@@ -29,7 +29,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -274,7 +274,12 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					List<Map<String, Object>> newDmpInputMongoEntityList = dmpInputDataDmpRelationMap.getKey();
 					for(Map<String, Object> newDmpInputMongoEntity : newDmpInputMongoEntityList) {
 						dmpInputMongoDmpRelationEntity = new DmpInputMongoDmpRelationEntity();
-						dmpInputMongoDmpRelationEntity.setMongoId(newDmpInputMongoEntity.get(DmpInputMongoHandler.MONGO_BASE_ID).toString());
+						Object mongoIdObj = newDmpInputMongoEntity.get(DmpInputMongoHandler.MONGO_BASE_ID);
+						if (mongoIdObj == null) {
+							ServiceException.runError("DMP转换缺少mongoId, convertId={}, storageName={}, data={}",
+									convertId, storageName, JSON.toJSONString(newDmpInputMongoEntity));
+						}
+						dmpInputMongoDmpRelationEntity.setMongoId(mongoIdObj.toString());
 						dmpInputMongoDmpRelationEntity.setDmpId(id);
 						dmpInputMongoDmpRelationEntity.setConvertId(convertId);
 						dmpInputDataDmpRelationEntityList.add(dmpInputMongoDmpRelationEntity);
@@ -524,7 +529,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					for(DmpSoDetailEntity detailEntity : dmpSoDetailEntityList) {
 						String skuNo = detailEntity.getPlatformSku();
 						if(StringUtils.isNotBlank(skuNo)) {
-							String key = RedisKeyConstant.PRODUCT_LISTING_TIME + sourcePlatform + ":" + skuNo;
+							String key = RedisCacheConstants.PRODUCT_LISTING_TIME + sourcePlatform + ":" + skuNo;
 							if(!SKU_LISTING_TIME_SET.contains(key)) {
 								Boolean hasKey = redisTemplate.hasKey(key);
 								if(hasKey) {

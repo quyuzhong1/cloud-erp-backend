@@ -113,6 +113,11 @@ public class CfgSettingValueDTO implements Serializable {
         private Integer firstMileReconciliationDate;
 
         /**
+         * 头程对账执行超时时间 单位：秒
+         */
+        private Integer firstMileExecTimeout;
+
+        /**
          * 报关对账类型，/wms/dict/drop/down?type=reconciliationType
          */
         @NotBlank(message = "报关对账类型不能为空")
@@ -122,6 +127,12 @@ public class CfgSettingValueDTO implements Serializable {
          * 报关对账日期
          */
         private Integer declareReconciliationDate;
+
+        /**
+         * 报关对账执行超时时间 单位：秒
+         */
+        private Integer declareExecTimeout;
+
         /**
          * 头程分摊类型，/wms/dict/drop/down?type=reconciliationType
          */
@@ -132,6 +143,10 @@ public class CfgSettingValueDTO implements Serializable {
          * 头程分摊日期
          */
         private Integer firstMileAllocationDate;
+        /**
+         * 头程分摊执行超时时间 单位：秒
+         */
+        private Integer firstMileAllocationeExecTimeout;
         
         /**
          * 小包分摊类型，/wms/dict/drop/down?type=reconciliationType
@@ -143,12 +158,16 @@ public class CfgSettingValueDTO implements Serializable {
          * 小包分摊上月开始日期
          */
         private Integer packageBeginAllocationDate;
-        
+
         /**
          * 小包分摊生成日期
          */
         @NotNull(message = "小包分摊生成日期")
         private Integer packageAllocationDate;
+        /**
+         * 小包分摊执行超时时间 单位：秒
+         */
+        private Integer packageBeginExecTimeout;
         
         /**
          * 中转分摊类型，/wms/dict/drop/down?type=reconciliationType
@@ -160,12 +179,17 @@ public class CfgSettingValueDTO implements Serializable {
          * 中转分摊上月开始日期
          */
         private Integer transferBeginAllocationDate;
-        
+
         /**
          * 中转分摊生成日期
          */
         @NotNull(message = "中转分摊生成日期")
         private Integer transferAllocationDate;
+
+        /**
+         * 中转分摊执行超时时间 单位：秒
+         */
+        private Integer transferBeginExecTimeout;
 
     }
 
@@ -243,7 +267,7 @@ public class CfgSettingValueDTO implements Serializable {
         private String firstOtherTaxFee;
         //费用分摊-头程-其他费用
         private String firstOtherFee;
-        //费用分摊-头程-组织id
+        //费用分摊-头程-组织id （CostAllocationOrgTypeEnum + 启用的核算组织）
         private String firstOrgId;
         //费用分摊-头程-仓库id
         private String firstWarehouseId;
@@ -261,10 +285,12 @@ public class CfgSettingValueDTO implements Serializable {
         private String packageDeductibleTax;
         //费用分摊-小包-其他费用
         private String packageOtherFee;
-        //费用分摊-小包-组织id
+        //费用分摊-小包-组织id （CostAllocationOrgTypeEnum + 启用的核算组织）
         private String packageOrgId;
         //费用分摊-小包-仓库id
         private String packageWarehouseId;
+        //费用分摊-小包-分摊单据类型 CostAllocationBillTypeEnum
+        private List<String> packageBillTypeList;
         
         /**
          * 费用分摊-小包中转-运费
@@ -314,6 +340,19 @@ public class CfgSettingValueDTO implements Serializable {
         private String companyName;
 
 
+    }
+
+
+    /**
+     * 异步任务单据批次参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BillBatchParamsDTO {
+        private String smallBagBatch;
+        private String smallBagTimeoutSeconds;
+        private String firstMileBatch;
+        private String firstMileTimeoutSeconds;
     }
 
 }

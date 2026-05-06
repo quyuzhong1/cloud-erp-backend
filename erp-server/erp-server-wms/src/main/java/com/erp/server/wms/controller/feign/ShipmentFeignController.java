@@ -6,9 +6,11 @@ import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import com.erp.model.wms.enums.ShipmentSourceTypeEnum;
 import com.erp.server.wms.convert.FbaShipmentReceiveConverter;
 import com.erp.server.wms.rocketmq.consumer.PlatformFbaShipmentConsumerService;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
@@ -58,6 +60,10 @@ public class ShipmentFeignController extends BaseController {
             return true;
         }
         List<FbaShipmentReceiveEntity> receiveEntityList = FbaShipmentReceiveConverter.INSTANCE.sourceListToEntityList(groupEntity.getDetailList());
+        String sourcePlatform = ShipmentSourceTypeEnum.FBT.getCode().equals(entity.getSourceType())
+                ? PlatformEnum.FBT.getName()
+                : PlatformEnum.LINGXING.getName();
+        receiveEntityList.forEach(item -> item.setSourcePlatform(sourcePlatform));
         Map<String, List<FbaShipmentReceiveEntity>> groupMap = receiveEntityList.stream().collect(Collectors.groupingBy(e -> CharSequenceUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
 //        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value, entity));
         for (Map.Entry<String, List<FbaShipmentReceiveEntity>> entry : groupMap.entrySet()) {

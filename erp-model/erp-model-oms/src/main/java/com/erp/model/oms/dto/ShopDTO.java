@@ -1317,4 +1317,22 @@ public class ShopDTO implements Serializable {
         @NotEmpty(message = "平台集合不能为空")
         private List<String> platformList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListShopInfoDTO {
+
+        private String dictPlatform;
+
+        private List<ShopInfoDTO>  shopInfoDTOLists;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopInfoDTO{
+
+        private String id;
+
+        private String name;
+    }
 }

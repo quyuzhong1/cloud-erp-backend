@@ -45,7 +45,7 @@
         and sb2c.invalid_status = false
         and sbl.source_system = 'third'
           and  NOT EXISTS (
-            SELECT 1 from so_b2c_error sbe where sbe.main_id = sb2c.id  and sbe.type= 'getLogisticsLabel'
+            SELECT 1 from so_b2c_error sbe where sbe.main_id = sb2c.id  and sbe.type= 'getLogisticsLabel' and sbe.is_deleted = false
         )
     </select>
 

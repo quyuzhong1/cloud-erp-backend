@@ -182,46 +182,10 @@ public class MoldInfoImportExcelDTO implements Serializable {
     @ExcelProperty(value = "备注", index = 16)
     @FieldValid(fieldName = "备注",maxLength = 200)
     private String remark;
-
-    /**
-     * 含税单价
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*含税单价", index = 17)
-    @FieldValid(fieldName = "*含税单价",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private BigDecimal taxPrice;
-
-    /**
-     * 税率(%)
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*税率(%)", index = 18 )
-    @FieldValid(fieldName = "*税率(%)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
-    private BigDecimal rate;
-
-    /**
-     * 结算方式
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*结算方式", index = 19)
-    @FieldValid(fieldName = "*结算方式",isNotBlank = true)
-    private String payMethodName;
-    @ExcelIgnore
-    private String payMethodId;
-
-    /**
-     * 付款条件
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*付款条件", index = 20)
-    @FieldValid(fieldName = "*付款条件",isNotBlank = true)
-    private String paymentConditionName;
-    @ExcelIgnore
-    private String paymentCondition;
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index =21)
+    @ExcelProperty(value = "错误数据", index =17)
     @ColumnWidth(50)
     private String  errorMsg = "";
 }

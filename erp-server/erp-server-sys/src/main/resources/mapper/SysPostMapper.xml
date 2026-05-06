@@ -5,11 +5,10 @@
     <select id="paging" resultType="com.erp.model.sys.entity.SysPostEntity">
         SELECT id,post_name,post_remark
         FROM sys_post sp
-        <where>
-            <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
-                AND sp.post_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
-            </if>
-        </where>
+        where sp.is_deleted = false
+        <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
+            AND sp.post_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        </if>
 
         <if test="params.startTime!=null">
             AND sp.create_time &gt;=#{params.startTime}

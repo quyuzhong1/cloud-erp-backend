@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.dmp.dto.CfgDiffStrategyDTO;
 import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -21,4 +23,6 @@ import com.erp.model.dmp.entity.CfgDiffStrategyEntity;
 public interface CfgDiffStrategyMapper extends BaseMapper<CfgDiffStrategyEntity> {
 
 	IPage<CfgDiffStrategyDTO.ViewDTO> paging(Page query, @Param("params") CfgDiffStrategyDTO.PagingParamDTO params);
+
+    List<CfgDiffStrategyDTO.ListByBillTypeDTO> listByBillType(@Param("billType") String billType);
 }

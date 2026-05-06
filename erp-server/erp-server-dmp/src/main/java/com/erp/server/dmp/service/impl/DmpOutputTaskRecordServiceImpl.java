@@ -786,8 +786,8 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     }
 
 	@Override
-	public List<String> outputErrorCountMsg() {
-		return baseMapper.outputErrorCountMsg();
+	public List<String> outputErrorCountMsg(String conditionSql) {
+		return baseMapper.outputErrorCountMsg(conditionSql);
 	}
 
     @Override
@@ -820,7 +820,16 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         if (CollectionUtils.isEmpty(sourceCodeList)) {
             return Boolean.FALSE;
         }
-
+        List<DmpOutputTaskRecordEntity> historyList = this.lambdaQuery()
+                .select(DmpOutputTaskRecordEntity::getSourceCode)
+                .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
+                .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+                .list();
+        //过滤已完结的任务记录
+        sourceCodeList = sourceCodeList.stream().filter(v-> historyList.stream().noneMatch(history->history.getSourceCode().equals(v))).collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceCodeList)) {
+            return Boolean.TRUE;
+        }
         //校验是否存在黑名单
 //        checkExistsBlack(ids);
         remark = "无需同步原因：" + remark + "，推送失败原因：";
@@ -829,6 +838,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .setSql(" response_data = ('" + remark + "' || response_data) " )
                 .in(DmpOutputTaskRecordEntity::getSourceCode, sourceCodeList)
+                .ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .update();
     }
 

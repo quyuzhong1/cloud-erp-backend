@@ -1,37 +1,26 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 /**
  * @Classname SysDepartmentUserEntity
-
  * @Date 2022-07-13 18:51
  * @Created by yl
  */
+@EqualsAndHashCode(callSuper = true)
 @TableName("sys_department_user")
 @NoArgsConstructor
 @Data
-public class SysDepartmentUserEntity {
-
-    @TableId(value = "id",type = IdType.ASSIGN_ID )
-    private String id;
-
+public class SysDepartmentUserEntity extends BaseEntity<SysDepartmentUserEntity> {
 
     private String departmentId;
 
     private String userId;
 
     private Integer leadState;
-
-    @TableField(fill= FieldFill.INSERT)
-    private Date createTime;
-
-    @TableField(fill= FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
 
 }

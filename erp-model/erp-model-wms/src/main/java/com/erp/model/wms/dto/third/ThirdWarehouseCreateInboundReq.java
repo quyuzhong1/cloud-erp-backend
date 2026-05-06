@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto.third;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -49,6 +50,10 @@ public class ThirdWarehouseCreateInboundReq {
      * file
      */
     private String fileName;
+    /**
+     * 附件列表
+     */
+    private List<WmsAttachmentDTO.UpdateDTO> attachmentList;
     /**
      * 交货方式 （自送，揽收）
      * {@link com.erp.model.wms.enums.OverseasDeliveryModeEnum}

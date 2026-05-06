@@ -43,6 +43,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
@@ -240,7 +241,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        query.setSearchCount(Boolean.FALSE);
+        Integer totalCount = this.baseMapper.pagingCount(pagingParamDTO.getParams());
         IPage<SoReturnInstockDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        pageData.setTotal(ObjectUtils.isEmpty(totalCount) ? MathUtil.ZERO : totalCount);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
@@ -2117,7 +2121,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if(mappingList.isEmpty()){
             return;
         }
-        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
+        Map<String, String> thirdWarehouseMap = mappingList.stream()
+                .filter(item -> CharSequenceUtil.isBlank(item.getInventorySyncMode()) || !Objects.equals(InventorySyncModeEnum.INVENTORY.getCode(), item.getInventorySyncMode()))
+                .collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
         //过滤掉没有第三方仓库映射的明细
         detailEntityList = detailEntityList.stream().filter(v->thirdWarehouseMap.containsKey(v.getWarehouseId())).collect(Collectors.toList());
         Map<String, List<SoReturnInstockDetailEntity>> collectByWarehouseId = detailEntityList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getWarehouseId));

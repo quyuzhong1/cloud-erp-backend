@@ -26,12 +26,14 @@ public enum DynamicDataSourceTypeEnum implements EnumMessage {
 
     public static boolean isDoris(DynamicDataSourceTypeEnum dataSourceTypeEnum){
         return dataSourceTypeEnum == DynamicDataSourceTypeEnum.DORIS
-                || dataSourceTypeEnum == DynamicDataSourceTypeEnum.ADS_DORIS;
+                || dataSourceTypeEnum == DynamicDataSourceTypeEnum.ADS_DORIS
+        		;
     }
 
     public static boolean isDorisByStr(String dataSourceTypeStr){
         return Arrays.asList(DynamicDataSourceTypeEnum.DORIS.getCode(),
-                DynamicDataSourceTypeEnum.ADS_DORIS.getCode())
+                DynamicDataSourceTypeEnum.ADS_DORIS.getCode()
+        		)
                 .contains(dataSourceTypeStr);
     }
 

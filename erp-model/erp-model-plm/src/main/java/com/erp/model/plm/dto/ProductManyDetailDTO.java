@@ -78,5 +78,10 @@ public class ProductManyDetailDTO {
      * 目的国海关编码信息
      */
     private List<ProductCustomsEntity> productCustomsList;
+    
+    /**
+     * 标准零售价信息
+     */
+    private List<ProductRetailPriceShowDTO> productRetailPriceShowDTOList;
 
 }

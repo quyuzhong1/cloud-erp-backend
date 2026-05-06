@@ -21,17 +21,7 @@
     </properties>
 
     <dependencies>
-    	<dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.28</version>
-        </dependency>
-        
-        <dependency>
-    <groupId>com.baomidou</groupId>
-    <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
-    <version>3.3.1</version>
-</dependency>
+    	
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-model-scm</artifactId>
@@ -226,6 +216,11 @@
             <artifactId>erp-sdk-wms-antu</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.hankcs</groupId>
+            <artifactId>hanlp</artifactId>
+            <version>portable-1.8.4</version>
         </dependency>
         <dependency>
             <groupId>org.dom4j</groupId>

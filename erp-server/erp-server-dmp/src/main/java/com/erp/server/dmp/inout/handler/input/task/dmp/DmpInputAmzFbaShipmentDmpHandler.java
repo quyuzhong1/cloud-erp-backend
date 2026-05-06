@@ -6,10 +6,18 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.ShopInfoMappingEntity;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
+import com.erp.server.dmp.service.ShopInfoMappingService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,10 +30,16 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandler {
 
+    @Resource
+    private ShopInfoMappingService shopInfoMappingService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         super.afterConvertData(dmpInputDataDmpRelationMaps);
-        //List<Map<String, Object>> lxData = new ArrayList<>();
+        List<Map<String, Object>> lxData = new ArrayList<>();
         List<Map<String, Object>> labelData = new ArrayList<>();
         if (CollUtil.isNotEmpty(dmpInputDataDmpRelationMaps)) {
             for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
@@ -41,7 +55,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                     List<ParamData> lxParamDataList = Collections.singletonList(
                             new ParamData("shipment_id", "shipment_id", PannoEnum.IN, shipmentIds)
                     );
-                    //lxData.addAll(mongoService.findMongoData(lxParamDataList, "lingxing_fba_shipment_data"));
+                    lxData.addAll(mongoService.findMongoData(lxParamDataList, "lingxing_fba_shipment_data"));
                     labelData.addAll(mongoService.findMongoData(lxParamDataList, "amazon_fba_shipment_label_data"));
                 }
             }
@@ -82,15 +96,22 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                     labelType =  labelPrepType.getDesc();
                 }
                 dmpDataMap.put("labelType", labelType);
-//                if (!lxData.isEmpty()) {
-//                    for (Map<String, Object> lxDatum : lxData) {
-//                        if (lxDatum.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
-//                            int isSta = (int)lxDatum.get("is_sta");
-//                            dmpDataMap.put("isSta",isSta == 0 ? Boolean.FALSE : Boolean.TRUE);
-//                        }
-//                    }
-//
-//                }
+                if (!lxData.isEmpty()) {
+                    for (Map<String, Object> lxDatum : lxData) {
+                        if (lxDatum.get("shipment_id").toString().equals(dmpDataMap.get("fbaShipmentId"))) {
+                            String fulfillmentCenter = lxDatum.get("destination_fulfillment_center_id").toString();
+                            dmpDataMap.put("fulfillmentCenter",fulfillmentCenter);
+                            ShopInfoMappingEntity mappingEntity = shopInfoMappingService.getBySIdAndType(lxDatum.get("sid").toString(), PlatformEnum.LINGXING.getName());
+                            if (Objects.nonNull(mappingEntity)) {
+                                ShopInfoEntity shop = shopInfoFeign.getShopInfoById(mappingEntity.getShopId());
+                                dmpDataMap.put("fulfillmentCenterCountry",shop.getDictCountryCode());
+                            }
+                        }
+                    }
+
+                } else {
+                    throw new ServiceException("领星未获取到数据");
+                }
                 String shipmentName = mongoData.get("shipmentName").toString();
                 if (shipmentName.contains("ASDN")) {
                     dmpDataMap.put("isSta",Boolean.FALSE);

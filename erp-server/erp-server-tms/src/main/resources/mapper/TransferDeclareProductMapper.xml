@@ -19,8 +19,6 @@
        <result column="qty" property="qty" />
        <result column="declare_chinese_name" property="declareChineseName" />
        <result column="declare_english_name" property="declareEnglishName" />
-       <result column="declare_price" property="declarePrice" />
-       <result column="currency" property="currency" />
     </resultMap>
 
     <!-- 通用查询结果列 -->

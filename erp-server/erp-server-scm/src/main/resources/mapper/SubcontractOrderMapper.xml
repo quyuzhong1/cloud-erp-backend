@@ -55,7 +55,12 @@
         so.approve_time as approveTime,
         so.purchaser_name as purchaserName,
         so.create_time as createTime,
-        so.create_user_name as createUserName
+        so.create_user_name as createUserName,
+        so.type as type,
+        sod.repair_qty as repairQty,
+        sod.repair_price as repairPrice,
+        sod.repair_amount as repairAmount,
+        sod.supplier_id as supplierId
     </sql>
 
     <select id="paging" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ListDTO">
@@ -273,6 +278,7 @@
             sod.variant_property as variantProperty,
             so.purchase_org_id as purchaseOrgId,
             so.purchase_org_name as purchaseOrgName,
+            so.type as type,
             sod.warehouse_id as warehouseId,
             sod.warehouse_name as warehouseName,
             sod.qty,
@@ -287,7 +293,9 @@
             sod.plan_delivery_date as planDeliveryDate,
             sod.bom_version as bomVersion,
             sod.warehouse_location,
-            sod.first_mass_product  as firstMassProduct
+            sod.first_mass_product  as firstMassProduct,
+            sod.repair_qty as repairQty,
+            sod.repair_price as repairPrice
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
         left join supplier s on sod.supplier_id = s.id and s.is_deleted = false

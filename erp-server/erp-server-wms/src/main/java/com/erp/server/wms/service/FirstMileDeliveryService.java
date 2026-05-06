@@ -395,5 +395,19 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * AWD出库货件下推头程发货单
      */
     BatchResultDTO generateFirstMileDeliveryByAwdOutStock(AwdOutstockDTO.GenerateDeliveryDTO dto);
-
+    /**
+     * 取消分货分页查询
+     * @author will
+     * @date 2026/1/23 16:32
+     * @return PagingVO<CancelDeliveryListDTO>
+     */
+    PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> cancelDeliveryPaging(PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto);
+    /**
+     * 取消发货
+     * @author will
+     * @date 2026/1/23 18:49
+     * @param cancelDeliveryDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO);
 }

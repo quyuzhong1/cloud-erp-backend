@@ -20,7 +20,6 @@ import com.erp.server.dmp.service.AfterSaleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -417,4 +416,13 @@ public class AfterSaleController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据单据idList获取售后人员
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listCsAgent")
+    public ApiResult<Map<String, String>> listCsAgent(@RequestBody AfterSaleDTO.ListCsAgentDTO dto ) {
+        return success(afterSaleService.listCsAgent(dto));
+    }
 }

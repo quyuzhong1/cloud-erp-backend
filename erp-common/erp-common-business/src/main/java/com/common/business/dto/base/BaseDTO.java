@@ -46,6 +46,11 @@ public class BaseDTO implements Serializable {
          */
         private String fileUrl;
         /**
+         * 文件名称
+         */
+        private String fileName;
+
+        /**
          * 任务id[后端使用]
          */
         private String taskId;
@@ -156,5 +161,16 @@ public class BaseDTO implements Serializable {
          * 附件名称
          */
         private String attachName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DictDTO implements Serializable {
+        /**
+         * 附件id
+         */
+        @NotBlank(message = "字典key不能为空")
+        private String key;
     }
 }

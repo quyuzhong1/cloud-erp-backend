@@ -269,10 +269,22 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     private String platformSubSoCode;
 
     /**
+     * amount分摊来源:cost_avg=采购平均成本, cost_fin=财务导入成本, retail_std=标准零售价,空=无分摊
+     */
+    @TableField("price_allocation_source")
+    private String priceAllocationSource = "";
+
+    /**
      * 产品名称
      */
     @TableField(exist = false)
     private String productName;
+
+    /**
+     * 分摊来源金额
+     */
+    @TableField(exist = false)
+    private BigDecimal allocationAmount;
 
     public static final String MAIN_ID = "main_id";
 

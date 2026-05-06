@@ -15,6 +15,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -25,6 +26,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -538,7 +540,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(mappingList.isEmpty()){
             return;
         }
-        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+        Map<String, String> thirdWarehouseMap = mappingList.stream()
+                .filter(item -> CharSequenceUtil.isBlank(item.getInventorySyncMode()) || !Objects.equals(InventorySyncModeEnum.INVENTORY.getCode(), item.getInventorySyncMode()))
+                .collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
 
         detailList = detailList.stream().filter(item -> thirdWarehouseMap.containsKey(item.getWarehouseId())).collect(Collectors.toList());
         Map<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> collect = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));
@@ -580,7 +584,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(mappingList.isEmpty()){
             return;
         }
-        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+        Map<String, String> thirdWarehouseMap = mappingList.stream()
+                .filter(item -> CharSequenceUtil.isBlank(item.getInventorySyncMode()) || !Objects.equals(InventorySyncModeEnum.INVENTORY.getCode(), item.getInventorySyncMode()))
+                .collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
 
         detailList = detailList.stream().filter(item -> thirdWarehouseMap.containsKey(item.getWarehouseId())).collect(Collectors.toList());
         Map<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> collect = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));
@@ -687,6 +693,10 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
+        }
+        //下推生成的盘盈盘亏单不允许修改
+        if (StringUtils.isNotBlank(old.getSourceId())) {
+            throw new ServiceException(ApiError.WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE);
         }
         StocktakingProfitLossEntity entity = new StocktakingProfitLossEntity();
         BeanMapper.copy(dto, entity);
@@ -945,7 +955,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             }
             String code = docNoGenHelper.generateCode(businessNoType);
             entity.setCode(code);
-            entity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+            entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
             addList.add(entity);
             for (StocktakingProfitLossDetailDTO.AddDTO item : dto.getDetailList()) {
                 StocktakingProfitLossDetailEntity detail = new StocktakingProfitLossDetailEntity();
@@ -975,7 +985,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     public List<StocktakingProfitLossEntity> listBySourceId(String sourceId) {
         return this.lambdaQuery().eq(StocktakingProfitLossEntity::getSourceId, sourceId).
-                eq(StocktakingProfitLossEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING).
                 list();
 
     }
@@ -1016,40 +1025,6 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
-    }
-
-    @Override
-    public List<StocktakingProfitLossDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
-        if (CollectionUtils.isEmpty(warehouseIds)){
-            throw new ServiceException("仓库IDS 不能为空");
-        }
-        if (CollectionUtils.isEmpty(orgIds)){
-            throw new ServiceException("组织IDS 不能为空");
-        }
-        if (CollectionUtils.isEmpty(skuIds)){
-            throw new ServiceException("SKU IDS不能为空");
-        }
-        return baseMapper.maxDateByParams(warehouseIds, orgIds, skuIds);
-    }
-
-    @Override
-    public String findLastOneCode(String warehouseId, String skuId, LocalDate billDate) {
-        List<String> codeList = baseMapper.findLastOneCode(warehouseId, skuId, billDate);
-        return codeList.stream().findFirst().orElse("");
-    }
-
-    @Override
-    public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
-        // 最新盘盈盘亏单有效单据日期列表
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
-        if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
-            // 已有日期之前对应仓位已审核的盘盈盘亏单
-            return lastStocktakingProfitLossList.stream()
-                    .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
-                            (billDate.isBefore(e.getBillDate()) || billDate.equals(e.getBillDate()))
-                    );
-        }
-        return false;
     }
 
     @Override
@@ -1164,8 +1139,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             }
         }
 
-        List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+        //List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        //List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
         //盘点人信息
         List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
         List<String> userIdList=taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
@@ -1184,15 +1159,16 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     map(FindUserDTO::getUserName).collect(Collectors.joining(","));
             item.setStocktakingUserName(stocktakingUserName);
 
-            String skuId = item.getSkuId();
-            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
-            if (Objects.nonNull(sku)) {
-                item.setProductName(sku.getName());
-                item.setUnit(sku.getUnitName());
-            } else {
-                item.setProductName("");
-                item.setUnit("");
-            }
+
+//            String skuId = item.getSkuId();
+//            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+//            if (Objects.nonNull(sku)) {
+//                item.setProductName(sku.getName());
+//                item.setUnit(sku.getUnitName());
+//            } else {
+//                item.setProductName("");
+//                item.setUnit("");
+//            }
 
         }
 

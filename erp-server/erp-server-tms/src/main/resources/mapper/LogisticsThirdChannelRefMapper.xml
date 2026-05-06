@@ -26,6 +26,7 @@
        <result column="third_channel_code" property="thirdChannelCode" />
        <result column="third_channel_name" property="thirdChannelName" />
        <result column="push_type" property="pushType" />
+       <result column="dict_platform" property="dictPlatform" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -39,7 +40,7 @@
         update_time,
         version,
         is_deleted,
-        remark, disabled, is_push_mobile, logistics_channel_id, logistics_channel_name, logistics_channel_code, third_supplier_code, third_supplier_name, platform_type, logistics_supplier_id, logistics_supplier_name, third_channel_code, third_channel_name, push_type
+        remark, disabled, is_push_mobile, logistics_channel_id, logistics_channel_name, logistics_channel_code, third_supplier_code, third_supplier_name, platform_type, logistics_supplier_id, logistics_supplier_name, third_channel_code, third_channel_name, push_type, dict_platform
     </sql>
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$PagingVO">
         select
@@ -59,6 +60,7 @@
             ltcr.create_user_name as createUserName,
             ltcr.create_time as createTime,
             ltcr.disabled as disabled,
+            ltcr.dict_platform as mainDictPlatform,
             ltcrd.id as detailId,
             ltcrd.shop_id as shopId,
             ltcrd.shop_name as shopName,
@@ -111,8 +113,87 @@
             left join logistics_third_channel_ref_detail ltcrd on ltcr.id = ltcrd.main_id and ltcrd.is_deleted = false
         where
             ltcr.is_deleted = false
+            and ltcr.disabled = false
             and ltcr.platform_type = #{platformType}
         order by ltcr.create_time desc
+    </select>
+
+    <!--  根据物流渠道id查询已启用的第三方渠道配置（用于物流渠道 view 只读回填 trackQueryMode） -->
+    <select id="listByChannelId" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$PagingVO">
+        select
+            ltcr.id as id,
+            ltcr.platform_type as platformType,
+            ltcr.logistics_channel_id as logisticsChannelId,
+            ltcr.logistics_channel_name as logisticsChannelName,
+            ltcr.logistics_channel_code as logisticsChannelCode,
+            ltcr.disabled as disabled,
+            ltcr.dict_platform as mainDictPlatform
+        from
+            logistics_third_channel_ref ltcr
+        where
+            ltcr.is_deleted = false
+            and ltcr.disabled = false
+            and ltcr.logistics_channel_id = #{channelId}
+        order by ltcr.create_time desc
+    </select>
+    <select id="existRefBySalePlatform" resultType="com.erp.model.tms.entity.LogisticsThirdChannelRefEntity">
+        select * from logistics_third_channel_ref ltcr
+        where
+              ltcr.is_deleted = false
+          and ltcr.disabled = false
+          AND (
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = #{channelId} and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id ='all' and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} AND ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+            )
+    </select>
+
+    <select id="getTrackQueryModeBySalePlatform" resultType="java.lang.String">
+        select ltcr.platform_type
+        from logistics_third_channel_ref ltcr
+        where
+              ltcr.is_deleted = false
+          and ltcr.disabled = false
+          AND (
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = #{channelId} and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id ='all' and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} AND ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+            )
+        order by
+            case
+                when ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = #{channelId} and ltcr.logistics_supplier_id = #{logisticsSupplierId} then 1
+                when ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = 'all' and ltcr.logistics_supplier_id = #{logisticsSupplierId} then 2
+                when ltcr.dict_platform = #{salePlatform} and ltcr.logistics_supplier_id = 'all' and ltcr.logistics_channel_id = 'all' then 3
+            end asc,
+            ltcr.create_time desc
+        limit 1
+    </select>
+
+    <select id="listByTrackNos" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$ListByTrackNosDTO">
+        SELECT
+            ltcr.ID AS thirdRefId,
+            lbd.ID AS logisticsBillDetailId,
+            lbd.track_no AS trackNo,
+            ltcr.platform_type AS platformType,
+            ltcr.third_channel_code AS thirdChannelCode,
+            ltcr.third_supplier_code AS thirdSupplierCode
+        FROM
+            logistics_bill_detail lbd
+                LEFT JOIN logistics_third_channel_ref ltcr ON ltcr.disabled = FALSE
+                AND ltcr.is_deleted = FALSE
+                AND ltcr.ID = lbd.third_ref_id
+        WHERE
+            lbd.is_deleted = FALSE
+        <if test="trackNos != null and trackNos.size > 0">
+            AND lbd.track_no IN
+            <foreach collection="trackNos" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
 

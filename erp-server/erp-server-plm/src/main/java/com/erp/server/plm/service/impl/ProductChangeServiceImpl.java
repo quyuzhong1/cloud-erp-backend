@@ -13,291 +13,789 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.ApproveDTO;
+import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.threadlocal.UserContext;
+import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.*;
+
+import cn.hutool.core.util.StrUtil;
+import com.erp.model.plm.dto.ProductChangeDetailDTO;
+import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.BomOperationTypeEnum;
-import com.erp.model.plm.enums.ProductChangeStateEnum;
-import com.erp.model.plm.vo.BomVO;
-import com.erp.model.plm.vo.ProductChangePagingVO;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.model.workflow.vo.MyToDoTaskVO;
-import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.server.plm.constant.BomConstant;
-import com.erp.server.plm.constant.SearchType;
-import com.erp.server.plm.mapper.ProductChangeMapper;
+import com.erp.server.plm.listener.ProductChangeExcelListener;
 import com.erp.server.plm.service.*;
+import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.dto.base.BaseResultDTO;
+import com.erp.server.plm.mapper.ProductChangeMapper;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
+import com.common.business.config.DocNoGenHelper;
+import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.util.ObjectUtil;
+import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.plm.dto.ProductChangeDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 
-import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import javax.annotation.Resource;
 import java.util.stream.Collectors;
+import java.util.*;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.collection.CollUtil;
+import com.common.business.vo.PagingVO;
+import com.common.business.dto.base.*;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * 变更信息表(ProductChange)表服务实现类
+ * <p>
+ * 产品变更信息表 服务实现类
+ * </p>
  *
- * @author yl
- * @since 2023-01-11 14:05:03
+ * @author lrp
+ * @since 2026-02-03
  */
-@Service
 @Slf4j
-public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, ProductChangeEntity> implements ProductChangeService {
-
-
+@Service
+public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapper, ProductChangeEntity> implements ProductChangeService {
     @Resource
-    private ProductChangeDetailsService changeDetailsService;
-
+    private OperateLogService operateLogService;
     @Resource
-    private BomInfoService bomInfoService;
-
-
-    @Resource
-    private ProductDetailService productDetailService;
-    @Resource
-    private ProductInfoService productInfoService;
-
-
+    private DocNoGenHelper docNoGenHelper;
     @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource
-    private BomSkuService bomSkuService;
-
-    @Autowired
-    private SysUserFeign sysUserFeign;
-
-    @Autowired
-    private ProductChangeDetailsService productChangeDetailsService;
-
-    @Autowired
-    private OperateLogService operateLogService;
+    private ProductChangeDetailService productChangeDetailService;
 
     @Resource
-    private BomOperateLogService bomOperateLogService;
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private FileFeign fileFeign;
+
+    @Resource
+    private ProductChangeService productChangeService;
+
+    @Resource
+    private ProductInfoService productInfoService;
+
+    @Resource
+    private ProductPackService productPackService;
 
     @Resource
     private ProductPurchaseService productPurchaseService;
 
     @Resource
-    private InventoryFeign inventoryFeign;
+    private ProductSaleService productSaleService;
 
-    //变更财务人员审核
-    @Value("${changeFinancialAudit}")
-    private String financial;
+    @Resource
+    private ProductRefBuService productRefBuService;
+
+    @Resource
+    private ProductCostService productCostService;
+
+    @Resource
+    private BasicProductBuService basicProductBuService;
+
+    @Resource
+    private BasicDictService basicDictService;
+
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
+    @Resource
+    private ProductRDTTeamService productRDTTeamService;
+
+    @Resource
+    private ProductBrandService productBrandService;
+
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
+    @Resource
+    private SysFeign sysFeign;
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
-
-    private void checkInventoryGreaterThanZero(){
-
-    }
-
-    /**
-     * 添加变更
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-01-14 15:02
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean add(AddChangeDTO dto) {
-        ProductChangeEntity change = new ProductChangeEntity();
-        String type = dto.getType();
-        String changeBom = BomConstant.CHANGE_BOM;
-        Boolean isBom = changeBom.equals(type);
-        String sourceId = dto.getSourceId();
-        if (isBom) {
-            //检查能否变更 只有归档才可以
-            bomInfoService.checkIfChange(sourceId,dto.getDetailsJson());
-        }
-        BeanMapper.copy(dto, change);
-        String id = IdWorker.getIdStr();
-        change.setId(id);
-        //如果是bom 检查审核人为空不
-        if (!isBom) {
-            //sku数据验证
-            checkSkuChange(dto.getDetailsJson());
-
-        }
-        //处理数据
-        handleData(change,isBom);
-
-        Boolean saveResult = this.save(change);
-        if (saveResult) {
-            changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
-        }
-        AddChangeDTO oldDto = new AddChangeDTO();
-        if (ObjectUtils.isNotEmpty(oldDto)) {
-            BeanMapperUtils.copy(oldDto, dto);
-        }
-
-        //启动一个流程
-        submit(id,Boolean.TRUE);
-        return saveResult;
-    }
-
-    /**
-     * 数据处理
-     * @author will
-     * @date 2025/6/11 17:27
-     * @param change
-     * @param isBom
-     * @return void
-     */
-    private void handleData(ProductChangeEntity change,Boolean isBom) {
-        if (isBom) {
-            BomInfoEntity bomInfoEntity = bomInfoService.getById(change.getSourceId());
-            change.setSourceCode(bomInfoEntity.getSerialNumber());
-        } else {
-            ProductDetailEntity productDetailEntity = productDetailService.getById(change.getSourceId());
-            change.setSourceCode(productDetailEntity.getSkuNo());
-        }
-    }
-
-
-    /**
-     * @param detailsJson
-     * @description: 验证sku变更
-     * @author Will
-     * @date: 2023/5/16 10:11
-     */
-    public void checkSkuChange(String detailsJson) {
-        if (StringUtils.isBlank(detailsJson)) {
-            return;
-        }
-        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
-
-        //采购信息验证
-        ProductPurchaseShowDTO purchaseShowDTO = skuDTO.getProductPurchaseShowDTO();
-        if (purchaseShowDTO != null) {
-            ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
-            BeanMapper.copy(purchaseShowDTO, purchaseEntity);
-            productPurchaseService.checkProductPurchase(purchaseEntity);
-        }
-    }
-
-    /**
-     * 检查库存是否大于零
-     * 此方法用于检查给定商品的库存是否大于零如果库存大于零，则根据库存状态统计数量，并抛出异常
-     *
-     */
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void checkInventoryGreaterThanZero(ProductInfoEntity productInfoEntity,String propertyId , String skuId) {
-        // 如果商品属性ID与实体中的属性ID不匹配，则直接返回
-        if(productInfoEntity.getPropertyId().equals(propertyId)){
+    public BaseResultDTO.AddDTO add(ProductChangeDTO.AddDTO addDTO) {
+        ProductChangeEntity productChangeEntity = new ProductChangeEntity();
+        BeanMapperUtils.copy(addDTO, productChangeEntity);
+
+        // 数据处理
+        handleData(productChangeEntity);
+        List<ProductChangeEntity> dbList = this.lambdaQuery()
+                .eq(ProductChangeEntity::getSkuNo, addDTO.getSkuNo())
+                .eq(ProductChangeEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+                .list();
+        if(CollectionUtil.isNotEmpty(dbList)){
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_EXIST, dbList.get(0).getSkuNo());
+        }
+        log.info("开始新增产品变更信息单");
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BG);
+        productChangeEntity.setCode(code);
+        boolean save = super.save(productChangeEntity);
+        if(!save) {
+            throw new ServiceException("产品变更信息单保存失败");
+        }
+        productChangeDetailService.add(productChangeEntity,addDTO.getDetailDTOList());
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "产品变更信息单" , productChangeEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "新增操作");
+
+        return new BaseResultDTO.AddDTO(productChangeEntity.getId(), code);
+    }
+
+    /**
+    * 修改
+    */
+    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(ProductChangeDTO.UpdateDTO addOrUpdateDTO) {
+        ProductChangeEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品变更信息单"));
+        // 待提交和审核不通过允许修改
+        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
+        }
+        ProductChangeEntity productChangeEntity =  BeanMapperUtils.map(ProductChangeEntity.class, addOrUpdateDTO);
+
+        // 数据处理
+        handleData(productChangeEntity);
+        boolean save = super.updateById(productChangeEntity);
+        if(!save) {
+            throw new ServiceException("产品变更信息单保存失败");
+        }
+        productChangeDetailService.update(productChangeEntity,addOrUpdateDTO.getDetailDTOList());
+
+        // 记录主单操作日志
+        String msg = StrUtil.format("用户【{}】编辑单据 ", UserContext.getDefaultLoginUser().getUserName(), "产品变更信息单");
+        operateLogService.addSysLogByUpdate(old, productChangeEntity, String.valueOf(ProductChangeEntity.class), productChangeEntity.getId(),"", msg);
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public PagingVO<ProductChangeDTO.ListDTO> paging(PagingDTO<ProductChangeDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<ProductChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<ProductChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
+        ProductChangeDTO.PagingParamDTO searchParam = new ProductChangeDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<ProductChangeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<ProductChangeDTO.TabListDTO> resultList = new ArrayList<>();
+        // 计算合计数量
+        resultList.add(new ProductChangeDTO.TabListDTO("","全部", list.stream().mapToInt(ProductChangeDTO.TabListDTO::getCount).sum()));
+
+        // 获取状态列表
+        List<ApproveStatusEnum> statusList = new ArrayList<>(Arrays.asList(ApproveStatusEnum.values()));
+        // 不存在的状态赋值为0
+        statusList.forEach(status -> {
+            Optional<ProductChangeDTO.TabListDTO> optional = list.stream().filter(item -> item.getTabFlag().equals(status.getStatus())).findFirst();
+            if (optional.isPresent()) {
+                ProductChangeDTO.TabListDTO tabListDTO = optional.get();
+                tabListDTO.setTabFlagName(status.getName());
+                resultList.add(optional.get());
+            } else {
+                resultList.add(new ProductChangeDTO.TabListDTO(status.getStatus(), status.getName(), 0));
+            }
+        });
+        return resultList;
+    }
+
+    @Override
+    public void exportList(ProductChangeDTO.PagingParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("产品信息变更单", FileTaskEventEnum.EXPORT_PLM_PRODUCT_CHANGE.getCode(), param);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "excel/productChangeTemplate.xlsx";
+        String excelName = "产品信息变更导入模板.xlsx";
+        com.common.core.utils.ExcelUtil.downloadTemplate(path, excelName, response);
+    }
+
+    @Override
+    public void importExcel(BaseDTO.ImportDTO dto) {
+        dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        downloadTaskFeign.saveImportTask("产品信息变更导入", FileTaskEventEnum.IMPORT_PLM_PRODUCT_CHANGE.getCode(), dto);
+    }
+
+    @Override
+    public void importProductChange(BaseDTO.ImportDTO dto) {
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //设置操作人
+        FindUserDTO findUserDTO = userList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
+        if(Objects.nonNull(findUserDTO)){
+            LoginUser user = new LoginUser();
+            user.setUid(findUserDTO.getUserId());
+            user.setUserName(findUserDTO.getUserName());
+            user.setRealName(findUserDTO.getRealName());
+            user.setUserAccount(findUserDTO.getMobile());
+            user.setMobile(findUserDTO.getMobile());
+            UserContext.setLoginUser(user);
+        }
+
+        ProductChangeExcelListener excelListenerUtil = new ProductChangeExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), ProductChangeImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<ProductChangeImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "产品信息变更错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, ProductChangeImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    @Override
+    public void handleImportSuccessList(List<ProductChangeImportExcelDTO> successList, List<String> errorNoList, List<ProductChangeImportExcelDTO> errorList, String importType) {
+        if (CollectionUtils.isEmpty(successList)) {
             return;
         }
 
-        // 创建一个用于查询库存的DTO对象，并设置SKU编号列表
-        InventoryQtyDTO.InventoryBySkuDTO inventoryBySkuDTO = new InventoryQtyDTO.InventoryBySkuDTO();
-        inventoryBySkuDTO.setSkuIdList(Collections.singletonList(skuId));
+        if(CollUtil.isNotEmpty(errorNoList)){
+            successList = successList.stream().filter(e -> StringUtils.isNotBlank(e.getSkuNo()) && !errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
 
-        // 调用远程服务，获取库存实体列表
-        List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuIds(inventoryBySkuDTO);
+            //全部返回到错误列表
+            List<ProductChangeImportExcelDTO> collect = successList.stream().filter(e -> StringUtils.isBlank(e.getSkuNo()) || errorNoList.contains(e.getSkuNo())).collect(Collectors.toList());
+            errorList.addAll(collect);
+        }
 
-        // 如果库存实体列表不为空，则进行进一步处理
-        if(CollUtil.isNotEmpty(inventoryEntities)){
-            // 排除在途的库存
-            inventoryEntities = inventoryEntities.stream()
-                    .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
-                    .collect(Collectors.toList());
+        if(CollUtil.isEmpty(successList)){
+            return;
+        }
+        List<String> skuNoList = successList.stream().map(ProductChangeImportExcelDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listBySkuNoList(skuNoList);
+        List<ProductChangeEntity> dbList = this.lambdaQuery()
+            .in(ProductChangeEntity::getSkuNo, skuNoList)
+            .eq(ProductChangeEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+            .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+            .list();
+        Map<String,List<ProductChangeImportExcelDTO>> groupMap = successList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotBlank(e.getSkuNo())).collect(Collectors.groupingBy(ProductChangeImportExcelDTO::getSkuNo));
 
-            // 计算剩余库存的总数量
-            int totalQty = inventoryEntities.stream()
-                    .mapToInt(inventory -> Optional.ofNullable(inventory.getQty()).orElse(0))
-                    .sum();
+        for (Map.Entry<String, List<ProductChangeImportExcelDTO>> entry : groupMap.entrySet()) {
+            List<String> errorMsgList = new ArrayList<>();
+            String skuNo = entry.getKey();
+            //判断数据库是否已存在
+            List<ProductChangeEntity> existList = dbList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).collect(Collectors.toList());
+            if(CollectionUtil.isNotEmpty(existList)){
+                errorMsgList.add(StrUtil.format("已存在未审核的变更单，sku:{}",skuNo));
+            }
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).findFirst().orElse(null);
+            if(Objects.isNull(productDetailEntity)){
+                errorMsgList.add("SKU编号在系统中不存在");
+            }
+            if(Objects.nonNull(productDetailEntity) && !productDetailEntity.getStatus().equals(2)){
+                errorMsgList.add("只有已审核的sku可以变更");
+            }
+            //判断field是否重复
+            List<String> fieldList = entry.getValue().stream().map(ProductChangeImportExcelDTO::getField).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<String> repeatFieldList = fieldList.stream().filter(i -> Collections.frequency(fieldList, i) > 1).distinct().collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(repeatFieldList)) {
+                errorMsgList.add(StrUtil.format("变更字段存在重复：{}", String.join(",", repeatFieldList)));
+            }
 
-            // 如果总库存量大于0，则按库存状态统计数量，并抛出异常
-            if(totalQty > 0){
-                // 按库存状态统计数量
-                Map<String, Integer> qtyMap = inventoryEntities.stream()
-                        .collect(Collectors.groupingBy(
-                                InventoryEntity::getDictInventoryStatus,
-                                Collectors.summingInt(inventory -> Optional.ofNullable(inventory.getQty()).orElse(0))
-                        ));
-
-                // 构建包含库存状态和数量的字符串
-                StringBuilder sb = new StringBuilder();
-                for (Map.Entry<String, Integer> entry : qtyMap.entrySet()) {
-                    sb.append(InventoryStatusEnum.getNameByCode(entry.getKey())).append(":")
-                            .append(entry.getValue()).append(";");
-                }
-
-                // 抛出包含库存状态和数量信息的自定义异常
-                throw new ServiceException(ApiError.PRODUCT_SKU_STOCK_REF_CHANGE_FORBIDDEN,sb.toString());
+            if(CollectionUtils.isNotEmpty(errorMsgList)){
+                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
+                entry.getValue().forEach(v->v.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList)));
+                errorList.addAll(entry.getValue());
+                continue;
+            }
+            //校验通过，封装新增的数据
+            ProductChangeImportExcelDTO first = entry.getValue().get(0);
+            ProductChangeDTO.AddDTO addDTO = new ProductChangeDTO.AddDTO();
+            addDTO.setBillDate(first.getBillDate());
+            addDTO.setProductName(productDetailEntity.getName());
+            addDTO.setReason(first.getReason());
+            addDTO.setSkuId(productDetailEntity.getId());
+            addDTO.setSkuNo(skuNo);
+            List<ProductChangeDetailDTO.AddDTO> detailDTOList = entry.getValue().stream().map(v -> {
+                ProductChangeDetailDTO.AddDTO detailDTO = new ProductChangeDetailDTO.AddDTO();
+                detailDTO.setField(Objects.requireNonNull(ProductChangeFieldEnum.getByFieldLabel(v.getField())).getCode());
+                detailDTO.setNewValue(v.getNewValueObj());
+                detailDTO.setRemark(v.getRemark());
+                return detailDTO;
+            }).collect(Collectors.toList());
+            addDTO.setDetailDTOList(detailDTOList);
+            try {
+                productChangeService.add(addDTO);
+            }catch (Exception e){
+                log.error("新增失败", e);
+                entry.getValue().forEach(v->v.setErrorMsg("新增失败："+e.getMessage()));
+                errorList.addAll(entry.getValue());
             }
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO approve(ApproveOneDTO dto) {
-        //获取到变更信息
-        ProductChangeEntity entity = this.getById(dto.getId());
-        if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
+    public BaseResultDTO.AddDTO batchAdd(ProductChangeDTO.BatchAddDTO dto) {
+        List<ProductChangeEntity> dbList = this.lambdaQuery()
+            .in(ProductChangeEntity::getSkuId, dto.getSkuIds())
+            .eq(ProductChangeEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+            .ne(ProductChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode())
+            .list();
+        if (CollectionUtil.isNotEmpty(dbList)) {
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_EXIST, dbList.get(0).getSkuNo());
         }
+        List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(dto.getSkuIds());
+        List<String> notApproveSku = skuVOList.stream().filter(v->!v.getStatus().equals(2)).map(v->v.getSkuNo()).collect(Collectors.toList());
+        if(CollectionUtil.isNotEmpty(notApproveSku)){
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_SKU_NOT_APPROVE,  String.join(",", notApproveSku));
+        }
+        List<ProductChangeEntity> mainList = new ArrayList<>();
+        List<OperateLogEntity> operateLogEntities = new ArrayList<>();
+        for (String skuId : dto.getSkuIds()) {
+            SkuVO skuVO = skuVOList.stream().filter(v -> Objects.equals(v.getSkuId(), skuId)).findFirst().orElse(null);
+            if(Objects.isNull(skuVO)){
+                throw new ServiceException("skuId在系统中不存在");
+            }
+            ProductChangeEntity productChangeEntity = new ProductChangeEntity();
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BG);
+            productChangeEntity.setCode(code);
+            productChangeEntity.setSkuId(skuId);
+            productChangeEntity.setSkuNo(skuVO.getSkuNo());
+            productChangeEntity.setProductName(skuVO.getSkuName());
+            productChangeEntity.setBillDate(LocalDate.now());
+            List<ProductChangeDetailEntity> detailEntityList = new ArrayList<>();
+            for (ProductChangeDetailDTO.AddDTO addDTO : dto.getDetailList()) {
+                ProductChangeDetailEntity productChangeDetailEntity = new ProductChangeDetailEntity();
+                productChangeDetailEntity.setField(addDTO.getField());
+                if(Objects.nonNull(addDTO.getOldValue())){
+                    productChangeDetailEntity.setOldValue(addDTO.getOldValue().toString());
+                }
+                productChangeDetailEntity.setNewValue(addDTO.getNewValue().toString());
+                productChangeDetailEntity.setRemark(addDTO.getRemark());
+                detailEntityList.add(productChangeDetailEntity);
+            }
+            productChangeEntity.setDetailEntityList(detailEntityList);
+            mainList.add(productChangeEntity);
+
+        }
+        this.saveBatch(mainList);
+        for (ProductChangeEntity productChangeEntity : mainList) {
+            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "产品变更信息单" , productChangeEntity.getCode());
+            OperateLogEntity operateLogEntity = new OperateLogEntity();
+            operateLogEntity.setModuleType(ModuleTypeEnum.PRODUCT_CHANGE.getCode());
+            operateLogEntity.setBusinessId(productChangeEntity.getId());
+            operateLogEntity.setContent(msg);
+            operateLogEntity.setOperation("新增操作");
+            operateLogEntities.add(operateLogEntity);
+        }
+        List<ProductChangeDetailEntity> detailEntityList = new ArrayList<>();
+        for (ProductChangeEntity productChangeEntity : mainList) {
+            List<ProductChangeDetailEntity> productChangeDetailEntities = productChangeEntity.getDetailEntityList();
+            productChangeDetailEntities.forEach(v->v.setMainId(productChangeEntity.getId()));
+            productChangeDetailService.checkData(productChangeEntity, productChangeDetailEntities);
+            detailEntityList.addAll(productChangeDetailEntities);
+        }
+        this.buildOldValue(mainList,detailEntityList);
+        operateLogService.addSysLogByBatchSave(operateLogEntities);
+        productChangeDetailService.saveBatch(detailEntityList);
+        return new BaseResultDTO.AddDTO();
+    }
+
+    @Override
+    public void buildOldValue(List<ProductChangeEntity> mainList, List<ProductChangeDetailEntity> detailEntityList) {
+        List<String> skuIds = mainList.stream().map(ProductChangeEntity::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIds);
+        List<String> productIds = productDetailEntityList.stream().map(ProductDetailEntity::getProductId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductInfoEntity> productInfoEntityList = productInfoService.listByIds(productIds);
+        List<ProductCostEntity> productCostEntityList = productCostService.listBySkuIds(skuIds);
+        List<ProductPurchaseEntity> productPurchaseEntityList = productPurchaseService.listBySkuIds(skuIds);
+        List<ProductSaleEntity> productSaleEntityList = productSaleService.listBySkuIds(skuIds);
+        List<ProductPackEntity> productPackEntityList = productPackService.listBySkuIdList(skuIds);
+        List<ProductRefBuEntity> productRefBuEntityList = productRefBuService.listByProductIds(productIds);
+        for (ProductChangeEntity productChangeEntity : mainList) {
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(v -> Objects.equals(v.getId(), productChangeEntity.getSkuId())).findFirst().orElse(null);
+            if(Objects.isNull(productDetailEntity)){
+                continue;
+            }
+            ProductInfoEntity productInfoEntity = productInfoEntityList.stream().filter(v -> Objects.equals(v.getId(), productDetailEntity.getProductId())).findFirst().orElse(null);
+            if(Objects.isNull(productInfoEntity)){
+                continue;
+            }
+            ProductCostEntity productCostEntity = productCostEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductCostEntity());
+            ProductPurchaseEntity productPurchaseEntity = productPurchaseEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductPurchaseEntity());
+            ProductSaleEntity productSaleEntity = productSaleEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductSaleEntity());
+            ProductPackEntity productPackEntity = productPackEntityList.stream().filter(v -> Objects.equals(v.getSkuId(), productChangeEntity.getSkuId())).findFirst().orElse(new ProductPackEntity());
+            List<ProductChangeDetailEntity> currentDetailList = detailEntityList.stream().filter(v -> Objects.equals(v.getMainId(), productChangeEntity.getId())).collect(Collectors.toList());
+            for (ProductChangeDetailEntity productChangeDetailEntity : currentDetailList) {
+                String field = productChangeDetailEntity.getField();
+                if (StringUtils.isBlank(field)) {
+                    continue;
+                }
+                // 匹配字段枚举
+                ProductChangeFieldEnum fieldEnum = ProductChangeFieldEnum.getByEntityField(field);
+                if (fieldEnum == null) {
+                    continue;
+                }
+                Object oldValue = getOldValueByFieldEnum(fieldEnum, productCostEntity, productDetailEntity,
+                        productInfoEntity, productPackEntity, productPurchaseEntity, productSaleEntity, productRefBuEntityList);
+
+                if(Objects.nonNull(oldValue)){
+                    productChangeDetailEntity.setOldValue(oldValue.toString());
+                }
+            }
+        }
+    }
+
+    /**
+     * 根据字段枚举获取对应旧值
+     */
+    @Override
+    public Object getOldValueByFieldEnum(ProductChangeFieldEnum fieldEnum,
+                                          ProductCostEntity productCostEntity,
+                                          ProductDetailEntity productDetailEntity,
+                                          ProductInfoEntity productInfoEntity,
+                                          ProductPackEntity productPackEntity,
+                                          ProductPurchaseEntity productPurchaseEntity,
+                                          ProductSaleEntity productSaleEntity,
+                                          List<ProductRefBuEntity> productRefBuEntityList) {
+        Object oldValue = null;
+        switch (fieldEnum) {
+            // product_cost
+            case EXPECTED_PROJECT_APPROVAL_COST:
+                oldValue = productCostEntity.getProjectApprovalCost();
+                break;
+            case ACTUAL_MASS_PRODUCTION_COST:
+                oldValue = productCostEntity.getMassCost();
+                break;
+            case EXPECTED_PROJECT_COST:
+                oldValue = productCostEntity.getProjectCost();
+                break;
+            case TAX_RATE:
+                oldValue = productCostEntity.getTaxRate();
+                break;
+            case TARGET_TAX_INCLUDED_COST:
+                oldValue = productCostEntity.getTargetTaxCost();
+                break;
+            case STANDARD_RETAIL_PRICE:
+                oldValue = productCostEntity.getRetailPrice();
+                break;
+            case ACTUAL_GROSS_PROFIT_MARGIN:
+                oldValue = productCostEntity.getActualGpmUsd();
+                break;
+
+            // product_detail
+            case EXPECTED_ON_SHELF_TIME:
+                oldValue = productDetailEntity.getPlanListingTime();
+                break;
+            case PRODUCT_DETAIL_NAME_CN:
+                oldValue = productDetailEntity.getName();
+                break;
+            case PRODUCT_DETAIL_NAME_EN:
+                oldValue = productDetailEntity.getNameEn();
+                break;
+
+            // product_info
+            case SALE_MODE:
+                oldValue = productInfoEntity.getSaleMethod();
+                break;
+            case PRODUCT_NAME_CN:
+                oldValue = productInfoEntity.getName();
+                break;
+            case PRODUCT_SELLING_POINT:
+                oldValue = productInfoEntity.getSellSpot();
+                break;
+            case PRODUCT_USAGE:
+                oldValue = productInfoEntity.getUsageDesc();
+                break;
+            case MAIN_MATERIAL:
+                oldValue = productInfoEntity.getMaterials();
+                break;
+            case PRODUCT_ATTRIBUTE:
+                oldValue = productInfoEntity.getPropertyId();
+                break;
+            case ENTRUSTED_DEVELOPMENT_COST:
+                oldValue = productInfoEntity.getEntrustedDevelopCost();
+                break;
+            case SAMPLE_FEE:
+                oldValue = productInfoEntity.getSampleFee();
+                break;
+            case PRODUCT_NAME_EN:
+                oldValue = productInfoEntity.getNameEn();
+                break;
+            case PRODUCT_CATEGORY:
+                oldValue = productInfoEntity.getCategoryId();
+                break;
+            case APPLICATION_CATEGORY:
+                oldValue = productInfoEntity.getApplicationCategoryId();
+                break;
+            case R_D_TEAM:
+                oldValue = productInfoEntity.getRdtTeamId();
+                break;
+            case BRAND:
+                oldValue = productInfoEntity.getBrandId();
+                break;
+            case PRODUCT_GRADE:
+                oldValue = productInfoEntity.getGradeId();
+                break;
+            case SALE_CHANNEL:
+                oldValue = productInfoEntity.getSalesChannel();
+                break;
+            case IS_CUSTOMIZED:
+                oldValue = productInfoEntity.getIsCustomized();
+                break;
+            case HAS_INFRINGEMENT_RISK:
+                oldValue = productInfoEntity.getPirateRisk();
+                break;
+
+            // product_pack
+            case PRODUCT_LENGTH:
+                oldValue = productPackEntity.getProductLength();
+                break;
+            case PRODUCT_WIDTH:
+                oldValue = productPackEntity.getProductWidth();
+                break;
+            case PRODUCT_HEIGHT:
+                oldValue = productPackEntity.getProductHeight();
+                break;
+            case GROSS_WEIGHT:
+                oldValue = productPackEntity.getGrossWeight();
+                break;
+            case NET_WEIGHT:
+                oldValue = productPackEntity.getNetWeight();
+                break;
+            case BOX_LENGTH:
+                oldValue = productPackEntity.getBoxLength();
+                break;
+            case BOX_WIDTH:
+                oldValue = productPackEntity.getBoxWidth();
+                break;
+            case BOX_HEIGHT:
+                oldValue = productPackEntity.getBoxHeight();
+                break;
+            case BOX_WEIGHT:
+                oldValue = productPackEntity.getBoxWeight();
+                break;
+            case BOX_QUANTITY:
+                oldValue = productPackEntity.getBoxQty();
+                break;
+
+            // product_purchase
+            case EAN_CODE:
+                oldValue = productPurchaseEntity.getEan();
+                break;
+            case TRIAL_PRODUCTION_QUANTITY:
+                oldValue = productPurchaseEntity.getTrialProductionQty();
+                break;
+            case FIRST_BATCH_MASS_PRODUCTION_QUANTITY:
+                oldValue = productPurchaseEntity.getFirstMassQty();
+                break;
+            case PLANNED_FIRST_BATCH_ORDER_QUANTITY:
+                oldValue = productPurchaseEntity.getPlanOrderQty();
+                break;
+            case EXPECTED_FIRST_BATCH_ARRIVAL_TIME:
+                oldValue = productPurchaseEntity.getPlanArrivalTime();
+                break;
+            case MOQ:
+                oldValue = productPurchaseEntity.getMoq();
+                break;
+            case DELIVERY_CYCLE:
+                oldValue = productPurchaseEntity.getDeliveryCycle();
+                break;
+            case FIRST_BATCH_ORDER_TIME:
+                oldValue = productPurchaseEntity.getPlaceOrderTime();
+                break;
+            case ACTUAL_FIRST_BATCH_ARRIVAL_QUANTITY:
+                oldValue = productPurchaseEntity.getActualArrivalQty();
+                break;
+            case ACTUAL_FIRST_BATCH_ARRIVAL_TIME:
+                oldValue = productPurchaseEntity.getActualArrivalTime();
+                break;
+            case FIRST_BATCH_ARRIVAL_STATUS:
+                oldValue = productPurchaseEntity.getArrivalState();
+                break;
+
+            // product_ref_bu
+            case BU_LINE:
+                ProductRefBuEntity productRefBuEntity = productRefBuEntityList.stream()
+                        .filter(v -> Objects.equals(v.getProductId(), productInfoEntity.getId()))
+                        .findFirst().orElse(null);
+                if (Objects.nonNull(productRefBuEntity)) {
+                    oldValue = productRefBuEntity.getBuId();
+                }
+                break;
+
+            // product_sale
+            case ANNUAL_TARGET_SALES_VOLUME:
+                oldValue = productSaleEntity.getYearSaleQty();
+                break;
+            case ANNUAL_TARGET_SALES_AMOUNT:
+                oldValue = productSaleEntity.getYearSaleAmount();
+                break;
+            case MONTHLY_TARGET_SALES_VOLUME:
+                oldValue = productSaleEntity.getMonthSaleQty();
+                break;
+            case MONTHLY_TARGET_SALES_AMOUNT:
+                oldValue = productSaleEntity.getMonthSaleAmount();
+                break;
+            case COLLECTION_DEGREE_TARGET_SALES_VOLUME:
+                oldValue = productSaleEntity.getTargetSalesQty();
+                break;
+            case SALE_COUNTRY:
+                oldValue = productSaleEntity.getSaleCountry();
+                break;
+            case ON_SHELF_TIME:
+                oldValue = productSaleEntity.getListingTime();
+                break;
+            case OFF_SHELF_TIME:
+                oldValue = productSaleEntity.getDelistingTime();
+                break;
+            case SALE_PLATFORM:
+                oldValue = productSaleEntity.getSalesPlatform();
+                break;
+            case IS_IMAGE_COMPLETED:
+                oldValue = productSaleEntity.getIsFinishedImg();
+                break;
+            case IS_VIDEO_COMPLETED:
+                oldValue = productSaleEntity.getIsFinishedVideo();
+                break;
+
+            default:
+                log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getName());
+        }
+        return oldValue;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO submit(String id) {
+        ProductChangeEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到产品变更信息单数据");
+        }
+        validateSubmit(entity);
+        // 更新单据审核状态
+        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+        startProcess(entity);
+        // 记录操作日志
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO addAndSubmit(ProductChangeDTO.AddDTO dto) {
+        // 新增
+        BaseResultDTO.AddDTO result = this.add(dto);
+        // 提交
+        this.submit(result.getId());
+        return result;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateAndSubmit(ProductChangeDTO.UpdateDTO dto) {
+        // 修改
+        this.update(dto);
+        // 提交
+        this.submit(dto.getId());
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.WF_REJECT_COMMENT_REQUIRED);
         }
+        ProductChangeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
         // 调用流程审核
         approveProcess(entity, dto);
-
-        //操作记录
-        String operateContent = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "变更管理", approveType.getName(), dto.getComment());
-        bomOperateLogService.saveOperate(entity.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单", approveType.getName(), dto.getComment());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
-     * 审核流程处理
-     * @param entity
-     * @param dto
-     */
+    * 审核流程处理
+    * @param entity
+    * @param dto
+    */
     private void approveProcess(ProductChangeEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
@@ -306,7 +804,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(getVariablesMap(entity));
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -319,77 +817,52 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO disApprove(String id) {
+        ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单单数据"));
+        // 反审核条件判断
+        validateDisApprove(entity);
+
+        // 更新审核信息
+        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "反审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
+    }
+
+    private Boolean validateDisApprove(ProductChangeEntity entity) {
+        // 已审核支持反审核
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+            throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
+        }
+        return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO delete(String id) {
+        ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
+        // 只有待提交数据允许删除
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
+        }
+
+        // 删除主单数据
+        super.removeById(id);
+        productChangeDetailService.deleteByMainId(id);
+        // 删除日志数据
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getCode(), "删除产品变更信息单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
     /**
-     * variablesMap值赋值
-     * @author will
-     * @date 2025/5/21 10:51
-     * @param entity
-     * @return Map<String,Object>
-     */
-    private Map<String,Object> getVariablesMap(ProductChangeEntity entity) {
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        //获取到对应的 json
-        String detailsJson = changeDetailsService.getDetailsJson(entity.getId());
-        if (StringUtils.isNotBlank(detailsJson)) {
-            //对应就是bom
-            if (BomConstant.CHANGE_BOM.equals(entity.getType())) {
-                BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
-                variablesMap.put("code", bom.getSerialNumber());
-            }
-            //对应就是sku
-            if (BomConstant.CHANGE_SKU.equals(entity.getType())) {
-                ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
-                variablesMap.put("code", ObjectUtil.isNotEmpty(sku.getProductManySkuDetail()) ? "" : sku.getProductManySkuDetail().getSkuNo());
-            }
-        }
-        return variablesMap;
-    }
-
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity) {
-        if (ObjectUtil.isEmpty(entity)) {
-            return Boolean.TRUE;
-        }
-        Integer approveStatus;
-        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
-            //审核通过
-            approveStatus = ProductChangeStateEnum.AUDIT_PASS.getState();
-        } else if (dto.getType().equals(ApproveTypeEnum.CANCEL.getStatus())){
-            //待提交
-            approveStatus = ProductChangeStateEnum.WAIT_SUBMIT.getState();
-        } else {
-            //审核不通过
-            approveStatus = ProductChangeStateEnum.AUDIT_NO_PASS.getState();
-        }
-        //更新审核状态
-        updateForApprove(entity.getId(), approveStatus,dto.getComment());
-
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //获取到变更信息
-            String type = entity.getType();
-            //获取到对应的 json
-            String detailsJson = changeDetailsService.getDetailsJson(entity.getId());
-            if (StringUtils.isNotBlank(detailsJson)) {
-                //对应就是bom
-                if (BomConstant.CHANGE_BOM.equals(type)) {
-                    BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
-                    //变更bom
-                    bomInfoService.changeBom(bom);
-                }
-                //对应就是sku
-                if (BomConstant.CHANGE_SKU.equals(type)) {
-                    ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
-                    productDetailService.changeSku(sku);
-                }
-            }
-        }
-        return Boolean.TRUE;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
+    * 撤销
+    */
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
@@ -398,64 +871,542 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.BOM_NOT_FOUND);
         }
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
-        updateForApprove(id, ProductChangeStateEnum.WAIT_SUBMIT.getState(),"");
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
         //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更");
-        bomOperateLogService.saveOperate(entity.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(),msg );
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "产品变更信息单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO submit(String id, Boolean isProcess) {
-        ProductChangeEntity entity = getById(id);
+    public Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity) {
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到产品变更单数据");
+            return Boolean.TRUE;
         }
-        // 待提交或审核不通过并且未作废允许提交
-        if ((!ProductChangeStateEnum.WAIT_SUBMIT.getState().equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(entity.getState()))) {
-            throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        updateForApprove(entity.getId(), approveStatus.getStatus());
+
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            List<ProductChangeDetailEntity> detailEntityList = productChangeDetailService.listByMains(Collections.singletonList(entity.getId()));
+            if (detailEntityList.isEmpty()) {
+                log.warn("变更单ID：{} 无变更明细，无需更新业务表", entity.getId());
+                return Boolean.TRUE;
+            }
+            ProductDetailEntity productDetailEntity = productDetailService.getById(entity.getSkuId());
+            updateSkuChange(entity,detailEntityList,productDetailEntity);
+            //推送金蝶
+            productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
 
-        // 更新单据审核状态
-        log.info("提交 开始修改委外发料单状态数据，id：【{}】", id);
-        this.updateForApprove(id, ProductChangeStateEnum.AUDIT_ING.getState(),"");
+        return Boolean.TRUE;
+    }
 
-        log.info("提交 开始启动委外发料单流程，id=：【{}】", entity.getId());
-        if (isProcess) {
-            startProcess(entity);
+    public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList,ProductDetailEntity productDetailEntity) {
+        String skuId = entity.getSkuId();
+        if(Objects.isNull(productDetailEntity)){
+            throw new ServiceException("产品明细信息不存在，SKU ID：" + skuId);
         }
-        // 记录操作日志
-        log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更单");
-        bomOperateLogService.saveOperate(id, BomOperationTypeEnum.STATE_CHANGE.getType(),msg);
-        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.SUBMIT);
+
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+        if(Objects.isNull(productInfoEntity)){
+            throw new ServiceException("产品基础信息不存在，产品ID：" + productDetailEntity.getProductId());
+        }
+        String pid = productInfoEntity.getId();
+        ProductCostEntity productCostEntity = productCostService.getBySkuId(skuId);
+        ProductPurchaseEntity productPurchaseEntity = productPurchaseService.getBySkuId(skuId);
+        ProductSaleEntity productSaleEntity = productSaleService.getBySkuId(skuId);
+        ProductPackEntity productPackEntity = productPackService.getBySkuId(skuId);
+
+        ProductDetailEntity oldDetailEntity = new ProductDetailEntity();
+        ProductInfoEntity oldProductInfoEntity = new ProductInfoEntity();
+        ProductCostEntity oldProductCostEntity = new ProductCostEntity();
+        ProductPurchaseEntity oldProductPurchaseEntity = new ProductPurchaseEntity();
+        ProductSaleEntity oldProductSaleEntity = new ProductSaleEntity();
+        ProductPackEntity oldProductPackEntity = new ProductPackEntity();
+
+        BeanMapperUtils.copy(productDetailEntity, oldDetailEntity);
+        BeanMapperUtils.copy(productInfoEntity, oldProductInfoEntity);
+        BeanMapperUtils.copy(productCostEntity, oldProductCostEntity);
+        BeanMapperUtils.copy(productPurchaseEntity, oldProductPurchaseEntity);
+        BeanMapperUtils.copy(productSaleEntity, oldProductSaleEntity);
+        BeanMapperUtils.copy(productPackEntity, oldProductPackEntity);
+
+        // 标记各个实体是否有变更
+        boolean costChanged = false;
+        boolean detailChanged = false;
+        boolean infoChanged = false;
+        boolean packChanged = false;
+        boolean purchaseChanged = false;
+        boolean saleChanged = false;
+
+        boolean isChangeTax = false;
+
+        List<BasicDictEntity> basicDictList = basicDictService.list();
+        List<BasicCategoryEntity> basicCategoryEntities = basicCategoryService.list();
+        List<ProductRDTTeamEntity> productRDTTeamEntities = productRDTTeamService.list();
+        List<ProductBrandEntity> productBrandEntities = productBrandService.list();
+
+        for (ProductChangeDetailEntity detail : detailEntityList) {
+            String field = detail.getField();
+            String newValueStr = detail.getNewValue();
+            if (StringUtils.isBlank(field) || StringUtils.isBlank(newValueStr)) {
+                log.warn("变更明细ID：{} 字段/新值为空，跳过更新", detail.getId());
+                continue;
+            }
+
+            // 匹配字段枚举
+            ProductChangeFieldEnum fieldEnum = ProductChangeFieldEnum.getByEntityField(field);
+            if (fieldEnum == null) {
+                throw new ServiceException("不支持的变更字段：" + field);
+            }
+            // 转换新值为对应数据类型
+            Object newValue = convertValue(fieldEnum.getDataType(), newValueStr);
+            if (newValue == null) {
+                throw new ServiceException("新值转换失败，字段：" + fieldEnum.getName() + "，值：" + newValueStr);
+            }
+
+            // 根据枚举匹配业务表，执行更新
+            switch (fieldEnum) {
+                // product_cost
+                case EXPECTED_PROJECT_APPROVAL_COST:
+                    productCostEntity.setProjectApprovalCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case ACTUAL_MASS_PRODUCTION_COST:
+                    productCostEntity.setMassCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case EXPECTED_PROJECT_COST:
+                    productCostEntity.setProjectCost((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case TAX_RATE:
+                    productCostEntity.setTaxRate((BigDecimal) newValue);
+                    isChangeTax = true;
+                    costChanged = true;
+                    break;
+                case TARGET_TAX_INCLUDED_COST:
+                    productCostEntity.setTargetTaxCost((BigDecimal) newValue);
+                    isChangeTax = true;
+                    costChanged = true;
+                    break;
+                case STANDARD_RETAIL_PRICE:
+                    productCostEntity.setRetailPrice((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+                case ACTUAL_GROSS_PROFIT_MARGIN:
+                    productCostEntity.setActualGpmUsd((BigDecimal) newValue);
+                    costChanged = true;
+                    break;
+
+                // product_detail
+                case EXPECTED_ON_SHELF_TIME:
+                    productDetailEntity.setPlanListingTime((LocalDate) newValue);
+                    detailChanged = true;
+                    break;
+                case PRODUCT_DETAIL_NAME_CN:
+                    productDetailEntity.setName((String) newValue);
+                    detailChanged = true;
+                    break;
+                case PRODUCT_DETAIL_NAME_EN:
+                    productDetailEntity.setNameEn((String) newValue);
+                    detailChanged = true;
+                    break;
+
+
+                // product_info
+                case SALE_MODE:
+                    productInfoEntity.setSaleMethod((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_NAME_CN:
+                    productInfoEntity.setName((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_SELLING_POINT:
+                    productInfoEntity.setSellSpot((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_USAGE:
+                    productInfoEntity.setUsageDesc((String) newValue);
+                    infoChanged = true;
+                    break;
+                case MAIN_MATERIAL:
+                    productInfoEntity.setMaterials((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_ATTRIBUTE:
+                    String propertyId = (String) newValue;
+                    BasicDictEntity basicDictEntity = basicDictList.stream().filter(e -> Objects.equals(e.getId(), propertyId)).findFirst().orElse(new BasicDictEntity());
+                    productInfoEntity.setPropertyId((String) newValue);
+                    productInfoEntity.setProperty(basicDictEntity.getName());
+                    infoChanged = true;
+                    break;
+                case ENTRUSTED_DEVELOPMENT_COST:
+                    productInfoEntity.setEntrustedDevelopCost((BigDecimal) newValue);
+                    infoChanged = true;
+                    break;
+                case SAMPLE_FEE:
+                    productInfoEntity.setSampleFee((BigDecimal) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_NAME_EN:
+                    productInfoEntity.setNameEn((String) newValue);
+                    infoChanged = true;
+                    break;
+                case PRODUCT_CATEGORY:
+                    String categoryId = (String) newValue;
+                    BasicCategoryEntity basicCategoryEntity = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), categoryId)).findFirst().orElse(new BasicCategoryEntity());
+                    productInfoEntity.setCategoryId(categoryId);
+                    productInfoEntity.setCategory(basicCategoryEntity.getName());
+                    infoChanged = true;
+                    break;
+                case APPLICATION_CATEGORY:
+                    String oldValue = productInfoEntity.getApplicationCategoryId();
+                    productInfoEntity.setApplicationCategoryId((String) newValue);
+                    List<String> applicationCategoryNameList = new ArrayList<>();
+                    String[] applicationCategoryIdList = newValue.toString().split(",");
+                    List<ApplicationCategoryEntity> applicationCategoryEntities = applicationCategoryService.list();
+                    for (String applicationCategoryId : applicationCategoryIdList) {
+                        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), applicationCategoryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(applicationCategoryEntity)){
+                            applicationCategoryNameList.add(applicationCategoryEntity.getName());
+                        }
+                    }
+                    productInfoEntity.setApplicationCategoryName(String.join(",", applicationCategoryNameList));
+                    List<String> oldApplicationCategoryNameList = new ArrayList<>();
+                    String[] oldApplicationCategoryIdList = oldValue.split(",");
+                    for (String applicationCategoryId : oldApplicationCategoryIdList) {
+                        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), applicationCategoryId.trim())).findFirst().orElse(null);
+                        if(Objects.nonNull(applicationCategoryEntity)){
+                            oldApplicationCategoryNameList.add(applicationCategoryEntity.getName());
+                        }
+                    }
+                    oldProductInfoEntity.setApplicationCategoryName(String.join(",", oldApplicationCategoryNameList));
+                    infoChanged = true;
+                    break;
+                case R_D_TEAM:
+                    String rdtTeamId = (String) newValue;
+                    ProductRDTTeamEntity productRDTTeamEntity = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), rdtTeamId)).findFirst().orElse(new ProductRDTTeamEntity());
+                    productInfoEntity.setRdtTeamId(rdtTeamId);
+                    productInfoEntity.setRdtTeamName(productRDTTeamEntity.getName());
+                    infoChanged = true;
+                    break;
+                case BRAND:
+                    String brandId = (String) newValue;
+                    ProductBrandEntity productBrandEntity = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), brandId)).findFirst().orElse(new ProductBrandEntity());
+                    productInfoEntity.setBrandId(brandId);
+                    productInfoEntity.setBrandName(productBrandEntity.getName());
+                    infoChanged = true;
+                    break;
+                case PRODUCT_GRADE:
+                    String gradeId = (String) newValue;
+                    BasicDictEntity gradeDict = basicDictList.stream().filter(e -> Objects.equals(e.getId(), gradeId)).findFirst().orElse(new BasicDictEntity());
+                    productInfoEntity.setGradeId(gradeId);
+                    productInfoEntity.setGrade(gradeDict.getName());
+                    infoChanged = true;
+                    break;
+                case SALE_CHANNEL:
+                    productInfoEntity.setSalesChannel((String) newValue);
+                    infoChanged = true;
+                    break;
+                case IS_CUSTOMIZED:
+                    productInfoEntity.setIsCustomized((Integer) newValue);
+                    infoChanged = true;
+                    break;
+                case HAS_INFRINGEMENT_RISK:
+                    productInfoEntity.setPirateRisk((Integer) newValue);
+                    infoChanged = true;
+                    break;
+
+                // product_pack
+                case PRODUCT_LENGTH:
+                    productPackEntity.setProductLength((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case PRODUCT_WIDTH:
+                    productPackEntity.setProductWidth((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case PRODUCT_HEIGHT:
+                    productPackEntity.setProductHeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case GROSS_WEIGHT:
+                    productPackEntity.setGrossWeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case NET_WEIGHT:
+                    productPackEntity.setNetWeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_LENGTH:
+                    productPackEntity.setBoxLength((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_WIDTH:
+                    productPackEntity.setBoxWidth((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_HEIGHT:
+                    productPackEntity.setBoxHeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_WEIGHT:
+                    productPackEntity.setBoxWeight((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+                case BOX_QUANTITY:
+                    productPackEntity.setBoxQty((BigDecimal) newValue);
+                    packChanged = true;
+                    break;
+
+                // product_purchase
+                case EAN_CODE:
+                    String newEan = String.valueOf(newValue);
+                    if(StringUtils.isNotBlank(newEan)){
+                        ProductPurchaseEntity productPurchaseEntity1 = productPurchaseService.getByEan(newEan);
+                        if(Objects.nonNull(productPurchaseEntity1)){
+                            throw new ServiceException("EAN码已存在，无法更新");
+                        }
+                    }
+                    productPurchaseEntity.setEan(newEan);
+                    purchaseChanged = true;
+                    break;
+                case TRIAL_PRODUCTION_QUANTITY:
+                    productPurchaseEntity.setTrialProductionQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case FIRST_BATCH_MASS_PRODUCTION_QUANTITY:
+                    productPurchaseEntity.setFirstMassQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case PLANNED_FIRST_BATCH_ORDER_QUANTITY:
+                    productPurchaseEntity.setPlanOrderQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case EXPECTED_FIRST_BATCH_ARRIVAL_TIME:
+                    productPurchaseEntity.setPlanArrivalTime((LocalDate) newValue);
+                    purchaseChanged = true;
+                    break;
+                case MOQ:
+                    productPurchaseEntity.setMoq((Integer) newValue);
+                    purchaseChanged = true;
+                    break;
+                case DELIVERY_CYCLE:
+                    productPurchaseEntity.setDeliveryCycle((BigDecimal) newValue);
+                    purchaseChanged = true;
+                    break;
+                case FIRST_BATCH_ORDER_TIME:
+                    productPurchaseEntity.setPlaceOrderTime((LocalDate) newValue);
+                    purchaseChanged = true;
+                    break;
+                case ACTUAL_FIRST_BATCH_ARRIVAL_QUANTITY:
+                    productPurchaseEntity.setActualArrivalQty((Long) newValue);
+                    purchaseChanged = true;
+                    break;
+                case ACTUAL_FIRST_BATCH_ARRIVAL_TIME:
+                    productPurchaseEntity.setActualArrivalTime((LocalDate) newValue);
+                    purchaseChanged = true;
+                    break;
+                case FIRST_BATCH_ARRIVAL_STATUS:
+                    productPurchaseEntity.setArrivalState((Integer) newValue);
+                    purchaseChanged = true;
+                    break;
+
+                // product_ref_bu
+                case BU_LINE:
+                    productRefBuService.addOrUpdate(skuId,productInfoEntity.getId(), (String) newValue);
+                    // 不涉及上面几个实体的变更，所以无需设置标志
+                    break;
+
+                // product_sale
+                case ANNUAL_TARGET_SALES_VOLUME:
+                    productSaleEntity.setYearSaleQty((Long) newValue);
+                    saleChanged = true;
+                    break;
+                case ANNUAL_TARGET_SALES_AMOUNT:
+                    productSaleEntity.setYearSaleAmount((BigDecimal) newValue);
+                    saleChanged = true;
+                    break;
+                case MONTHLY_TARGET_SALES_VOLUME:
+                    productSaleEntity.setMonthSaleQty((Long) newValue);
+                    saleChanged = true;
+                    break;
+                case MONTHLY_TARGET_SALES_AMOUNT:
+                    productSaleEntity.setMonthSaleAmount((BigDecimal) newValue);
+                    saleChanged = true;
+                    break;
+                case COLLECTION_DEGREE_TARGET_SALES_VOLUME:
+                    productSaleEntity.setTargetSalesQty((BigDecimal) newValue);
+                    saleChanged = true;
+                    break;
+                case SALE_COUNTRY:
+                    productSaleEntity.setSaleCountry((String) newValue);
+                    saleChanged = true;
+                    break;
+                case ON_SHELF_TIME:
+                    productSaleEntity.setListingTime((LocalDate) newValue);
+                    saleChanged = true;
+                    break;
+                case OFF_SHELF_TIME:
+                    productSaleEntity.setDelistingTime((LocalDate) newValue);
+                    saleChanged = true;
+                    break;
+                case SALE_PLATFORM:
+                    productSaleEntity.setSalesPlatform((String) newValue);
+                    saleChanged = true;
+                    break;
+                case IS_IMAGE_COMPLETED:
+                    productSaleEntity.setIsFinishedImg((Integer) newValue);
+                    saleChanged = true;
+                    break;
+                case IS_VIDEO_COMPLETED:
+                    productSaleEntity.setIsFinishedVideo((Integer) newValue);
+                    saleChanged = true;
+                    break;
+
+                default:
+                    log.warn("未处理字段：{} 对应的业务表更新", fieldEnum.getName());
+            }
+        }
+
+        // 如果有变更税率或者目标含税成本，需要自动算出目标不含税成本
+        if(isChangeTax){
+            // 税率：整数 13 → 转成 0.13
+            BigDecimal taxRate = productCostEntity.getTaxRate() == null
+                    ? BigDecimal.ZERO
+                    : productCostEntity.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+            BigDecimal targetTaxCost = productCostEntity.getTargetTaxCost() == null
+                    ? BigDecimal.ZERO
+                    : productCostEntity.getTargetTaxCost();
+            BigDecimal targetCost = targetTaxCost.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.HALF_UP);
+            productCostEntity.setTargetNoTaxCost(targetCost);
+        }
+
+        // 仅对有变更的实体执行更新
+        if (detailChanged) {
+            productDetailService.updateById(productDetailEntity);
+            operateLogService.addSysLogByUpdate(oldDetailEntity, productDetailEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (infoChanged) {
+            productInfoService.updateById(productInfoEntity);
+            operateLogService.addSysLogByUpdate(oldProductInfoEntity, productInfoEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (purchaseChanged) {
+            productPurchaseService.updateById(productPurchaseEntity);
+            operateLogService.addSysLogByUpdate(oldProductPurchaseEntity, productPurchaseEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (saleChanged) {
+            productSaleService.updateById(productSaleEntity);
+            operateLogService.addSysLogByUpdate(oldProductSaleEntity, productSaleEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (packChanged) {
+            //校验箱规长宽高要大于包装长宽高，毛重大于净重
+            if (Objects.nonNull(productPackEntity.getBoxLength()) && Objects.nonNull(productPackEntity.getProductLength())
+                    && productPackEntity.getBoxLength().compareTo(productPackEntity.getProductLength()) < 0) {
+                throw new ServiceException("箱规长度必须大于等于包装长度");
+            }
+            if (Objects.nonNull(productPackEntity.getBoxWidth()) && Objects.nonNull(productPackEntity.getProductWidth())
+                    && productPackEntity.getBoxWidth().compareTo(productPackEntity.getProductWidth()) < 0) {
+                throw new ServiceException("箱规宽度必须大于等于包装宽度");
+            }
+            if (Objects.nonNull(productPackEntity.getBoxHeight()) && Objects.nonNull(productPackEntity.getProductHeight())
+                    && productPackEntity.getBoxHeight().compareTo(productPackEntity.getProductHeight()) < 0) {
+                throw new ServiceException("箱规高度必须大于等于包装高度");
+            }
+            if (Objects.nonNull(productPackEntity.getGrossWeight()) && Objects.nonNull(productPackEntity.getNetWeight())
+                    && productPackEntity.getGrossWeight().compareTo(productPackEntity.getNetWeight()) < 0) {
+                throw new ServiceException("毛重必须大于等于净重");
+            }
+            productPackService.updateById(productPackEntity);
+            operateLogService.addSysLogByUpdate(oldProductPackEntity, productPackEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
+        if (costChanged) {
+            productCostService.updateById(productCostEntity);
+            operateLogService.addSysLogByUpdate(oldProductCostEntity, productCostEntity, SKUCLASSPATH, skuId,pid, "产品变更信息单审核更新");
+        }
     }
 
     /**
-     * 启动流程
-     * @param entity
-     * @return void
-     * @Date 2025/5/19 10:07
-     **/
+     * 通用值类型转换：String -> 目标类型（String/Date/BigDecimal等）
+     */
+    @Override
+    public Object convertValue(Class<?> targetType, String valueStr) {
+        if (targetType == String.class) {
+            return valueStr;
+        } else if (targetType == LocalDate.class) {
+            return LocalDate.parse(valueStr);
+        } else if (targetType == BigDecimal.class) {
+            return new BigDecimal(valueStr);
+        } else if (targetType == Integer.class) {
+            return Integer.parseInt(valueStr);
+        } else if (targetType == Long.class) {
+            return Long.valueOf(valueStr);
+        }else{
+            throw new ServiceException("不支持的目标类型转换：" + targetType.getName());
+        }
+    }
+
+    @Override
+    public List<ProductChangeDTO.ProductChangeFieldDTO> getProductChangeFieldEnum() {
+        List<ProductChangeDTO.ProductChangeFieldDTO> fieldList = new ArrayList<>();
+        for (ProductChangeFieldEnum fieldEnum : ProductChangeFieldEnum.values()) {
+            ProductChangeDTO.ProductChangeFieldDTO fieldDTO = new ProductChangeDTO.ProductChangeFieldDTO();
+            fieldDTO.setCode(fieldEnum.getCode());
+            fieldDTO.setName(fieldEnum.getName());
+            fieldList.add(fieldDTO);
+        }
+        return fieldList;
+
+    }
+
+    @Override
+    public BatchResultDTO invalid(ProductChangeEntity productChangeEntity,String remark) {
+        if(Objects.isNull(productChangeEntity)){
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "产品变更信息单");
+        }
+        // 只有待提交数据允许作废
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, productChangeEntity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT, productChangeEntity.getApproveStatus())) {
+            throw new ServiceException("只有待提交或审核不通过数据支持作废");
+        }
+        if(productChangeEntity.getInvalidStatus()){
+            throw new ServiceException("该数据已作废");
+        }
+        // 删除主单数据
+        productChangeEntity.setInvalidStatus(true);
+        super.updateById(productChangeEntity);
+        // 删除日志数据
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ，备注：{}", UserContext.getDefaultLoginUser().getUserName(), productChangeEntity.getCode(), "产品信息变更单",remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_CHANGE.getCode(), productChangeEntity.getId(), "作废操作");
+        return BatchResultDTO.success(productChangeEntity.getId(), productChangeEntity.getCode(), OperationTypeEnum.INVALID);
+    }
+
+    /**
+    * 启动流程
+    *
+    * @param entity
+    * @return void
+    * @Date 2023/7/4 10:07
+    **/
 
     public void startProcess(ProductChangeEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
-        startDTO.setBusinessCode(entity.getSourceCode());
+        startDTO.setBusinessCode(entity.getCode());
         startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
-        startDTO.setBusinessName(entity.getSourceCode());
+        startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
@@ -464,385 +1415,338 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
     }
 
+
     /**
-     * 审核更新审核信息
-     * @param id
-     * @param approveStatus
-     */
-    public void updateForApprove(String id, Integer approveStatus,String comment) {
+    * 审核更新审核信息
+    * @param id
+    * @param approveStatus
+    */
+    public void updateForApprove(String id, String approveStatus) {
         //当前登录人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(ProductChangeEntity::getId, id)
-                .set(ProductChangeEntity::getState, approveStatus)
-                .set(ObjectUtil.isNotEmpty(comment),ProductChangeEntity::getRemark, comment)
-                .set(ProductChangeStateEnum.AUDIT_PASS.getState().equals(approveStatus),ProductChangeEntity::getApprovalFinishTime,LocalDateTime.now())
-                .update();
+            .set(ProductChangeEntity::getApproveUserId, userInfo.getUid())
+            .set(ProductChangeEntity::getApproveUserName, userInfo.getUserName())
+            .set(ProductChangeEntity::getApproveStatus, approveStatus)
+            .set(ProductChangeEntity::getApproveTime, LocalDateTime.now())
+            .update(new ProductChangeEntity());
+     }
+
+    /**
+    * 反审核更新审核信息
+    * @param id
+    * @param approveStatus
+    */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateForDisApprove(String id, String approveStatus) {
+        this.lambdaUpdate().eq(ProductChangeEntity::getId, id)
+            .set(ProductChangeEntity::getApproveUserId, "")
+            .set(ProductChangeEntity::getApproveUserName, "")
+            .set(ProductChangeEntity::getApproveStatus, approveStatus)
+            .set(ProductChangeEntity::getApproveTime, null)
+            .update(new ProductChangeEntity());
+        }
+
+    /**
+    * 更新审核状态
+    */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(String id, String approveStatus) {
+        lambdaUpdate().eq(ProductChangeEntity::getId, id)
+        .set(ProductChangeEntity::getApproveStatus, approveStatus)
+        .update(new ProductChangeEntity());
     }
 
-
+    /**
+    * 分页查询、导出 数据处理
+    */
+    private void validateSubmit(ProductChangeEntity entity) {
+        // 待提交或审核不通过并且未作废允许提交
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
+        }
+        if(entity.getInvalidStatus()){
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
+        }
+    }
 
     /**
-     * 分页获取变更信息
-     *
-     * @param dto
-     * @return com.erp.common.vo.PagingVO<java.util.List < com.erp.model.plm.vo.ProductChangePagingVO>>
-     * @author yl
-     * @date 2023-01-28 11:50
-     */
+    * 新增修改处理数据
+    */
+    private void handleData(ProductChangeEntity productChangeEntity) {
+        List<SkuVO> skuVOList = productDetailService.getSkuBaseByIds(Arrays.asList(productChangeEntity.getSkuId()));
+        if(CollectionUtil.isEmpty(skuVOList)){
+            throw new ServiceException(ApiError.COMMON_NO_SKU);
+        }
+        SkuVO skuVO = skuVOList.get(0);
+        if(!skuVO.getStatus().equals(2)){
+            throw new ServiceException(ApiError.PRODUCT_CHANGE_SKU_NOT_APPROVE);
+        }
+        productChangeEntity.setSkuNo(skuVO.getSkuNo());
+        productChangeEntity.setProductName(skuVO.getSkuName());
+    }
+
     @Override
-    public PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        SearchPagingDTO params = dto.getParams();
-        String searchKeyword = params.getSearchKeyword();
-        List<String> changeIdList = new ArrayList<>();
+    public ProductChangeDTO.ViewDTO view(String id) {
+        ProductChangeEntity productChangeEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
+        ProductChangeDTO.ViewDTO data = BeanMapperUtils.map(ProductChangeDTO.ViewDTO.class, productChangeEntity);
+        data.setApproveStatus(productChangeEntity.getApproveStatus().getStatus());
+        List<ProductChangeDetailEntity> detailList = productChangeDetailService.listByMains(Arrays.asList(id));
+        List<ProductChangeDetailDTO.ViewDTO> detailDTOList = BeanMapperUtils.copyList(ProductChangeDetailDTO.ViewDTO.class, detailList);
+        data.setDetailDTOList(detailDTOList);
+        // 数据填充处理
+        fillOne(data);
+        return data;
+    }
 
-        //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
-        List<String> changeSearch = new ArrayList<>();
-        if (StringUtils.isNotBlank(searchKeyword)) {
-            changeSearch = baseMapper.getChangeSearchCondition(searchKeyword);
+    private void fillOne(ProductChangeDTO.ViewDTO data) {
+        if (ObjectUtil.isEmpty(data)) {
+          return;
         }
-        //如果搜索是空就返回空
-        if (CollectionUtils.isEmpty(changeSearch) && StringUtils.isNotBlank(searchKeyword)) {
-            IPage pageData = new Page();
-            return new PagingVO(pageData);
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+    }
+
+   /**
+    * 分页查询、导出 数据处理
+   */
+   private void fillList(List<ProductChangeDTO.ListDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
         }
+        List<BasicDictEntity> basicDictList = basicDictService.list();
 
-        IPage pageData = baseMapper.paging(query, changeSearch, params);
-        List<ProductChangePagingVO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO(new Page());
-        }
-        String changeBom = BomConstant.CHANGE_BOM;
-        String changeSku = BomConstant.CHANGE_SKU;
-        List<String> businessTableIds = list.stream().map(ProductChangePagingVO::getId).collect(Collectors.toList());
-        //当前审核人
-        List<ProcessCurrentAuditorVO> currentAuditorList = workflowFeign.getProcessCurrentAudit(businessTableIds);
+       List<BasicCategoryEntity> basicCategoryEntities = basicCategoryService.list();
 
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+       List<ProductRDTTeamEntity> productRDTTeamEntities = productRDTTeamService.list();
 
-        //获取到类型是bom 的 源 id
-        List<String> bomIdList = list.stream().filter(c -> changeBom.equals(c.getType())).
-                map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
+       List<ProductBrandEntity> productBrandEntities = productBrandService.list();
+
+       List<ApplicationCategoryEntity> applicationCategoryEntities = applicationCategoryService.list();
+
+       List<BasicProductBuEntity> basicProductBuEntities = basicProductBuService.list();
+
+       List<DictCountryDTO.ListDTO> countryList = sysFeign.countryList().getData();
+
+       //最新审核人
+       ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+       list.forEach(obj -> {
+           dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PRODUCT_CHANGE.getCode(), obj.getId()));
+       });
+       ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+       if (CollectionUtils.isNotEmpty(dtoList)) {
+           listApiResult = workflowFeign.curApprover(dtoList);
+           Integer code = listApiResult.getCode();
+           if (200 != code) {
+               throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+           }
+       }
 
 
-        List<BomVO> bomList = new ArrayList<>();
-        //当不为空的时候表示有 bom 的
-        if (CollectionUtils.isNotEmpty(bomIdList)) {
-            bomList = bomInfoService.getByIds(bomIdList);
-        }
-        //获取到类型是sku 的 源 id
-        List<String> skuIdList = list.stream().filter(c -> changeSku.equals(c.getType())).
-                map(ProductChangePagingVO::getSourceId).collect(Collectors.toList());
+       // 属性赋值
+        for(ProductChangeDTO.ListDTO data : list) {
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            //映射字段
+            String newValue = data.getNewValue();
+            String oldValue = data.getOldValue();
 
-        List<SkuVO> skuList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(skuIdList)) {
-            skuList = productDetailService.getSkuBySkuIds(skuIdList);
-        }
-        for (ProductChangePagingVO item : list) {
-            String type = item.getType();
-            String sourceId = item.getSourceId();
-            //如果是bom
-            if (changeBom.equals(type)) {
-                BomVO bom = bomList.stream().filter(b -> b.getBomId().equals(sourceId))
-                        .findFirst().orElse(null);
-                if (bom != null) {
-                    item.setChangeSourceNo(bom.getSerialNumber());
-                }
+            ProductChangeFieldEnum productChangeFieldEnum = ProductChangeFieldEnum.getByEntityField(data.getField());
+            if(Objects.isNull(productChangeFieldEnum)){
+                continue;
             }
-            //如果是sku
-            if (changeSku.equals(type)) {
-                SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(sourceId))
-                        .findFirst().orElse(null);
-                if (sku != null) {
-                    item.setChangeSourceNo(sku.getSkuNo());
-                    item.setChangeSourceName(sku.getSkuName());
-                }
-            }
+            data.setFieldName(productChangeFieldEnum.getName());
+            String[] convertedValues = convertFieldValue(
+                    productChangeFieldEnum,
+                    oldValue,
+                    newValue,
+                    basicDictList,
+                    basicCategoryEntities,
+                    productRDTTeamEntities,
+                    productBrandEntities,
+                    applicationCategoryEntities,
+                    basicProductBuEntities,
+                    countryList
+            );
 
-            ProcessCurrentAuditorVO currentAuditor = currentAuditorList.stream().filter(c -> c.getBusinessTableId().
-                    equals(item.getId())).findFirst().orElse(null);
-            List<String> userNameList = new ArrayList<>(5);
-            if (currentAuditor != null) {
-                List<String> handleUserIdList = currentAuditor.getHandleUserIdList();
-                for (String handleUserId : handleUserIdList) {
-                    FindUserDTO user = userList.stream().filter(u -> u.getUserId().equals(handleUserId)).
-                            findFirst().orElse(null);
-                    if (user != null) {
-                        userNameList.add(user.getUserName());
+            data.setOldValue(convertedValues[0]);
+            data.setNewValue(convertedValues[1]);
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (org.apache.commons.lang3.StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
                     }
                 }
             }
-            if (CollectionUtils.isNotEmpty(userNameList)) {
-                item.setPersonApproving(String.join(",", userNameList));
-            }
-
         }
-
-        return new PagingVO(pageData);
-    }
-
+   }
 
     /**
-     * 作废
-     *
-     * @param productChangeId
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-01-28 16:41
+     * JDK8 版本：根据枚举转换新旧值
+     * 返回数组：[旧值, 新值]
      */
     @Override
-    public Boolean cancellation(String productChangeId) {
-        ProductChangeEntity entity = this.getById(productChangeId);
-        if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
+    public String[] convertFieldValue(ProductChangeFieldEnum fieldEnum,
+                                       String oldValue,
+                                       String newValue,
+                                       List<BasicDictEntity> basicDictList,
+                                       List<BasicCategoryEntity> basicCategoryEntities,
+                                       List<ProductRDTTeamEntity> productRDTTeamEntities,
+                                       List<ProductBrandEntity> productBrandEntities,
+                                       List<ApplicationCategoryEntity> applicationCategoryEntities,
+                                       List<BasicProductBuEntity> basicProductBuEntities,
+                                       List<DictCountryDTO.ListDTO> countryList) {
+
+        String convertedOld = oldValue;
+        String convertedNew = newValue;
+
+        if (fieldEnum == null) {
+            return new String[]{convertedOld, convertedNew};
         }
-        Integer state = entity.getState();
-        //待提交
-        Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
-        //审核不通过
-        Integer auditNoPassState = ProductChangeStateEnum.AUDIT_NO_PASS.getState();
-        //当不等于他们的时候
-        if (!waitAudit.equals(state) && !auditNoPassState.equals(state)) {
-            throw new ServiceException(ApiError.PROJECT_CHANGE_VOID_REQUIRED);
-        }
-        entity.setState(ProductChangeStateEnum.CANCELLATION.getState());
-        return this.updateById(entity);
-    }
 
+        switch (fieldEnum) {
+            case PRODUCT_ATTRIBUTE:
+                convertedNew = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(newValue);
+                convertedOld = basicDictList.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(oldValue);
+                break;
 
-    /**
-     * 根据变更的类型 获取到对应的数据
-     *
-     * @param type
-     * @return java.util.List<com.erp.common.dto.base.BaseIdDTO>
-     * @author yl
-     * @date 2023-01-28 17:02
-     */
-    @Override
-    public List<ChangeInfoDTO> getChangeByType(String type, String searchKeyword) {
-        String changeBom = BomConstant.CHANGE_BOM;
-        String changeSku = BomConstant.CHANGE_SKU;
-        if (changeBom.equals(type)) {
-            return bomInfoService.getBomInfo(searchKeyword);
-        }
-        if (changeSku.equals(type)) {
-            return productDetailService.getSku(searchKeyword);
-        }
-        return new ArrayList<>();
-    }
+            case PRODUCT_CATEGORY:
+                convertedNew = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
+                        .map(BasicCategoryEntity::getName).orElse(newValue);
+                convertedOld = basicCategoryEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(BasicCategoryEntity::getName).orElse(oldValue);
+                break;
 
-
-    /**
-     * 变更详情
-     *
-     * @param id
-     * @return com.erp.model.plm.dto.ProductChangeDTO
-     * @author yl
-     * @date 2023-01-30 10:50
-     */
-    @Override
-    public ProductChangeDTO details(String id) {
-        return null;
-    }
-
-
-    /**
-     * 编辑 变更信息
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-01-30 11:54
-     */
-    @Override
-    public Boolean edit(UpdateChangeDTO dto) {
-        String id = dto.getId();
-        //获取到变更信息
-        ProductChangeEntity changeEntity = this.getById(id);
-        if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
-        }
-        Integer state = changeEntity.getState();
-        Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
-        //只有待提交才能编辑
-        if (!waitAudit.equals(state)) {
-            throw new ServiceException(ApiError.BILL_WAIT_APPROVE_REQUIRED);
-        }
-        //新的
-        String sourceId = dto.getSourceId();
-        changeEntity.setSourceId(sourceId);
-        changeEntity.setType(dto.getType());
-        Boolean result = this.updateById(changeEntity);
-        if (result) {
-            /**
-             * 如果变更成功 如果是bom
-             * 那么原来老的 bom 状态要改回来
-             * bom 要改状态
-             *
-             */
-            changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
-
-        }
-        return result;
-    }
-
-    /**
-     * bom 详情
-     *
-     * @param changeEntity
-     * @return com.erp.model.plm.dto.ProductBomChangeDTO
-     * @author yl
-     * @date 2023-02-02 9:49
-     */
-    @Override
-    public ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity) {
-        try {
-            if (changeEntity != null) {
-                ProductBomChangeDTO result = new ProductBomChangeDTO();
-                result.setId(changeEntity.getId());
-                result.setSourceId(changeEntity.getSourceId());
-                result.setType(changeEntity.getType());
-                //获取到对应的 json
-                String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
-                if (StringUtils.isNotBlank(detailsJson)) {
-                    BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
-                    result.setInfo(bom);
+            case APPLICATION_CATEGORY:
+                // 新值
+                if (StringUtils.isNotBlank(newValue)) {
+                    List<String> newNames = new ArrayList<>();
+                    String[] idArr = newValue.split(",");
+                    for (String id : idArr) {
+                        applicationCategoryEntities.stream()
+                                .filter(e -> Objects.equals(e.getId(), id.trim()))
+                                .findFirst().ifPresent(entity -> newNames.add(entity.getName()));
+                    }
+                    convertedNew = String.join(",", newNames);
                 }
-                return result;
-            }
-        } catch (Exception e) {
-            log.error("getBomDetails", e);
-        }
-        return null;
-
-    }
-
-    @Override
-    public ProductChangeDTO skuDetails(ProductChangeEntity changeEntity) {
-        try {
-            if (changeEntity != null) {
-                ProductChangeDTO result = new ProductChangeDTO();
-                result.setId(changeEntity.getId());
-                result.setSourceId(changeEntity.getSourceId());
-                result.setType(changeEntity.getType());
-                //获取到对应的 json
-                String detailsJson = changeDetailsService.getDetailsJson(changeEntity.getId());
-                if (StringUtils.isNotBlank(detailsJson)) {
-                    ProductSmallestUnitDTO bom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
-                    result.setInfo(bom);
+                // 旧值
+                if (StringUtils.isNotBlank(oldValue)) {
+                    List<String> oldNames = new ArrayList<>();
+                    String[] idArr = oldValue.split(",");
+                    for (String id : idArr) {
+                        applicationCategoryEntities.stream()
+                                .filter(e -> Objects.equals(e.getId(), id.trim()))
+                                .findFirst().ifPresent(entity -> oldNames.add(entity.getName()));
+                    }
+                    convertedOld = String.join(",", oldNames);
                 }
-                return result;
-            }
-        } catch (Exception e) {
-            log.error("skuDetails", e);
-        }
-        return null;
+                break;
 
+            case R_D_TEAM:
+                convertedNew = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
+                        .map(ProductRDTTeamEntity::getName).orElse(newValue);
+                convertedOld = productRDTTeamEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(ProductRDTTeamEntity::getName).orElse(oldValue);
+                break;
+
+            case BRAND:
+                convertedNew = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
+                        .map(ProductBrandEntity::getName).orElse(newValue);
+                convertedOld = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(ProductBrandEntity::getName).orElse(oldValue);
+                break;
+
+            case PRODUCT_GRADE:
+                convertedNew = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(newValue);
+                convertedOld = basicDictList.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(oldValue);
+                break;
+
+            case BU_LINE:
+                convertedNew = basicProductBuEntities.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
+                        .map(BasicProductBuEntity::getName).orElse(newValue);
+                convertedOld = basicProductBuEntities.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(BasicProductBuEntity::getName).orElse(oldValue);
+                break;
+
+            case SALE_COUNTRY:
+                // 新值
+                if (StringUtils.isNotBlank(newValue)) {
+                    List<String> newCountries = new ArrayList<>();
+                    String[] idArr = newValue.split(",");
+                    for (String id : idArr) {
+                        countryList.stream()
+                                .filter(c -> Objects.equals(c.getId(), id.trim()))
+                                .findFirst().ifPresent(country -> newCountries.add(country.getNameCn()));
+                    }
+                    convertedNew = String.join(",", newCountries);
+                }
+                // 旧值
+                if (StringUtils.isNotBlank(oldValue)) {
+                    List<String> oldCountries = new ArrayList<>();
+                    String[] idArr = oldValue.split(",");
+                    for (String id : idArr) {
+                        countryList.stream()
+                                .filter(c -> Objects.equals(c.getId(), id.trim()))
+                                .findFirst().ifPresent(country -> oldCountries.add(country.getNameCn()));
+                    }
+                    convertedOld = String.join(",", oldCountries);
+                }
+                break;
+
+            case SALE_PLATFORM:
+                ProductSalesPlatformEnum platformNew = ProductSalesPlatformEnum.getByCode(newValue);
+                convertedNew = platformNew == null ? newValue : platformNew.getName();
+
+                ProductSalesPlatformEnum platformOld = ProductSalesPlatformEnum.getByCode(oldValue);
+                convertedOld = platformOld == null ? oldValue : platformOld.getName();
+                break;
+
+            case IS_IMAGE_COMPLETED:
+            case IS_VIDEO_COMPLETED:
+                convertedNew = StringUtils.isBlank(newValue) ? "" : ("1".equals(newValue) ? "是" : "否");
+                convertedOld = StringUtils.isBlank(oldValue) ? "" : ("1".equals(oldValue) ? "是" : "否");
+                break;
+
+            case HAS_INFRINGEMENT_RISK:
+                convertedNew = StringUtils.isBlank(newValue) ? "" : ("1".equals(newValue) ? "有风险" : "无风险");
+                convertedOld = StringUtils.isBlank(oldValue) ? "" : ("1".equals(oldValue) ? "有风险" : "无风险");
+                break;
+
+            case FIRST_BATCH_ARRIVAL_STATUS:
+                if ("1".equals(newValue)) {
+                    convertedNew = "未到货";
+                } else if ("2".equals(newValue)) {
+                    convertedNew = "已到货";
+                } else {
+                    convertedNew = "部分到货";
+                }
+
+                if ("1".equals(oldValue)) {
+                    convertedOld = "未到货";
+                } else if ("2".equals(oldValue)) {
+                    convertedOld = "已到货";
+                } else {
+                    convertedOld = "部分到货";
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return new String[]{convertedOld, convertedNew};
     }
 
-    /**
-     * 获取到源 id 审核中（变更中）
-     *
-     * @param sourceIds
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2023-02-02 16:29
-     */
-    @Override
-    public List<String> getBySourceId(List<String> sourceIds) {
-        if (CollectionUtils.isNotEmpty(sourceIds)) {
-            List<Integer> stateList = new ArrayList<>(2);
-            stateList.add(ProductChangeStateEnum.AUDIT_ING.getState());
-            stateList.add(ProductChangeStateEnum.WAIT_SUBMIT.getState());
-            LambdaQueryWrapper<ProductChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.select(ProductChangeEntity::getSourceId);
-            queryWrapper.in(ProductChangeEntity::getSourceId, sourceIds);
-            queryWrapper.in(ProductChangeEntity::getState, stateList);
-            return this.listObjs(queryWrapper, Object::toString);
-        }
-        return new ArrayList<>();
-
-    }
-
-
-    /**
-     * 根据关键字搜索 sku 或者bom 的编号
-     *
-     * @param searchKeyword
-     * @return java.util.List<java.lang.String>
-     * @author yl
-     * @date 2023-02-03 16:07
-     */
-    @Override
-    public List<String> getChangeSearchCondition(String searchKeyword) {
-        return baseMapper.getChangeSearchCondition(searchKeyword);
-    }
-
-    /**
-     * 审核情况
-     *
-     * @param id
-     * @return void
-     * @author yl
-     * @date 2023-02-08 9:00
-     */
-    @Override
-    public List<ApproveNodeRecordVO> auditInfo(String id) {
-        if (StringUtils.isNotBlank(id)) {
-            List<ApproveNodeRecordVO> list = workflowFeign.getHistoryTaskByBusinessTableId(id);
-            return list;
-        }
-        return new ArrayList<>();
-    }
-
-    @Override
-    public List<String> listChangeField(String id) {
-        ProductChangeEntity productChangeEntity = this.getById(id);
-        if (ObjectUtils.isEmpty(productChangeEntity)) {
-            throw new ServiceException(ApiError.PROJECT_CHANGE_INFO_NOT_FOUND);
-        }
-        //查询变更后的json字符串
-        String detailsJson = productChangeDetailsService.getDetailsJson(id);
-        if (StringUtils.isBlank(detailsJson)) {
-            throw new ServiceException(ApiError.COMMON_CHANGE_NO_RECORD);
-        }
-        //变更后数据
-        ProductSmallestUnitDTO newBom = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
-        //变更前数据
-        ProductSmallestUnitDTO oldbom = productDetailService.getSkuBySkuId(productChangeEntity.getSourceId());
-        if (ObjectUtils.isEmpty(oldbom)) {
-            throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
-        }
-        List<String> resultList = new ArrayList<>();
-        setList(newBom.getProductManySpecBaseDTO(), oldbom.getProductManySpecBaseDTO(), resultList);
-        setList(CollectionUtils.isNotEmpty(newBom.getProductCertificateShowDTOList()) ? newBom.getProductCertificateShowDTOList().get(0) : null, CollectionUtils.isNotEmpty(oldbom.getProductCertificateShowDTOList()) ? oldbom.getProductCertificateShowDTOList().get(0) : null, resultList);
-        setList(newBom.getProductCostShowDTO(), oldbom.getProductCostShowDTO(), resultList);
-        setList(newBom.getProductSaleShowDTO(), oldbom.getProductSaleShowDTO(), resultList);
-        setList(newBom.getProductManySkuDetail(), oldbom.getProductManySkuDetail(), resultList);
-        setList(newBom.getProductPurchaseShowDTO(), oldbom.getProductPurchaseShowDTO(), resultList);
-        setList(CollectionUtils.isNotEmpty(newBom.getRemarkEntityList()) ? newBom.getRemarkEntityList().get(0) : null, CollectionUtils.isNotEmpty(oldbom.getRemarkEntityList()) ? oldbom.getRemarkEntityList().get(0) : null, resultList);
-        setList(newBom.getProductLogisticsShowDTO(), oldbom.getProductLogisticsShowDTO(), resultList);
-        setList(newBom.getProductPackShowDTO(), oldbom.getProductPackShowDTO(), resultList);
-        if (CollectionUtils.isNotEmpty(resultList)) {
-            resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e) && !"updateUserName".equals(e) && !"createUserName".equals(e)).distinct().collect(Collectors.toList());
-        }
-        return resultList;
-    }
-
-    @Override
-    public List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<ProductChangePagingVO.TabListDTO> tabList = new ArrayList<>();
-        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.ALL, count()));
-        String userId = UserContext.getDefaultLoginUser().getUid();
-        //获取我的待办信息
-        List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.WAIT_AUDIT, myToDoTasks.size()));
-        return tabList;
-    }
-
-    private void setList(Object newObj, Object oldObj, List<String> resultList) {
-        List<String> list = operateLogService.listSysLogField(newObj, oldObj);
-        if (CollectionUtils.isNotEmpty(list)) {
-            resultList.addAll(list);
-        }
-    }
 }

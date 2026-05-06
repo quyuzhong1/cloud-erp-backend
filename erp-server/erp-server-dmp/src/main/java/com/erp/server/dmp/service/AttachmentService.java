@@ -2,7 +2,7 @@ package com.erp.server.dmp.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.dto.AttachmentDTO;
-import com.erp.model.dmp.entity.AttachmentEntity;
+import com.erp.model.dmp.entity.DmpAttachmentEntity;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * @author jack
  * @since 2025-04-06
  */
-public interface AttachmentService extends SuperService<AttachmentEntity> {
+public interface AttachmentService extends SuperService<DmpAttachmentEntity> {
 
 
     /**

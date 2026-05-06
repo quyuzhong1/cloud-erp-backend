@@ -49,6 +49,7 @@
                wcd.sku_no skuNo,
                wcd.fn_sku fnSku,
                wcd.pack_qty packQty,
+                wcd.is_cancel_required as isCancelRequired,
                wcs.package_weight packageWeight,
                wcs.box_length boxLength,
                wcs.box_width boxWidth,

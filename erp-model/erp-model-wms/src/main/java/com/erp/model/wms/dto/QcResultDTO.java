@@ -4,7 +4,6 @@ import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcReCheckResultEnum;
-import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -103,17 +102,6 @@ public class QcResultDTO {
         @Size(max = 250, message = "最大250个字符")
         private String badDescription;
 
-
-        /**
-         * 不良图片地址集合
-         */
-        private List<String> badImageUrlList;
-
-        /**
-         * 不良图片名称地址集合
-         */
-        private List<String> badImageNameList;
-
         /**
          * 质检附件地址集合
          */
@@ -128,15 +116,15 @@ public class QcResultDTO {
         /**
          * 质检结果
          */
-        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @StateEnumValue(clazz = QcResultEnum.class, message = "质检结果有误")
+//        @NotBlank(message = "质检结果不能为空", groups = {UpdateGroup.class, AddGroup.class})
+//        @StateEnumValue(clazz = QcResultEnum.class, message = "质检结果有误")
         private String qcResult;
 
         /**
          * 处理措施
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
          */
-        @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
+//        @NotBlank(message = "处理措施不能为空", groups = {UpdateGroup.class, AddGroup.class})
         private String handleModeDict;
 
         /**
@@ -149,6 +137,18 @@ public class QcResultDTO {
          */
         @StateEnumValue(clazz = QcReCheckResultEnum.class, message = "复检抽检结果有误")
         private String qcSampleResult;
+
+        /**
+         * 批次合格量
+         */
+        @NotNull(message = "批次合格量不允许为空")
+        @Min(value = 0,message = "批次合格量最小为0")
+        private Integer  lotQualifiedQty;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 
 
@@ -269,6 +269,11 @@ public class QcResultDTO {
          * 质检结果名
          */
         private String qcResultName;
+
+        /**
+         * 批次合格量
+         */
+        private Integer lotQualifiedQty;
 
         /**
          * 处理措施
@@ -558,4 +563,39 @@ public class QcResultDTO {
         private Boolean isFirstMassProduct;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class TotalLotQualifiedQtyDTO {
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+        /**
+         * 批次合格量汇总
+         */
+        private Integer totalLotQualifiedQty;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class LotQualifiedQtyDTO {
+        /**
+         * 质检id
+         */
+        private String qcId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 批次合格量
+         */
+        private Integer totalLotQualifiedQty;
+    }
 }

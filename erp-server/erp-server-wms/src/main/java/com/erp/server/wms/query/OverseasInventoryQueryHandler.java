@@ -43,10 +43,14 @@ public class OverseasInventoryQueryHandler extends AbstractQueryHandler {
             }
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             if (queryConditionEnum.equals(QueryConditionEnum.IS_NULL)) {
-                return " oi.warehouse_code IS NULL or oi.warehouse_code IS NULL";
+                return "( ( oi.dict_platform = 'fbt' AND ( fw.id IS NULL OR fw.id = '' ) ) " +
+                        "OR ( oi.dict_platform = 'AliExpress' AND ( w.warehouseName IS NULL OR w.warehouseName = '' ) ) " +
+                        "OR ( oi.dict_platform != 'AliExpress' AND oi.dict_platform != 'fbt' AND ( opw.warehouse_id IS NULL OR opw.warehouse_id = '' ) ) )";
             }
             if (queryConditionEnum.equals(QueryConditionEnum.NOT_NULL)) {
-                return " oi.warehouse_code IS NOT NULL or oi.warehouse_code IS NOT NULL";
+                return "( ( oi.dict_platform = 'fbt' AND fw.id IS NOT NULL AND fw.id != '' ) " +
+                        "OR ( oi.dict_platform = 'AliExpress' AND w.warehouseName IS NOT NULL AND w.warehouseName != '' ) " +
+                        "OR ( oi.dict_platform != 'AliExpress' AND oi.dict_platform != 'fbt' AND opw.warehouse_id IS NOT NULL AND opw.warehouse_id != '' ) )";
             }
             List<String> warehouseIds;
             if (queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST)){
@@ -62,36 +66,61 @@ public class OverseasInventoryQueryHandler extends AbstractQueryHandler {
             if (CollectionUtils.isEmpty(warehouseDTOList) && CollectionUtils.isEmpty(warehouseEntities)){
                 return null;
             }
-            List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
+            List<String> codeList = warehouseDTOList.stream()
+                    .map(OverseasProviderDTO.WarehouseDTO::getWarehouseId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
             List<String> warehouseNameList = warehouseEntities.stream().map(WarehouseEntity::getName).distinct().collect(Collectors.toList());
+            List<String> fbtWarehouseIdList = buildFbtWarehouseIdList(warehouseEntities);
 
             if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                if (CollectionUtils.isNotEmpty(codeList) && CollectionUtils.isEmpty(warehouseNameList)){
-                    buildSplicingSQLDTO("opw.warehouse_id", QueryConditionEnum.NOT_IN_LIST, warehouseIds, QueryDataTypeEnum.STRING);
-                    return null;
-                }
-                if (CollectionUtils.isEmpty(codeList) && CollectionUtils.isNotEmpty(warehouseNameList)){
-                    buildSplicingSQLDTO("w.warehouseName", QueryConditionEnum.NOT_IN_LIST, warehouseNameList, QueryDataTypeEnum.STRING);
-                    return null;
-                }
-                String codeListValueStr = QueryUtils.listToStringValue(warehouseIds, QueryDataTypeEnum.STRING);
-                String warehouseNameListValueStr = QueryUtils.listToStringValue(warehouseNameList, QueryDataTypeEnum.STRING);
-                return "( opw.warehouse_id not in " + codeListValueStr + " or w.warehouseName not in " + warehouseNameListValueStr + ")";
+                return buildWarehouseFilterSql(codeList, warehouseNameList, fbtWarehouseIdList, true);
             } else {
-                if (CollectionUtils.isNotEmpty(codeList) && CollectionUtils.isEmpty(warehouseNameList)){
-                    buildSplicingSQLDTO("opw.warehouse_id", QueryConditionEnum.IN_LIST, warehouseIds, QueryDataTypeEnum.STRING);
-                    return null;
-                }
-                if (CollectionUtils.isEmpty(codeList) && CollectionUtils.isNotEmpty(warehouseNameList)){
-                    buildSplicingSQLDTO("w.warehouseName", QueryConditionEnum.IN_LIST, warehouseNameList, QueryDataTypeEnum.STRING);
-                    return null;
-                }
-                String codeListValueStr = QueryUtils.listToStringValue(warehouseIds, QueryDataTypeEnum.STRING);
-                String warehouseNameListValueStr = QueryUtils.listToStringValue(warehouseNameList, QueryDataTypeEnum.STRING);
-                return "( opw.warehouse_id in " + codeListValueStr + " or w.warehouseName in " + warehouseNameListValueStr + ")";
+                return buildWarehouseFilterSql(codeList, warehouseNameList, fbtWarehouseIdList, false);
             }
         }
         return null;
+    }
+
+    private List<String> buildFbtWarehouseIdList(List<WarehouseEntity> warehouseEntities) {
+        Set<String> warehouseIdSet = new LinkedHashSet<>();
+        for (WarehouseEntity warehouseEntity : warehouseEntities) {
+            if (Objects.isNull(warehouseEntity)) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(warehouseEntity.getId())) {
+                warehouseIdSet.add(warehouseEntity.getId());
+            }
+            if (StringUtils.isNotBlank(warehouseEntity.getOnwayWarehouseId())) {
+                warehouseIdSet.add(warehouseEntity.getOnwayWarehouseId());
+            }
+        }
+        return new ArrayList<>(warehouseIdSet);
+    }
+
+    private String buildWarehouseFilterSql(List<String> providerWarehouseIdList,
+                                           List<String> warehouseNameList,
+                                           List<String> fbtWarehouseIdList,
+                                           boolean negative) {
+        List<String> sqlList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(providerWarehouseIdList)) {
+            String valueStr = QueryUtils.listToStringValue(providerWarehouseIdList, QueryDataTypeEnum.STRING);
+            sqlList.add("( oi.dict_platform != 'AliExpress' AND oi.dict_platform != 'fbt' AND opw.warehouse_id IN " + valueStr + " )");
+        }
+        if (CollectionUtils.isNotEmpty(warehouseNameList)) {
+            String valueStr = QueryUtils.listToStringValue(warehouseNameList, QueryDataTypeEnum.STRING);
+            sqlList.add("( oi.dict_platform = 'AliExpress' AND w.warehouseName IN " + valueStr + " )");
+        }
+        if (CollectionUtils.isNotEmpty(fbtWarehouseIdList)) {
+            String valueStr = QueryUtils.listToStringValue(fbtWarehouseIdList, QueryDataTypeEnum.STRING);
+            sqlList.add("( oi.dict_platform = 'fbt' AND fw.id IN " + valueStr + " )");
+        }
+        if (CollectionUtils.isEmpty(sqlList)) {
+            return null;
+        }
+        String sql = sqlList.size() == 1 ? sqlList.get(0) : "( " + String.join(" OR ", sqlList) + " )";
+        return negative ? "NOT " + sql : sql;
     }
 }
 

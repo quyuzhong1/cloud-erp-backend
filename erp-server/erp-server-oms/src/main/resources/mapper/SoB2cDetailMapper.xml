@@ -90,7 +90,15 @@
         inner join so_b2c sb on sbd.main_id = sb.id and sb.is_deleted = false
         <where>
             sbd.is_deleted = false and sb.invalid_status = false and sb.pay_status = 'paid'
-            and sb.approve_status = 'approve' and sb.bill_status in ('inDistribution','waitDistribution')
+            and sb.approve_status = 'approve'
+            <choose>
+                <when test="paramDTO.isThirdWarehouse != null and paramDTO.isThirdWarehouse == true">
+                    and sb.bill_status in ('inDistribution', 'waitDistribution', 'waitShipped')
+                </when>
+                <otherwise>
+                    and sb.bill_status in ('inDistribution', 'waitDistribution')
+                </otherwise>
+            </choose>
             <if test="paramDTO.skuIdList != null and paramDTO.skuIdList.size > 0">
                 and sbd.sku_id in
                 <foreach collection="paramDTO.skuIdList" item="item" open="(" close=")" separator=",">

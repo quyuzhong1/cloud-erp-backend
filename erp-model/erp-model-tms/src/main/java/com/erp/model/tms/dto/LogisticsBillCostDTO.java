@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -431,6 +433,43 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重（物流商）【可排序】
          */
         private BigDecimal thirdActualWeight;
+        /**
+         * 区域编码【可排序】
+         */
+        private String subregionCode;
+        /**
+         * 区域名称
+         */
+        private String regionName;
+        /**
+         * 部门id【可排序】
+         */
+        private String deptId;
+        /**
+         * 部门名称
+         */
+        private String deptName;
+        /**
+         * 军区id【可排序】
+         */
+        private String partitionId;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
+         * 是否分摊【可排序】
+         */
+        private Boolean isAllocateRequired;
+        /**
+         * 是否分摊名称
+         */
+        private String isAllocateRequiredName;
+        /**
+         * 不分摊原因【可排序】
+         */
+        private String notAllocateRemark;
+
     }
 
     /**
@@ -566,10 +605,24 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
     	/**
          * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
          */
          private String payType = LogisticsBillCostPayTypeEnum.PAY.getCode();
+
+        /**
+         * 导入确认
+         */
+        private ImportHistoryRecordDTO.ImportConfirmDTO importConfirmDTO;
     }
     
     /**
@@ -678,7 +731,7 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal thirdActualWeight;
-    	
+
     	/**
     	 * 实际金额币别
     	 */
@@ -702,7 +755,7 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 对账确认时间
     	 */
     	private LocalDateTime confirmTime;
-    	
+
     	/**
     	 * 新增付款/退款数据
     	 */
@@ -721,7 +774,15 @@ public class LogisticsBillCostDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 物流单id
+         */
+        private String logisticsBillId;
 
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
         /**
          * 计费重（物流商）
          */
@@ -799,11 +860,20 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal thirdActualWeight;
+
+        /**
+         * 导入确认
+         */
+        private ImportHistoryRecordDTO.ImportConfirmDTO importConfirmDTO;
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
 
         /**
          * 对账状态
@@ -960,7 +1030,29 @@ public class LogisticsBillCostDTO implements Serializable {
         private LocalDateTime confirmTime;
 
     }
-    
+
+    /**
+     * 批量更新对账状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateReconciliationStatusDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus
+         */
+        private String reconciliationStatus;
+
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
+    }
+
     /**
      * 支付状态
      */
@@ -1002,8 +1094,25 @@ public class LogisticsBillCostDTO implements Serializable {
     	 */
     	@NotBlank(message = "核算日期不能为空")
     	private String reportDate;
+    	/**
+    	 *物流标签类型
+    	 */
+    	private String type;
     	
+    } /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushAllocatedCostCountDTO {
+        /**
+         *
+         */
+        private Integer count =0;
+
     }
+
+
     @Data
     @NoArgsConstructor
     public static class OutStockDTO {
@@ -1089,5 +1198,84 @@ public class LogisticsBillCostDTO implements Serializable {
         private String type;
         private String sourceType;
         private BigDecimal costValue;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TotalCountDTO {
+
+        /**
+         * 计费重[物流商]
+         */
+        private BigDecimal totalBillingWeightLogistics = BigDecimal.ZERO;
+
+        /**
+         * 实际运费(总)
+         */
+        private BigDecimal totalActualShippingCost = BigDecimal.ZERO;
+        private String actualShippingCostCurrencySymbol = "¥";
+
+        /**
+         * 实际关税费用(总)
+         */
+        private BigDecimal totalActualDeclareCost = BigDecimal.ZERO;
+        private String actualDeclareCostCurrencySymbol = "¥";
+
+
+        /**
+         * 实际可抵扣税金[总]
+         */
+        private BigDecimal totalActualDeductibleTax = BigDecimal.ZERO;
+        private String actualDeductibleTaxCurrencySymbol = "¥";
+
+        /**
+         * 实际其他费用(总)
+         */
+        private BigDecimal totalActualOtherCost = BigDecimal.ZERO;
+        private String actualOtherCostCurrencySymbol = "¥";
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportDataDTO {
+        /**
+         * 导入类型
+         */
+        private String importType;
+        /**
+         * 确认日期
+         */
+        private LocalDateTime confirmTime;
+
+        /**
+         * 物流单信息
+          */
+        private LogisticsBillEntity logisticsBillEntity;
+        /**
+         * 物流单明细信息
+         */
+        private List<LogisticsBillDetailEntity> logisticsBillDetailList;
+
+        /**
+         * 物流费用新增数据列表
+         */
+        private  List<LogisticsBillCostDTO.AddDTO> addBillCostList;
+        /**
+         * 物流费用修改数据列表
+         */
+        private List<LogisticsBillCostDTO.UpdateDTO> updateBillCostList;
+        /**
+         * 费用项新增列表
+         */
+        private List<TmsCostDetailDTO.AddDTO> addCfgCostList;
+        /**
+         * 费用项更新列表
+         */
+        private List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList;
     }
 }

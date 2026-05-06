@@ -129,4 +129,19 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @author Cloud
      */
     boolean checkClosed(List<String> strings, List<String> warehourseLocationList, List<String> strings1, List<String> skuIds, LocalDate billDate);
+
+    /**
+     * 导入初盘数量
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response);
+
+
+    /**
+     * 下载初盘数量模板
+     * @param response
+     */
+    void downloadFirstQtyTemplate(HttpServletResponse response);
 }

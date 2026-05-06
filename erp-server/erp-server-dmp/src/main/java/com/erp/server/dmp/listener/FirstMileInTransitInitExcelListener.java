@@ -59,6 +59,11 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        // 兼容日期格式
+        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
+        if (Objects.nonNull(reportMonth)) {
+            excelDTO.setReportMonth(reportMonth.toString());
+        }
         //校验货件单号是否存在
         List<AdsErpFirstMileInTransitDiffEntity> shipmentList = adsErpFirstMileInTransitDiffService.lambdaQuery()
                 .eq(AdsErpFirstMileInTransitDiffEntity::getShipmentCode, excelDTO.getShipmentCode())
@@ -76,20 +81,19 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】货件明细不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getPlatformSkuNo()));
         }
         // 解析日期
-        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
-        if (Objects.nonNull(reportMonth)){
-            excelDTO.setReportMonth(reportMonth.toString());
-            List<AdsErpFirstMileInTransitDiffEntity> collect = shipmentList.stream()
-                    .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())
-                            && (StringUtils.isBlank(excelDTO.getAsin()) || e.getPlatformSpuNo().equals(excelDTO.getAsin())))
-                    .filter(e -> e.getReceiveQty() > 0)
-                    .collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(collect)){
-                List<String> monthList = collect.stream().map(AdsErpFirstMileInTransitDiffEntity::getCheckMonth).distinct().collect(Collectors.toList());
-//                errorMsgList.add(CharSequenceUtil.format("在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在【{}】在途数据", excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getPlatformSkuNo(), String.join(",",monthList)));
-                errorMsgList.add(CharSequenceUtil.format("在途货件单号【{}】ASIN【{}】MSKU【{}】存在【{}】本期签收不允许导入期初", excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getPlatformSkuNo(), String.join(",",monthList)));
-            }
-        }
+//        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
+//        if (Objects.nonNull(reportMonth)){
+//            excelDTO.setReportMonth(reportMonth.toString());
+//            List<AdsErpFirstMileInTransitDiffEntity> collect = shipmentList.stream()
+//                    .filter(e -> e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())
+//                            && (StringUtils.isBlank(excelDTO.getAsin()) || e.getPlatformSpuNo().equals(excelDTO.getAsin())))
+//                    .filter(e -> e.getReceiveQty() > 0)
+//                    .collect(Collectors.toList());
+//            if (CollUtil.isNotEmpty(collect)){
+//                List<String> monthList = collect.stream().map(AdsErpFirstMileInTransitDiffEntity::getCheckMonth).distinct().collect(Collectors.toList());
+//                errorMsgList.add(CharSequenceUtil.format("在途货件单号【{}】ASIN【{}】MSKU【{}】存在【{}】本期签收不允许导入期初", excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getPlatformSkuNo(), String.join(",",monthList)));
+//            }
+//        }
         String initTransitQty = excelDTO.getInitTransitQty();
         try {
             Integer i = Integer.valueOf(initTransitQty);

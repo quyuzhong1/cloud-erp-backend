@@ -90,6 +90,22 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private Integer diffQty;
 
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
+
+
+        /**
+         * 下推盘盈盘亏状态
+         */
+        private String pushStocktakingProfitLossStatus;
+
+
+        /**
+         * 下推盘盈盘亏状态名称
+         */
+        private String pushStocktakingProfitLossStatusName;
     }
 
 
@@ -109,6 +125,11 @@ public class StocktakingTaskDetailDTO implements Serializable {
         @NotNull(message = "盘点数量不能为空")
         @DecimalMin(value = "0",message ="盘点数量最小为0" )
         private Integer qty;
+
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
     }
 
     /**
@@ -193,6 +214,11 @@ public class StocktakingTaskDetailDTO implements Serializable {
          * 盘点人
          */
         private String stocktakingUserName;
+
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
 
     }
 

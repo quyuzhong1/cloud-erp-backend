@@ -95,8 +95,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
-    public static final String TABLE_BUSINESS_KEY = "TABLE_BUSINESS_KEY";
-
     @Override
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");

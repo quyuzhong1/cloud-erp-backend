@@ -221,6 +221,16 @@ public class LogisticsSupplierController extends BaseController {
 
 
     /**
+     * 所有物流商简称下拉
+     * @return
+     */
+    @GetMapping("/listWithAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithAll(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsSupplierService.listWithAll(filterDisabled));
+    }
+
+
+    /**
      * 物流商渠道树形结构
      * @return
      */
@@ -262,4 +272,6 @@ public class LogisticsSupplierController extends BaseController {
     public ApiResult<PagingVO<LogisticsSupplierDTO.PagingSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsSupplierDTO.SelectDTO> dto){
         return success(logisticsSupplierService.pagingSelect(dto));
     }
+
+
 }

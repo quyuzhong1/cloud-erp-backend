@@ -115,11 +115,7 @@ public class FsUseInfoConsumerService<T extends DmpSyncTaskIdDTO> extends Abstra
             LambdaQueryWrapper<SysUserThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SysUserThirdEntity::getThirdUserId, userId);
             List<SysUserThirdEntity> list = sysUserThirdService.list(queryWrapper);
-            if(CollUtil.isEmpty(list)){
-                log.error(ApiError.COMMON_FS_USER_NOT_BIND.getMsg(),eventType,name);
-                throw new ServiceException(ApiError.COMMON_FS_USER_NOT_BIND,eventType,name);
-            }
-            if(isResigned){
+            if(CollUtil.isNotEmpty(list) && isResigned){
                 UpdateUserStateDTO stateDTO = new UpdateUserStateDTO();
                 stateDTO.setState(0);
                 stateDTO.setIds(list.stream().map(SysUserThirdEntity::getUserId).collect(Collectors.toList()));

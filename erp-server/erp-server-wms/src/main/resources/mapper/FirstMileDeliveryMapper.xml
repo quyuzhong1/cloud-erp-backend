@@ -139,7 +139,7 @@
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
         fd.approve_time AS deliveryTime,
-        CASE WHEN fd.demand_type = 'demandPlatformWarehouse'
+        CASE WHEN fd.demand_type in ('demandPlatformWarehouse','demandFbtWarehouse')
             THEN (select fdd2.fba_shipment_code from first_mile_delivery_detail fdd2 where fdd2.main_id = fd.id and fdd2.is_deleted = false  limit 1)
             ELSE(SELECT owi.code from overseas_warehouse_inbound owi where owi.is_deleted = false and owi.source_code =  fd.code limit 1 ) END as refCode
         FROM  first_mile_delivery fd
@@ -189,11 +189,12 @@
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         with wcd as (
         SELECT main_id,
-        string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',') as boxDesc,
-        string_agg(wcd.sku_no, ',') as sku,
-        string_agg(wcd.sku_id, ',') as skuIds ,
-        string_agg(concat(wcd.sku_no,':',wcd.sku_id), ',')   as skuMapping
-        from wms_carton_detail wcd where is_deleted = false group by main_id
+        concat(wcd.sku_no,'*',wcd.pack_qty) as boxDesc,
+        wcd.sku_no as sku,
+        wcd.sku_id as skuIds ,
+        wcd.is_cancel_required as isCancelRequired,
+        concat(wcd.sku_no,':',wcd.sku_id)   as skuMapping
+        from wms_carton_detail wcd where is_deleted = false
         )
         SELECT
         pt.source_id as id,
@@ -211,6 +212,7 @@
         wcs.size_unit as sizeUnit,
         wcd.sku,
         wcd.skuIds,
+        wcd.isCancelRequired,
         wcd.skuMapping
         FROM packing_task pt
         INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
@@ -485,7 +487,7 @@
         wc.ID,
         wc.packing_task_id AS taskId,
         CASE
-        WHEN fmd.demand_type = 'demandPlatformWarehouse'  THEN
+        WHEN fmd.demand_type in ('demandPlatformWarehouse','demandFbtWarehouse') THEN
         CONCAT ( COALESCE ( fmdd.fba_shipment_code ), LPAD( CAST ( fsp.box_no AS TEXT ), 5, '0' ) )
         ELSE
         CONCAT ( COALESCE (  owi.code ), LPAD( CAST ( fsp.box_no AS TEXT ), 5, '0' ) )
@@ -518,7 +520,7 @@
         wcd.sku_no AS sku,
         fmd.code AS deliveryCode,
         CASE
-        WHEN fmd.demand_type = 'demandPlatformWarehouse'  THEN
+        WHEN fmd.demand_type in ('demandPlatformWarehouse','demandFbtWarehouse') THEN
         fmdd.fba_shipment_code
         ELSE
         owi.code
@@ -638,5 +640,58 @@
           <foreach collection="deliveryIds" item="item" open="(" close=")" separator=",">
               #{item}
           </foreach>
+    </select>
+
+    <!-- 取消分货分页查询 -->
+    <select id="cancelDeliveryPaging" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$CancelDeliveryListDTO">
+        with wcd as (
+        SELECT wcd.main_id,
+               wcd.id as cartonDetailId,
+            wcd.pack_qty as packageQty,
+            wcd.sku_no as skuNo,
+            wcd.is_cancel_required as isCancelRequired
+        from wms_carton_detail wcd where is_deleted = false
+        )
+        select
+            flb.id as logisticsBillId,
+            flb.business_code as businessCode,
+            wc.box_no as boxNo,
+            wcd.cartonDetailId,
+            wcd.skuNo,
+            wcd.packageQty,
+            wcd.isCancelRequired,
+            pt.id as packingTaskId,
+            wcs.id as cartonSpecId,
+            wcs.package_weight as packageWeight,
+            wcs.box_length as boxLength,
+            wcs.box_width as boxWidth,
+            wcs.box_height as boxHeight,
+            wcs.weight_unit as weightUnit
+        from foreign_logistics_bill flb
+        inner join first_mile_delivery fmd on flb.outstock_id = fmd.id and fmd.is_deleted = false
+        inner join packing_task pt on (fmd.id = pt.source_id or fmd.source_id = pt.source_id) and pt.is_deleted = false
+        inner join wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
+        inner join wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
+        inner JOIN wcd ON WCD.main_id = wc.id
+        where
+        ${params.sqlMap.default}
+        and flb.is_deleted = FALSE AND flb.order_type = 'firstMile' and flb.business_code != ''
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND flb.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        flb.business_code asc,wc.box_no asc
     </select>
 </mapper>

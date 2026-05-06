@@ -97,9 +97,9 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addOrUpdateDTO) {
         ${entity} ${entity?uncap_first} = new ${entity}();
-        BeanMapperUtils.copy(addDTO, ${entity?uncap_first});
+        BeanMapperUtils.copy(addOrUpdateDTO, ${entity?uncap_first});
 
         // 数据处理
         handleData(${entity?uncap_first});
@@ -232,7 +232,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
@@ -429,6 +429,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         revokeDTO.setBusinessId(entity.getId());
         // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
         revokeDTO.setBusinessKey(null);

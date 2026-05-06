@@ -7,7 +7,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
@@ -350,9 +350,29 @@ public class FbaShipmentDTO implements Serializable {
         private String deliveryToAddress;
 
         /**
+         * 跟踪号
+         */
+        private String trackingNo;
+
+        /**
+         * 物流承运商
+         */
+        private String carrierName;
+
+        /**
          * 详情
          */
         private List<FbaShipmentDetailDTO.ViewDTO> detailList;
+
+        /**
+         * 附件URL列表
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名称列表
+         */
+        private List<String> attachmentNameList;
     }
 
     /**
@@ -669,9 +689,21 @@ public class FbaShipmentDTO implements Serializable {
          */
         private String deliveryCode;
         /**
+         * 物流承运商
+         */
+        private String carrierName;
+        /**
+         * 跟踪单号
+         */
+        private String trackingNo;
+        /**
          * 平台货件状态
          */
         private String platformShipmentStatus;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
         /**
          * 平台产品id
          */
@@ -1148,5 +1180,45 @@ public class FbaShipmentDTO implements Serializable {
          * 打印条数
          */
         private Integer pageSize;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadLabelViewDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 货件号
+         */
+        private String fbaShipmentId;
+
+        /**
+         * 文件
+         */
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 文件
+         */
+        @NotNull(message = "文件不能为空")
+        private AttachDTO attachDTO;
     }
 }

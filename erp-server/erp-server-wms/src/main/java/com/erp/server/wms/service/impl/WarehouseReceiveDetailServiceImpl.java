@@ -1,11 +1,15 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -14,9 +18,11 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.QcResultDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -28,7 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +60,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private QcResultService qcResultService;
+
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
 
     /**
      * 新增
@@ -117,7 +131,16 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             listDetail.add(warehouseReceiveDetailEntity);
         }
         //保存详情信息
-        return this.saveBatch(listDetail);
+        boolean saveDetail = this.saveBatch(listDetail);
+        if (!saveDetail) {
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
+        }
+        //重算待质检数量
+        List<String> podIdList = listDetail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> detailIdList = listDetail.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        recalculateWaitQcQty(podIdList,detailIdList);
+
+        return Boolean.TRUE;
     }
 
     /**
@@ -205,6 +228,12 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             }*/
         }
         boolean flag = this.saveOrUpdateBatch(listDetail);
+
+        List<String> podIdList = listDetail.stream().map(WarehouseReceiveDetailEntity::getPurchaseOrderDetailId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> detailIdList = listDetail.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        //重算待质检数量
+        recalculateWaitQcQty(podIdList,detailIdList);
+
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {
             List<WarehouseReceiveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
@@ -339,5 +368,105 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     public void updateInfo(WarehouseReceiveDetailEntity wrd) {
         baseMapper.updateInfo(wrd.getId(),wrd.getInStockStatus());
+    }
+
+    @Override
+    @DistributeLocker(keyName = "podIdList")
+    public void recalculateWaitQcQty(List<String> podIdList, List<String> detailIdList) {
+        if (CollUtil.isEmpty(podIdList)) {
+            return;
+        }
+
+        //查询当前收货单明细的待质检数量
+        List<WarehouseReceiveDetailEntity> receiveDetailLIst = this.listByIds(detailIdList);
+        if (CollUtil.isEmpty(receiveDetailLIst)) {
+            throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
+        }
+
+        //查询采购订单下的质检批次合格数量汇总
+        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalLotQualifiedQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
+        Map<String, Integer> totalLotQualifiedQtyMap = totalLotQualifiedQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalLotQualifiedQty));
+
+        //查询采购订单下的其他收货单的收货数量汇总
+        List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);
+        Map<String, Integer> totalReceiveQtyMap = totalReceiveQtyList.stream().collect(Collectors.toMap(WarehouseReceiveDetailDTO.ReceiveQtyDTO::getPodId, WarehouseReceiveDetailDTO.ReceiveQtyDTO::getTotalReceiveQty));
+
+        //查询采购订单下的其他收货单的收货数量汇总
+        List<WarehouseReceiveDetailDTO.WaitQcQtyDTO> totalWaitQcQtyList = baseMapper.getTotalWaitQcQty(podIdList);
+
+        for (WarehouseReceiveDetailEntity receiveDetailEntity : receiveDetailLIst) {
+            //采购订单明细下的批次质检合格数量汇总
+            Integer totalLotQualifiedQty = totalLotQualifiedQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
+            //采购订单明细下的收货数量汇总
+            Integer totalReceiveQty = totalReceiveQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
+
+            //采购订单明细下收货单的待质检数量汇总（不包括本单）
+            Integer totalWaitQcQty = totalWaitQcQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPodId(), receiveDetailEntity.getPurchaseOrderDetailId()) && !CharSequenceUtil.equals(obj.getDetailId(), receiveDetailEntity.getId())).map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty).reduce(MathUtil.ZERO, Integer::sum);
+           //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
+            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(totalLotQualifiedQty) ? MathUtil.ZERO : totalLotQualifiedQty) - totalWaitQcQty;
+            if (waitQcQty < MathUtil.ZERO) {
+                waitQcQty = MathUtil.ZERO;
+            }
+            receiveDetailEntity.setWaitQcQty(waitQcQty);
+        }
+        super.updateBatchById(receiveDetailLIst);
+    }
+
+
+    @Override
+    public void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc) {
+        List<QcResultDTO.LotQualifiedQtyDTO> lotQualifiedQtyList = qcResultService.getLotQualifiedQtyByMainIdList(qcIdList);
+        if (CollUtil.isEmpty(lotQualifiedQtyList)) {
+            return;
+        }
+        List<String> sourceDetailIdList = lotQualifiedQtyList.stream().map(QcResultDTO.LotQualifiedQtyDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        //质检通知单信息
+        Map<String, QcNoticeDetailEntity> qcNoticeDetailEntityMap = qcNoticeDetailService.mapByIds(sourceDetailIdList);
+        if (ObjectUtil.isNotEmpty(qcNoticeDetailEntityMap)) {
+            List<String> qcNoticeSourceDetailIdList = qcNoticeDetailEntityMap.values().stream().map(QcNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            sourceDetailIdList.addAll(qcNoticeSourceDetailIdList);
+        }
+        //采购收货明细信息
+        Map<String, WarehouseReceiveDetailEntity> warehouseReceiveDetailEntityMap = this.mapByIds(sourceDetailIdList);
+
+        //需要更新的采购收货明细信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = new ArrayList<>();
+
+        //更新待质检数量
+        List<String> distQcIdList = qcIdList.stream().distinct().collect(Collectors.toList());
+        for (String distQcId : distQcIdList) {
+            QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = lotQualifiedQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getQcId(), distQcId)).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(lotQualifiedQtyDTO)) {
+                continue;
+            }
+            //采购收货来源直接取来源明细id
+            String sourceDetailId = lotQualifiedQtyDTO.getSourceDetailId();
+            //质检通知单来源需要取质检通知单明细的来源明细id
+            if (CharSequenceUtil.equals(lotQualifiedQtyDTO.getSourceType(), SourceTypeEnum.QC_NOTICE.getCode())) {
+                QcNoticeDetailEntity qcNoticeDetailEntity = qcNoticeDetailEntityMap.get(lotQualifiedQtyDTO.getSourceDetailId());
+                if (ObjectUtil.isEmpty(qcNoticeDetailEntity)) {
+                    throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"质检通知单明细");
+                }
+                sourceDetailId = qcNoticeDetailEntity.getSourceDetailId();
+            }
+            WarehouseReceiveDetailEntity receiveDetailEntity = warehouseReceiveDetailEntityMap.get(sourceDetailId);
+            if (ObjectUtil.isEmpty(receiveDetailEntity)) {
+                throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
+            }
+            Integer waitQcQty = MathUtil.ZERO;
+            if (isFinishQc) {
+                //待质检量=∑收货数量-质检合格量,小于0时默认为0
+                waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalLotQualifiedQty();
+            } else {
+                //待质检量=∑收货数量+质检合格量,小于0时默认为0
+                waitQcQty = receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalLotQualifiedQty();
+            }
+            if (waitQcQty < MathUtil.ZERO) {
+                waitQcQty = MathUtil.ZERO;
+            }
+            receiveDetailEntity.setWaitQcQty(waitQcQty);
+            receiveDetailList.add(receiveDetailEntity);
+        }
+        super.updateBatchById(receiveDetailList);
     }
 }

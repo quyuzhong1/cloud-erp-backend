@@ -13,7 +13,6 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -564,12 +563,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 taskOperateDTO.setComment(dto.getComment());
                 plmTaskFeign.projectTaskApprovalPass(taskOperateDTO);
                 break;
-            case PRODUCT_CHANGE:
+            case BOM_CHANGE:
                 ApproveOneDTO approveDTO = new ApproveOneDTO();
                 approveDTO.setId(dto.getId());
                 approveDTO.setComment(dto.getComment());
                 approveDTO.setType(dto.getType());
-                plmTaskFeign.productChangeApprove(approveDTO);
+                plmTaskFeign.bomChangeApprove(approveDTO);
                 break;
             case MOLD_INFO:
                 ApproveOneDTO moldApproveDTO = new ApproveOneDTO();

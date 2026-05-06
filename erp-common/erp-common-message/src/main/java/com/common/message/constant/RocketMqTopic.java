@@ -173,4 +173,13 @@ public class RocketMqTopic {
      * OMS 任务编排
      */
     public static final String OMS_WORKFLOW_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-oms_workflow_task_record_topic";
+
+    /**
+     * tms 费用分摊异步任务--手动
+     */
+    public static final String TMS_PUSH_ALLOCATION_COST_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_push_allocation_cost_topic";
+    /**
+     * tms 费用分摊异步任务--自动
+     */
+    public static final String TMS_ASYNC_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_async_task_record_topic";
 }

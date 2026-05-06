@@ -2,10 +2,9 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.erp.server.tms.service.LogisticsLastMileCostService;
-import com.erp.server.tms.service.LogisticsTrackService;
+import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,6 +25,13 @@ public class ImportTmsFeignController {
     private LogisticsLastMileCostService logisticsLastMileCostService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
+    @Resource
+    private ImportHistoryRecordService importHistoryRecordService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+
 
     @PostMapping("/logisticsBillCost")
     public void importLogisticsBillCost(@RequestBody BaseDTO.ImportDTO dto) {
@@ -59,6 +65,48 @@ public class ImportTmsFeignController {
             logisticsTrackService.importLogisticsTrackInfo(dto);
         } catch (Exception e) {
             log.error("导入物流轨迹失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importCfgLogisticsCost")
+    public void importCfgLogisticsCost(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            cfgLogisticsCostImportService.importCfgLogisticsCost(dto);
+        } catch (Exception e) {
+            log.error("导入费用配置失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/preprocessingImportExcel")
+    public void preprocessingImportExcel(@RequestBody ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO) {
+        try {
+            importHistoryRecordService.preprocessingImportExcel(importSyncDTO);
+        } catch (Exception e) {
+            log.error("导入费用配置失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(importSyncDTO.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    @PostMapping("/importLogisticsThirdChannelRef")
+    public void importLogisticsThirdChannelRef(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            logisticsThirdChannelRefService.importLogisticsThirdChannelRef(dto);
+        } catch (Exception e) {
+            log.error("导入物流-第三方渠道关系表失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

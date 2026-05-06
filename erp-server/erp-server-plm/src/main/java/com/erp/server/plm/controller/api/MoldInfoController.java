@@ -331,6 +331,44 @@ public class MoldInfoController extends BaseController {
     }
 
     /**
+    * 更新备注
+    * @author jack
+    * @date: 2026-03-10
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/updateRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:moldInfo:update",
+            serviceClass = MoldInfoService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "模具档案更新备注：{remark}")
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<MoldInfoEntity> list = moldInfoService.lambdaQuery().in(MoldInfoEntity::getId, ids).list();
+        Map<String, MoldInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldInfoEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO updateResult;
+            try {
+                updateResult = moldInfoService.updateRemark(id, dto.getRemark());
+            } catch (Exception e) {
+                log.error("模具档案更新备注失败", e);
+                MoldInfoEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateResult = BatchResultDTO.fail(id, id, "模具档案不存在, 更新备注失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(updateResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 撤销
     * @author jack
     * @date:  2025-10-10

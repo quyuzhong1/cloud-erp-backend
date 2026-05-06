@@ -26,7 +26,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.entity.AttachmentEntity;
+import com.erp.model.scm.entity.ScmAttachmentEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ContractInfoStatusEnum;
@@ -194,14 +194,14 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     }
 
     private void batchSaveAttachment(List<String> attachmentUrlList, List<String> attachmentNameList, ContractInfoEntity contractInfoEntity) {
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>();
+        List<ScmAttachmentEntity> batchAttachmentList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<ContractInfoEntity> clazz = ContractInfoEntity.class;
             TableName tableName = clazz.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity attachment = new AttachmentEntity();
+                ScmAttachmentEntity attachment = new ScmAttachmentEntity();
                 attachment.setAttachUrl(attachmentUrlList.get(i));
                 attachment.setAttachName(attachmentNameList.get(i));
                 attachment.setBusinessId(contractInfoEntity.getId());

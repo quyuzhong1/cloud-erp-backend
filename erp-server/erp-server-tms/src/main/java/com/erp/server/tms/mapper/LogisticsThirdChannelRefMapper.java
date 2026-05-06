@@ -32,4 +32,26 @@ public interface LogisticsThirdChannelRefMapper extends BaseMapper<LogisticsThir
     IPage<LogisticsThirdChannelRefDTO.PagingVO> paging(Page<Object> query, LogisticsThirdChannelRefDTO.PagingParamDTO params);
 
     List<LogisticsThirdChannelRefDTO.PagingVO> listByPlatform(@Param("platformType") String platformType);
+
+    /**
+     * 根据物流渠道id获取已启用查询配置
+     */
+    List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(@Param("channelId") String channelId);
+
+    List<LogisticsThirdChannelRefEntity> existRefBySalePlatform(@Param("salePlatform") String salePlatform, @Param("channelId")String channelId,@Param("logisticsSupplierId") String logisticsSupplierId);
+
+    /**
+     * 根据销售平台、物流渠道、物流商获取轨迹查询方式
+     */
+    String getTrackQueryModeBySalePlatform(@Param("salePlatform") String salePlatform, @Param("channelId") String channelId, @Param("logisticsSupplierId") String logisticsSupplierId);
+
+    /**
+     * 根据单号批量查询轨迹配置信息
+     *
+     * @param trackNos 单号列表
+     * @return 配置映射列表
+     * @author jack
+     * @date 2026-04-02
+     */
+    List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(@Param("trackNos") List<String> trackNos);
 }

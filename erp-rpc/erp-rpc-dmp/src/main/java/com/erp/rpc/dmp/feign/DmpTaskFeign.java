@@ -253,6 +253,9 @@ public interface DmpTaskFeign {
     @PostMapping("feign/dmp/allAddOrUpdateTaskAndSchedule")
     void allAddOrUpdateTaskAndSchedule(@RequestBody @Valid PlatformTaskDTO.DisabledDTO disabledDTO);
 
+    @PostMapping("feign/dmp/batchAddOrUpdateTasksAndSchedules")
+    void batchAddOrUpdateTasksAndSchedules(@RequestBody @Valid List<PlatformTaskDTO.DisabledDTO> disabledDTOS);
+
     /**
      * 获取飞书预警信息需要推送的(PushTask任务记录)
      * @return

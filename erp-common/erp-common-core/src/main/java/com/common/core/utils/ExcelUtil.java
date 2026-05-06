@@ -37,6 +37,7 @@ import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.common.core.enums.ApiError.FILE_EXCEL_PARSING_FIELD_EXCEPTION;
@@ -731,6 +732,9 @@ public class ExcelUtil {
             File tempDirectory = FileUtils.getTempDirectory();
             File filePath = new File(tempDirectory,"template"+ LocalDate.now() +".xlsx");
             File tempFile = File.createTempFile(fileName, ".xlsx");
+            if (!filePath.exists()) {
+                EasyExcel.write(filePath).sheet(fileName).doWrite(new ArrayList<>());
+            }
             if (list2.size() > BATCH_COUNT){
                 List<List<List<String>>> partition = ListUtil.partition(list2, BATCH_COUNT);
                 // 初始化写入器（append模式）

@@ -21,6 +21,11 @@ import java.util.List;
 public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
 
     /**
+     * 订单类型，B2B/B2C
+     */
+    private String orderType;
+
+    /**
      * 订单号，根据订单匹配B2B三方发货单更新
      */
     private String platformOrderCode;
@@ -45,26 +50,59 @@ public class ThirdWarehouseQueryFbaOutboundResponse extends ThirdWarehouseAuth{
      * 2023-05-29 16:48:07
      */
     private String deliveryTimeStr;
+
     /**
-     * 以下状态B2B三方发货单状态不作变更
-     * NEW：草稿
-     * SUBMIT：已提交
-     * PROCESSED：出库中
-     * WAIT_UPLOAD：待上传
-     * UPLOADED：已上传
-     * BLOCK：订单拦截中
-     * DISCARD_PROCESSED：作废中
-     *
-     * 以下状态自动变更为取消发货，有拦截标识时清空拦截标识，记录拦截成功
-     * EXCEPTION：出库异常
-     * DISCARD：已作废
-     * PROBLEM：问题件
-     *
-     * 以下状态自动变更为已发货，并自动生成销售出库单自动审核
-     * SUCCESS：已出库
+     * 平台创建时间
+     */
+    private String platformCreateTimeStr;
+
+    /**
+     * 平台修改时间
+     */
+    private String platformUpdateTimeStr;
+    /**
+     * ERP标准状态，供WMS内部业务流转使用
      */
     private String status;
 
+    /**
+     * 海外仓原始状态，供DMP落原始状态使用
+     */
+    private String platformOriginalStatus;
 
+    /**
+     * zhongbao 海外仓出库异常时，记录异常原型到操作日志
+     */
+    private String errorReason;
+
+    /**
+     * 平台：zhongbao用作判断订单状态是否需要解析数据
+     */
+    private String platform;
+
+    /**
+     * 平台订单号
+     */
+    private String swOrderNumber;
+
+    /**
+     * 仓库代码
+     */
+    private String warehouseCode;
+
+    /**
+     * 运输方式
+     */
+    private String shippingMethod;
+
+    /**
+     * 承运商
+     */
+    private String carrierName;
+
+    /**
+     * 拦截状态
+     */
+    private String interceptStatus;
 
 }

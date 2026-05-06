@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.business.constant.RedisCacheConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -122,7 +123,7 @@ public class DmpOutputUtils{
 	        
 	        boolean isSend = true;
 	        if(StringUtils.isNotBlank(message) && message.contains("旺店通出库") && message.contains("msg=库存不足")) {
-	        	String redisKey = "wdt:error:code:" + code;
+	        	String redisKey = RedisCacheConstants.WDT_ERROR_CODE_KEY + code;
 	        	Object object = redisUtil.get(redisKey);
 	        	
 	        	if(object == null) {
@@ -147,14 +148,14 @@ public class DmpOutputUtils{
 		return update;
 	}
 	
-	public void outputErrorCountMsg() {
+	public void outputErrorCountMsg(String conditionSql) {
 		WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName("预警消息");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
         warnMsgInfo.setTitle("今天之前中台各业务推送失败数量汇总");
         warnMsgInfo.setTableName("dmp_output_task_record");
         warnMsgInfo.setTableId("无");
-        List<String> outputErrorCountMsg = dmpOutputTaskRecordService.outputErrorCountMsg();
+        List<String> outputErrorCountMsg = dmpOutputTaskRecordService.outputErrorCountMsg(conditionSql);
         if(CollUtil.isEmpty(outputErrorCountMsg)) {
         	warnMsgInfo.setKeyInfo("无推送失败数据");
         }else {

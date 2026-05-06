@@ -9,9 +9,9 @@ import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.excel.DmpAfterSaleExcelDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
-
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -178,4 +178,6 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto);
 
     BatchResultDTO invalidByCode(String code);
+
+    Map<String, String> listCsAgent(AfterSaleDTO.ListCsAgentDTO dto);
 }

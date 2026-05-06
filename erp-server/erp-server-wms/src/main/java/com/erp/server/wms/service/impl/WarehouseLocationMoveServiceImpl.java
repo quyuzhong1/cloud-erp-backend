@@ -30,6 +30,7 @@ import com.common.core.utils.*;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -607,10 +608,16 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if(mappingList.isEmpty()){
             return;
         }
+        //需要跳过的仓库id集合
+        List<String> skipWarehouseIds = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).collect(Collectors.toList());
         //同步旺店通 审核{调入仓位做其他入库单，调出仓位做其他出库单}，反审核{调入仓位做其他出库单，调出仓位做其他入库单}
         List<CreateOtherStockoutRequest.GoodsList> outgoodsList = new ArrayList<>();
         List<CreateOtherStockinRequest.GoodsList> ingoodsList = new ArrayList<>();
         for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
+            if (CollUtil.isNotEmpty(skipWarehouseIds) && skipWarehouseIds.contains(detailEntity.getWarehouseId())){
+                log.warn("仓位移动单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), detailEntity.getWarehouseId());
+                continue;
+            }
             CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
             outGoods.setSpecNo(detailEntity.getSkuNo());
             outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));

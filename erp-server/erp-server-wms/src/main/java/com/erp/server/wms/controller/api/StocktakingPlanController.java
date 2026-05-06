@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
@@ -12,19 +11,16 @@ import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.server.wms.query.StocktakingPlanQueryHandler;
 import com.erp.server.wms.service.StocktakingPlanService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -214,7 +210,7 @@ public class StocktakingPlanController extends BaseController {
                 }
                 approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 // 删除盘点锁定的库存
-                redisUtil.keys(CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                redisUtil.keys(CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
             }
             resultDTOS.add(approveResult);
@@ -244,7 +240,7 @@ public class StocktakingPlanController extends BaseController {
             try {
                 disApproveResult = stocktakingPlanService.disApprove(id);
                 // 删除盘点锁定的库存
-                redisUtil.keys(CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                redisUtil.keys(CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
             }catch (Exception e){
                 log.error("盘点计划反审核失败",e);
@@ -347,6 +343,17 @@ public class StocktakingPlanController extends BaseController {
             keyIdName = "id")
     public ApiResult<StocktakingPlanDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(stocktakingPlanService.view(id));
+    }
+
+    /**
+     * 下推盘点任务
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pushStocktakingTask")
+    public ApiResult<?> pushStockingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        boolean flag = stocktakingPlanService.pushStockingTask(dto);
+        return flag == true ? success() : failure();
     }
 
 

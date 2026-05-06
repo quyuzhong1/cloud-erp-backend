@@ -854,4 +854,17 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> listByApprovePropertyNotAsset(List<String> skuNos);
 
     PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
+
+    ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
+
+    void sendSinglePushTask (ProductDetailEntity entity, String operate);
+    /**
+     * 根据skuid 集合获取到sku采购信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2024-04-25 12:06
+     */
+    List<SkuVO> listSkuPurchaseBySkuNos(List<String> skuNos);
 }

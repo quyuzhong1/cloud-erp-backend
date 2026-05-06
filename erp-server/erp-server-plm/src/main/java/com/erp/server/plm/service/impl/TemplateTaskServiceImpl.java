@@ -679,6 +679,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     public void setTaskChargeDistribution(List<TaskChargeDistributionEntity> taskChargeDistributionList, List<String> ids, String templateId, String taskId, Integer source) {
 
         if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
+            //查询对应负责人的上级
+            List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
             //根据分配类型查询模板中的数据
             for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                 if (StringUtils.isBlank(taskChargeDistributionEntity.getCharges())) {
@@ -700,8 +702,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 }
                 //按上级
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(ids)) {
-                    //查询对应负责人的上级
-                    List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
                     if (CollectionUtils.isEmpty(userSuperiorDTOS)) {
                         continue;
                     }

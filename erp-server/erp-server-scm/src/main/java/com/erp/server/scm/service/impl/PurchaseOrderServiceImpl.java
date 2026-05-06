@@ -629,10 +629,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.PO_PUSH_DOWN_CHANGE_EXISTS);
         }
 
-        //验证与没有下推送货单
+        //验证有没有下推送货单
         List<DeliveryOrderDetailEntity> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailByDetailSourceIds(podIds);
         if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
             throw new ServiceException(ApiError.PO_PUSH_DOWN_DELIVERY_EXISTS);
+        }
+        //验证有没有下推质检申请单
+        List<QcApplicationEntity> qcApplicationList = FeignQuery.create(QcApplicationEntity.class).eq(QcApplicationEntity::getSourceId, entity.getId()).list();
+        if (CollectionUtils.isNotEmpty(qcApplicationList)) {
+            String qcApplicationCodes = qcApplicationList.stream().map(QcApplicationEntity::getCode).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.PO_PUSH_DOWN_QC_APPLICATION_EXISTS,qcApplicationCodes);
         }
 
         //送货中、已完成、已关闭不能反审核,但是上面验证了下推收货单据则只需要验证已关闭即可
@@ -1467,13 +1473,25 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     && e.getWarehouseId().equals(item.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseLocationEntity());
             item.setWarehouseLocationName(warehouseLocationEntity.getName());
             //相同采购单号清空后面数据的采购单号和供应商
-            List<String> poIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
-            boolean contains = poIds.contains(item.getPurchaseOrderId());
-            if (contains) {
-                item.setPurchaseOrderCode(null);
-                item.setSupplierName(null);
-                continue;
+            List<String> poIds = list.stream()
+                    .map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId)
+                    .collect(Collectors.toList());
+
+            Map<String, Long> poIdCountMap = poIds.stream()
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+            if (poIdCountMap.getOrDefault(item.getPurchaseOrderId(), 0L) > 1) {
+                // 检查是否是第一次出现
+                long firstIndex = poIds.indexOf(item.getPurchaseOrderId());
+                long currentIndex = list.indexOf(item);
+
+                // 如果不是第一次出现，则清空采购单号和供应商信息
+                if (currentIndex > firstIndex) {
+                    item.setPurchaseOrderCode(null);
+                    item.setSupplierName(null);
+                }
             }
+
         }
 
         return list;
@@ -4060,5 +4078,34 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //单价是否一致
             adjustListDTO.setIsSameName(adjustListDTO.getIsSame() ? "一致" : "不一致");
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addQcGoodQty(List<PurchaseOrderDTO.QcQtyDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return false;
+        }
+        //dtoList 根据purchaseOrderDetailId 汇总qcGoodQty之和
+        Map<String, Integer> qcGoodQtyMap = dtoList.stream()
+                .filter(e -> Objects.nonNull(e.getQcGoodQty()) && e.getQcGoodQty() != 0)
+                .collect(Collectors.groupingBy(
+                        PurchaseOrderDTO.QcQtyDTO::getPurchaseOrderDetailId,
+                        Collectors.summingInt(PurchaseOrderDTO.QcQtyDTO::getQcGoodQty)
+                ));
+        // 构建汇总后的列表
+        List<PurchaseOrderDTO.QcQtyDTO> aggregatedList = qcGoodQtyMap.entrySet().stream()
+                .map(entry -> {
+                    PurchaseOrderDTO.QcQtyDTO dto = new PurchaseOrderDTO.QcQtyDTO();
+                    dto.setPurchaseOrderDetailId(entry.getKey());
+                    dto.setQcGoodQty(entry.getValue());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        for (PurchaseOrderDTO.QcQtyDTO dto : aggregatedList) {
+            baseMapper.addQcGoodQty(dto);
+        }
+        return true;
     }
 }

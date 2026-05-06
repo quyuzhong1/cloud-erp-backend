@@ -548,7 +548,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //匹配中转规则
         matchTransferRule(soDeliveryNoticeEntity,soInfoEntity);
         this.save(soDeliveryNoticeEntity);
-        soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
+        soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId(),soInfoEntity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
         //生成装箱任务

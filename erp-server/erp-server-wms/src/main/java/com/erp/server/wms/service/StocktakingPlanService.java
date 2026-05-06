@@ -13,6 +13,7 @@ import com.erp.model.wms.enums.StocktakingStatusEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -157,4 +158,22 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
      */
     void updateForStocktakingStatus(String sourceId, StocktakingStatusEnum stocktakingStatusEnum);
 
+    /**
+     * 下推盘点任务
+     * @param dto
+     * @return
+     */
+    Boolean pushStockingTask(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * xxljob下推盘点任务
+     * @param dto
+     * @return
+     */
+    Boolean pushStockingTaskByJob(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 过滤不能下推的盘点任务
+     */
+    Map<String, String> filterStocktakingPlan(List<String> idList);
 }

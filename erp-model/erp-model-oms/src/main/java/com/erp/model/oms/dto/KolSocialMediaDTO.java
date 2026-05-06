@@ -47,6 +47,11 @@ public class KolSocialMediaDTO implements Serializable {
          */
         private String permissionSql;
 
+        /**
+         * 正文内容
+         */
+        private String content;
+
     }
 
     /**
@@ -117,6 +122,11 @@ public class KolSocialMediaDTO implements Serializable {
         private String title;
 
         /**
+         * 正文内容
+         */
+        private String content;
+
+        /**
         * 入库时间，毫秒时间戳
         */
         private Long insertTimestamp;
@@ -152,9 +162,19 @@ public class KolSocialMediaDTO implements Serializable {
         private Long likeCount;
 
         /**
+        * 收藏量
+        */
+        private Long collectCount;
+
+        /**
         * 转发量
         */
         private Long repostCount;
+
+        /**
+        * 投币量
+        */
+        private Long coinCount;
 
         /**
         * 唯一键
@@ -242,6 +262,11 @@ public class KolSocialMediaDTO implements Serializable {
         private String title;
 
         /**
+         * 正文内容
+         */
+        private String content;
+
+        /**
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
         */
         private Long insertTimestamp;
@@ -277,9 +302,19 @@ public class KolSocialMediaDTO implements Serializable {
         private Long likeCount;
 
         /**
+        * 收藏量
+        */
+        private Long collectCount;
+
+        /**
         * 转发量
         */
         private Long repostCount;
+
+        /**
+        * 投币量
+        */
+        private Long coinCount;
 
         /**
         * 唯一键，用于去重覆盖（对应第三方unique）。云听系统可能因模型优化等原因重跑数据，同一条数据的字段可能更新。此类变更不会影响unique值，但会更新insertTimestamp入库时间，因此，请始终以最新拉取的数据为准，按unique主键进行幂等性写入，覆盖本地旧数据
@@ -409,6 +444,11 @@ public class KolSocialMediaDTO implements Serializable {
         private String title;
 
         /**
+         * 正文内容
+         */
+        private String content;
+
+        /**
         * 入库时间，毫秒时间戳（对应第三方insertTimestamp）
         */
         private Long insertTimestamp;
@@ -444,9 +484,19 @@ public class KolSocialMediaDTO implements Serializable {
         private Long likeCount;
 
         /**
+        * 收藏量
+        */
+        private Long collectCount;
+
+        /**
         * 转发量
         */
         private Long repostCount;
+
+        /**
+        * 投币量
+        */
+        private Long coinCount;
 
         /**
         * 唯一键，用于去重覆盖（对应第三方unique）。云听系统可能因模型优化等原因重跑数据，同一条数据的字段可能更新。此类变更不会影响unique值，但会更新insertTimestamp入库时间，因此，请始终以最新拉取的数据为准，按unique主键进行幂等性写入，覆盖本地旧数据

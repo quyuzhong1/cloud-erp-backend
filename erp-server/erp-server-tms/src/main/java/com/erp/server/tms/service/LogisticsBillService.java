@@ -38,7 +38,7 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     * @param dto
     * @return
     */
-    Boolean add(LogisticsBillDTO.AddDTO dto);
+    LogisticsBillEntity add(LogisticsBillDTO.AddDTO dto);
 
     /**
     * 修改
@@ -48,6 +48,14 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     * @return
     */
     Boolean update(LogisticsBillDTO.UpdateDTO dto);
+    /**
+     * 导入批量新增
+     * @Author Luo_WG
+     * @Date 2023/11/9 18:03
+     * @param addDTOList
+     * @return java.lang.Boolean
+     **/
+    Boolean batchImportAdd(List<LogisticsBillEntity> addDTOList);
 
     /**
      * 根据来源id查询物流单
@@ -307,4 +315,22 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillVo>
      */
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData( List<String> platformCodeList, List<String> soCodeList, List<String> soDeliveryCodeList, List<String> trackNoList);
+    /**
+     * 根据唯一键查询物流单信息
+     * @author will
+     * @date 2026/1/22 15:03
+     * @param paramMap
+     * @return List<LogisticsBillVo>
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap);
+    /**
+     * 更新是否需要分配
+     * @author will
+     * @date 2026/1/30 18:06
+     * @param id
+     * @param isAllocateRequired
+     * @param notAllocateRemark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateIsAllocateRequired(String id,Boolean isAllocateRequired, String notAllocateRemark);
 }

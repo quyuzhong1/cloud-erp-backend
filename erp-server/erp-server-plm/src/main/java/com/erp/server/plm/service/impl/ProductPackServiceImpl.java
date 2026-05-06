@@ -225,6 +225,72 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     }
 
     @Override
+    public List<ProductVO.ProductPackVO> getBySkuNos(List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        //报关属性
+        List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
+        List<ProductDetailEntity> productDetailList = productDetailService.listBySkuNoList(skuNos);
+        List<String> skuIds = productDetailList.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<ProductPackEntity> list = this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
+        //产品详情信息
+        List<SkuVO> productDetails = productDetailService.listSkuPackByIds(skuIds);
+
+        List<ProductVO.ProductPackVO> resultList = new ArrayList<>(list.size());
+        for (ProductPackEntity item : list) {
+            String skuId = item.getSkuId();
+            ProductVO.ProductPackVO packVO = new ProductVO.ProductPackVO();
+            //产品毛重
+            packVO.setProductGrossWeight(item.getGrossWeight());
+            packVO.setBoxQty(item.getBoxQty());
+            //长
+            packVO.setProductLength(LengthConverterUtil.mmToCm(item.getProductLength()));
+            //宽
+            packVO.setProductWidth(LengthConverterUtil.mmToCm(item.getProductWidth()));
+            //高
+            packVO.setProductHeight(LengthConverterUtil.mmToCm(item.getProductHeight()));
+            //长
+            packVO.setBoxLength(LengthConverterUtil.mmToCm(item.getBoxLength()));
+            //宽
+            packVO.setBoxWidth(LengthConverterUtil.mmToCm(item.getBoxWidth()));
+            //高
+            packVO.setBoxHeight(LengthConverterUtil.mmToCm(item.getBoxHeight()));
+            //外箱重量
+            BigDecimal boxWeight = item.getBoxWeight();
+            if (boxWeight != null) {
+                packVO.setBoxWeight(boxWeight);
+            }
+            //产品重量
+            BigDecimal netWeight = item.getNetWeight();
+            if (netWeight != null) {
+                packVO.setProductNetWeight(netWeight);
+            }
+            SkuVO detail = productDetails.stream().filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (detail != null) {
+                packVO.setProductName(detail.getSkuName());
+                packVO.setVariantProperty(detail.getVariantProperty());
+                String skuImagesUrl = detail.getSkuImagesUrl();
+                packVO.setEan(detail.getEan());
+                if (StringUtils.isNotBlank(skuImagesUrl)) {
+                    packVO.setSkuImageUrlList(Arrays.asList(skuImagesUrl.split(",")));
+                }
+                packVO.setMaterials(detail.getMaterials());
+                //产品属性
+                String ProductProperty = dictList.stream().filter(d -> d.getId().equals(detail.getProductPropertyId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
+                packVO.setLogisticsProductProperty(ProductProperty);
+                packVO.setFunctionDesc(detail.getFunctionDesc());
+                packVO.setProductGrade(detail.getProductGrade());
+                packVO.setSkuNo(detail.getSkuNo());
+            }
+            packVO.setSkuId(skuId);
+            resultList.add(packVO);
+        }
+        return resultList;
+    }
+
+    @Override
     public List<ProductPackEntity> findBySkuIds(List<String> skuIds) {
         return this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
     }

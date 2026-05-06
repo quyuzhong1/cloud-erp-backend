@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -19,6 +20,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
@@ -41,6 +43,10 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
+    private static final String TIKTOK_SHIPPING_TYPE_SELLER = "SELLER";
+    private static final String TIKTOK_FULFILLMENT_BY_TIKTOK = "FULFILLMENT_BY_TIKTOK";
+    private static final String TIKTOK_FULFILLMENT_BY_SELLER = "FULFILLMENT_BY_SELLER";
+
     @Resource
     private DmpSoInfoService dmpSoInfoService;
     @Resource
@@ -89,8 +95,8 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 dmpDataMap.put("shopId", list.get(0).getNextLevelId());
                 //销售平台
                 Object statusObj = dmpDataMap.get("platformOriginalStatus");
+                String status = statusObj == null ? "" : String.valueOf(statusObj);
                 if (statusObj != null) {
-                    String status = String.valueOf(statusObj);
                     if ("ON_HOLD".equalsIgnoreCase(status)) {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
@@ -128,37 +134,69 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     }
                 }
                 Map<String, Object> lableMap = new HashMap<>();
-                Object shippingTypeObj = dmpDataMap.get("logisticType");
-                if (shippingTypeObj != null) {
-                    String shippingType = String.valueOf(shippingTypeObj);
+                if (statusObj != null) {
                     lableMap.put("tikTokStatus", statusObj.toString());
-                    //自发货(shipping_type=SELLER)	中转仓（shipping_type=TIKTOK）
-                    lableMap.put("shippingType", shippingType);
-
-                    //渠道Id
-                    Object shippingProviderIdObj = dmpDataMap.get("shippingProviderId");
-                    if (shippingProviderIdObj != null) {
-                        String shippingProviderId = String.valueOf(shippingProviderIdObj);
-                        dmpDataMap.put("logisticsChannelId", "SELLER".equalsIgnoreCase(shippingType) ? "" : shippingProviderId);
-                    }
-
-                    //渠道名称
-                    Object shippingProviderObj = dmpDataMap.get("shippingProvider");
-                    if (shippingProviderObj != null) {
-                        String shippingProvider = String.valueOf(shippingProviderObj);
-                        dmpDataMap.put("logisticsChannelName", "SELLER".equalsIgnoreCase(shippingType) ? "" : shippingProvider);
-                    }
                 }
 
+                String fulfillmentType = getStringValue(dmpDataMap, "fulfillmentType", "fulfillment_type");
+                String rawLogisticType = getStringValue(dmpDataMap, "logisticType");
+                String shippingType = getStringValue(dmpDataMap, "shippingType", "shipping_type", "logisticType");
+                boolean isPlatformWarehouseOrder = isTikTokPlatformWarehouseOrder(fulfillmentType);
+                boolean hasDeliveryType = StringUtils.isNotBlank(fulfillmentType) || StringUtils.isNotBlank(shippingType);
+                String normalizedLogisticType = normalizeTikTokLogisticType(fulfillmentType, shippingType, rawLogisticType);
+                if (StringUtils.isNotBlank(fulfillmentType)) {
+                    lableMap.put("fulfillmentType", fulfillmentType);
+                }
+                if (StringUtils.isNotBlank(shippingType)) {
+                    lableMap.put("shippingType", shippingType);
+                }
+                lableMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
+                dmpDataMap.put("logisticType", normalizedLogisticType);
+                normalizeTikTokPlatformWarehouseStatus(dmpDataMap, status, isPlatformWarehouseOrder);
+
+                //渠道Id
+                Object shippingProviderIdObj = dmpDataMap.get("shippingProviderId");
+                if (shippingProviderIdObj != null && hasDeliveryType) {
+                    String shippingProviderId = String.valueOf(shippingProviderIdObj);
+                    dmpDataMap.put("logisticsChannelId", isSelfDeliveryOrder(fulfillmentType, shippingType) ? "" : shippingProviderId);
+                }
+
+                //渠道名称
+                Object shippingProviderObj = dmpDataMap.get("shippingProvider");
+                if (shippingProviderObj != null && hasDeliveryType) {
+                    String shippingProvider = String.valueOf(shippingProviderObj);
+                    dmpDataMap.put("logisticsChannelName", isSelfDeliveryOrder(fulfillmentType, shippingType) ? "" : shippingProvider);
+                }
+
+                Object orderTypeObj = dmpDataMap.get("orderType");
+                if (orderTypeObj != null) {
+                    String orderType = String.valueOf(orderTypeObj);
+                    if("BACK_ORDER".equals(orderType)){
+                        lableMap.put("orderType", "preOrder");
+                    }
+                }
                 // 是否明细退款
                 boolean hasRefundLineItems = false;
                 Object lineItemsObj = dmpDataMap.get("lineItems");
                 if (null != lineItemsObj){
                     // 存在退款的明细ID
                     Set<String> refundedLineItemIds = new HashSet<>();
-                    JSONArray jsonArray = JSONUtil.parseArray(lineItemsObj.toString());
+                    JSONArray jsonArray = null;
+                    if (lineItemsObj instanceof List){
+                        List lineItemsList = (List) lineItemsObj;
+                        jsonArray = JSONUtil.parseArray(lineItemsList);
+                    } else if (lineItemsObj instanceof JSONArray){
+                        jsonArray = (JSONArray) lineItemsObj;
+                    } else {
+                        jsonArray = JSONUtil.parseArray(lineItemsObj.toString());
+                    }
                     for (Object itemObj : jsonArray) {
-                        JSONObject itemJsonObj = JSONUtil.parseObj(itemObj);
+                        JSONObject itemJsonObj = null;
+                        if (itemObj instanceof JSONObject){
+                            itemJsonObj = JSONUtil.parseObj(itemObj);
+                        } else if (JSONUtil.isTypeJSON(itemJsonObj.toString())){
+                            itemJsonObj = JSONUtil.parseObj(itemObj.toString());
+                        }
                         String cancelUser = itemJsonObj.getStr("cancelUser");
                         if (StringUtils.isNotBlank(cancelUser)) {
                             String sourceFundedLineItemId = itemJsonObj.getStr("fid");
@@ -203,14 +241,18 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put("platformUpdateTime", payTime);
                 }
 
-                //发货时间
-                Object deliveryTimeObj = dmpDataMap.get("deliveryTime");
-                if (deliveryTimeObj != null) {
-                    if (Long.valueOf(deliveryTimeObj + "") > 0) {
-                        // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                        LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
-                        dmpDataMap.put("deliveryTime", payTime);
-                    }
+                // 发货时间:
+                // TikTok平台仓/FBT订单优先取 rts_time，保持后续销售出库单出库日期与平台履约时间口径一致。
+                Long deliveryEpochSeconds = isPlatformWarehouseOrder
+                        ? firstPositiveLongValue(dmpDataMap, "rtsTime", "rts_time", "deliveryTime", "delivery_time")
+                        : firstPositiveLongValue(dmpDataMap, "deliveryTime", "delivery_time", "rtsTime", "rts_time");
+                if (deliveryEpochSeconds != null) {
+                    LocalDateTime deliveryTime = LocalDateTime.ofInstant(
+                            Instant.ofEpochSecond(deliveryEpochSeconds),
+                            ZoneId.systemDefault());
+                    dmpDataMap.put("deliveryTime", deliveryTime);
+                } else {
+                    dmpDataMap.put("deliveryTime", null);
                 }
 
                 //支付信息
@@ -226,6 +268,89 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put("totalDiscount", MathUtil.valueOf(paymentMap.get("sellerDiscount")).add(MathUtil.valueOf(paymentMap.get("platformDiscount"))));
                 }
             }
+        }
+    }
+
+    private String getStringValue(Map<String, Object> dataMap, String... keys) {
+        if (dataMap == null || keys == null) {
+            return "";
+        }
+        for (String key : keys) {
+            Object value = dataMap.get(key);
+            if (value != null && StringUtils.isNotBlank(String.valueOf(value))) {
+                return String.valueOf(value);
+            }
+        }
+        return "";
+    }
+
+    private Long firstPositiveLongValue(Map<String, Object> dataMap, String... keys) {
+        if (dataMap == null || keys == null) {
+            return null;
+        }
+        for (String key : keys) {
+            Object value = dataMap.get(key);
+            if (value == null) {
+                continue;
+            }
+            String text = String.valueOf(value).trim();
+            if (StringUtils.isBlank(text)) {
+                continue;
+            }
+            try {
+                long parsed = Long.parseLong(text);
+                if (parsed > 0) {
+                    return parsed;
+                }
+            } catch (NumberFormatException ignore) {
+            }
+        }
+        return null;
+    }
+
+    private boolean isTikTokPlatformWarehouseOrder(String fulfillmentType) {
+        return TIKTOK_FULFILLMENT_BY_TIKTOK.equalsIgnoreCase(fulfillmentType);
+    }
+
+    private boolean isSelfDeliveryOrder(String fulfillmentType, String shippingType) {
+        return TIKTOK_FULFILLMENT_BY_SELLER.equalsIgnoreCase(fulfillmentType)
+                || TIKTOK_SHIPPING_TYPE_SELLER.equalsIgnoreCase(shippingType);
+    }
+
+    private String normalizeTikTokLogisticType(String fulfillmentType, String shippingType, String rawLogisticType) {
+        if (isTikTokPlatformWarehouseOrder(fulfillmentType)) {
+            return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+        }
+        if (isSelfDeliveryOrder(fulfillmentType, shippingType)) {
+            return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+        }
+        if (OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equalsIgnoreCase(rawLogisticType)
+                || OrderLogisticTypeEnum.SELF_SHIPMENT.getCode().equalsIgnoreCase(rawLogisticType)
+                || OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode().equalsIgnoreCase(rawLogisticType)) {
+            return rawLogisticType;
+        }
+        return "";
+    }
+
+    private void normalizeTikTokPlatformWarehouseStatus(TreeMap<String, Object> dmpDataMap, String status, boolean isPlatformWarehouseOrder) {
+        if (!isPlatformWarehouseOrder || StringUtils.isBlank(status)) {
+            return;
+        }
+        if ("ON_HOLD".equalsIgnoreCase(status)
+                || "AWAITING_SHIPMENT".equalsIgnoreCase(status)
+                || "AWAITING_COLLECTION".equalsIgnoreCase(status)
+                || "PARTIALLY_SHIPPING".equalsIgnoreCase(status)) {
+            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            dmpDataMap.put("invalidStatus", Boolean.FALSE);
+            return;
+        }
+        if ("IN_TRANSIT".equalsIgnoreCase(status)
+                || "DELIVERED".equalsIgnoreCase(status)
+                || "COMPLETED".equalsIgnoreCase(status)) {
+            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+            dmpDataMap.put("invalidStatus", Boolean.FALSE);
         }
     }
 }

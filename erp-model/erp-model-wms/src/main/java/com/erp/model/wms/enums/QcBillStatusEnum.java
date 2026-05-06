@@ -3,6 +3,9 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Objects;
 
 /**
  * 质检单状态枚举
@@ -50,14 +53,25 @@ public enum QcBillStatusEnum implements EnumMessage {
     }
 
     public static QcBillStatusEnum getByCode(String code) {
-
-        QcBillStatusEnum[] eumnList = QcBillStatusEnum.values();
-        for (QcBillStatusEnum item : eumnList) {
-            if (code.equals(item.getCode())) {
-                return item;
+        if (StringUtils.isNotBlank(code)) {
+            QcBillStatusEnum[] eumnList = QcBillStatusEnum.values();
+            for (QcBillStatusEnum item : eumnList) {
+                if (code.equals(item.getCode())) {
+                    return item;
+                }
             }
         }
         return null;
     }
 
+    public static String getNameByCode(String code) {
+
+        QcBillStatusEnum[] eumnList = QcBillStatusEnum.values();
+        for (QcBillStatusEnum item : eumnList) {
+            if (item.getCode().equals(code)) {
+                return item.getName();
+            }
+        }
+        return "";
+    }
 }

@@ -1,199 +1,180 @@
 package com.erp.server.plm.controller.api;
 
-import cn.hutool.core.util.ObjectUtil;
+
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
+import com.erp.server.plm.query.ProductChangeQueryHandler;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
+import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.exception.ServiceException;
-import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.vo.ProductChangePagingVO;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.server.plm.constant.BomConstant;
-import com.erp.server.plm.query.ProductChangeHandler;
-import com.erp.server.plm.service.BomInfoService;
-import com.erp.server.plm.service.ProductChangeService;
-import com.erp.server.plm.service.ProductDetailService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.context.annotation.ScopedProxyMode;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.common.core.controller.BaseController;
+import com.erp.server.plm.service.ProductChangeService;
+import com.common.core.controller.vo.ApiResult;
+import com.common.business.vo.PagingVO;
+import com.common.business.dto.base.*;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.plm.dto.ProductChangeDTO;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
+import java.util.stream.Collectors;
+import com.erp.model.plm.entity.ProductChangeEntity;
 
 /**
- * 变更管理
+ * 产品变更信息表
  *
- * @author yl
- * @since 2023-01-11 14:05:03
+ * @author lrp
+ * @since 2026-02-03
  */
-@RestController
-@LogSystemModule("BOM管理")
-@RequestMapping("change")
-@RefreshScope(proxyMode = ScopedProxyMode.DEFAULT)
 @Slf4j
+@RestController
+@LogSystemModule("产品变更信息表")
+@RequestMapping("/productChange")
 public class ProductChangeController extends BaseController {
-
 
     @Resource
     private ProductChangeService productChangeService;
 
-    @Resource
-    private BomInfoService bomInfoService;
-
-    @Resource
-    private ProductDetailService productDetailService;
-
     /**
-     * 添加变更
-     *
-     * @param dto
-     * @return
-     */
-    @LogAction(value = LogActionEnum.INSERT, desc = "添加变更")
+    * 新增
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<String>
+    */
     @PostMapping("/add")
-    public ApiResult<Object> add(@RequestBody @Validated AddChangeDTO dto) {
-        Boolean result = productChangeService.add(dto);
-        return result == true ? success() : failure();
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品变更信息表新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ProductChangeDTO.AddDTO dto) {
+        return success(productChangeService.add(dto));
     }
 
-
     /**
-     * 编辑变更
-     *
-     * @param dto
-     * @return
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新变更:id={id},数据源id={源数据id},变更类型={type}")
+    * 修改
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult
+    */
     @PostMapping("/update")
-    public ApiResult<Object> update(@RequestBody @Validated UpdateChangeDTO dto) {
-        Boolean result = productChangeService.edit(dto);
-        return result == true ? success() : failure();
+    @LogAction(value = LogActionEnum.UPDATE, desc = "产品变更信息表修改")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "plm:productChange:update",
+        serviceClass = ProductChangeService.class,
+        keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated ProductChangeDTO.UpdateDTO dto) {
+        productChangeService.update(dto);
+        return success();
     }
 
 
     /**
-     * 变更分页展示
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/paging")
-    @WebAdvanceQuery(handler = ProductChangeHandler.class)
-    public ApiResult<PagingVO<List<ProductChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
-        PagingVO<List<ProductChangePagingVO>> pagingVO = productChangeService.paging(dto);
-        return success(pagingVO);
-    }
-
-    /**
-     * 获取 tab列表
-     * @author Will
-     * @date: 2023/10/13 11:49
-     * @param dto
-     * @return ApiResult<List<TabListDTO>>
-     */
+    * 获取状态统计
+    * @return
+    */
     @PostMapping("/tabList")
-    public ApiResult<List<ProductChangePagingVO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<ProductChangePagingVO.TabListDTO> tabList = productChangeService.tabList(dto);
-        return success(tabList);
-    }
-
-
-    /**
-     * 变更详情
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/view")
-    public ApiResult<Object> details(@RequestBody @Validated BaseIdDTO dto) {
-
-        //获取到变更信息
-        ProductChangeEntity changeEntity = productChangeService.getById(dto.getId());
-        if (Objects.isNull(changeEntity)) {
-            throw new ServiceException(ApiError.COMMON_CHANGE_INFO_REQUIRED);
-        }
-        Object object = null;
-        String type = changeEntity.getType();
-        //对应就是bom
-        if (BomConstant.CHANGE_BOM.equals(type)) {
-            ProductBomChangeDTO bomChange = productChangeService.getBomDetails(changeEntity);
-            object = bomChange;
-        }
-        //对应sku
-        if (BomConstant.CHANGE_SKU.equals(type)) {
-            ProductChangeDTO skuChange = productChangeService.skuDetails(changeEntity);
-            object = skuChange;
-        }
-        if (object != null) {
-            return success(object);
-        }
-        return failure();
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:paging",
+            tableAlias = "pc"
+    )
+    public ApiResult<List<ProductChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+       return success(productChangeService.tabList(dto));
     }
 
     /**
-     * 作废
-     *
-     * @param dto
-     * @return
-     */
-    @LogAction(value = LogActionEnum.INVALID, desc = "作废变更")
-    @PostMapping("/cancellation")
-    public ApiResult<Object> cancellation(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = productChangeService.cancellation(dto.getId());
-        return result == true ? success() : failure();
+    * 列表查询
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return ApiResult<PagingVO<ProductChangeDTO.ListDTO>>
+    */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:paging",
+            tableAlias = "pc"
+    )
+    @WebAdvanceQuery(handler = ProductChangeQueryHandler.class)
+    public ApiResult<PagingVO<ProductChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto) {
+        return success(productChangeService.paging(dto));
     }
 
     /**
-     * 获取变更的信息
-     *
-     * @param
-     * @return
-     */
-    @PostMapping("/list")
-    public ApiResult<List<ChangeInfoDTO>> list(@RequestBody @Validated ProductChangeListSearchDTO dto) {
-        List<ChangeInfoDTO> list = productChangeService.getChangeByType(dto.getType(), dto.getSearchKeyword());
-        return success(list);
+    * 新增并提交审核
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<Void>
+    */
+    @PostMapping("/addAndSubmit")
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated ProductChangeDTO.AddDTO dto) {
+        BaseResultDTO.AddDTO result = productChangeService.addAndSubmit(dto);
+        return success(result);
     }
 
     /**
-     * 提交审核
-     * @author will
-     * @date:  2024-01-08
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
+    * 修改并提交审核
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<Void>
+    */
+    @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:updateAndSubmit",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "id")
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated ProductChangeDTO.UpdateDTO dto) {
+        productChangeService.updateAndSubmit(dto);
+        return success();
+    }
+
+    /**
+    * 提交审核
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
     @PostMapping("/submit")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "产品变更单提交审核")
-    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:submit",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "产品变更信息表提交审核")
+    public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = productChangeService.submit(id,Boolean.TRUE);
+                submit = productChangeService.submit(id);
             }catch (Exception e){
-                log.error("产品变更单 提交审核失败",e);
-                ProductChangeEntity entity = productChangeService.getById(id);
+                log.error("产品变更信息单 提交审核失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "产品变更单不存在, 提交失败");
+                    submit = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 提交失败");
                     resultDTOS.add(submit);
                     continue;
                 }
-                submit = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
         }
@@ -201,30 +182,37 @@ public class ProductChangeController extends BaseController {
     }
 
     /**
-     * 审核
-     * @author will
-     * @date 2025/5/16 15:00
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
+    * 审核
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
     @PostMapping("/approve")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "变更单审核")
-    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:approve",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "产品变更信息表审核")
+    public ApiResult<List<BatchResultDTO>> batchApprove(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
                 approveResult = productChangeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
             }catch (Exception e){
-                log.error("变更单审核失败",e);
-                ProductChangeEntity entity = productChangeService.getById(id);
+                log.error("产品变更信息单审核失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "变更单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
         }
@@ -232,29 +220,151 @@ public class ProductChangeController extends BaseController {
     }
 
     /**
-     * 撤销流程
-     * @author will
-     * @date:  2025-05-16
+    * 反审核
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:disApprove",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "产品变更信息表反审核")
+    public ApiResult<List<BatchResultDTO>> batchDisApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO disApproveResult;
+            try {
+                disApproveResult = productChangeService.disApprove(id);
+            }catch (Exception e){
+                log.error("产品变更信息单反审核失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    disApproveResult = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 反审核失败");
+                    resultDTOS.add(disApproveResult);
+                    continue;
+                }
+                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(disApproveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+    * 删除
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:delete",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "产品变更信息表删除")
+    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+		List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+		Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = productChangeService.delete(id);
+            }catch (Exception e){
+                log.error("产品变更信息单删除失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 作废
+     * @author lrp
+     * @date:  2026-02-03
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:invalid",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "产品变更信息表作废")
+    public ApiResult<List<BatchResultDTO>> batchInvalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+        Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = productChangeService.invalid(idEntityMap.get(id),dto.getRemark());
+            }catch (Exception e){
+                log.error("产品变更信息单作废失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 作废失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+    * 撤销
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
     @PostMapping("/cancelProcess")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "变更撤销")
-    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:cancelProcess",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "产品变更信息表撤销")
+    public ApiResult<List<BatchResultDTO>> batchCancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ProductChangeEntity> list = productChangeService.lambdaQuery().in(ProductChangeEntity::getId, ids).list();
+        Map<String, ProductChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(ProductChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
                 cancelResult = productChangeService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
-                log.error("变更信息流程失败",e);
-                ProductChangeEntity entity = productChangeService.getById(id);
+                log.error("产品变更信息单撤回流程失败",e);
+                ProductChangeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "变更信息不存在, 撤回流程失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "产品变更信息单不存在, 撤回流程失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }
-                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(cancelResult);
         }
@@ -262,28 +372,81 @@ public class ProductChangeController extends BaseController {
     }
 
     /**
-     * 查询变更字段
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/listChangeField")
-    public ApiResult<List<String>> listChangeField(@RequestBody @Validated BaseIdDTO dto) {
-        List<String> list = productChangeService.listChangeField(dto.getId());
-        return success(list);
+    * 详情
+    * @author lrp
+    * @date:  2026-02-03
+    * @param id
+    * @return ApiResult<ProductChangeDTO.ViewDTO>>
+    */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:view",
+            serviceClass = ProductChangeService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<ProductChangeDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(productChangeService.view(id));
     }
-
 
     /**
-     * bom 审核情况
-     *
-     * @return
-     */
-    @PostMapping("/auditInfo")
-    public ApiResult<List<ApproveNodeRecordVO>> auditInfo(@RequestBody @Validated BaseIdDTO dto) {
-        List<ApproveNodeRecordVO> list=productChangeService.auditInfo(dto.getId());
-        return success(list);
+    * 导出Excel数据
+    * @author lrp
+    * @date:  2026-02-03
+    * @param dto
+    * @return
+    */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:productChange:export",
+            tableAlias = ""
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "产品变更信息表导出Excel数据")
+    public ApiResult<Boolean> exportList(@RequestBody @Validated ProductChangeDTO.PagingParamDTO dto) {
+        productChangeService.exportList(dto);
+        return success(true);
     }
 
-}
+    /**
+     * 下载导入模板
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        productChangeService.downloadTemplate(response);
+        return success();
+    }
 
+    /**
+     * 导入Excel数据
+     * @author wuht
+     * @date: 2025-10-11
+     * @param dto 导入参数
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/import")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "产品信息变更导入Excel数据")
+    public ApiResult<Boolean> importExcel(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        // 异步导入任务
+        productChangeService.importExcel(dto);
+        return success(true);
+    }
+
+    /**
+     * 批量新增
+     * @author lrp
+     * @date:  2026-02-03
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/batchAdd")
+    @LogAction(value = LogActionEnum.INSERT, desc = "产品变更信息表新增")
+    public ApiResult<BaseResultDTO.AddDTO> batchAdd(@RequestBody @Validated ProductChangeDTO.BatchAddDTO dto) {
+        return success(productChangeService.batchAdd(dto));
+    }
+
+    @PostMapping("/getProductChangeFieldEnum")
+    public ApiResult<List<ProductChangeDTO.ProductChangeFieldDTO>> getProductChangeFieldEnum() {
+        return success(productChangeService.getProductChangeFieldEnum());
+    }
+}

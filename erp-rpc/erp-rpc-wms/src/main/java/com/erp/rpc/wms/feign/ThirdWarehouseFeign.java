@@ -22,7 +22,7 @@ public interface ThirdWarehouseFeign {
      * @return 出库单号
      */
     @PostMapping("feign/thirdWarehouse/createOutboundOrder")
-    ApiResult<String> createOutboundOrder(@RequestBody ThirdWarehouseCreateOutboundReq createOutboundReq);
+    ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundOrder(@RequestBody ThirdWarehouseCreateOutboundReq createOutboundReq);
 
     /**
      * 取消海外仓出库单
@@ -38,7 +38,19 @@ public interface ThirdWarehouseFeign {
      * @return
      */
     @PostMapping("feign/thirdWarehouse/queryOutboundOrder")
-    ApiResult<String> queryOutboundOrder(@RequestBody ThirdWarehouseQueryOutboundReq queryOutboundReq);
+    ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundOrder(@RequestBody ThirdWarehouseQueryOutboundReq queryOutboundReq);
+
+    /**
+     * 批量查询海外仓B2B出库单
+     */
+    @PostMapping("feign/thirdWarehouse/queryFbaOutboundBill")
+    ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@RequestBody ThirdWarehouseQueryFbaOutboundReq queryOutboundReq);
+
+    /**
+     * 按时间分页查询海外仓B2B出库单
+     */
+    @PostMapping("feign/thirdWarehouse/queryFbaOutboundBillPage")
+    ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(@RequestBody ThirdWarehouseQueryFbaOutboundPageReq queryOutboundReq);
     /**
      * 运费试算
      * @param params

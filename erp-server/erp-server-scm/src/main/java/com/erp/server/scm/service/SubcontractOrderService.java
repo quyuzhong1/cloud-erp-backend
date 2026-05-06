@@ -8,10 +8,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -254,4 +257,10 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     List<SubcontractOrderEntity> listByCodes(List<String> list);
 
     void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+
+    List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto);
+
+    List<SubcontractOrderDTO.ListRateDTO> listRateBySupplier(List<SubcontractOrderDTO.ListRateParamDTO> dto);
+
+    SubcontractOrderEntity listSubcontractOrderByKingdeeId(String kingdeeId);
 }

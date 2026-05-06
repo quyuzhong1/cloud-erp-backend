@@ -1,0 +1,54 @@
+package com.erp.model.plm.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * 变更信息表(ProductChange)实体类
+ *
+ * @author yl
+ * @since 2023-01-11 12:26:20
+ */
+@Data
+@EqualsAndHashCode(callSuper = false)
+@TableName("bom_change")
+public class BomChangeEntity extends BaseEntity<BomChangeEntity> implements Serializable {
+    private static final long serialVersionUID = -79726809443887610L;
+
+    /**
+     * 类型 bom sku
+     */
+    private String type;
+
+    /**
+     * 源数据 如sku ，bom 表id
+     */
+    private String sourceId;
+
+    /**
+     * 来源编码，bom取编码，产品信息取skuNo
+     */
+    private String sourceCode;
+
+    /**
+     * 状态
+     */
+    private Integer state;
+
+    /**
+     * 备注
+     */
+    private String remark;
+
+    /**
+     * 审核完成时间
+     */
+    private LocalDateTime approvalFinishTime;
+
+}
+
