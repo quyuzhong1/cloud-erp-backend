@@ -48,6 +48,14 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     * @return
     */
     Boolean update(LogisticsBillDTO.UpdateDTO dto);
+    /**
+     * 导入批量新增
+     * @Author Luo_WG
+     * @Date 2023/11/9 18:03
+     * @param addDTOList
+     * @return java.lang.Boolean
+     **/
+    Boolean batchImportAdd(List<LogisticsBillEntity> addDTOList);
 
     /**
      * 根据来源id查询物流单

@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -56,4 +57,22 @@ public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWei
      * @return
      */
     List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(@Param("params") FirstMileWeightAllocationDTO.ViewProductWeightParamDTO params);
+
+    /**
+     * 游标分页查询可下推分摊的发货单ID
+     * @param params 查询参数（含lastId游标、batchSize批大小）
+     * @return 发货单ID列表
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageFirstMileDeliveryIds(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 统计可下推分摊的总条数
+     * @param params 查询参数
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    int countFirstMileDeliveryIds(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
 }

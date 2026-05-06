@@ -4,6 +4,7 @@ import com.common.business.enums.OverseasInstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
@@ -16,7 +17,8 @@ public enum ImlEnums {
     INCOME_TYPE("incomeType",IncomeTypeEnum.class),
     RECEIVING_STATUS("receivingStatus",ReceivingStatusEnum.class),
     CANCEL_STATUS("cancelStatus",CancelStatusEnum.class),
-    ORDER_STATUS("orderStatus",OrderStatusEnum.class),
+    ORDER_STATUS("orderStatus", OrderStatusEnum.class),
+    B2B_ORDER_STATUS("b2bOrderStatus", B2BOrderStatusEnum.class),
     ;
 
     private final String fieldName;
@@ -190,10 +192,52 @@ public enum ImlEnums {
         }
 
         public static String getName(String code){
-            return Arrays.stream(ImlEnums.OrderStatusEnum.values())
+            return Arrays.stream(OrderStatusEnum.values())
                     .filter(item -> code.equals(item.getCode()))
                     .findFirst()
-                    .map(ImlEnums.OrderStatusEnum::getName)
+                    .map(OrderStatusEnum::getName)
+                    .orElse(null);
+        }
+    }
+
+    /**
+     * 入库单状态
+     */
+    @Getter
+    public enum B2BOrderStatusEnum {
+        DRAFT("DRAFT","草稿", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        SUBMIT_ORDER("SUBMIT_ORDER","已建单", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        WAIT_OUTBOUND("WAIT_OUTBOUND","已下单", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        ASSIGNED_SUCCESS("ASSIGNED_SUCCESS","已分配", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        WAREHOUSE_OPERATION_SUCCESS("WAREHOUSE_OPERATION_SUCCESS","已作业", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        COMPLETE_OUTBOUND("COMPLETE_OUTBOUND","已出库", ThirdDeliveryStatusEnum.SHIPPED),
+        ORDER_FAIL("ORDER_FAIL","下单失败", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        EXCEPTION("EXCEPTION","异常", ThirdDeliveryStatusEnum.EXCEPTION_ORDER)
+        ;
+        private final String code;
+        private final String name;
+        private final ThirdDeliveryStatusEnum erpSoStatus;
+
+
+        B2BOrderStatusEnum(String code, String name, ThirdDeliveryStatusEnum erpsoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpsoStatus;
+        }
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getErpSoStatus)
+                    .map(ThirdDeliveryStatusEnum::getCode)
+                    .orElse("");
+        }
+
+        public static String getName(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getName)
                     .orElse(null);
         }
     }

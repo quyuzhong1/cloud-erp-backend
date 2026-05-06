@@ -461,7 +461,6 @@
     </select>
 
     <!-- 查询计费重合计 -->
-
     <select id="listTotalBillingWeightLogisticsCount" resultType="java.math.BigDecimal">
         select
             sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics

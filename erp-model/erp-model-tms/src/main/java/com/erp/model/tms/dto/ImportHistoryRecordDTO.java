@@ -4,8 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
-import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
-import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.entity.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -268,25 +267,14 @@ public class ImportHistoryRecordDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-     * 修改
-     */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class AddOrUpdateDTO extends CommonDTO {
 
         /**
          * 主键id
          */
-        @NotBlank(message = "主键id不能为空")
         private String id;
-
     }
+
 
     @Data
     @NoArgsConstructor
@@ -474,5 +462,71 @@ public class ImportHistoryRecordDTO implements Serializable {
             this.setImportType(baseImportDTO.getImportType());
             this.setUserId(baseImportDTO.getUserId());
         }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RegenerateImportDTO {
+        /**
+         * 导入记录id集合
+         */
+        @NotEmpty(message = "导入记录id不能为空")
+        private List<String> ids;
+
+        /**
+         * 处理类型，预处理（preprocessing）/正式导入（import）/导入确认（confirmImport）
+         */
+        private String processingType;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PreQueryResultDTO {
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 费用归属
+         */
+        private String dictCostAttribution;
+        /**
+         * 物流信息
+         */
+        private List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList;
+        /**
+         * 费用明细列表
+         */
+        private Map<String, List<TmsCostDetailEntity>> mainIdListMap;
+        /**
+         * 费用列表
+         */
+        private List<LogisticsBillCostEntity> logisticsBillCostList;
+        /**
+         * 费用配置列表
+         */
+        private List<TmsCfgCostEntity> cfgCostList;
+
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportConfirmDTO {
+        /**
+         * 物流费用id
+         */
+        private String logisticsCostId;
+        /**
+         * 确认时间
+         */
+        private LocalDateTime confirmDateTime;
     }
 }
