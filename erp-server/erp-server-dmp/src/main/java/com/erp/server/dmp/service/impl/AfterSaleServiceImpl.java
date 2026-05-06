@@ -1189,8 +1189,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     }
                 }
             }
-            data.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
-            data.setLabelStatusName(LogisticsLabelStatusEnum.NOT_OBTAINED.getName());
+            if (attachmentMap.get(data.getId()) != null) {
+                data.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
+                data.setLabelStatusName(LogisticsLabelStatusEnum.OBTAINED.getName());
+            } else {
+                data.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+                data.setLabelStatusName(LogisticsLabelStatusEnum.NOT_OBTAINED.getName());
+            }
             if (Objects.nonNull(listDTOMap.get(data.getOutboundTrackNo()))) {
                 data.setLogisticsChannelId(listDTOMap.get(data.getOutboundTrackNo()).getLogisticsChannelId());
                 data.setLogisticsChannelName(listDTOMap.get(data.getOutboundTrackNo()).getLogisticsChannelName());
@@ -1856,29 +1861,31 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.LogisticsLabelPreviewListDTO> labelPreviewListDTOS = new ArrayList<>();
         for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : list) {
             AfterSaleDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO = new AfterSaleDTO.LogisticsLabelPreviewListDTO();
+            labelPreviewListDTO.setId(orderInfoDTO.getId());
+            labelPreviewListDTO.setTrackNo(orderInfoDTO.getOutboundTrackNo());
+            labelPreviewListDTO.setCode(orderInfoDTO.getCode());
             LogisticsOrderDTO.ListDTO listDTO = map.get(orderInfoDTO.getId());
             if (listDTO != null) {
-                labelPreviewListDTO.setId(orderInfoDTO.getId());
                 labelPreviewListDTO.setLogisticsPlatform(listDTO.getLogisticsPlatform());
                 labelPreviewListDTO.setLogisticsPlatformName(listDTO.getLogisticsPlatformName());
                 labelPreviewListDTO.setLogisticsChannelId(listDTO.getLogisticsChannelId());
                 labelPreviewListDTO.setLogisticsChannelName(listDTO.getLogisticsChannelName());
-                labelPreviewListDTO.setTrackNo(orderInfoDTO.getOutboundTrackNo());
-                labelPreviewListDTO.setCode(orderInfoDTO.getCode());
-                DmpAttachmentEntity attachmentEntity = attachmentMap.get(orderInfoDTO.getId());
-                if (attachmentEntity == null) {
-                    notPrintReasonMap = new HashMap<>();
+            }
+            DmpAttachmentEntity attachmentEntity = attachmentMap.get(orderInfoDTO.getId());
+            if (attachmentEntity == null) {
+                notPrintReasonMap = new HashMap<>();
+                if (listDTO != null) {
                     if (StringUtils.isBlank(listDTO.getExceptionType())) {
                         notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), "未获取面单");
                     } else if (ExceptionTypeEnum.LABEL_EXCEPTION.getCode().equals(listDTO.getExceptionType())) {
                         notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), listDTO.getExceptionReason());
                     }
-                } else {
-                    labelPreviewListDTO.setAttachName(attachmentMap.get(orderInfoDTO.getId()).getAttachName());
-                    labelPreviewListDTO.setAttachUrl(attachmentMap.get(orderInfoDTO.getId()).getAttachUrl());
                 }
-                labelPreviewListDTOS.add(labelPreviewListDTO);
+            } else {
+                labelPreviewListDTO.setAttachName(attachmentMap.get(orderInfoDTO.getId()).getAttachName());
+                labelPreviewListDTO.setAttachUrl(attachmentMap.get(orderInfoDTO.getId()).getAttachUrl());
             }
+            labelPreviewListDTOS.add(labelPreviewListDTO);
         }
         // 有运单号数量
         Integer trackNoCount = Math.toIntExact(list.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getOutboundTrackNo())).count());
