@@ -193,18 +193,6 @@ public class TmsFmDeclareBillController extends BaseController {
     }
 
     /**
-     * 合并报关
-     * @author lrp
-     * @date:  2024-03-19
-     * @return ApiResult<String>
-     */
-    @PostMapping("/mergeDeclare")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单合并报关")
-    public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return success(tmsDeclareBillService.mergeDeclare(dto));
-    }
-
-    /**
      * 删除报关单
      * @author lrp
      * @date:  2024-03-19
