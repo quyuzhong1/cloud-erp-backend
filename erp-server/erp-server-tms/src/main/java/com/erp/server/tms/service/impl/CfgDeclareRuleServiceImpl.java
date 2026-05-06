@@ -149,40 +149,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     @Override
-    public void exportList(CfgDeclareRuleDTO.ExportDTO param, HttpServletResponse response) {
-        List<CfgDeclareRuleDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        fillList(list);
-
-        StringBuilder sb = new StringBuilder();
-        String excelPath = "excel/cfgDeclareRule.xlsx";
-        String name = "\u62a5\u5173\u89c4\u5219\u4e3b\u5355\u5bfc\u51fa";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
-    }
-
-    @Override
-    public CfgDeclareRuleDTO.ViewDTO view(String id) {
-        CfgDeclareRuleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(RULE_NOT_FOUND_MESSAGE));
-        CfgDeclareRuleDTO.ViewDTO data = BeanMapperUtils.map(CfgDeclareRuleDTO.ViewDTO.class, entity);
-        List<CfgDeclareRuleConditionEntity> conditions = cfgDeclareRuleConditionService.lambdaQuery()
-                .eq(CfgDeclareRuleConditionEntity::getRuleId, id)
-                .orderByAsc(CfgDeclareRuleConditionEntity::getIndex)
-                .list();
-        if (CollUtil.isNotEmpty(conditions)) {
-            data.setDetailList(BeanMapperUtils.copyList(CfgDeclareRuleConditionDTO.ListDTO.class, conditions));
-        }
-        return data;
-    }
-
-    @Override
     public List<BaseDropDownDTO.Tree> dropDownList(String type, String name) {
         if (SENDER.equals(type)) {
             return Collections.singletonList(buildDropDown(

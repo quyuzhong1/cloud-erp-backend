@@ -1,6 +1,8 @@
 package com.erp.server.tms.controller.api;
 
 
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.validator.ValidList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -27,6 +29,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
@@ -121,6 +124,18 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     @PostMapping("/mergeAfterPreview")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> mergeAfterPreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
         return success(deliveryDeclareDetailMidService.mergeAfterPreview(dto.getIds()));
+    }
+
+    /**
+     * 批量添加合并的报关明细
+     * @author jack
+     * @date 2026/5/6 18:00
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Object>
+     */
+    @PostMapping("/batchAddMergeDetail")
+    public ApiResult<Object> batchAddMergeDetail(@RequestBody @Valid ValidList<TmsDeclareBillDTO.MergeDeclareBillDTO> list)  {
+        return success(deliveryDeclareDetailMidService.batchAddMergeDetail(list.getList()));
     }
 
 
