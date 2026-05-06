@@ -1373,11 +1373,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setBoxNo(entity.getBoxNo());
         detailDTO.setSkuId(entity.getSkuId());
         detailDTO.setSkuNo(entity.getSkuNo());
-        detailDTO.setCustomsCode(entity.getHsCode());
-        detailDTO.setDeclareChineseName(entity.getProductNameCn());
+        detailDTO.setHsCode(entity.getHsCode());
+        detailDTO.setProductNameCn(entity.getProductNameCn());
         detailDTO.setDeclareElement(entity.getDeclareElement());
-        detailDTO.setDeclareUnit(entity.getUnit());
-        detailDTO.setPrice(entity.getUnitPrice());
+        detailDTO.setUnit(entity.getUnit());
+        detailDTO.setUnitPrice(entity.getUnitPrice());
         detailDTO.setQty(entity.getQty());
         detailDTO.setDeclareCurrency(entity.getCurrency());
         detailDTO.setDeclareCurrencySymbol(entity.getCurrencySymbol());
@@ -1409,11 +1409,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
                 TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
                 detailEntity.setSkuNo(detailDTO.getSkuNo());
-                detailEntity.setCustomsCode(detailDTO.getCustomsCode());
-                detailEntity.setDeclareChineseName(detailDTO.getDeclareChineseName());
+                detailEntity.setCustomsCode(detailDTO.getHsCode());
+                detailEntity.setDeclareChineseName(detailDTO.getProductNameCn());
                 detailEntity.setDeclareElement(detailDTO.getDeclareElement());
-                detailEntity.setDeclareUnit(detailDTO.getDeclareUnit());
-                detailEntity.setPrice(Objects.isNull(detailDTO.getPrice()) ? BigDecimal.ZERO : detailDTO.getPrice());
+                detailEntity.setDeclareUnit(detailDTO.getUnit());
+                detailEntity.setPrice(Objects.isNull(detailDTO.getUnitPrice()) ? BigDecimal.ZERO : detailDTO.getUnitPrice());
                 detailEntity.setQty(Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty());
                 detailEntity.setDeclareCurrency(detailDTO.getDeclareCurrency());
                 detailEntity.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
