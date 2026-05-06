@@ -51,7 +51,7 @@ description: 根据提供的 **DDL 语句** 或 **Java 实体类**，全自动�
 * **日期 (date)** $\rightarrow$ `controls: date`, `data_type: date`, `date_type: date`
 
 ### 4.2 动态检索逻辑 (Dynamic Lookup)
-**仅当 `controls: select` 时**，必须实时检索 `skills/data/query_option_lite.md` 文件，根据字段含义动态获取 `query_option_id`。
+**仅当 `controls: select` 时**，必须实时检索 `skills/data/query_option_lite.md` Markdown 表格，根据字段含义动态获取 `query_option_id`。
 
 | 业务场景 / 字段特征 | 匹配逻辑 | 优先级 ID |
 | :--- | :--- | :--- |
@@ -120,7 +120,7 @@ INSERT INTO "public"."cfg_query_condition" ("id", "create_user_id", "create_user
 ---
 
 ## 7. skills/data/query_option_lite.md 自动化维护
-AI 必须主动维护并增量更新 `skills/data/query_option_lite.md` 引用库。
+AI 必须主动维护并增量更新 `skills/data/query_option_lite.md` Markdown 表格引用库。
 
 ### 7.1 提取逻辑
 当监听到 `INSERT INTO "public"."cfg_query_option"` 时，提取：
@@ -132,4 +132,4 @@ AI 必须主动维护并增量更新 `skills/data/query_option_lite.md` 引用�
 ### 7.2 查重逻辑
 检查 `skills/data/query_option_lite.md` 是否已存在相同 `id` 或 **标准化 `url`**（去除首斜杠）。
 * **若存在**：不处理。
-* **若不存在**：追加至 JSON 数组末尾。
+* **若不存在**：按现有 Markdown 表格列顺序追加一行：`| id | name | module | \`url\` |`。
