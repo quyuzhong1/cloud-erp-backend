@@ -134,7 +134,7 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
             initDmpResponse.setDoNextStatus(false);
             dmpInputTaskService.lambdaUpdate()
-                    .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(10))
+                    .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(20))
                     .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId())
                     .update();
             return Collections.emptyList();
