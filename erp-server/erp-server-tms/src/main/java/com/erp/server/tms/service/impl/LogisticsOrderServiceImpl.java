@@ -6,6 +6,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -459,8 +460,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             }
         });
         if (CollUtil.isNotEmpty(successLabelList)) {
-            mqProducerService.sendBachMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC,
-                    RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), successLabelList);
+            mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC,
+                    RocketMqTagEnum.DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG.getName(), successLabelList, IdUtil.simpleUUID());
         }
         super.saveOrUpdateBatch(entityList);
         return resultDTOList;
@@ -830,12 +831,13 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Override
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
-        log.info("批量获取物流面单开始，单据编号：{}", StringUtils.join(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList()), ","));
+        log.info("批量获取物流面单开始：{}", JSON.toJSONString(logisticsLabelDTOS));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
             LogisticsOrderEntity logisticsOrderEntity = this.lambdaQuery().eq(LogisticsOrderEntity::getAfterSaleId, logisticsLabelDTO.getAfterSaleId()).one();
             if (logisticsOrderEntity == null || LogisticsStatusEnum.CANCEL.getCode().equals(logisticsOrderEntity.getStatus())) {
+                log.warn("未找到物流单：{}", logisticsLabelDTO.getAfterSaleId());
                 resultDTO.setStatus(false);
                 resultDTO.setAfterSaleId(logisticsLabelDTO.getAfterSaleId());
                 resultDTO.setErrorMsg("单据不存在或者状态发生变更");
@@ -845,6 +847,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             String channelId = logisticsOrderEntity.getLogisticsChannelId();
             LogisticsSupplierDTO.AuthDTO auth = logisticsAuthService.getAuthByChannelId(channelId);
             if (Objects.isNull(auth)) {
+                log.warn("未找到物流渠道：{}", channelId);
                 throw new ServiceException(ApiError.LOGISTICS_CHANNEL_NOT_FOUND);
             }
             Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), null, auth.getLogisticsPlatform());
@@ -854,7 +857,9 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             String url = "";
             try {
                 ValidatorUtil.validateEntity(orderLabelRequest);
+                log.info("获取物流面单开始：{}", JSON.toJSONString(orderLabelRequest));
                 baseResult = expressShipperService.getLabel(authMap, orderLabelRequest);
+                log.info("获取物流面单结束：{}", JSON.toJSONString(baseResult));
                 // 转换实体
                 if (baseResult.isSuccess()) {
                     LabelResponse labelResponse = JSONUtil.toBean(JSONUtil.toJsonStr(baseResult.getObj()), LabelResponse.class);

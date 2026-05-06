@@ -81,6 +81,14 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
         return lambdaQuery().in(TmsDeclareBillDetailEntity::getMainId, mainIds).list();
     }
 
+    @Override
+    public Boolean deleteDetailByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate().in(TmsDeclareBillDetailEntity::getMainId, mainIdList).remove();
+    }
+
 
     /**
     * 新增修改处理数据

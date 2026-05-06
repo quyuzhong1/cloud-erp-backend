@@ -148,4 +148,12 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @return IPage<CancelDeliveryListDTO>
      */
     IPage<FirstMileDeliveryDTO.CancelDeliveryListDTO> cancelDeliveryPaging(Page<FirstMileDeliveryDTO.CancelDeliveryListDTO> query,@Param("params") FirstMileDeliveryDTO.CancelDeliveryParamDTO params);
+    /**
+     * 查询合并前数据
+     * @author will
+     * @date 2026/4/27 17:39
+     * @param ids
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(@Param("ids") List<String> ids);
 }
