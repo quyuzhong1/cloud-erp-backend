@@ -77,9 +77,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static cn.hutool.json.XMLTokener.entity;
-
 /**
  * <p>
  * 报关单 服务实现类
