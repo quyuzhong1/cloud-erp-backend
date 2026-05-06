@@ -153,11 +153,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 组合品SKU
-        */
-        private String comboSkuNo;
-
-        /**
         * 币种
         */
         private String currency;
@@ -266,6 +261,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 中转仓IDs(逗号分隔)
         */
         private String transferWarehouseIds;
+
+        /**
+        * Transfer warehouse names
+        */
+        private String transferWarehouseNames;
 
         /**
         * 销售组织ID
@@ -479,11 +479,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 组合品SKU
-        */
-        private String comboSkuNo;
-
-        /**
         * 币种
         */
         private String currency;
@@ -567,6 +562,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 中转仓IDs(逗号分隔)
         */
         private String transferWarehouseIds;
+
+        /**
+        * Transfer warehouse names
+        */
+        private String transferWarehouseNames;
 
         /**
         * 销售组织ID
@@ -700,12 +700,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 组合品SKU
-        */
-        @Size(max = 64,message = "组合品SKU最大长度不能超过64位")
-        private String comboSkuNo;
-
-        /**
         * 币种
         */
         @NotBlank(message = "币种不能为空")
@@ -811,6 +805,11 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 中转仓IDs(逗号分隔)
         */
         private String transferWarehouseIds;
+
+        /**
+        * Transfer warehouse names
+        */
+        private String transferWarehouseNames;
 
         /**
         * 销售组织ID

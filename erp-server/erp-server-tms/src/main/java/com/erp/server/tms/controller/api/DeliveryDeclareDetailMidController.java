@@ -25,6 +25,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -105,13 +106,21 @@ public class DeliveryDeclareDetailMidController extends BaseController {
      * @date 2026-04-29
      */
     @PostMapping("/mergePreview")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:deliveryDeclareDetailMid:mergePreview",
-            serviceClass = DeliveryDeclareDetailMidService.class,
-            keyIdName = "id")
     public ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>> mergePreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
         return success(deliveryDeclareDetailMidService.mergePreview(dto.getIds()));
+    }
+
+    /**
+     * 合并后预览
+     *
+     * @param dto 报关明细中间表id集合
+     * @return ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>>
+     * @author jack
+     * @date 2026-05-06
+     */
+    @PostMapping("/mergeAfterPreview")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> mergeAfterPreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryDeclareDetailMidService.mergeAfterPreview(dto.getIds()));
     }
 
 
