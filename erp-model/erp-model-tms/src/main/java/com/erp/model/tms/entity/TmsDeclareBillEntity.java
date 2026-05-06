@@ -113,6 +113,11 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     */
     @TableField("sender_id")
     private String senderId;
+    /**
+     * 发货人类型
+     */
+    @TableField("sender_type")
+    private String senderType;
 
     /**
     * 出境关别
@@ -125,10 +130,20 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     @TableField("export_date")
     private LocalDate exportDate;
     /**
+     * 收货人id
+     */
+    @TableField("receiver_id")
+    private String receiverId;
+    /**
     * 收货人名称
     */
     @TableField("receiver_name")
     private String receiverName;
+    /**
+     * 收货人类型
+     */
+    @TableField("receiver_type")
+    private String receiverType;
     /**
     * 监管方式
     */

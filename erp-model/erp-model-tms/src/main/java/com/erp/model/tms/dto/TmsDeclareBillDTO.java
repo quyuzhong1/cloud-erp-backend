@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -324,6 +325,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 产品明细
          */
         private List<ProductDetail> productDetailList;
+        /**
+         * 合并报关明细（用于新增/编辑页面回显）
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
         /**
          * 装箱信息
          */
@@ -1124,6 +1129,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String senderId;
 
         /**
+         * 发货人类型
+         */
+        private String senderType;
+
+        /**
          * 发货人名称
          */
         private String senderName;
@@ -1142,11 +1152,18 @@ public class TmsDeclareBillDTO implements Serializable {
          * 报关日期
          */
         private LocalDate declareDate;
-
+        /**
+         * 收货人id
+         */
+        private String receiverId;
         /**
          * 收货人名称
          */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
         /**
          * 运输方式
          */
@@ -1278,9 +1295,9 @@ public class TmsDeclareBillDTO implements Serializable {
         private BigDecimal otherFee;
 
         /**
-         * 产品明细
+         *  明细信息
          */
-        private List<ProductDetail> productDetailList;
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList;
         /**
          * 装箱信息
          */
@@ -1321,6 +1338,12 @@ public class TmsDeclareBillDTO implements Serializable {
         private String sourceId;
 
         private Boolean isAuto = false;
+
+        /**
+         *  明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
     }
     /**
     * 修改
@@ -1334,6 +1357,12 @@ public class TmsDeclareBillDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         *  明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
 
     }
 
@@ -1362,6 +1391,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 发货人id
          */
         private String senderId;
+        /**
+         * 发货人类型
+         */
+        private String senderType;
 
         /**
          * 出境关别
@@ -1379,9 +1412,17 @@ public class TmsDeclareBillDTO implements Serializable {
         private LocalDate declareDate;
 
         /**
+         * 收货人id
+         */
+        private String receiverId;
+        /**
          * 收货人名称
          */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
 
         /**
          * 监管方式
@@ -1718,6 +1759,10 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MergeDeclareBillDetailDTO {
+        /**
+         *  主键id
+         */
+        private String id;
 
         /**
          *  业务单号+箱号
