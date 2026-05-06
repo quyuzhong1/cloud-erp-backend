@@ -69,7 +69,7 @@ description: 数据库 DDL 与基础 DML 生成规范，包含表结构、通用
     "approve_time" TIMESTAMP ( 0 ) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 * **【涉及来源溯源】**
-    "source_id" VARCHAR ( 19 ) COLLATE "pg_catalog"."default" NOT NULL DEFAULT '' :: BPCCHARACTER VARYINGHAR,
+    "source_id" VARCHAR ( 19 ) COLLATE "pg_catalog"."default" NOT NULL DEFAULT '' :: CHARACTER VARYING,
     "source_code" VARCHAR ( 255 ) COLLATE "pg_catalog"."default" NOT NULL DEFAULT '' :: CHARACTER VARYING,
     "source_type" VARCHAR ( 255 ) COLLATE "pg_catalog"."default" NOT NULL DEFAULT '' :: CHARACTER VARYING,
 
@@ -133,7 +133,7 @@ description: 数据库 DDL 与基础 DML 生成规范，包含表结构、通用
 当生成业务数据的 `INSERT`、`UPDATE` 或 `DELETE` 语句时，必须强制拼接以下底层字段赋值，不可遗漏：
 * **插入 (INSERT)**:
   * **主键 ID (`id`)**: 
-    1. **调用脚本**: 必须通过执行 `antigravity-skills\scripts\snow_id_gen.py` 获取初始雪花算法 ID。
+    1. **调用脚本**: 必须通过执行 `skills\scripts\snow_id_gen.py` 获取初始雪花算法 ID。
     2. **连续自增**: 若涉及多条数据插入且未指定 ID，则后续条目的 `id` 在第一条生成的 ID 基础上依次递增（ID_n = ID_start + n - 1）。
     3. **用户指定优先**: 若用户已明确指定 `id` 值，则不再自动生成，直接使用指定值。
   * `create_user_id` / `update_user_id`: `'1838067106149261313'`
