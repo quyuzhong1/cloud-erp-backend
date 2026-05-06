@@ -71,8 +71,6 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
 
         List<QcDefectEntity> toUpdate = new ArrayList<>();
         List<String> toDeleteIds = new ArrayList<>();
-        List<AttachDTO> addAttachDTOS = new ArrayList<>();
-
         // 处理新增和更新
         for (QcDefectDTO.AddDTO addDTO : qcDefectList) {
             // 校验数据完整性
@@ -99,13 +97,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
 
                 // 处理新增的附件
                 if (hasDefectImage) {
-                    for (QcDefectDTO.BadImageView badImageView : addDTO.getBadImageViewList()) {
-                        AttachDTO attachDTO = new AttachDTO();
-                        attachDTO.setBusinessId(newEntity.getId());
-                        attachDTO.setAttachUrl(badImageView.getAttachUrl());
-                        attachDTO.setAttachName(badImageView.getAttachName());
-                        addAttachDTOS.add(attachDTO);
-                    }
+                    List<AttachDTO> addAttachDTOS = buildAttachDTOList(addDTO.getBadImageViewList());
                     attachmentService.batchSave(addAttachDTOS, WmsConstant.QC_DEFECT, newEntity.getId());
                 }
             } else {
@@ -122,13 +114,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
 
                     // 处理更新的附件
                     if (hasDefectImage) {
-                        List<AttachDTO> updateAttachDTOS = new ArrayList<>();
-                        for (QcDefectDTO.BadImageView badImageView : addDTO.getBadImageViewList()) {
-                            AttachDTO attachDTO = new AttachDTO();
-                            attachDTO.setAttachUrl(badImageView.getAttachUrl());
-                            attachDTO.setAttachName(badImageView.getAttachName());
-                            updateAttachDTOS.add(attachDTO);
-                        }
+                        List<AttachDTO> updateAttachDTOS = buildAttachDTOList(addDTO.getBadImageViewList());
                         attachmentService.batchSave(updateAttachDTOS, WmsConstant.QC_DEFECT, addDTO.getId());
                     }
                 } else {
@@ -159,6 +145,30 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
             attachmentService.batchRemoveAttachment(toDeleteIds);
             removeByIds(toDeleteIds); // 删除缺陷记录
         }
+    }
+
+    /**
+     * 组装并去重附件，避免重复保存同一附件
+     */
+    private List<AttachDTO> buildAttachDTOList(List<QcDefectDTO.BadImageView> badImageViewList) {
+        if (CollectionUtils.isEmpty(badImageViewList)) {
+            return Collections.emptyList();
+        }
+        Map<String, AttachDTO> attachmentMap = new LinkedHashMap<>();
+        for (QcDefectDTO.BadImageView badImageView : badImageViewList) {
+            if (Objects.isNull(badImageView) || StringUtils.isBlank(badImageView.getAttachUrl())) {
+                continue;
+            }
+            String dedupKey = badImageView.getAttachUrl() + "#" + StringUtils.defaultString(badImageView.getAttachName());
+            if (attachmentMap.containsKey(dedupKey)) {
+                continue;
+            }
+            AttachDTO attachDTO = new AttachDTO();
+            attachDTO.setAttachUrl(badImageView.getAttachUrl());
+            attachDTO.setAttachName(badImageView.getAttachName());
+            attachmentMap.put(dedupKey, attachDTO);
+        }
+        return new ArrayList<>(attachmentMap.values());
     }
 
 
