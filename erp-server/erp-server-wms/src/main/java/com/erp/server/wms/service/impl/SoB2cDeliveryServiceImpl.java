@@ -511,7 +511,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.AllocateCargoViewDTO> viewList = new ArrayList<>();
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, deliveryIds));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
-        List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
+        List<PickingDetailEntity> pickingDetails = pickingDetailService.listByMainIdList(pickingIds);
         List<String> skuIds = pickingDetails.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<PrintWayBillPdfDetailDTO> allDetailDTOList = new ArrayList<>();
