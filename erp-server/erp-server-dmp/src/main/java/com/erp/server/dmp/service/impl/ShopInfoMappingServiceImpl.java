@@ -93,4 +93,13 @@ public class ShopInfoMappingServiceImpl extends SuperServiceImpl<ShopInfoMapping
                 .last("LIMIT 1")
                 .one();
     }
+
+    @Override
+    public ShopInfoMappingEntity getBySIdAndType(String shopId, String thirdPlatformType) {
+        return lambdaQuery()
+                .eq(ShopInfoMappingEntity::getThirdPlatformType, thirdPlatformType)
+                .eq(ShopInfoMappingEntity::getThirdPlatformShopId, shopId)
+                .last("LIMIT 1")
+                .one();
+    }
 }

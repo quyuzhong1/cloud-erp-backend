@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
@@ -134,6 +135,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
+                .eq(BusinessCommonConstants.isArchive(), SysMenuEntity::getIsArchiveDisplay , Boolean.TRUE)
                 .list();
         if (CollectionUtils.isEmpty(allMenuList)) {
             return Collections.emptyList();
@@ -207,11 +209,12 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
+        boolean archive = BusinessCommonConstants.isArchive();
         //如果有系统管理员显示所有的
         if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            return baseMapper.findAllMenuCode(functionType,userType);
+            return baseMapper.findAllMenuCode(functionType,userType , archive);
         } else {
-            return baseMapper.findMenuCodeByRoleIds(roleIds, functionType,userType);
+            return baseMapper.findMenuCodeByRoleIds(roleIds, functionType,userType , archive);
         }
     }
 
@@ -224,7 +227,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      **/
     @Override
     public List<String> findMenuCodeAll(String userType) {
-        return baseMapper.findAllMenuCode(null, userType);
+        return baseMapper.findAllMenuCode(null, userType , BusinessCommonConstants.isArchive());
     }
 
     /**
@@ -376,6 +379,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(SysMenuEntity::getType,type)
                 .eq(SysMenuEntity::getSystem, userType)
+                .eq(BusinessCommonConstants.isArchive(), SysMenuEntity::getIsArchiveDisplay , Boolean.TRUE)
                 .list();
         if (CollectionUtils.isEmpty(allMenuList)) {
             return Collections.emptyList();

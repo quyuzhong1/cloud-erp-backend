@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.utils.MathUtil;
@@ -52,6 +53,8 @@ public class LogisticsFeignController {
     private ShippingCalculationService shippingCalculationService;
     @Resource
     private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -159,6 +162,10 @@ public class LogisticsFeignController {
     @PostMapping("/listChannelInfoById")
     public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds){
         return logisticsChannelService.listChannelInfoById(channelIds);
+    }
+    @PostMapping("/listChannelInfoByName")
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(@RequestBody List<String> channelNames){
+        return logisticsChannelService.listChannelInfoByName(channelNames);
     }
 
     @GetMapping("/getLogisticsChannelConstraint")
@@ -304,4 +311,12 @@ public class LogisticsFeignController {
     public List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@RequestBody InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO) {
         return inventorySkuCostService.getSkuCostInCNY(queryDTO);
     }
+    /**
+     * @return
+     */
+    @PostMapping("/updateTrack")
+    public void updateTrack(@RequestBody LogisticsTrackDTO.Kuaidi100Detail dto) {
+         logisticsBillDetailService.updateTrack(dto);
+    }
+
 }

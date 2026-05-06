@@ -8,9 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.AttachDTO;
@@ -646,6 +644,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //产品信息
             ProductVO.ProductPackVO productPackVO = productPactMap.get(qcNoticeDetail.getSkuId());
             BeanMapper.copy(productPackVO, qcProduct);
+            qcProduct.setBoxQty(productPackVO.getBoxQty().intValue());
             addDto.setQcProduct(qcProduct);
             //质检信息
             BeanMapper.copy(qcNoticeDetail, qcInfo);

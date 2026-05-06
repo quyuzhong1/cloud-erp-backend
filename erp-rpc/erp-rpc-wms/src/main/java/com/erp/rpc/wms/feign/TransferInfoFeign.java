@@ -32,14 +32,14 @@ public interface TransferInfoFeign {
      * @author hcg
      */
      @PostMapping("/feign/transferInfo/listByCodes")
-    List<TransferInfoEntity> listByCodes(List<String> list);
+    List<TransferInfoEntity> listByCodes(@RequestBody List<String> list);
 
      /**
      * 审核
      * @author hcg
      */
      @PostMapping("/feign/transferInfo/updateApproveStatus")
-    void updateApproveStatus(TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+    void updateApproveStatus(@RequestBody TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }
 
 

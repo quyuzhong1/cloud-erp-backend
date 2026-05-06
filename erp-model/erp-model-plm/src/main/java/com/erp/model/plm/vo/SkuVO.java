@@ -200,6 +200,10 @@ public class SkuVO implements Serializable {
      * 成本价格来源
      */
     private String costSource;
+    /**
+     * 成本价格来源
+     */
+    private String priceAllocationSource;
     //材料成本
     private BigDecimal productCost;
     //头程运费

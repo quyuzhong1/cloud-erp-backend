@@ -14,6 +14,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -21,6 +22,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.ShopInfoMappingService;
 import com.sdk.third.lingxing.dto.FbaShipmentReqDTO;
 import com.sdk.third.lingxing.dto.Result;
@@ -33,6 +35,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +57,10 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
     @Resource
     private ShopInfoMappingService shopInfoMappingService;
+
+    @Resource
+    private DmpInputTaskService dmpInputTaskService;
+
     @Resource
     private RedisUtil redisUtil;
 
@@ -104,23 +111,37 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         LocalDate today = LocalDate.now();
         System.out.println("当前日期: " + today.format(formatter));
 
-        // 获取30天前的日期
-        LocalDate dateBefore30Days = today.minusDays(30);
-        String startDate = dateBefore30Days.format(formatter);
+        // 获取10年前的日期
+        LocalDate dateBefore10Years = today.minusYears(10);
+        String startDate = dateBefore10Years.format(formatter);
 
-        // 获取30天后的日期
-        LocalDate dateAfter30Days = today.plusDays(30);
-        String endDate = dateAfter30Days.format(formatter);
+        // 获取10年后的日期
+        LocalDate dateAfter10Years = today.plusYears(10);
+        String endDate = dateAfter10Years.format(formatter);
 
-        // 所有明细
+        String shipmentId = findMongoData.get(0).getOrDefault("shipmentId", "").toString();
+        if (StringUtils.isBlank(shipmentId)) {
+            ServiceException.runError("未找到mongo中shipmentId信息:taskId=" + dmpInputTaskEntity.getId());
+        }
         // 请求参数
-        FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate, endDate);
+        FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate,endDate,shipmentId);
         Result<List<Object>> resultData = requestData(fbaShipmentReqDTO, false);
         if (null == resultData) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
         }
+
+        if (isEmptyShipmentData(resultData)) {
+            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+            initDmpResponse.setDoNextStatus(false);
+            dmpInputTaskService.lambdaUpdate()
+                    .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(10))
+                    .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
+                    .update();
+            return Collections.emptyList();
+        }
+
         if ("3001008".equalsIgnoreCase(resultData.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细触发限流停止当前:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
             log.warn(errorMsg);
@@ -222,6 +243,22 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             return null;
         }
         return currentResult;
+    }
+
+    private boolean isEmptyShipmentData(Result<List<Object>> resultData) {
+        if (resultData == null || resultData.getData() == null) {
+            return true;
+        }
+        Object data = resultData.getData();
+        if (data instanceof List) {
+            return ((List<?>) data).isEmpty();
+        }
+        JSONObject dataObject = JSON.parseObject(JSON.toJSONString(data));
+        if (dataObject == null) {
+            return true;
+        }
+        JSONArray jsonArray = dataObject.getJSONArray("list");
+        return jsonArray == null || jsonArray.isEmpty();
     }
 
     protected List<Map<String, Object>> getParentStorageMongoData() {
