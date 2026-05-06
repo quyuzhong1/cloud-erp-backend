@@ -66,24 +66,5 @@ public class CfgDeclareRuleController extends BaseController {
         return success(cfgDeclareRuleService.dropDownList(type, name));
     }
 
-    @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRule:view",
-            serviceClass = CfgDeclareRuleService.class,
-            keyIdName = "id")
-    @LogViewService
-    public ApiResult<CfgDeclareRuleDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(cfgDeclareRuleService.view(id));
-    }
 
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRule:export",
-            tableAlias = "")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "报关规则主表导出Excel数据")
-    public void exportList(@RequestBody @Validated CfgDeclareRuleDTO.ExportDTO dto, HttpServletResponse response) {
-        cfgDeclareRuleService.exportList(dto, response);
-    }
 }

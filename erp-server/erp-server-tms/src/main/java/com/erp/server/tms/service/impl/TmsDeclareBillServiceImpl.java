@@ -257,7 +257,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     midEntity.setContractNo(addResult.getCode());
                     midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
                     midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setComboSkuNo(StringUtils.defaultString(sourceDetail.getComboSkuNo()));
                     midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
                     midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
                     midEntity.setDeclareId(addResult.getId());
@@ -461,7 +460,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 midEntity.setContractNo(old.getCode());
                 midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
                 midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                midEntity.setComboSkuNo(StringUtils.defaultString(sourceDetail.getComboSkuNo()));
                 midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
                 midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
                 midEntity.setDeclareId(old.getId());
@@ -1210,7 +1208,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     midEntity.setContractNo(addResult.getCode());
                     midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
                     midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setComboSkuNo(StringUtils.defaultString(sourceDetail.getComboSkuNo()));
                     midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
                     midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
                     midEntity.setDeclareId(addResult.getId());
