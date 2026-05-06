@@ -1,15 +1,14 @@
 package com.erp.model.workflow.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author yl
@@ -18,12 +17,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("workflow_history_activity")
-public class ActHistoryActivityEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+public class ActHistoryActivityEntity extends BaseEntity<ActHistoryActivityEntity> {
 
     /**
      * 流程id
@@ -54,19 +48,5 @@ public class ActHistoryActivityEntity implements Serializable {
      */
     @TableField("audit_status")
     private String auditStatus;
-
-
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
 
 }

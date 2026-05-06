@@ -1,10 +1,10 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
-
-import java.io.Serializable;
-import java.util.Date;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author Will
@@ -12,17 +12,10 @@ import java.util.Date;
  * @description: 业务编码表
  * @date 2022/11/21 11:24
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_code")
-public class SysCodeEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
+public class SysCodeEntity extends BaseEntity<SysCodeEntity> {
 
     /**
      * 类目
@@ -42,39 +35,4 @@ public class SysCodeEntity implements Serializable {
     @TableField("type")
     private Integer type;
 
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id" , fill = FieldFill.INSERT)
-    private String createUserId;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value = "create_user_name" , fill = FieldFill.INSERT)
-    private String createUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField(value = "update_user_id" , fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
-
-    /**
-     * 更新人
-     */
-    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
-    private String updateUserName;
 }

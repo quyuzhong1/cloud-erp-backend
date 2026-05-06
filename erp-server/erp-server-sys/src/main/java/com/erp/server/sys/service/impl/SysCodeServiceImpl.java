@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.enums.DistributedLockEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -213,6 +216,16 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         }
         SysCodeEntity entity = new SysCodeEntity();
         BeanMapperUtils.copy(dto,entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        entity.setCreateTime(now);
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
         boolean flag = this.save(entity);
         dto.setNum(MathUtil.ONE);
         dto.setId(entity.getId());
@@ -230,9 +243,12 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param num
      */
     public void updateNumByCode (String id,Integer num) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
       lambdaUpdate().eq(SysCodeEntity::getId,id)
               .set(SysCodeEntity::getNum,num + 1)
-              .set(SysCodeEntity::getUpdateTime,new Date())
+              .set(SysCodeEntity::getUpdateTime, LocalDateTime.now())
+              .set(SysCodeEntity::getUpdateUserId, loginUser.getUid())
+              .set(SysCodeEntity::getUpdateUserName, loginUser.getUserName())
               .update();
     }
 

@@ -1,4 +1,4 @@
-package com.erp.model.bi.entity;
+package com.erp.model.dmp.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -11,10 +11,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * @author Will
+ * @author lei.nie
  * @version 1.0
  * @description: 结算汇率表
- * @date 2022/12/19 9:44
+ * @date 2026/04/13
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -51,7 +51,6 @@ public class BiSettlementExchangeRateEntity extends BaseEntity<BiSettlementExcha
     @TableField(value = "target_currency_code")
     private String targetCurrencyCode;
 
-
     /**
      * 审核状态
      */
@@ -70,7 +69,6 @@ public class BiSettlementExchangeRateEntity extends BaseEntity<BiSettlementExcha
     @TableField(value = "disabled")
     private Boolean disabled;
 
-
     /**
      * 汇率类型
      */
@@ -83,11 +81,9 @@ public class BiSettlementExchangeRateEntity extends BaseEntity<BiSettlementExcha
     @TableField(value = "indirect_exchange_rate")
     private BigDecimal indirectExchangeRate;
 
-
     /**
      * 金蝶id
      */
     @TableField(value = "kingdee_id")
     private String kingdeeId;
-
 }
