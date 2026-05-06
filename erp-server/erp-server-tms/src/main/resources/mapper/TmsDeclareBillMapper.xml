@@ -217,7 +217,7 @@
             dn.transferWarehouseName,
             dn.salesOrgname
         from  tms_declare_bill db
-        inner join delivery_notice dn on db.id = dn.declare_id
+        left join delivery_notice dn on db.id = dn.declare_id
         where
         ${params.sqlMap.default}
         and db.is_deleted = false
@@ -271,7 +271,7 @@
             dn.destWarehouseName,
             dn.transferWarehouseName
         from  tms_declare_bill db
-        inner join delivery_notice dn on db.id = dn.declare_id
+        left join delivery_notice dn on db.id = dn.declare_id
         where
         ${params.sqlMap.default}
         and db.is_deleted = false

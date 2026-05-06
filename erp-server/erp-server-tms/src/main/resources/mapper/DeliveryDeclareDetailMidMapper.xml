@@ -161,21 +161,28 @@
         dddm.source_id as sourceId,
         dddm.source_code as sourceCode,
         dddm.source_detail_id as sourceDetailId,
+        dddm.source_type as sourceType,
+        dddm.business_id as businessId,
+        dddm.business_code as businessCode,
+        dddm.box_no as boxNo,
         dddm.sku_id as skuId,
         dddm.sku_no as skuNo,
-        fpl.customs_code as customsCode,
-        fpl.declare_chinese_name as declareChineseName,
+        fpl.customs_code as hsCode,
+        fpl.declare_chinese_name as productNameCn,
         fpl.declare_element as declareElement,
-        fpl.declare_unit as declareUnit,
-        fpl.declare_price as price,
-        dddm.qty,
-        fpl.declare_currency as declareCurrency,
+        fpl.declare_unit as unit,
+        fpl.declare_price as unitPrice,
+        dddm.qty as qty,
+        dddm.currency as declareCurrency,
         fpl.declare_currency_symbol as declareCurrencySymbol,
         fpl.source_country as sourceCountry,
         fpl.source_cargo as sourceCargo,
-        fpl.exemption
+        fpl.exemption as exemption,
+        fmd.country_id as countryId,
+        fmd.country_name as countryName
         from delivery_declare_detail_mid dddm
         inner join foreign_product_logistics fpl on dddm.sku_id = fpl.sku_id and fpl.is_deleted = false
+        left join first_mile_delivery fmd on dddm.source_id = fmd.id and fmd.is_deleted = false
         where  dddm.is_deleted = false
         and dddm.declare_id in
         <foreach collection="declareBillIdList" item="declareBillId" open="(" separator="," close=")">

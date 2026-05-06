@@ -1783,6 +1783,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_STATUS_DETAIL_INCONSISTENT(13650,"报关明细【{0}】必须保持一致"),
     LOGISTICS_DECLARE_BILL_TYPE_MISMATCH(13651,"报关单类型不匹配"),
     LOGISTICS_DECLARE_STATUS_INVALID_TARGET(13652,"报关状态不存在"),
+    LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF(13653,"报关单合并收货人类型必须一致"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
