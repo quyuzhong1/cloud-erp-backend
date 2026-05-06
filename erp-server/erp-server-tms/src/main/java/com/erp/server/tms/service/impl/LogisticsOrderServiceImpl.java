@@ -475,7 +475,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         log.info("开始执行删除操作，单号：【{}】", entity.getCode());
         // 物流单据状态等于下单中或者下单成功，不允许删除
         if (LogisticsStatusEnum.ORDERING.getCode().equals(entity.getStatus()) || LogisticsStatusEnum.SUCCESS.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "物流单据不是已取消或者下单失败状态，不能编辑");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流单据不是已取消或者下单失败状态，不能删除");
         }
         this.removeById(id);
         // 记录主单操作日志

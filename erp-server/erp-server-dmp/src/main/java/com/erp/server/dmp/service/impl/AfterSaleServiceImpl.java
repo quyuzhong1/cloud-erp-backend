@@ -1189,6 +1189,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     }
                 }
             }
+            data.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
+            data.setLabelStatusName(LogisticsLabelStatusEnum.NOT_OBTAINED.getName());
             if (Objects.nonNull(listDTOMap.get(data.getOutboundTrackNo()))) {
                 data.setLogisticsChannelId(listDTOMap.get(data.getOutboundTrackNo()).getLogisticsChannelId());
                 data.setLogisticsChannelName(listDTOMap.get(data.getOutboundTrackNo()).getLogisticsChannelName());
@@ -1201,8 +1203,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 data.setLabelStatus(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatus());
                 data.setLabelStatusName(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatusName());
             }
-            data.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
-            data.setLabelStatusName(LogisticsLabelStatusEnum.NOT_OBTAINED.getName());
         }
     }
 
