@@ -1116,6 +1116,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("仅待确认报关单可以拆分明细");
         }
 
+        //删除原本的报关单
+        deleteDeclareBillById(declareBillEntity.getId());
+
         List<String> ids = declareDTO.getSplitDeclareDTOList().stream()
                 .filter(Objects::nonNull)
                 .map(TmsDeclareBillDTO.SplitDeclareDTO::getSourceId)
@@ -1132,9 +1135,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //保存合并数据
             batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(),mergeDeclareBillDTOS);
         }
-
-        //删除原本的报关单
-        deleteDeclareBillById(declareBillEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -1142,13 +1142,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDeclareBillById (String id) {
-
         //删除发货明细数据
         deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(Collections.singletonList(id));
-
         //删除明细数据
         detailService.deleteDetailByMainIdList(Collections.singletonList(id));
-
         //删除主表数据
         super.removeById(id);
     }
@@ -1270,6 +1267,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     BeanUtil.copyProperties(detailDTO, sourceDeliveryDetailDTO);
                     sourceDeliveryDetailDTO.setSkuId(logisticDTO.getSkuId());
                     sourceDeliveryDetailDTO.setSkuNo(logisticDTO.getSkuNo());
+                    sourceDeliveryDetailDTO.setComboSkuNo(productLogisticsDTO.getSkuNo());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
                     fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
                     result.add(sourceDeliveryDetailDTO);
@@ -1295,12 +1293,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                  ProductDetailDTO.ProductLogisticDTO productLogisticsDTO,
                                  Map<String, String> declareUnitNameMap,
                                  Map<String, String> currencyMap) {
-        detailDTO.setCustomsCode(productLogisticsDTO.getCustomsCode());
-        detailDTO.setDeclareChineseName(productLogisticsDTO.getDeclareChineseName());
+        detailDTO.setHsCode(productLogisticsDTO.getCustomsCode());
+        detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
-        detailDTO.setDeclareUnit(productLogisticsDTO.getDeclareUnit());
-        detailDTO.setDeclareUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
-        detailDTO.setPrice(productLogisticsDTO.getPrice());
+        detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
+        detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
+        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
         detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
         detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
         detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
@@ -1365,11 +1363,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : declareBillList) {
                 TmsDeclareBillDetailEntity detailEntity = new TmsDeclareBillDetailEntity();
                 detailEntity.setSkuNo(detailDTO.getSkuNo());
-                detailEntity.setCustomsCode(detailDTO.getCustomsCode());
-                detailEntity.setDeclareChineseName(detailDTO.getDeclareChineseName());
+                detailEntity.setCustomsCode(detailDTO.getHsCode());
+                detailEntity.setDeclareChineseName(detailDTO.getProductNameCn());
                 detailEntity.setDeclareElement(detailDTO.getDeclareElement());
-                detailEntity.setDeclareUnit(detailDTO.getDeclareUnit());
-                detailEntity.setPrice(Objects.isNull(detailDTO.getPrice()) ? BigDecimal.ZERO : detailDTO.getPrice());
+                detailEntity.setDeclareUnit(detailDTO.getUnit());
+                detailEntity.setPrice(Objects.isNull(detailDTO.getUnitPrice()) ? BigDecimal.ZERO : detailDTO.getUnitPrice());
                 detailEntity.setQty(Objects.isNull(detailDTO.getQty()) ? 0 : detailDTO.getQty());
                 detailEntity.setDeclareCurrency(detailDTO.getDeclareCurrency());
                 detailEntity.setDeclareCurrencySymbol(detailDTO.getDeclareCurrencySymbol());
@@ -1419,18 +1417,18 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     midEntity.setContractNo(addResult.getCode());
                     midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
                     midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setComboSkuNo("");
+                    midEntity.setComboSkuNo(StringUtils.defaultString(sourceDetail.getComboSkuNo()));
                     midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
                     midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
                     midEntity.setDeclareId(addResult.getId());
                     midEntity.setDeclareCode(addResult.getCode());
                     midEntity.setDeclareDetailId(billDetailEntity.getId());
                     midEntity.setBoxNo(StringUtils.defaultString(sourceDetail.getBoxNo()));
-                    midEntity.setHsCode(StringUtils.defaultString(declareDetail.getCustomsCode()));
-                    midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getDeclareChineseName()));
+                    midEntity.setHsCode(StringUtils.defaultString(declareDetail.getHsCode()));
+                    midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getProductNameCn()));
                     midEntity.setDeclareElement(StringUtils.defaultString(declareDetail.getDeclareElement()));
-                    midEntity.setUnit(StringUtils.defaultString(declareDetail.getDeclareUnit()));
-                    midEntity.setUnitPrice(Objects.isNull(declareDetail.getPrice()) ? BigDecimal.ZERO : declareDetail.getPrice());
+                    midEntity.setUnit(StringUtils.defaultString(declareDetail.getUnit()));
+                    midEntity.setUnitPrice(Objects.isNull(declareDetail.getUnitPrice()) ? BigDecimal.ZERO : declareDetail.getUnitPrice());
                     midEntity.setQty(Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty());
                     addMidList.add(midEntity);
                 }

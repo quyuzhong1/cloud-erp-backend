@@ -3118,16 +3118,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
             ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
             if (Objects.nonNull(productLogisticsEntity)) {
-                deliveryDetailDTO.setCustomsCode(productLogisticsEntity.getCustomsCode());
-                deliveryDetailDTO.setDeclareChineseName(productLogisticsEntity.getDeclareChineseName());
+                deliveryDetailDTO.setHsCode(productLogisticsEntity.getCustomsCode());
+                deliveryDetailDTO.setProductNameCn(productLogisticsEntity.getDeclareChineseName());
                 deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
-                deliveryDetailDTO.setDeclareUnit(productLogisticsEntity.getDeclareUnit());
+                deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 //报关单位名称
-                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getDeclareUnit())).findFirst().orElse(null);
+                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getUnit())).findFirst().orElse(null);
                 if (Objects.nonNull(unitEntity)) {
-                    deliveryDetailDTO.setDeclareUnitName(unitEntity.getName());
+                    deliveryDetailDTO.setUnitName(unitEntity.getName());
                 }
-                deliveryDetailDTO.setPrice(productLogisticsEntity.getDeclarePrice());
+                deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
                 deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
                 deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
                 deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));

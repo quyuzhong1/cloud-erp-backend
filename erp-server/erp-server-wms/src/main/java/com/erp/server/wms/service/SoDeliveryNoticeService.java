@@ -377,7 +377,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     BatchResultDTO updateNotNeedDeclare(String id);
 
     /**
-     *
+     *下推b2b报关单-前置数据（未合并）
      * @author will
      * @date 2026/4/24 14:24
      * @param dto

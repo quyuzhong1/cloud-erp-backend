@@ -1732,11 +1732,11 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 中国海关编码(商品编号)
          */
-        private String customsCode;
+        private String hsCode;
         /**
          * 报关中文名（商品名称）
          */
-        private String declareChineseName;
+        private String productNameCn;
         /**
          * 申报要素
          */
@@ -1744,16 +1744,16 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 报关单位
          */
-        private String declareUnit;
+        private String unit;
 
         /**
          * 报关单位名称
          */
-        private String declareUnitName;
+        private String unitName;
         /**
          * 单价
          */
-        private BigDecimal price;
+        private BigDecimal unitPrice;
         /**
          * 数量
          */
@@ -1825,15 +1825,19 @@ public class TmsDeclareBillDTO implements Serializable {
          *  sku编码
          */
         private String skuNo;
+        /**
+         *  组合品sku
+         */
+        private String comboSkuNo;
 
         /**
          * 中国海关编码(商品编号)
          */
-        private String customsCode;
+        private String hsCode;
         /**
          * 报关中文名（商品名称）
          */
-        private String declareChineseName;
+        private String productNameCn;
         /**
          * 申报要素
          */
@@ -1841,16 +1845,16 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 报关单位
          */
-        private String declareUnit;
+        private String unit;
 
         /**
          * 报关单位名称
          */
-        private String declareUnitName;
+        private String unitName;
         /**
          * 单价
          */
-        private BigDecimal price;
+        private BigDecimal unitPrice;
         /**
          * 数量
          */
@@ -1867,6 +1871,16 @@ public class TmsDeclareBillDTO implements Serializable {
          * 报关币别符号
          */
         private String declareCurrencySymbol;
+
+        /**
+         * 国家编码
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
     }
 
 
