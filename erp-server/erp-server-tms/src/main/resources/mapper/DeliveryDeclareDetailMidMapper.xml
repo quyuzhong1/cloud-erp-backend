@@ -135,8 +135,8 @@
         dddm.generate_status AS tabFlag,
         count(dddm.id)  AS count
         FROM  delivery_declare_detail_mid dddm
-        WHERE ${params.sqlMap.default}
-            AND dddm.is_deleted=FALSE
+        WHERE
+            dddm.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

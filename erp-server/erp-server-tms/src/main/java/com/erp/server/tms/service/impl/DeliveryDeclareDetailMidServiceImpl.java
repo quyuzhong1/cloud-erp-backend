@@ -157,7 +157,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         DeliveryDeclareDetailMidGenerateStatusEnum[] statusList = DeliveryDeclareDetailMidGenerateStatusEnum.values();
         for (DeliveryDeclareDetailMidGenerateStatusEnum statusEnum : statusList) {
             DeliveryDeclareDetailMidDTO.TabListDTO tabListDTO = list.stream().filter(e -> Objects.equals(statusEnum.getCode(), e.getTabFlag())).findFirst().orElse(null);
-            if(Objects.isNull(tabListDTO)){
+            if(Objects.nonNull(tabListDTO)){
                 result.add(tabListDTO);
             }else {
                 list.add(new DeliveryDeclareDetailMidDTO.TabListDTO(statusEnum.getCode(),statusEnum.getName(), 0));
