@@ -774,6 +774,7 @@
         select
             fmd.id as sourceId,
             fmd.code as sourceCode,
+            'firstMileDelivery' as sourceType,
             fmdd.id as sourceDetailId,
             fmd.source_id as businessId,
             fmd.source_code as businessCode,
