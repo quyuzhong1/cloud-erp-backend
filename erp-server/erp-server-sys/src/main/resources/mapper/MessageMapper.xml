@@ -282,6 +282,7 @@
            AND mur.user_id = #{userId}
         WHERE m.is_deleted = FALSE
         AND m.application = 'PC'
+        AND m.type = 'sys'
         <if test="params.id != null and params.id != ''">
             AND m.id = #{params.id}
         </if>
