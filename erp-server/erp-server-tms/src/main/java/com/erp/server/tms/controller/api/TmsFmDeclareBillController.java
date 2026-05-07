@@ -18,6 +18,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
+import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -31,10 +32,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
@@ -307,12 +305,15 @@ public class TmsFmDeclareBillController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id, id, "报关单主单不存在"));
                 continue;
             }
+            // 仅待确认状态支持批量更新字段
+            if (!Objects.equals(entity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "仅支持待确认的报关单"));
+                continue;
+            }
             try {
                 TmsDeclareBillDTO.BatchUpdateFieldDTO updateDTO = new TmsDeclareBillDTO.BatchUpdateFieldDTO();
-                updateDTO.setIds(Collections.singletonList(id));
-                updateDTO.setUpdateFiledCode(dto.getUpdateFiledCode());
-                updateDTO.setValues(dto.getValues());
-                updateDTO.setName(dto.getName());
+                updateDTO.setId(id);
+                updateDTO.setFieldList(dto.getFieldList());
                 Boolean flag = tmsDeclareBillService.updateBatchFiled(updateDTO, SourceTypeEnum.FM_DECLARE_BILL);
                 if (flag) {
                     resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "报关单批量更新成功"));

@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -53,6 +54,10 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     public static class BatchUpdateFieldDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 主键id集合
          */
         @NotEmpty(message = "至少选择一条报关单")
@@ -61,7 +66,21 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 修改的字段编号
          */
-        @NotBlank(message = "修改字段编号不能为空")
+        @NotEmpty(message = "修改字段不能为空")
+        private List<@Valid BatchUpdateFieldListDTO> fieldList;
+
+    }
+
+    /**
+     * 批量更新字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateFieldListDTO {
+        /**
+         * 修改的字段编号
+         */
+        @NotBlank(message = "修改字段不能为空")
         private String updateFiledCode;
 
         /**
@@ -157,10 +176,11 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ConfirmDeclareStatusDTO {
-        /**
-         * 主键id
-         */
-        @NotBlank(message = "主键id不能为空")
+//        /**
+//         * 主键id
+//         */
+//        @NotNull(message = "id集合不能为空")
+//        private List<String> ids;
         private String id;
 
         /**
