@@ -86,12 +86,12 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 字段值
          */
-        private Object values;
+        private Object selectValue;
 
         /**
          * 字段显示值
          */
-        private String name;
+        private String selectLabel;
     }
 
     /**
@@ -119,6 +119,18 @@ public class TmsDeclareBillDTO implements Serializable {
          * 下拉接口地址
          */
         private String url;
+
+
+        /**
+         *下拉框显示值
+         */
+        private String selectLabel;
+
+
+        /**
+         *下拉框绑定值
+         */
+        private String selectValue;
 
         /**
          * 排序

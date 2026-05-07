@@ -1582,9 +1582,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (Objects.isNull(fieldEnum)) {
                 throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, batchUpdateFieldListDTO.getUpdateFiledCode());
             }
-            parseBatchFieldValue(fieldEnum, batchUpdateFieldListDTO.getValues());
-            Object fieldValue = batchUpdateFieldListDTO.getValues();
-            String name = batchUpdateFieldListDTO.getName();
+            parseBatchFieldValue(fieldEnum, batchUpdateFieldListDTO.getSelectValue());
+            Object fieldValue = batchUpdateFieldListDTO.getSelectValue();
+            String name = batchUpdateFieldListDTO.getSelectLabel();
             //设置参数
             setUpdateWrapperField(updateWrapper, fieldEnum, fieldValue, name);
         }
