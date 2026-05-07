@@ -1021,10 +1021,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(printWayBillPdfDTO.getDetailList());
         map.put("detail", detail);
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(printWayBillPdfDTO));
-        String base = Base64.getEncoder().encodeToString(bytes);
-        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder().base64(base).fileName(RandomUtil.randomNumbers(5) + ".pdf").build();
-        String url = fileFeign.uploadFileByBase64(uploadBase64);
+        String url = JasperHelperUtil.exportToPdfUrl(inputStream, map, Collections.singletonList(printWayBillPdfDTO));
         base64UrlList.add(url);
     }
 
