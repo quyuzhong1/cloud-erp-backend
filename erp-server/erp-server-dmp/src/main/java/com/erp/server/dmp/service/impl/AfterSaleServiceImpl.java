@@ -1782,7 +1782,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if (dmpAttachmentEntity != null) {
                     attachmentService.removeById(dmpAttachmentEntity.getId());
                 }
-                cancelResult = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "");
+                cancelResult = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "操作成功");
                 resultList.add(cancelResult);
             }
         }
