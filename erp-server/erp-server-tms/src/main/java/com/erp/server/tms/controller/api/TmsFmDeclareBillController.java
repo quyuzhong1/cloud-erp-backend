@@ -13,7 +13,9 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
@@ -30,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -193,18 +196,6 @@ public class TmsFmDeclareBillController extends BaseController {
     }
 
     /**
-     * 合并报关
-     * @author lrp
-     * @date:  2024-03-19
-     * @return ApiResult<String>
-     */
-    @PostMapping("/mergeDeclare")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "头程报关单合并报关")
-    public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return success(tmsDeclareBillService.mergeDeclare(dto));
-    }
-
-    /**
      * 删除报关单
      * @author lrp
      * @date:  2024-03-19
@@ -282,6 +273,44 @@ public class TmsFmDeclareBillController extends BaseController {
                 submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 批量更新字段
+     */
+    @PostMapping("/updateBatchFiled")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "报关单批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
+    public ApiResult<List<BatchResultDTO>> updateBatchFiled(@RequestBody @Validated TmsDeclareBillDTO.BatchUpdateFieldDTO dto) {
+        if (ObjectUtil.isEmpty(dto.getIds())) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TmsDeclareBillEntity> entityList = tmsDeclareBillService.lambdaQuery().in(TmsDeclareBillEntity::getId, dto.getIds()).list();
+        Map<String, TmsDeclareBillEntity> idEntityMap = entityList.stream().collect(Collectors.toMap(TmsDeclareBillEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            TmsDeclareBillEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "报关单主单不存在"));
+                continue;
+            }
+            try {
+                TmsDeclareBillDTO.BatchUpdateFieldDTO updateDTO = new TmsDeclareBillDTO.BatchUpdateFieldDTO();
+                updateDTO.setIds(Collections.singletonList(id));
+                updateDTO.setUpdateFiledCode(dto.getUpdateFiledCode());
+                updateDTO.setValues(dto.getValues());
+                updateDTO.setName(dto.getName());
+                Boolean flag = tmsDeclareBillService.updateBatchFiled(updateDTO, SourceTypeEnum.FM_DECLARE_BILL);
+                if (flag) {
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "报关单批量更新成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "报关单批量更新失败"));
+                }
+            } catch (Exception e) {
+                log.error("报关单批量更新失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -198,22 +199,6 @@ public class TmsB2BDeclareBillController extends BaseController {
         return success(tmsDeclareBillService.confirmDeclareStatus(dto, SourceTypeEnum.B2B_DECLARE_BILL));
     }
 
-    /**
-     * 合并报关
-     * @author lrp
-     * @date:  2024-03-19
-     * @return ApiResult<String>
-     */
-    @PostMapping("/mergeDeclare")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsB2BDeclareBill:mergeDeclare",
-            serviceClass = TmsDeclareBillService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2B报关单合并报关")
-    public ApiResult<Boolean> mergeDeclare(@RequestBody @Validated TmsDeclareBillDTO.MergeDeclareDTO dto) {
-        return success(tmsDeclareBillService.mergeDeclare(dto));
-    }
 
     /**
      * 删除报关单
@@ -287,6 +272,44 @@ public class TmsB2BDeclareBillController extends BaseController {
                 submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 批量更新字段
+     */
+    @PostMapping("/updateBatchFiled")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "报关单批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
+    public ApiResult<List<BatchResultDTO>> updateBatchFiled(@RequestBody @Validated TmsDeclareBillDTO.BatchUpdateFieldDTO dto) {
+        if (ObjectUtil.isEmpty(dto.getIds())) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<TmsDeclareBillEntity> entityList = tmsDeclareBillService.lambdaQuery().in(TmsDeclareBillEntity::getId, dto.getIds()).list();
+        Map<String, TmsDeclareBillEntity> idEntityMap = entityList.stream().collect(Collectors.toMap(TmsDeclareBillEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            TmsDeclareBillEntity entity = idEntityMap.get(id);
+            if (ObjectUtil.isEmpty(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "报关单主单不存在"));
+                continue;
+            }
+            try {
+                TmsDeclareBillDTO.BatchUpdateFieldDTO updateDTO = new TmsDeclareBillDTO.BatchUpdateFieldDTO();
+                updateDTO.setIds(Collections.singletonList(id));
+                updateDTO.setUpdateFiledCode(dto.getUpdateFiledCode());
+                updateDTO.setValues(dto.getValues());
+                updateDTO.setName(dto.getName());
+                Boolean flag = tmsDeclareBillService.updateBatchFiled(updateDTO, SourceTypeEnum.B2B_DECLARE_BILL);
+                if (flag) {
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "报关单批量更新成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "报关单批量更新失败"));
+                }
+            } catch (Exception e) {
+                log.error("报关单批量更新失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

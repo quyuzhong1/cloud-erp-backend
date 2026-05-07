@@ -94,6 +94,14 @@ public class WmsFirstMileDeliveryController {
     }
 
     /**
+     * 下推头程报关单合并前明细
+     **/
+    @PostMapping("/listBeforePushFmDeclare")
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(@RequestBody TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        return firstMileDeliveryService.listBeforePushFmDeclare(dto);
+    }
+
+    /**
      * 查询用于报关中间表生成的装箱明细
      *
      * @param ids 头程发货单id集合

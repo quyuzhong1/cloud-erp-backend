@@ -1,11 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.dto.ApproveDTO;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -27,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
@@ -40,6 +34,7 @@ import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.tms.enums.DeliveryDeclareDetailMidGenerateStatusEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -50,6 +45,7 @@ import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.mapper.DeliveryDeclareDetailMidMapper;
 import com.erp.server.tms.service.CfgDeclareRuleConditionService;
 import com.erp.server.tms.service.CfgDeclareRuleService;
@@ -92,6 +88,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
@@ -159,7 +157,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         DeliveryDeclareDetailMidGenerateStatusEnum[] statusList = DeliveryDeclareDetailMidGenerateStatusEnum.values();
         for (DeliveryDeclareDetailMidGenerateStatusEnum statusEnum : statusList) {
             DeliveryDeclareDetailMidDTO.TabListDTO tabListDTO = list.stream().filter(e -> Objects.equals(statusEnum.getCode(), e.getTabFlag())).findFirst().orElse(null);
-            if(Objects.isNull(tabListDTO)){
+            if(Objects.nonNull(tabListDTO)){
                 result.add(tabListDTO);
             }else {
                 list.add(new DeliveryDeclareDetailMidDTO.TabListDTO(statusEnum.getCode(),statusEnum.getName(), 0));
@@ -221,7 +219,11 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     public DeliveryDeclareDetailMidDTO.ViewDTO view(String id) {
         DeliveryDeclareDetailMidEntity entity = super.getByIdOpt(id)
                 .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关明细中间表"));
-        return BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.ViewDTO.class, entity);
+        DeliveryDeclareDetailMidDTO.ViewDTO viewDTO = BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.ViewDTO.class, entity);
+        if (CharSequenceUtil.isBlank(viewDTO.getTransferWarehouseNames())) {
+            viewDTO.setTransferWarehouseNames(getTransferWarehouseNames(viewDTO.getTransferWarehouseIds()));
+        }
+        return viewDTO;
     }
 
     /**
@@ -273,6 +275,67 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     /**
+     * 合并后预览
+     *
+     * @param ids 报关明细中间表id集合
+     * @return 合并后预览列表
+     * @throws ServiceException 校验失败时抛出
+     * @author jack
+     * @date 2026-05-06
+     */
+    @Override
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeAfterPreview(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED);
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctIds)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED);
+        }
+        List<DeliveryDeclareDetailMidEntity> entityList = super.listByIds(distinctIds);
+        if (CollectionUtils.isEmpty(entityList) || entityList.size() != distinctIds.size()) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
+        }
+        if (entityList.stream().anyMatch(item -> !CharSequenceUtil.equals(item.getGenerateStatus(),
+                DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
+        }
+        Set<String> sourceTypeSet = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceType)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (sourceTypeSet.size() != 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
+        }
+        String sourceType = sourceTypeSet.iterator().next();
+
+        List<String> sourceIds = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<String> sourceDetailIds = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = new ArrayList<>();
+        if(Objects.equals(sourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())){
+            sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds,sourceDetailIds));
+        }else if(Objects.equals(sourceType, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())){
+            sourceDetailList = soDeliveryNoticeFeign.listBeforePushB2bDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds,sourceDetailIds));
+        }
+        sourceDetailList.stream().forEach(e -> e.setSourceType(sourceType));
+        return tmsDeclareBillService.autoMergeDeclareBillView(
+                new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, sourceDetailList));
+    }
+
+    /**
      * 自动生成报关明细中间表
      *
      * @param dto 自动生成参数
@@ -305,6 +368,18 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return Boolean.FALSE;
         }
         return tmsDeclareBillService.autoGenerateDeclareBillByMid(dto);
+    }
+
+    @Override
+    public Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
+        String sourceType = list.get(0).getDeclareBillList().get(0).getSourceDeliveryDetailList().get(0).getSourceType();
+        if(Objects.equals(sourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())){
+            return tmsDeclareBillService.batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(),list);
+        }else if(Objects.equals(sourceType, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())){
+            return tmsDeclareBillService.batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(),list);
+        }else {
+            return Boolean.FALSE;
+        }
     }
 
     /**
@@ -389,6 +464,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList()));
         Set<String> existingKeys = getExistingKeys(header.getId(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         Map<String, DeliveryDeclareDetailMidEntity> pendingMap = new HashMap<String, DeliveryDeclareDetailMidEntity>();
+        String transferWarehouseNames = getTransferWarehouseNames(header.getTransferWarehouseIds());
         for (WmsCartonDetailDTO.ListPackingDetailDTO packingDetail : packingDetailList) {
             FirstMileDeliveryDetailEntity detail = matchFirstMileDetail(detailMap.get(packingDetail.getSkuId()), packingDetail);
             if (Objects.isNull(detail)) {
@@ -411,13 +487,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     CharSequenceUtil.blankToDefault(header.getSourceType(), header.getDemandType()),
                     "",
                     packingDetail,
-                    detail.getSkuNo(),
                     productLogisticDTO,
                     header.getDeliveryWarehouseId(),
                     header.getDeliveryWarehouseName(),
                     header.getDestWarehouseId(),
                     header.getDestWarehouseName(),
                     header.getTransferWarehouseIds(),
+                    transferWarehouseNames,
                     header.getInventoryOrgId(),
                     header.getInventoryOrgName());
         }
@@ -471,6 +547,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .collect(Collectors.toList()));
         Set<String> existingKeys = getExistingKeys(header.getId(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         Map<String, DeliveryDeclareDetailMidEntity> pendingMap = new HashMap<String, DeliveryDeclareDetailMidEntity>();
+        String transferWarehouseNames = getTransferWarehouseNames(header.getTransferWarehouseIds());
         for (WmsCartonDetailDTO.ListPackingDetailDTO packingDetail : packingDetailList) {
             SoDeliveryNoticeDetailEntity detail = matchSoDeliveryNoticeDetail(detailMap.get(packingDetail.getSkuId()), packingDetail);
             if (Objects.isNull(detail)) {
@@ -492,13 +569,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                     header.getSourceType(),
                     "",
                     packingDetail,
-                    detail.getSkuNo(),
                     productLogisticDTO,
                     header.getWarehouseId(),
                     header.getWarehouseName(),
                     "",
                     "",
                     header.getTransferWarehouseIds(),
+                    transferWarehouseNames,
                     header.getSalesOrgId(),
                     header.getSalesOrgName());
         }
@@ -522,16 +599,16 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @param businessType 业务类型
      * @param contractNo 合同协议号
      * @param packingDetail 装箱明细
-     * @param originSkuNo 原始商品编码
      * @param productLogisticDTO 商品物流信息
      * @param fromWarehouseId 发货仓id
      * @param fromWarehouseName 发货仓名称
      * @param destWarehouseId 目的仓id
      * @param destWarehouseName 目的仓名称
      * @param transferWarehouseIds 中转仓id
+     * @param transferWarehouseNames 中转仓名称
      * @param salesOrgId 销售组织id
      * @param salesOrgName 销售组织名称
-     * @throws ServiceException 组合品拆分信息异常时抛出
+     * @throws RuntimeException 当前方法不主动抛出业务异常
      * @author jack
      * @date 2026-04-29
      */
@@ -546,38 +623,19 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                            String businessType,
                            String contractNo,
                            WmsCartonDetailDTO.ListPackingDetailDTO packingDetail,
-                           String originSkuNo,
                            ProductDetailDTO.ProductLogisticDTO productLogisticDTO,
                            String fromWarehouseId,
                            String fromWarehouseName,
                            String destWarehouseId,
                            String destWarehouseName,
                            String transferWarehouseIds,
+                           String transferWarehouseNames,
                            String salesOrgId,
                            String salesOrgName) {
-        // 组合品按申报类型拆分为子件申报，普通商品直接按装箱数量申报。
-        if (isSplitCombination(productLogisticDTO)) {
-            if (CollectionUtils.isEmpty(productLogisticDTO.getChildList())) {
-                throw new ServiceException(ApiError.LOGISTICS_COMBO_DECLARE_CHILD_EMPTY, originSkuNo);
-            }
-            for (ProductDetailDTO.ProductLogisticDTO child : productLogisticDTO.getChildList()) {
-                if (Objects.isNull(child.getChildQty())) {
-                    throw new ServiceException(ApiError.LOGISTICS_COMBO_DECLARE_CHILD_QTY_EMPTY, originSkuNo);
-                }
-                validateProductLogistic(child, child.getSkuNo());
-                // 子件申报数量=装箱数量*BOM子件用量。
-                Integer qty = safePackQty(packingDetail.getPackQty()) * child.getChildQty();
-                addMidRow(pendingMap, existingKeys, sourceType, sourceId, sourceCode, sourceDetailId, businessId,
-                        businessCode, businessType, contractNo, stringifyBoxNo(packingDetail.getBoxNo()), child, qty,
-                        fromWarehouseId, fromWarehouseName, destWarehouseId, destWarehouseName,
-                        transferWarehouseIds, salesOrgId, salesOrgName, originSkuNo);
-            }
-            return;
-        }
         addMidRow(pendingMap, existingKeys, sourceType, sourceId, sourceCode, sourceDetailId, businessId,
                 businessCode, businessType, contractNo, stringifyBoxNo(packingDetail.getBoxNo()), productLogisticDTO,
                 safePackQty(packingDetail.getPackQty()), fromWarehouseId, fromWarehouseName, destWarehouseId,
-                destWarehouseName, transferWarehouseIds, salesOrgId, salesOrgName, "");
+                destWarehouseName, transferWarehouseIds, transferWarehouseNames, salesOrgId, salesOrgName);
     }
 
     /**
@@ -601,9 +659,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @param destWarehouseId 目的仓id
      * @param destWarehouseName 目的仓名称
      * @param transferWarehouseIds 中转仓id
+     * @param transferWarehouseNames 中转仓名称
      * @param salesOrgId 销售组织id
      * @param salesOrgName 销售组织名称
-     * @param comboSkuNo 组合品商品编码
      * @throws RuntimeException 当前方法不主动抛出业务异常
      * @author jack
      * @date 2026-04-29
@@ -626,9 +684,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                            String destWarehouseId,
                            String destWarehouseName,
                            String transferWarehouseIds,
+                           String transferWarehouseNames,
                            String salesOrgId,
-                           String salesOrgName,
-                           String comboSkuNo) {
+                           String salesOrgName) {
         String key = buildUniqueKey(sourceId, sourceDetailId, boxNo, productLogisticDTO.getSkuId());
         if (existingKeys.contains(key)) {
             return;
@@ -652,7 +710,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         entity.setContractNo(CharSequenceUtil.blankToDefault(contractNo, ""));
         entity.setSkuId(productLogisticDTO.getSkuId());
         entity.setSkuNo(productLogisticDTO.getSkuNo());
-        entity.setComboSkuNo(CharSequenceUtil.blankToDefault(comboSkuNo, ""));
         entity.setCurrency(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareCurrency(), ""));
         entity.setCurrencySymbol(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareCurrencySymbol(), ""));
         entity.setDeclareId("");
@@ -670,6 +727,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         entity.setDestWarehouseId(CharSequenceUtil.blankToDefault(destWarehouseId, ""));
         entity.setDestWarehouseName(CharSequenceUtil.blankToDefault(destWarehouseName, ""));
         entity.setTransferWarehouseIds(CharSequenceUtil.blankToDefault(transferWarehouseIds, ""));
+        entity.setTransferWarehouseNames(CharSequenceUtil.blankToDefault(transferWarehouseNames, ""));
         entity.setSalesOrgId(CharSequenceUtil.blankToDefault(salesOrgId, ""));
         entity.setSalesOrgName(CharSequenceUtil.blankToDefault(salesOrgName, ""));
         existingKeys.add(key);
@@ -771,21 +829,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             }
         }
         return detailList.get(0);
-    }
-
-    /**
-     * 判断组合品是否需要拆分申报
-     *
-     * @param productLogisticDTO 商品物流信息
-     * @return 是否拆分申报
-     * @throws RuntimeException 当前方法不主动抛出业务异常
-     * @author jack
-     * @date 2026-04-29
-     */
-    private boolean isSplitCombination(ProductDetailDTO.ProductLogisticDTO productLogisticDTO) {
-        return Objects.nonNull(productLogisticDTO)
-                && Boolean.TRUE.equals(productLogisticDTO.getIsCombination())
-                && CharSequenceUtil.equals(productLogisticDTO.getCombinationDeclareType(), CombinationDeclareTypeEnums.SPLIT.getCode());
     }
 
     /**
@@ -1072,6 +1115,10 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         data.put("destWarehouseId", CharSequenceUtil.blankToDefault(entity.getDestWarehouseId(), ""));
         data.put("toWarehouseId", CharSequenceUtil.blankToDefault(entity.getDestWarehouseId(), ""));
         data.put("transferWarehouseIds", CharSequenceUtil.blankToDefault(entity.getTransferWarehouseIds(), ""));
+        String transferWarehouseNames = CharSequenceUtil.isBlank(entity.getTransferWarehouseNames())
+                ? getTransferWarehouseNames(entity.getTransferWarehouseIds())
+                : entity.getTransferWarehouseNames();
+        data.put("transferWarehouseNames", CharSequenceUtil.blankToDefault(transferWarehouseNames, ""));
         data.put("salesOrgId", CharSequenceUtil.blankToDefault(entity.getSalesOrgId(), ""));
         data.put("detailList", Collections.singletonList(new HashMap<String, Object>(data)));
         return data;
@@ -1115,6 +1162,43 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             return RULE_TYPE_B2B_DECLARE;
         }
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
+    }
+
+    /**
+     * 构建合并后预览来源明细
+     *
+     * @param entity 报关明细中间表
+     * @param countryDTO 国家信息
+     * @return 报关合并来源明细
+     * @throws RuntimeException 当前方法不主动抛出业务异常
+     * @author jack
+     * @date 2026-05-06
+     */
+    private TmsDeclareBillDTO.SourceDeliveryDetailDTO buildSourceDeliveryDetailDTO(DeliveryDeclareDetailMidEntity entity,
+                                                                                  DeliveryDeclareDetailMidDTO.PreviewCountryDTO countryDTO) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO dto = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+        dto.setSourceId(entity.getSourceId());
+        dto.setSourceCode(entity.getSourceCode());
+        dto.setSourceType(entity.getSourceType());
+        dto.setSourceDetailId(entity.getSourceDetailId());
+        dto.setBusinessId(entity.getBusinessId());
+        dto.setBusinessCode(entity.getBusinessCode());
+        dto.setBoxNo(entity.getBoxNo());
+        dto.setSkuId(entity.getSkuId());
+        dto.setSkuNo(entity.getSkuNo());
+        dto.setHsCode(entity.getHsCode());
+        dto.setProductNameCn(entity.getProductNameCn());
+        dto.setDeclareElement(entity.getDeclareElement());
+        dto.setUnit(entity.getUnit());
+        dto.setUnitPrice(entity.getUnitPrice());
+        dto.setQty(entity.getQty());
+        dto.setDeclareCurrency(entity.getCurrency());
+        dto.setDeclareCurrencySymbol(entity.getCurrencySymbol());
+        if (Objects.nonNull(countryDTO)) {
+            dto.setCountryId(countryDTO.getCountryId());
+            dto.setCountryName(countryDTO.getCountryName());
+        }
+        return dto;
     }
 
     /**
@@ -1166,8 +1250,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CharSequenceUtil.isBlank(entity.getGenerateStatus())) {
             entity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode());
         }
-        if (Objects.isNull(entity.getComboSkuNo())) {
-            entity.setComboSkuNo("");
+        if (CharSequenceUtil.isBlank(entity.getTransferWarehouseNames())) {
+            entity.setTransferWarehouseNames(getTransferWarehouseNames(entity.getTransferWarehouseIds()));
         }
     }
 
@@ -1188,14 +1272,97 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList()));
+        Map<String, String> transferWarehouseNameMap = getTransferWarehouseNameMap(list.stream()
+                .map(DeliveryDeclareDetailMidDTO.ListDTO::getTransferWarehouseIds)
+                .collect(Collectors.toList()));
         for (DeliveryDeclareDetailMidDTO.ListDTO data : list) {
             data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
             data.setGenerateStatusName(DeliveryDeclareDetailMidGenerateStatusEnum.getName(data.getGenerateStatus()));
-            if (Objects.isNull(data.getComboSkuNo())) {
-                data.setComboSkuNo("");
+            if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {
+                data.setTransferWarehouseNames(buildTransferWarehouseNames(data.getTransferWarehouseIds(), transferWarehouseNameMap));
             }
             fillLatestProductLogistic(data, productLogisticMap.get(data.getSkuId()));
         }
+    }
+
+    /**
+     * 获取中转仓名称
+     *
+     * @param transferWarehouseIds 中转仓id
+     * @return 中转仓名称
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-05-06
+     */
+    private String getTransferWarehouseNames(String transferWarehouseIds) {
+        if (CharSequenceUtil.isBlank(transferWarehouseIds)) {
+            return "";
+        }
+        return buildTransferWarehouseNames(transferWarehouseIds,
+                getTransferWarehouseNameMap(Collections.singletonList(transferWarehouseIds)));
+    }
+
+    /**
+     * 获取中转仓名称映射
+     *
+     * @param transferWarehouseIdsList 中转仓id集合
+     * @return 中转仓名称映射
+     * @throws RuntimeException 远程调用异常时抛出
+     * @author jack
+     * @date 2026-05-06
+     */
+    private Map<String, String> getTransferWarehouseNameMap(List<String> transferWarehouseIdsList) {
+        if (CollectionUtils.isEmpty(transferWarehouseIdsList)) {
+            return Collections.emptyMap();
+        }
+        List<String> warehouseIds = transferWarehouseIdsList.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .flatMap(item -> CharSequenceUtil.split(item, ",").stream())
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(warehouseIds)) {
+            return Collections.emptyMap();
+        }
+        List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(warehouseIds);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            return Collections.emptyMap();
+        }
+        return warehouseList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(WarehouseDTO.ListDTO::getId,
+                        item -> CharSequenceUtil.blankToDefault(item.getName(), ""),
+                        (oldValue, newValue) -> oldValue));
+    }
+
+    /**
+     * 构建中转仓名称
+     *
+     * @param transferWarehouseIds 中转仓id
+     * @param transferWarehouseNameMap 中转仓名称映射
+     * @return 中转仓名称
+     * @throws RuntimeException 当前方法不主动抛出业务异常
+     * @author jack
+     * @date 2026-05-06
+     */
+    private String buildTransferWarehouseNames(String transferWarehouseIds, Map<String, String> transferWarehouseNameMap) {
+        if (CharSequenceUtil.isBlank(transferWarehouseIds) || CollUtil.isEmpty(transferWarehouseNameMap)) {
+            return "";
+        }
+        List<String> warehouseNameList = new ArrayList<String>();
+        for (String warehouseId : CharSequenceUtil.split(transferWarehouseIds, ",")) {
+            if (CharSequenceUtil.isBlank(warehouseId)) {
+                continue;
+            }
+            String warehouseName = transferWarehouseNameMap.get(warehouseId);
+            if (CharSequenceUtil.isNotBlank(warehouseName)) {
+                warehouseNameList.add(warehouseName);
+            }
+        }
+        if (CollectionUtils.isEmpty(warehouseNameList)) {
+            return "";
+        }
+        return String.join(",", warehouseNameList);
     }
 
     /**

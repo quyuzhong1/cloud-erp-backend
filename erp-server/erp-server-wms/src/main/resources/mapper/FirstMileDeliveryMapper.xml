@@ -774,6 +774,7 @@
         select
             fmd.id as sourceId,
             fmd.code as sourceCode,
+            'firstMileDelivery' as sourceType,
             fmdd.id as sourceDetailId,
             fmd.source_id as businessId,
             fmd.source_code as businessCode,
@@ -790,5 +791,11 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
+        <if test="detailIds != null and detailIds.size > 0">
+            and fmdd.id in
+            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

@@ -50,8 +50,6 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum);
 
-    Boolean mergeDeclare(TmsDeclareBillDTO.MergeDeclareDTO dto);
-
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 
     Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO dto);
@@ -86,6 +84,14 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @return com.common.business.dto.base.BatchResultDTO
      */
     BatchResultDTO updateRemark(String id,String remark);
+
+    /**
+     * 批量更新报关单主表字段
+     * @param dto dto
+     * @param sourceTypeEnum 报关单类型
+     * @return Boolean
+     */
+    Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum);
 
     /**
      * 删除报关单

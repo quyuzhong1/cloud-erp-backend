@@ -175,6 +175,15 @@ public class SoDeliveryNoticeFeignController {
     public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(@RequestBody List<String> ids) {
         return soDeliveryNoticeService.listDeclarePackingDetail(ids);
     }
+
+    /**
+     * 下推B2B报关单合并前明细
+     **/
+    @PostMapping("/listBeforePushB2bDeclare")
+    public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@RequestBody TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
+        return soDeliveryNoticeService.listBeforePushB2bDeclare(dto);
+    }
+
     /**
      * 更新销售信息
      * @param soInfoEntity

@@ -7,6 +7,7 @@ import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -77,6 +78,17 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      */
     List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> mergePreview(List<String> ids);
 
+    /**
+     * 合并后预览
+     *
+     * @param ids 报关明细中间表id集合
+     * @return 合并后预览列表
+     * @throws com.common.core.exception.ServiceException 校验失败时抛出
+     * @author jack
+     * @date 2026-05-06
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeAfterPreview(List<String> ids);
+
 
     /**
     * 导出Excel
@@ -122,4 +134,6 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      * @date 2026-04-29
      */
     Boolean autoGenerateMidData(AutoGenerateBillDTO dto);
+
+    Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list);
 }

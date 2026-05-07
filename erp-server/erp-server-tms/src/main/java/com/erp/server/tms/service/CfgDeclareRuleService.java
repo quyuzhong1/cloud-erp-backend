@@ -22,9 +22,5 @@ public interface CfgDeclareRuleService extends SuperService<CfgDeclareRuleEntity
 
     CfgDeclareRuleDTO.SaveListDTO paging(CfgDeclareRuleDTO.ListParamDTO dto);
 
-    CfgDeclareRuleDTO.ViewDTO view(String id);
-
-    void exportList(CfgDeclareRuleDTO.ExportDTO dto, HttpServletResponse response);
-
     List<BaseDropDownDTO.Tree> dropDownList(String type, String name);
 }

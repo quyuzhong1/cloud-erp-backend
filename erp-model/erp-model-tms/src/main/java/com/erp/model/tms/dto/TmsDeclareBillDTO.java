@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -44,6 +45,35 @@ public class TmsDeclareBillDTO implements Serializable {
         @NotNull(message = "id集合不能为空")
         private List<String> ids;
 
+    }
+
+    /**
+     * 批量更新字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateFieldDTO {
+        /**
+         * 主键id集合
+         */
+        @NotEmpty(message = "至少选择一条报关单")
+        private List<String> ids;
+
+        /**
+         * 修改的字段编号
+         */
+        @NotBlank(message = "修改字段编号不能为空")
+        private String updateFiledCode;
+
+        /**
+         * 字段值
+         */
+        private Object values;
+
+        /**
+         * 字段显示值
+         */
+        private String name;
     }
 
 
@@ -324,6 +354,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 产品明细
          */
         private List<ProductDetail> productDetailList;
+        /**
+         * 合并报关明细（用于新增/编辑页面回显）
+         */
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
         /**
          * 装箱信息
          */
@@ -1124,6 +1158,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String senderId;
 
         /**
+         * 发货人类型
+         */
+        private String senderType;
+
+        /**
          * 发货人名称
          */
         private String senderName;
@@ -1142,11 +1181,18 @@ public class TmsDeclareBillDTO implements Serializable {
          * 报关日期
          */
         private LocalDate declareDate;
-
+        /**
+         * 收货人id
+         */
+        private String receiverId;
         /**
          * 收货人名称
          */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
         /**
          * 运输方式
          */
@@ -1278,9 +1324,9 @@ public class TmsDeclareBillDTO implements Serializable {
         private BigDecimal otherFee;
 
         /**
-         * 产品明细
+         *  明细信息
          */
-        private List<ProductDetail> productDetailList;
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList;
         /**
          * 装箱信息
          */
@@ -1321,6 +1367,12 @@ public class TmsDeclareBillDTO implements Serializable {
         private String sourceId;
 
         private Boolean isAuto = false;
+
+        /**
+         *  明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
     }
     /**
     * 修改
@@ -1334,6 +1386,12 @@ public class TmsDeclareBillDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         *  明细信息
+         */
+        @NotEmpty(message = "明细信息不能为空")
+        private List<MergeDeclareBillDetailDTO> mergeDetailList;
 
     }
 
@@ -1362,6 +1420,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 发货人id
          */
         private String senderId;
+        /**
+         * 发货人类型
+         */
+        private String senderType;
 
         /**
          * 出境关别
@@ -1379,9 +1441,17 @@ public class TmsDeclareBillDTO implements Serializable {
         private LocalDate declareDate;
 
         /**
+         * 收货人id
+         */
+        private String receiverId;
+        /**
          * 收货人名称
          */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
 
         /**
          * 监管方式
@@ -1718,11 +1788,25 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MergeDeclareBillDetailDTO {
+        /**
+         *  主键id
+         */
+        private String id;
 
         /**
          *  业务单号+箱号
          */
         private String businessDesc;
+
+        /**
+         * 合并来源业务单号（英文逗号拼接，不含箱号）
+         */
+        private String businessOrderNos;
+
+        /**
+         * 合并代表 SKU id（取合并集合第一条来源明细）
+         */
+        private String leadSkuId;
 
         /**
          *  sku编码
@@ -1758,6 +1842,42 @@ public class TmsDeclareBillDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+
+        /**
+         * 总价（单价 × 合并后数量）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 原产国（合并集合第一条 SKU）
+         */
+        private String sourceCountry;
+
+        /**
+         * 原产国名称
+         */
+        private String sourceCountryName;
+
+        /**
+         * 最终目的国/运抵国
+         */
+        private String toCountry;
+
+        /**
+         * 最终目的国名称
+         */
+        private String toCountryName;
+
+        /**
+         * 境内货源地
+         */
+        private String sourceCargo;
+
+        /**
+         * 征免
+         */
+        private String exemption;
+
         /**
          * 报关币别
          */
@@ -1825,10 +1945,6 @@ public class TmsDeclareBillDTO implements Serializable {
          *  sku编码
          */
         private String skuNo;
-        /**
-         *  组合品sku
-         */
-        private String comboSkuNo;
 
         /**
          * 中国海关编码(商品编号)
@@ -1873,14 +1989,34 @@ public class TmsDeclareBillDTO implements Serializable {
         private String declareCurrencySymbol;
 
         /**
-         * 国家编码
+         * 运抵国/最终目的国编码（国家维度）
          */
         private String countryId;
 
         /**
-         * 国家名称
+         * 运抵国/最终目的国名称
          */
         private String countryName;
+
+        /**
+         * 原产国（产品物流）
+         */
+        private String sourceCountry;
+
+        /**
+         * 原产国名称（产品物流）
+         */
+        private String sourceCountryName;
+
+        /**
+         * 境内货源地（产品物流）
+         */
+        private String sourceCargo;
+
+        /**
+         * 征免（产品物流）
+         */
+        private String exemption;
     }
 
 
@@ -1898,6 +2034,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotEmpty(message = "选择ids不能为空")
         private List<String> ids;
+        /**
+         *  下推的明细ids
+         */
+        private List<String> detailIds;
     }
 
 
@@ -1916,5 +2056,26 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
 
+    }
+
+
+    /**
+     * 拆分保存时按原报关单合同号递增后缀：{@code 原号_1}、{@code 原号_2}…（再次拆分时原号若已为 {@code xxx_1} 则得到 {@code xxx_1_1}）。
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    public static class SplitDeclareCodeSequence {
+        private final String baseCode;
+        private int sequence;
+
+        public SplitDeclareCodeSequence(String baseCode) {
+            this.baseCode = baseCode;
+        }
+
+        public String nextCode() {
+            sequence++;
+            return baseCode + "_" + sequence;
+        }
     }
 }

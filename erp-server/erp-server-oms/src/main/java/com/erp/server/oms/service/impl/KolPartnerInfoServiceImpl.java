@@ -921,6 +921,9 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             AddressParseDTO.BatchParseResultDTO batchParseResultDTO = new AddressParseDTO.BatchParseResultDTO();
             BeanMapperUtils.copy(resultDTO, batchParseResultDTO);
             batchParseResultDTO.setId(dto.getId());
+            batchParseResultDTO.setProvince(resultDTO.getProvince() + "省");
+            batchParseResultDTO.setCity(resultDTO.getCity() + "市");
+            batchParseResultDTO.setDetailAddress(resultDTO.getDistrict() + resultDTO.getDetailAddress());
             resultDTOS.add(batchParseResultDTO);
         });
         return resultDTOS;

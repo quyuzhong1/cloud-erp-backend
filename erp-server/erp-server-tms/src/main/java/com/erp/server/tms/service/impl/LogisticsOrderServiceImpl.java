@@ -475,7 +475,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         log.info("开始执行删除操作，单号：【{}】", entity.getCode());
         // 物流单据状态等于下单中或者下单成功，不允许删除
         if (LogisticsStatusEnum.ORDERING.getCode().equals(entity.getStatus()) || LogisticsStatusEnum.SUCCESS.getCode().equals(entity.getStatus())) {
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), "物流单据不是已取消或者下单失败状态，不能编辑");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流单据不是已取消或者下单失败状态，不能删除");
         }
         this.removeById(id);
         // 记录主单操作日志
@@ -641,6 +641,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             resultList.add(result);
             if (success) {
                 entity.setStatus(LogisticsStatusEnum.CANCEL.getCode());
+                entity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
                 entity.setTrackNo("");
                 pushCancelOperateLog(entity, RequestStatusEnums.SUCCESS.getCode(), orderUpdateRequest, baseResult);
             } else {
@@ -702,6 +703,10 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         LogisticsOrderEntity entity = getById(dto.getId());
         if (Objects.isNull(entity)) {
             throw new ServiceException("物流单不存在");
+        }
+        // 校验是不是pdf文件
+        if (!StringUtils.endsWithIgnoreCase(dto.getAttachName(), ".pdf")) {
+            throw new ServiceException("仅支持上传PDF格式的文件");
         }
         TmsAttachmentEntity tmsAttachmentEntity = attachmentService.getOne(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .eq(TmsAttachmentEntity::getBusinessId, entity.getId())

@@ -25,7 +25,6 @@
        <result column="contract_no" property="contractNo" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="combo_sku_no" property="comboSkuNo" />
        <result column="currency" property="currency" />
        <result column="currency_symbol" property="currencySymbol" />
        <result column="declare_id" property="declareId" />
@@ -43,6 +42,7 @@
        <result column="dest_warehouse_id" property="destWarehouseId" />
        <result column="dest_warehouse_name" property="destWarehouseName" />
        <result column="transfer_warehouse_ids" property="transferWarehouseIds" />
+       <result column="transfer_warehouse_names" property="transferWarehouseNames" />
        <result column="sales_org_id" property="salesOrgId" />
        <result column="sales_org_name" property="salesOrgName" />
     </resultMap>
@@ -71,7 +71,6 @@
         dddm.contract_no AS contractNo,
         dddm.sku_id AS skuId,
         dddm.sku_no AS skuNo,
-        dddm.combo_sku_no AS comboSkuNo,
         dddm.currency AS currency,
         dddm.currency_symbol AS currencySymbol,
         dddm.declare_id AS declareId,
@@ -89,6 +88,7 @@
         dddm.dest_warehouse_id AS destWarehouseId,
         dddm.dest_warehouse_name AS destWarehouseName,
         dddm.transfer_warehouse_ids AS transferWarehouseIds,
+        dddm.transfer_warehouse_names AS transferWarehouseNames,
         dddm.sales_org_id AS salesOrgId,
         dddm.sales_org_name AS salesOrgName
     </sql>
@@ -135,8 +135,8 @@
         dddm.generate_status AS tabFlag,
         count(dddm.id)  AS count
         FROM  delivery_declare_detail_mid dddm
-        WHERE ${params.sqlMap.default}
-            AND dddm.is_deleted=FALSE
+        WHERE
+            dddm.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -161,21 +161,28 @@
         dddm.source_id as sourceId,
         dddm.source_code as sourceCode,
         dddm.source_detail_id as sourceDetailId,
+        dddm.source_type as sourceType,
+        dddm.business_id as businessId,
+        dddm.business_code as businessCode,
+        dddm.box_no as boxNo,
         dddm.sku_id as skuId,
         dddm.sku_no as skuNo,
-        fpl.customs_code as customsCode,
-        fpl.declare_chinese_name as declareChineseName,
+        fpl.customs_code as hsCode,
+        fpl.declare_chinese_name as productNameCn,
         fpl.declare_element as declareElement,
-        fpl.declare_unit as declareUnit,
-        fpl.declare_price as price,
-        dddm.qty,
-        fpl.declare_currency as declareCurrency,
+        fpl.declare_unit as unit,
+        fpl.declare_price as unitPrice,
+        dddm.qty as qty,
+        dddm.currency as declareCurrency,
         fpl.declare_currency_symbol as declareCurrencySymbol,
         fpl.source_country as sourceCountry,
         fpl.source_cargo as sourceCargo,
-        fpl.exemption
+        fpl.exemption as exemption,
+        fmd.country_id as countryId,
+        fmd.country_name as countryName
         from delivery_declare_detail_mid dddm
         inner join foreign_product_logistics fpl on dddm.sku_id = fpl.sku_id and fpl.is_deleted = false
+        left join first_mile_delivery fmd on dddm.source_id = fmd.id and fmd.is_deleted = false
         where  dddm.is_deleted = false
         and dddm.declare_id in
         <foreach collection="declareBillIdList" item="declareBillId" open="(" separator="," close=")">

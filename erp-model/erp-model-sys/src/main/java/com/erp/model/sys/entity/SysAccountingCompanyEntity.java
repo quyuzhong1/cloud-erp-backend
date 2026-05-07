@@ -73,7 +73,13 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     @TableField("usci_code")
     private String usciCode;
-    
+
+    /**
+     * 公司海关代码
+     */
+    @TableField("company_hs_code")
+    private String companyHsCode;
+
     /**
      * 组织职能
      */

@@ -173,7 +173,7 @@ public enum BusinessNoTypeEnum {
     CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
     CODE_WDGL(124 ,"WDGL","文件管理",BusinessNoConstant.WDGL),
     CODE_WLD(125 ,"WLD","物流单据编号",BusinessNoConstant.WLD),
-    CODE_VJ(126 ,"VJ","文件管理",BusinessNoConstant.VJ),
+    CODE_VJ(126 ,"VJ","保宏预报合同号",BusinessNoConstant.VJ),
 
     ;
 
