@@ -3,60 +3,103 @@
 <mapper namespace="com.erp.server.wms.mapper.WarehouseReceiveMapper">
 
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">
+        WITH qc_return_lines AS (
+            SELECT
+            qi.source_id,
+            qi.source_detail_id,
+            SUM(prd.return_qty)::numeric AS return_qty
+            FROM qc_info qi
+            INNER JOIN qc_result qr ON qr.main_id = qi.id AND qr.is_deleted = false
+            INNER JOIN po_return pr ON pr.source_id = qi.id AND pr.is_deleted = false
+            AND pr.approve_status = 'approve'
+            INNER JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = false
+            WHERE qi.is_deleted = false
+            AND qi.source_type IN ('poReceive', 'warehouseReceive')
+            AND qi.qc_status = 'finishQc'
+            GROUP BY qi.source_id, qi.source_detail_id
+        ),
+        qc_notice_return_lines AS (
+            SELECT
+            qn.source_id,
+            qnd.source_detail_id,
+            SUM(prd.return_qty)::numeric AS return_qty
+            FROM qc_info qi
+            INNER JOIN qc_result qr ON qr.main_id = qi.id AND qr.is_deleted = false
+            INNER JOIN qc_notice qn ON qi.source_id = qn.id AND qn.is_deleted = false
+            INNER JOIN qc_notice_detail qnd ON qi.source_detail_id = qnd.id AND qnd.is_deleted = false
+            INNER JOIN po_return pr ON pr.source_id = qi.id AND pr.is_deleted = false
+            AND pr.approve_status = 'approve'
+            INNER JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = false
+            WHERE qi.is_deleted = false
+            AND qi.source_type = 'qcNotice'
+            AND qn.source_type = 'poReceive'
+            AND qi.qc_status = 'finishQc'
+            GROUP BY qn.source_id, qnd.source_detail_id
+        ),
+        return_agg AS (
+            SELECT
+            source_id,
+            source_detail_id,
+            SUM(return_qty) AS return_qty
+            FROM (
+            SELECT source_id, source_detail_id, return_qty FROM qc_return_lines
+            UNION ALL
+            SELECT source_id, source_detail_id, return_qty FROM qc_notice_return_lines
+            ) u
+            GROUP BY source_id, source_detail_id
+        ),
+        instock_agg AS (
+            SELECT
+            pi.source_id,
+            pid.source_detail_id,
+            SUM(pid.stock_in_qty) AS stock_in_qty
+            FROM po_instock_detail pid
+            INNER JOIN po_instock pi ON pi.id = pid.main_id
+            AND pi.is_deleted = false
+            AND pi.approve_status = 'approve'
+            WHERE pid.is_deleted = false
+            GROUP BY pi.source_id, pid.source_detail_id
+        )
         SELECT
-            wr.id,
-            wrd.id AS detailId,
-            wr.code,
-            wr.purchase_order_id AS purchaseOrderId,
-            wr.purchase_order_code AS purchaseOrderCode,
-            wr.supplier_name AS supplierName,
-            wr.approve_status AS approveStatus,
-            wrd.in_stock_status AS inStockStatus,
-            wr.invalid_status AS invalidStatus,
-            wrd.sku_id AS skuId,
-            wrd.sku_no AS skuNo,
-            wr.bill_date AS billDate,
-            wrd.receive_qty AS receiveQty,
-            wr.delivery_warehouse_name AS deliveryWarehouseName,
-            wr.receive_user_name AS receiveUserName,
-            wr.purchase_user_name AS purchaseUserName,
-        pod.purchase_qty AS purchaseQty,
-            wrd.exceed_qty AS exceedQty,
-            wr.approve_user_name AS approveUserName,
-            wr.approve_time AS approveTime,
-            wr.create_user_name AS createUserName,
-            wrd.purchase_order_detail_id AS purchaseOrderDetailId,
-            wrd.remark,
-            wr.subcontract_type as subcontractType,
-            wr.create_time AS createTime,
-            (case when instock.stockInQty is null then 0 else instock.stockInQty END) stockInQty,
-            (case when returnInfo.returnQty is null then 0 else returnInfo.returnQty END) returnQty,
-            wr.receive_org_id as receiveOrgId,
-            wr.receive_org_name as receiveOrgName,
-            po.purchase_org_id as purchaseOrgId,
-            po.purchase_org_name as purchaseOrgName,
-            wr.source_code as deliveryCode,
-            wrd.wait_qc_qty as waitQcQty
+        wr.id,
+        wrd.id AS detailid,
+        wr.code,
+        wr.purchase_order_id AS purchaseorderid,
+        wr.purchase_order_code AS purchaseordercode,
+        wr.supplier_name AS suppliername,
+        wr.approve_status AS approvestatus,
+        wrd.in_stock_status AS instockstatus,
+        wr.invalid_status AS invalidstatus,
+        wrd.sku_id AS skuid,
+        wrd.sku_no AS skuno,
+        wr.bill_date AS billdate,
+        wrd.receive_qty AS receiveqty,
+        wr.delivery_warehouse_name AS deliverywarehousename,
+        wr.receive_user_name AS receiveusername,
+        wr.purchase_user_name AS purchaseusername,
+        pod.purchase_qty AS purchaseqty,
+        wrd.exceed_qty AS exceedqty,
+        wr.approve_user_name AS approveusername,
+        wr.approve_time AS approvetime,
+        wr.create_user_name AS createusername,
+        wrd.purchase_order_detail_id AS purchaseorderdetailid,
+        wrd.remark,
+        wr.subcontract_type AS subcontracttype,
+        wr.create_time AS createtime,
+        COALESCE(instock.stock_in_qty, 0) AS stockinqty,
+        COALESCE(returnInfo.return_qty, 0) AS returnqty,
+        wr.receive_org_id AS receiveorgid,
+        wr.receive_org_name AS receiveorgname,
+        po.purchase_org_id AS purchaseorgid,
+        po.purchase_org_name AS purchaseorgname,
+        wr.source_code AS deliverycode,
+        wrd.wait_qc_qty AS waitqcqty
         FROM po_receive_detail wrd
-        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
-            LEFT join purchase_order po on po.id = wr.purchase_order_id and po.is_deleted = FALSE
-        LEFT join purchase_order_detail pod on pod.id = wrd.purchase_order_detail_id and pod.is_deleted = FALSE
-        LEFT JOIN (SELECT pi.source_id,pid.source_detail_id,
-        SUM(pid.stock_in_qty)  AS stockInQty
-        FROM po_instock_detail pid
-        LEFT JOIN po_instock pi ON pi.id = pid.main_id AND pi.is_deleted = FALSE
-        AND pi.approve_status = 'approve' WHERE pid.is_deleted = FALSE
-        GROUP BY pi.source_id,pid.source_detail_id) instock
-        ON wr.ID = instock.source_id AND wrd.ID = instock.source_detail_id
-
-        left join (select qi.source_id,qi.source_detail_id,SUM(prd.return_qty) returnQty
-        from qc_info qi
-        inner join po_return pr on pr.source_id=qi.id and pr.is_deleted=FALSE
-        and pr.approve_status='approve'
-        inner join po_return_detail prd on pr.id=prd.main_id and prd.is_deleted=FALSE  and prd.purchase_order_detail_id=qi.source_detail_id
-        where qi.is_deleted=FALSE
-        and qi.qc_status='finishQc'
-        group by qi.source_id,qi.source_detail_id) returnInfo  on returnInfo.source_id=wr.id and returnInfo.source_detail_id=wrd.purchase_order_detail_id
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = false
+        LEFT JOIN purchase_order po ON po.id = wr.purchase_order_id AND po.is_deleted = false
+        LEFT JOIN purchase_order_detail pod ON pod.id = wrd.purchase_order_detail_id AND pod.is_deleted = false
+        LEFT JOIN instock_agg instock ON instock.source_id = wr.id AND instock.source_detail_id = wrd.id
+        LEFT JOIN return_agg returnInfo ON returnInfo.source_id = wr.id AND returnInfo.source_detail_id = wrd.id
         WHERE ${params.sqlMap.default}
         and wr.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -140,60 +183,103 @@
     </select>
 
     <select id="warehouseReceiveExportExcel" resultType="com.erp.model.wms.dto.WarehouseReceiveExcelDTO">
+        WITH qc_return_lines AS (
+            SELECT
+            qi.source_id,
+            qi.source_detail_id,
+            SUM(prd.return_qty)::numeric AS return_qty
+            FROM qc_info qi
+            INNER JOIN qc_result qr ON qr.main_id = qi.id AND qr.is_deleted = false
+            INNER JOIN po_return pr ON pr.source_id = qi.id AND pr.is_deleted = false
+            AND pr.approve_status = 'approve'
+            INNER JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = false
+            WHERE qi.is_deleted = false
+            AND qi.source_type IN ('poReceive', 'warehouseReceive')
+            AND qi.qc_status = 'finishQc'
+            GROUP BY qi.source_id, qi.source_detail_id
+        ),
+        qc_notice_return_lines AS (
+            SELECT
+            qn.source_id,
+            qnd.source_detail_id,
+            SUM(prd.return_qty)::numeric AS return_qty
+            FROM qc_info qi
+            INNER JOIN qc_result qr ON qr.main_id = qi.id AND qr.is_deleted = false
+            INNER JOIN qc_notice qn ON qi.source_id = qn.id AND qn.is_deleted = false
+            INNER JOIN qc_notice_detail qnd ON qi.source_detail_id = qnd.id AND qnd.is_deleted = false
+            INNER JOIN po_return pr ON pr.source_id = qi.id AND pr.is_deleted = false
+            AND pr.approve_status = 'approve'
+            INNER JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = false
+            WHERE qi.is_deleted = false
+            AND qi.source_type = 'qcNotice'
+            AND qn.source_type = 'poReceive'
+            AND qi.qc_status = 'finishQc'
+            GROUP BY qn.source_id, qnd.source_detail_id
+        ),
+        return_agg AS (
+            SELECT
+            source_id,
+            source_detail_id,
+            SUM(return_qty) AS return_qty
+            FROM (
+            SELECT source_id, source_detail_id, return_qty FROM qc_return_lines
+            UNION ALL
+            SELECT source_id, source_detail_id, return_qty FROM qc_notice_return_lines
+            ) u
+            GROUP BY source_id, source_detail_id
+        ),
+        instock_agg AS (
+            SELECT
+            pi.source_id,
+            pid.source_detail_id,
+            SUM(pid.stock_in_qty) AS stock_in_qty
+            FROM po_instock_detail pid
+            INNER JOIN po_instock pi ON pi.id = pid.main_id
+            AND pi.is_deleted = false
+            AND pi.approve_status = 'approve'
+            WHERE pid.is_deleted = false
+            GROUP BY pi.source_id, pid.source_detail_id
+        )
         SELECT
         wr.id,
-        wrd.id AS detailId,
+        wrd.id AS detailid,
         wr.code,
-        wr.purchase_order_id AS purchaseOrderId,
-        wr.purchase_order_code AS purchaseOrderCode,
-        wr.supplier_name AS supplierName,
-        wr.approve_status AS approveStatus,
-        wrd.in_stock_status AS inStockStatus,
-        wr.invalid_status AS invalidStatus,
-        wrd.sku_id AS skuId,
-        wrd.sku_no AS skuNo,
-        wr.bill_date AS billDate,
-        wrd.receive_qty AS receiveQty,
-        wr.delivery_warehouse_name AS deliveryWarehouseName,
-        wr.receive_user_name AS receiveUserName,
-        wr.purchase_user_name AS purchaseUserName,
-        pod.purchase_qty AS purchaseQty,
-        wrd.exceed_qty AS exceedQty,
-        wr.approve_user_name AS approveUserName,
-        wr.approve_time AS approveTime,
-        wr.create_user_name AS createUserName,
-        wrd.purchase_order_detail_id AS purchaseOrderDetailId,
+        wr.purchase_order_id AS purchaseorderid,
+        wr.purchase_order_code AS purchaseordercode,
+        wr.supplier_name AS suppliername,
+        wr.approve_status AS approvestatus,
+        wrd.in_stock_status AS instockstatus,
+        wr.invalid_status AS invalidstatus,
+        wrd.sku_id AS skuid,
+        wrd.sku_no AS skuno,
+        wr.bill_date AS billdate,
+        wrd.receive_qty AS receiveqty,
+        wr.delivery_warehouse_name AS deliverywarehousename,
+        wr.receive_user_name AS receiveusername,
+        wr.purchase_user_name AS purchaseusername,
+        pod.purchase_qty AS purchaseqty,
+        wrd.exceed_qty AS exceedqty,
+        wr.approve_user_name AS approveusername,
+        wr.approve_time AS approvetime,
+        wr.create_user_name AS createusername,
+        wrd.purchase_order_detail_id AS purchaseorderdetailid,
         wrd.remark,
-        wr.subcontract_type as subcontractType,
-        wr.create_time AS createTime,
-        (case when instock.stockInQty is null then 0 else instock.stockInQty END) stockInQty,
-        (case when returnInfo.returnQty is null then 0 else returnInfo.returnQty END) returnQty,
-        wr.receive_org_id as receiveOrgId,
-        wr.receive_org_name as receiveOrgName,
-        po.purchase_org_id as purchaseOrgId,
-        po.purchase_org_name as purchaseOrgName,
-        wr.source_code as deliveryCode,
-        wrd.wait_qc_qty as waitQcQty
+        wr.subcontract_type AS subcontracttype,
+        wr.create_time AS createtime,
+        COALESCE(instock.stock_in_qty, 0) AS stockinqty,
+        COALESCE(returnInfo.return_qty, 0) AS returnqty,
+        wr.receive_org_id AS receiveorgid,
+        wr.receive_org_name AS receiveorgname,
+        po.purchase_org_id AS purchaseorgid,
+        po.purchase_org_name AS purchaseorgname,
+        wr.source_code AS deliverycode,
+        wrd.wait_qc_qty AS waitqcqty
         FROM po_receive_detail wrd
-        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
-        LEFT join purchase_order po on po.id = wr.purchase_order_id and po.is_deleted = FALSE
-        LEFT join purchase_order_detail pod on pod.id = wrd.purchase_order_detail_id and pod.is_deleted = FALSE
-        LEFT JOIN (SELECT pi.source_id,pid.source_detail_id,
-        SUM(pid.stock_in_qty)  AS stockInQty
-        FROM po_instock_detail pid
-        LEFT JOIN po_instock pi ON pi.id = pid.main_id AND pi.is_deleted = FALSE
-        AND pi.approve_status = 'approve' WHERE pid.is_deleted = FALSE
-        GROUP BY pi.source_id,pid.source_detail_id) instock
-        ON wr.ID = instock.source_id AND wrd.ID = instock.source_detail_id
-
-        left join (select qi.source_id,qi.source_detail_id,SUM(prd.return_qty) returnQty
-        from qc_info qi
-        inner join po_return pr on pr.source_id=qi.id and pr.is_deleted=FALSE
-        and pr.approve_status='approve'
-        inner join po_return_detail prd on pr.id=prd.main_id and prd.is_deleted=FALSE  and prd.purchase_order_detail_id=qi.source_detail_id
-        where qi.is_deleted=FALSE
-        and qi.qc_status='finishQc'
-        group by qi.source_id,qi.source_detail_id) returnInfo  on returnInfo.source_id=wr.id and returnInfo.source_detail_id=wrd.purchase_order_detail_id
+        INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = false
+        LEFT JOIN purchase_order po ON po.id = wr.purchase_order_id AND po.is_deleted = false
+        LEFT JOIN purchase_order_detail pod ON pod.id = wrd.purchase_order_detail_id AND pod.is_deleted = false
+        LEFT JOIN instock_agg instock ON instock.source_id = wr.id AND instock.source_detail_id = wrd.id
+        LEFT JOIN return_agg returnInfo ON returnInfo.source_id = wr.id AND returnInfo.source_detail_id = wrd.id
         WHERE ${params.sqlMap.default}
         and wr.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -640,6 +726,63 @@
         group by wr.approve_status
     </select>
     <select id="pagingTotal" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingTotalDTO">
+        WITH qc_return_lines AS (
+            SELECT
+            qi.source_id,
+            qi.source_detail_id,
+            SUM(prd.return_qty)::numeric AS return_qty
+            FROM qc_info qi
+            INNER JOIN qc_result qr ON qr.main_id = qi.id AND qr.is_deleted = false
+            INNER JOIN po_return pr ON pr.source_id = qi.id AND pr.is_deleted = false
+            AND pr.approve_status = 'approve'
+            INNER JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = false
+            WHERE qi.is_deleted = false
+            AND qi.source_type IN ('poReceive', 'warehouseReceive')
+            AND qi.qc_status = 'finishQc'
+            GROUP BY qi.source_id, qi.source_detail_id
+        ),
+        qc_notice_return_lines AS (
+            SELECT
+            qn.source_id,
+            qnd.source_detail_id,
+            SUM(prd.return_qty)::numeric AS return_qty
+            FROM qc_info qi
+            INNER JOIN qc_result qr ON qr.main_id = qi.id AND qr.is_deleted = false
+            INNER JOIN qc_notice qn ON qi.source_id = qn.id AND qn.is_deleted = false
+            INNER JOIN qc_notice_detail qnd ON qi.source_detail_id = qnd.id AND qnd.is_deleted = false
+            INNER JOIN po_return pr ON pr.source_id = qi.id AND pr.is_deleted = false
+            AND pr.approve_status = 'approve'
+            INNER JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = false
+            WHERE qi.is_deleted = false
+            AND qi.source_type = 'qcNotice'
+            AND qn.source_type = 'poReceive'
+            AND qi.qc_status = 'finishQc'
+            GROUP BY qn.source_id, qnd.source_detail_id
+        ),
+        return_agg AS (
+        SELECT
+            source_id,
+            source_detail_id,
+            SUM(return_qty) AS return_qty
+            FROM (
+            SELECT source_id, source_detail_id, return_qty FROM qc_return_lines
+            UNION ALL
+            SELECT source_id, source_detail_id, return_qty FROM qc_notice_return_lines
+            ) u
+            GROUP BY source_id, source_detail_id
+        ),
+        instock_agg AS (
+        SELECT
+            pi.source_id,
+            pid.source_detail_id,
+            SUM(pid.stock_in_qty) AS stock_in_qty
+            FROM po_instock_detail pid
+            INNER JOIN po_instock pi ON pi.id = pid.main_id
+            AND pi.is_deleted = false
+            AND pi.approve_status = 'approve'
+            WHERE pid.is_deleted = false
+            GROUP BY pi.source_id, pid.source_detail_id
+        )
         SELECT
         sum(wrd.receive_qty) AS receiveQty,
         sum(pod.purchase_qty) AS purchaseQty,
@@ -650,21 +793,8 @@
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         LEFT join purchase_order po on po.id = wr.purchase_order_id and po.is_deleted = FALSE
         LEFT join purchase_order_detail pod on pod.id = wrd.purchase_order_detail_id and pod.is_deleted = FALSE
-        LEFT JOIN (SELECT pi.source_id,pid.source_detail_id,
-        SUM(pid.stock_in_qty)  AS stockInQty
-        FROM po_instock_detail pid
-        LEFT JOIN po_instock pi ON pi.id = pid.main_id AND pi.is_deleted = FALSE
-        AND pi.approve_status = 'approve' WHERE pid.is_deleted = FALSE
-        GROUP BY pi.source_id,pid.source_detail_id) instock
-        ON wr.ID = instock.source_id AND wrd.ID = instock.source_detail_id
-        left join (select qi.source_id,qi.source_detail_id,SUM(prd.return_qty) returnQty
-        from qc_info qi
-        inner join po_return pr on pr.source_id=qi.id and pr.is_deleted=FALSE
-        and pr.approve_status='approve'
-        inner join po_return_detail prd on pr.id=prd.main_id and prd.is_deleted=FALSE  and prd.purchase_order_detail_id=qi.source_detail_id
-        where qi.is_deleted=FALSE
-        and qi.qc_status='finishQc'
-        group by qi.source_id,qi.source_detail_id) returnInfo  on returnInfo.source_id=wr.id and returnInfo.source_detail_id=wrd.purchase_order_detail_id
+        LEFT JOIN instock_agg instock ON instock.source_id = wr.id AND instock.source_detail_id = wrd.id
+        LEFT JOIN return_agg returnInfo ON returnInfo.source_id = wr.id AND returnInfo.source_detail_id = wrd.id
         WHERE ${params.sqlMap.default}
         and wr.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
