@@ -941,6 +941,284 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return deliveryDTOList;
     }
 
+    /**
+     * 根据选中SKU查询报关表头信息
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param dto
+     * @param sourceTypeEnum
+     * @return com.erp.model.tms.dto.TmsDeclareBillDTO.SelectedSkuHeaderDTO
+     */
+    @Override
+    public TmsDeclareBillDTO.SelectedSkuHeaderDTO querySelectedSkuHeader(TmsDeclareBillDTO.SelectedSkuHeaderParamDTO dto,
+                                                                         SourceTypeEnum sourceTypeEnum) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> selectedDetailList = dto.getSourceDeliveryDetailList().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(selectedDetailList)) {
+            throw new ServiceException("选中的SKU信息不能为空");
+        }
+        List<String> sourceIdList = selectedDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIdList)) {
+            throw new ServiceException("未找到来源单据，无法查询报关表头");
+        }
+
+        TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO = new TmsDeclareBillDTO.SelectedSkuHeaderDTO();
+        List<TmsDeclareBillDTO.PackingDTO> packingDTOList;
+        List<LogisticsBillEntity> logisticsBillList;
+        if (SourceTypeEnum.FM_DECLARE_BILL == sourceTypeEnum) {
+            List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
+            packingDTOList = deliveryDTOList.stream()
+                    .filter(item -> CollUtil.isNotEmpty(item.getPackingDTOList()))
+                    .flatMap(item -> item.getPackingDTOList().stream())
+                    .collect(Collectors.toList());
+            logisticsBillList = fmLogisticService.listByOutstcockCode(deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.DeliveryDTO::getSourceCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList()));
+        } else if (SourceTypeEnum.B2B_DECLARE_BILL == sourceTypeEnum) {
+            List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(sourceIdList).build());
+            packingDTOList = deliveryDTOList.stream()
+                    .filter(item -> CollUtil.isNotEmpty(item.getPackingDTOList()))
+                    .flatMap(item -> item.getPackingDTOList().stream())
+                    .collect(Collectors.toList());
+            logisticsBillList = logisticService.listByOutstockCodeList(deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getSoOutstockCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList()));
+        } else {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+        }
+
+        fillHeaderLogistics(headerDTO, logisticsBillList);
+        fillHeaderWeight(headerDTO, selectedDetailList, packingDTOList);
+        return headerDTO;
+    }
+
+    /**
+     * 填充报关表头物流信息
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param headerDTO
+     * @param logisticsBillList
+     */
+    private void fillHeaderLogistics(TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO,
+                                     List<LogisticsBillEntity> logisticsBillList) {
+        if (CollUtil.isEmpty(logisticsBillList)) {
+            headerDTO.setShippingMethod("");
+            headerDTO.setShippingMethodName("");
+            headerDTO.setLogisticsSupplierId("");
+            headerDTO.setLogisticsSupplierName("");
+            headerDTO.setTransportNo("");
+            return;
+        }
+        headerDTO.setShippingMethod(joinDistinct(logisticsBillList.stream()
+                .map(LogisticsBillEntity::getShippingMethod)
+                .collect(Collectors.toList())));
+        headerDTO.setShippingMethodName(joinDistinct(logisticsBillList.stream()
+                .map(item -> LogisticsMethodEnum.getName(item.getShippingMethod()))
+                .collect(Collectors.toList())));
+        headerDTO.setLogisticsSupplierId(joinDistinct(logisticsBillList.stream()
+                .map(LogisticsBillEntity::getLogisticsSupplierId)
+                .collect(Collectors.toList())));
+        List<String> supplierIds = logisticsBillList.stream()
+                .map(LogisticsBillEntity::getLogisticsSupplierId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> supplierNameMap = CollUtil.isEmpty(supplierIds)
+                ? new HashMap<>()
+                : logisticsSupplierService.listByIds(supplierIds).stream()
+                .collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName, (a, b) -> a));
+        headerDTO.setLogisticsSupplierName(joinDistinct(logisticsBillList.stream()
+                .map(item -> supplierNameMap.get(item.getLogisticsSupplierId()))
+                .collect(Collectors.toList())));
+        headerDTO.setTransportNo(joinDistinct(logisticsBillList.stream()
+                .map(item -> StringUtils.defaultIfBlank(item.getTransportNo(), item.getCounterNo()))
+                .collect(Collectors.toList())));
+    }
+
+    /**
+     * 填充报关表头件数和重量
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param headerDTO
+     * @param selectedDetailList
+     * @param packingDTOList
+     */
+    private void fillHeaderWeight(TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO,
+                                  List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> selectedDetailList,
+                                  List<TmsDeclareBillDTO.PackingDTO> packingDTOList) {
+        Set<String> selectedBoxKeySet = selectedDetailList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
+                .map(this::buildSelectedBoxKeyList)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        Set<String> selectedBoxCountKeySet = selectedDetailList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getBoxNo()))
+                .map(item -> buildSelectedBoxKey(StringUtils.defaultIfBlank(item.getSourceId(), item.getSourceCode()), item.getBoxNo()))
+                .collect(Collectors.toSet());
+        List<TmsDeclareBillDTO.PackingDTO> selectedPackingList = packingDTOList.stream()
+                .filter(item -> selectedBoxKeySet.contains(buildSelectedBoxKey(item.getSourceId(), item.getBoxNo()))
+                        || selectedBoxKeySet.contains(buildSelectedBoxKey(item.getSourceCode(), item.getBoxNo())))
+                .collect(Collectors.toList());
+        headerDTO.setBoxQty(selectedBoxCountKeySet.size());
+        headerDTO.setGrossWeight(selectedPackingList.stream()
+                .collect(Collectors.toMap(this::buildPackingBoxKey, item -> parseWeight(item.getPackageWeight()), (a, b) -> a))
+                .values()
+                .stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+        headerDTO.setNetWeight(calculateSelectedNetWeight(selectedDetailList));
+    }
+
+    /**
+     * 计算选中SKU净重
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param selectedDetailList
+     * @return java.math.BigDecimal
+     */
+    private BigDecimal calculateSelectedNetWeight(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> selectedDetailList) {
+        List<String> skuIdList = selectedDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIdList)) {
+            return BigDecimal.ZERO;
+        }
+        List<ProductDetailDTO.ProductLogisticDTO> productLogisticsList = plmTaskFeign.listProductLogisticsByIds(skuIdList);
+        Map<String, ProductDetailDTO.ProductLogisticDTO> logisticsMap = CollUtil.isEmpty(productLogisticsList)
+                ? new HashMap<>()
+                : productLogisticsList.stream().collect(Collectors.toMap(ProductDetailDTO.ProductLogisticDTO::getSkuId, item -> item, (a, b) -> a));
+        BigDecimal netWeight = BigDecimal.ZERO;
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : selectedDetailList) {
+            ProductDetailDTO.ProductLogisticDTO productLogisticsDTO = logisticsMap.get(detailDTO.getSkuId());
+            if (Objects.isNull(productLogisticsDTO)) {
+                continue;
+            }
+            netWeight = netWeight.add(calculateProductNetWeight(productLogisticsDTO, detailDTO.getQty()));
+        }
+        return netWeight;
+    }
+
+    /**
+     * 计算产品净重
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param productLogisticsDTO
+     * @param qty
+     * @return java.math.BigDecimal
+     */
+    private BigDecimal calculateProductNetWeight(ProductDetailDTO.ProductLogisticDTO productLogisticsDTO, Integer qty) {
+        int qtyValue = Objects.isNull(qty) ? 0 : qty;
+        if (CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
+                && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
+                && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
+            return productLogisticsDTO.getChildList().stream()
+                    .map(item -> calculateSingleSkuNetWeight(item.getNetWeight(), qtyValue * (Objects.isNull(item.getChildQty()) ? 1 : item.getChildQty())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        return calculateSingleSkuNetWeight(productLogisticsDTO.getNetWeight(), qtyValue);
+    }
+
+    /**
+     * 计算单个SKU净重
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param netWeight
+     * @param qty
+     * @return java.math.BigDecimal
+     */
+    private BigDecimal calculateSingleSkuNetWeight(BigDecimal netWeight, Integer qty) {
+        if (Objects.isNull(netWeight) || Objects.isNull(qty)) {
+            return BigDecimal.ZERO;
+        }
+        return netWeight.multiply(BigDecimal.valueOf(qty)).divide(new BigDecimal(1000), 4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * 构建选中箱号匹配键集合
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param detailDTO
+     * @return java.util.List<java.lang.String>
+     */
+    private List<String> buildSelectedBoxKeyList(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        List<String> keyList = new ArrayList<>();
+        if (StringUtils.isNotBlank(detailDTO.getSourceId())) {
+            keyList.add(buildSelectedBoxKey(detailDTO.getSourceId(), detailDTO.getBoxNo()));
+        }
+        if (StringUtils.isNotBlank(detailDTO.getSourceCode())) {
+            keyList.add(buildSelectedBoxKey(detailDTO.getSourceCode(), detailDTO.getBoxNo()));
+        }
+        return keyList;
+    }
+
+    /**
+     * 构建装箱箱号匹配键
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param packingDTO
+     * @return java.lang.String
+     */
+    private String buildPackingBoxKey(TmsDeclareBillDTO.PackingDTO packingDTO) {
+        return buildSelectedBoxKey(StringUtils.defaultIfBlank(packingDTO.getSourceId(), packingDTO.getSourceCode()), packingDTO.getBoxNo());
+    }
+
+    /**
+     * 构建选中箱号匹配键
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param sourceKey
+     * @param boxNo
+     * @return java.lang.String
+     */
+    private String buildSelectedBoxKey(String sourceKey, String boxNo) {
+        return CharSequenceUtil.join("|", StringUtils.defaultString(sourceKey), StringUtils.defaultString(boxNo));
+    }
+
+    /**
+     * 拼接去重字符串
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param valueList
+     * @return java.lang.String
+     */
+    private String joinDistinct(List<String> valueList) {
+        if (CollUtil.isEmpty(valueList)) {
+            return "";
+        }
+        return valueList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(","));
+    }
+
+    /**
+     * 转换重量
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param weight
+     * @return java.math.BigDecimal
+     */
+    private BigDecimal parseWeight(String weight) {
+        if (StringUtils.isBlank(weight)) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(weight.trim());
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
     @Override
     public TmsDeclareBillDTO.StatisticsVO statisticsBySoOut(PermissionsDTO permissionsDTO) {
         TmsDeclareBillDTO.StatisticsVO statisticsVO = new TmsDeclareBillDTO.StatisticsVO();

@@ -44,6 +44,16 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     List<TmsDeclareBillDTO.DeliveryDTO> getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO querySourceDTO);
 
+    /**
+     * 根据选中SKU查询报关表头信息
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param dto
+     * @param sourceTypeEnum
+     * @return com.erp.model.tms.dto.TmsDeclareBillDTO.SelectedSkuHeaderDTO
+     */
+    TmsDeclareBillDTO.SelectedSkuHeaderDTO querySelectedSkuHeader(TmsDeclareBillDTO.SelectedSkuHeaderParamDTO dto, SourceTypeEnum sourceTypeEnum);
+
     TmsDeclareBillDTO.ViewDTO view(String id);
 
     TmsDeclareBillDTO.DeclareStatusDetailDTO declareStatusDetail(String id, SourceTypeEnum sourceTypeEnum);

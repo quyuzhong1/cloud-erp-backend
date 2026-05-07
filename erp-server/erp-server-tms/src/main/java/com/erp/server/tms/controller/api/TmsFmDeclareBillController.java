@@ -155,6 +155,18 @@ public class TmsFmDeclareBillController extends BaseController {
     }
 
     /**
+     * 根据选中SKU查询报关表头信息
+     * @author will
+     * @date 2026/5/7 14:47
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.tms.dto.TmsDeclareBillDTO.SelectedSkuHeaderDTO>
+     */
+    @PostMapping("/querySelectedSkuHeader")
+    public ApiResult<TmsDeclareBillDTO.SelectedSkuHeaderDTO> querySelectedSkuHeader(@RequestBody @Valid TmsDeclareBillDTO.SelectedSkuHeaderParamDTO dto) {
+        return success(tmsDeclareBillService.querySelectedSkuHeader(dto, SourceTypeEnum.FM_DECLARE_BILL));
+    }
+
+    /**
      * 详情
      * @author lrp
      * @date:  2024-03-19
