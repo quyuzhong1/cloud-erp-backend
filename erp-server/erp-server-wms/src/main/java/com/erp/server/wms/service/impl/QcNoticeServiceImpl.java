@@ -1438,6 +1438,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         // 批量预查数据
         List<QcDefectEntity> existDefectList = CollUtil.isNotEmpty(qcInfoIds) ? qcDefectService.lambdaQuery().in(QcDefectEntity::getMainId, qcInfoIds).list() : new ArrayList<>();
         Map<String, QcDefectEntity> existDefectMap = existDefectList.stream().collect(Collectors.toMap(k -> k.getMainId() + "_" + k.getDefectLevel(), v -> v, (a, b) -> a));
+        Map<String, List<QcDefectEntity>> existDefectByMainIdMap = existDefectList.stream().collect(Collectors.groupingBy(QcDefectEntity::getMainId));
         List<QcResultEntity> existQcResultList = CollUtil.isNotEmpty(qcInfoIds) ? qcResultService.getByMainIdList(qcInfoIds) : new ArrayList<>();
         Map<String, QcResultEntity> qcResultMap = existQcResultList.stream().collect(Collectors.toMap(QcResultEntity::getMainId, v -> v, (a, b) -> a));
 
@@ -1446,6 +1447,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<QcStandardRefEntity> standardRefBatchSaveList = new ArrayList<>();
         List<QcDefectEntity> defectBatchSaveList = new ArrayList<>();
         List<QcDefectEntity> defectBatchUpdateList = new ArrayList<>();
+        List<String> defectIdBatchRemoveList = new ArrayList<>();
         List<String> attachmentIdBatchRemoveList = new ArrayList<>();
         Map<String, List<AttachDTO>> attachmentBatchSaveMap = new HashMap<>();
         List<QcInfoEntity> qcInfoBatchUpdateList = new ArrayList<>();
@@ -1471,20 +1473,30 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
 
             //不良信息
-            if (CollUtil.isNotEmpty(qcInfoView.getDefectViewList())) {
+            List<QcDefectEntity> billExistDefectList = existDefectByMainIdMap.getOrDefault(qcInfoView.getQcBillId(), Collections.emptyList());
+            if (CollUtil.isEmpty(qcInfoView.getDefectViewList())) {
+                if (CollUtil.isNotEmpty(billExistDefectList)) {
+                    List<String> clearDefectIds = billExistDefectList.stream().map(QcDefectEntity::getId).collect(Collectors.toList());
+                    defectIdBatchRemoveList.addAll(clearDefectIds);
+                    attachmentIdBatchRemoveList.addAll(clearDefectIds);
+                }
+            } else {
                 List<QcNoticeDTO.DefectView> defectViewList = qcInfoView.getDefectViewList();
+                Set<String> submitDefectLevelSet = new HashSet<>();
                 for (QcNoticeDTO.DefectView defectView : defectViewList) {
                     if (StringUtils.isBlank(defectView.getDefectLevl())) {
                         continue;
                     }
+                    submitDefectLevelSet.add(defectView.getDefectLevl());
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
                     boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
                     boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
+                    boolean hasAnyDefectInfo = hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage;
+                    boolean hasCoreDefectInfo = hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc;
 
-                    if ((hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage)
-                            && !(hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc && hasDefectImage)) {
+                    if (hasAnyDefectInfo && !hasCoreDefectInfo) {
                         throw new ServiceException(ApiError.PO_QC_DEFECT_INFO_INCOMPLETE);
                     }
 
@@ -1512,6 +1524,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         }
                     } else {
                         // 新增操作
+                        if (!hasDefectImage) {
+                            throw new ServiceException(ApiError.PO_QC_DEFECT_INFO_INCOMPLETE);
+                        }
                         QcDefectEntity newDefect = new QcDefectEntity();
                         BeanUtils.copyProperties(defectView, newDefect);
                         newDefect.setDefectLevel(defectView.getDefectLevl());
@@ -1530,6 +1545,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                             }
                             attachmentBatchSaveMap.put(id, attachDTOs);
                         }
+                    }
+                }
+
+                // 按缺陷等级覆盖：本次未提交的等级，清理历史缺陷及附件
+                for (QcDefectEntity oldDefect : billExistDefectList) {
+                    if (!submitDefectLevelSet.contains(oldDefect.getDefectLevel())) {
+                        defectIdBatchRemoveList.add(oldDefect.getId());
+                        attachmentIdBatchRemoveList.add(oldDefect.getId());
                     }
                 }
             }
@@ -1607,6 +1630,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(standardRefBatchSaveList)) qcStandardRefService.saveBatch(standardRefBatchSaveList);
         if (CollUtil.isNotEmpty(defectBatchSaveList)) qcDefectService.saveBatch(defectBatchSaveList);
         if (CollUtil.isNotEmpty(defectBatchUpdateList)) qcDefectService.updateBatchById(defectBatchUpdateList);
+        if (CollUtil.isNotEmpty(defectIdBatchRemoveList)) qcDefectService.removeByIds(defectIdBatchRemoveList.stream().distinct().collect(Collectors.toList()));
         if (CollUtil.isNotEmpty(attachmentIdBatchRemoveList)) wmsAttachmentService.batchRemoveAttachment(attachmentIdBatchRemoveList);
         for (Map.Entry<String, List<AttachDTO>> entry : attachmentBatchSaveMap.entrySet()) {
             wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.QC_DEFECT, entry.getKey());
