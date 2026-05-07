@@ -126,7 +126,7 @@ public class QcInfoDTO implements Serializable {
          * 产品信息
          * 从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
          */
-        @Valid
+//        @Valid 前端进行区分web进行校验  pda端不校验
         private QcProductDTO.AddDTO qcProduct;
 
         /**

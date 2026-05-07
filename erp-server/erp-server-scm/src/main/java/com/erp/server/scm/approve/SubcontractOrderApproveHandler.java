@@ -49,7 +49,7 @@ public class SubcontractOrderApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
-        BatchResultDTO resultDTO = subcontractOrderService.cancelProcess(entity);
+        BatchResultDTO resultDTO = subcontractOrderService.cancelProcess(dto,entity);
         return resultDTO.getSuccess();
     }
 

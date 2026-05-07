@@ -2704,12 +2704,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
                 GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, pageSize, 0);
                 if (CharSequenceUtil.isNotBlank(response.getPayload().getDownloadURL())){
-                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(response.getPayload().getDownloadURL(), true);
-                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                            .fileName(entity.getFbaShipmentId() + ".pdf")
-                            .base64(pdfUrlToBase64)
-                            .build();
-                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
+                    labelUrl = PdfUtil.convertPdfUrlToErpUrl(response.getPayload().getDownloadURL(), true);
                 }
             }catch (ApiException e){
                 throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getResponseBody());
@@ -2723,12 +2718,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 AwdApi api = AmazonSpApiInitUtils.create(AwdApi.class, shopInfoDTO, false);
                 ShipmentLabels inboundShipmentLabels = api.getInboundShipmentLabels(entity.getFbaShipmentId(), pageType, formatType);
                 if (CharSequenceUtil.isNotBlank(inboundShipmentLabels.getLabelDownloadURL())){
-                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL(), true);
-                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                            .fileName(entity.getFbaShipmentId() + ".pdf")
-                            .base64(pdfUrlToBase64)
-                            .build();
-                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
+                    labelUrl = PdfUtil.convertPdfUrlToErpUrl(inboundShipmentLabels.getLabelDownloadURL(), true);
                 }
             }catch (ApiException e){
                 log.error("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), JSONUtil.toJsonStr(e));

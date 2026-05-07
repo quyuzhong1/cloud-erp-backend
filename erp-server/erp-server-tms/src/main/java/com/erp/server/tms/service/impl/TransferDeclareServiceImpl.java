@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.business.annotation.Idempotent;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -497,11 +498,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), "未开发平台【" + LogisticsPlatformEnum.getByName(authEntity.getLogisticsPlatform()).getName() + "】报关功能"));
             return resultDTOList;
         }
+        //合同协议号
+        String concatNo = getConcatNo();
         //计算入库预报客户单号
-        String referenceCode = getReferenceCode();
+        String referenceCode = getReferenceCode(concatNo);
         TransferLogisticsCreateInboundReq request = TransferLogisticsCreateInboundReq.builder()
                 .referenceCode(referenceCode)
-                .isDelivery(true)
+                .concatNo(concatNo)
+                .isDelivery(false)
                 .packQty(qtyDTO.getQty())
                 .grossWeight(receiveItemList.stream().map(TransferLogisticsCreateInboundReq.ReceiveItem::getGrossWeight).reduce(BigDecimal::add).orElse(BigDecimal.ZERO))
                 .receivingStatus("2")
@@ -509,9 +513,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 .build();
         try {
             //下单
-            log.info("入库预报参数请求：{}", JSONObject.toJSON(request));
+            log.warn("入库预报参数请求：{}", JSONObject.toJSON(request));
             ApiResult<String> result = service.createInbound(request, authEntity.getId());
-            log.info("入库预报参数响应：{}", JSONObject.toJSON(result));
+            log.warn("入库预报参数响应：{}", JSONObject.toJSON(result));
             transferDeclareEntity.setInstockRefCode(referenceCode);
             transferDeclareEntity.setInstockForecastAsnCode(result.getData());
             transferDeclareEntity.setTotalQty(qtyDTO.getQty());
@@ -537,12 +541,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), msg));
             }
         }catch (Exception e){
+            log.warn("调用物流服务入库预报接口异常，异常信息：{}", ExceptionUtil.stacktraceToString(e));
             transferDeclareEntity.setInstockRefCode(referenceCode);
             transferDeclareEntity.setInstockForecastAsnCode("");
             transferDeclareEntity.setTotalQty(qtyDTO.getQty());
-            String msg = String.format("入库预报失败：%s", e.getMessage());
+            String msg = String.format("入库预报失败：%s", Objects.nonNull(e.getMessage()) && e.getMessage().length() < 200 ? e.getMessage() : e.getMessage().substring(0, 200));
             //上传失败
-            transferDeclareEntity.setInstockForecastRemark(e.getMessage());
+            transferDeclareEntity.setInstockForecastRemark(msg);
             transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
             baseMapper.updateById(transferDeclareEntity);
 
@@ -552,6 +557,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
 
         return resultDTOList;
+    }
+    //规则：VJ+字段客户参考号后面的数字202604170002
+    //例如：VJ202604170002
+    @Idempotent
+    private String getConcatNo() {
+        return docNoGenHelper.generateBusinessCode(BusinessNoTypeEnum.CODE_VJ);
     }
 
     /**
@@ -577,18 +588,31 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         tmsB2cDeclareReconciliationDetailService.add(addDetailList);
     }
 
-    private String getReferenceCode() {
+    @Idempotent
+    private String getReferenceCode(String concatNo) {
+        String orderCode = concatNo.replace(BusinessNoTypeEnum.CODE_VJ.getName(), "");
+        StringBuilder stringBuffer = new StringBuilder();
+        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("name"))){
+            String name = declareSetting.getDataJson().get("name").toString();
+            stringBuffer.append(name).append("+");
+        }else{
+            throw new ServiceException("报关主体配置信息为空");
+        }
+        stringBuffer.append(orderCode);
+        return stringBuffer.toString();
+    }
+
+    /**
+     * 获取时间戳
+     * @return
+     */
+    private String getTimeNumber(){
         StringBuilder stringBuffer = new StringBuilder();
         LocalDateTime localDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String format = localDateTime.format(formatter);
-        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
-        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("name"))){
-            String name = declareSetting.getDataJson().get("name").toString();
-            stringBuffer.append(name).append("+").append(format);
-        }else{
-            throw new ServiceException("报关主体配置信息为空");
-        }
+        stringBuffer.append(format);
         Integer count = this.lambdaQuery().likeRight(TransferDeclareEntity::getInstockRefCode,stringBuffer.toString()).count();
         if (Objects.isNull(count)){
             stringBuffer.append(StringUtils.leftPad("1",4, "0"));

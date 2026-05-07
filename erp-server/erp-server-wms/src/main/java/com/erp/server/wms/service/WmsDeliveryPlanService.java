@@ -1,11 +1,13 @@
 package com.erp.server.wms.service;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.common.business.vo.PagingVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -133,10 +135,10 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
     * 撤销
     * @author Luo_WG
     * @date: 2023-11-16
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel

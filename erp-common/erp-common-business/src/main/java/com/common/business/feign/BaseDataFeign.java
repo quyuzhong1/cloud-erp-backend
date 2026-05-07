@@ -25,4 +25,11 @@ public interface BaseDataFeign {
 	
 	@PostMapping("feign/baseData/invoke")
 	String invoke(@RequestBody FeignInvoke feignInvoke);
+
+	@GetMapping("feign/baseData/deleteArchiveData")
+	int deleteArchiveData(@RequestParam("tableName") String tableName,
+						  @RequestParam("timeField") String timeField,
+						  @RequestParam("retentionDay") int retentionDay,
+						  @RequestParam("limitCount") int limitCount,
+						  @RequestParam("extSql") String extSql);
 }
