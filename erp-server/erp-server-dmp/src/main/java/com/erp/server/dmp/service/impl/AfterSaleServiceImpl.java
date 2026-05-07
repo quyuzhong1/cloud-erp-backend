@@ -183,7 +183,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         AfterSaleEntity afterSaleEntity = new AfterSaleEntity();
         BeanMapperUtils.copy(addDTO, afterSaleEntity);
-
+        afterSaleEntity.setType("");
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
 
 
@@ -1758,12 +1758,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().filter(w -> w.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())).collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
-        // 筛选出单据类型是手工的MANUAL
-        List<AfterSaleEntity> manualList = list.stream().filter(item -> StringUtils.isBlank(item.getType()) || OutboundTrackNoTypeEnum.MANUAL.getCode().equals(item.getType())).collect(Collectors.toList());
+        // 筛选出单据类型不是API的
+        List<AfterSaleEntity> manualList = list.stream().filter(item -> !OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (AfterSaleEntity afterSaleEntity : manualList) {
-            BatchResultDTO cancelResult = null;
+            BatchResultDTO cancelResult;
             if (StringUtils.isBlank(afterSaleEntity.getType())) {
                 cancelResult = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "没有下单的数据不能操作取消");
                 resultList.add(cancelResult);
