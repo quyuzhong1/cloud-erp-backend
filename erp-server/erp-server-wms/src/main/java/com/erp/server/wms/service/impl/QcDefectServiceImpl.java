@@ -50,6 +50,11 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
                 .list();
 
         if (Objects.isNull(qcDefectList) || qcDefectList.isEmpty()) {
+            if (CollectionUtils.isNotEmpty(exitList)) {
+                List<String> defectIds = exitList.stream().map(QcDefectEntity::getId).collect(Collectors.toList());
+                attachmentService.batchRemoveAttachment(defectIds);
+                removeByIds(defectIds);
+            }
             return;
         }
 
@@ -86,7 +91,7 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
             }
 
             // 根据是否有ID决定是新增还是更新
-            if (addDTO.getId() == null) {
+            if (StringUtils.isBlank(addDTO.getId())) {
                 // 新增记录
                 QcDefectEntity newEntity = new QcDefectEntity();
                 BeanUtils.copyProperties(addDTO, newEntity);
@@ -124,15 +129,14 @@ public class QcDefectServiceImpl extends SuperServiceImpl<QcDefectMapper, QcDefe
         }
 
         // 处理需要删除的记录 - 在exitList中但不在qcDefectList中的记录
-        Set<String> newDefectLevels = qcDefectList.stream()
-                .map(QcDefectDTO.AddDTO::getDefectLevel)
+        Set<String> submittedDefectIds = qcDefectList.stream()
+                .map(QcDefectDTO.AddDTO::getId)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
 
         // 找出需要删除的记录
         for (QcDefectEntity entity : exitList) {
-            if (StringUtils.isNotBlank(entity.getDefectLevel())
-                    && !newDefectLevels.contains(entity.getDefectLevel())) {
+            if (!submittedDefectIds.contains(entity.getId())) {
                 toDeleteIds.add(entity.getId());
             }
         }
