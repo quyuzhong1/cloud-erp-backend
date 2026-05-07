@@ -787,8 +787,8 @@
         sum(wrd.receive_qty) AS receiveQty,
         sum(pod.purchase_qty) AS purchaseQty,
         sum(wrd.exceed_qty) AS giftQty,
-        sum((case when instock.stockInQty is null then 0 else instock.stockInQty END)) stockInQty,
-        sum((case when returnInfo.returnQty is null then 0 else returnInfo.returnQty END)) returnQty
+        sum(COALESCE(instock.stock_in_qty, 0)) stockInQty,
+        sum(COALESCE(returnInfo.return_qty, 0)) returnQty
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         LEFT join purchase_order po on po.id = wr.purchase_order_id and po.is_deleted = FALSE
