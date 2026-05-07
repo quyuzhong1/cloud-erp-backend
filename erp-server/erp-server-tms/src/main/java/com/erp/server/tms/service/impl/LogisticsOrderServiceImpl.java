@@ -747,6 +747,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> dtoList) {
         List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .in(TmsAttachmentEntity::getBusinessId, dtoList.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getId).collect(Collectors.toList()))
@@ -828,6 +829,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> batchLogisticsLabel(BaseIdsDTO.IdsDTO dto) {
         List<LogisticsOrderEntity> entityList = this.listByIds(dto.getIds());
         List<LogisticsOrderDTO.LogisticsLabelDTO> labelDTOList = entityList.stream().map(this::getLogisticsOrderLabel).collect(Collectors.toList());
@@ -835,6 +837,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
         log.info("批量获取物流面单开始：{}", JSON.toJSONString(logisticsLabelDTOS));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
@@ -913,6 +917,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public void updateLogisticsOrder(String afterSaleId) {
         super.lambdaUpdate().eq(LogisticsOrderEntity::getAfterSaleId, afterSaleId).set(LogisticsOrderEntity::getLabelStatus, LogisticsLabelStatusEnum.OBTAINED.getCode()).update();
     }

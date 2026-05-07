@@ -2901,15 +2901,25 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND,"AWD出库");
         }
 
-        for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
-            if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
-                throw new ServiceException(ApiError.MAPPING_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
-            }
-        }
-
         FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(awdOutstockEntity.getFbaShipmentId());
         if (Objects.isNull(fbaShipmentEntity)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"FBA货件");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA货件");
+        }
+
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList = new ArrayList<>();
+        for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
+            if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
+                throw new ServiceException(ApiError.MAPPING_MSKU_NOT_MAPPING, awdOutstockDetailEntity.getMsku());
+            }
+            FbaShipmentDetailEntity fbaShipmentDetailEntity = fbaShipmentDetailService.lambdaQuery()
+                    .eq(FbaShipmentDetailEntity::getMainId, fbaShipmentEntity.getId())
+                    .eq(FbaShipmentDetailEntity::getSkuId, awdOutstockDetailEntity.getSkuId())
+                    .one();
+            if (Objects.isNull(fbaShipmentDetailEntity)) {
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA货件");
+            }
+            fbaShipmentDetailEntity.setDeliveryQty(awdOutstockDetailEntity.getQty());
+            fbaShipmentDetailEntityList.add(fbaShipmentDetailEntity);
         }
 
         FirstMileDeliveryDTO.AddDTO addDTO = new FirstMileDeliveryDTO.AddDTO();
@@ -2975,6 +2985,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             approve(approveOneDTO);
+            // 更新FBA货件的发货数量
+            if (CollectionUtils.isNotEmpty(fbaShipmentDetailEntityList)) {
+                fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntityList);
+            }
         }finally {
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);
