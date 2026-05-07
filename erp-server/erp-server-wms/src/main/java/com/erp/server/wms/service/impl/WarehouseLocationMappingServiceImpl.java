@@ -293,6 +293,9 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
                 .eq(CharSequenceUtil.isNotBlank(params.getSysWarehouseLocation()), WarehouseLocationMappingEntity::getSysWarehouseLocation, params.getSysWarehouseLocation())
                 .eq(CharSequenceUtil.isNotBlank(params.getDictPlatform()), WarehouseLocationMappingEntity::getDictPlatform, params.getDictPlatform())
                 .like(CharSequenceUtil.isNotBlank(params.getThirdWarehouseLocation()), WarehouseLocationMappingEntity::getThirdWarehouseLocation, params.getThirdWarehouseLocation());
+        if (params.getSqlMap() != null && CharSequenceUtil.isNotBlank(params.getSqlMap().get("default"))) {
+            wrapper.apply(params.getSqlMap().get("default"));
+        }
         return wrapper;
     }
 
