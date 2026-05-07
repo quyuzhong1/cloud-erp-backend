@@ -780,6 +780,8 @@
             fmd.source_code as businessCode,
             fmdd.sku_id as skuId,
             fmdd.sku_no as skuNo,
+            fmd.country_id as countryId,
+            fmd.country_name as countryName,
             fmdd.delivery_qty as qty,
             wc.box_no
         from first_mile_delivery fmd

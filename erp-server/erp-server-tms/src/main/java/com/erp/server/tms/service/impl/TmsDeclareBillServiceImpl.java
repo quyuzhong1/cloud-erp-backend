@@ -1911,6 +1911,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (Objects.nonNull(productLogisticsDTO)) {
                 fillDeclareInfo(detailDTO, productLogisticsDTO, declareUnitNameMap, currencyMap);
             }
+            detailDTO.setCountryName(currencyMap.get(detailDTO.getCountryId()));
             applyDeclareLineDefaults(detailDTO);
             if (Objects.nonNull(productLogisticsDTO)
                     && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
