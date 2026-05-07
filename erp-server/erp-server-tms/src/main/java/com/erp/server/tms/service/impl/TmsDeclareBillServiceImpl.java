@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
@@ -1345,6 +1346,105 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }else{
             return BatchResultDTO.fail(id,entity.getCode(),"备注更新失败");
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum) {
+        List<String> ids = Optional.ofNullable(dto.getIds()).orElse(Collections.emptyList())
+                .stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(ids)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        String updateFiledCode = CharSequenceUtil.toUnderlineCase(dto.getUpdateFiledCode());
+        if (StringUtils.contains(updateFiledCode, ".")) {
+            updateFiledCode = StringUtils.substringAfterLast(updateFiledCode, ".");
+        }
+        TmsDeclareBillBatchFieldEnum fieldEnum = TmsDeclareBillBatchFieldEnum.getEnumByCode(updateFiledCode);
+        if (Objects.isNull(fieldEnum)) {
+            throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, updateFiledCode);
+        }
+        List<TmsDeclareBillEntity> entityList = this.lambdaQuery()
+                .in(TmsDeclareBillEntity::getId, ids)
+                .list();
+        if (CollUtil.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+        // 仅允许当前模块对应类型的报关单操作
+        boolean existTypeMismatch = entityList.stream()
+                .anyMatch(v -> !CharSequenceUtil.equals(v.getType(), sourceTypeEnum.getCode()));
+        if (existTypeMismatch) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+        }
+        // 仅待确认状态支持批量更新字段
+        boolean existNotWaitStatus = entityList.stream()
+                .anyMatch(v -> !CharSequenceUtil.equals(v.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode()));
+        if (existNotWaitStatus) {
+            throw new ServiceException("仅支持待确认的报关单");
+        }
+        Object fieldValue = parseBatchFieldValue(fieldEnum, dto.getValues());
+        boolean updateFlag;
+        switch (fieldEnum) {
+            case SOURCE_CODE:
+                updateFlag = this.update(new UpdateWrapper<TmsDeclareBillEntity>()
+                        .in("id", ids)
+                        .set("source_code", fieldValue));
+                break;
+            case BUSINESS_TYPE:
+                updateFlag = this.lambdaUpdate()
+                        .set(TmsDeclareBillEntity::getBusinessType, Objects.toString(fieldValue, ""))
+                        .in(TmsDeclareBillEntity::getId, ids)
+                        .update();
+                break;
+            case COUNTRY_NAME:
+                updateFlag = this.lambdaUpdate()
+                        .set(TmsDeclareBillEntity::getCountryName, Objects.toString(fieldValue, ""))
+                        .in(TmsDeclareBillEntity::getId, ids)
+                        .update();
+                break;
+            case DECLARE_DATE:
+                updateFlag = this.lambdaUpdate()
+                        .set(TmsDeclareBillEntity::getDeclareDate, (LocalDate) fieldValue)
+                        .in(TmsDeclareBillEntity::getId, ids)
+                        .update();
+                break;
+            case DECLARE_TYPE:
+                updateFlag = this.lambdaUpdate()
+                        .set(TmsDeclareBillEntity::getDeclareType, Objects.toString(fieldValue, ""))
+                        .in(TmsDeclareBillEntity::getId, ids)
+                        .update();
+                break;
+            default:
+                throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, updateFiledCode);
+        }
+        if (!updateFlag) {
+            throw new ServiceException("报关单批量更新失败");
+        }
+        return Boolean.TRUE;
+    }
+
+    private Object parseBatchFieldValue(TmsDeclareBillBatchFieldEnum fieldEnum, Object values) {
+        if (Objects.isNull(values)) {
+            return null;
+        }
+        if (TmsDeclareBillBatchFieldEnum.DECLARE_DATE.equals(fieldEnum)) {
+            if (values instanceof LocalDate) {
+                return values;
+            }
+            String dateStr = Objects.toString(values, "");
+            if (StringUtils.isBlank(dateStr)) {
+                return null;
+            }
+            try {
+                return LocalDate.parse(dateStr);
+            } catch (Exception e) {
+                throw new ServiceException("报关日期格式错误，请使用yyyy-MM-dd");
+            }
+        }
+        return Objects.toString(values, "");
     }
 
     @Override

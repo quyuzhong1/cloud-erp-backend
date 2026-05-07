@@ -106,6 +106,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setContactName(dto.getContactName());
         entity.setKingdeeCode(dto.getKingdeeCode());
         entity.setUsciCode(dto.getUsciCode());
+        entity.setCompanyHsCode(dto.getCompanyHsCode());
         if(Objects.isNull(dto.getVatRate())){
             entity.setVatRate(BigDecimal.ZERO);
         }else{

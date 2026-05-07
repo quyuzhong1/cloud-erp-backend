@@ -47,6 +47,35 @@ public class TmsDeclareBillDTO implements Serializable {
 
     }
 
+    /**
+     * 批量更新字段
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateFieldDTO {
+        /**
+         * 主键id集合
+         */
+        @NotEmpty(message = "至少选择一条报关单")
+        private List<String> ids;
+
+        /**
+         * 修改的字段编号
+         */
+        @NotBlank(message = "修改字段编号不能为空")
+        private String updateFiledCode;
+
+        /**
+         * 字段值
+         */
+        private Object values;
+
+        /**
+         * 字段显示值
+         */
+        private String name;
+    }
+
 
     /**
      * 更新报关状态DTO
