@@ -56,9 +56,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
 
     TmsDeclareBillDTO.ViewDTO view(String id);
 
-    TmsDeclareBillDTO.DeclareStatusDetailDTO declareStatusDetail(String id, SourceTypeEnum sourceTypeEnum);
-
-    Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum);
+    BatchResultDTO confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum);
 
     List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto);
 

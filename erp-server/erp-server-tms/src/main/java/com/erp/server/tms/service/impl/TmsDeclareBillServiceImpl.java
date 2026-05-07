@@ -6,6 +6,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -67,10 +69,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -699,55 +704,65 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public TmsDeclareBillDTO.DeclareStatusDetailDTO declareStatusDetail(String id, SourceTypeEnum sourceTypeEnum) {
-        List<String> statusList = Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode());
-        TmsDeclareBillEntity entity = getDeclareBillByIdAndType(id, sourceTypeEnum);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
-        //仅待确认，已确认，已报关可操作
-        if(!statusList.contains(entity.getDeclareStatus())){
-            throw new ServiceException("仅待确认，已确认，已报关可操作");
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public BatchResultDTO confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum) {
+        String id = Optional.ofNullable(dto.getIds()).orElse(Collections.emptyList()).stream()
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("");
+        if (StringUtils.isBlank(id)) {
+            return BatchResultDTO.fail("", "", "id不能为空");
         }
-        TmsDeclareBillDTO.DeclareStatusDetailDTO detailDTO = new TmsDeclareBillDTO.DeclareStatusDetailDTO();
-        detailDTO.setId(entity.getId());
-        detailDTO.setDeclareStatus(entity.getDeclareStatus());
-        detailDTO.setDeclareStatusName(DeclareStatusEnum.getName(entity.getDeclareStatus()));
-        if (Objects.nonNull(entity.getDeclarConfirmDate())) {
-            detailDTO.setDeclarConfirmDate(entity.getDeclarConfirmDate());
+        TmsDeclareBillEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            return BatchResultDTO.fail(id, id, "报关单不存在");
         }
-        detailDTO.setDeclarUserId(entity.getDeclarUserId());
-        detailDTO.setDeclarUserName(entity.getDeclarUserName());
-        if (DeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus())) {
-            LoginUser loginUser = UserContext.getDefaultLoginUser();
-            detailDTO.setDeclarConfirmDate(LocalDate.now());
-            detailDTO.setDeclarUserId(loginUser.getUid());
-            detailDTO.setDeclarUserName(loginUser.getUserName());
+        try {
+            TmsDeclareBillEntity declareBillEntity = getDeclareBillByIdAndType(id, sourceTypeEnum);
+            DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
+            if (Objects.isNull(targetStatus)) {
+                throw new ServiceException("报关状态无效");
+            }
+            if (DeclareStatusEnum.WAIT.getCode().equals(declareBillEntity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
+                fillDeclareConfirmUser(dto);
+            }
+            confirmDeclareStatusSingle(declareBillEntity, dto, targetStatus, sourceTypeEnum);
+            return BatchResultDTO.success(declareBillEntity.getId(), declareBillEntity.getCode(), "报关状态更新成功");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            log.error("报关状态更新失败，id:{}", id, e);
+            String msg = StringUtils.isNotBlank(e.getMessage()) ? e.getMessage() : "报关状态更新失败";
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
         }
-        return detailDTO;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum) {
-        TmsDeclareBillEntity entity = getDeclareBillByIdAndType(dto.getId(), sourceTypeEnum);
-        DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
+    private void confirmDeclareStatusSingle(TmsDeclareBillEntity entity, TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto,
+                                            DeclareStatusEnum targetStatus, SourceTypeEnum sourceTypeEnum) {
         String currentStatus = entity.getDeclareStatus();
         if (DeclareStatusEnum.WAIT.getCode().equals(currentStatus) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
             validateDeclareConfirm(entity);
-            fillDeclareConfirmUser(dto);
             updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclarConfirmDate(), dto.getDeclarUserId(), dto.getDeclarUserName());
-            return Boolean.TRUE;
+            String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
+            operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
+            return;
         }
         if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.WAIT.equals(targetStatus)) {
             updateDeclareStatus(entity, targetStatus.getCode(), null, null, null);
-            return Boolean.TRUE;
+            String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
+            operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
+            return;
         }
         if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.DECLARED.equals(targetStatus)) {
             updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclarConfirmDate(), entity.getDeclarUserId(), entity.getDeclarUserName());
-            return Boolean.TRUE;
+            String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
+            operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
+            return;
         }
         if (DeclareStatusEnum.DECLARED.getCode().equals(currentStatus) && DeclareStatusEnum.WAIT.equals(targetStatus)) {
             updateDeclareStatus(entity, targetStatus.getCode(), null, null, null);
-            return Boolean.TRUE;
+            String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
+            operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
+            return;
         }
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN, DeclareStatusEnum.getName(currentStatus), targetStatus.getName());
     }
@@ -1522,100 +1537,112 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum) {
-        List<String> ids = Optional.ofNullable(dto.getIds()).orElse(Collections.emptyList())
-                .stream()
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(ids)) {
-            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        TmsDeclareBillEntity old = getById(dto.getId());
+        UpdateWrapper<TmsDeclareBillEntity> updateWrapper = new UpdateWrapper<>();
+        List<TmsDeclareBillDTO.BatchUpdateFieldListDTO> fieldList = dto.getFieldList();
+        for (TmsDeclareBillDTO.BatchUpdateFieldListDTO batchUpdateFieldListDTO : fieldList) {
+            TmsDeclareBillBatchFieldEnum fieldEnum = TmsDeclareBillBatchFieldEnum.getEnumByCode(batchUpdateFieldListDTO.getUpdateFiledCode());
+            if (Objects.isNull(fieldEnum)) {
+                throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, batchUpdateFieldListDTO.getUpdateFiledCode());
+            }
+            parseBatchFieldValue(fieldEnum, batchUpdateFieldListDTO.getValues());
+            Object fieldValue = batchUpdateFieldListDTO.getValues();
+            String name = batchUpdateFieldListDTO.getName();
+            //设置参数
+            setUpdateWrapperField(updateWrapper, fieldEnum, fieldValue, name);
         }
-        String updateFiledCode = CharSequenceUtil.toUnderlineCase(dto.getUpdateFiledCode());
-        if (StringUtils.contains(updateFiledCode, ".")) {
-            updateFiledCode = StringUtils.substringAfterLast(updateFiledCode, ".");
-        }
-        TmsDeclareBillBatchFieldEnum fieldEnum = TmsDeclareBillBatchFieldEnum.getEnumByCode(updateFiledCode);
-        if (Objects.isNull(fieldEnum)) {
-            throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, updateFiledCode);
-        }
-        List<TmsDeclareBillEntity> entityList = this.lambdaQuery()
-                .in(TmsDeclareBillEntity::getId, ids)
-                .list();
-        if (CollUtil.isEmpty(entityList)) {
-            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
-        }
-        // 仅允许当前模块对应类型的报关单操作
-        boolean existTypeMismatch = entityList.stream()
-                .anyMatch(v -> !CharSequenceUtil.equals(v.getType(), sourceTypeEnum.getCode()));
-        if (existTypeMismatch) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
-        }
-        // 仅待确认状态支持批量更新字段
-        boolean existNotWaitStatus = entityList.stream()
-                .anyMatch(v -> !CharSequenceUtil.equals(v.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode()));
-        if (existNotWaitStatus) {
-            throw new ServiceException("仅支持待确认的报关单");
-        }
-        Object fieldValue = parseBatchFieldValue(fieldEnum, dto.getValues());
-        boolean updateFlag;
-        switch (fieldEnum) {
-            case SOURCE_CODE:
-                updateFlag = this.update(new UpdateWrapper<TmsDeclareBillEntity>()
-                        .in("id", ids)
-                        .set("source_code", fieldValue));
-                break;
-            case BUSINESS_TYPE:
-                updateFlag = this.lambdaUpdate()
-                        .set(TmsDeclareBillEntity::getBusinessType, Objects.toString(fieldValue, ""))
-                        .in(TmsDeclareBillEntity::getId, ids)
-                        .update();
-                break;
-            case COUNTRY_NAME:
-                updateFlag = this.lambdaUpdate()
-                        .set(TmsDeclareBillEntity::getCountryName, Objects.toString(fieldValue, ""))
-                        .in(TmsDeclareBillEntity::getId, ids)
-                        .update();
-                break;
-            case DECLARE_DATE:
-                updateFlag = this.lambdaUpdate()
-                        .set(TmsDeclareBillEntity::getDeclareDate, (LocalDate) fieldValue)
-                        .in(TmsDeclareBillEntity::getId, ids)
-                        .update();
-                break;
-            case DECLARE_TYPE:
-                updateFlag = this.lambdaUpdate()
-                        .set(TmsDeclareBillEntity::getDeclareType, Objects.toString(fieldValue, ""))
-                        .in(TmsDeclareBillEntity::getId, ids)
-                        .update();
-                break;
-            default:
-                throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, updateFiledCode);
-        }
+        // 批量更新数据库
+        updateWrapper.eq("id", dto.getId());
+        boolean updateFlag = this.update(updateWrapper);
+                
         if (!updateFlag) {
             throw new ServiceException("报关单批量更新失败");
         }
+
+        TmsDeclareBillEntity newEntity = getById(dto.getId());
+        log.info("批量更新字段 开始记录报关单日志数据，单号：【{}】", old.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ",
+                UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "报关单");
+        operateLogService.addModuleOperateLogByObj(old, newEntity, sourceTypeEnum.getCode(), old.getId(), msg);
         return Boolean.TRUE;
     }
 
-    private Object parseBatchFieldValue(TmsDeclareBillBatchFieldEnum fieldEnum, Object values) {
-        if (Objects.isNull(values)) {
-            return null;
-        }
-        if (TmsDeclareBillBatchFieldEnum.DECLARE_DATE.equals(fieldEnum)) {
+    private void parseBatchFieldValue(TmsDeclareBillBatchFieldEnum fieldEnum, Object values) {
+        if (TmsDeclareBillBatchFieldEnum.DECLARE_DATE.equals(fieldEnum)
+                || TmsDeclareBillBatchFieldEnum.EXPORT_DATE.equals(fieldEnum)) {
+            if (Objects.isNull(values)) {
+            }
             if (values instanceof LocalDate) {
-                return values;
             }
             String dateStr = Objects.toString(values, "");
             if (StringUtils.isBlank(dateStr)) {
-                return null;
             }
             try {
-                return LocalDate.parse(dateStr);
+                LocalDate.parse(dateStr);
             } catch (Exception e) {
-                throw new ServiceException("报关日期格式错误，请使用yyyy-MM-dd");
+                throw new ServiceException(CharSequenceUtil.format("{}格式错误，请使用yyyy-MM-dd", fieldEnum.getName()));
             }
         }
-        return Objects.toString(values, "");
+        if (TmsDeclareBillBatchFieldEnum.SHIPPING_FEE.equals(fieldEnum)
+                || TmsDeclareBillBatchFieldEnum.INSURANCE_FEE.equals(fieldEnum)
+                || TmsDeclareBillBatchFieldEnum.OTHER_FEE.equals(fieldEnum)) {
+            if (Objects.isNull(values)) {
+            }
+            if (values instanceof BigDecimal) {
+            }
+            String valueStr = Objects.toString(values, "").trim();
+            if (StringUtils.isBlank(valueStr)) {
+            }
+            try {
+                new BigDecimal(valueStr);
+            } catch (Exception e) {
+                throw new ServiceException(CharSequenceUtil.format("{}格式错误，请输入数字", fieldEnum.getName()));
+            }
+        }
+    }
+
+    /**
+     * 设置更新 wrapper 的字段
+     */
+    private void setUpdateWrapperField(UpdateWrapper<TmsDeclareBillEntity> updateWrapper, 
+                                       TmsDeclareBillBatchFieldEnum fieldEnum, 
+                                       Object fieldValue, 
+                                       String name) {
+        String fieldName = fieldEnum.getCode();
+        switch (fieldEnum) {
+            case PRE_INPUT_NO:
+            case DEST_CUSTOMS:
+            case DECLARE_TYPE:
+            case SENDER_ID:
+            case EXPORT_CUSTOMS_NAME:
+            case DICT_SUPERVISION_METHOD:
+            case DICT_NATURE_LEVY:
+            case LICENSE_NO:
+            case TRADING_AREA:
+            case TO_AREA:
+            case TO_PORT:
+            case EXPORT_PORT:
+            case DICT_PACK_TYPE:
+            case DICT_TRANSACTION_METHOD:
+            case REMARK:
+                updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
+                break;
+            case RECEIVER_ID:
+                updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
+                updateWrapper.set("receiver_name", name);
+                break;
+            case EXPORT_DATE:
+            case DECLARE_DATE:
+                updateWrapper.set(fieldName, fieldValue);
+                break;
+            case SHIPPING_FEE:
+            case INSURANCE_FEE:
+            case OTHER_FEE:
+                updateWrapper.set(fieldName, Objects.isNull(fieldValue) ? BigDecimal.ZERO : fieldValue);
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
@@ -1759,6 +1786,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //保存合并数据（合同号：原单号_1、_2…）
             batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence);
         }
+        String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
+        operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.B2B_DECLARE_BILL.getCode(), declareBillEntity.getId(), "拆分操作");
         return Boolean.TRUE;
     }
 
