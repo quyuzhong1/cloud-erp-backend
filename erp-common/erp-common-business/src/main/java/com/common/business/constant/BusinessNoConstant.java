@@ -272,8 +272,6 @@ public interface BusinessNoConstant {
 
     String BG = "BG";
 
-    //tms异步任务记录
-    String Z="Z";
     //抽样方案
     String CYFA="CYFA";
 
@@ -281,6 +279,8 @@ public interface BusinessNoConstant {
     String ZJSQ = "ZJSQ";
     String WDGL = "WDGL";
     String VJ = "VJ";
+    //tms异步任务记录
+    String Z="Z";
 
     String WLD = "WLD";
 }
