@@ -50,6 +50,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.erp.model.tms.entity.LogisticsOrderEntity;
 import com.erp.model.tms.enums.ExceptionTypeEnum;
@@ -64,6 +65,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsOrderFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
@@ -167,6 +169,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Resource
     private SysDictFeign sysDictFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1866,6 +1871,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.OrderInfoDTO> list = this.baseMapper.getPlaceOrderPreview(dto.getIds());
         // 取出商家寄出快递单号不为空的并且单据类型是API的
         List<AfterSaleDTO.OrderInfoDTO> filterList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
+
+        // 查询物流商信息
+        List<String> logisticsChannelIds = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
+        List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
+        List<String> paperSizeList = channelInfoList.stream().map(LogisticsChannelDTO.BaseDTO::getPaperSize).distinct().collect(Collectors.toList());
+        // 打印配货单默认100*100不校验
+        if (paperSizeList.size() > 1) {
+            throw new ServiceException(ApiError.COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT);
+        }
+
         List<String> outboundTrackNoList = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getOutboundTrackNo).collect(Collectors.toList());
         List<LogisticsOrderDTO.ListDTO> listDTOS = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
         Map<String, LogisticsOrderDTO.ListDTO> map = listDTOS.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getAfterSaleId, item -> item));

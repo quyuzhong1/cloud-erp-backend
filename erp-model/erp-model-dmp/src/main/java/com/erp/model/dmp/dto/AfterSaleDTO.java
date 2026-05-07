@@ -1026,6 +1026,8 @@ public class AfterSaleDTO implements Serializable {
         @Size(max = 200, message = "详细地址最大长度不能超过200位")
         private String detailedAddress;
 
+        private String logisticsChannelId;
+
     }
 
     @Data

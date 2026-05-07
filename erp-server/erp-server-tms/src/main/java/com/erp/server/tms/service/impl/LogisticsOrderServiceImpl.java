@@ -482,7 +482,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         log.info("删除 开始记录物流下单表日志数据，单号：【{}】", entity.getCode());
         String msg = StrUtil.format("用户【{}】删除单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "物流下单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), entity.getId(), "删除物流单");
-        return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @DistributeLocker(keyName = "id")
@@ -548,7 +548,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 attachmentService.removeById(tmsAttachmentEntity.getId());
             }
             pushCancelOperateLog(entity, RequestStatusEnums.SUCCESS.getCode(), orderUpdateRequest, baseResult);
-            return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.CANCEL);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL);
         } else {
             pushCancelOperateLog(entity, RequestStatusEnums.FAILED.getCode(), orderUpdateRequest, baseResult);
             return resultDTO;
@@ -841,10 +841,12 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
         log.info("批量获取物流面单开始：{}", JSON.toJSONString(logisticsLabelDTOS));
+        List<LogisticsOrderEntity> logisticsOrderEntityList = this.listByIds(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList()));
+        Map<String, LogisticsOrderEntity> idEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getId, w -> w));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
-            LogisticsOrderEntity logisticsOrderEntity = this.lambdaQuery().eq(LogisticsOrderEntity::getAfterSaleId, logisticsLabelDTO.getAfterSaleId()).one();
+            LogisticsOrderEntity logisticsOrderEntity = idEntityMap.get(logisticsLabelDTO.getAfterSaleId());
             if (logisticsOrderEntity == null || LogisticsStatusEnum.CANCEL.getCode().equals(logisticsOrderEntity.getStatus())) {
                 log.warn("未找到物流单：{}", logisticsLabelDTO.getAfterSaleId());
                 resultDTO.setStatus(false);
@@ -903,7 +905,6 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 resultDTO.setStatus(false);
                 resultDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
                 resultDTOList.add(resultDTO);
-                logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
                 logisticsOrderEntity.setExceptionType(ExceptionTypeEnum.LABEL_EXCEPTION.getCode());
                 pushLabelOperateLog(logisticsOrderEntity.getId(), logisticsOrderEntity.getTrackNo(), RequestStatusEnums.FAILED.getCode(), logisticsLabelDTO, baseResult);
             }
