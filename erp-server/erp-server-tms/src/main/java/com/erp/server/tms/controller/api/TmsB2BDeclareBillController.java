@@ -16,12 +16,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.enums.DeclareTypeEnum;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
-import com.erp.model.tms.enums.DeclareDeclareTypeEnum;
 import com.erp.model.tms.enums.DeclareStatusEnum;
-import com.erp.model.wms.entity.QcApplicationEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -177,6 +174,14 @@ public class TmsB2BDeclareBillController extends BaseController {
     @GetMapping("/view")
     public ApiResult<TmsDeclareBillDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(tmsDeclareBillService.view(id));
+    }
+
+    /**
+     * 批量更新字段下拉配置
+     */
+    @GetMapping("/batchUpdateFieldDropDown")
+    public ApiResult<List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO>> batchUpdateFieldDropDown() {
+        return success(tmsDeclareBillService.batchUpdateFieldDropDown());
     }
 
     /**

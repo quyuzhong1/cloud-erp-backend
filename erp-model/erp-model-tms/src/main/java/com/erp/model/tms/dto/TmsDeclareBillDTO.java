@@ -94,6 +94,38 @@ public class TmsDeclareBillDTO implements Serializable {
         private String name;
     }
 
+    /**
+     * 批量更新字段下拉配置
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchUpdateFieldDropDownDTO {
+        /**
+         * 字段编码
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String name;
+
+        /**
+         * 控件类型（input/date/select）
+         */
+        private String controls;
+
+        /**
+         * 下拉接口地址
+         */
+        private String url;
+
+        /**
+         * 排序
+         */
+        private Integer index;
+    }
+
 
     /**
      * 更新报关状态DTO
