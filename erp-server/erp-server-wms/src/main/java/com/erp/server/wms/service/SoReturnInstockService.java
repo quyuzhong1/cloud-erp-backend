@@ -169,11 +169,11 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @description: 原子批量删除销售退货入库单
      * @author Will
      * @date: 2023/5/17 15:15
-     * @param ids
+     * @param entity
      * @param returnDetails
      * @return List<BatchResultDTO>
      */
-    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+    BatchResultDTO deleteByIds(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> returnDetails);
 
     /**
      * 删除单个实体
