@@ -12,6 +12,7 @@ public enum CfgSettingEnum implements EnumMessage {
     ALLOCATION_SETTING("allocationSetting","分摊设置"),
     CONTRACT_AGREEMENT_NO("contractAgreementNo","合同协议号"),
     DECLARE_CUSTOMS("declareCustoms","报关主体"),
+    DECLARE_BATCH_UPDATE_FIELD("declareBatchUpdateField","报关单批量更新字段"),
     BUILD_DONGGUANG("buildDongGuanWarehouseAndCompany","东莞塘厦仓和公司生成"),
     BILL_BATCH_PARAMS("billBatchParams","异步任务批次参数"),
 

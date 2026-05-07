@@ -5,14 +5,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperService;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
 
@@ -100,6 +98,12 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @return Boolean
      */
     Boolean updateBatchFiled(TmsDeclareBillDTO.BatchUpdateFieldDTO dto, SourceTypeEnum sourceTypeEnum);
+
+    /**
+     * 查询报关单批量更新字段下拉配置
+     * @return 下拉字段配置
+     */
+    List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown();
 
     /**
      * 删除报关单

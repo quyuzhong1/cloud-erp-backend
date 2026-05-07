@@ -6,8 +6,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -75,7 +75,6 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -651,6 +650,44 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         fillViewDTO(viewDTO);
         return viewDTO;
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown() {
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_BATCH_UPDATE_FIELD.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return Collections.emptyList();
+        }
+        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> dropDownList = parseBatchUpdateFieldDropDown(cfgSettingEntity.getDataJson());
+        dropDownList.sort(Comparator.comparing(TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO::getIndex, Comparator.nullsLast(Integer::compareTo)));
+        return dropDownList;
+    }
+
+    private List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> parseBatchUpdateFieldDropDown(JSONObject dataJson) {
+        if (ObjectUtil.isEmpty(dataJson)) {
+            return new ArrayList<>();
+        }
+        if (ObjectUtil.isNotEmpty(dataJson.getJSONArray("data"))) {
+            return JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class);
+        }
+        if (ObjectUtil.isNotEmpty(dataJson.get("field"))) {
+            return Collections.singletonList(JSONUtil.toBean(dataJson, TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class));
+        }
+        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> result = new ArrayList<>();
+        dataJson.values().forEach(value -> {
+            if (ObjectUtil.isEmpty(value)) {
+                return;
+            }
+            try {
+                TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO dto = JSONUtil.toBean(JSONUtil.parseObj(value), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class);
+                if (ObjectUtil.isNotEmpty(dto) && ObjectUtil.isNotEmpty(dto.getField())) {
+                    result.add(dto);
+                }
+            } catch (Exception e) {
+                log.warn("解析报关单批量更新字段配置失败, value={}", value, e);
+            }
+        });
+        return result;
     }
 
     /**
