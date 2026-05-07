@@ -912,7 +912,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
         }
-        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(thirdWarehouseService, req, 0);
+        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(thirdWarehouseService, req, entity.getPlatformOrderCode(), 0);
         if (fbaOutboundBill.isSuccess()) {
             // 创建成功
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "", null);
@@ -921,6 +921,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         // 创建失败，尝试查询是否实际已创建成功
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        if (CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode())) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(entity.getPlatformOrderCode()));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
 
@@ -1021,9 +1024,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return null;
     }
 
-    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, final int retryCount) {
+    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, String knownPlatformOrderCode, final int retryCount) {
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        if (CharSequenceUtil.isNotBlank(knownPlatformOrderCode)) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(knownPlatformOrderCode));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
         ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
@@ -1042,7 +1048,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 try {
                     log.info("{}秒后进行第{}次重试", RETRY_DELAY_SECONDS / 1000, retryCount + 2);
                     Thread.sleep(RETRY_DELAY_SECONDS);
-                    return createFbaOutboundBill(service, req, retryCount + 1);
+                    return createFbaOutboundBill(service, req, knownPlatformOrderCode, retryCount + 1);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     return ApiResult.error(-1, "重试被中断");
