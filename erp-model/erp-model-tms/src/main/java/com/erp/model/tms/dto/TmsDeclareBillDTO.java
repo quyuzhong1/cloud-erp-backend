@@ -423,6 +423,66 @@ public class TmsDeclareBillDTO implements Serializable {
     }
 
     /**
+     * 选中SKU查询报关表头参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectedSkuHeaderParamDTO {
+        /**
+         * 选中的来源SKU明细
+         */
+        @NotEmpty(message = "选中的SKU信息不能为空")
+        private List<SourceDeliveryDetailDTO> sourceDeliveryDetailList;
+    }
+
+    /**
+     * 选中SKU查询报关表头返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectedSkuHeaderDTO {
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
+
+        /**
+         * 运输方式名称
+         */
+        private String shippingMethodName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 提运单号
+         */
+        private String transportNo;
+
+        /**
+         * 件数
+         */
+        private Integer boxQty;
+
+        /**
+         * 毛重
+         */
+        private BigDecimal grossWeight;
+
+        /**
+         * 净重
+         */
+        private BigDecimal netWeight;
+    }
+
+    /**
      * 产品明细
      */
     @Data
