@@ -36,4 +36,7 @@ public interface ImportWmsFeign {
     @PostMapping("/feign/import/importSampleAdjustment")
     void importSampleAdjustment(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importWarehouseLocationMapping")
+    void importWarehouseLocationMapping(@RequestBody BaseDTO.ImportDTO dto);
+
 }
