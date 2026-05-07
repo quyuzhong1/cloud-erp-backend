@@ -1700,6 +1700,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
                 .list();
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
+        List<AfterSaleEntity> updateAfterSaleList = new ArrayList<>();
         List<AfterSaleProgressEntity> progressEntityList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (AfterSaleEntity afterSaleEntity : afterSaleEntityList) {
@@ -1708,6 +1709,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if (resultDTO != null) {
                 afterSaleEntity.setType(OutboundTrackNoTypeEnum.API.getCode());
                 afterSaleEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
+                updateAfterSaleList.add(afterSaleEntity);
                 AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
                 if (afterSaleProgressEntity == null) {
                     afterSaleProgressEntity = new AfterSaleProgressEntity();
@@ -1719,9 +1721,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     progressEntityList.add(afterSaleProgressEntity);
                 } else {
                     // 售后发货
-                    if (afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())) {
-                        if (!afterSaleProgressEntity.getTrackNo().equals(resultDTO.getTrackNo())) {
-                            String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), afterSaleProgressEntity.getTrackNo(), resultDTO.getTrackNo());
+                    if (AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(afterSaleProgressEntity.getNode())) {
+                        String oldTrackNo = afterSaleProgressEntity.getTrackNo();
+                        String newTrackNo = resultDTO.getTrackNo();
+                        if (!Objects.equals(oldTrackNo, newTrackNo)) {
+                            String msg = StrUtil.format("用户【{}】编辑商家寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(), oldTrackNo, newTrackNo);
                             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleProgressEntity.getMainId(), "编辑信息");
                         }
                     } else {
@@ -1731,15 +1735,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                     progressEntityList.add(afterSaleProgressEntity);
                 }
-                batchResultDTO = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "");
+                batchResultDTO = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "下单成功");
                 resultList.add(batchResultDTO);
             } else {
                 batchResultDTO = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "下单失败");
                 resultList.add(batchResultDTO);
             }
         }
-        super.updateBatchById(afterSaleEntityList);
-        afterSaleProgressService.saveOrUpdateBatch(progressEntityList);
+        if (CollectionUtils.isNotEmpty(updateAfterSaleList)) {
+            super.updateBatchById(updateAfterSaleList);
+        }
+        if (CollectionUtils.isNotEmpty(progressEntityList)) {
+            afterSaleProgressService.saveOrUpdateBatch(progressEntityList);
+        }
         return resultList;
     }
 
@@ -1755,11 +1763,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
                 .list();
-        Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().filter(w -> w.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())).collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
+        Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<DmpAttachmentEntity> attachmentList = attachmentService.lambdaQuery().in(DmpAttachmentEntity::getBusinessId, afterSaleIdList).eq(DmpAttachmentEntity::getType, "after_sale_label").list();
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
         // 筛选出单据类型不是API的
         List<AfterSaleEntity> manualList = list.stream().filter(item -> !OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
+        // 筛选出单据类型是API的
+        List<AfterSaleEntity> apiList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (AfterSaleEntity afterSaleEntity : manualList) {
@@ -1773,31 +1783,34 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if (afterSaleProgressEntity != null && StringUtils.isNotBlank(afterSaleProgressEntity.getTrackNo())) {
                     afterSaleProgressEntity.setTrackNo("");
                     progressList.add(afterSaleProgressEntity);
+                    DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(afterSaleEntity.getId());
+                    if (dmpAttachmentEntity != null) {
+                        attachmentService.removeById(dmpAttachmentEntity.getId());
+                    }
+                    cancelResult = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "操作成功");
+                    resultList.add(cancelResult);
                 } else {
                     cancelResult = BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(), "商家寄出快递单号不为空才可操作取消");
                     resultList.add(cancelResult);
-                    continue;
                 }
-                DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(afterSaleEntity.getId());
-                if (dmpAttachmentEntity != null) {
-                    attachmentService.removeById(dmpAttachmentEntity.getId());
-                }
-                cancelResult = BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), "操作成功");
-                resultList.add(cancelResult);
             }
         }
-        // 筛选出单据类型是API的
-        List<AfterSaleEntity> apiList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
         Map<String, AfterSaleEntity> apiMap = apiList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
         if (CollectionUtils.isNotEmpty(apiList)) {
             List<String> codeList = apiList.stream().map(AfterSaleEntity::getCode).collect(Collectors.toList());
             List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.batchCancel(codeList);
+            List<AfterSaleEntity> updateApiList = new ArrayList<>();
             for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
+                AfterSaleEntity afterSaleEntity = apiMap.get(resultDTO.getAfterSaleId());
+                if (afterSaleEntity == null) {
+                    log.warn("取消物流订单时未找到对应的售后单，afterSaleId: {}", resultDTO.getAfterSaleId());
+                    continue;
+                }
                 BatchResultDTO cancelResult;
-                if (resultDTO.getStatus()) {
-                    AfterSaleEntity afterSaleEntity = apiMap.get(resultDTO.getAfterSaleId());
+                if (Boolean.TRUE.equals(resultDTO.getStatus())) {
                     afterSaleEntity.setType("");
                     afterSaleEntity.setLogisticsChannelId("");
+                    updateApiList.add(afterSaleEntity);
                     // 取消成功清空商家寄出快递单号和面单信息
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(resultDTO.getAfterSaleId());
                     if (afterSaleProgressEntity != null) {
@@ -1814,9 +1827,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
                 resultList.add(cancelResult);
             }
-            this.updateBatchById(apiList);
+            if (CollectionUtils.isNotEmpty(updateApiList)) {
+                this.updateBatchById(updateApiList);
+            }
         }
-        afterSaleProgressService.updateBatchById(progressList);
+        if (CollectionUtils.isNotEmpty(progressList)) {
+            afterSaleProgressService.updateBatchById(progressList);
+        }
         return resultList;
     }
 
@@ -1873,17 +1890,22 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.OrderInfoDTO> filterList = list.stream().filter(item -> OutboundTrackNoTypeEnum.API.getCode().equals(item.getType())).collect(Collectors.toList());
 
         // 查询物流商信息
-        List<String> logisticsChannelIds = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
-        List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
-        List<String> paperSizeList = channelInfoList.stream().map(LogisticsChannelDTO.BaseDTO::getPaperSize).distinct().collect(Collectors.toList());
-        // 打印配货单默认100*100不校验
-        if (paperSizeList.size() > 1) {
-            throw new ServiceException(ApiError.COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT);
+        List<String> logisticsChannelIds = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getLogisticsChannelId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(logisticsChannelIds)) {
+            List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
+            List<String> paperSizeList = channelInfoList.stream().map(LogisticsChannelDTO.BaseDTO::getPaperSize).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            // 打印配货单默认100*100不校验
+            if (paperSizeList.size() > 1) {
+                throw new ServiceException(ApiError.COMMON_PAPER_SIZE_INCONSISTENT_NOT_PRINT);
+            }
         }
 
-        List<String> outboundTrackNoList = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getOutboundTrackNo).collect(Collectors.toList());
-        List<LogisticsOrderDTO.ListDTO> listDTOS = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
-        Map<String, LogisticsOrderDTO.ListDTO> map = listDTOS.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getAfterSaleId, item -> item));
+        List<String> outboundTrackNoList = filterList.stream().map(AfterSaleDTO.OrderInfoDTO::getOutboundTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        Map<String, LogisticsOrderDTO.ListDTO> map = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(outboundTrackNoList)) {
+            List<LogisticsOrderDTO.ListDTO> listDTOS = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
+            map = listDTOS.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getAfterSaleId, item -> item));
+        }
         // 查询面单信息
         List<DmpAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<DmpAttachmentEntity>().lambda()
                 .in(DmpAttachmentEntity::getBusinessId, dto.getIds())
@@ -1894,7 +1916,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             throw new ServiceException(ApiError.SO_LOGISTICS_WAYBILL_NOT_OBTAINED, CharSequenceUtil.join(",", notPrintCodes));
         }
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, v -> v));
-        Map<String, String> notPrintReasonMap = null;
+        Map<String, String> notPrintReasonMap = new HashMap<>();
         List<AfterSaleDTO.LogisticsLabelPreviewListDTO> labelPreviewListDTOS = new ArrayList<>();
         for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : list) {
             AfterSaleDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO = new AfterSaleDTO.LogisticsLabelPreviewListDTO();
@@ -1910,17 +1932,20 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
             DmpAttachmentEntity attachmentEntity = attachmentMap.get(orderInfoDTO.getId());
             if (attachmentEntity == null) {
-                notPrintReasonMap = new HashMap<>();
                 if (listDTO != null) {
+                    String channelName = labelPreviewListDTO.getLogisticsChannelName();
+                    if (StringUtils.isBlank(channelName)) {
+                        channelName = "未知物流商";
+                    }
                     if (StringUtils.isBlank(listDTO.getExceptionType())) {
-                        notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), "未获取面单");
+                        notPrintReasonMap.put(channelName, "未获取面单");
                     } else if (ExceptionTypeEnum.LABEL_EXCEPTION.getCode().equals(listDTO.getExceptionType())) {
-                        notPrintReasonMap.put(labelPreviewListDTO.getLogisticsChannelName(), listDTO.getExceptionReason());
+                        notPrintReasonMap.put(channelName, listDTO.getExceptionReason());
                     }
                 }
             } else {
-                labelPreviewListDTO.setAttachName(attachmentMap.get(orderInfoDTO.getId()).getAttachName());
-                labelPreviewListDTO.setAttachUrl(attachmentMap.get(orderInfoDTO.getId()).getAttachUrl());
+                labelPreviewListDTO.setAttachName(attachmentEntity.getAttachName());
+                labelPreviewListDTO.setAttachUrl(attachmentEntity.getAttachUrl());
             }
             labelPreviewListDTOS.add(labelPreviewListDTO);
         }
@@ -1932,7 +1957,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         result.setTrackNoCount(trackNoCount);
         result.setNotTrackNoCount(notTrackNoCount);
         result.setNotPrintCount(dto.getIds().size() - attachmentList.size());
-        result.setNotPrintReasonMap(notPrintReasonMap);
+        result.setNotPrintReasonMap(notPrintReasonMap.isEmpty() ? null : notPrintReasonMap);
         return result;
     }
 
@@ -1969,10 +1994,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
         Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, v -> v));
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
-        BatchResultDTO batchResultDTO;
         List<DmpAttachmentEntity> saveList = new ArrayList<>();
         for (AfterSaleDTO.LogisticsOrderResultDTO resultDTO : resultDTOList) {
-            if (resultDTO.getStatus()) {
+            BatchResultDTO batchResultDTO;
+            if (Boolean.TRUE.equals(resultDTO.getStatus())) {
                 if (attachmentMap.get(resultDTO.getAfterSaleId()) != null) {
                     attachmentService.removeById(attachmentMap.get(resultDTO.getAfterSaleId()).getId());
                 }
@@ -1982,13 +2007,17 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 attachmentEntity.setAttachName(resultDTO.getTrackNo() + ".pdf");
                 attachmentEntity.setAttachUrl(resultDTO.getUrl());
                 saveList.add(attachmentEntity);
-                batchResultDTO = BatchResultDTO.success(resultDTO.getAfterSaleId(), afterSaleEntityMap.get(resultDTO.getAfterSaleId()).getCode(), "获取面单成功");
+                AfterSaleEntity afterSaleEntity = afterSaleEntityMap.get(resultDTO.getAfterSaleId());
+                batchResultDTO = BatchResultDTO.success(resultDTO.getAfterSaleId(), afterSaleEntity != null ? afterSaleEntity.getCode() : "", "获取面单成功");
             } else {
-                batchResultDTO = BatchResultDTO.fail(resultDTO.getAfterSaleId(), afterSaleEntityMap.get(resultDTO.getAfterSaleId()).getCode(), resultDTO.getErrorMsg());
+                AfterSaleEntity afterSaleEntity = afterSaleEntityMap.get(resultDTO.getAfterSaleId());
+                batchResultDTO = BatchResultDTO.fail(resultDTO.getAfterSaleId(), afterSaleEntity != null ? afterSaleEntity.getCode() : "", resultDTO.getErrorMsg());
             }
             batchResultDTOList.add(batchResultDTO);
         }
-        attachmentService.saveOrUpdateBatch(saveList);
+        if (CollectionUtils.isNotEmpty(saveList)) {
+            attachmentService.saveOrUpdateBatch(saveList);
+        }
         return batchResultDTOList;
     }
 
@@ -2008,12 +2037,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 筛选出单据类型是API的
         List<AfterSaleEntity> apiList = afterSaleEntityList.stream().filter(e -> OutboundTrackNoTypeEnum.API.getCode().equals(e.getType())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(apiList)) {
-            List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = new ArrayList<>();
-            apiList.forEach(e -> {
+            List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS = apiList.stream().map(e -> {
                 LogisticsOrderDTO.LogisticsLabelDTO labelDTO = new LogisticsOrderDTO.LogisticsLabelDTO();
                 labelDTO.setAfterSaleId(e.getId());
-                logisticsLabelDTOS.add(labelDTO);
-            });
+                return labelDTO;
+            }).collect(Collectors.toList());
             List<BatchResultDTO> batchResultDTOS = getLogisticsOrderLabel(logisticsLabelDTOS);
             batchResultDTOList.addAll(batchResultDTOS);
         }
