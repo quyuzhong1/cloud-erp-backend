@@ -99,7 +99,7 @@
     <!-- 根据soDeliveryNoticeIdList查询对应的包装信息 -->
     <select id="listPackingDetailByIdList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PackingDTO">
         SELECT
-            sdn.id as sourceId
+            sdn.id as sourceId,
             sdn.code as sourceCode,
             so.id as soOutstockId,
             so.code as soOutstockCode,

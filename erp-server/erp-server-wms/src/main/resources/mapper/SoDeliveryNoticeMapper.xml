@@ -463,12 +463,14 @@
             sdnd.sku_id as skuId,
             sdnd.sku_no as skuNo,
             sdnd.delivery_qty as qty,
-            wc.box_no
+            wc.box_no,
+            ci.country_id
         from so_delivery_notice sdn
         left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
         left join packing_task_detail ptd on sdnd.id = ptd.source_detail_id and ptd.is_deleted = false
         left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false
         left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
+        left join customer_info ci on sdn.customer_id = ci.id and ci.is_deleted = false
         where sdn.is_deleted = false and sdn.declare_status = 'wait' and wc.box_no is not null and sdn.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}

@@ -1071,6 +1071,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
                 deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
             }
+
         }
     }
 

@@ -31,6 +31,7 @@
     <select id="listByType" resultType="com.erp.model.tms.dto.CfgConditionDTO$CommonDTO">
         SELECT
             condition_field,
+            logic,
             controls,
             api_url,
             condition_field_name,
@@ -39,10 +40,13 @@
             label,
             value,
             search_key,
-            remote_label
+            remote_label,
+            value_type
         FROM
             cfg_condition cc
-        WHERE cc.rule_type = #{type}
+        WHERE cc.is_deleted = FALSE
+          AND cc.rule_type = #{type}
+        ORDER BY cc.index ASC
 
     </select>
 

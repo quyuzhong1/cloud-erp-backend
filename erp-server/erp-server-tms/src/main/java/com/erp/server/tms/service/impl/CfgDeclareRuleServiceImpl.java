@@ -11,11 +11,12 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.entity.ConditionElement;
+import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
+import com.erp.model.tms.dto.CfgConditionDTO;
 import com.erp.model.tms.dto.CfgDeclareRuleConditionDTO;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
 import com.erp.model.tms.entity.CfgDeclareRuleConditionEntity;
@@ -24,21 +25,22 @@ import com.erp.model.tms.enums.CfgDeclareRuleReceiverTypeEnum;
 import com.erp.model.tms.enums.CfgDeclareRuleSenderTypeEnum;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.server.tms.mapper.CfgDeclareRuleMapper;
+import com.erp.server.tms.service.CfgConditionService;
 import com.erp.server.tms.service.CfgDeclareRuleConditionService;
 import com.erp.server.tms.service.CfgDeclareRuleService;
 import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -54,7 +56,8 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
     private static final String SENDER = "sender";
     private static final String RECEIVER = "receiver";
-    private static final String RULE_NOT_FOUND_MESSAGE = "CfgDeclareRule not found";
+    private static final String RULE_TYPE = "ruleType";
+    private static final String CONDITION_VALUE_TYPE_STRING = "String";
     private static final String DUPLICATE_RULE_MESSAGE = "Duplicate ruleType/senderId/receiverId combination";
     private static final String SAVE_FAILED_MESSAGE = "CfgDeclareRule save failed";
 
@@ -63,9 +66,13 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     @Resource
     private CfgDeclareRuleConditionService cfgDeclareRuleConditionService;
     @Resource
+    private CfgConditionService cfgConditionService;
+    @Resource
     private CommonService commonService;
     @Resource
     private SysFeign sysFeign;
+    @Resource
+    private SpElServer spElServer;
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -176,6 +183,49 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         throw new ServiceException("type must be sender or receiver");
     }
 
+    @Override
+    public List<CfgDeclareRuleEntity> listMatchedRule(Map<String, String> paramMap) {
+        if (paramMap == null || paramMap.isEmpty() || StrUtil.isBlank(paramMap.get(RULE_TYPE))) {
+            return Collections.emptyList();
+        }
+        String ruleType = paramMap.get(RULE_TYPE);
+        List<CfgConditionDTO.CommonDTO> conditionList = cfgConditionService.listByType(ruleType);
+        if (CollUtil.isEmpty(conditionList)) {
+            return Collections.emptyList();
+        }
+
+        Map<String, Object> matchData = buildMatchData(paramMap, conditionList);
+        Map<String, String> valueTypeMap = conditionList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getConditionField()))
+                .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField,
+                        item -> StrUtil.blankToDefault(item.getValueType(), CONDITION_VALUE_TYPE_STRING),
+                        (left, right) -> left,
+                        HashMap::new));
+
+        List<CfgDeclareRuleEntity> ruleList = this.lambdaQuery()
+                .eq(CfgDeclareRuleEntity::getRuleType, ruleType)
+                .eq(CfgDeclareRuleEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if (CollUtil.isEmpty(ruleList)) {
+            return Collections.emptyList();
+        }
+
+        List<String> ruleIdList = ruleList.stream()
+                .map(CfgDeclareRuleEntity::getId)
+                .collect(Collectors.toList());
+        Map<String, List<CfgDeclareRuleConditionEntity>> ruleConditionMap = cfgDeclareRuleConditionService.lambdaQuery()
+                .in(CfgDeclareRuleConditionEntity::getRuleId, ruleIdList)
+                .orderByAsc(CfgDeclareRuleConditionEntity::getIndex)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(CfgDeclareRuleConditionEntity::getRuleId,
+                        LinkedHashMap::new, Collectors.toList()));
+
+        return ruleList.stream()
+                .filter(rule -> matchDeclareRule(rule, ruleConditionMap, matchData, valueTypeMap))
+                .collect(Collectors.toList());
+    }
+
     void validateBatchSaveRequest(String ruleType,
                                   List<CfgDeclareRuleDTO.SaveDTO> saveList,
                                   Map<String, CfgDeclareRuleEntity> existingRuleMap) {
@@ -213,6 +263,50 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .map(CfgDeclareRuleEntity::getId)
                 .filter(id -> !keepIdSet.contains(id))
                 .collect(Collectors.toList());
+    }
+
+    Map<String, Object> buildMatchData(Map<String, String> paramMap, List<CfgConditionDTO.CommonDTO> conditionList) {
+        Map<String, Object> matchData = new HashMap<>();
+        for (CfgConditionDTO.CommonDTO condition : conditionList) {
+            String conditionField = condition.getConditionField();
+            if (StrUtil.isBlank(conditionField)) {
+                continue;
+            }
+            String value = paramMap.get(conditionField);
+            if(StringUtils.isNotBlank(value)){
+                matchData.put(conditionField, value);
+            }
+        }
+        matchData.put("detailList", Collections.singletonList(new HashMap<>(matchData)));
+        return matchData;
+    }
+
+    boolean matchDeclareRule(CfgDeclareRuleEntity rule,
+                             Map<String, List<CfgDeclareRuleConditionEntity>> ruleConditionMap,
+                             Map<String, Object> matchData,
+                             Map<String, String> valueTypeMap) {
+        List<CfgDeclareRuleConditionEntity> conditionList = ruleConditionMap.get(rule.getId());
+        if (CollUtil.isEmpty(conditionList)) {
+            return false;
+        }
+        List<ConditionElement> conditionElementList = conditionList.stream()
+                .sorted(Comparator.comparing(CfgDeclareRuleConditionEntity::getIndex,
+                        Comparator.nullsLast(Integer::compareTo)))
+                .map(condition -> buildConditionElement(condition, valueTypeMap))
+                .collect(Collectors.toList());
+        return Boolean.TRUE.equals(spElServer.matchExpressionByConditionList(conditionElementList, new HashMap<>(matchData), ""));
+    }
+
+    ConditionElement buildConditionElement(CfgDeclareRuleConditionEntity condition, Map<String, String> valueTypeMap) {
+        ConditionElement element = new ConditionElement();
+        element.setLeftBracket(condition.getLeftBracket());
+        element.setField(condition.getField());
+        element.setCompare(condition.getCompare());
+        element.setValue(condition.getValue());
+        element.setRightBracket(condition.getRightBracket());
+        element.setLogic(condition.getLogic());
+        element.setValueType(valueTypeMap.getOrDefault(condition.getField(), CONDITION_VALUE_TYPE_STRING));
+        return element;
     }
 
     List<CfgDeclareRuleConditionEntity> buildConditionEntities(String ruleId,
