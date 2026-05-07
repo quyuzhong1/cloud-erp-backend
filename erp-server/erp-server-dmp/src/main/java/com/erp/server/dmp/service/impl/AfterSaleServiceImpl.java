@@ -616,15 +616,20 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 获取商家寄出快递单号
         List<String> outboundTrackNoList = pageData.getRecords().stream().map(DmpAfterSaleExcelDTO::getOutboundTrackNo).collect(Collectors.toList());
-        List<LogisticsOrderDTO.ListDTO> list = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
-        Map<String, LogisticsOrderDTO.ListDTO> listDTOMap = list.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getTrackNo, item -> item));
+        Map<String, LogisticsOrderDTO.ListDTO> listDTOMap = Collections.emptyMap();
+        if (CollectionUtils.isNotEmpty(outboundTrackNoList)) {
+            List<LogisticsOrderDTO.ListDTO> list = logisticsOrderFeign.getLogisticsOrderListByTrackNo(outboundTrackNoList);
+            listDTOMap = list.stream().collect(Collectors.toMap(LogisticsOrderDTO.ListDTO::getTrackNo, item -> item));
+        }
         // 属性赋值
         for (DmpAfterSaleExcelDTO data : pageData.getRecords()) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             //单据状态
             data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
-            data.setLogisticsChannelName(listDTOMap.get(data.getOutboundTrackNo()).getLogisticsChannelName());
+            if (listDTOMap.containsKey(data.getOutboundTrackNo())) {
+                data.setLogisticsChannelName(listDTOMap.get(data.getOutboundTrackNo()).getLogisticsChannelName());
+            }
         }
         return new PagingVO(pageData);
     }
@@ -1743,6 +1748,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         Map<String, DmpAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(DmpAttachmentEntity::getBusinessId, w -> w));
         // 筛选出单据类型是手工的MANUAL
         List<AfterSaleEntity> manualList = list.stream().filter(item -> StringUtils.isBlank(item.getType()) || OutboundTrackNoTypeEnum.MANUAL.getCode().equals(item.getType())).collect(Collectors.toList());
+        List<AfterSaleProgressEntity> progressList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
         for (AfterSaleEntity afterSaleEntity : manualList) {
             BatchResultDTO cancelResult = null;
@@ -1752,7 +1758,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 // 取消成功清空商家寄出快递单号和面单信息
                 AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(afterSaleEntity.getId());
                 if (afterSaleProgressEntity != null) {
-                    afterSaleProgressService.removeById(afterSaleProgressEntity.getId());
+                    afterSaleProgressEntity.setTrackNo("");
+                    progressList.add(afterSaleProgressEntity);
                 }
                 DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(afterSaleEntity.getId());
                 if (dmpAttachmentEntity != null) {
@@ -1777,7 +1784,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     // 取消成功清空商家寄出快递单号和面单信息
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressMap.get(resultDTO.getAfterSaleId());
                     if (afterSaleProgressEntity != null) {
-                        afterSaleProgressService.removeById(afterSaleProgressEntity.getId());
+                        afterSaleProgressEntity.setTrackNo("");
+                        progressList.add(afterSaleProgressEntity);
                     }
                     DmpAttachmentEntity dmpAttachmentEntity = attachmentMap.get(resultDTO.getAfterSaleId());
                     if (dmpAttachmentEntity != null) {
@@ -1789,6 +1797,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
                 resultList.add(cancelResult);
             }
+            afterSaleProgressService.updateBatchById(progressList);
             this.updateBatchById(apiList);
         }
         return resultList;
