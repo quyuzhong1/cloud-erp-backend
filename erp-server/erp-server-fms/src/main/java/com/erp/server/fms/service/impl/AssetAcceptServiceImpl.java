@@ -139,6 +139,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         // 校验验收数量
         validateAcceptQty(addDTO.getDetailList());
+        validateMoldRefSkuForSave(addDTO.getDetailList());
         
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         BeanMapperUtils.copy(addDTO, assetAcceptEntity);
@@ -326,6 +327,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         
         // 校验验收数量
         validateAcceptQty(addOrUpdateDTO.getDetailList());
+        validateMoldRefSkuForSave(addOrUpdateDTO.getDetailList());
         
         AssetAcceptEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "资产验收单"));
@@ -1574,6 +1576,57 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         }
     }
 
+    private void validateMoldRefSkuForSave(List<AssetAcceptDetailDTO.AddDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> skuIds = detailList.stream()
+                .map(AssetAcceptDetailDTO.AddDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIds)) {
+            return;
+        }
+        List<com.erp.model.plm.entity.ProductDetailEntity> skuInfoList = plmTaskFeign.getByIdList(skuIds);
+        if (CollUtil.isEmpty(skuInfoList)) {
+            return;
+        }
+        List<String> moldCodes = skuInfoList.stream()
+                .map(com.erp.model.plm.entity.ProductDetailEntity::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        validateMoldRefSku(moldCodes, "保存");
+    }
+
+    private void validateMoldRefSkuForPush(List<AssetPurchaseOrderDTO.GenerateAssetAcceptDTO> dtoList) {
+        if (CollUtil.isEmpty(dtoList)) {
+            return;
+        }
+        List<String> moldCodes = dtoList.stream()
+                .map(AssetPurchaseOrderDTO.GenerateAssetAcceptDTO::getAssetCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        validateMoldRefSku(moldCodes, "下推");
+    }
+
+    private void validateMoldRefSku(List<String> moldCodes, String actionName) {
+        if (CollUtil.isEmpty(moldCodes)) {
+            return;
+        }
+        List<String> invalidMoldCodes = plmTaskFeign.listInvalidMoldCodesForRefSku(moldCodes);
+        if (CollUtil.isEmpty(invalidMoldCodes)) {
+            return;
+        }
+        String errorMsg = invalidMoldCodes.stream()
+                .distinct()
+                .map(moldCode -> "模具【" + moldCode + "】未关联SKU或关联SKU数据未审核通过，无法" + actionName)
+                .collect(Collectors.joining("；"));
+        throw new ServiceException(errorMsg);
+    }
+
     /**
     * 转资产卡片
     * @author wuht
@@ -2354,6 +2407,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         if (dtoList.isEmpty()) {
             return Boolean.FALSE;
         }
+        validateMoldRefSkuForPush(dtoList);
 
         AssetAcceptEntity assetAcceptEntity = new AssetAcceptEntity();
         assetAcceptEntity.setSourceId(dtoList.get(0).getId());

@@ -620,6 +620,12 @@ public interface SysUserFeign {
     List<SysUserInfoEntity> listUserByDept(@RequestBody String deptName);
 
     /**
+     * 根据部门ID查询用户
+     */
+    @PostMapping("feign/user/listUserByDeptId")
+    List<SysUserInfoEntity> listUserByDeptId(@RequestBody String deptId);
+
+    /**
      * @param deptNameList
      * @return List<SysDepartmentDTO>
      * @description: 根据部门名称查询最高级别部门及下级

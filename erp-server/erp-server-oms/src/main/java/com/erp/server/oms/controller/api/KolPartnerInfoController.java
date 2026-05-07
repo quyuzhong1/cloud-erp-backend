@@ -261,6 +261,22 @@ public class KolPartnerInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 下载更新模板
+     * @author jack
+     * @date:  2025-12-02
+     * @param response
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "企业达人库下载更新模板")
+    @GetMapping("/downloadUpdateTemplate")
+    public ApiResult downloadUpdateTemplate(HttpServletResponse response) {
+        String standardPath = "excel/kolPartnerInfoUpdateTemplate.xlsx";
+        String standardExcelName = "kolPartnerInfoUpdateTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
+    }
+
 
 
     /**

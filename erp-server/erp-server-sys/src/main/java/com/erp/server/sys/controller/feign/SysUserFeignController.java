@@ -513,6 +513,14 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据部门ID查询用户
+     */
+    @PostMapping("/listUserByDeptId")
+    public List<SysUserInfoEntity> listUserByDeptId(@RequestBody String deptId) {
+        return sysUserInfoService.listUserByDeptId(deptId);
+    }
+
+    /**
      * 分页查询
      * @param dto
      * @return

@@ -7,10 +7,12 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.enums.ImportTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.DictCityTypeEnum;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolPartnerInfoImportExcelDTO;
 import com.erp.model.oms.entity.*;
@@ -53,6 +55,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.util.*;
@@ -493,6 +496,10 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         KolPartnerInfoExcelListener excelListenerUtil = new KolPartnerInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            if (ImportTypeEnum.UPDATE.getCode().equals(dto.getImportType())) {
+                importKolPartnerInfoUpdate(dto, bytes);
+                return;
+            }
             EasyExcel.read(new ByteArrayInputStream(bytes), KolPartnerInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
@@ -506,6 +513,28 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "企业达人库错误信息.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, KolPartnerInfoImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    private void importKolPartnerInfoUpdate(BaseDTO.ImportDTO dto, byte[] bytes) {
+        KolPartnerInfoExcelListener.UpdateListener excelListenerUtil = new KolPartnerInfoExcelListener.UpdateListener(dto.getTaskId(), dto.getImportCount());
+        EasyExcel.read(new ByteArrayInputStream(bytes), KolPartnerInfoImportExcelDTO.UpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(excelListenerUtil.getCount());
+        List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "企业达人库错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, KolPartnerInfoImportExcelDTO.UpdateExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
@@ -808,6 +837,357 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         }
     }
 
+    @Override
+    public void handleImportUpdateSuccessList(List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> successList, List<String> errorNoList, List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        if(CollUtil.isNotEmpty(errorNoList)){
+            List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> collect = successList.stream()
+                    .filter(e -> StringUtils.isBlank(e.getCode()) || errorNoList.contains(e.getCode()))
+                    .collect(Collectors.toList());
+            errorList.addAll(collect);
+            successList = successList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getCode()) && !errorNoList.contains(e.getCode()))
+                    .collect(Collectors.toList());
+        }
+
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+
+        List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery()
+                .in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode()))
+                .list();
+        Map<String, String> optionMap = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (o1, o2) -> o1));
+        List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
+        Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getNameZh, DictLanguageEntity::getId, (o1, o2) -> o1));
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId, (o1, o2) -> o1));
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, FindUserDTO::getUserId, (o1, o2) -> o1));
+        List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
+        Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId, (o1, o2) -> o1));
+        List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
+        Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
+        Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId, (o1, o2) -> o1));
+        Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId, (o1, o2) -> o1));
+        Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId, (o1, o2) -> o1));
+
+        List<String> codeList = successList.stream()
+                .map(KolPartnerInfoImportExcelDTO.UpdateExcelDTO::getCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, KolPartnerInfoEntity> oldMap = lambdaQuery()
+                .in(KolPartnerInfoEntity::getCode, codeList)
+                .eq(KolPartnerInfoEntity::getIsDeleted, false)
+                .list()
+                .stream()
+                .collect(Collectors.toMap(KolPartnerInfoEntity::getCode, e -> e, (o1, o2) -> o1));
+
+        KolPartnerInfoService kolPartnerInfoService = SpringUtil.getBean(KolPartnerInfoService.class);
+        Map<String, List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(KolPartnerInfoImportExcelDTO.UpdateExcelDTO::getCode));
+        for (Map.Entry<String, List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO>> entry : collect.entrySet()) {
+            String code = entry.getKey();
+            List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> list = entry.getValue();
+            List<String> errorMsgList = new ArrayList<>();
+            KolPartnerInfoEntity old = oldMap.get(code);
+            if (Objects.isNull(old)) {
+                addImportUpdateError(list, errorList, Collections.singletonList("达人编码不存在"));
+                continue;
+            }
+
+            KolPartnerInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(KolPartnerInfoDTO.UpdateDTO.class, old);
+            updateDTO.setId(old.getId());
+            updateDTO.setKolCooperationPlatformDTOList(BeanMapperUtils.copyList(KolCooperationPlatformDTO.UpdateDTO.class,
+                    kolCooperationPlatformService.lambdaQuery().eq(KolCooperationPlatformEntity::getMainId, old.getId()).eq(KolCooperationPlatformEntity::getIsDeleted, false).list()));
+            updateDTO.setKolAddressInfoDTOList(BeanMapperUtils.copyList(KolAddressInfoDTO.UpdateDTO.class,
+                    kolAddressInfoService.lambdaQuery().eq(KolAddressInfoEntity::getMainId, old.getId()).eq(KolAddressInfoEntity::getIsDeleted, false).list()));
+            fillImportUpdateAttachment(updateDTO, old.getId());
+
+            for (KolPartnerInfoImportExcelDTO.UpdateExcelDTO item : list) {
+                applyMainImportUpdate(item, updateDTO, optionMap, languageMap, deptMap, userMap, dictCountryMap, errorMsgList);
+                applyPlatformImportUpdate(item, updateDTO, errorMsgList);
+                applyAddressImportUpdate(item, updateDTO, dictCountryMap, provinceMap, cityMap, districtMap, errorMsgList);
+            }
+
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                addImportUpdateError(list, errorList, errorMsgList);
+                continue;
+            }
+
+            try {
+                kolPartnerInfoService.update(updateDTO);
+            } catch (Exception e) {
+                addImportUpdateError(list, errorList, Collections.singletonList(e.getMessage()));
+            }
+        }
+    }
+
+    private void addImportUpdateError(List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> list, List<KolPartnerInfoImportExcelDTO.UpdateExcelDTO> errorList, List<String> errorMsgList) {
+        String errorMsg = FieldValidUtil.getMsgSort(errorMsgList.stream().distinct().collect(Collectors.toList()));
+        list.forEach(item -> {
+            item.setErrorMsg(errorMsg);
+            errorList.add(item);
+        });
+    }
+
+    private void fillImportUpdateAttachment(KolPartnerInfoDTO.UpdateDTO updateDTO, String id) {
+        List<AttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessId(id);
+        updateDTO.setAttachUrlList(attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
+        updateDTO.setAttachNameList(attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+    }
+
+
+    private void applyMainImportUpdate(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item,
+                                       KolPartnerInfoDTO.UpdateDTO updateDTO,
+                                       Map<String, String> optionMap,
+                                       Map<String, String> languageMap,
+                                       Map<String, String> deptMap,
+                                       Map<String, String> userMap,
+                                       Map<String, String> dictCountryMap,
+                                       List<String> errorMsgList) {
+        if (StringUtils.isNotBlank(item.getNickname())) {
+            updateDTO.setNickname(StringUtils.trim(item.getNickname()));
+        }
+        if (StringUtils.isNotBlank(item.getTypeName())) {
+            String type = parseOptionIds(item.getTypeName(), optionMap, "达人类型", errorMsgList);
+            if (StringUtils.isNotBlank(type)) {
+                updateDTO.setType(type);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getCooperationTypeName())) {
+            String cooperationType = parseOptionIds(item.getCooperationTypeName(), optionMap, "合作类型", errorMsgList);
+            if (StringUtils.isNotBlank(cooperationType)) {
+                updateDTO.setCooperationType(cooperationType);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getCooperationDateStr())) {
+            LocalDate cooperationDate = LocalDateUtil.parseStrToLocalDate(item.getCooperationDateStr());
+            if (Objects.isNull(cooperationDate)) {
+                errorMsgList.add("合作日期格式错误");
+            } else {
+                updateDTO.setCooperationDate(cooperationDate);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getCountryName())) {
+            String countryName = StringUtils.trim(item.getCountryName());
+            String countryId = dictCountryMap.getOrDefault(countryName, "");
+            if (StringUtils.isBlank(countryId)) {
+                errorMsgList.add("国家名称不存在");
+            } else {
+                updateDTO.setCountryId(countryId);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getLanguageName())) {
+            String languageName = StringUtils.trim(item.getLanguageName());
+            String language = languageMap.getOrDefault(languageName, "");
+            if (StringUtils.isBlank(language)) {
+                errorMsgList.add("语言不存在");
+            } else {
+                updateDTO.setLanguage(language);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getEmail())) {
+            updateDTO.setEmail(StringUtils.trim(item.getEmail()));
+        }
+        if (StringUtils.isNotBlank(item.getPhone())) {
+            updateDTO.setPhone(StringUtils.trim(item.getPhone()));
+        }
+        if (StringUtils.isNotBlank(item.getChargeName())) {
+            String chargeName = StringUtils.trim(item.getChargeName());
+            String chargeId = userMap.getOrDefault(chargeName, "");
+            if (StringUtils.isBlank(chargeId)) {
+                errorMsgList.add("负责人不存在");
+            } else {
+                updateDTO.setChargeId(chargeId);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getDeptName())) {
+            String deptName = StringUtils.trim(item.getDeptName());
+            String deptId = deptMap.getOrDefault(deptName, "");
+            if (StringUtils.isBlank(deptId)) {
+                errorMsgList.add("部门不存在");
+            } else {
+                updateDTO.setDeptId(deptId);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getRemark())) {
+            updateDTO.setRemark(item.getRemark());
+        }
+    }
+
+    private String parseOptionIds(String optionNames, Map<String, String> optionMap, String fieldName, List<String> errorMsgList) {
+        List<String> optionIdList = new ArrayList<>();
+        for (String optionName : optionNames.split(",")) {
+            String name = StringUtils.trim(optionName);
+            String optionId = optionMap.getOrDefault(name, "");
+            if (StringUtils.isBlank(optionId)) {
+                errorMsgList.add(fieldName + "不存在");
+                return "";
+            }
+            optionIdList.add(optionId);
+        }
+        return String.join(",", optionIdList);
+    }
+
+    private void applyPlatformImportUpdate(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item,
+                                           KolPartnerInfoDTO.UpdateDTO updateDTO,
+                                           List<String> errorMsgList) {
+        if (!hasPlatformImportUpdateValue(item)) {
+            return;
+        }
+        if (StringUtils.isBlank(item.getPlatformName())) {
+            errorMsgList.add("合作平台不能为空");
+            return;
+        }
+        KolCooperationPlatformDTO.UpdateDTO platformDTO = updateDTO.getKolCooperationPlatformDTOList().stream()
+                .filter(e -> Objects.equals(e.getPlatformName(), StringUtils.trim(item.getPlatformName())))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(platformDTO)) {
+            errorMsgList.add("合作平台不存在");
+            return;
+        }
+        if (StringUtils.isNotBlank(item.getPlatformAccountId())) {
+            platformDTO.setPlatformAccountId(StringUtils.trim(item.getPlatformAccountId()));
+        }
+        if (StringUtils.isNotBlank(item.getPlatformAccountName())) {
+            platformDTO.setPlatformAccountName(StringUtils.trim(item.getPlatformAccountName()));
+        }
+        if (Objects.nonNull(item.getFollowerCount())) {
+            platformDTO.setFollowerCount(item.getFollowerCount());
+        }
+        if (StringUtils.isNotBlank(item.getHomepageUrl())) {
+            platformDTO.setHomepageUrl(StringUtils.trim(item.getHomepageUrl()));
+        }
+        if (StringUtils.isNotBlank(item.getPlatformRemark())) {
+            platformDTO.setRemark(item.getPlatformRemark());
+        }
+    }
+
+    private boolean hasPlatformImportUpdateValue(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item) {
+        return StringUtils.isNotBlank(item.getPlatformName())
+                || StringUtils.isNotBlank(item.getPlatformAccountId())
+                || StringUtils.isNotBlank(item.getPlatformAccountName())
+                || Objects.nonNull(item.getFollowerCount())
+                || StringUtils.isNotBlank(item.getHomepageUrl())
+                || StringUtils.isNotBlank(item.getPlatformRemark());
+    }
+
+    private void applyAddressImportUpdate(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item,
+                                          KolPartnerInfoDTO.UpdateDTO updateDTO,
+                                          Map<String, String> dictCountryMap,
+                                          Map<String, String> provinceMap,
+                                          Map<String, String> cityMap,
+                                          Map<String, String> districtMap,
+                                          List<String> errorMsgList) {
+        if (!hasAddressImportUpdateValue(item)) {
+            return;
+        }
+        if (StringUtils.isBlank(item.getContactPerson())) {
+            errorMsgList.add("联系人不能为空");
+            return;
+        }
+        KolAddressInfoDTO.UpdateDTO addressDTO = updateDTO.getKolAddressInfoDTOList().stream()
+                .filter(e -> Objects.equals(e.getContactPerson(), StringUtils.trim(item.getContactPerson())))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(addressDTO)) {
+            errorMsgList.add("联系人对应地址不存在");
+            return;
+        }
+        if (StringUtils.isNotBlank(item.getAddressCountryName())) {
+            String countryName = StringUtils.trim(item.getAddressCountryName());
+            String countryId = dictCountryMap.getOrDefault(countryName, "");
+            if (StringUtils.isBlank(countryId)) {
+                errorMsgList.add("地址信息--国家名称未找到");
+            } else {
+                addressDTO.setCountryId(countryId);
+                addressDTO.setCountryName(countryName);
+            }
+        }
+        if (StringUtils.isNotBlank(item.getProvince())) {
+            String province = StringUtils.trim(item.getProvince());
+            String provinceId = provinceMap.getOrDefault(province, "");
+            if (StringUtils.isNotBlank(provinceId)) {
+                addressDTO.setProvinceId(provinceId);
+            } else if (DictValueEnum.CN.getCode().equals(addressDTO.getCountryId())) {
+                errorMsgList.add("地址信息--省未找到");
+            }
+            addressDTO.setProvince(province);
+        }
+        if (StringUtils.isNotBlank(item.getCity())) {
+            String city = StringUtils.trim(item.getCity());
+            String cityId = cityMap.getOrDefault(city, "");
+            if (StringUtils.isNotBlank(cityId)) {
+                addressDTO.setCityId(cityId);
+            } else if (DictValueEnum.CN.getCode().equals(addressDTO.getCountryId())) {
+                errorMsgList.add("地址信息--市未找到");
+            }
+            addressDTO.setCity(city);
+        }
+        if (StringUtils.isNotBlank(item.getDistrict())) {
+            String district = StringUtils.trim(item.getDistrict());
+            String districtId = districtMap.getOrDefault(district, "");
+            if (StringUtils.isNotBlank(districtId)) {
+                addressDTO.setDistrictId(districtId);
+            } else if (DictValueEnum.CN.getCode().equals(addressDTO.getCountryId())) {
+                errorMsgList.add("地址信息--区域未找到");
+            }
+            addressDTO.setDistrict(district);
+        }
+        if (StringUtils.isNotBlank(item.getDetailAddress())) {
+            addressDTO.setDetailAddress(StringUtils.trim(item.getDetailAddress()));
+        }
+        if (StringUtils.isNotBlank(item.getContactPersonPhone())) {
+            addressDTO.setPhone(StringUtils.trim(item.getContactPersonPhone()));
+        }
+        if (StringUtils.isNotBlank(item.getZipCode())) {
+            addressDTO.setZipCode(StringUtils.trim(item.getZipCode()));
+        }
+        if (StringUtils.isNotBlank(item.getReceiverTaxNo())) {
+            addressDTO.setReceiverTaxNo(StringUtils.trim(item.getReceiverTaxNo()));
+        }
+        if (StringUtils.isNotBlank(item.getIsDefaultName())) {
+            if ("是".equals(item.getIsDefaultName())) {
+                addressDTO.setIsDefault(Boolean.TRUE);
+            } else if ("否".equals(item.getIsDefaultName())) {
+                addressDTO.setIsDefault(Boolean.FALSE);
+            } else {
+                errorMsgList.add("默认地址只能填写是或否");
+            }
+        }
+        if (StringUtils.isNotBlank(item.getDisabledName())) {
+            if ("启用".equals(item.getDisabledName())) {
+                addressDTO.setDisabled(Boolean.FALSE);
+            } else if ("禁用".equals(item.getDisabledName())) {
+                addressDTO.setDisabled(Boolean.TRUE);
+            } else {
+                errorMsgList.add("启用状态只能填写启用或禁用");
+            }
+        }
+        if (StringUtils.isNotBlank(item.getAddressRemark())) {
+            addressDTO.setRemark(item.getAddressRemark());
+        }
+    }
+
+    private boolean hasAddressImportUpdateValue(KolPartnerInfoImportExcelDTO.UpdateExcelDTO item) {
+        return StringUtils.isNotBlank(item.getAddressCountryName())
+                || StringUtils.isNotBlank(item.getProvince())
+                || StringUtils.isNotBlank(item.getCity())
+                || StringUtils.isNotBlank(item.getDistrict())
+                || StringUtils.isNotBlank(item.getDetailAddress())
+                || StringUtils.isNotBlank(item.getContactPerson())
+                || StringUtils.isNotBlank(item.getContactPersonPhone())
+                || StringUtils.isNotBlank(item.getZipCode())
+                || StringUtils.isNotBlank(item.getReceiverTaxNo())
+                || StringUtils.isNotBlank(item.getIsDefaultName())
+                || StringUtils.isNotBlank(item.getDisabledName())
+                || StringUtils.isNotBlank(item.getAddressRemark());
+    }
 
     @Override
     public KolPartnerInfoDTO.ViewDTO view(String id) {

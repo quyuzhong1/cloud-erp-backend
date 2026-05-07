@@ -15,6 +15,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.ApproveDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -42,11 +45,15 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.listener.AssetNoticeExcelListener;
 import com.erp.server.scm.mapper.AssetNoticeMapper;
 import com.erp.server.scm.service.*;
@@ -87,6 +94,8 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_NOTIC
 @Slf4j
 @Service
 public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, AssetNoticeEntity> implements AssetNoticeService {
+
+    private static final Integer USER_DISABLED_STATE = 0;
 
     @Autowired
     private ModuleOperateLogService moduleOperateLogService;
@@ -1163,7 +1172,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE)) {
             throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
-        return;
+        validatePurchaseDevUser(entity.getPurchaseDevUserId());
     }
 
     /**
@@ -1197,10 +1206,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         }
         // 采购开发用户验证
         if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseDevUserId())) {
-            FindUserDTO purchaseDevUser = sysUserFeign.getUserByUserId(assetNoticeEntity.getPurchaseDevUserId());
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(purchaseDevUser)) {
-                throw new ServiceException(ApiError.COMMON_USER_NOT_FOUND);
-            }
+            validatePurchaseDevUser(assetNoticeEntity.getPurchaseDevUserId());
         }
         // 采购跟单用户验证
         if (StringUtils.isNotBlank(assetNoticeEntity.getPurchaseFollowUserId())) {
@@ -1210,6 +1216,31 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             }
         }
 
+    }
+
+    private void validatePurchaseDevUser(String userId) {
+        SysUserInfoEntity purchaseDevUser = listPurchaseDevUsers().stream()
+                .filter(user -> Objects.equals(user.getUid(), userId))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(purchaseDevUser)) {
+            throw new ServiceException("采购开发只能选择供应链支持中心部门下的用户");
+        }
+        if (USER_DISABLED_STATE.equals(purchaseDevUser.getUserState())) {
+            throw new ServiceException("采购开发用户已禁用");
+        }
+    }
+
+    private List<SysUserInfoEntity> listPurchaseDevUsers() {
+        List<SysUserInfoEntity> userList = sysUserFeign.listUserByDeptId(ScmConstant.SUPPLY_CHAIN_SUPPORT_CENTER_DEPT_ID);
+        if (CollectionUtils.isEmpty(userList)) {
+            return Collections.emptyList();
+        }
+        return userList.stream()
+                .filter(user -> Objects.nonNull(user)
+                        && StringUtils.isNotBlank(user.getUid())
+                        && !Objects.equals(user.getIsDeleted(), Boolean.TRUE))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -1242,6 +1273,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<SysUserInfoEntity> purchaseDevUserList = listPurchaseDevUsers();
 
         // 收集所有的assetCode并去重
         Set<String> assetCodeSet = successList.stream()
@@ -1271,7 +1303,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
                 // 数据校验和转换
                 List<String> errorMsgList = new ArrayList<>();
                 AssetNoticeDetailDTO.MoldImportDTO moldImportDTO = validateAndConvertData(
-                        importMainDTO, value, skuVOList, companyList, deptList, userList, errorMsgList, supplierInfoMap);
+                        importMainDTO, value, skuVOList, companyList, deptList, userList, purchaseDevUserList, errorMsgList, supplierInfoMap);
 
                 // 如果存在错误，添加到错误列表
                 if (errorMsgList.size() > 0) {
@@ -1350,6 +1382,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
             List<BaseIdDTO> companyList,
             List<SysDepartmentDTO> deptList,
             List<FindUserDTO> userList,
+            List<SysUserInfoEntity> purchaseDevUserList,
             List<String> errorMsgList,
             Map<String, MoldInfoDTO.SupplierInfoByCodeDTO> supplierInfoMap) {
 
@@ -1393,14 +1426,16 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
         // 采购开发用户
         if (StringUtils.isNotBlank(importMainDTO.getPurchaseDevUserName())) {
-            FindUserDTO purchaseDevUser = userList.stream()
+            SysUserInfoEntity purchaseDevUser = purchaseDevUserList.stream()
                     .filter(obj -> obj.getUserName().equals(importMainDTO.getPurchaseDevUserName()))
                     .findFirst()
                     .orElse(null);
             if (purchaseDevUser == null) {
-                errorMsgList.add("请录入采购开发用户信息");
+                errorMsgList.add("采购开发只能录入供应链支持中心部门下的用户");
+            } else if (USER_DISABLED_STATE.equals(purchaseDevUser.getUserState())) {
+                errorMsgList.add("采购开发用户【" + importMainDTO.getPurchaseDevUserName() + "】已禁用");
             } else {
-                moldImportDTO.setPurchaseDevUserId(purchaseDevUser.getUserId());
+                moldImportDTO.setPurchaseDevUserId(purchaseDevUser.getUid());
                 moldImportDTO.setPurchaseDevUserName(purchaseDevUser.getUserName());
             }
         }

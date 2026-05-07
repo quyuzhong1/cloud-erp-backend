@@ -106,6 +106,28 @@
                 AND ptm.is_deleted = FALSE
         order by ptm.id
     </select>
+    <select id="listLatestFinishedRemark"
+            resultType="com.erp.model.workflow.dto.ProcessTaskManagementDTO$FinishedRemarkDTO">
+        SELECT temp.businessId,
+               temp.remark
+        FROM (
+                 SELECT pm.business_id                                                    AS businessId,
+                        ptm.remark                                                        AS remark,
+                        ROW_NUMBER() OVER (PARTITION BY pm.business_id
+                            ORDER BY ptm.approve_time DESC NULLS LAST, ptm.id DESC)      AS rn
+                 FROM process_management pm
+                          INNER JOIN process_task_management ptm
+                                     ON pm.process_instance_id = ptm.process_instance_id
+                                         AND ptm.is_deleted = FALSE
+                 WHERE pm.is_deleted = FALSE
+                   AND pm.business_id IN
+                       <foreach collection="businessIds" item="businessId" open="(" separator="," close=")">
+                           #{businessId}
+                       </foreach>
+                   AND ptm.task_status IN ('approve', 'reject')
+             ) temp
+        WHERE temp.rn = 1
+    </select>
     <select id="listProcessByBusinessKey" parameterType="com.erp.model.workflow.dto.ProcessManagementDTO$TaskKeyInfoDTO" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
         SELECT
         ptm.id,

@@ -759,8 +759,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (warehouseRuleMatch) {
                 // 通过代理调用，确保 logisticsRule() 方法上的独立事务生效
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = bean.logisticsRule(id, new HashMap<>(), false);
-                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
                 if(isRuleMatch){
@@ -769,12 +767,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //申报信息规则
                     bean.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                SoB2cEntity entity = bean.getById(id);
-                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
-                }
+                soB2cRuleService.handleAutoLogisticsAction(id, logisticsRuleResult);
             }
         }
         //自动计算预估运费到订单的预估运费字段（异步）
@@ -5828,6 +5821,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("actualShippingCost", logisticsEntity.getActualShippingCost());
         map.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
         map.put("dictPlatform", soB2cEntity.getDictPlatform());
+        map.put("vatInvoiceStatus", CharSequenceUtil.isNotBlank(soB2cEntity.getVatInvoiceStatus()) ? soB2cEntity.getVatInvoiceStatus() : "");
         map.put("nfeInvoiceStatus", CharSequenceUtil.isNotBlank(soB2cEntity.getNfeInvoiceStatus()) ? soB2cEntity.getNfeInvoiceStatus() : "");
         //获取开票清单最新开票记录
         InvoiceInfoEntity latestInvoice = invoiceInfoService.findLatestInvoice(soB2cEntity.getId());
@@ -6242,6 +6236,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean result = Objects.nonNull(matchResult);
         SoB2cDTO.RuleResultDTO resultDTO = new SoB2cDTO.RuleResultDTO();
         Boolean autoGetTrackNo = Boolean.FALSE;
+        Boolean autoTrackNoOnly = Boolean.FALSE;
+        Boolean autoTrackNoInRange = Boolean.FALSE;
         Boolean autoGetTrackNotOfRangeDelivery = Boolean.FALSE;
         //表示通过
         if (result) {
@@ -6250,6 +6246,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String logisticsChannelName = matchResult.getLogisticsChannelName();
             resultDTO.setName(matchResult.getName());
             autoGetTrackNo = matchResult.getAutoGetTrackNo();
+            autoTrackNoOnly = matchResult.getAutoTrackNoOnly();
+            autoTrackNoInRange = matchResult.getAutoTrackNoInRange();
             autoGetTrackNotOfRangeDelivery = matchResult.getAutoGetTrackNotOfRangeDelivery();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
                 SoB2cLogisticsEntity b2cLogistics = soB2cLogisticsService.getByMainId(id);
@@ -6282,6 +6280,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         resultDTO.setIsRuleMatch(result);
         resultDTO.setAutoGetTrackNo(autoGetTrackNo);
+        resultDTO.setAutoTrackNoOnly(autoTrackNoOnly);
+        resultDTO.setAutoTrackNoInRange(autoTrackNoInRange);
         resultDTO.setAutoGetTrackNotOfRangeDelivery(autoGetTrackNotOfRangeDelivery);
         return resultDTO;
     }
@@ -8278,14 +8278,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //申报信息规则
                     declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                SoB2cEntity entity = soB2cService.getById(id);
-                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
-                }
+                soB2cRuleService.handleAutoLogisticsAction(id, logisticsRuleResult);
             }
         }
         //自动计算预估运费到订单的预估运费字段
@@ -11998,8 +11991,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
                             if (Boolean.TRUE.equals(warehouseRuleMatch)) {
                                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(soB2cEntity.getId(), new HashMap<>(), false);
-                                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                                 //表示成功
                                 if(Boolean.TRUE.equals(isRuleMatch)){
@@ -12008,10 +11999,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                     //申报信息规则
                                     declareRule(soB2cEntity.getId(), new HashMap<>(), Boolean.FALSE, false);
                                 }
-                                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                                    soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId(), logisticsRuleResult.getName());
-                                }
+                                soB2cRuleService.handleAutoLogisticsAction(soB2cEntity.getId(), logisticsRuleResult);
                             }
                         }
                         //自动计算预估运费到订单的预估运费字段

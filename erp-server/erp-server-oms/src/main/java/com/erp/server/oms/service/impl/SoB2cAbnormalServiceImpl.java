@@ -197,7 +197,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         if(Objects.isNull(matchResult) || Objects.isNull(matchResult.getLogisticsSupplierId())){
             return false;
         }
-        return  matchResult.getAutoGetTrackNotOfRangeDelivery() || matchResult.getAutoGetTrackNo();
+        return Boolean.TRUE.equals(matchResult.getAutoGetTrackNo())
+                || Boolean.TRUE.equals(matchResult.getAutoGetTrackNotOfRangeDelivery());
     }
 
     @Override

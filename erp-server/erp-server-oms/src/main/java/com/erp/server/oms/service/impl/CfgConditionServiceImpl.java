@@ -116,7 +116,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
 
     @Override
     public List<CfgConditionDTO.ListDTO> listOrderHandleCondition() {
-        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "logisticsChannelId");
+        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "logisticsChannelId", "vatInvoiceStatus", "nfeInvoiceStatus");
         return baseMapper.listConditionByType(typeList, ConditionSourceTypeEnum.ORDER.getCode());
     }
 

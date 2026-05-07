@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.UserSelectDto;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -252,6 +253,17 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.erp.model.sys.entity.SysUserInfoEntity>
      **/
     List<SysUserInfoEntity> listUserByDept(String deptName);
+
+    /**
+     * 根据部门ID查询部门及下级部门用户
+     */
+    List<SysUserInfoEntity> listUserByDeptId(String deptId);
+
+    /**
+     * 根据部门ID查询用户下拉列表
+     */
+    List<BaseDropDownDTO.DisabledDTO> listDeptUserDropDown(String deptId);
+
     /**
      * @description: 店铺权限设置分页查询
      * @author Will

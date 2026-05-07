@@ -238,15 +238,12 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     }
 
     private void forShopAuthor(ShopAuthorizeDTO dto, List<String> shopIds, Map<SettingEnum, String> configMap, CfgAppClientEntity cfgAppClient, AmazonTokenDTO tokenDTO) {
+        shopIds = getAmazonAuthorizeShopIds(shopIds, dto.getSelling_partner_id());
         List<PlatformTaskDTO.DisabledDTO> disabledDTOS = new ArrayList<>();
         for (String shopId : shopIds) {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (null == shopInfo) {
                 throw new ServiceException(ApiError.SHOP_NOT_FOUND);
-            }
-            // 店铺已授权
-            if(AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfo.getAuthStatus())){
-                throw new ServiceException(ApiError.SHOP_ALREADY_AUTHORIZED);
             }
             // 添加授权账号校验
             if (StringUtils.isNotBlank(shopInfo.getPlatformShopCode())){
@@ -302,6 +299,25 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             disabledDTOS.add(taskDTO);
         }
         dmpTaskFeign.batchAddOrUpdateTasksAndSchedules(disabledDTOS);
+    }
+
+    private List<String> getAmazonAuthorizeShopIds(List<String> shopIds, String platformShopCode) {
+        Set<String> resultShopIds = new LinkedHashSet<>(shopIds);
+        if (StringUtils.isBlank(platformShopCode)) {
+            return new ArrayList<>(resultShopIds);
+        }
+        List<ShopInfoEntity> relatedNotAuthShops = shopInfoService.lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
+                .eq(ShopInfoEntity::getAuthStatus, AuthStatusEnum.NOT.getCode())
+                .eq(ShopInfoEntity::getPlatformShopCode, platformShopCode)
+                .list();
+        if (!CollectionUtils.isEmpty(relatedNotAuthShops)) {
+            relatedNotAuthShops.stream()
+                    .map(ShopInfoEntity::getId)
+                    .filter(StringUtils::isNotBlank)
+                    .forEach(resultShopIds::add);
+        }
+        return new ArrayList<>(resultShopIds);
     }
 
     /**

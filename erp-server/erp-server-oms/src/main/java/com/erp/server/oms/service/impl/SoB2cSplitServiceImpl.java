@@ -837,13 +837,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         logisticsRuleResult.setAutoGetTrackNo(false);
                         log.error("{}物流规则异常",entity.getCode(),e);
                     }
-                    Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                    Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                    Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                    if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                            || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                        soB2cRuleService.handleAutoSubmitDelivery(entity.getId(), logisticsRuleResult.getName());
-                    }
+                    soB2cRuleService.handleAutoLogisticsAction(entity.getId(), logisticsRuleResult);
 
                 }
                 //自动计算预估运费到订单的预估运费字段

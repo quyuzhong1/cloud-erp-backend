@@ -242,6 +242,26 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
     }
 
     @Override
+    public List<ProcessTaskManagementDTO.FinishedRemarkDTO> listFinishedTaskRemarksBatch(List<String> businessIds) {
+        if (CollectionUtils.isEmpty(businessIds)) {
+            return Collections.emptyList();
+        }
+        List<ProcessTaskManagementDTO.FinishedRemarkDTO> queryList = baseMapper.listLatestFinishedRemark(businessIds);
+        Map<String, String> remarkMap = queryList.stream()
+                .collect(Collectors.toMap(ProcessTaskManagementDTO.FinishedRemarkDTO::getBusinessId,
+                        ProcessTaskManagementDTO.FinishedRemarkDTO::getRemark,
+                        (oldValue, newValue) -> oldValue));
+        List<ProcessTaskManagementDTO.FinishedRemarkDTO> resultList = new ArrayList<>(businessIds.size());
+        for (String businessId : businessIds) {
+            ProcessTaskManagementDTO.FinishedRemarkDTO dto = new ProcessTaskManagementDTO.FinishedRemarkDTO();
+            dto.setBusinessId(businessId);
+            dto.setRemark(remarkMap.get(businessId));
+            resultList.add(dto);
+        }
+        return resultList;
+    }
+
+    @Override
     public List<ProcessTaskManagementEntity> listProcessByBusinessKey(ProcessManagementDTO.TaskKeyInfoDTO dto) {
         return baseMapper.listProcessByBusinessKey(dto);
     }

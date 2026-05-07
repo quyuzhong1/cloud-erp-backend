@@ -119,9 +119,19 @@ public class RuleLogisticsDTO implements Serializable {
         private String logisticsChannelName;
 
         /**
-         * 是否自动获取物流单号
+         * 是否自动获取跟踪号并提交发货
          */
         private Boolean autoGetTrackNo;
+
+        /**
+         * 是否自动获取跟踪号并不提交发货
+         */
+        private Boolean autoTrackNoOnly;
+
+        /**
+         * 是否自动获取跟踪号并不提交发货（非超范围派送订单）
+         */
+        private Boolean autoTrackNoInRange;
 
         /**
          * 规则名称
@@ -129,7 +139,7 @@ public class RuleLogisticsDTO implements Serializable {
         private String name;
 
         /**
-         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         * 是否自动获取跟踪号并提交发货（非超范围派送订单）
          */
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
@@ -198,7 +208,7 @@ public class RuleLogisticsDTO implements Serializable {
         private String logisticsChannelName;
 
         /**
-         * 是否自动获取物流单号
+         * 是否自动获取跟踪号并提交发货
          */
         private Boolean autoGetTrackNo;
 
@@ -207,7 +217,17 @@ public class RuleLogisticsDTO implements Serializable {
          */
         private List<RuleConditionDTO.ViewDTO> conditionList;
         /**
-         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         * 是否自动获取跟踪号并不提交发货
+         */
+        private Boolean autoTrackNoOnly;
+
+        /**
+         * 是否自动获取跟踪号并不提交发货（非超范围派送订单）
+         */
+        private Boolean autoTrackNoInRange;
+
+        /**
+         * 是否自动获取跟踪号并提交发货（非超范围派送订单）
          */
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
@@ -289,15 +309,25 @@ public class RuleLogisticsDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
-         * 是否自动获取物流单号
+         * 是否自动获取跟踪号并提交发货
          */
-        @NotNull(message = "是否自动获取物流单号 不能为空")
+        @NotNull(message = "是否自动获取跟踪号并提交发货不能为空")
         private Boolean autoGetTrackNo;
 
         /**
-         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         * 是否自动获取跟踪号并不提交发货
          */
-        @NotNull(message = "是否自动获取物流单号（非超范围派送订单）不能为空")
+        private Boolean autoTrackNoOnly;
+
+        /**
+         * 是否自动获取跟踪号并不提交发货（非超范围派送订单）
+         */
+        private Boolean autoTrackNoInRange;
+
+        /**
+         * 是否自动获取跟踪号并提交发货（非超范围派送订单）
+         */
+        @NotNull(message = "是否自动获取跟踪号并提交发货（非超范围派送订单）不能为空")
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
