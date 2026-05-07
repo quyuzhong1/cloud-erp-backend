@@ -4,7 +4,6 @@ import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -133,7 +132,7 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      * @author jack
      * @date 2026-04-29
      */
-    Boolean autoGenerateMidData(AutoGenerateBillDTO dto);
+    Boolean autoGenerateMidData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list);
 
     Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list);
 }

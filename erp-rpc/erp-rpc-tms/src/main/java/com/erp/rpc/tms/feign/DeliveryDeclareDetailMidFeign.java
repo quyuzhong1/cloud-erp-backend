@@ -1,10 +1,12 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 /**
  * 报关明细中间表Feign接口
@@ -26,5 +28,5 @@ public interface DeliveryDeclareDetailMidFeign {
      * @date 2026-04-29
      */
     @PostMapping("/feign/deliveryDeclareDetailMid/autoGenerateMidData")
-    Boolean autoGenerateMidData(@RequestBody AutoGenerateBillDTO dto);
+    Boolean autoGenerateMidData(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list);
 }
