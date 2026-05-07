@@ -1207,6 +1207,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if (attachmentMap.get(data.getId()) != null) {
                 data.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
                 data.setLabelStatusName(LogisticsLabelStatusEnum.OBTAINED.getName());
+                data.setAttachment(attachmentMap.get(data.getId()));
             } else {
                 data.setLabelStatus(LogisticsLabelStatusEnum.NOT_OBTAINED.getCode());
                 data.setLabelStatusName(LogisticsLabelStatusEnum.NOT_OBTAINED.getName());
@@ -1219,7 +1220,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 data.setProvince(listDTOMap.get(data.getOutboundTrackNo()).getProvince());
                 data.setCity(listDTOMap.get(data.getOutboundTrackNo()).getCity());
                 data.setDetailedAddress(listDTOMap.get(data.getOutboundTrackNo()).getDetailedAddress());
-                data.setAttachment(attachmentMap.get(data.getId()));
                 data.setLabelStatus(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatus());
                 data.setLabelStatusName(listDTOMap.get(data.getOutboundTrackNo()).getLabelStatusName());
             }
