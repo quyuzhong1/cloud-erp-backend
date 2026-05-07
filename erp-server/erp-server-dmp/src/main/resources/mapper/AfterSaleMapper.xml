@@ -240,7 +240,8 @@
         afs.username AS thridUserName,
         o.track_no as outboundTrackNo,
         afs.phone_number AS phoneNumber,
-        afs.type
+        afs.type,
+        afs.logistics_channel_id as logisticsChannelId
         FROM
         after_sale AS afs
         LEFT JOIN after_sale_detail AS afsd ON afs.ID = afsd.main_id AND afsd.is_deleted = FALSE
