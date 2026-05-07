@@ -184,6 +184,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Resource
     private TmsDeclareBillFeign tmsDeclareBillFeign;
     @Resource
+    private com.erp.rpc.tms.feign.CfgSettingFeign tmsCfgSettingFeign;
+    @Resource
     private PackingTaskService packingTaskService;
     @Resource
     private CfgRuleOutService cfgRuleOutService;
@@ -289,14 +291,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(taskEntityList)) {
             boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
             if(packed){
-                // 走TMS生成报关明细中间表逻辑。
-                AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                        .id(entity.getId())
-                        .billGenerateTimingEnum(billGenerateTimingEnum)
-                        .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-                        .firstMileDeliveryEntity(entity)
-                        .checkCfg(Boolean.TRUE) // 检查配置
-                        .build();
                 try {
                     if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
                         Boolean autoGenerateResult;
@@ -304,7 +298,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                         Boolean originalValue = UserContext.getIsUserSystem();
                         UserContext.setIsUserSystem(Boolean.TRUE);
                         try {
-                            autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(autoGenerateBillDTO);
+                            if (!checkFirstMileDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
+                                return;
+                            }
+                            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushFmDeclare(
+                                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+                            autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
                         } finally {
                             //恢复系统标识
                             UserContext.setIsUserSystem(originalValue);
@@ -320,6 +319,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
             }
         }
+    }
+
+    private Boolean checkFirstMileDeclareAutoGenerateCfg(BillGenerateTimingEnum billGenerateTimingEnum) {
+        if (Objects.isNull(billGenerateTimingEnum)) {
+            return Boolean.FALSE;
+        }
+        com.erp.model.tms.entity.CfgSettingEntity cfgSettingEntity =
+                tmsCfgSettingFeign.getByKey(com.erp.model.tms.enums.CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if (Objects.isNull(cfgSettingEntity) || Boolean.TRUE.equals(cfgSettingEntity.getDisabled())) {
+            return Boolean.FALSE;
+        }
+        com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO cfg =
+                BeanUtil.toBean(cfgSettingEntity.getDataJson(), com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO.class);
+        return Objects.nonNull(cfg)
+                && Boolean.TRUE.equals(cfg.getIsAutoFirstMileDeclare())
+                && CharSequenceUtil.equals(cfg.getFirstMileDeclareGenerateTiming(), billGenerateTimingEnum.getCode());
     }
 
     private void matchTransferRule(FirstMileDeliveryEntity entity) {
@@ -1203,7 +1218,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                                 Boolean originalValue = UserContext.getIsUserSystem();
                                 UserContext.setIsUserSystem(Boolean.TRUE);
                                 try {
-                                    autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(autoGenerateBillDTO);
+                                    if (!checkFirstMileDeclareAutoGenerateCfg(BillGenerateTimingEnum.AFTER_APPROVE)) {
+                                        return Boolean.TRUE;
+                                    }
+                                    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushFmDeclare(
+                                            new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+                                    autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
                                 } finally {
                                     UserContext.setIsUserSystem(originalValue);
                                 }

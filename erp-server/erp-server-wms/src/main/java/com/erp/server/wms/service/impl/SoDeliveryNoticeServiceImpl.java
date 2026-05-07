@@ -61,7 +61,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -231,6 +230,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private ExecutorService wmsTaskExecutorPool;
     @Resource
     private DeliveryDeclareDetailMidFeign deliveryDeclareDetailMidFeign;
+    @Resource
+    private com.erp.rpc.tms.feign.CfgSettingFeign tmsCfgSettingFeign;
     @Resource
     private SysDictFeign sysDictFeign;
 
@@ -1943,18 +1944,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (Objects.isNull(entity)) {
             return;
         }
-        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                .id(entity.getId())
-                .billGenerateTimingEnum(billGenerateTimingEnum)
-                .sourceTypeEnum(SourceTypeEnum.SO_DELIVERY_NOTICE)
-                .checkCfg(checkCfg)
-                .build();
         try {
             Boolean originalValue = UserContext.getIsUserSystem();
             UserContext.setIsUserSystem(Boolean.TRUE);
             try {
                 // 跨服务自动生成报关明细中间表时临时切换系统标识，避免使用前台用户上下文。
-                deliveryDeclareDetailMidFeign.autoGenerateMidData(autoGenerateBillDTO);
+                if (Boolean.TRUE.equals(checkCfg) && !checkB2bDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
+                    return;
+                }
+                List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushB2bDeclare(
+                        new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+                deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
             } finally {
                 UserContext.setIsUserSystem(originalValue);
             }
@@ -1966,14 +1966,24 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     /**
-     * 查询用于报关中间表生成的装箱明细
-     *
-     * @param ids 发货通知单id集合
-     * @return 装箱明细集合
-     * @throws RuntimeException 查询异常时抛出
-     * @author jack
-     * @date 2026-04-29
+     * Check B2B declare auto-generate config.
      */
+    private Boolean checkB2bDeclareAutoGenerateCfg(BillGenerateTimingEnum billGenerateTimingEnum) {
+        if (Objects.isNull(billGenerateTimingEnum)) {
+            return Boolean.FALSE;
+        }
+        com.erp.model.tms.entity.CfgSettingEntity cfgSettingEntity =
+                tmsCfgSettingFeign.getByKey(com.erp.model.tms.enums.CfgSettingEnum.BILL_AUTO_ADD.getCode());
+        if (Objects.isNull(cfgSettingEntity) || Boolean.TRUE.equals(cfgSettingEntity.getDisabled())) {
+            return Boolean.FALSE;
+        }
+        com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO cfg =
+                BeanUtil.toBean(cfgSettingEntity.getDataJson(), com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO.class);
+        return Objects.nonNull(cfg)
+                && Boolean.TRUE.equals(cfg.getIsAutoB2BDeclare())
+                && CharSequenceUtil.equals(cfg.getB2BDeclareGenerateTiming(), billGenerateTimingEnum.getCode());
+    }
+
     @Override
     public List<WmsCartonDetailDTO.ListPackingDetailDTO> listDeclarePackingDetail(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {

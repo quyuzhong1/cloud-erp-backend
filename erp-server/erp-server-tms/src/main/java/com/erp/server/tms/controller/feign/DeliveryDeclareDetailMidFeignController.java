@@ -1,6 +1,6 @@
 package com.erp.server.tms.controller.feign;
 
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.server.tms.service.DeliveryDeclareDetailMidService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 报关明细中间表Feign控制器
@@ -32,7 +33,7 @@ public class DeliveryDeclareDetailMidFeignController {
      * @date 2026-04-29
      */
     @PostMapping("/autoGenerateMidData")
-    public Boolean autoGenerateMidData(@RequestBody AutoGenerateBillDTO dto) {
-        return service.autoGenerateMidData(dto);
+    public Boolean autoGenerateMidData(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
+        return service.autoGenerateMidData(list);
     }
 }
