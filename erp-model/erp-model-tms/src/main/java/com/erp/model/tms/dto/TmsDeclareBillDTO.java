@@ -3,7 +3,6 @@ package com.erp.model.tms.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -1369,6 +1368,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private Boolean isAuto = false;
 
         /**
+         * 是否按规则重新合并后保存
+         */
+        private Boolean isMerge = false;
+
+        /**
          *  明细信息
          */
         @NotEmpty(message = "明细信息不能为空")
@@ -1386,6 +1390,11 @@ public class TmsDeclareBillDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 是否按规则重新合并后保存
+         */
+        private Boolean isMerge = false;
 
         /**
          *  明细信息
@@ -2028,7 +2037,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  是否合并,true是，false否
          */
-        private Boolean isMerge = false;
+        private Boolean isMultipleMerge = false;
         /**
          *  下推的主表ids
          */
@@ -2048,9 +2057,9 @@ public class TmsDeclareBillDTO implements Serializable {
     @AllArgsConstructor
     public static class AutoMergeDeclareBillViewDTO {
         /**
-         *  是否合并,true是，false否
+         *  是否批量合并,true是，false否
          */
-        private Boolean isMerge = false;
+        private Boolean isMultipleMerge = false;
         /**
          * 需要报关信息
          */

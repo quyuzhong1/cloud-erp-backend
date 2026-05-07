@@ -3159,7 +3159,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds(), dto.getDetailIds());
-        return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMerge(),list));
+        return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(),list));
     }
 
 
