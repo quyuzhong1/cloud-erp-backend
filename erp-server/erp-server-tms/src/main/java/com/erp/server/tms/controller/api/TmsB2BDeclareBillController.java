@@ -180,33 +180,26 @@ public class TmsB2BDeclareBillController extends BaseController {
     }
 
     /**
-     * 报关状态详情
-     * @author lrp
-     * @date:  2024-03-19
-     * @param id
-     * @return ApiResult<TmsDeclareBillDTO.DeclareStatusDetailDTO>
-     */
-    @GetMapping("/declareStatusDetail")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsB2BDeclareBill:confirmDeclareStatus",
-            serviceClass = TmsDeclareBillService.class,
-            keyIdName = "id")
-    public ApiResult<TmsDeclareBillDTO.DeclareStatusDetailDTO> declareStatusDetail(@RequestParam("id") String id) {
-        return success(tmsDeclareBillService.declareStatusDetail(id, SourceTypeEnum.B2B_DECLARE_BILL));
-    }
-
-    /**
      * 报关状态更新
      * @author lrp
      * @date:  2024-03-19
      * @param dto
-     * @return ApiResult<Boolean>
+     * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/confirmDeclareStatus")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "B2B报关单报关状态更新")
-    public ApiResult<Boolean> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
-        return success(tmsDeclareBillService.confirmDeclareStatus(dto, SourceTypeEnum.B2B_DECLARE_BILL));
+    public ApiResult<List<BatchResultDTO>> confirmDeclareStatus(@RequestBody @Validated TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
+        List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            TmsDeclareBillDTO.ConfirmDeclareStatusDTO singleDTO = new TmsDeclareBillDTO.ConfirmDeclareStatusDTO();
+            singleDTO.setIds(Collections.singletonList(id));
+            singleDTO.setDeclareStatus(dto.getDeclareStatus());
+            singleDTO.setDeclarConfirmDate(dto.getDeclarConfirmDate());
+            singleDTO.setDeclarUserId(dto.getDeclarUserId());
+            singleDTO.setDeclarUserName(dto.getDeclarUserName());
+            resultList.add(tmsDeclareBillService.confirmDeclareStatus(singleDTO, SourceTypeEnum.B2B_DECLARE_BILL));
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
 
 

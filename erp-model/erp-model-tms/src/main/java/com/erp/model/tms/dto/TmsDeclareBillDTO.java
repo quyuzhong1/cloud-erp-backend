@@ -176,13 +176,11 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ConfirmDeclareStatusDTO {
-//        /**
-//         * 主键id
-//         */
-//        @NotNull(message = "id集合不能为空")
-//        private List<String> ids;
-        private String id;
-
+        /**
+         * 主键id集合
+         */
+        @NotEmpty(message = "id集合不能为空")
+        private List<String> ids;
         /**
          * 报关状态
          */

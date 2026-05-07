@@ -69,7 +69,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -702,63 +704,65 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public TmsDeclareBillDTO.DeclareStatusDetailDTO declareStatusDetail(String id, SourceTypeEnum sourceTypeEnum) {
-        List<String> statusList = Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode());
-        TmsDeclareBillEntity entity = getDeclareBillByIdAndType(id, sourceTypeEnum);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "报关单"));
-        //仅待确认，已确认，已报关可操作
-        if(!statusList.contains(entity.getDeclareStatus())){
-            throw new ServiceException("仅待确认，已确认，已报关可操作");
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public BatchResultDTO confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum) {
+        String id = Optional.ofNullable(dto.getIds()).orElse(Collections.emptyList()).stream()
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("");
+        if (StringUtils.isBlank(id)) {
+            return BatchResultDTO.fail("", "", "id不能为空");
         }
-        TmsDeclareBillDTO.DeclareStatusDetailDTO detailDTO = new TmsDeclareBillDTO.DeclareStatusDetailDTO();
-        detailDTO.setId(entity.getId());
-        detailDTO.setDeclareStatus(entity.getDeclareStatus());
-        detailDTO.setDeclareStatusName(DeclareStatusEnum.getName(entity.getDeclareStatus()));
-        if (Objects.nonNull(entity.getDeclarConfirmDate())) {
-            detailDTO.setDeclarConfirmDate(entity.getDeclarConfirmDate());
+        TmsDeclareBillEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            return BatchResultDTO.fail(id, id, "报关单不存在");
         }
-        detailDTO.setDeclarUserId(entity.getDeclarUserId());
-        detailDTO.setDeclarUserName(entity.getDeclarUserName());
-        if (DeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus())) {
-            LoginUser loginUser = UserContext.getDefaultLoginUser();
-            detailDTO.setDeclarConfirmDate(LocalDate.now());
-            detailDTO.setDeclarUserId(loginUser.getUid());
-            detailDTO.setDeclarUserName(loginUser.getUserName());
+        try {
+            TmsDeclareBillEntity declareBillEntity = getDeclareBillByIdAndType(id, sourceTypeEnum);
+            DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
+            if (Objects.isNull(targetStatus)) {
+                throw new ServiceException("报关状态无效");
+            }
+            if (DeclareStatusEnum.WAIT.getCode().equals(declareBillEntity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
+                fillDeclareConfirmUser(dto);
+            }
+            confirmDeclareStatusSingle(declareBillEntity, dto, targetStatus, sourceTypeEnum);
+            return BatchResultDTO.success(declareBillEntity.getId(), declareBillEntity.getCode(), "报关状态更新成功");
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            log.error("报关状态更新失败，id:{}", id, e);
+            String msg = StringUtils.isNotBlank(e.getMessage()) ? e.getMessage() : "报关状态更新失败";
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
         }
-        return detailDTO;
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean confirmDeclareStatus(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto, SourceTypeEnum sourceTypeEnum) {
-        TmsDeclareBillEntity entity = getDeclareBillByIdAndType(dto.getId(), sourceTypeEnum);
-        DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
+    private void confirmDeclareStatusSingle(TmsDeclareBillEntity entity, TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto,
+                                            DeclareStatusEnum targetStatus, SourceTypeEnum sourceTypeEnum) {
         String currentStatus = entity.getDeclareStatus();
         if (DeclareStatusEnum.WAIT.getCode().equals(currentStatus) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
             validateDeclareConfirm(entity);
-            fillDeclareConfirmUser(dto);
             updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclarConfirmDate(), dto.getDeclarUserId(), dto.getDeclarUserName());
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
-            return Boolean.TRUE;
+            return;
         }
         if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.WAIT.equals(targetStatus)) {
             updateDeclareStatus(entity, targetStatus.getCode(), null, null, null);
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
-            return Boolean.TRUE;
+            return;
         }
         if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.DECLARED.equals(targetStatus)) {
             updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclarConfirmDate(), entity.getDeclarUserId(), entity.getDeclarUserName());
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
-            return Boolean.TRUE;
+            return;
         }
         if (DeclareStatusEnum.DECLARED.getCode().equals(currentStatus) && DeclareStatusEnum.WAIT.equals(targetStatus)) {
             updateDeclareStatus(entity, targetStatus.getCode(), null, null, null);
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
-            return Boolean.TRUE;
+            return;
         }
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN, DeclareStatusEnum.getName(currentStatus), targetStatus.getName());
     }
