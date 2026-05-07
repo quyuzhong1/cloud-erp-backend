@@ -169,6 +169,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOC
 @Slf4j
 public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService {
 
+    private static final int REMARK_MAX_LENGTH = 255;
+
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -4784,7 +4786,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (CharSequenceUtil.isBlank(outstockId)){
             return;
         }
-        this.lambdaUpdate().set(SoOutstockEntity::getRemark, remark).eq(SoOutstockEntity::getId, outstockId).update();
+        String safeRemark = Objects.nonNull(remark) && remark.length() > REMARK_MAX_LENGTH ? remark.substring(0, REMARK_MAX_LENGTH) : remark;
+        this.lambdaUpdate().set(SoOutstockEntity::getRemark, safeRemark).eq(SoOutstockEntity::getId, outstockId).update();
     }
 
     private void fillExportLogisticsHandoverListDTO(List<SoOutstockDTO.ExportLogisticsHandoverListDTO> list) {
