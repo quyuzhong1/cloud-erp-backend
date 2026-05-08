@@ -807,6 +807,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 resultDTO = BatchResultDTO.fail(logisticsOrderEntity.getId(), logisticsOrderEntity.getCode(), e.getMessage());
             }
             if (success) {
+                logisticsOrderEntity.setExceptionReason("");
                 if (attachmentMap.get(logisticsOrderEntity.getId()) != null) {
                     attachmentService.removeById(attachmentMap.get(logisticsOrderEntity.getId()).getId());
                 }
@@ -895,6 +896,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             }
             if (success) {
                 logisticsOrderEntity.setLabelStatus(LogisticsLabelStatusEnum.OBTAINED.getCode());
+                logisticsOrderEntity.setExceptionReason("");
                 resultDTO.setStatus(true);
                 resultDTO.setAfterSaleId(logisticsOrderEntity.getAfterSaleId());
                 resultDTO.setTrackNo(logisticsOrderEntity.getTrackNo());
