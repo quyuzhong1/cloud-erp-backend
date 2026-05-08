@@ -203,11 +203,21 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             log.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getMsg(),e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
             pushOperateLog(businessType,2000,erpBusinessCode, false);
-            return ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(),e.getMessage());
+            return ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), getThirdWarehouseExceptionMessage(e, businessType));
         } finally {
             // remove thread-local
             ThirdWarehouseContext.remove();
         }
+    }
+
+    private String getThirdWarehouseExceptionMessage(Exception e, SourceTypeEnum businessType) {
+        if ((businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
+                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL)
+                && e instanceof NullPointerException
+                && CharSequenceUtil.isBlank(e.getMessage())) {
+            return "第三方仓接口返回为空";
+        }
+        return e.getMessage();
     }
 
     @FunctionalInterface
