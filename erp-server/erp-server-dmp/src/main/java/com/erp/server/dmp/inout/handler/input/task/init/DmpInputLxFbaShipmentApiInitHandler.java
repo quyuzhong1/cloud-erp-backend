@@ -137,6 +137,8 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                     .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(20))
                     .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId())
                     .update();
+            String errorMsg = StrUtil.format("请求领星FBA货件失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
+            log.warn(errorMsg);
             return Collections.emptyList();
         }
 
