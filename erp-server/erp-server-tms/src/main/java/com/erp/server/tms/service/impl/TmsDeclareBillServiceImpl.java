@@ -148,6 +148,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Resource
     private DeliveryDeclareDetailMidService deliveryDeclareDetailMidService;
 
+    @Resource
+    private CfgDeclareRuleService cfgDeclareRuleService;
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -2548,6 +2552,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 }
             }
         }
+
         List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : list) {
             if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
@@ -2656,6 +2661,38 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         declareBillEntity.setGrossWeight(Objects.isNull(headerDTO.getGrossWeight()) ? BigDecimal.ZERO : headerDTO.getGrossWeight());
         declareBillEntity.setNetWeight(Objects.isNull(headerDTO.getNetWeight()) ? BigDecimal.ZERO : headerDTO.getNetWeight());
         fillBatchDeclareBillBusinessType(type, headerParamDTO.getSourceDeliveryDetailList(), declareBillEntity);
+
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("ruleType", type);
+        paramMap.put("countryCode", declareBillEntity.getCountry());
+        //发货仓
+        String fromWarehouseId = headerParamDTO.getSourceDeliveryDetailList().stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getFromWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining(","));
+        paramMap.put("fromWarehouseId", fromWarehouseId);
+        //中转仓
+        String transferWarehouseId = headerParamDTO.getSourceDeliveryDetailList().stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds).filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining(","));
+        paramMap.put("transferWarehouseId", transferWarehouseId);
+        if (CharSequenceUtil.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
+            //目的仓
+            String destWarehouseId = headerParamDTO.getSourceDeliveryDetailList().stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getDestWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining(","));
+            paramMap.put("destWarehouseId", destWarehouseId);
+        } else {
+            //组织
+            String salesOrgId = headerParamDTO.getSourceDeliveryDetailList().stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSalesOrgId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining(","));
+            paramMap.put("salesOrgId", salesOrgId);
+        }
+        List<CfgDeclareRuleEntity> cfgDeclareRuleList = cfgDeclareRuleService.listMatchedRule(paramMap);
+        if (CollUtil.isEmpty(cfgDeclareRuleList)) {
+            throw new ServiceException("未找到匹配的报关规则，请检查来源单信息是否正确");
+        }
+        if (cfgDeclareRuleList.size() > 1) {
+            throw new ServiceException("找到多条匹配的报关规则，请检查来源单信息是否正确");
+        }
+        declareBillEntity.setSenderId(cfgDeclareRuleList.get(0).getSenderId());
+        declareBillEntity.setReceiverId(cfgDeclareRuleList.get(0).getReceiverId());
+        declareBillEntity.setSenderName(cfgDeclareRuleList.get(0).getSenderName());
+        declareBillEntity.setReceiverName(cfgDeclareRuleList.get(0).getReceiverName());
+        declareBillEntity.setSenderType(cfgDeclareRuleList.get(0).getSenderType());
+        declareBillEntity.setReceiverType(cfgDeclareRuleList.get(0).getReceiverType());
     }
 
     /**
