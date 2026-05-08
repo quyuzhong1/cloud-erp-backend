@@ -10,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
+import com.erp.model.tms.entity.CfgDeclareRuleEntity;
 import com.erp.server.tms.service.CfgDeclareRuleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 报关规则主表
@@ -66,5 +68,12 @@ public class CfgDeclareRuleController extends BaseController {
         return success(cfgDeclareRuleService.dropDownList(type, name));
     }
 
+    /**
+     * 引用取值：根据规则类型和条件参数匹配报关规则。
+     */
+    @PostMapping("/listMatchedRule")
+    public ApiResult<List<CfgDeclareRuleEntity>> listMatchedRule(@RequestBody Map<String, String> paramMap) {
+        return success(cfgDeclareRuleService.listMatchedRule(paramMap));
+    }
 
 }
