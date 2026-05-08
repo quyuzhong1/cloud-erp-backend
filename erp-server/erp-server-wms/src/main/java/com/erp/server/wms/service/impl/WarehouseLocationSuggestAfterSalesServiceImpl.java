@@ -315,7 +315,9 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
             dto.setPriority(entity.getPriority());
             dto.setStatusName(entity.getDisabled() ? "禁用" : "启用");
-
+            dto.setStatus(!entity.getDisabled());
+            dto.setUpdateUser(entity.getUpdateUserName());
+            dto.setUpdateTime(entity.getUpdateTime());
             dtoList.add(dto);
         }
         return dtoList;

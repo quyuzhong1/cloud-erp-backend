@@ -157,6 +157,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                     WarehouseLocationStatusEnum warehouseLocationStatus = WarehouseLocationStatusEnum.getByCode(data.getStatus());
                     data.setStatusName(WarehouseLocationStatusEnum.getName(data.getStatus()));
                     data.setCanCheck(Boolean.TRUE);
+                    data.setParentId(warehouseLocation.getParentId());
                     if (Objects.equals(warehouseLocation.getDisabled(), Boolean.TRUE) || Objects.equals(warehouseLocationStatus, WarehouseLocationStatusEnum.STOP)) {
                         data.setCanCheck(Boolean.FALSE);
                     }

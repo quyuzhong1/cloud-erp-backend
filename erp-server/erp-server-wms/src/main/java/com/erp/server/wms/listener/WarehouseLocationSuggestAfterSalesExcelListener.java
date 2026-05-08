@@ -92,10 +92,6 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
             return;
         }
         //EAN码校验
-        if (CharSequenceUtil.isBlank(dto.getEanCode())) {
-            dto.setErrorMsg("EAN码不能为空");
-            return;
-        }
         if (dto.getEanCode().length() > 255) {
             dto.setErrorMsg("EAN码过长");
             return;

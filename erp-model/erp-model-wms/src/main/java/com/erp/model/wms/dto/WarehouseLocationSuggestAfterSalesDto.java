@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -233,6 +234,16 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
          * 状态名称，（启用/禁用）
          */
         private String statusName;
+        private Boolean status;
+
+        /**
+         * 更新人
+         */
+        private String updateUser;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
     }
 
