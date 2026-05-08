@@ -26,6 +26,7 @@ import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelExportFillCellMergeStrategy;
@@ -62,6 +63,8 @@ import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -79,6 +82,7 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
+import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
@@ -154,6 +158,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
@@ -236,6 +242,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         requisitionApplicationEntity.setDeliveryPushDownStatus(BillPushDownStatusEnum.WAIT.getCode());
         // 数据处理
         handleData(requisitionApplicationEntity);
+        validateGoodCangSkuCanStore(addDTO, addDTO.getDetailList());
 
         log.info("开始新增要货申请单");
         // 生成单号
@@ -276,6 +283,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 数据处理
         handleData(requisitionApplicationEntity);
+        validateGoodCangSkuCanStore(updateDTO, updateDTO.getDetailList());
         log.info("编辑 开始修改要货申请单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(requisitionApplicationEntity);
         if(!save) {
@@ -2594,6 +2602,72 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
     /**
     * 新增修改处理数据
     */
+    private void validateGoodCangSkuCanStore(RequisitionApplicationDTO.CommonDTO dto, List<? extends RequisitionApplicationDetailDTO.CommonDTO> detailList) {
+        if (!RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(dto.getType())
+                || CharSequenceUtil.isBlank(dto.getChannelId())
+                || CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        OverseasProviderEntity overseasProviderEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(dto.getChannelId());
+        if (Objects.isNull(overseasProviderEntity) || !Objects.equals(overseasProviderEntity.getCode(), OmsPlatformEnum.OMS_GOOD_CANG.getCode())) {
+            return;
+        }
+        List<String> platformSkuList = detailList.stream()
+                .filter(Objects::nonNull)
+                .map(RequisitionApplicationDetailDTO.CommonDTO::getPlatformSku)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(platformSkuList)) {
+            return;
+        }
+        ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(overseasProviderEntity.getId());
+        ApiResult<List<ThirdWarehouseSkuResp>> skuResult = handlerService.getSkuList(ThirdWarehouseProductReq.builder().skuNoList(platformSkuList).build(), overseasProviderEntity.getId());
+        if (!skuResult.isSuccess()) {
+            throw new ServiceException("查询谷仓商品失败:" + skuResult.getMsg());
+        }
+        OverseasProviderWarehouseEntity warehouseEntity = overseasProviderWarehouseService.getByWarehouseId(dto.getChannelId());
+        String country = Objects.nonNull(warehouseEntity) ? warehouseEntity.getCountry() : "";
+        String warehouseName = CharSequenceUtil.blankToDefault(dto.getChannelName(), Objects.nonNull(warehouseEntity) ? warehouseEntity.getWarehouseName() : "");
+        List<ThirdWarehouseSkuResp> thirdWarehouseSkuList = Optional.ofNullable(skuResult.getData()).orElse(Collections.emptyList());
+        List<String> errorSkuList = new ArrayList<>();
+        for (String platformSku : platformSkuList) {
+            ThirdWarehouseSkuResp thirdWarehouseSku = thirdWarehouseSkuList.stream()
+                    .filter(v -> isSameGoodCangSku(v, platformSku))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(thirdWarehouseSku) || !isGoodCangSkuCanStoreInCountry(thirdWarehouseSku, country)) {
+                errorSkuList.add(platformSku);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(errorSkuList)) {
+            throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家或对应国家是否可存不为是,请先在第三方系统维护商品进口国清关信息", errorSkuList, warehouseName));
+        }
+    }
+
+    private boolean isGoodCangSkuCanStoreInCountry(ThirdWarehouseSkuResp thirdWarehouseSku, String country) {
+        if (CharSequenceUtil.isBlank(country)
+                || CollectionUtils.isEmpty(thirdWarehouseSku.getImportCountryList())
+                || CollectionUtils.isEmpty(thirdWarehouseSku.getTaxInfoList())) {
+            return false;
+        }
+        boolean hasImportCountry = thirdWarehouseSku.getImportCountryList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(v -> country.equals(v.getCountryCode()));
+        boolean allowStore = thirdWarehouseSku.getTaxInfoList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(v -> country.equals(v.getExportableCountry()) && isAllowSave(v.getAllowSave()));
+        return hasImportCountry && allowStore;
+    }
+
+    private boolean isAllowSave(String allowSave) {
+        return "Y".equalsIgnoreCase(allowSave) || "是".equals(allowSave);
+    }
+
+    private boolean isSameGoodCangSku(ThirdWarehouseSkuResp thirdWarehouseSku, String skuNo) {
+        return Objects.nonNull(thirdWarehouseSku)
+                && (Objects.equals(thirdWarehouseSku.getProductSku(), skuNo) || Objects.equals(thirdWarehouseSku.getProductBarcode(), skuNo));
+    }
+
     private void handleData(RequisitionApplicationEntity requisitionApplicationEntity) {
         String requisitionWarehouseId = requisitionApplicationEntity.getRequisitionWarehouseId();
         List<WarehouseDTO.UpdateDTO> warehouse = warehouseService.listWarehouseByIds(Collections.singletonList(requisitionWarehouseId));
