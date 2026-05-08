@@ -413,7 +413,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             createInputDTO.setSystemCode(PlatformDictEnum.TIK_TOK.getCode());
             createInputDTO.setBillType("fba_shipment");
             createInputDTO.setNextLevelId(authId);
-            createInputDTO.setTaskType("normal");
+            createInputDTO.setTaskType("hotfix");
             Map<String, Object> detailExtendJson = new LinkedHashMap<>();
             detailExtendJson.put("shopId", dto.getShopId());
             detailExtendJson.put("shipmentCodeList", dto.getShipmentCodeList());
