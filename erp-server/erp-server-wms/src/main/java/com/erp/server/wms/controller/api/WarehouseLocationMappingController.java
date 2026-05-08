@@ -44,6 +44,14 @@ public class WarehouseLocationMappingController extends BaseController {
     }
 
     /**
+     * 查询仓位绑定详情
+     */
+    @GetMapping("/view")
+    public ApiResult<WarehouseLocationMappingDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(warehouseLocationMappingService.view(id));
+    }
+
+    /**
      * 新增仓位绑定
      */
     @PostMapping("/add")

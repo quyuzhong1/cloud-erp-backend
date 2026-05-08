@@ -104,6 +104,15 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         return new PagingVO<>(viewList, (int) pageData.getTotal(), (int) pageData.getSize(), (int) pageData.getCurrent());
     }
 
+    @Override
+    public WarehouseLocationMappingDTO.ViewDTO view(String id) {
+        WarehouseLocationMappingEntity entity = this.getById(id);
+        if (entity == null || Boolean.TRUE.equals(entity.getIsDeleted())) {
+            throw new ServiceException("仓位绑定不存在");
+        }
+        return buildViewList(Collections.singletonList(entity)).get(0);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WarehouseLocationMappingDTO.AddDTO dto) {
