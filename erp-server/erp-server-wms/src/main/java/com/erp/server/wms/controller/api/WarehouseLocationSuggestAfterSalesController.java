@@ -172,4 +172,24 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
         warehouseLocationSuggestAfterSalesService.downloadTemplate(response);
     }
 
+    /**
+     * 启用/禁用仓位
+     */
+    @PostMapping("/updateStatus")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={id},状态值={disabled}(true=禁用,false=启用)")
+    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
+        warehouseLocationSuggestAfterSalesService.updateDisabled(dto);
+        return ApiResult.success();
+    }
+
+    /**
+     * 批量启用/禁用仓位
+     */
+    @PostMapping("/updateStatusBatch")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={ids},状态值={disabled}(true=禁用,false=启用)")
+    public ApiResult<List<BatchResultDTO>> updateStatusBatch(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
+        List<BatchResultDTO> resultDTOList = warehouseLocationSuggestAfterSalesService.updateStatusBatch(dto);
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+    }
+
 }

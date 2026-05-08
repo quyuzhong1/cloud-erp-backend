@@ -167,6 +167,23 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDto {
+        /**
+         * 仓位ID
+         */
+        private String id;
+        /**
+         * 仓位ID List
+         */
+        private List<String> ids;
+        /**
+         * 状态：false启用，true禁用
+         */
+        private String disabled;
+    }
+
     /**
      * 分页列表
      */
@@ -300,6 +317,7 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
     /**
      * 导出Excel
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends AwdInventoryDTO.PagingParamDTO {

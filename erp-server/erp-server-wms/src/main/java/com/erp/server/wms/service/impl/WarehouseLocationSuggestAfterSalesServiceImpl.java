@@ -6,6 +6,7 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -242,6 +243,43 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
         } catch (Exception e) {
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDisabled(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
+        LoginUser user = UserContext.getNonLoginUser();
+        WarehouseLocationSuggestAfterSalesEntity entity = new WarehouseLocationSuggestAfterSalesEntity();
+        entity.setId(dto.getId());
+        entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
+        baseMapper.updateById(entity);
+        operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> updateStatusBatch(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            return Collections.emptyList();
+        }
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        LoginUser user = UserContext.getNonLoginUser();
+
+        List<WarehouseLocationSuggestAfterSalesEntity> list = baseMapper.selectBatchIds(dto.getIds());
+
+        List<WarehouseLocationSuggestAfterSalesEntity> updateList = new ArrayList<>();
+        for (WarehouseLocationSuggestAfterSalesEntity entity : list) {
+            if (entity.getDisabled().equals(Boolean.parseBoolean(dto.getDisabled()))) {
+                continue;
+            }
+            entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
+            updateList.add(entity);
+            operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+        }
+        if (!updateList.isEmpty()) {
+            this.updateBatchById(updateList);
+        }
+        return resultDTOList;
     }
 
 
