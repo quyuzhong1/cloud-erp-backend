@@ -1553,6 +1553,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String senderId;
         /**
+         * 发货人名称
+         */
+        private String senderName;
+        /**
          * 发货人类型
          */
         private String senderType;

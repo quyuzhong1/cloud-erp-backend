@@ -672,34 +672,6 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
 
-    /**
-     * 下推头程报关单 (不校验系统配置)
-     * @author jack
-     * @date: 2025-07-18
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @PostMapping("/generateFirstMileDeclare")
-    public ApiResult<List<BatchResultDTO>> generateFirstMileDeclare(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = firstMileDeliveryService.generateFirstMileDeclare(id);
-            }catch (Exception e){
-                log.error("下推头程报关单失败",e);
-                FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "下推头程报关单失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 
     /**
      * 重新出库
