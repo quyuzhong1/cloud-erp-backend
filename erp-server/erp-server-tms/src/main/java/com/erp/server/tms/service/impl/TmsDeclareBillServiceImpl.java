@@ -208,41 +208,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setBoxQty(boxNoSet.size());
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.FM_DECLARE_BILL, false);
 
-            List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
-            for (int i = 0; i < mergeDetailList.size(); i++) {
-                TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail = mergeDetailList.get(i);
-                TmsDeclareBillDetailEntity billDetailEntity = detailEntityList.get(i);
-                if (CollUtil.isEmpty(declareDetail.getSourceDeliveryDetailList())) {
-                    continue;
-                }
-                for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : declareDetail.getSourceDeliveryDetailList()) {
-                    DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
-                    midEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
-                    midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
-                    midEntity.setSourceType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-                    midEntity.setSourceId(StringUtils.defaultIfBlank(sourceDetail.getSourceId(), addDTO.getSourceId()));
-                    midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
-                    midEntity.setSourceDetailId(StringUtils.defaultString(sourceDetail.getSourceDetailId()));
-                    midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
-                    midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
-                    midEntity.setContractNo(addResult.getCode());
-                    midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
-                    midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
-                    midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
-                    midEntity.setDeclareId(addResult.getId());
-                    midEntity.setDeclareCode(addResult.getCode());
-                    midEntity.setDeclareDetailId(billDetailEntity.getId());
-                    midEntity.setBoxNo(StringUtils.defaultString(sourceDetail.getBoxNo()));
-                    midEntity.setHsCode(StringUtils.defaultString(declareDetail.getHsCode()));
-                    midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getProductNameCn()));
-                    midEntity.setDeclareElement(StringUtils.defaultString(declareDetail.getDeclareElement()));
-                    midEntity.setUnit(StringUtils.defaultString(declareDetail.getUnit()));
-                    midEntity.setUnitPrice(Objects.isNull(declareDetail.getUnitPrice()) ? BigDecimal.ZERO : declareDetail.getUnitPrice());
-                    midEntity.setQty(Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty());
-                    addMidList.add(midEntity);
-                }
-            }
+            List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
+                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), addDTO.getSourceId(), addResult.getId(), addResult.getCode());
             if (CollUtil.isNotEmpty(addMidList)) {
                 deliveryDeclareDetailMidService.saveBatch(addMidList);
             }
@@ -323,6 +290,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (!CharSequenceUtil.equals(old.getType(), sourceTypeEnum.getCode())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
         }
+        String sourceType = resolveDeclareSourceType(old.getType());
         if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
             throw new ServiceException("报关单状态不是待确认，不能编辑");
         }
@@ -372,41 +340,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         deliveryDeclareDetailMidService.lambdaUpdate()
                 .eq(DeliveryDeclareDetailMidEntity::getDeclareId, old.getId())
                 .remove();
-        List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
-        for (int i = 0; i < mergeDetailList.size(); i++) {
-            TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail = mergeDetailList.get(i);
-            TmsDeclareBillDetailEntity billDetailEntity = detailEntityList.get(i);
-            if (CollUtil.isEmpty(declareDetail.getSourceDeliveryDetailList())) {
-                continue;
-            }
-            for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : declareDetail.getSourceDeliveryDetailList()) {
-                DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
-                midEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
-                midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
-                midEntity.setSourceType(old.getType());
-                midEntity.setSourceId(StringUtils.defaultString(sourceDetail.getSourceId()));
-                midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
-                midEntity.setSourceDetailId(StringUtils.defaultString(sourceDetail.getSourceDetailId()));
-                midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
-                midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
-                midEntity.setContractNo(old.getCode());
-                midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
-                midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
-                midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
-                midEntity.setDeclareId(old.getId());
-                midEntity.setDeclareCode(old.getCode());
-                midEntity.setDeclareDetailId(billDetailEntity.getId());
-                midEntity.setBoxNo(StringUtils.defaultString(sourceDetail.getBoxNo()));
-                midEntity.setHsCode(StringUtils.defaultString(declareDetail.getHsCode()));
-                midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getProductNameCn()));
-                midEntity.setDeclareElement(StringUtils.defaultString(declareDetail.getDeclareElement()));
-                midEntity.setUnit(StringUtils.defaultString(declareDetail.getUnit()));
-                midEntity.setUnitPrice(Objects.isNull(declareDetail.getUnitPrice()) ? BigDecimal.ZERO : declareDetail.getUnitPrice());
-                midEntity.setQty(Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty());
-                addMidList.add(midEntity);
-            }
-        }
+        List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
+                sourceType, null, old.getId(), old.getCode());
         if (CollUtil.isNotEmpty(addMidList)) {
             deliveryDeclareDetailMidService.saveBatch(addMidList);
         }
@@ -1358,41 +1293,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setBoxQty(boxNoSet.size());
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.B2B_DECLARE_BILL, false);
 
-            List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
-            for (int i = 0; i < mergeDetailList.size(); i++) {
-                TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail = mergeDetailList.get(i);
-                TmsDeclareBillDetailEntity billDetailEntity = detailEntityList.get(i);
-                if (CollUtil.isEmpty(declareDetail.getSourceDeliveryDetailList())) {
-                    continue;
-                }
-                for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : declareDetail.getSourceDeliveryDetailList()) {
-                    DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
-                    midEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
-                    midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
-                    midEntity.setSourceType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-                    midEntity.setSourceId(StringUtils.defaultIfBlank(sourceDetail.getSourceId(), addDTO.getSourceId()));
-                    midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
-                    midEntity.setSourceDetailId(StringUtils.defaultString(sourceDetail.getSourceDetailId()));
-                    midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
-                    midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
-                    midEntity.setContractNo(addResult.getCode());
-                    midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
-                    midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
-                    midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
-                    midEntity.setDeclareId(addResult.getId());
-                    midEntity.setDeclareCode(addResult.getCode());
-                    midEntity.setDeclareDetailId(billDetailEntity.getId());
-                    midEntity.setBoxNo(StringUtils.defaultString(sourceDetail.getBoxNo()));
-                    midEntity.setHsCode(StringUtils.defaultString(declareDetail.getHsCode()));
-                    midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getProductNameCn()));
-                    midEntity.setDeclareElement(StringUtils.defaultString(declareDetail.getDeclareElement()));
-                    midEntity.setUnit(StringUtils.defaultString(declareDetail.getUnit()));
-                    midEntity.setUnitPrice(Objects.isNull(declareDetail.getUnitPrice()) ? BigDecimal.ZERO : declareDetail.getUnitPrice());
-                    midEntity.setQty(Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty());
-                    addMidList.add(midEntity);
-                }
-            }
+            List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
+                    SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), addDTO.getSourceId(), addResult.getId(), addResult.getCode());
             if (CollUtil.isNotEmpty(addMidList)) {
                 deliveryDeclareDetailMidService.saveBatch(addMidList);
             }
@@ -2526,6 +2428,98 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * 报关单类型转换为来源单类型，中间表 source_type 存来源单类型。
+     */
+    private String resolveDeclareSourceType(String declareBillType) {
+        if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
+            return SourceTypeEnum.FIRST_MILE_DELIVERY.getCode();
+        }
+        if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
+            return SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+    }
+
+    /**
+     * 构建报关明细中间表。sourceType 为来源单类型，不是报关单类型。
+     */
+    private List<DeliveryDeclareDetailMidEntity> buildDeclareDetailMidList(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
+                                                                           List<TmsDeclareBillDetailEntity> detailEntityList,
+                                                                           String sourceType,
+                                                                           String fallbackSourceId,
+                                                                           String declareId,
+                                                                           String declareCode) {
+        List<DeliveryDeclareDetailMidEntity> midList = new ArrayList<>();
+        for (int i = 0; i < mergeDetailList.size(); i++) {
+            TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail = mergeDetailList.get(i);
+            TmsDeclareBillDetailEntity billDetailEntity = detailEntityList.get(i);
+            if (CollUtil.isEmpty(declareDetail.getSourceDeliveryDetailList())) {
+                continue;
+            }
+            for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : declareDetail.getSourceDeliveryDetailList()) {
+                midList.add(buildDeclareDetailMidEntity(sourceType, sourceDetail, declareDetail,
+                        fallbackSourceId, declareId, declareCode, billDetailEntity.getId()));
+            }
+        }
+        return midList;
+    }
+
+    /**
+     * 格式化实体
+     * @author will
+     * @date 2026/5/7 19:18
+     * @param sourceType
+     * @param sourceDetail
+     * @param declareDetail
+     * @param fallbackSourceId
+     * @param declareId
+     * @param declareCode
+     * @param declareDetailId
+     * @return com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity
+     */
+    private DeliveryDeclareDetailMidEntity buildDeclareDetailMidEntity(String sourceType,
+                                                                       TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail,
+                                                                       TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail,
+                                                                       String fallbackSourceId,
+                                                                       String declareId,
+                                                                       String declareCode,
+                                                                       String declareDetailId) {
+        DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
+        midEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
+        midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
+        midEntity.setSourceType(sourceType);
+        midEntity.setSourceId(StringUtils.defaultIfBlank(sourceDetail.getSourceId(), StringUtils.defaultString(fallbackSourceId)));
+        midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
+        midEntity.setSourceDetailId(StringUtils.defaultString(sourceDetail.getSourceDetailId()));
+        midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
+        midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
+        midEntity.setBusinessType(sourceType);
+        midEntity.setContractNo(declareCode);
+        midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
+        midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
+        midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
+        midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
+        midEntity.setDeclareId(declareId);
+        midEntity.setDeclareCode(declareCode);
+        midEntity.setDeclareDetailId(declareDetailId);
+        midEntity.setBoxNo(StringUtils.defaultString(sourceDetail.getBoxNo()));
+        midEntity.setHsCode(StringUtils.defaultString(declareDetail.getHsCode()));
+        midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getProductNameCn()));
+        midEntity.setDeclareElement(StringUtils.defaultString(declareDetail.getDeclareElement()));
+        midEntity.setUnit(StringUtils.defaultString(declareDetail.getUnit()));
+        midEntity.setUnitPrice(Objects.isNull(declareDetail.getUnitPrice()) ? BigDecimal.ZERO : declareDetail.getUnitPrice());
+        midEntity.setQty(Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty());
+        midEntity.setFromWarehouseId(sourceDetail.getFromWarehouseId());
+        midEntity.setFromWarehouseName(sourceDetail.getFromWarehouseName());
+        midEntity.setDestWarehouseId(sourceDetail.getDestWarehouseId());
+        midEntity.setDestWarehouseName(sourceDetail.getDestWarehouseName());
+        midEntity.setTransferWarehouseIds(StringUtils.defaultString(sourceDetail.getTransferWarehouseIds()));
+        midEntity.setSalesOrgId(sourceDetail.getSalesOrgId());
+        midEntity.setSalesOrgName(sourceDetail.getSalesOrgName());
+        return midEntity;
+    }
+
+    /**
      * 构建合并报关来源明细
      * @author jack
      * @date 2026/4/30 16:35
@@ -2681,6 +2675,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
+        String declareBillType = type;
+        String sourceType = resolveDeclareSourceType(declareBillType);
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = list.stream()
                 .filter(Objects::nonNull)
                 .map(TmsDeclareBillDTO.MergeDeclareBillDTO::getDeclareBillList)
@@ -2706,7 +2702,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
 
         List<DeliveryDeclareDetailMidEntity> existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
-                .eq(DeliveryDeclareDetailMidEntity::getSourceType, type)
+                .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
                 .in(DeliveryDeclareDetailMidEntity::getSourceDetailId, sourceDetailIdSet)
                 .list();
 
@@ -2724,7 +2720,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     if (Objects.isNull(oldBill)) {
                         continue;
                     }
-                    if (!CharSequenceUtil.equals(oldBill.getType(), type)) {
+                    if (!CharSequenceUtil.equals(oldBill.getType(), declareBillType)) {
                         throw new ServiceException(CharSequenceUtil.format("报关单【{}】类型与当前保存不一致，无法合并替换", CharSequenceUtil.blankToDefault(oldBill.getCode(), declareBillId)));
                     }
                     if (!CharSequenceUtil.equals(oldBill.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
@@ -2766,53 +2762,21 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
 
             TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
-            fillBatchDeclareBillEntity(type, declareBillList, declareBillEntity);
+            fillBatchDeclareBillEntity(declareBillType, declareBillList, declareBillEntity);
 
             if (splitCodeSequence != null) {
                 declareBillEntity.setCode(splitCodeSequence.nextCode());
             }
-            BaseResultDTO.AddDTO addResult = add(declareBillEntity, detailEntityList, SourceTypeEnum.getEnum(type), false);
+            BaseResultDTO.AddDTO addResult = add(declareBillEntity, detailEntityList, SourceTypeEnum.getEnum(declareBillType), false);
 
-            for (int i = 0; i < declareBillList.size(); i++) {
-                TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail = declareBillList.get(i);
-                TmsDeclareBillDetailEntity billDetailEntity = detailEntityList.get(i);
-                if (CollUtil.isEmpty(declareDetail.getSourceDeliveryDetailList())) {
-                    continue;
-                }
-                for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : declareDetail.getSourceDeliveryDetailList()) {
-                    DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
-                    midEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
-                    midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
-                    midEntity.setSourceType(type);
-                    midEntity.setSourceId(StringUtils.defaultString(sourceDetail.getSourceId()));
-                    midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
-                    midEntity.setSourceDetailId(StringUtils.defaultString(sourceDetail.getSourceDetailId()));
-                    midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
-                    midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
-                    midEntity.setContractNo(addResult.getCode());
-                    midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
-                    midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
-                    midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
-                    midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
-                    midEntity.setDeclareId(addResult.getId());
-                    midEntity.setDeclareCode(addResult.getCode());
-                    midEntity.setDeclareDetailId(billDetailEntity.getId());
-                    midEntity.setBoxNo(StringUtils.defaultString(sourceDetail.getBoxNo()));
-                    midEntity.setHsCode(StringUtils.defaultString(declareDetail.getHsCode()));
-                    midEntity.setProductNameCn(StringUtils.defaultString(declareDetail.getProductNameCn()));
-                    midEntity.setDeclareElement(StringUtils.defaultString(declareDetail.getDeclareElement()));
-                    midEntity.setUnit(StringUtils.defaultString(declareDetail.getUnit()));
-                    midEntity.setUnitPrice(Objects.isNull(declareDetail.getUnitPrice()) ? BigDecimal.ZERO : declareDetail.getUnitPrice());
-                    midEntity.setQty(Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty());
-                    addMidList.add(midEntity);
-                }
-            }
+            addMidList.addAll(buildDeclareDetailMidList(declareBillList, detailEntityList,
+                    sourceType, null, addResult.getId(), addResult.getCode()));
         }
         if (CollUtil.isNotEmpty(addMidList)) {
             deliveryDeclareDetailMidService.saveBatch(addMidList);
         }
         //更新报关状态
-        updateSourceDeclareStatus(type,addMidList);
+        updateSourceDeclareStatus(declareBillType, addMidList);
         return Boolean.TRUE;
     }
 

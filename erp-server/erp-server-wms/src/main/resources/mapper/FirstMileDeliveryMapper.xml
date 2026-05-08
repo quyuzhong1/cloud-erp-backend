@@ -783,7 +783,12 @@
             fmd.country_id as countryId,
             fmd.country_name as countryName,
             fmdd.delivery_qty as qty,
-            wc.box_no
+            wc.box_no,
+            fmd.delivery_warehouse_id as fromWarehouseId,
+            fmd.delivery_warehouse_name as fromWarehouseName,
+            fmd.delivery_warehouse_id as destWarehouseId,
+            fmd.delivery_warehouse_name as destWarehouseName,
+            fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
         left join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
         left join packing_task_detail ptd on fmdd.id = ptd.source_detail_id and ptd.is_deleted = false

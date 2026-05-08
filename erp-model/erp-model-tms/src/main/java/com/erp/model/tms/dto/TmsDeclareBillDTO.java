@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -2148,6 +2149,39 @@ public class TmsDeclareBillDTO implements Serializable {
          * 征免（产品物流）
          */
         private String exemption;
+
+        /**
+         * 发货仓ID
+         */
+        private String fromWarehouseId;
+        /**
+         * 发货仓名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 目的仓ID
+         */
+        private String destWarehouseId;
+        /**
+         * 目的仓名称
+         */
+        private String destWarehouseName;
+        /**
+         * 中转仓IDs(逗号分隔)
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓名称
+         */
+        private String transferWarehouseNames;
+        /**
+         * 销售组织ID
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
     }
 
 
