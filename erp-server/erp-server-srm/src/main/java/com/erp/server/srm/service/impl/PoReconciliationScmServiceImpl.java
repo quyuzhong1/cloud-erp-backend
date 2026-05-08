@@ -67,6 +67,7 @@ import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -938,6 +939,10 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto) {
+        // 校验是不是pdf文件
+        if (!StringUtils.endsWithIgnoreCase(dto.getAttachName(), ".pdf")) {
+            throw new ServiceException("仅支持上传PDF格式的文件");
+        }
         PoReconciliationEntity poReconciliationEntity = getById(dto.getId());
         if (ObjectUtil.isEmpty(poReconciliationEntity)) {
             throw new ServiceException(ApiError.PO_RECONCILIATION_NOT_FOUND);
