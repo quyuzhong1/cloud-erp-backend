@@ -64,6 +64,11 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
       PagingVO<FirstMileDeliveryDTO.ListDTO> paging(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
 
     /**
+     * 根据头程发货单ids获取国家下拉。
+     */
+    List<BaseDropDownDTO.DisabledDTO> countryDropDownByIds(List<String> ids);
+
+    /**
      * 期初明细分页列表
      * @param pagingParamDTO
      * @return
