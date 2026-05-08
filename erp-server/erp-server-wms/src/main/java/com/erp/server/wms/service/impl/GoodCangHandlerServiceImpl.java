@@ -76,6 +76,21 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             page++;
         }
         List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = BeanUtil.copyToList(respList,ThirdWarehouseSkuResp.class);
+        for (GoodCangSkuResp resp : respList) {
+            ThirdWarehouseSkuResp thirdWarehouseSkuResp = thirdWarehouseSkuRespList.stream()
+                    .filter(v -> Objects.equals(v.getProductSku(), resp.getProductSku()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(thirdWarehouseSkuResp)) {
+                continue;
+            }
+            if (CollUtil.isNotEmpty(resp.getImportCountryList())) {
+                thirdWarehouseSkuResp.setImportCountryList(BeanUtil.copyToList(resp.getImportCountryList(), ThirdWarehouseSkuResp.ImportCountry.class));
+            }
+            if (CollUtil.isNotEmpty(resp.getTaxInfoList())) {
+                thirdWarehouseSkuResp.setTaxInfoList(BeanUtil.copyToList(resp.getTaxInfoList(), ThirdWarehouseSkuResp.TaxInfo.class));
+            }
+        }
         return success(thirdWarehouseSkuRespList);
     }
 

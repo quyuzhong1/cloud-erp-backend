@@ -1362,15 +1362,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 List<ThirdWarehouseSkuResp> thirdWarehouseSkuList = skuResult.getData();
                 List<String> errorSkuList = new ArrayList<>();
                 for(String platformSku : platformSkuList){
-                    ThirdWarehouseSkuResp thirdWarehouseSku = thirdWarehouseSkuList.stream().filter(v->v.getProductSku().equals(platformSku)).findFirst().orElse(null);
-                    if(Objects.nonNull(thirdWarehouseSku)){
-                        if(thirdWarehouseSku.getImportCountryList().stream().noneMatch(v->v.getCountryCode().equals(country))){
-                            errorSkuList.add(platformSku);
-                        }
+                    ThirdWarehouseSkuResp thirdWarehouseSku = thirdWarehouseSkuList.stream().filter(v->isSameGoodCangSku(v, platformSku)).findFirst().orElse(null);
+                    if(Objects.isNull(thirdWarehouseSku) || !isGoodCangSkuCanStoreInCountry(thirdWarehouseSku, country)){
+                        errorSkuList.add(platformSku);
                     }
                 }
                 if(CollectionUtils.isNotEmpty(errorSkuList)){
-                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息", errorSkuList, toWarehouseName));
+                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家或对应国家是否可存不为是,请先在第三方系统维护商品进口国清关信息", errorSkuList, toWarehouseName));
                 }
             }
         }else{
@@ -1379,6 +1377,31 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
 
     }
+
+    private boolean isGoodCangSkuCanStoreInCountry(ThirdWarehouseSkuResp thirdWarehouseSku, String country) {
+        if (CharSequenceUtil.isBlank(country)
+                || CollectionUtils.isEmpty(thirdWarehouseSku.getImportCountryList())
+                || CollectionUtils.isEmpty(thirdWarehouseSku.getTaxInfoList())) {
+            return false;
+        }
+        boolean hasImportCountry = thirdWarehouseSku.getImportCountryList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(v -> country.equals(v.getCountryCode()));
+        boolean allowStore = thirdWarehouseSku.getTaxInfoList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(v -> country.equals(v.getExportableCountry()) && isAllowSave(v.getAllowSave()));
+        return hasImportCountry && allowStore;
+    }
+
+    private boolean isAllowSave(String allowSave) {
+        return "Y".equalsIgnoreCase(allowSave) || "是".equals(allowSave);
+    }
+
+    private boolean isSameGoodCangSku(ThirdWarehouseSkuResp thirdWarehouseSku, String skuNo) {
+        return Objects.nonNull(thirdWarehouseSku)
+                && (Objects.equals(thirdWarehouseSku.getProductSku(), skuNo) || Objects.equals(thirdWarehouseSku.getProductBarcode(), skuNo));
+    }
+
     private void fillData(List<ListingInfoDTO.PageDTO> records) {
         List<String> skuNo = records.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
 
