@@ -295,6 +295,14 @@ public class SoDeliveryNoticeDTO {
          * 出库通知状态名称
          */
         private String isAllowOutstockName;
+        /**
+         * 报关状态 ("none","无需生成"), ("wait","未生成"),("finish","已生成"),
+         */
+        private String declareStatus;
+        /**
+         * 报关状态名称
+         */
+        private String declareStatusName;
     }
 
     /**

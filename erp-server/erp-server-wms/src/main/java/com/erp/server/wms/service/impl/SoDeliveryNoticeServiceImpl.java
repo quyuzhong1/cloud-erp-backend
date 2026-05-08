@@ -15,10 +15,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
@@ -61,6 +58,7 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
+import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
@@ -299,6 +297,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         && Objects.nonNull(e.getSkuId()) && e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
                 obj.setPackingQty(Objects.isNull(countDTO) ? 0 : countDTO.getPackingQty());
                 obj.setPackingStatus(Objects.isNull(countDTO) ? PackingTaskStatusEnum.WAIT.getCode() : countDTO.getPackingStatus());
+                obj.setDeclareStatusName(WmsDeclareStatusEnum.getName(obj.getDeclareStatus()));
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
                     obj.setPackingStatusName(PackingTaskStatusEnum.getName(obj.getPackingStatus()));
                 }else{
@@ -507,6 +506,59 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         resultDTO.setType(item.getCode());
         return resultDTO;
     }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> countryDropDownByIds(List<String> ids) {
+        List<String> idList = Optional.ofNullable(ids).orElse(Collections.emptyList()).stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(idList)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+
+        List<SoDeliveryNoticeEntity> noticeList = this.listByIds(idList);
+        if (CollectionUtils.isEmpty(noticeList) || noticeList.size() != idList.size()) {
+            throw new ServiceException(ApiError.SO_DELIVERY_NOTICE_NOT_EXIST);
+        }
+
+        List<String> customerIds = noticeList.stream()
+                .map(SoDeliveryNoticeEntity::getCustomerId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(customerIds)) {
+            return Collections.emptyList();
+        }
+
+        Map<String, CustomerInfoEntity> customerMap = Optional.ofNullable(customerFeign.listCustomerByIds(customerIds))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        Set<String> countryIdSet = new HashSet<>();
+        for (SoDeliveryNoticeEntity notice : noticeList) {
+            CustomerInfoEntity customer = customerMap.get(notice.getCustomerId());
+            if (Objects.isNull(customer) || CharSequenceUtil.isBlank(customer.getCountryId())) {
+                continue;
+            }
+            countryIdSet.add(customer.getCountryId());
+        }
+        if (countryIdSet.size() > 1) {
+            throw new ServiceException("所选发货通知单客户国家不一致");
+        }
+
+        return buildCountryDropDown(countryIdSet.iterator().next());
+    }
+
+    private List<BaseDropDownDTO.DisabledDTO> buildCountryDropDown(String countryId) {
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(countryId));
+        if (CollectionUtils.isEmpty(countryList)) {
+            throw new ServiceException("国家信息不存在");
+        }
+        DictCountryEntity country = countryList.get(0);
+        return Collections.singletonList(new BaseDropDownDTO.DisabledDTO(country.getId(), country.getNameCn(), country.getDisabled()));
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoDeliveryNoticeDTO.Add dto) {

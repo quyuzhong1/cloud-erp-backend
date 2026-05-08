@@ -132,6 +132,14 @@ public class FirstMileDeliveryController extends BaseController {
     }
 
     /**
+     * 根据头程发货单ids获取国家下拉。
+     */
+    @PostMapping("/countryDropDownByIds")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> countryDropDownByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(firstMileDeliveryService.countryDropDownByIds(dto.getIds()));
+    }
+
+    /**
     * 新增并提交审核
     * @author Luo_WG
     * @date:  2023-10-30

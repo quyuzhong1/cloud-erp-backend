@@ -95,6 +95,14 @@ public class SoDeliveryNoticeController extends BaseController {
     }
 
     /**
+     * 根据发货通知单ids获取客户国家下拉。
+     */
+    @PostMapping("/countryDropDownByIds")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> countryDropDownByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soDeliveryNoticeService.countryDropDownByIds(dto.getIds()));
+    }
+
+    /**
      * 新增
      *
      * @param dto dto
@@ -681,7 +689,7 @@ public class SoDeliveryNoticeController extends BaseController {
 
 
     /**
-     * 下推头程报关单（合并后）
+     * 下推b2b报关单（合并后）
      * @author will
      * @date 2026/4/23 18:00
      * @param dto
@@ -691,5 +699,6 @@ public class SoDeliveryNoticeController extends BaseController {
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushB2bDeclare(@RequestBody @Valid TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto)  {
         return success(soDeliveryNoticeService.listAfterPushB2bDeclare(dto));
     }
+
 }
 

@@ -52,6 +52,11 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     List<SoDeliveryNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto);
 
     /**
+     * 根据发货通知单ids获取客户国家下拉。
+     */
+    List<BaseDropDownDTO.DisabledDTO> countryDropDownByIds(List<String> ids);
+
+    /**
      * 新增
      * @Author Luo_WG
      * @Date 2023/4/13 11:03

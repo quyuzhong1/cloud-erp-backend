@@ -437,6 +437,41 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> countryDropDownByIds(List<String> ids) {
+        List<String> idList = Optional.ofNullable(ids).orElse(Collections.emptyList()).stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(idList)) {
+            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+        }
+
+        List<FirstMileDeliveryEntity> deliveryList = this.listByIds(idList);
+        if (CollectionUtils.isEmpty(deliveryList) || deliveryList.size() != idList.size()) {
+            throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND);
+        }
+
+        Set<String> countryIdSet = new HashSet<>();
+        for (FirstMileDeliveryEntity delivery : deliveryList) {
+            if (CharSequenceUtil.isBlank(delivery.getCountryId())) {
+                continue;
+            }
+            countryIdSet.add(delivery.getCountryId());
+        }
+        if (countryIdSet.size() > 1) {
+            throw new ServiceException("所选头程发货单国家不一致");
+        }
+
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(countryIdSet.iterator().next()));
+        if (CollectionUtils.isEmpty(countryList)) {
+            throw new ServiceException("国家信息不存在");
+        }
+        DictCountryEntity country = countryList.get(0);
+        return Collections.singletonList(new BaseDropDownDTO.DisabledDTO(country.getId(), country.getNameCn(), country.getDisabled()));
+    }
+
     @Override
     public PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
