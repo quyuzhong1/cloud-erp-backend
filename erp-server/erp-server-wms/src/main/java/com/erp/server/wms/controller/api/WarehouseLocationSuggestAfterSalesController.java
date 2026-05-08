@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -11,7 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
 import com.erp.model.wms.entity.WarehouseLocationSuggestAfterSalesEntity;
-import com.erp.server.wms.query.WarehouseLocationReplenishQueryHandler;
+import com.erp.server.wms.query.WarehouseLocationSuggestAfterSalesQueryHandler;
 import com.erp.server.wms.service.WarehouseLocationSuggestAfterSalesService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -34,7 +36,7 @@ import java.util.Objects;
 @RestController
 @LogSystemModule("仓位售后推荐表")
 @RequestMapping("/warehouseLocationSuggestAfterSales")
-        public class WarehouseLocationSuggestAfterSalesController extends BaseController {
+public class WarehouseLocationSuggestAfterSalesController extends BaseController {
 
     @Resource
     private WarehouseLocationSuggestAfterSalesService warehouseLocationSuggestAfterSalesService;
@@ -48,11 +50,7 @@ import java.util.Objects;
      * @author liuchao
      */
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            warehouseTableField = "warehouse_id",
-//            menuCode = "wms:warehouseLocationSuggestAfterSales:paging"
-//    )
-    @WebAdvanceQuery(handler = WarehouseLocationReplenishQueryHandler.class)
+    @WebAdvanceQuery(handler = WarehouseLocationSuggestAfterSalesQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO>> paging(@RequestBody PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> pagingDTO) {
         PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> pagingResult = warehouseLocationSuggestAfterSalesService.paging(pagingDTO);
         return ApiResult.success(pagingResult);
@@ -84,11 +82,11 @@ import java.util.Objects;
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改仓位售后推荐")
     @PostMapping("/update")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:warehouse:update",
-//            serviceClass = WarehouseService.class,
-//            keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:warehouseLocationSuggestAfterSales:update",
+            serviceClass = WarehouseLocationSuggestAfterSalesService.class,
+            keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.AddOrEditDTO dto) {
         Boolean flag = warehouseLocationSuggestAfterSalesService.addOrEdit(dto);
         return flag ? success() : failure();
@@ -138,25 +136,27 @@ import java.util.Objects;
 
     /**
      * 导入仓位售后推荐Excel
-     * @param file 文件
+     *
+     * @param file     文件
      * @param response 响应
      * @return 导入结果
      */
     @PostMapping("/importExcel")
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入仓位售后推荐Excel")
-    public ApiResult<Void> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
+    public ApiResult<Void> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response) {
         warehouseLocationSuggestAfterSalesService.importExcel(file, response);
         return ApiResult.success();
     }
 
     /**
      * 导出仓位售后推荐Excel
+     *
      * @param dto 导出参数
      * @return 导出结果
      */
     @PostMapping("/exportExcel")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位售后推荐Excel")
-    public ApiResult<Boolean> exportExcel(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.ExportParamDTO dto){
+    public ApiResult<Boolean> exportExcel(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.ExportParamDTO dto) {
         warehouseLocationSuggestAfterSalesService.exportExcel(dto);
         return success(true);
     }
@@ -165,7 +165,7 @@ import java.util.Objects;
      * 下载导入模板
      */
     @GetMapping("/downloadTemplate")
-    public void downloadTemplate(HttpServletResponse response){
+    public void downloadTemplate(HttpServletResponse response) {
         warehouseLocationSuggestAfterSalesService.downloadTemplate(response);
     }
 
