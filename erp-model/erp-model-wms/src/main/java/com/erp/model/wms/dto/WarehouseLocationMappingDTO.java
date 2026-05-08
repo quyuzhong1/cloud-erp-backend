@@ -87,6 +87,9 @@ public class WarehouseLocationMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class IdsDTO implements Serializable {
+        /**
+         * 主键ID集合
+         */
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
     }
@@ -95,36 +98,78 @@ public class WarehouseLocationMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SearchDTO extends PermissionsDTO {
+        /**
+         * 仓库ID
+         */
         private String sysWarehouseId;
 
+        /**
+         * 仓位编码
+         */
         private String sysWarehouseLocation;
 
+        /**
+         * 第三方系统
+         */
         private String dictPlatform;
 
+        /**
+         * 绑定仓位编码
+         */
         private String thirdWarehouseLocation;
 
+        /**
+         * 高级查询条件
+         */
         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+        /**
+         * 数据权限SQL
+         */
         private Map<String, String> sqlMap;
     }
 
     @Data
     @NoArgsConstructor
     public static class ViewDTO implements Serializable {
+        /**
+         * 主键ID
+         */
         private String id;
 
+        /**
+         * 仓库ID
+         */
         private String sysWarehouseId;
 
+        /**
+         * 仓库编码
+         */
         private String sysWarehouseCode;
 
+        /**
+         * 仓库名称
+         */
         private String sysWarehouseName;
 
+        /**
+         * 仓位编码
+         */
         private String sysWarehouseLocation;
 
+        /**
+         * 仓位名称
+         */
         private String sysWarehouseLocationName;
 
+        /**
+         * 第三方系统
+         */
         private String dictPlatform;
 
+        /**
+         * 第三方系统名称
+         */
         private String dictPlatformName;
 
         /**
@@ -142,14 +187,29 @@ public class WarehouseLocationMappingDTO implements Serializable {
          */
         private String bindWarehouseName;
 
+        /**
+         * 绑定仓位编码
+         */
         private String thirdWarehouseLocation;
 
+        /**
+         * 创建人
+         */
         private String createUserName;
 
+        /**
+         * 创建时间
+         */
         private LocalDateTime createTime;
 
+        /**
+         * 更新人
+         */
         private String updateUserName;
 
+        /**
+         * 更新时间
+         */
         private LocalDateTime updateTime;
     }
 

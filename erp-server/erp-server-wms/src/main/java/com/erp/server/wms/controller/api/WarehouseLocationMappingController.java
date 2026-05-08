@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -9,6 +10,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseLocationMappingDTO;
+import com.erp.server.wms.query.WarehouseLocationMappingQueryHandler;
 import com.erp.server.wms.service.WarehouseLocationMappingService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,8 +38,17 @@ public class WarehouseLocationMappingController extends BaseController {
      * 分页查询仓位绑定列表
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = WarehouseLocationMappingQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationMappingDTO.ViewDTO>> paging(@RequestBody PagingDTO<WarehouseLocationMappingDTO.SearchDTO> dto) {
         return success(warehouseLocationMappingService.paging(dto));
+    }
+
+    /**
+     * 查询仓位绑定详情
+     */
+    @GetMapping("/view")
+    public ApiResult<WarehouseLocationMappingDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(warehouseLocationMappingService.view(id));
     }
 
     /**

@@ -18,6 +18,8 @@ public interface WarehouseLocationMappingService extends SuperService<WarehouseL
 
     PagingVO<WarehouseLocationMappingDTO.ViewDTO> paging(PagingDTO<WarehouseLocationMappingDTO.SearchDTO> dto);
 
+    WarehouseLocationMappingDTO.ViewDTO view(String id);
+
     void add(WarehouseLocationMappingDTO.AddDTO dto);
 
     void update(WarehouseLocationMappingDTO.UpdateDTO dto);

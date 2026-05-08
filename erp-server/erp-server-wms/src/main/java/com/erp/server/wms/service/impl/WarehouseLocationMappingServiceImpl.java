@@ -104,6 +104,15 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
         return new PagingVO<>(viewList, (int) pageData.getTotal(), (int) pageData.getSize(), (int) pageData.getCurrent());
     }
 
+    @Override
+    public WarehouseLocationMappingDTO.ViewDTO view(String id) {
+        WarehouseLocationMappingEntity entity = this.getById(id);
+        if (entity == null || Boolean.TRUE.equals(entity.getIsDeleted())) {
+            throw new ServiceException("仓位绑定不存在");
+        }
+        return buildViewList(Collections.singletonList(entity)).get(0);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(WarehouseLocationMappingDTO.AddDTO dto) {
@@ -293,6 +302,9 @@ public class WarehouseLocationMappingServiceImpl extends SuperServiceImpl<Wareho
                 .eq(CharSequenceUtil.isNotBlank(params.getSysWarehouseLocation()), WarehouseLocationMappingEntity::getSysWarehouseLocation, params.getSysWarehouseLocation())
                 .eq(CharSequenceUtil.isNotBlank(params.getDictPlatform()), WarehouseLocationMappingEntity::getDictPlatform, params.getDictPlatform())
                 .like(CharSequenceUtil.isNotBlank(params.getThirdWarehouseLocation()), WarehouseLocationMappingEntity::getThirdWarehouseLocation, params.getThirdWarehouseLocation());
+        if (params.getSqlMap() != null && CharSequenceUtil.isNotBlank(params.getSqlMap().get("default"))) {
+            wrapper.apply(params.getSqlMap().get("default"));
+        }
         return wrapper;
     }
 
