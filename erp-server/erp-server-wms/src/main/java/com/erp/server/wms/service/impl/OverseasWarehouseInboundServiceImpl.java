@@ -287,7 +287,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 throw new ServiceException(msg);
             }
             //三方条码
-            String thirdBarcode = listingInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), firstMileDeliveryDetailEntity.getPlatformSkuNo())).map(ListingInfoEntity::getThirdBarcode).findFirst().orElse("");
+            String thirdBarcode = listingInfoList.stream().filter(obj -> CharSequenceUtil.equals(providerEntity.getId(),obj.getAuthId()) &&
+                    CharSequenceUtil.equals(obj.getPlatform(), mainEntity.getDictPlatform()) &&
+                    CharSequenceUtil.equals(obj.getPlatformSkuNo(), firstMileDeliveryDetailEntity.getPlatformSkuNo())).map(ListingInfoEntity::getThirdBarcode)
+                    .findFirst().orElse("");
 
             ThirdWarehouseCreateInboundReq.Item currentItem = BeanUtil.copyProperties(itemDTO, ThirdWarehouseCreateInboundReq.Item.class);
             currentItem.setProductSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
