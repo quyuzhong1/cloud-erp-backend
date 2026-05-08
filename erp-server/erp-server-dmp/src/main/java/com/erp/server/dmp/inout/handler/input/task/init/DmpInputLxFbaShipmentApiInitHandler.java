@@ -153,8 +153,7 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
         List<JSONObject> allResultList = extractShipmentList(resultData.getData());
         allResultList.forEach(e -> e.put("shopId", shopId));
-        //return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
-        return new ArrayList<DmpInputTaskInitDTO>();
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
     }
 
     /**
