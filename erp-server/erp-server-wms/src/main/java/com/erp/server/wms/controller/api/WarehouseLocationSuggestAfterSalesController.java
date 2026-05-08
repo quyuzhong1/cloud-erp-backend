@@ -50,6 +50,9 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      * @author liuchao
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            menuCode = "wms:warehouseLocationSuggestAfterSales:paging"
+    )
     @WebAdvanceQuery(handler = WarehouseLocationSuggestAfterSalesQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO>> paging(@RequestBody PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> pagingDTO) {
         PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> pagingResult = warehouseLocationSuggestAfterSalesService.paging(pagingDTO);
