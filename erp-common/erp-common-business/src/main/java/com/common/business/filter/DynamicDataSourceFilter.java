@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
@@ -43,42 +44,45 @@ public class DynamicDataSourceFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	String requestURI = "";
-    	requestURI = ((HttpServletRequest) request).getRequestURI();
-        DorisQuerySettingDTO dorisQuerySettingDTO = getDorisQuerySettingDTO(requestURI);
-        if(dorisQuerySettingDTO == null) {
-            chain.doFilter(request, response);
-        }else {
-            ServletRequest requestWrapper = null;
-            if(request instanceof HttpServletRequest) {
-                requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
-            }
-            //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
-            // 在chain.doFiler方法中传递新的request对象
-            if(requestWrapper == null) {
-                chain.doFilter(request, response);
-            } else {
-                DynamicDataSourceTypeEnum dynamicDataSourceType = null;
-                try {
-                    dynamicDataSourceType = getDynamicDataSourceType(dorisQuerySettingDTO , requestWrapper);
-                } catch (Throwable e) {
-                    log.error("获取动态数据源类型错误" , e);
+    	if(BusinessCommonConstants.isDynamicEnabled()) {
+    		String requestURI = "";
+        	requestURI = ((HttpServletRequest) request).getRequestURI();
+        	DorisQuerySettingDTO dorisQuerySettingDTO = getDorisQuerySettingDTO(requestURI);
+        	if(dorisQuerySettingDTO == null) {
+        		chain.doFilter(request, response);
+        	}else {
+        		ServletRequest requestWrapper = null;
+                if(request instanceof HttpServletRequest) {
+                    requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
                 }
-                if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
-                    chain.doFilter(requestWrapper, response);
-                }else {
+                //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
+                // 在chain.doFiler方法中传递新的request对象
+                if(requestWrapper == null) {
+                    chain.doFilter(request, response);
+                } else {
+                	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
                     try {
-                        DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
-                        DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
-                        chain.doFilter(requestWrapper, response);
-                    } finally {
-                        DynamicDataSourceContextHolder.poll();
-                        DynamicDataSourceThreadLocal.remove();
+        				dynamicDataSourceType = getDynamicDataSourceType(dorisQuerySettingDTO , requestWrapper);
+        			} catch (Throwable e) {
+        				log.error("获取动态数据源类型错误" , e);
+        			}
+                    if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
+                    	chain.doFilter(requestWrapper, response);
+                    }else {
+                    	try {
+                    		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
+            	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
+            	            chain.doFilter(requestWrapper, response);
+                        } finally {
+                            DynamicDataSourceContextHolder.poll();
+                            DynamicDataSourceThreadLocal.remove();
+                        }
                     }
                 }
-            }
-        }
-
+        	}
+    	}else {
+    		chain.doFilter(request, response);
+    	}
     }
     
     private DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
