@@ -31,8 +31,6 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.push.service.wdt.WdtOtherInStockService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
 import com.erp.server.dmp.service.*;
-import com.sdk.wangdian.enums.WdtInStockStatusEnum;
-import com.sdk.wangdian.enums.WdtOutStockStatusEnum;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.OtherStockinResponse;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -229,17 +227,14 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         List<StockoutOtherQueryResponse.OrderItem> order = queryResponse.getOrder();
         //旺店通已经存在这个单据
         if (!order.isEmpty()) {
-            StockoutOtherQueryResponse.OrderItem orderInfoDto = order.get(0);
-            if (orderInfoDto.getStatus().equals(110)) {
-                return ApiResult.success();
-            } else {
-                //修改任务的错误消息
-                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtOutStockStatusEnum.getName(String.valueOf(orderInfoDto.getStatus())));
-                return ApiResult.error(format);
-            }
+            return WdtOtherStockAuditHelper.buildOutStockAuditResult(order.get(0));
         }
         wdtOtherOutStockService.executeConsumer(request);
-        return ApiResult.success();
+        StockoutOtherQueryResponse verifyResponse = wdtOtherOutStockService.queryWithDetail(request);
+        if (ObjectUtils.isEmpty(verifyResponse) || CollUtil.isEmpty(verifyResponse.getOrder())) {
+            return WdtOtherStockAuditHelper.buildNoDetailResult();
+        }
+        return WdtOtherStockAuditHelper.buildOutStockAuditResult(verifyResponse.getOrder().get(0));
     }
 
     public ApiResult<Object> pushWdtInstock(CreateOtherStockinRequest request, String warehouseNo) {
@@ -249,17 +244,13 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
         List<OtherStockinResponse.OrderInfoDto> order = dataInfoDto.getOrder();
         //旺店通已经存在这个单据
         if (order != null && !order.isEmpty()) {
-            OtherStockinResponse.OrderInfoDto dto = dataInfoDto.getOrder().get(0);
-            if (dto.getStatus().equals(80)) {
-                //修改推送任务状态为同步成功
-                return ApiResult.success();
-            } else {
-                //修改任务的错误消息
-                String format = String.format("单据推送成功，当前状态：%s，请手动处理", WdtInStockStatusEnum.getName(String.valueOf(dto.getStatus())));
-                return ApiResult.error(format);
-            }
+            return WdtOtherStockAuditHelper.buildInStockAuditResult(dataInfoDto.getOrder().get(0));
         }
         wdtOtherInStockService.executeConsumer(request);
-        return ApiResult.success();
+        OtherStockinResponse.DataInfoDto verifyDataInfo = wdtOtherInStockService.queryWithDetail(request);
+        if (ObjectUtils.isEmpty(verifyDataInfo) || CollUtil.isEmpty(verifyDataInfo.getOrder())) {
+            return WdtOtherStockAuditHelper.buildNoDetailResult();
+        }
+        return WdtOtherStockAuditHelper.buildInStockAuditResult(verifyDataInfo.getOrder().get(0));
     }
 }
