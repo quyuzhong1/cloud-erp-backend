@@ -21,11 +21,13 @@ import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopPlatformStatusEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
@@ -136,6 +138,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private ExecutorService dmpInputExecutorPool;
     @Resource
     private DmpInputTaskFactory dmpInputTaskFactory;
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
 
     @Override
@@ -698,12 +702,23 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
 
         // 创建新中台hotfix任务
-        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
-        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
-        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
-        //dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+//        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+//        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+//        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
+//        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
+//        dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+//        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+
+        DmpInoutDTO.CreateInputDTO createInputDTO = new DmpInoutDTO.CreateInputDTO();
+        createInputDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
+        createInputDTO.setBillType("fba_shipment");
+        createInputDTO.setNextLevelId(dto.getShopId());
+        createInputDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        Map<String, Object> detailExtendJson = new LinkedHashMap<>();
+        detailExtendJson.put("shopId", dto.getShopId());
+        detailExtendJson.put("shipmentCodeList", dto.getShipmentCodeList());
+        createInputDTO.setDetailExtendJson(JSONUtil.toJsonStr(detailExtendJson));
+        dmpInoutTaskFeign.doInputTask(Collections.singletonList(createInputDTO));
         // 创建任务
 //        DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
 //        // 执行任务
