@@ -28,6 +28,7 @@
         sdn.create_user_name AS createUserName,
         sdn.create_time AS createTime,
         sdn.transfer_warehouse_ids,
+        sdn.declare_status AS declareStatus,
         sdnd.ID AS detailId,
         sdnd.source_detail_id AS sourceDetailId,
         sdnd.sku_id AS skuId,
