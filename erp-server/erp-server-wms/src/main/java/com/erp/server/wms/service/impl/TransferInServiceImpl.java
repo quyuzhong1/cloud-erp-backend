@@ -25,6 +25,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -105,6 +106,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+    @Resource
+    private InventoryService inventoryService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -467,11 +470,48 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
+            // 调入审核前校验可分配库存（盘盈盘亏来源暂不校验）
+            validateAllocationInventoryOnApprove(entity);
             handleData(entity);
             //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
             this.updateQcNoticePutaway(entity,Boolean.TRUE);
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 分步式调入审核可分配库存校验：
+     * 调出数量 <= 可分配库存（实体仓可用+冻结-虚拟仓可用-冻结）
+     */
+    private void validateAllocationInventoryOnApprove(TransferInEntity entity) {
+        TransferOutEntity transferOutEntity = transferOutService.getById(entity.getSourceId());
+        if (transferOutEntity != null && isStocktakingSource(transferOutEntity.getSourceType())) {
+            return;
+        }
+        List<TransferInDetailEntity> detailList = transferInDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        Map<String, Integer> requestQtyMap = detailList.stream()
+                .collect(Collectors.groupingBy(TransferInDetailEntity::getSkuId,
+                        Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
+        Map<String, TransferInDetailEntity> detailMap = detailList.stream()
+                .collect(Collectors.toMap(TransferInDetailEntity::getSkuId, Function.identity(), (left, right) -> left));
+        for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
+            String skuId = entry.getKey();
+            Integer requestQty = entry.getValue();
+            TransferInDetailEntity detail = detailMap.get(skuId);
+            Integer allocatableQty = inventoryService.getRecipientAvailableQty(entity.getOutWarehouseId(), skuId);
+            if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
+                throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), entity.getOutWarehouseName(), allocatableQty);
+            }
+        }
+    }
+
+    private boolean isStocktakingSource(String sourceType) {
+        return CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), sourceType)
+                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT.getCode(), sourceType)
+                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_LOSS.getCode(), sourceType);
     }
 
     //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态

@@ -401,6 +401,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         if (!dto.getType().equals(ApproveType.PASS)) {
             return Boolean.TRUE;
         }
+        // 调出审核前校验可分配库存（盘盈盘亏来源暂不校验）
+        validateAllocationInventoryOnApprove(entity);
         //更新库存
         updateInventoryTransCore(Collections.singletonList(entity));
         //推送旺店通
@@ -408,6 +410,40 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         //推送金蝶
         syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 分步式调出审核可分配库存校验：
+     * 调出数量 <= 可分配库存（实体仓可用+冻结-虚拟仓可用-冻结）
+     */
+    private void validateAllocationInventoryOnApprove(TransferOutEntity entity) {
+        if (isStocktakingSource(entity.getSourceType())) {
+            return;
+        }
+        List<TransferOutDetailEntity> detailList = transferOutDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        Map<String, Integer> requestQtyMap = detailList.stream()
+                .collect(Collectors.groupingBy(TransferOutDetailEntity::getSkuId,
+                        Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
+        Map<String, TransferOutDetailEntity> detailMap = detailList.stream()
+                .collect(Collectors.toMap(TransferOutDetailEntity::getSkuId, Function.identity(), (left, right) -> left));
+        for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
+            String skuId = entry.getKey();
+            Integer requestQty = entry.getValue();
+            TransferOutDetailEntity detail = detailMap.get(skuId);
+            Integer allocatableQty = inventoryService.getRecipientAvailableQty(entity.getOutWarehouseId(), skuId);
+            if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
+                throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), entity.getOutWarehouseName(), allocatableQty);
+            }
+        }
+    }
+
+    private boolean isStocktakingSource(String sourceType) {
+        return CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), sourceType)
+                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT.getCode(), sourceType)
+                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_LOSS.getCode(), sourceType);
     }
 
     @Override
