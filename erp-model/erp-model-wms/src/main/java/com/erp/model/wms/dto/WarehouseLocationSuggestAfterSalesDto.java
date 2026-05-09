@@ -258,8 +258,7 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
         /**
          * 状态名称，（启用/禁用）
          */
-        private String statusName;
-        private Boolean status;
+        private Boolean disabled;
 
         /**
          * 更新人
