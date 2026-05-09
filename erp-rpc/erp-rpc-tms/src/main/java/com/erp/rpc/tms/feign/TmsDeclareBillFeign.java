@@ -34,18 +34,6 @@ public interface TmsDeclareBillFeign {
     List<BatchResultDTO> delete(@RequestBody TmsDeclareBillDTO.DeleteDTO dto);
 
     /**
-     * 自动生成头程报关单
-     **/
-    @PostMapping("/feign/tmsDeclareBill/autoGenerateFirstMileDeclare")
-    Boolean autoGenerateFirstMileDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
-
-    /**
-     * 自动生成B2B报关单
-     **/
-    @PostMapping("/feign/tmsDeclareBill/autoGenerateB2bDeclare")
-    Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
-
-    /**
      * 删除tms发货明细
      * @author will
      * @date 2026/4/24 14:55

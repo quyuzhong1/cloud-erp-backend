@@ -2895,67 +2895,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return baseMapper.listOverseasProvider(deliveryIds);
     }
 
-    @Override
-    public BatchResultDTO generateFirstMileDeclare(String id) {
-        FirstMileDeliveryEntity entity = getById(id);
-        if (Objects.isNull(entity)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.FIRST_MILE_SHIPMENT_NOT_FOUND.getMsg());
-        }
-        //限制B2B类型,未作废,审核状态为未审核 才可下推报关单
-        if(Objects.equals(entity.getInvalidStatus(), Boolean.TRUE) || Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())){
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.SO_DELIVERY_REQUIRED_PENDING_NOT_APPROVED.getMsg() );
-        }
-        //根据装箱状态生成报关单
-        generateByPacked(entity,BillGenerateTimingEnum.AFTER_PACKING);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
-    }
-
-    /**
-     * 根据装箱状态自动生成物流单和报关单
-     *
-     * 该方法会检查头程发货单关联的所有装箱任务是否都已装箱(PACKED状态)，
-     * 如果全部已装箱则自动调用TMS服务生成物流单和报关单，并更新发货单状态。
-     *
-     * @param entity 头程发货单实体对象，包含发货单基本信息及状态
-     * @throws ServiceException 当自动生成物流单或报关单失败时抛出异常
-     */
-    private void generateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTiming) {
-        List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
-        if (CollectionUtils.isEmpty(taskEntityList)) {
-            throw new ServiceException(ApiError.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
-        } else {
-            boolean packed = taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
-            if (Boolean.FALSE.equals(packed) && billGenerateTiming.equals(BillGenerateTimingEnum.AFTER_PACKING)) {
-                throw new ServiceException(ApiError.LOGISTICS_PACKING_NOT_COMPLETED_DECLARATION_FORBIDDEN);
-            } else {
-                if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
-                    throw new ServiceException("报关单状态不为待生成，不能下推生成报关单");
-                } else {
-                    AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-                            .id(entity.getId())
-                            .billGenerateTimingEnum(billGenerateTiming)
-                            .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
-                            .firstMileDeliveryEntity(entity)
-                            .checkCfg(Boolean.FALSE) // 不检查配置
-                            .build();
-                    try {
-                        Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-                        if (autoGenerateResult) {
-                            FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                            updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
-                            updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-                            this.updateStatus(updateStatusDTO);
-                        }else {
-                            throw new ServiceException("下推生成报关单失败");
-                        }
-                    } catch (Exception e) {
-                        log.error("头程发货单{} 下推生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage());
-                        throw new ServiceException(CharSequenceUtil.format("头程发货单{} 下推生成报关单失败>>>>>>{}", entity.getCode(), e.getMessage()));
-                    }
-                }
-            }
-        }
-    }
 
     @Override
     public BatchResultDTO retryOutstock(String id) {

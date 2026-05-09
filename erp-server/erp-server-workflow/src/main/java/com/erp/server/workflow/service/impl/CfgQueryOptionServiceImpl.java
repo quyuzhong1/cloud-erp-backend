@@ -52,7 +52,14 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     @Override
     public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType) {
         List<CfgQueryOptionEntity> list = lambdaQuery().eq(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()).orderByDesc(CfgQueryOptionEntity::getId).list();
-        List<CfgQueryOptionDTO.ListDTO> result = BeanMapper.copyList(list, CfgQueryOptionDTO.ListDTO.class);
+        List<CfgQueryOptionDTO.ListDTO> result = new ArrayList<>();
+        for (CfgQueryOptionEntity cfgQueryOptionEntity : list) {
+            CfgQueryOptionDTO.ListDTO item = new CfgQueryOptionDTO.ListDTO();
+            BeanMapper.copy(cfgQueryOptionEntity, item);
+            item.setLabel(cfgQueryOptionEntity.getSelectLabel());
+            item.setValue(cfgQueryOptionEntity.getSelectValue());
+            result.add(item);
+        }
         List<CfgQueryOptionDTO.ListDTO> listDTOS = baseMapper.proDropDownByMain(bussinessKey, useType);
         if(CollUtil.isNotEmpty(listDTOS)){
             result.addAll(listDTOS);
