@@ -3,7 +3,6 @@ package com.erp.model.tms.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -2087,6 +2086,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 客户SKU
+         */
+        private String platformSkuNo;
+
+        /**
          * 中国海关编码(商品编号)
          */
         private String hsCode;
@@ -2212,6 +2216,29 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private List<String> detailIds;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PushDeclareNoMergeDTO {
+        /**
+         *  下推的主表id
+         */
+        @NotBlank(message = "选择id不能为空")
+        private String id;
+        /**
+         *  下推的明细ids
+         */
+        @NotBlank(message = "选择detailId不能为空")
+        private String detailId;
+        /**
+         *  skuId
+         */
+        @NotBlank(message = "选择skuId不能为空")
+        private String skuId;
+    }
+
 
 
 

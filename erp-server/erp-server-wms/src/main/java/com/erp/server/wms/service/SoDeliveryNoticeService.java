@@ -407,6 +407,14 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      */
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
     /**
+     * b2b报关单（BOM拆分后不合并，按来源明细最小维度返回）
+     * @author will
+     * @date 2026/5/9
+     * @param list
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
+    /**
      * 更新报关状态
      * @author will
      * @date 2026/4/30 11:54
