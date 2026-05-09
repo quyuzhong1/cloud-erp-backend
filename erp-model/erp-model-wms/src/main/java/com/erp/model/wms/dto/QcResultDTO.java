@@ -82,6 +82,15 @@ public class QcResultDTO {
 
 
         /**
+         * 允许入库量
+         */
+        @NotNull(message = "允许入库量不能为空")
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "最小值为0", groups = {AddGroup.class})
+        private Integer allowInstockQty;
+
+
+        /**
          * 采购订单明细id 不能为空
          */
         //@NotBlank(message = "采购订单明细id 不能为空")
