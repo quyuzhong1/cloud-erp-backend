@@ -1758,6 +1758,10 @@ public class TmsDeclareBillDTO implements Serializable {
          *  sku编码
          */
         private String skuNo;
+        /**
+         *  bom版本
+         */
+        private String bomVersion;
 
         /**
          * 中国海关编码(商品编号)

@@ -70,6 +70,13 @@ public class CfgDeclareRuleController extends BaseController {
 
     /**
      * 引用取值：根据规则类型和条件参数匹配报关规则。
+     * 参数是Map<String, String> paramMap
+     * 需要传参：都是去重逗号拼接
+     * countryCode
+     * fromWarehouseId
+     * salesOrgId
+     * transferWarehouseId
+     * destWarehouseId
      */
     @PostMapping("/listMatchedRule")
     public ApiResult<List<CfgDeclareRuleEntity>> listMatchedRule(@RequestBody Map<String, String> paramMap) {

@@ -728,43 +728,107 @@
     <select id="listNotGenerateDeclareFmDetail"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$NotGenerateDetailDTO">
         select
-            fmd.id as sourceId,
-            fmd.code as sourceCode,
-            'firstMileDelivery' as sourceType,
-            fmdd.id as sourceDetailId,
-            fmdd.sku_id as skuId,
-            fmdd.sku_no as skuNo,
-            fpl.customs_code as customsCode,
-            fpl.declare_chinese_name as declareChineseName,
-            fpl.declare_element as declareElement,
-            fpl.declare_unit as declareUnit,
-            fpl.declare_price as price,
-            fmdd.plan_qty as qty,
-            (fmdd.plan_qty * fpl.declare_price) as totalPrice,
-            fpl.declare_currency as declareCurrency,
-            fpl.declare_currency_symbol as declareCurrencySymbol,
-            fpl.source_country as sourceCountry,
-            fpl.source_cargo as sourceCargo,
+            *
+        from (
+        -- 1. 公共子查询：获取需要处理的发货通知明细（等待报关 + 有箱子）
+        WITH qualified_details AS MATERIALIZED (
+        SELECT
+            fmd.id AS source_id,
+            fmd.code AS source_code,
+            fmdd.id AS detail_id,
+            fmdd.sku_id,
+            fmdd.sku_no,
+            fmdd.plan_qty
+        FROM first_mile_delivery fmd
+        JOIN first_mile_delivery_detail fmdd
+        on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        WHERE fmd.is_deleted = false
+        AND fmd.declare_status = 'wait'
+        AND EXISTS (
+            SELECT 1
+            FROM packing_task_detail ptd
+            JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted = false
+            JOIN wms_carton wc ON wc.packing_task_id = pt.id
+            AND wc.is_deleted = false
+            AND wc.box_no IS NOT NULL
+            WHERE ptd.is_deleted = false
+            AND ptd.source_detail_id = fmdd.id
+        )
+        ),
+        -- 2. BOM 信息（物化）
+        has_bom AS MATERIALIZED (
+        SELECT
+            fpbi.id AS bom_id,
+            fpbi.bom_version,
+            fpbs.parent_sku_id,
+            fpbs.parent_sku_no,
+            fpbs.sku_id,
+            fpbs.sku_no
+        FROM foreign_product_bom_info fpbi
+        JOIN foreign_product_bom_sku fpbs
+        ON fpbi.id = fpbs.bom_id
+        WHERE fpbi.is_deleted = false
+        AND fpbs.is_deleted = false
+        )
+        -- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
+        SELECT
+            qd.source_id AS "sourceId",
+            qd.source_code AS "sourceCode",
+            'soDeliveryNotice' AS "sourceType",
+            qd.detail_id AS "sourceDetailId",
+            qd.sku_id AS "skuId",
+            qd.sku_no AS "skuNo",
+            '' AS "bom_version",
+            fpl.customs_code AS "customsCode",
+            fpl.declare_chinese_name AS "declareChineseName",
+            fpl.declare_element AS "declareElement",
+            fpl.declare_unit AS "declareUnit",
+            fpl.declare_price AS "price",
+            qd.plan_qty AS "qty",
+            (qd.plan_qty * fpl.declare_price) AS "totalPrice",
+            fpl.declare_currency AS "declareCurrency",
+            fpl.declare_currency_symbol AS "declareCurrencySymbol",
+            fpl.source_country AS "sourceCountry",
+            fpl.source_cargo AS "sourceCargo",
             fpl.exemption
-        from wms_first_mile_delivery fmd
-        inner join wms_first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-        inner join foreign_product_logistics fpl on fmdd.sku_id = fpl.sku_id and fpl.is_deleted = false
-        left join packing_task_detail ptd on sdnd.id = ptd.source_detail_id and ptd.is_deleted = false
-        left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false
-        left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
-        where  ${params.sqlMap.default}
-        and fmd.is_deleted = false and fmd.declare_status = 'wait' and wc.box_no is not null
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        fmdd.id DESC
+        FROM qualified_details qd
+        LEFT JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
+        LEFT JOIN foreign_product_logistics fpl
+        ON fpl.sku_id = qd.sku_id
+        AND fpl.is_deleted = false
+        WHERE (hb.bom_id IS NULL OR fpl.combination_declare_type = 'combine')
+        UNION ALL
+        -- ========== 分支 2：有 BOM 且组合申报类型为 'split' ==========
+        SELECT
+            qd.source_id AS "sourceId",
+            qd.source_code AS "sourceCode",
+            'soDeliveryNotice' AS "sourceType",
+            qd.detail_id AS "sourceDetailId",
+            hb.parent_sku_id AS "skuId",
+            hb.parent_sku_no AS "skuNo",
+            hb.bom_version AS "bomVersion",
+            fpl_child.customs_code AS "customsCode",
+            fpl_child.declare_chinese_name AS "declareChineseName",
+            fpl_child.declare_element AS "declareElement",
+            fpl_child.declare_unit AS "declareUnit",
+            fpl_child.declare_price AS "price",
+            qd.plan_qty AS "qty",
+            (qd.plan_qty * fpl_child.declare_price) AS "totalPrice",
+            fpl_child.declare_currency AS "declareCurrency",
+            fpl_child.declare_currency_symbol AS "declareCurrencySymbol",
+            fpl_child.source_country AS "sourceCountry",
+            fpl_child.source_cargo AS "sourceCargo",
+            fpl_child.exemption
+            FROM qualified_details qd
+            JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
+            JOIN foreign_product_logistics fpl_child
+            ON fpl_child.sku_id = hb.sku_id
+            AND fpl_child.is_deleted = false
+            AND fpl_child.combination_declare_type = 'split'
+        ) fmdd
+        where
+        ${params.sqlMap.default}
+        ORDER BY fmdd.sourceId DESC
     </select>
 
 
