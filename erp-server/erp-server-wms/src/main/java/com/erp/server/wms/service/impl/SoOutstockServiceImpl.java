@@ -3183,7 +3183,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         generateB2cDTO.setDetailList(addDTOS);
         //重试时需要按照发货单发货时间扣减
         generateB2cDTO.setBillDate(outTime.toLocalDate());
+        fillBlankPlatformOutstockTrackNo(entity.getId(), warehouseId, trackNo);
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+    }
+
+    private void fillBlankPlatformOutstockTrackNo(String soB2cId, String warehouseId, String trackNo) {
+        if (CharSequenceUtil.isBlank(trackNo)) {
+            return;
+        }
+        List<SoOutstockEntity> outstockList = this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoId, soB2cId)
+                .eq(CharSequenceUtil.isNotBlank(warehouseId), SoOutstockEntity::getWarehouseId, warehouseId)
+                .eq(SoOutstockEntity::getSourceType, SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())
+                .and(wrapper -> wrapper.isNull(SoOutstockEntity::getTrackNo).or().eq(SoOutstockEntity::getTrackNo, CharSequenceUtil.EMPTY))
+                .list();
+        if (CollectionUtils.isEmpty(outstockList)) {
+            return;
+        }
+        outstockList.forEach(outstock -> outstock.setTrackNo(trackNo));
+        this.updateBatchById(outstockList);
     }
 
     @Override
