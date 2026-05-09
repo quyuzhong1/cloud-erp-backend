@@ -701,5 +701,17 @@ public class SoDeliveryNoticeController extends BaseController {
         return success(soDeliveryNoticeService.listAfterPushB2bDeclare(dto));
     }
 
+    /**
+     * b2b报关单（BOM拆分后不合并，按来源明细最小维度返回）
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>>
+     */
+    @PostMapping("/listAfterPushB2bDeclareNoMerge")
+    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushB2bDeclareNoMerge(@RequestBody @Valid ValidList<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list)  {
+        return success(soDeliveryNoticeService.listAfterPushB2bDeclareNoMerge(list.getList()));
+    }
+
 }
 

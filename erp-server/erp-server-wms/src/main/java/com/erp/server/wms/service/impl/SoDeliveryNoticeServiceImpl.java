@@ -44,10 +44,12 @@ import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.LabelSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -59,7 +61,6 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
-import com.erp.model.tms.enums.DeclareStatusEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
@@ -107,6 +108,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1133,6 +1135,178 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushB2bDeclare(dto.getIds(), dto.getDetailIds());
         return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(),list));
+    }
+
+    @Override
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = baseMapper.listB2bDeclareMinSourceDetail(list);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> declareSourceDetailList = prepareB2bMinDeclareSourceDetail(sourceDetailList);
+        return buildB2bMinMergeDeclareBillList(declareSourceDetailList);
+    }
+
+    /**
+     * 按产品物流补齐报关字段，并按组合品申报类型拆分 BOM 子件。
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetailList
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareB2bMinDeclareSourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return Collections.emptyList();
+        }
+        List<String> skuIdList = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<ProductDetailDTO.ProductLogisticDTO> productLogisticsList = plmTaskFeign.listProductLogisticsByIds(skuIdList);
+        Map<String, ProductDetailDTO.ProductLogisticDTO> logisticsMap = CollUtil.isEmpty(productLogisticsList)
+                ? new HashMap<>()
+                : productLogisticsList.stream().collect(Collectors.toMap(ProductDetailDTO.ProductLogisticDTO::getSkuId, item -> item, (a, b) -> a));
+
+        List<String> countryIdList = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getCountryId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<DictCountryEntity> countryList = CollUtil.isEmpty(countryIdList) ? Collections.emptyList() : sysDictFeign.listCountryByIds(countryIdList);
+        Map<String, String> countryNameMap = CollUtil.isEmpty(countryList)
+                ? new HashMap<>()
+                : countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
+
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = new ArrayList<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDetailList) {
+            if (Objects.isNull(detailDTO)) {
+                continue;
+            }
+            detailDTO.setCountryName(countryNameMap.get(detailDTO.getCountryId()));
+            ProductDetailDTO.ProductLogisticDTO productLogisticsDTO = logisticsMap.get(detailDTO.getSkuId());
+            if (Objects.nonNull(productLogisticsDTO)
+                    && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productLogisticsDTO.getCombinationDeclareType())
+                    && Boolean.TRUE.equals(productLogisticsDTO.getIsCombination())
+                    && CollUtil.isNotEmpty(productLogisticsDTO.getChildList())) {
+                for (ProductDetailDTO.ProductLogisticDTO childLogisticsDTO : productLogisticsDTO.getChildList()) {
+                    TmsDeclareBillDTO.SourceDeliveryDetailDTO childDetailDTO = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+                    BeanUtil.copyProperties(detailDTO, childDetailDTO);
+                    childDetailDTO.setSkuId(childLogisticsDTO.getSkuId());
+                    childDetailDTO.setSkuNo(childLogisticsDTO.getSkuNo());
+                    childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
+                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO);
+                    result.add(childDetailDTO);
+                }
+            } else {
+                fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO);
+                result.add(detailDTO);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 填充报关字段。
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param detailDTO
+     * @param productLogisticsDTO
+     */
+    private void fillB2bMinDeclareInfo(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
+                                       ProductDetailDTO.ProductLogisticDTO productLogisticsDTO) {
+        if (Objects.isNull(detailDTO) || Objects.isNull(productLogisticsDTO)) {
+            return;
+        }
+        detailDTO.setHsCode(productLogisticsDTO.getCustomsCode());
+        detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
+        detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
+        detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
+        detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
+        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
+        detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
+        detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());
+        detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+        detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
+        detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
+        detailDTO.setSourceCargo(StringUtils.defaultIfBlank(productLogisticsDTO.getSourceCargo(), "深圳特区"));
+        detailDTO.setExemption(StringUtils.defaultIfBlank(productLogisticsDTO.getExemption(), "照章征税"));
+    }
+
+    /**
+     * 最小维度数据不再按报关要素合并，仅按发货通知单+箱号+客户SKU组装报关单预览。
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetailList
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    private List<TmsDeclareBillDTO.MergeDeclareBillDTO> buildB2bMinMergeDeclareBillList(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = sourceDetailList.stream()
+                .collect(Collectors.groupingBy(item -> StringUtils.defaultString(item.getSourceId()), LinkedHashMap::new, Collectors.toList()));
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> result = new ArrayList<>();
+        for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : sourceGroupMap.values()) {
+            Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceDetailGroupMap = sourceGroup.stream()
+                    .collect(Collectors.groupingBy(this::buildB2bMinDeclareGroupKey, LinkedHashMap::new, Collectors.toList()));
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = sourceDetailGroupMap.values().stream()
+                    .map(this::buildB2bMinMergeDeclareBillDetail)
+                    .collect(Collectors.toList());
+            result.add(TmsDeclareBillDTO.MergeDeclareBillDTO.builder()
+                    .declareBillList(declareBillList)
+                    .build());
+        }
+        return result;
+    }
+
+    private String buildB2bMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        return String.join("|",
+                StringUtils.defaultString(detailDTO.getSourceId()),
+                StringUtils.defaultString(detailDTO.getSourceDetailId()),
+                StringUtils.defaultString(detailDTO.getSkuId()));
+    }
+
+    private TmsDeclareBillDTO.MergeDeclareBillDetailDTO buildB2bMinMergeDeclareBillDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> detailGroup) {
+        TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO = detailGroup.get(0);
+        Integer qty = detailGroup.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+        BigDecimal totalAmount = detailGroup.stream().map(obj -> MathUtil.multiplyWithFour(obj.getUnitPrice(),BigDecimal.valueOf(obj.getQty()))).reduce(BigDecimal.ZERO,BigDecimal::add);
+        String businessCode = detailGroup.stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessCode).distinct().collect(Collectors.joining(","));
+        String businessDesc = detailGroup.stream()
+                .filter(Objects::nonNull)
+                .map(item -> StringUtils.isBlank(item.getBoxNo())
+                        ? businessCode
+                        : CharSequenceUtil.format("{}+{}", businessCode, item.getBoxNo()))
+                .distinct()
+                .collect(Collectors.joining("、"));
+
+        return TmsDeclareBillDTO.MergeDeclareBillDetailDTO.builder()
+                .businessDesc(businessDesc)
+                .businessOrderNos(StringUtils.defaultString(businessCode))
+                .leadSkuId(detailDTO.getSkuId())
+                .skuNo(detailDTO.getSkuNo())
+                .hsCode(detailDTO.getHsCode())
+                .productNameCn(detailDTO.getProductNameCn())
+                .declareElement(detailDTO.getDeclareElement())
+                .unit(detailDTO.getUnit())
+                .unitName(detailDTO.getUnitName())
+                .unitPrice(detailDTO.getUnitPrice())
+                .qty(qty)
+                .totalAmount(totalAmount)
+                .sourceCountry(detailDTO.getSourceCountry())
+                .sourceCountryName(detailDTO.getSourceCountryName())
+                .toCountry(detailDTO.getCountryId())
+                .toCountryName(detailDTO.getCountryName())
+                .sourceCargo(StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), "深圳特区"))
+                .exemption(StringUtils.defaultIfBlank(detailDTO.getExemption(), "照章征税"))
+                .declareCurrency(detailDTO.getDeclareCurrency())
+                .declareCurrencyName(detailDTO.getDeclareCurrencyName())
+                .declareCurrencySymbol(detailDTO.getDeclareCurrencySymbol())
+                .mergeRemark("")
+                .sourceDeliveryDetailList(detailGroup)
+                .build();
     }
 
     @Override
@@ -3226,7 +3400,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //释放冻结库存
         handleUnLockVirtualInventory(removeList,soDeliveryNoticeDetailList);
-        
+
         // 返回成功结果
         return resultDTOList;
     }

@@ -546,4 +546,139 @@
             </foreach>
         </if>
     </select>
+
+    <!-- 查询B2B报关按箱号最小维度来源明细 -->
+    <select id="listB2bDeclareMinSourceDetail"
+            resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
+        select * from (
+        WITH carton_detail AS (
+        SELECT
+        wc.packing_task_id,
+        wc.box_no,
+        wcd.sku_id,
+        wcd.sku_no,
+        COALESCE(wcd.fn_sku, '') AS fn_sku,
+        SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+        FROM wms_carton wc
+        INNER JOIN wms_carton_detail wcd
+        ON wcd.main_id = wc.id
+        AND wcd.is_deleted = false
+        AND COALESCE(wcd.pack_qty, 0) > 0
+        WHERE wc.is_deleted = false
+        AND wc.box_no IS NOT NULL
+        GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
+        ),
+        has_bom AS MATERIALIZED (
+        SELECT
+        fpbi.id AS bom_id,
+        fpbi.bom_version,
+        fpbs.parent_sku_id,
+        fpbs.parent_sku_no,
+        fpbs.sku_id,
+        fpbs.sku_no
+        FROM foreign_product_bom_info fpbi
+        JOIN foreign_product_bom_sku fpbs
+        ON fpbi.id = fpbs.bom_id
+        WHERE fpbi.is_deleted = false
+        AND fpbs.is_deleted = false
+        )
+        -- 分支1：不需要拆分的明细（无BOM 或 combination_declare_type = 'combine'）
+        SELECT
+        sdn.id AS sourceId,
+        sdn.code AS sourceCode,
+        'soDeliveryNotice' AS sourceType,
+        sdnd.id AS sourceDetailId,
+        sdn.source_id AS businessId,
+        sdn.source_code AS businessCode,
+        sdnd.sku_id AS skuId,
+        sdnd.sku_no AS skuNo,
+        sdnd.platform_sku_no AS platformSkuNo,
+        cd.pack_qty AS qty,
+        cd.box_no AS boxNo,
+        ci.country_id AS countryId,
+        sdn.warehouse_id AS fromWarehouseId,
+        sdn.warehouse_name AS fromWarehouseName,
+        sdn.warehouse_org_id AS fromWarehouseOrgId,
+        sdn.warehouse_org_name AS fromWarehouseOrgName,
+        sdn.transfer_warehouse_ids AS transferWarehouseIds,
+        sdn.sales_org_id AS salesOrgId,
+        sdn.sales_org_name AS salesOrgName
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd
+        ON sdnd.main_id = sdn.id
+        AND sdnd.is_deleted = false
+        INNER JOIN packing_task_detail ptd
+        ON ptd.source_detail_id = sdnd.id
+        AND ptd.is_deleted = false
+        INNER JOIN packing_task pt
+        ON pt.id = ptd.main_id
+        AND pt.is_deleted = false
+        INNER JOIN carton_detail cd
+        ON cd.packing_task_id = pt.id
+        AND cd.sku_id = sdnd.sku_id
+        AND (COALESCE(ptd.fn_sku, '') = '' OR cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        LEFT JOIN customer_info ci
+        ON ci.id = sdn.customer_id
+        AND ci.is_deleted = false
+        LEFT JOIN has_bom hb
+        ON hb.parent_sku_id = sdnd.sku_id
+        LEFT JOIN foreign_product_logistics fpl_parent
+        ON fpl_parent.sku_id = sdnd.sku_id
+        AND fpl_parent.is_deleted = false
+        WHERE sdn.is_deleted = false
+        AND sdn.declare_status = 'wait'
+        AND (hb.bom_id IS NULL OR fpl_parent.combination_declare_type = 'combine')
+        UNION ALL
+        -- 分支2：需要拆分的明细（有BOM 且 combination_declare_type = 'split'）
+        SELECT
+        sdn.id AS sourceId,
+        sdn.code AS sourceCode,
+        'soDeliveryNotice' AS sourceType,
+        sdnd.id AS sourceDetailId,
+        sdn.source_id AS businessId,
+        sdn.source_code AS businessCode,
+        hb.sku_id AS skuId,                     -- 子SKU ID
+        hb.sku_no AS skuNo,                     -- 子SKU 编码
+        '' AS platformSkuNo,                    -- 子SKU无平台编码，置空
+        cd.pack_qty AS qty,                     -- 原箱数量（每个子SKU继承相同数量）
+        cd.box_no AS boxNo,
+        ci.country_id AS countryId,
+        sdn.warehouse_id AS fromWarehouseId,
+        sdn.warehouse_name AS fromWarehouseName,
+        sdn.warehouse_org_id AS fromWarehouseOrgId,
+        sdn.warehouse_org_name AS fromWarehouseOrgName,
+        sdn.transfer_warehouse_ids AS transferWarehouseIds,
+        sdn.sales_org_id AS salesOrgId,
+        sdn.sales_org_name AS salesOrgName
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd
+        ON sdnd.main_id = sdn.id
+        AND sdnd.is_deleted = false
+        INNER JOIN packing_task_detail ptd
+        ON ptd.source_detail_id = sdnd.id
+        AND ptd.is_deleted = false
+        INNER JOIN packing_task pt
+        ON pt.id = ptd.main_id
+        AND pt.is_deleted = false
+        INNER JOIN carton_detail cd
+        ON cd.packing_task_id = pt.id
+        AND cd.sku_id = sdnd.sku_id               -- 箱子中实际装的是父SKU
+        AND (COALESCE(ptd.fn_sku, '') = '' OR cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        INNER JOIN has_bom hb
+        ON hb.parent_sku_id = sdnd.sku_id
+        INNER JOIN foreign_product_logistics fpl_parent
+        ON fpl_parent.sku_id = hb.sku_id
+        AND fpl_parent.is_deleted = false
+        AND fpl_parent.combination_declare_type = 'split'   -- 仅拆分类型
+        LEFT JOIN customer_info ci
+        ON ci.id = sdn.customer_id
+        AND ci.is_deleted = false
+        WHERE sdn.is_deleted = false
+        AND sdn.declare_status = 'wait') sn
+        where 1 = 1 and
+        <foreach collection="list" item="item" separator="or" open="(" close=")">
+             (sn.sourceId = #{item.sourceId} and sn.sourceDetailId = #{item.sourceDetailId} and sn.skuId = #{item.skuId})
+        </foreach>
+        ORDER BY sn.sourceCode, sn.boxNo, sn.skuNo
+    </select>
 </mapper>
