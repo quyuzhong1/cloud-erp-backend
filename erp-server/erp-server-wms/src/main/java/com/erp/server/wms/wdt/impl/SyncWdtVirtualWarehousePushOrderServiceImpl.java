@@ -341,17 +341,28 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        Integer orderType = request.getOrder_type();
         for (VirtualWarehouseAllocationDetailEntity obj : list) {
-            //无调出虚拟仓不校验
-            if (CharSequenceUtil.isBlank(handleDetail.getFromVirtualWarehouseId())) {
+            String virtualWarehouseId;
+            String thirdVirtualWarehouseNo;
+            if (Integer.valueOf(1).equals(orderType)) {
+                // 新增分货使用调入虚拟仓
+                virtualWarehouseId = handleDetail.getToVirtualWarehouseId();
+                thirdVirtualWarehouseNo = handleDetail.getThirdToVirtualWarehouseNo();
+            } else {
+                // 其他类型沿用调出虚拟仓
+                virtualWarehouseId = handleDetail.getFromVirtualWarehouseId();
+                thirdVirtualWarehouseNo = handleDetail.getThirdFromVirtualWarehouseNo();
+            }
+            if (CharSequenceUtil.isBlank(virtualWarehouseId)) {
                 continue;
             }
             VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO = new VirtualWarehousePushHandleDetailDTO.CheckDataDTO();
-            checkDataDTO.setOrderType(request.getOrder_type());
+            checkDataDTO.setOrderType(orderType);
             checkDataDTO.setWarehouseId(handleDetail.getWarehouseId());
             checkDataDTO.setThirdWarehouseNo(handleDetail.getThirdWarehouseId());
-            checkDataDTO.setVirtualWarehouseId(handleDetail.getFromVirtualWarehouseId());
-            checkDataDTO.setThirdVirtualWarehouseNo(handleDetail.getThirdFromVirtualWarehouseNo());
+            checkDataDTO.setVirtualWarehouseId(virtualWarehouseId);
+            checkDataDTO.setThirdVirtualWarehouseNo(thirdVirtualWarehouseNo);
             checkDataDTO.setSkuId(obj.getSkuId());
             checkDataDTO.setSkuNo(skuNo);
             checkDataDTO.setQty(obj.getQty());
