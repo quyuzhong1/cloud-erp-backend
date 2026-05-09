@@ -129,10 +129,9 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         for (Map<String, Object> mongoData : findMongoData) {
             String shipmentId = mongoData.getOrDefault("shipmentId", "").toString();
             if (StringUtils.isBlank(shipmentId)) {
-                allShipmentFetched = false;
-                resultData = null;
-                allResultList.clear();
-                break;
+                String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败: sid={}, shipmentId为空, taskId={}", sid, dmpInputTaskEntity.getId());
+                log.error(errorMsg);
+                throw new ServiceException(errorMsg);
             }
             // 请求参数
             FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate, endDate, shipmentId);
