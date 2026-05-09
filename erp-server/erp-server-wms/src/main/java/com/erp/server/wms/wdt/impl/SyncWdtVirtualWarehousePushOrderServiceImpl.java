@@ -87,89 +87,34 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if (CollUtil.isEmpty(checkDataList)) {
             return;
         }
-        // 先执行原逻辑（处理取消/虚拟仓调拨）
-        checkOldPendingPushInventory(checkDataList);
 
-        // 再执行新逻辑（新增分货/虚拟仓调拨）
-        checkCurrentPushInventory(checkDataList);
-    }
-
-    /**
-     * 原逻辑：旺店通可用库存 >= 待同步完成数 + 本次分配数量
-     */
-    private void checkOldPendingPushInventory(List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> checkDataList) {
-        if (CollUtil.isEmpty(checkDataList)) {
-            return;
-        }
-        //来源仓库
+        // 原逻辑：查询已存在未同步成功的调出明细
         List<String> fromWarehouseIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        //来源虚拟仓
         List<String> fromVirtualWarehouseIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
-        //sku
         List<String> skuIdList = checkDataList.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuId).distinct().collect(Collectors.toList());
-
-        //查询已存在未同步成功的调出明细
         List<VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO> oldDetailList = virtualWarehouseAllocationDetailService.listRepeatHandleDetail(fromWarehouseIdList, fromVirtualWarehouseIdList, skuIdList);
-        if (CollUtil.isEmpty(oldDetailList)) {
-            return;
-        }
+        boolean needOldPendingCheck = CollUtil.isNotEmpty(oldDetailList);
 
-        Map<String, List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO>> map = checkDataList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}",obj.getThirdWarehouseNo(),obj.getThirdVirtualWarehouseNo())));
-        for (Map.Entry<String, List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO>> entry : map.entrySet()) {
-            List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> value = entry.getValue();
-            VirtualWarehousePushHandleDetailDTO.CheckDataDTO fristCheckDataDTO = value.get(0);
-            String skuNoList = value.stream().map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuNo).collect(Collectors.joining(","));
-
-            WdtSearchHandelDetailDTO.SearchVirtualInventoryParamDTO detailDTO = new WdtSearchHandelDetailDTO.SearchVirtualInventoryParamDTO();
-            detailDTO.setSpec_nos(skuNoList);
-            detailDTO.setVirtual_warehouse_no(fristCheckDataDTO.getThirdVirtualWarehouseNo());
-            detailDTO.setWarehouse_no(fristCheckDataDTO.getThirdWarehouseNo());
-            List<WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO> searchVirtualInventoryDTOS = wdtVirtualInventoryService.searchVirtualInventory(detailDTO);
-            if (CollUtil.isEmpty(searchVirtualInventoryDTOS)) {
-                throw new ServiceException("调用旺店通虚拟仓库存查询接口无可用库存，仓库编码：{}.虚拟仓库编码：{}，SKU列表：{}" , fristCheckDataDTO.getThirdWarehouseNo(), fristCheckDataDTO.getThirdVirtualWarehouseNo(), skuNoList);
-            }
-            for (VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO : value) {
-                //待同步完成数
-                Integer totalPushQty = oldDetailList.stream().filter(obj ->
-                                   !CharSequenceUtil.equals(obj.getDetailId(), checkDataDTO.getDetailId())
-                                && CharSequenceUtil.equals(obj.getWarehouseId(), checkDataDTO.getWarehouseId())
-                                && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), checkDataDTO.getVirtualWarehouseId())
-                                && CharSequenceUtil.equals(obj.getSkuId(), checkDataDTO.getSkuId()))
-                        .map(VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO::getQty)
-                        .reduce(MathUtil.ZERO, Integer::sum);
-
-                searchVirtualInventoryDTOS.stream().filter(obj -> CharSequenceUtil.equals(checkDataDTO.getSkuNo(),obj.getSkuNo()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdWarehouseNo(),obj.getWarehouseCode()) && CharSequenceUtil.equals(fristCheckDataDTO.getThirdVirtualWarehouseNo(),obj.getVirtualWarehouseCode()))
-                        .findFirst().ifPresent(obj -> {
-                            if (MathUtil.compareTo(obj.getQty(),totalPushQty + checkDataDTO.getQty()) < 0) {
-                                throw new ServiceException("旺店通虚拟仓【{}】可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，待同步完成数：{}，可用库存-取消/调出数量-待同步完成数＜0",obj.getVirtualWarehouseCode(), checkDataDTO.getSkuNo() ,checkDataDTO.getQty() ,fristCheckDataDTO.getThirdVirtualWarehouseNo()
-                                        , obj.getQty() , totalPushQty);
-                            }
-                        });
-            }
-        }
-    }
-
-    /**
-     * 新逻辑：仅新增分货/虚拟仓调拨，校验旺店通可用库存 >= 本次分配数量
-     */
-    private void checkCurrentPushInventory(List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> checkDataList) {
-        Map<String, List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO>> map = checkDataList.stream()
-                .filter(obj -> obj.getOrderType() == 1 || obj.getOrderType() == 3)
+        Map<String, List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO>> groupedCheckDataMap = checkDataList.stream()
                 .collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}", obj.getThirdWarehouseNo(), obj.getThirdVirtualWarehouseNo())));
-        for (Map.Entry<String, List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO>> entry : map.entrySet()) {
-            List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> value = entry.getValue();
-            if (CollUtil.isEmpty(value)) {
+        for (Map.Entry<String, List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO>> entry : groupedCheckDataMap.entrySet()) {
+            List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> groupCheckDataList = entry.getValue();
+            if (CollUtil.isEmpty(groupCheckDataList)) {
                 continue;
             }
-            VirtualWarehousePushHandleDetailDTO.CheckDataDTO firstCheckDataDTO = value.get(0);
-            String skuNoList = value.stream()
+            boolean hasCurrentPushOrderType = groupCheckDataList.stream().anyMatch(this::isCurrentPushOrderType);
+            if (!needOldPendingCheck && !hasCurrentPushOrderType) {
+                continue;
+            }
+            VirtualWarehousePushHandleDetailDTO.CheckDataDTO firstCheckDataDTO = groupCheckDataList.get(0);
+            String skuNoList = groupCheckDataList.stream()
                     .map(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
                     .distinct()
                     .collect(Collectors.joining(","));
             if (CharSequenceUtil.isBlank(skuNoList)) {
                 continue;
             }
-
             WdtSearchHandelDetailDTO.SearchVirtualInventoryParamDTO detailDTO = new WdtSearchHandelDetailDTO.SearchVirtualInventoryParamDTO();
             detailDTO.setSpec_nos(skuNoList);
             detailDTO.setVirtual_warehouse_no(firstCheckDataDTO.getThirdVirtualWarehouseNo());
@@ -178,24 +123,59 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             if (searchVirtualInventoryDTOS == null) {
                 searchVirtualInventoryDTOS = Collections.emptyList();
             }
-            Map<String, Integer> wdtInventoryQtyMap = searchVirtualInventoryDTOS.stream()
+            if (CollUtil.isEmpty(searchVirtualInventoryDTOS)) {
+                throw new ServiceException("调用旺店通虚拟仓库存查询接口无可用库存，仓库编码：{}.虚拟仓库编码：{}，SKU列表：{}", firstCheckDataDTO.getThirdWarehouseNo(), firstCheckDataDTO.getThirdVirtualWarehouseNo(), skuNoList);
+            }
+
+            Map<String, WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO> wdtInventoryMap = searchVirtualInventoryDTOS.stream()
                     .filter(obj -> CharSequenceUtil.equals(firstCheckDataDTO.getThirdWarehouseNo(), obj.getWarehouseCode())
                             && CharSequenceUtil.equals(firstCheckDataDTO.getThirdVirtualWarehouseNo(), obj.getVirtualWarehouseCode()))
                     .collect(Collectors.toMap(WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO::getSkuNo,
-                            obj -> MathUtil.valueOf(obj.getQty()).intValue(),
+                            obj -> obj,
                             (left, right) -> left));
-            Map<String, Integer> currentPushQtyMap = value.stream()
-                    .collect(Collectors.groupingBy(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuNo,
-                            Collectors.summingInt(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getQty)));
-            for (Map.Entry<String, Integer> skuPushEntry : currentPushQtyMap.entrySet()) {
-                String skuNo = skuPushEntry.getKey();
-                Integer currentPushQty = skuPushEntry.getValue();
-                Integer wdtInventoryQty = wdtInventoryQtyMap.getOrDefault(skuNo, 0);
-                if (MathUtil.compareTo(wdtInventoryQty, currentPushQty) < 0) {
-                    throw new ServiceException(ApiError.VM_WDT_ENTITY_INVENTORY_INSUFFICIENT, firstCheckDataDTO.getThirdWarehouseNo(), skuNo, wdtInventoryQty, currentPushQty);
+
+            if (needOldPendingCheck) {
+                for (VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO : groupCheckDataList) {
+                    // 待同步完成数
+                    Integer totalPushQty = oldDetailList.stream().filter(obj ->
+                                    !CharSequenceUtil.equals(obj.getDetailId(), checkDataDTO.getDetailId())
+                                            && CharSequenceUtil.equals(obj.getWarehouseId(), checkDataDTO.getWarehouseId())
+                                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), checkDataDTO.getVirtualWarehouseId())
+                                            && CharSequenceUtil.equals(obj.getSkuId(), checkDataDTO.getSkuId()))
+                            .map(VirtualWarehouseAllocationDetailDTO.RepeatHandleDetailDTO::getQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+
+                    WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO inventoryDTO = wdtInventoryMap.get(checkDataDTO.getSkuNo());
+                    if (inventoryDTO == null) {
+                        continue;
+                    }
+                    if (MathUtil.compareTo(inventoryDTO.getQty(), totalPushQty + checkDataDTO.getQty()) < 0) {
+                        throw new ServiceException("旺店通虚拟仓【{}】可用库存不足，SKU：【{}】，取消/调出数量：{}，虚拟仓库编码：【{}】，可用库存：{}，待同步完成数：{}，可用库存-取消/调出数量-待同步完成数＜0", inventoryDTO.getVirtualWarehouseCode(), checkDataDTO.getSkuNo(), checkDataDTO.getQty(), firstCheckDataDTO.getThirdVirtualWarehouseNo()
+                                , inventoryDTO.getQty(), totalPushQty);
+                    }
+                }
+            }
+
+            if (hasCurrentPushOrderType) {
+                Map<String, Integer> currentPushQtyMap = groupCheckDataList.stream()
+                        .filter(this::isCurrentPushOrderType)
+                        .collect(Collectors.groupingBy(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuNo,
+                                Collectors.summingInt(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getQty)));
+                for (Map.Entry<String, Integer> skuPushEntry : currentPushQtyMap.entrySet()) {
+                    String skuNo = skuPushEntry.getKey();
+                    Integer currentPushQty = skuPushEntry.getValue();
+                    WdtSearchHandelDetailDTO.SearchVirtualInventoryDTO inventoryDTO = wdtInventoryMap.get(skuNo);
+                    Integer wdtInventoryQty = inventoryDTO == null ? 0 : MathUtil.valueOf(inventoryDTO.getQty()).intValue();
+                    if (MathUtil.compareTo(wdtInventoryQty, currentPushQty) < 0) {
+                        throw new ServiceException(ApiError.VM_WDT_ENTITY_INVENTORY_INSUFFICIENT, firstCheckDataDTO.getThirdWarehouseNo(), skuNo, wdtInventoryQty, currentPushQty);
+                    }
                 }
             }
         }
+    }
+
+    private boolean isCurrentPushOrderType(VirtualWarehousePushHandleDetailDTO.CheckDataDTO checkDataDTO) {
+        return Integer.valueOf(1).equals(checkDataDTO.getOrderType()) || Integer.valueOf(3).equals(checkDataDTO.getOrderType());
     }
 
     @Override
