@@ -82,21 +82,27 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
         for (DmpAwdInventoryEntity value : dmpAwdInventoryEntityMap.values()) {
             if (StringUtils.isNotBlank(value.getMsku())) {
                 mskuIds.add(value.getMsku());
-                if (StringUtils.isBlank(shopId)) {
-                    shopId = value.getNextLevelId();
-                }
+            }
+            if (StringUtils.isBlank(shopId)) {
+                shopId = value.getNextLevelId();
             }
         }
 
-        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
-        listingInfoParamDTO.setPlatformSkuNoList(mskuIds);
-        listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
-        listingInfoParamDTO.setShopIdList(Collections.singletonList(shopId));
-        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS = Collections.emptyList();
+        if (StringUtils.isNotBlank(shopId) && CollUtil.isNotEmpty(mskuIds)) {
+            ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+            listingInfoParamDTO.setPlatformSkuNoList(mskuIds);
+            listingInfoParamDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+            listingInfoParamDTO.setShopIdList(Collections.singletonList(shopId));
+            List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+            if (CollUtil.isNotEmpty(mappingSkuViewDTOList)) {
+                mappingSkuViewDTOS = mappingSkuViewDTOList;
+            }
+        }
 
-        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(shopId);
+        ShopInfoEntity shopInfo = StringUtils.isBlank(shopId) ? null : shopInfoFeign.getShopInfoById(shopId);
         List<WarehouseDTO.ListDTO> wareHouseList = new ArrayList<>();
-        if (StringUtils.isNotBlank(shopInfo.getAwdWarehouseId())) {
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotBlank(shopInfo.getAwdWarehouseId())) {
             List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Collections.singletonList(shopInfo.getAwdWarehouseId()));
             if (!listDTOS.isEmpty()) {
                 wareHouseList.addAll(listDTOS);
@@ -107,6 +113,9 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
             DmpAwdInventoryEntity dmpEntity = dmpAwdInventoryEntityMap.get(changId);
+            if (Objects.isNull(dmpEntity)) {
+                continue;
+            }
             AwdInventoryEntity entity = this.convert(dmpEntity, cfgOutputId, shopInfo, wareHouseList, mappingSkuViewDTOS);
             if (null != entity) {
                 map.put(changId, JSON.toJSONString(entity));
@@ -123,10 +132,13 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
             return null;
         }
         AwdInventoryEntity dtoEntity = new AwdInventoryEntity();
-        SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = mappingSkuViewDTOS.stream()
-                .filter(item -> item.getPlatformSkuNo().equals(dmpEntity.getMsku()))
-                .findFirst()
-                .orElse(null);
+        SkuMappingDTO.MappingSkuViewDTO mappingSkuViewDTO = null;
+        if (CollUtil.isNotEmpty(mappingSkuViewDTOS)) {
+            mappingSkuViewDTO = mappingSkuViewDTOS.stream()
+                    .filter(item -> StringUtils.equals(item.getPlatformSkuNo(), dmpEntity.getMsku()))
+                    .findFirst()
+                    .orElse(null);
+        }
 
         if (Objects.nonNull(mappingSkuViewDTO)) {
             dtoEntity.setAsin(StringUtils.isNotBlank(mappingSkuViewDTO.getPlatformSpuNo()) ? mappingSkuViewDTO.getPlatformSpuNo() : "");
@@ -143,7 +155,7 @@ public class DmpOutputAwdInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
         dtoEntity.setTotalInboundQty(Objects.isNull(dmpEntity.getTotalInboundQty()) ? 0 : dmpEntity.getTotalInboundQty());
         dtoEntity.setTotalOnhandQty(Objects.isNull(dmpEntity.getTotalOnhandQty()) ? 0 : dmpEntity.getTotalOnhandQty());
         //店铺管理-基础设置-AWD仓
-        if (StringUtils.isNotBlank(shopInfo.getAwdWarehouseId())) {
+        if (Objects.nonNull(shopInfo) && StringUtils.isNotBlank(shopInfo.getAwdWarehouseId())) {
             dtoEntity.setWarehouseId(shopInfo.getAwdWarehouseId());
         }
         if (!wareHouseList.isEmpty()) {
