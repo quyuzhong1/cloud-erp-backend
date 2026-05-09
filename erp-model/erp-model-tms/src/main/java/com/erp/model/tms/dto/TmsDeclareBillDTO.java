@@ -1553,6 +1553,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String senderId;
         /**
+         * 发货人名称
+         */
+        private String senderName;
+        /**
          * 发货人类型
          */
         private String senderType;
@@ -1754,6 +1758,10 @@ public class TmsDeclareBillDTO implements Serializable {
          *  sku编码
          */
         private String skuNo;
+        /**
+         *  bom版本
+         */
+        private String bomVersion;
 
         /**
          * 中国海关编码(商品编号)

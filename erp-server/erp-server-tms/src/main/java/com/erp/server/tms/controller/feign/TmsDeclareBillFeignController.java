@@ -53,22 +53,6 @@ public class TmsDeclareBillFeignController {
     }
 
     /**
-     * 自动生成头程报关单
-     **/
-    @PostMapping("/autoGenerateFirstMileDeclare")
-    Boolean autoGenerateFirstMileDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
-        return tmsDeclareBillService.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
-    }
-
-    /**
-     * 自动生成B2b报关单
-     **/
-    @PostMapping("/autoGenerateB2bDeclare")
-    Boolean autoGenerateB2bDeclare(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
-        return tmsDeclareBillService.autoGenerateB2bDeclare(autoGenerateBillDTO);
-    }
-
-    /**
      * 删除tms发货明细
      * @author will
      * @date 2026/4/24 14:55

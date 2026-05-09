@@ -406,7 +406,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
 
     List<OverseasProviderWarehouseDTO.ProviderDTO> listOverseasProvider(List<String> deliveryIds);
 
-    BatchResultDTO generateFirstMileDeclare(String id);
     /**
      * 重新出库
      * @author will
