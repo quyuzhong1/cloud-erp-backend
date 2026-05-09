@@ -123,28 +123,40 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         LocalDate dateAfter10Years = today.plusYears(10);
         String endDate = dateAfter10Years.format(formatter);
 
-        String shipmentId = findMongoData.get(0).getOrDefault("shipmentId", "").toString();
-        if (StringUtils.isBlank(shipmentId)) {
-            ServiceException.runError("未找到mongo中shipmentId信息:taskId=" + dmpInputTaskEntity.getId());
-        }
-        // 请求参数
-        FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate,endDate,shipmentId);
-        Result<Object> resultData = requestData(fbaShipmentReqDTO, false);
-        if (null == resultData) {
-            String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
-            log.error(errorMsg);
-            throw new ServiceException(errorMsg);
-        }
+        Result<Object> resultData = null;
+        List<JSONObject> allResultList = new ArrayList<>();
+        for (Map<String, Object> mongoData : findMongoData) {
+            String shipmentId = mongoData.getOrDefault("shipmentId", "").toString();
+            if (StringUtils.isBlank(shipmentId)) {
+                resultData = null;
+                allResultList.clear();
+                break;
+            }
+            // 请求参数
+            FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate, endDate, shipmentId);
+            resultData = requestData(fbaShipmentReqDTO, false);
+            if (null == resultData) {
+                String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
+                log.error(errorMsg);
+                throw new ServiceException(errorMsg);
+            }
 
-        if ("3001008".equalsIgnoreCase(resultData.getCode())) {
-            String errorMsg = StrUtil.format("请求领星FBA货件明细触发限流停止当前:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
-            log.warn(errorMsg);
-            // 设置限流等待时间,
-            BigDecimal timeOut = BigDecimal.ONE.max(new BigDecimal(limitSecondStr));
-            redisUtil.set(limitKey, dmpInputTaskEntity.getCfgInputId(), timeOut.longValue());
-            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextStatus(false);
-            return Collections.emptyList();
+            if ("3001008".equalsIgnoreCase(resultData.getCode())) {
+                String errorMsg = StrUtil.format("请求领星FBA货件明细触发限流停止当前:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
+                log.warn(errorMsg);
+                // 设置限流等待时间,
+                BigDecimal timeOut = BigDecimal.ONE.max(new BigDecimal(limitSecondStr));
+                redisUtil.set(limitKey, dmpInputTaskEntity.getCfgInputId(), timeOut.longValue());
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextStatus(false);
+                return Collections.emptyList();
+            }
+
+            if (isEmptyShipmentData(resultData)) {
+                allResultList.clear();
+                break;
+            }
+            allResultList.addAll(extractShipmentList(resultData.getData()));
         }
 
         if (isEmptyShipmentData(resultData)) {
@@ -173,7 +185,6 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             }
         }
 
-        List<JSONObject> allResultList = extractShipmentList(resultData.getData());
         allResultList.forEach(e -> e.put("shopId", shopId));
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
     }
