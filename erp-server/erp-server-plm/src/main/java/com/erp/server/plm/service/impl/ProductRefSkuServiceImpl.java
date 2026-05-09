@@ -147,7 +147,7 @@ public class ProductRefSkuServiceImpl extends SuperServiceImpl<ProductRefSkuMapp
             entity.setProductId(productId);
             entity.setSkuId(dto.getSkuId());
             entity.setRefSkuId(dto.getRefSkuId());
-            entity.setRemark(StringUtils.defaultIfBlank(dto.getRemark(), null));
+            entity.setRemark(StringUtils.defaultString(dto.getRemark()));
             entity.setSort(Objects.nonNull(dto.getSort()) ? dto.getSort() : i + 1);
             saveList.add(entity);
         }
