@@ -136,33 +136,6 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             throw new ServiceException(errorMsg);
         }
 
-        if (isEmptyShipmentData(resultData)) {
-            int retryLimit = 3;
-            if (StringUtils.isNotBlank(retryCountStr)) {
-                retryLimit = Integer.parseInt(retryCountStr.trim());
-            }
-            Integer oldErrorCount = dmpInputTaskEntity.getErrorCount();
-            int currentErrorCount = (oldErrorCount == null ? 0 : oldErrorCount) + 1;
-            dmpInputTaskService.lambdaUpdate()
-                    .set(DmpInputTaskEntity::getErrorCount, currentErrorCount)
-                    .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
-                    .update();
-            dmpInputTaskEntity.setErrorCount(currentErrorCount);
-            if (currentErrorCount >= retryLimit) {
-                log.warn("请求领星FBA货件为空且重试次数已达上限:taskId={},sid={},errorCount={},retryLimit={}", dmpInputTaskEntity.getId(), sid, currentErrorCount, retryLimit);
-            } else {
-                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextStatus(false);
-                dmpInputTaskService.lambdaUpdate()
-                        .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(20))
-                        .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId())
-                        .update();
-                String errorMsg = StrUtil.format("请求领星FBA货件失败:,sid={}, result={}, errorCount={}", sid, JSONUtil.toJsonStr(resultData), currentErrorCount);
-                log.warn(errorMsg);
-                return Collections.emptyList();
-            }
-        }
-
         if ("3001008".equalsIgnoreCase(resultData.getCode())) {
             String errorMsg = StrUtil.format("请求领星FBA货件明细触发限流停止当前:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
             log.warn(errorMsg);
@@ -172,6 +145,32 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
             initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
+        }
+
+        if (isEmptyShipmentData(resultData)) {
+            int retryLimit = parseRetryLimit(retryCountStr);
+            String retryTaskId = dmpInputTaskEntity.getParentTaskId();
+            DmpInputTaskEntity retryTaskEntity = dmpInputTaskService.getById(retryTaskId);
+            Integer oldErrorCount = retryTaskEntity == null ? 0 : retryTaskEntity.getErrorCount();
+            int currentErrorCount = (oldErrorCount == null ? 0 : oldErrorCount) + 1;
+            if (currentErrorCount >= retryLimit) {
+                dmpInputTaskService.lambdaUpdate()
+                        .set(DmpInputTaskEntity::getErrorCount, currentErrorCount)
+                        .eq(DmpInputTaskEntity::getId, retryTaskId)
+                        .update();
+                log.warn("请求领星FBA货件为空且重试次数已达上限:taskId={},sid={},errorCount={},retryLimit={}", retryTaskId, sid, currentErrorCount, retryLimit);
+            } else {
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextStatus(false);
+                dmpInputTaskService.lambdaUpdate()
+                        .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(20))
+                        .set(DmpInputTaskEntity::getErrorCount, currentErrorCount)
+                        .eq(DmpInputTaskEntity::getId, retryTaskId)
+                        .update();
+                String errorMsg = StrUtil.format("请求领星FBA货件失败:,sid={}, result={}, errorCount={}", sid, JSONUtil.toJsonStr(resultData), currentErrorCount);
+                log.warn(errorMsg);
+                return Collections.emptyList();
+            }
         }
 
         List<JSONObject> allResultList = extractShipmentList(resultData.getData());
@@ -233,6 +232,18 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
         return mongoService.findMongoData(paramDataList, "amazon_fba_shipment_data");
+    }
+
+    private int parseRetryLimit(String retryCountStr) {
+        if (StringUtils.isBlank(retryCountStr)) {
+            return 3;
+        }
+        try {
+            return Math.max(Integer.parseInt(retryCountStr.trim()), 1);
+        } catch (Exception e) {
+            log.warn("retryCount配置非法,使用默认重试次数3,retryCount={}", retryCountStr);
+            return 3;
+        }
     }
 
 }
