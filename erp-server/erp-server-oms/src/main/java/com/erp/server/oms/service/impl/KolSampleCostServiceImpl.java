@@ -27,6 +27,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.KolSampleCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -41,6 +42,7 @@ import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.listener.KolSampleCostExcelListener;
 import com.erp.server.oms.mapper.KolSampleCostMapper;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.KolSampleCostService;
 import com.erp.server.oms.service.OperateLogService;
 import com.google.common.collect.Lists;
@@ -91,6 +93,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Resource
     private FileFeign fileFeign;
+
+    @Autowired
+    private CustomerInfoService customerInfoService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -247,8 +252,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 .filter(this::isWdtKolSoOutstock)
                 .collect(Collectors.toList());
 
-        appendRegularKolSampleCost(thisMonthList, regularSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap);
-        appendWdtKolSampleCost(thisMonthList, wdtKolSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap);
+        // 客户档案军区兜底：销售订单/收件人取不到军区时，按出库单客户取
+        Map<String, String> customerPartitionIdMap = buildCustomerPartitionIdMap(soOutstockDTOList);
+
+        appendRegularKolSampleCost(thisMonthList, regularSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap);
+        appendWdtKolSampleCost(thisMonthList, wdtKolSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap);
 
         if (CollUtil.isEmpty(thisMonthList)) {
             return;
@@ -387,10 +395,33 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(clearanceCustomsTax, qty));
     }
 
+    private Map<String, String> buildCustomerPartitionIdMap(List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList) {
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            return new HashMap<>();
+        }
+        List<String> customerIds = soOutstockDTOList.stream()
+                .map(SoOutstockDTO.KolSoOutstockDTO::getCustomerId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(customerIds)) {
+            return new HashMap<>();
+        }
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.listByIds(customerIds);
+        if (CollUtil.isEmpty(customerInfoEntities)) {
+            return new HashMap<>();
+        }
+        return customerInfoEntities.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getPartitionId()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPartitionId, (a, b) -> a));
+    }
+
     private void appendRegularKolSampleCost(List<KolSampleCostEntity> thisMonthList,
                                             List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList,
                                             Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
-                                            Map<String, String> partitionMap) {
+                                            Map<String, String> partitionMap,
+                                            Map<String, String> customerPartitionIdMap) {
         if (CollUtil.isEmpty(soOutstockDTOList)) {
             return;
         }
@@ -408,7 +439,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 continue;
             }
             for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, false);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap, false);
             }
         }
     }
@@ -416,7 +447,8 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     private void appendWdtKolSampleCost(List<KolSampleCostEntity> thisMonthList,
                                         List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList,
                                         Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
-                                        Map<String, String> partitionMap) {
+                                        Map<String, String> partitionMap,
+                                        Map<String, String> customerPartitionIdMap) {
         if (CollUtil.isEmpty(soOutstockDTOList)) {
             return;
         }
@@ -453,7 +485,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                         kolSoOutstockDTO.getPlatformCode(), kolSoOutstockDTO.getSkuNo(), kolSoOutstockDTO.getSoOutstockCode(), kolSoOutstockDTO.getSoOutstockDetailId());
             }
             for (Map.Entry<String, KolSampleCostEntity> entry : hitMap.entrySet()) {
-                appendKolSampleCost(thisMonthList, soOutstockMap.get(entry.getKey()), entry.getValue(), oldOutstockDetailCostMap, partitionMap, true);
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(entry.getKey()), entry.getValue(), oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap, true);
             }
         }
     }
@@ -463,6 +495,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                                      KolSampleCostEntity sampleCostEntity,
                                      Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
                                      Map<String, String> partitionMap,
+                                     Map<String, String> customerPartitionIdMap,
                                      boolean useWdtSourceCodeAsSoCode) {
         if (CollUtil.isEmpty(kolSoOutstockDTOList) || ObjUtil.isEmpty(sampleCostEntity)) {
             return;
@@ -476,8 +509,13 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             costEntity.setSourceId(sampleCostEntity.getSourceId());
             costEntity.setSourceType(sampleCostEntity.getSourceType());
             costEntity.setSourceDetailId(sampleCostEntity.getSourceDetailId());
-            costEntity.setPartitionId(sampleCostEntity.getPartitionId());
-            costEntity.setPartitionName(partitionMap.get(sampleCostEntity.getPartitionId()));
+            // 优先按 销售订单/收件人 取军区，未取到则按出库单客户档案兜底
+            String partitionId = sampleCostEntity.getPartitionId();
+            if (CharSequenceUtil.isBlank(partitionId)) {
+                partitionId = customerPartitionIdMap.get(kolSoOutstockDTO.getCustomerId());
+            }
+            costEntity.setPartitionId(partitionId);
+            costEntity.setPartitionName(partitionMap.get(partitionId));
             costEntity.setPartnerId(sampleCostEntity.getPartnerId());
             costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
             costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
