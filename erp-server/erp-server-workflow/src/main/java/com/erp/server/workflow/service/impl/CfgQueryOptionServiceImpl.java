@@ -97,10 +97,12 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
     @Override
     public List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey,String useType) {
+        List<CfgQueryOptionEntity> list = lambdaQuery().eq(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()).orderByDesc(CfgQueryOptionEntity::getId).list();
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = this.list(new LambdaQueryWrapper<CfgQueryOptionEntity>()
                 .eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey)
                 .eq(CfgQueryOptionEntity::getUseType, useType)
                 .eq(CfgQueryOptionEntity::getIsDeleted, false));
+        cfgQueryOptionEntities.addAll(list);
         List<CfgQueryOptionDTO.TreeDTO> resultList = new ArrayList<>(cfgQueryOptionEntities.size());
         Map<String, String> map = new HashMap<>();
         for (RuleCompareEnum item : RuleCompareEnum.values()) {
