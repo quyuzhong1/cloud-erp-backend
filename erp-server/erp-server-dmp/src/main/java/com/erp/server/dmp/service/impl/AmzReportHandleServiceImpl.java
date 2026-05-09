@@ -678,7 +678,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .collect(Collectors.toList());
         // 校验新中台明细配置
         DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getCode, BusinessTypeEnum.FBA_SHIPMENT.getCode())
+                .eq(DmpCfgInputEntity::getBillType, BusinessTypeEnum.FBA_SHIPMENT.getCode())
                 .eq(DmpCfgInputEntity::getDisabled, false)
                 .last(" LIMIT 1 ")
                 .one();
