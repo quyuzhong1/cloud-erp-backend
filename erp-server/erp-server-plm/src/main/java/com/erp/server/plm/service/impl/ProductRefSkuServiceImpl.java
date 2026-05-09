@@ -189,7 +189,7 @@ public class ProductRefSkuServiceImpl extends SuperServiceImpl<ProductRefSkuMapp
         for (ProductRefSkuDTO item : dtoList) {
             ProductRefSkuDTO dto = new ProductRefSkuDTO();
             dto.setId(item.getId());
-            dto.setSkuId(noSpec ? StringUtils.defaultIfBlank(item.getSkuId(), defaultSkuId) : item.getSkuId());
+            dto.setSkuId(noSpec ? defaultSkuId : item.getSkuId());
             dto.setRefSkuId(item.getRefSkuId());
             dto.setRemark(item.getRemark());
             dto.setSort(item.getSort());
