@@ -224,19 +224,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                     && !mainEntity.getIsIntercept()){
                 soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
             }
-            //如果是拆单，子单也需要拦截
-            if(mainEntity.getInvalidStatus() && SoB2cInvalidTypeEnum.ENUM_SPLIT.getCode().equals(mainEntity.getInvalidType())){
-                List<String> targetSoIds = soB2cRefService.listDeepestTargetIdsBySourceId(mainEntity.getId());
-                if(CollectionUtils.isNotEmpty(targetSoIds)){
-                    List<SoB2cEntity> targetEntityList = soB2cService.listByIds(targetSoIds);
-                    for (SoB2cEntity soB2cEntity : targetEntityList) {
-                        if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
-                                && !soB2cEntity.getIsIntercept()){
-                            soB2cService.deliveryIntercept(soB2cEntity.getId(), "平台取消");
-                        }
-                    }
-                }
-            }
+            handleSplitTargetPlatformCancel(mainEntity);
         }
 
 
@@ -279,6 +267,55 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        if (Objects.nonNull(entity) && ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())){
 //            cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
 //        }
+    }
+
+    /**
+     * 拆分原单平台取消后，同步子单取消状态；拦截成功后按最新状态决定是否作废子单。
+     */
+    private void handleSplitTargetPlatformCancel(SoB2cEntity mainEntity) {
+        if (!Boolean.TRUE.equals(mainEntity.getInvalidStatus()) || !SoB2cInvalidTypeEnum.ENUM_SPLIT.getCode().equals(mainEntity.getInvalidType())) {
+            return;
+        }
+        List<String> targetSoIds = soB2cRefService.listDeepestTargetIdsBySourceId(mainEntity.getId());
+        if (CollectionUtils.isEmpty(targetSoIds)) {
+            return;
+        }
+        List<SoB2cEntity> targetEntityList = soB2cService.listByIds(targetSoIds);
+        List<String> invalidTargetSoIds = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : targetEntityList) {
+            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
+                    && !Boolean.TRUE.equals(soB2cEntity.getIsIntercept())) {
+                BatchResultDTO deliveryInterceptResult = soB2cService.deliveryIntercept(soB2cEntity.getId(), "平台取消");
+                if (Boolean.TRUE.equals(deliveryInterceptResult.getSuccess())) {
+                    SoB2cEntity latestEntity = soB2cService.getById(soB2cEntity.getId());
+                    if (Objects.nonNull(latestEntity)
+                            && !SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())
+                            && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())) {
+                        invalidTargetSoIds.add(soB2cEntity.getId());
+                    }
+                }
+            }
+        }
+        List<String> cancelTargetSoIds = targetSoIds.stream()
+                .filter(id -> !invalidTargetSoIds.contains(id))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(invalidTargetSoIds)) {
+            soB2cService.lambdaUpdate()
+                    .in(SoB2cEntity::getId, invalidTargetSoIds)
+                    .set(SoB2cEntity::getIsCancel, Boolean.TRUE)
+                    .set(SoB2cEntity::getRemark, "平台取消")
+                    .set(SoB2cEntity::getInvalidStatus, Boolean.TRUE)
+                    .set(SoB2cEntity::getInvalidType, SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode())
+                    .set(SoB2cEntity::getInvalidRemark, "平台取消")
+                    .update();
+        }
+        if (CollectionUtils.isNotEmpty(cancelTargetSoIds)) {
+            soB2cService.lambdaUpdate()
+                    .in(SoB2cEntity::getId, cancelTargetSoIds)
+                    .set(SoB2cEntity::getIsCancel, Boolean.TRUE)
+                    .set(SoB2cEntity::getRemark, "平台取消")
+                    .update();
+        }
     }
 
     /**
