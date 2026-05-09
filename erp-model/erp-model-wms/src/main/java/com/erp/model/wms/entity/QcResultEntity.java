@@ -67,6 +67,13 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
     private Integer qcBadQty;
 
     /**
+     * 允许入库量
+     */
+    @TableField("allow_instock_qty")
+    private Integer allowInstockQty;
+
+
+    /**
      * 总数量
      */
     @TableField("total_qty")

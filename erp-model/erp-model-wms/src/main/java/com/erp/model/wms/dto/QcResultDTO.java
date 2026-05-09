@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
@@ -79,6 +80,15 @@ public class QcResultDTO {
         @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         @DecimalMin(value = "0", message = "最小值为0", groups = {AddGroup.class})
         private Integer qcBadQty;
+
+
+        /**
+         * 允许入库量
+         */
+        @NotNull(message = "允许入库量不能为空")
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMin(value = "0", message = "最小值为0", groups = {AddGroup.class})
+        private Integer allowInstockQty;
 
 
         /**
@@ -211,7 +221,10 @@ public class QcResultDTO {
          */
         private Integer qcBadQty;
 
-
+        /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
         /**
          * 质检不良率
          */

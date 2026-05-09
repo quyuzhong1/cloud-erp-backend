@@ -739,6 +739,10 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
 
        // 属性赋值
         for(QcApplicationDTO.ListDTO data : list) {
+            //无值时默认待质检
+            if (CharSequenceUtil.isBlank(data.getQcStatus())) {
+                data.setQcStatus(QcNoticeStatusEnum.WAIT.getCode());
+            }
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //质检类型名称
