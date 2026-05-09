@@ -78,13 +78,19 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
         // 获取限流间隔时间配置
         String limitSecondStr = "4";
+        String retryCountStr = "3";
         String extendJson = dmpCfgInputEntity.getExtendJson();
         if (StringUtils.isNotBlank(extendJson)){
             JSONObject parseObject = JSON.parseObject(extendJson);
             if(parseObject != null) {
                 String sourceLimitSecond = parseObject.getString("limitSecond");
+                String retryCount = parseObject.getString("retryCount");
                 if (StringUtils.isNotBlank(sourceLimitSecond)){
                     limitSecondStr = sourceLimitSecond;
+                }
+
+                if (StringUtils.isNotBlank(retryCount)){
+                    retryCountStr = retryCount;
                 }
             }
         }
@@ -131,15 +137,30 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         }
 
         if (isEmptyShipmentData(resultData)) {
-            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextStatus(false);
+            int retryLimit = 3;
+            if (StringUtils.isNotBlank(retryCountStr)) {
+                retryLimit = Integer.parseInt(retryCountStr.trim());
+            }
+            Integer oldErrorCount = dmpInputTaskEntity.getErrorCount();
+            int currentErrorCount = (oldErrorCount == null ? 0 : oldErrorCount) + 1;
             dmpInputTaskService.lambdaUpdate()
-                    .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(20))
-                    .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId())
+                    .set(DmpInputTaskEntity::getErrorCount, currentErrorCount)
+                    .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
                     .update();
-            String errorMsg = StrUtil.format("请求领星FBA货件失败:,sid={}, result={}", sid, JSONUtil.toJsonStr(resultData));
-            log.warn(errorMsg);
-            return Collections.emptyList();
+            dmpInputTaskEntity.setErrorCount(currentErrorCount);
+            if (currentErrorCount >= retryLimit) {
+                log.warn("请求领星FBA货件为空且重试次数已达上限:taskId={},sid={},errorCount={},retryLimit={}", dmpInputTaskEntity.getId(), sid, currentErrorCount, retryLimit);
+            } else {
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextStatus(false);
+                dmpInputTaskService.lambdaUpdate()
+                        .set(DmpInputTaskEntity::getNextExecTime, LocalDateTime.now().plusMinutes(20))
+                        .eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getParentTaskId())
+                        .update();
+                String errorMsg = StrUtil.format("请求领星FBA货件失败:,sid={}, result={}, errorCount={}", sid, JSONUtil.toJsonStr(resultData), currentErrorCount);
+                log.warn(errorMsg);
+                return Collections.emptyList();
+            }
         }
 
         if ("3001008".equalsIgnoreCase(resultData.getCode())) {
