@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
@@ -11,10 +12,12 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
 import com.erp.model.wms.entity.WarehouseLocationSuggestAfterSalesEntity;
 import com.erp.server.wms.query.WarehouseLocationSuggestAfterSalesQueryHandler;
 import com.erp.server.wms.service.WarehouseLocationSuggestAfterSalesService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,6 +45,9 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
     @Resource
     private WarehouseLocationSuggestAfterSalesService warehouseLocationSuggestAfterSalesService;
 
+    @Resource
+    private WarehouseService warehouseService;
+
     /**
      * 高级查询
      *
@@ -57,6 +64,19 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
     public ApiResult<PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO>> paging(@RequestBody PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> pagingDTO) {
         PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> pagingResult = warehouseLocationSuggestAfterSalesService.paging(pagingDTO);
         return ApiResult.success(pagingResult);
+    }
+
+    /**
+     * 获取默认的新增数据的仓库信息
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @date 2026-04-30
+     * @author liuchao
+     */
+    @GetMapping("/getDefaultAddWarehouse")
+    public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
+        return CollUtil.isNotEmpty(dtos)?ApiResult.success(dtos.get(0)):new ApiResult<>();
     }
 
 

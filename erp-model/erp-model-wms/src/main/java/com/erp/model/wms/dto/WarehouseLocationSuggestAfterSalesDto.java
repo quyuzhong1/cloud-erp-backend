@@ -326,4 +326,60 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
          */
         private List<String> ids;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PdaSearchDto {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 库区code
+         */
+        private String warehouseAreaCode;
+        /**
+         * 建议仓位code
+         */
+        private String suggestWarehouseLocationCode;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PdaListDto {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 库区code
+         */
+        private String warehouseAreaCode;
+        /**
+         * 建议仓位code
+         */
+        private String suggestWarehouseLocationCode;
+    }
 }

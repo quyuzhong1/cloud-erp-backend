@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.read.builder.ExcelReaderBuilder;
+import com.alibaba.excel.read.builder.ExcelReaderSheetBuilder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -182,7 +184,9 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
         WarehouseLocationSuggestAfterSalesExcelListener listener = new WarehouseLocationSuggestAfterSalesExcelListener();
         try {
-            EasyExcel.read(file.getInputStream(), listener).sheet(0).doRead();
+            ExcelReaderBuilder read = EasyExcel.read(file.getInputStream(), listener);
+            ExcelReaderSheetBuilder sheet = read.sheet(0);
+            sheet.doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }

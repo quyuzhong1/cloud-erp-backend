@@ -92,7 +92,7 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
             return;
         }
         //EAN码校验
-        if (dto.getEanCode().length() > 255) {
+        if (dto.getEanCode() != null && dto.getEanCode().length() > 255) {
             dto.setErrorMsg("EAN码过长");
             return;
         }
