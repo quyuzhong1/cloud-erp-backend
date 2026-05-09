@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
@@ -220,7 +221,10 @@ public class QcResultDTO {
          */
         private Integer qcBadQty;
 
-
+        /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
         /**
          * 质检不良率
          */
