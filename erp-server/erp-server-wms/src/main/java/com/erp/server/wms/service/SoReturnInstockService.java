@@ -349,6 +349,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
 
     List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
     /**
+     * 重算销售退货入库单价格字段，不重新推送金蝶。
+     */
+    void refreshPriceFields(List<String> ids);
+    /**
      * 下载模板
      * @author will
      * @date 2025/4/24 19:48

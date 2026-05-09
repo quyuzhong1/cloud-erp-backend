@@ -167,28 +167,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setWarehouseId(detailDto.getWarehouseId());
                     detailEntity.setWarehouseName(updateDTO.getName());
                 }
-                if(Objects.isNull(detailDto.getPrice())){
-                    SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(null);
-                    if(Objects.nonNull(soDetailEntity)){
-                        detailEntity.setPrice(soDetailEntity.getPrice());
-                        detailEntity.setTaxPrice(soDetailEntity.getPrice());
-                        detailEntity.setTaxRate(BigDecimal.ZERO);
-                        detailEntity.setTaxReturnAmount(soDetailEntity.getPrice().multiply(BigDecimal.valueOf(detailDto.getRealQty())));
-                        detailEntity.setReturnAmount(soDetailEntity.getPrice().multiply(BigDecimal.valueOf(detailDto.getRealQty())));
-                        BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soDetailEntity.getExchangeRate();
-                        detailEntity.setTaxReturnAmountLocalCurrency(detailEntity.getTaxReturnAmount().multiply(exchangeRate));
-                        detailEntity.setReturnAmountLocalCurrency(detailEntity.getReturnAmount().multiply(exchangeRate));
-                    }
-                }else{
-                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
-                    detailEntity.setPrice(detailDto.getPrice());
-                    detailEntity.setTaxPrice(detailDto.getTaxPrice());
-                    detailEntity.setTaxRate(detailDto.getTaxRate());
-                    detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-                    detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
-                    detailEntity.setReturnAmount(detailDto.getReturnAmount());
-                    detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-                }
+                fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
+                        detailDto.getRealQty(), detailDto.getExchangeRate(), soReturnDetailEntities, soDetailEntityList);
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
 
@@ -284,28 +264,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(detailDto.getSkuNo());
                 detailEntity.setMustQty(detailDto.getMustQty());
                 detailEntity.setRealQty(detailDto.getRealQty());
-                if(Objects.isNull(detailDto.getPrice())){
-                    SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-                    if(Objects.nonNull(soB2cDetailEntity)){
-                        detailEntity.setPrice(soB2cDetailEntity.getPrice());
-                        detailEntity.setTaxPrice(soB2cDetailEntity.getPrice());
-                        detailEntity.setTaxRate(BigDecimal.ZERO);
-                        detailEntity.setTaxReturnAmount(soB2cDetailEntity.getPrice().multiply(BigDecimal.valueOf(detailDto.getRealQty())));
-                        detailEntity.setReturnAmount(soB2cDetailEntity.getPrice().multiply(BigDecimal.valueOf(detailDto.getRealQty())));
-                        BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
-                        detailEntity.setTaxReturnAmountLocalCurrency(detailEntity.getTaxReturnAmount().multiply(exchangeRate));
-                        detailEntity.setReturnAmountLocalCurrency(detailEntity.getReturnAmount().multiply(exchangeRate));
-                    }
-                }else{
-                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
-                    detailEntity.setPrice(detailDto.getPrice());
-                    detailEntity.setTaxPrice(detailDto.getTaxPrice());
-                    detailEntity.setTaxRate(detailDto.getTaxRate());
-                    detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-                    detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
-                    detailEntity.setReturnAmount(detailDto.getReturnAmount());
-                    detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-                }
+                fillB2cPrice(detailEntity, detailDto.getSkuId(), detailDto.getRealQty(), detailDto.getExchangeRate(), soB2cDetailEntityList);
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
@@ -518,6 +477,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         }else{
             //退货订单id
             String soReturnId = dto.getSoReturnId();
+            SoReturnEntity soReturn = soReturnFeign.getSoReturnById(soReturnId);
             //B2B退货订单明细集合
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainId(soReturnId);
             //B2B退货通知单
@@ -526,6 +486,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(Collections.singletonList(soReturnId));
             //B2B退货入库单
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.getSoReturnInstockByReturnIds(Collections.singletonList(soReturnId));
+            List<SoDetailEntity> soDetailEntityList = new ArrayList<>();
+            if(Objects.nonNull(soReturn) && StringUtils.isNotBlank(soReturn.getSourceId())){
+                soDetailEntityList = soInfoFeign.listSoDetailByMainId(soReturn.getSourceId());
+            }
             //sku
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
@@ -594,6 +558,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
                 detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
                 detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                detailEntity.setPrice(detailDto.getPrice());
+                detailEntity.setTaxPrice(detailDto.getTaxPrice());
+                detailEntity.setTaxRate(detailDto.getTaxRate());
                 if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
                 }else{
@@ -697,6 +664,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
                     }
                 }
+                fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
+                        detailDto.getRealQty(), detailEntity.getExchangeRate(), soReturnDetailEntities, soDetailEntityList);
                 list.add(detailEntity);
                 //修改操作日志
                 if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
@@ -730,6 +699,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             }
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnIds);
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
+            SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
+            List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
+            if (Objects.nonNull(soB2cReturnEntity) && StringUtils.isNotBlank(soB2cReturnEntity.getSoId())) {
+                soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cReturnEntity.getSoId()));
+            }
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
             //原明细数据
             List<SoReturnInstockDetailEntity> oldList = this.listDetailByMainId(dto.getId());
@@ -770,6 +744,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                fillB2cPrice(detailEntity, detailDto.getSkuId(), detailDto.getRealQty(), detailDto.getExchangeRate(), soB2cDetailEntityList);
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
                     if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
@@ -847,6 +822,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                detailEntity.setPrice(detailDto.getPrice());
+                detailEntity.setTaxPrice(detailDto.getTaxPrice());
+                detailEntity.setTaxRate(detailDto.getTaxRate());
 
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
@@ -1001,6 +983,66 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<String> oldIds = oldList.stream().map(SoReturnInstockDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    private void fillB2bPrice(SoReturnInstockDetailEntity detailEntity, String skuId, String sourceDetailId, String soReturnDetailId,
+                              Integer realQty, BigDecimal exchangeRate, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList) {
+        SoDetailEntity soDetailEntity = findSoDetail(skuId, sourceDetailId, soReturnDetailId, returnDetailList, soDetailList);
+        if (Objects.isNull(soDetailEntity)) {
+            return;
+        }
+        setPriceAndAmount(detailEntity, soDetailEntity.getPrice(), soDetailEntity.getTaxRate(), soDetailEntity.getTaxPrice(),
+                Objects.nonNull(exchangeRate) ? exchangeRate : soDetailEntity.getExchangeRate(), realQty);
+    }
+
+    private void fillB2cPrice(SoReturnInstockDetailEntity detailEntity, String skuId, Integer realQty,
+                              BigDecimal exchangeRate, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+        SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+                .filter(req -> CharSequenceUtil.equals(req.getSkuId(), skuId))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(soB2cDetailEntity)) {
+            return;
+        }
+        setPriceAndAmount(detailEntity, soB2cDetailEntity.getPrice(), BigDecimal.ZERO, soB2cDetailEntity.getPrice(),
+                Objects.nonNull(exchangeRate) ? exchangeRate : soB2cDetailEntity.getExchangeRate(), realQty);
+    }
+
+    private SoDetailEntity findSoDetail(String skuId, String sourceDetailId, String soReturnDetailId,
+                                        List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList) {
+        String soDetailId = returnDetailList.stream()
+                .filter(req -> CharSequenceUtil.equals(req.getId(), soReturnDetailId))
+                .map(SoReturnDetailEntity::getSourceDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse(sourceDetailId);
+        SoDetailEntity soDetailEntity = soDetailList.stream()
+                .filter(req -> CharSequenceUtil.equals(req.getId(), soDetailId))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(soDetailEntity)) {
+            return soDetailEntity;
+        }
+        return soDetailList.stream()
+                .filter(req -> CharSequenceUtil.equals(req.getSkuId(), skuId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void setPriceAndAmount(SoReturnInstockDetailEntity detailEntity, BigDecimal price, BigDecimal taxRate,
+                                   BigDecimal taxPrice, BigDecimal exchangeRate, Integer realQty) {
+        BigDecimal qty = BigDecimal.valueOf(Objects.nonNull(realQty) ? realQty : 0);
+        BigDecimal safePrice = Objects.nonNull(price) ? price : BigDecimal.ZERO;
+        BigDecimal safeTaxPrice = Objects.nonNull(taxPrice) ? taxPrice : safePrice;
+        BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
+        detailEntity.setPrice(safePrice);
+        detailEntity.setTaxRate(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO);
+        detailEntity.setTaxPrice(safeTaxPrice);
+        detailEntity.setExchangeRate(safeExchangeRate);
+        detailEntity.setReturnAmount(MathUtil.multiplyWithFour(safePrice, qty));
+        detailEntity.setTaxReturnAmount(MathUtil.multiplyWithFour(safeTaxPrice, qty));
+        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detailEntity.getReturnAmount(), safeExchangeRate));
+        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detailEntity.getTaxReturnAmount(), safeExchangeRate));
     }
 
     @Override

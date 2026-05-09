@@ -60,6 +60,8 @@ public class DataRecoveryJob {
         if(CollUtil.isEmpty(ids)){
             if("soReturnInstockService".equals(type)){
                 ids = soOutstockService.getIdsByTemp("so_return_instock");
+            }else if("soReturnInstockPrice".equals(type)){
+                ids = soOutstockService.getIdsByTemp("so_return_instock");
             }else if("transferInfoService".equals(type)){
                 ids = soOutstockService.getIdsByTemp("transfer_info");
             }else if("soOutstockService".equals(type)){
@@ -81,6 +83,8 @@ public class DataRecoveryJob {
                     if (Objects.nonNull(entity)){
                         soReturnInstockService.disApprove(entity, isPushKingdee);
                     }
+                }else if(CharSequenceUtil.isNotBlank(type) && "soReturnInstockPrice".equals(type)){
+                    soReturnInstockService.refreshPriceFields(Collections.singletonList(item));
                 }else if(CharSequenceUtil.isNotBlank(type) && "transferInfoService".equals(type)){
                     TransferInfoEntity entity = transferInfoService.getById(item);
                     if (Objects.nonNull(entity)){
