@@ -702,7 +702,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
 
         // 创建新中台hotfix任务
-//        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+ //        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
 //        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
 //        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
 //        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
@@ -717,6 +717,9 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         Map<String, Object> detailExtendJson = new LinkedHashMap<>();
         detailExtendJson.put("shopId", dto.getShopId());
         detailExtendJson.put("shipmentCodeList", dto.getShipmentCodeList());
+        JSONObject extendJsonObj = JSON.parseObject(inputEntity.getExtendJson());
+        String retryCount = extendJsonObj.getString("retryCount");
+        detailExtendJson.put("retryCount", retryCount);
         createInputDTO.setDetailExtendJson(JSONUtil.toJsonStr(detailExtendJson));
         dmpInoutTaskFeign.doInputTask(Collections.singletonList(createInputDTO));
         // 创建任务
