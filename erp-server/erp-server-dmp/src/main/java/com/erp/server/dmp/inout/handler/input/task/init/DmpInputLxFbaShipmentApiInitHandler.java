@@ -125,9 +125,11 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
         Result<Object> resultData = null;
         List<JSONObject> allResultList = new ArrayList<>();
+        boolean allShipmentFetched = true;
         for (Map<String, Object> mongoData : findMongoData) {
             String shipmentId = mongoData.getOrDefault("shipmentId", "").toString();
             if (StringUtils.isBlank(shipmentId)) {
+                allShipmentFetched = false;
                 resultData = null;
                 allResultList.clear();
                 break;
@@ -152,14 +154,16 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 return Collections.emptyList();
             }
 
-            if (isEmptyShipmentData(resultData)) {
+            List<JSONObject> shipmentList = extractShipmentList(resultData.getData());
+            if (CollectionUtils.isEmpty(shipmentList)) {
+                allShipmentFetched = false;
                 allResultList.clear();
                 break;
             }
-            allResultList.addAll(extractShipmentList(resultData.getData()));
+            allResultList.addAll(shipmentList);
         }
 
-        if (isEmptyShipmentData(resultData)) {
+        if (!allShipmentFetched || isEmptyShipmentData(resultData)) {
             int retryLimit = parseRetryLimit(retryCountStr);
             String retryTaskId = dmpInputTaskEntity.getParentTaskId();
             DmpInputTaskEntity retryTaskEntity = dmpInputTaskService.getById(retryTaskId);
@@ -184,7 +188,6 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 return Collections.emptyList();
             }
         }
-
         allResultList.forEach(e -> e.put("shopId", shopId));
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
     }
