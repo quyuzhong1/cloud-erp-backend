@@ -419,7 +419,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //更新审核状态
         updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        operateLogService.addModuleOperateLog("提交了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog("提交了一个直接调拨单", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
