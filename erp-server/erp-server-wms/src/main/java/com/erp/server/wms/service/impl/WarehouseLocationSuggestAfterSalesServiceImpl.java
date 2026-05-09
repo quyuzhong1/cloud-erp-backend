@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -27,6 +26,7 @@ import com.erp.model.wms.dto.excel.WarehouseLocationSuggestAfterSalesExcelDto;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationSuggestAfterSalesEntity;
+import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.WarehouseLocationSuggestAfterSalesExcelListener;
@@ -92,41 +92,55 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
         WarehouseLocationSuggestAfterSalesEntity entity = new WarehouseLocationSuggestAfterSalesEntity();
         BeanMapperUtils.copy(dto, entity);
 
-        LambdaQueryWrapper<WarehouseLocationSuggestAfterSalesEntity> wrapper = Wrappers.lambdaQuery(WarehouseLocationSuggestAfterSalesEntity.class)
+        // 1. 严格通过 ID 判断是新增还是修改
+        boolean isSave = StrUtil.isBlank(entity.getId());
+        WarehouseLocationSuggestAfterSalesEntity oldEntity = null;
+
+        // 2. 查出当前业务组合（SKU+仓库+仓位）在数据库中的记录，用于冲突判定
+        LambdaQueryWrapper<WarehouseLocationSuggestAfterSalesEntity> conflictWrapper = Wrappers.lambdaQuery(WarehouseLocationSuggestAfterSalesEntity.class)
                 .eq(WarehouseLocationSuggestAfterSalesEntity::getSkuNo, entity.getSkuNo())
                 .eq(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId, entity.getWarehouseId())
                 .eq(WarehouseLocationSuggestAfterSalesEntity::getSuggestWarehouseLocationCode, entity.getSuggestWarehouseLocationCode())
                 .last("LIMIT 1");
+        WarehouseLocationSuggestAfterSalesEntity conflictEntity = this.getOne(conflictWrapper, false);
 
-        WarehouseLocationSuggestAfterSalesEntity oldEntity = this.getOne(wrapper, false);
-
-        boolean isSave = (oldEntity == null);
-        boolean success;
-
-        if (!isSave) {
-            // 存在则执行覆盖更新
-            log.info("开始覆盖更新仓位售后推荐单 sku: [{}]", entity.getSkuNo());
-            entity.setId(oldEntity.getId());
-            success = this.updateById(entity);
-        } else {
-            // 不存在则新增
+        if (isSave) {
+            // 【新增逻辑】
+            if (conflictEntity != null) {
+                throw new ServiceException(StrUtil.format("新增失败：SKU【{}】在该仓库已存在相同的推荐仓位", entity.getSkuNo()));
+            }
             log.info("开始新增仓位售后推荐单 sku: [{}]", entity.getSkuNo());
-            success = this.save(entity);
+        } else {
+            // 【修改逻辑】
+            // 获取修改前的原始数据（用于日志对比）
+            oldEntity = this.getById(entity.getId());
+            if (oldEntity == null) {
+                throw new ServiceException("修改失败：原记录不存在或已被删除");
+            }
+
+            // 冲突检查：如果根据业务组合查到了记录，但 ID 不是当前这条，说明改后会产生重复
+            if (conflictEntity != null && !conflictEntity.getId().equals(entity.getId())) {
+                throw new ServiceException(StrUtil.format("修改失败：SKU【{}】的新推荐组合与已有记录冲突", entity.getSkuNo()));
+            }
+            log.info("开始更新仓位售后推荐单 ID: [{}]", entity.getId());
         }
+
+        //
+        boolean success = this.saveOrUpdate(entity);
 
         if (!success) {
-            log.error("仓位售后推荐单操作失败 sku: [{}], isSave: [{}]", entity.getSkuNo(), isSave);
-            throw new ServiceException((isSave ? "新增" : "覆盖更新") + "仓位推荐信息失败");
+            log.error("仓位售后推荐单操作失败 ID: [{}], isSave: [{}]", entity.getId(), isSave);
+            throw new ServiceException((isSave ? "新增" : "更新") + "仓位推荐信息失败");
         }
-        //日志记录
-        String operator = UserContext.getDefaultLoginUser().getUserName();
-        String actionName = isSave ? "新增" : "覆盖更新";
 
-        String msg = StrUtil.format("用户【{}】对 SKU【{}】推荐仓位编码【{}】 执行了【{}】相关的【{}】操作",
-                operator, entity.getSkuNo(), entity.getSuggestWarehouseLocationCode(), actionName, "仓位售后推荐");
+        // 日志记录
+        String operator = UserContext.getDefaultLoginUser().getUserName();
+        String actionName = isSave ? "新增" : "修改覆盖";
+        String msg = StrUtil.format("用户【{}】对 SKU【{}】执行了【{}】相关的仓位售后推荐操作",
+                operator, entity.getSkuNo(), actionName);
 
         operateLogService.addModuleOperateLogByObj(
-                oldEntity,
+                oldEntity, // 新增时为 null，修改时为数据库原值
                 entity,
                 ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(),
                 entity.getId(),
@@ -228,19 +242,22 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
         String excelName = "售后仓位推荐导入模板.xlsx";
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
+
+        // 使用 try-with-resources 自动管理资源
+        try (InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+             XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+             OutputStream output = response.getOutputStream()) {
+
             response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
-            response.setContentType("application/msexcel");
+            // 设置文件头及编码，防止中文文件名乱码
+            String encodedFileName = new String(excelName.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1);
+            response.setHeader("Content-Disposition", "attachment;filename=" + encodedFileName);
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
             wb.write(output);
-            wb.close();
-        } catch (Exception e) {
+            output.flush(); // 显式刷新缓冲区
+        } catch (IOException e) {
+            log.error("下载仓位推荐模板失败", e);
             throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
         }
     }
@@ -279,83 +296,89 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
         if (!updateList.isEmpty()) {
             this.updateBatchById(updateList);
         }
+        //暂时没有对单个数据的修改状态做判断是否成功失败只返回空的结果后续可以加逻辑
         return resultDTOList;
     }
 
 
     /**
-     * 填充字段
+     * 填充视图
      *
-     * @param entityList 查询结果
-     * @return 填充后的结果
+     * @param entityList 实体列表
+     * @return 列表视图
      */
     private List<WarehouseLocationSuggestAfterSalesDto.ListDTO> fillViewList(List<WarehouseLocationSuggestAfterSalesEntity> entityList) {
-        if (entityList.isEmpty()) {
+        if (CollUtil.isEmpty(entityList)) {
             return Collections.emptyList();
         }
 
-
-        List<WarehouseLocationSuggestAfterSalesDto.ListDTO> dtoList = new ArrayList<>(entityList.size());
-        //批量获取sku信息
+        // 1. 提取所有关联 ID/Code 提升批量查询效率
         List<String> skuNoList = entityList.stream().map(WarehouseLocationSuggestAfterSalesEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = entityList.stream().map(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId).distinct().collect(Collectors.toList());
+
+        // 2. 批量获取外部数据并转为 Map (空间换时间)
+        // SKU 基础信息
         List<ProductDetailEntity> skuDetailEntities = plmTaskFeign.listBySkuNos(skuNoList);
-        Map<String, ProductDetailEntity> skuDetailMap = skuDetailEntities.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item));
-        //获取ena码信息
+        Map<String, ProductDetailEntity> skuDetailMap = skuDetailEntities.stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (k1, k2) -> k1));
+
+        // EAN 码信息
         Map<String, String> skuAndEnaMap = new HashMap<>();
         if (CollUtil.isNotEmpty(skuDetailEntities)) {
             List<String> skuIdList = skuDetailEntities.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
             List<ProductPurchaseEntity> productPurchaseEntities = plmTaskFeign.listProductPurchaseBySkuId(skuIdList);
-            skuAndEnaMap = productPurchaseEntities
-                    .stream().filter(i -> StrUtil.isNotBlank(i.getEan())).collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, ProductPurchaseEntity::getEan));
+            skuAndEnaMap = productPurchaseEntities.stream()
+                    .filter(i -> StrUtil.isNotBlank(i.getEan()))
+                    .collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, ProductPurchaseEntity::getEan, (k1, k2) -> k1));
         }
 
-        //批量获取仓库信息
-        List<String> warehouseIdList = entityList.stream().map(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseList = warehouseService.getBaseMapper().selectBatchIds(warehouseIdList);
-        Map<String, String> warehouseIdNameMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        // 仓库名称 Map
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        Map<String, String> warehouseIdNameMap = warehouseList.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (k1, k2) -> k1));
 
-        //批量获取库区/仓位信息
-        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .in("warehouse_id", warehouseIdList)
-                .eq("is_deleted", false)
-        );
+        // 关键优化点：将所有库位/库区信息转成 Map 结构，Key 使用 "warehouseId_code" 保证唯一性
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.list(Wrappers.lambdaQuery(WarehouseLocationEntity.class)
+                .in(WarehouseLocationEntity::getWarehouseId, warehouseIdList)
+                .eq(WarehouseLocationEntity::getIsDeleted, false));
 
+        Map<String, WarehouseLocationEntity> locationMap = warehouseLocationList.stream()
+                .collect(Collectors.toMap(
+                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + item.getType(),
+                        item -> item,
+                        (oldVal, newVal) -> oldVal));
+
+        // 3. 组装数据，直接通过 Map 获取，复杂度降至 O(1)
+        List<WarehouseLocationSuggestAfterSalesDto.ListDTO> dtoList = new ArrayList<>(entityList.size());
         for (WarehouseLocationSuggestAfterSalesEntity entity : entityList) {
             WarehouseLocationSuggestAfterSalesDto.ListDTO dto = new WarehouseLocationSuggestAfterSalesDto.ListDTO();
-            dto.setId(entity.getId());
+            BeanMapperUtils.copy(entity, dto);
 
-            dto.setSkuNo(entity.getSkuNo());
-            ProductDetailEntity skuDetailEntity = skuDetailMap.get(entity.getSkuNo());
-            if (skuDetailEntity != null) {
-                dto.setEnaNo(skuAndEnaMap.get(skuDetailEntity.getId()));
-                dto.setProductName(skuDetailEntity.getName());
+            // 匹配 SKU 信息
+            ProductDetailEntity skuDetail = skuDetailMap.get(entity.getSkuNo());
+            if (skuDetail != null) {
+                dto.setEanNo(skuAndEnaMap.get(skuDetail.getId()));
+                dto.setProductName(skuDetail.getName());
             }
 
-            dto.setWarehouseId(entity.getWarehouseId());
-            String warehouseName = warehouseIdNameMap.get(entity.getWarehouseId());
-            dto.setWarehouseName(warehouseName);
+            // 匹配仓库
+            dto.setWarehouseName(warehouseIdNameMap.get(entity.getWarehouseId()));
 
-            WarehouseLocationEntity areaEntity = warehouseLocationList.stream()
-                    .filter(item -> item.getCode().equals(entity.getWarehouseAreaCode()))
-                    .findFirst().orElse(new WarehouseLocationEntity());
-
+            // 匹配库区 (使用组合 Key)
+            String areaKey = entity.getWarehouseId() + "_" + entity.getWarehouseAreaCode() + "_" + WarehouseLocationTypeEnum.AREA;
+            WarehouseLocationEntity areaEntity = locationMap.getOrDefault(areaKey, new WarehouseLocationEntity());
             dto.setWarehouseAreaId(areaEntity.getId());
-            dto.setWarehouseAreaCode(areaEntity.getCode());
             dto.setWarehouseAreaName(areaEntity.getName());
 
-
-            WarehouseLocationEntity locationEntity = warehouseLocationList.stream()
-                    .filter(item -> item.getCode().equals(entity.getSuggestWarehouseLocationCode()))
-                    .findFirst().orElse(new WarehouseLocationEntity());
+            // 匹配仓位 (使用组合 Key)
+            String locationKey = entity.getWarehouseId() + "_" + entity.getSuggestWarehouseLocationCode() + "_" + WarehouseLocationTypeEnum.AREA;
+            WarehouseLocationEntity locationEntity = locationMap.getOrDefault(locationKey, new WarehouseLocationEntity());
             dto.setSuggestWarehouseLocationId(locationEntity.getId());
-            dto.setSuggestWarehouseLocationCode(locationEntity.getCode());
             dto.setSuggestWarehouseLocationName(locationEntity.getName());
 
-            dto.setPriority(entity.getPriority());
             dto.setStatusName(entity.getDisabled() ? "禁用" : "启用");
             dto.setStatus(!entity.getDisabled());
             dto.setUpdateUser(entity.getUpdateUserName());
-            dto.setUpdateTime(entity.getUpdateTime());
             dtoList.add(dto);
         }
         return dtoList;

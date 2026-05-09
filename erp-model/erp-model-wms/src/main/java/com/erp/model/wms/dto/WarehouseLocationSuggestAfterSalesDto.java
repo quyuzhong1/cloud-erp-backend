@@ -138,19 +138,19 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
         /**
          * 库区编码
          */
-        private String warehouseAreaId;
+        private String warehouseAreaCode;
         /**
-         * 推荐仓位id
+         * 推荐仓位code
          */
-        private String suggestWarehouseLocationId;
+        private String suggestWarehouseLocationCode;
         /**
          * 优先级
          */
         private Integer priority;
         /**
-         * 启用状态
+         * 是否禁用
          */
-        private Boolean status;
+        private Boolean disabled;
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -195,7 +195,7 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
 
         private String skuNo;
 
-        private String enaNo;
+        private String eanNo;
 
         /**
          * 产品名称
