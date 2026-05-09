@@ -348,7 +348,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
         Map<String, WarehouseLocationEntity> locationMap = warehouseLocationList.stream()
                 .collect(Collectors.toMap(
-                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + item.getType(),
+                        item -> item.getWarehouseId() + "_" + item.getCode() + "_" + item.getType().toUpperCase(),
                         item -> item,
                         (oldVal, newVal) -> oldVal));
 
@@ -375,16 +375,24 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
             dto.setWarehouseAreaName(areaEntity.getName());
 
             // 匹配仓位 (使用组合 Key)
-            String locationKey = entity.getWarehouseId() + "_" + entity.getSuggestWarehouseLocationCode() + "_" + WarehouseLocationTypeEnum.AREA;
+            String locationKey = entity.getWarehouseId() + "_" + entity.getSuggestWarehouseLocationCode() + "_" + WarehouseLocationTypeEnum.LOCATION;
             WarehouseLocationEntity locationEntity = locationMap.getOrDefault(locationKey, new WarehouseLocationEntity());
             dto.setSuggestWarehouseLocationId(locationEntity.getId());
             dto.setSuggestWarehouseLocationName(locationEntity.getName());
 
             dto.setStatusName(entity.getDisabled() ? "禁用" : "启用");
-            dto.setStatus(!entity.getDisabled());
+            dto.setStatus(entity.getDisabled());
             dto.setUpdateUser(entity.getUpdateUserName());
             dtoList.add(dto);
         }
         return dtoList;
+    }
+
+
+    @Override
+    public List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> getSuggestWarehouseLocationList(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto dto) {
+
+
+        return Collections.emptyList();
     }
 }

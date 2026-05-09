@@ -98,4 +98,15 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @author liuchao
      */
     List<BatchResultDTO> updateStatusBatch(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto);
+
+
+    /**
+     * PDA获取仓位售后推荐列表
+     *
+     * @param dto 搜索参数
+     * @return 仓位售后推荐列表
+     * @date 2026-05-09
+     * @author liuchao
+     */
+    List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> getSuggestWarehouseLocationList(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto dto);
 }

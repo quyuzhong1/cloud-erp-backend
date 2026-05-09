@@ -120,6 +120,10 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
     @NoArgsConstructor
     public static class AddOrEditDTO {
         /**
+         *  id
+         */
+        private String id;
+        /**
          * SKU编码
          */
         private String skuNo;
@@ -143,6 +147,10 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
          * 推荐仓位code
          */
         private String suggestWarehouseLocationCode;
+        /**
+         * 推荐仓位id
+         */
+        private String suggestWarehouseLocationId;
         /**
          * 优先级
          */
@@ -264,47 +272,6 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
 
     }
 
-
-    /**
-     * 导入
-     */
-    @Data
-    public static class importExcelDTO implements Serializable {
-//        @ExcelProperty(value = "*SKU", index = 0)
-//        @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 64)
-//        private String skuNo;
-//
-//        @ExcelProperty(value = "产品名称", index = 1)
-//        @FieldValid(fieldName = "产品名称", maxLength = 64)
-//        private String productName;
-//
-//        @ExcelProperty(value = "*仓位编码", index = 2)
-//        @FieldValid(fieldName = "仓位编码", isNotBlank = true, maxLength = 64)
-//        private String warehouseLocation;
-//
-//        @ExcelProperty(value = "*所属仓库", index = 3)
-//        @FieldValid(fieldName = "所属仓库", isNotBlank = true, maxLength = 64)
-//        private String warehouseName;
-//
-//        @ExcelProperty(value = "所属库区", index = 4)
-//        @FieldValid(fieldName = "所属库区", maxLength = 64)
-//        private String warehouseAreaName;
-//
-//        @ExcelProperty(value = "库区类型", index = 5)
-//        @FieldValid(fieldName = "库区类型", maxLength = 20)
-//        private String warehouseAreaType;
-//
-//        @ExcelProperty(value = "安全库存", index = 6)
-//        @FieldValid(fieldName = "安全库存", maxLength = 20)
-//        private Integer safetyQty;
-//
-//        @ExcelProperty(value = "补货上限量", index = 7)
-//        @FieldValid(fieldName = "补货上限量", maxLength = 20)
-//        private Integer maxQty;
-//
-//        private String errorInfo;
-    }
-
     /**
      * 导出
      */
@@ -332,27 +299,19 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
     @NoArgsConstructor
     public static class PdaSearchDto {
         /**
-         * id
-         */
-        private String id;
-        /**
          * sku编码
          */
         private String skuNo;
 
         /**
-         * 仓库id
+         * 仓库id （目前暂时只有 东莞售后仓库）
          */
         private String warehouseId;
 
         /**
-         * 库区code
+         * 取出仓位code （目前暂时只有 空仓位）
          */
-        private String warehouseAreaCode;
-        /**
-         * 建议仓位code
-         */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
     }
 
     @Data
