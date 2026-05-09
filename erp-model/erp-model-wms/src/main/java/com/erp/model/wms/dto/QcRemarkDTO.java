@@ -133,6 +133,11 @@ public class QcRemarkDTO implements Serializable {
         @NotNull(message = "检验不良量不允许为空")
         private Integer qcBadQty;
         /**
+         * 允许入库量
+         */
+        @NotNull(message = "允许入库量不允许为空")
+        private Integer allowInstockQty;
+        /**
          * 检验不良率
          */
         private String qcBadRate;

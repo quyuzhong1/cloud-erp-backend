@@ -556,6 +556,13 @@ public class QcNoticeDTO implements Serializable {
         private Integer qcBadQty;
 
         /**
+         *允许入库量
+         */
+        @NotNull(message = "允许入库量不允许为空")
+        @Min(value = 0, message = "允许入库量不能小于0")
+        private Integer allowInstockQty;
+
+        /**
          * 质检员id
          */
         private String qcUserId;
