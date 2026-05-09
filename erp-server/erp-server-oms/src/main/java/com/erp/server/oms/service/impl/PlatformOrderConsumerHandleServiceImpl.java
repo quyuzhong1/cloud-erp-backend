@@ -285,14 +285,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         for (SoB2cEntity soB2cEntity : targetEntityList) {
             if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
                     && !Boolean.TRUE.equals(soB2cEntity.getIsIntercept())) {
-                BatchResultDTO deliveryInterceptResult = soB2cService.deliveryIntercept(soB2cEntity.getId(), "平台取消");
-                if (Boolean.TRUE.equals(deliveryInterceptResult.getSuccess())) {
-                    SoB2cEntity latestEntity = soB2cService.getById(soB2cEntity.getId());
-                    if (Objects.nonNull(latestEntity)
-                            && !SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())
-                            && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())) {
-                        invalidTargetSoIds.add(soB2cEntity.getId());
-                    }
+                soB2cService.deliveryIntercept(soB2cEntity.getId(), "平台取消");
+                SoB2cEntity latestEntity = soB2cService.getById(soB2cEntity.getId());
+                if (Objects.nonNull(latestEntity)
+                        && !SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())
+                        && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())) {
+                    invalidTargetSoIds.add(soB2cEntity.getId());
                 }
             }
         }
