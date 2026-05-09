@@ -12,7 +12,6 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -95,6 +94,14 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
      */
     List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids, @Param("detailIds") List<String> detailIds);
+
+    /**
+     * 查询B2B报关按箱号最小维度来源明细
+     *
+     * @param list 发货通知单明细参数集合
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
+     */
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listB2bDeclareMinSourceDetail(@Param("list") List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
 
     /**
      * 查询用于报关中间表生成的装箱明细

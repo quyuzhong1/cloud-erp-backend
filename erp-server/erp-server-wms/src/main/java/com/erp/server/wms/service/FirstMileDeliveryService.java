@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -458,4 +459,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
      */
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto);
+    /**
+     * 报关单（BOM拆分后不合并，按来源明细最小维度返回）
+     * @author will
+     * @date 2026/5/9 16:11
+     * @param list
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
 }
