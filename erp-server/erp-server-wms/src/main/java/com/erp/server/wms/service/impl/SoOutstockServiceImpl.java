@@ -4222,6 +4222,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstockDetailService.updateBatchById(list);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refreshAmountFields(List<String> ids, Boolean isPushKingdee) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<SoOutstockEntity> soOutstockEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soOutstockEntityList)) {
+            return;
+        }
+        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.listByMainIds(ids);
+        for (SoOutstockEntity entity : soOutstockEntityList) {
+            List<SoOutstockDetailEntity> currentDetailList = detailList.stream()
+                    .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), entity.getId()))
+                    .collect(Collectors.toList());
+            soOutstockDetailService.refreshAmountFields(currentDetailList, entity);
+        }
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            soOutstockDetailService.updateBatchById(detailList);
+        }
+        if (Boolean.TRUE.equals(isPushKingdee)) {
+            sendPushTask(soOutstockEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+    }
+
     private void syncToWdt(SoOutstockEntity entity,SyncOperateEnum operateEnum) {
         if(CharSequenceUtil.isBlank(entity.getWarehouseId())){
             return;
