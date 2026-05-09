@@ -271,12 +271,10 @@
         FROM logistics_bill lb
         LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = lb.id AND lbd.is_deleted = FALSE
         <if test="params.usePackingStatusSql != null and params.usePackingStatusSql">
-            -- 拆分OR条件为两个LEFT JOIN
             LEFT JOIN foreign_packing_task fpt1 ON fpt1.source_id = lb.outstock_id AND fpt1.is_deleted = FALSE
             LEFT JOIN foreign_packing_task fpt2 ON fpt2.source_id = lb.source_id AND fpt2.is_deleted = FALSE
         </if>
         <if test="params.useWeightAllocationStatusSql != null and params.useWeightAllocationStatusSql">
-            -- 消除相关子查询
             LEFT JOIN ( SELECT DISTINCT logistics_bill_id FROM first_mile_weight_allocation WHERE is_deleted = FALSE ) fmwa ON fmwa.logistics_bill_id = lb.id
         </if>
         WHERE ${params.sqlMap.default}
