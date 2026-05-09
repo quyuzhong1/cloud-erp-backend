@@ -853,15 +853,17 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).collect(Collectors.toList());
+        List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
 
         //销售订单主表信息
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
-
-        //查询销售订单下的销售出库单
-        List<SoOutstockDetailEntity> soOutstockDetailList = this.listBySoDetailIds(soDetailIdList);
+        List<SoDetailEntity> allSoDetailList = CollectionUtils.isNotEmpty(soIdList) ? soInfoFeign.listSoDetailByMainIds(soIdList) : Collections.emptyList();
+        Map<String, BigDecimal> orderWeightMap = allSoDetailList.stream()
+                .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
+                        Collectors.mapping(this::calculateB2bDetailWeight,
+                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
 
         for (SoOutstockDetailEntity detailEntity : detailList) {
             //销售订单明细
@@ -877,36 +879,57 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
 
             //单价信息
-            BigDecimal price = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(),soDetailEntity.getPerBoxQty());
+            BigDecimal price = getB2bOutstockPrice(soDetailEntity);
             detailEntity.setPrice(price);
             detailEntity.setTaxRate(soDetailEntity.getTaxRate());
             detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
             detailEntity.setAmount(MathUtil.multiplyWithTwo(price, detailEntity.getActualQty()));
             detailEntity.setCurrency(soDetailEntity.getCurrency());
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
-            //销售订单明细已下推的销售出库单
-            /**
-             *  单SKU价税合计(本位币)=SKU的价税合计(本位币)*(出库数量/销售订单数量)
-             *  最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
-             */
-            List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailList.stream().filter(obj -> obj.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
-            BigDecimal allAmountLocalCurrency = MathUtil.multiplyWithTwo(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getBoxQty())));
-            if (CollectionUtils.isNotEmpty(soOutStockDetailList)) {
-                Integer totalActualQty = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(), soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO) {
-                    BigDecimal totalAllAmount = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
-                    allAmountLocalCurrency = MathUtil.subtract(soDetailEntity.getAllAmountLocalCurrency(), totalAllAmount);
-                }
-            }
+            BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soInfoEntity, soDetailEntity,
+                    detailEntity.getActualQty(), orderWeightMap.get(soDetailEntity.getMainId()));
             detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
-            BigDecimal taxAmount = allAmountLocalCurrency;
-            if(soDetailEntity.getExchangeRate().compareTo(BigDecimal.ZERO) != 0){
-                taxAmount = MathUtil.divide(allAmountLocalCurrency, soDetailEntity.getExchangeRate());
-            }
-            detailEntity.setTaxAmount(taxAmount);
+            detailEntity.setTaxAmount(divideAmount(allAmountLocalCurrency, defaultExchangeRate(soDetailEntity.getExchangeRate()), RoundingMode.HALF_UP));
             detailEntity.setRemark(soDetailEntity.getRemark());
             detailEntity.setCustomerPO(soDetailEntity.getCustomerPO());
         }
+    }
+
+    private BigDecimal calculateB2bAllAmountLocalCurrency(SoInfoEntity soInfoEntity, SoDetailEntity soDetailEntity,
+                                                          Integer actualQty, BigDecimal totalWeight) {
+        BigDecimal exchangeRate = defaultExchangeRate(soDetailEntity.getExchangeRate());
+        BigDecimal orderLocalAmount = getB2bOrderLocalAmount(soInfoEntity, exchangeRate);
+        return calculateAllocatedAmount(orderLocalAmount, calculateB2bDetailWeight(soDetailEntity), totalWeight,
+                getB2bSalesQty(soDetailEntity), actualQty, RoundingMode.DOWN);
+    }
+
+    private BigDecimal getB2bOrderLocalAmount(SoInfoEntity soInfoEntity, BigDecimal exchangeRate) {
+        BigDecimal orderAmount = soInfoEntity.getOrderAmount();
+        if (Objects.nonNull(orderAmount)) {
+            return orderAmount.multiply(exchangeRate);
+        }
+        return MathUtil.nvl(soInfoEntity.getAllAmountLc(), BigDecimal.ZERO);
+    }
+
+    private BigDecimal calculateB2bDetailWeight(SoDetailEntity soDetailEntity) {
+        return getB2bSalesQty(soDetailEntity).multiply(getB2bOutstockPrice(soDetailEntity));
+    }
+
+    private BigDecimal getB2bSalesQty(SoDetailEntity soDetailEntity) {
+        Integer boxQty = soDetailEntity.getBoxQty();
+        if (Objects.nonNull(boxQty) && boxQty > 0) {
+            return BigDecimal.valueOf(boxQty);
+        }
+        return BigDecimal.valueOf(Objects.nonNull(soDetailEntity.getQty()) ? soDetailEntity.getQty() : 0);
+    }
+
+    private BigDecimal getB2bOutstockPrice(SoDetailEntity soDetailEntity) {
+        BigDecimal price = MathUtil.nvl(soDetailEntity.getPrice(), BigDecimal.ZERO);
+        Integer perBoxQty = soDetailEntity.getPerBoxQty();
+        if (Objects.nonNull(perBoxQty) && perBoxQty > 0) {
+            return price.multiply(BigDecimal.valueOf(perBoxQty)).setScale(4, RoundingMode.HALF_UP);
+        }
+        return price;
     }
 
 
@@ -1014,7 +1037,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         }
 
-        BigDecimal allDetailAmount = soDetailList.stream().map(soDetail -> soDetail.getPrice().multiply(BigDecimal.valueOf(soDetail.getQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal allDetailAmount = soDetailList.stream().map(this::calculateB2cDetailWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         for (SoOutstockDetailEntity detailEntity : detailList) {
             String symbol = currencyList.stream().filter(c -> c.getId().equals(detailEntity.getCurrency())).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
@@ -1133,13 +1156,89 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setCurrency(currency);
             symbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().map(CurrencyDTO.ViewDTO::getSymbol).orElse("");
             detailEntity.setCurrencySymbol(symbol);
-            BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, detailEntity.getActualQty());
+            BigDecimal taxAmount = calculateB2cTaxAmount(soB2cEntity, soDetailEntity, detailEntity, taxPrice, allDetailAmount);
             detailEntity.setTaxAmount(taxAmount);
-            BigDecimal amountLocalCurrency = taxAmount;
-            if(BigDecimal.ZERO.compareTo(exchangeRate)!=0){
-                amountLocalCurrency = MathUtil.multiplyWithTwo(amount,exchangeRate,4);
-            }
-            detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
+            detailEntity.setAllAmountLocalCurrency(calculateB2cAllAmountLocalCurrency(soB2cEntity, soDetailEntity,
+                    detailEntity, taxAmount, allDetailAmount, exchangeRate));
+        }
+    }
+
+    private BigDecimal calculateB2cTaxAmount(SoB2cEntity soB2cEntity, SoB2cDetailEntity soDetailEntity,
+                                             SoOutstockDetailEntity detailEntity, BigDecimal taxPrice,
+                                             BigDecimal totalWeight) {
+        if (Objects.nonNull(soB2cEntity) && Objects.nonNull(soDetailEntity)
+                && CharSequenceUtil.equals(detailEntity.getSkuId(), soDetailEntity.getSkuId())) {
+            return calculateAllocatedAmount(MathUtil.nvl(soB2cEntity.getAmount(), BigDecimal.ZERO),
+                    calculateB2cDetailWeight(soDetailEntity), totalWeight,
+                    BigDecimal.valueOf(Objects.nonNull(soDetailEntity.getQty()) ? soDetailEntity.getQty() : 0),
+                    detailEntity.getActualQty(), RoundingMode.DOWN);
+        }
+        return multiplyAmount(taxPrice, BigDecimal.valueOf(Objects.nonNull(detailEntity.getActualQty()) ? detailEntity.getActualQty() : 0),
+                RoundingMode.DOWN);
+    }
+
+    private BigDecimal calculateB2cAllAmountLocalCurrency(SoB2cEntity soB2cEntity, SoB2cDetailEntity soDetailEntity,
+                                                          SoOutstockDetailEntity detailEntity, BigDecimal taxAmount,
+                                                          BigDecimal totalWeight, BigDecimal exchangeRate) {
+        BigDecimal safeExchangeRate = defaultExchangeRate(exchangeRate);
+        if (Objects.nonNull(soB2cEntity) && Objects.nonNull(soDetailEntity)
+                && CharSequenceUtil.equals(detailEntity.getSkuId(), soDetailEntity.getSkuId())) {
+            return calculateAllocatedAmount(MathUtil.nvl(soB2cEntity.getAmount(), BigDecimal.ZERO).multiply(safeExchangeRate),
+                    calculateB2cDetailWeight(soDetailEntity), totalWeight,
+                    BigDecimal.valueOf(Objects.nonNull(soDetailEntity.getQty()) ? soDetailEntity.getQty() : 0),
+                    detailEntity.getActualQty(), RoundingMode.DOWN);
+        }
+        return multiplyAmount(taxAmount, safeExchangeRate, RoundingMode.DOWN);
+    }
+
+    private BigDecimal calculateB2cDetailWeight(SoB2cDetailEntity soDetailEntity) {
+        return MathUtil.nvl(soDetailEntity.getPrice(), BigDecimal.ZERO)
+                .multiply(BigDecimal.valueOf(Objects.nonNull(soDetailEntity.getQty()) ? soDetailEntity.getQty() : 0));
+    }
+
+    private BigDecimal calculateAllocatedAmount(BigDecimal totalAmount, BigDecimal detailWeight, BigDecimal totalWeight,
+                                                BigDecimal salesQty, Integer actualQty, RoundingMode roundingMode) {
+        if (MathUtil.compareTo(totalWeight, BigDecimal.ZERO) == 0 || MathUtil.compareTo(salesQty, BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO.setScale(4, roundingMode);
+        }
+        BigDecimal qty = BigDecimal.valueOf(Objects.nonNull(actualQty) ? actualQty : 0);
+        return MathUtil.nvl(totalAmount, BigDecimal.ZERO)
+                .multiply(MathUtil.nvl(detailWeight, BigDecimal.ZERO))
+                .divide(totalWeight, 12, RoundingMode.HALF_UP)
+                .divide(salesQty, 12, RoundingMode.HALF_UP)
+                .multiply(qty)
+                .setScale(4, roundingMode);
+    }
+
+    private BigDecimal multiplyAmount(BigDecimal amount, BigDecimal multiplier, RoundingMode roundingMode) {
+        return MathUtil.nvl(amount, BigDecimal.ZERO)
+                .multiply(MathUtil.nvl(multiplier, BigDecimal.ZERO))
+                .setScale(4, roundingMode);
+    }
+
+    private BigDecimal divideAmount(BigDecimal amount, BigDecimal divisor, RoundingMode roundingMode) {
+        if (MathUtil.compareTo(divisor, BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO.setScale(4, roundingMode);
+        }
+        return MathUtil.nvl(amount, BigDecimal.ZERO).divide(divisor, 4, roundingMode);
+    }
+
+    private BigDecimal defaultExchangeRate(BigDecimal exchangeRate) {
+        if (Objects.isNull(exchangeRate) || BigDecimal.ZERO.compareTo(exchangeRate) == 0) {
+            return BigDecimal.ONE;
+        }
+        return exchangeRate;
+    }
+
+    @Override
+    public void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity) {
+        if (CollectionUtils.isEmpty(detailList) || Objects.isNull(entity)) {
+            return;
+        }
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+            handleB2cDetailData(detailList, entity);
+        } else {
+            handleDetailData(detailList);
         }
     }
 
@@ -1192,6 +1291,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return true;
         }
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = this.lambdaQuery().in(SoOutstockDetailEntity::getSoDetailId,soDetailIds).list();
+        List<String> orderIdList = soDetailEntityList.stream().map(SoDetailEntity::getMainId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoList = CollectionUtils.isNotEmpty(orderIdList) ? soInfoFeign.listSoInfoByIds(orderIdList) : Collections.emptyList();
+        List<SoDetailEntity> allSoDetailList = CollectionUtils.isNotEmpty(orderIdList) ? soInfoFeign.listSoDetailByMainIds(orderIdList) : Collections.emptyList();
+        Map<String, BigDecimal> orderWeightMap = allSoDetailList.stream()
+                .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
+                        Collectors.mapping(this::calculateB2bDetailWeight,
+                                Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
         List<SoOutstockDetailEntity> updateList = new ArrayList<>();
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             //销售订单明细
@@ -1199,17 +1305,21 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 continue;
             }
-            BigDecimal price=MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), soDetailEntity.getPerBoxQty());
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            if (Objects.isNull(soInfoEntity)) {
+                continue;
+            }
+            BigDecimal price = getB2bOutstockPrice(soDetailEntity);
             //单价信息
             detailEntity.setPrice(price);
-            BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
-            BigDecimal amount=MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
+            BigDecimal exchangeRate = defaultExchangeRate(soDetailEntity.getExchangeRate());
+            detailEntity.setExchangeRate(exchangeRate);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
             detailEntity.setAmount(amount);
-            BigDecimal amountLocalCurrency=amount;
-            if(Objects.nonNull(exchangeRate) && BigDecimal.ZERO.compareTo(exchangeRate)!=0){
-                amountLocalCurrency=MathUtil.multiplyWithTwo(amount,exchangeRate,4);
-            }
-            detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
+            BigDecimal allAmountLocalCurrency = calculateB2bAllAmountLocalCurrency(soInfoEntity, soDetailEntity,
+                    detailEntity.getActualQty(), orderWeightMap.get(soDetailEntity.getMainId()));
+            detailEntity.setAllAmountLocalCurrency(allAmountLocalCurrency);
+            detailEntity.setTaxAmount(divideAmount(allAmountLocalCurrency, exchangeRate, RoundingMode.HALF_UP));
             updateList.add(detailEntity);
         }
         if(CollectionUtils.isNotEmpty(updateList)){
