@@ -1138,7 +1138,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list) {
+    public TmsDeclareBillDTO.MergeDeclareBillDTO listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = baseMapper.listB2bDeclareMinSourceDetail(list);
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> declareSourceDetailList = prepareB2bMinDeclareSourceDetail(sourceDetailList);
         return buildB2bMinMergeDeclareBillList(declareSourceDetailList);
@@ -1237,24 +1237,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @param sourceDetailList
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
      */
-    private List<TmsDeclareBillDTO.MergeDeclareBillDTO> buildB2bMinMergeDeclareBillList(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+    private TmsDeclareBillDTO.MergeDeclareBillDTO buildB2bMinMergeDeclareBillList(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        TmsDeclareBillDTO.MergeDeclareBillDTO billDTO = new TmsDeclareBillDTO.MergeDeclareBillDTO();
         if (CollUtil.isEmpty(sourceDetailList)) {
-            return Collections.emptyList();
+            return billDTO;
         }
-        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceGroupMap = sourceDetailList.stream()
-                .collect(Collectors.groupingBy(item -> StringUtils.defaultString(item.getSourceId()), LinkedHashMap::new, Collectors.toList()));
-        List<TmsDeclareBillDTO.MergeDeclareBillDTO> result = new ArrayList<>();
-        for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : sourceGroupMap.values()) {
-            Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceDetailGroupMap = sourceGroup.stream()
-                    .collect(Collectors.groupingBy(this::buildB2bMinDeclareGroupKey, LinkedHashMap::new, Collectors.toList()));
-            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList = sourceDetailGroupMap.values().stream()
-                    .map(this::buildB2bMinMergeDeclareBillDetail)
-                    .collect(Collectors.toList());
-            result.add(TmsDeclareBillDTO.MergeDeclareBillDTO.builder()
-                    .declareBillList(declareBillList)
-                    .build());
+        Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceDetailGroupMap = sourceDetailList.stream()
+                .collect(Collectors.groupingBy(this::buildB2bMinDeclareGroupKey, LinkedHashMap::new, Collectors.toList()));
+        List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> detailDTOList = new ArrayList<>();
+        for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : sourceDetailGroupMap.values()) {
+            TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDeclareBillDetailDTO = buildB2bMinMergeDeclareBillDetail(sourceGroup);
+            detailDTOList.add(mergeDeclareBillDetailDTO);
         }
-        return result;
+        billDTO.setDeclareBillList(detailDTOList);
+        return billDTO;
     }
 
     private String buildB2bMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
