@@ -9,6 +9,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient(name = "erp-sys", contextId = "thirdNoticePushRecordFeign", configuration = ExportFeignConfig.class)
 public interface ThirdNoticePushRecordFeign {
 
@@ -18,5 +20,7 @@ public interface ThirdNoticePushRecordFeign {
     @PostMapping("/feign/thirdNoticePushRecord/updateStatusById")
     Boolean updateStatusById(@RequestBody ThirdNoticePushRecordEntity entity);
 
+    @PostMapping("/feign/thirdNoticePushRecord/batchSendMqRecordConsumer")
+    Boolean batchSendMqRecordConsumer(@RequestBody List<String> jsonStrList);
 
 }

@@ -78,6 +78,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.ThirdNoticePushRecordFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.DeliveryDeclareDetailMidFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
@@ -95,6 +96,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -218,8 +220,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
     private SysDictFeign sysDictFeign;
-
-
+    @Resource
+    private ThirdNoticePushRecordFeign thirdNoticePushRecordFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -3067,6 +3069,34 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //添加日志
         addLogCancelDelivery(cancelDeliveryDTO, old, wmsCartonDetailEntity, cartonSpecEntity);
         return BatchResultDTO.success(wmsCartonDetailEntity.getId(), wmsCartonDetailEntity.getSkuNo(), "操作成功");
+    }
+
+    @Override
+    @Async("wmsErpExecutor")
+    public void sendMsg(List<String> logisticsBillIds){
+        List<LogisticsBillEntity> list = FeignQuery.create(LogisticsBillEntity.class).in(LogisticsBillEntity::getId, logisticsBillIds).list();
+        if(CollUtil.isNotEmpty(list)){
+            List<String> fmIds = list.stream().map(LogisticsBillEntity::getOutstockId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(fmIds)){
+                List<FirstMileDeliveryEntity> firstMileDeliveryEntities = listByIds(fmIds);
+                List<String> jsonStrList = new ArrayList<>(firstMileDeliveryEntities.size());
+                TableName tableName = FirstMileDeliveryEntity.class.getDeclaredAnnotation(TableName.class);
+                for (FirstMileDeliveryEntity firstMileDeliveryEntity : firstMileDeliveryEntities) {
+                    Map<String, Object> before = BeanUtil.beanToMap(firstMileDeliveryEntity);
+                    Map<String, Object> after = new HashMap<>(before);
+                    after.put("table", tableName.value());
+                    after.put("P_TAG_IUD", "U");
+                    after.put("db", "erp-wms");
+                    after.put("cancelDelivery", Boolean.TRUE);
+                    Map<String, Map<String, Object>> map = new HashMap<>();
+                    map.put("before", before);
+                    map.put("after", after);
+                    String jsonStr = JSONUtil.toJsonStr(map);
+                    jsonStrList.add(jsonStr);
+                }
+                thirdNoticePushRecordFeign.batchSendMqRecordConsumer(jsonStrList);
+            }
+        }
     }
 
     @Override
