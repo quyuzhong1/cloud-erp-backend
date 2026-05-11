@@ -677,7 +677,7 @@
         AND sdn.declare_status = 'wait') sn
         where 1 = 1 and
         <foreach collection="list" item="item" separator="or" open="(" close=")">
-             (sn.sourceId = #{item.sourceId} and sn.sourceDetailId = #{item.sourceDetailId} and sn.skuId = #{item.skuId})
+             (sn.sourceId = #{item.id} and sn.sourceDetailId = #{item.detailId} and sn.skuId = #{item.skuId})
         </foreach>
         ORDER BY sn.sourceCode, sn.boxNo, sn.skuNo
     </select>
