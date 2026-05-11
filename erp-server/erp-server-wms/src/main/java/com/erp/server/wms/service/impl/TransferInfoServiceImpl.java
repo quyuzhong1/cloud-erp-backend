@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -1443,7 +1444,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //审核中允许审核
@@ -1457,6 +1459,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -2093,7 +2096,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //如果是审核中，撤销
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
                 try {
-                    this.cancelProcess(Collections.singletonList(entity.getId()));
+                    this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(entity.getId())));
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
                 }
@@ -2163,7 +2166,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(unSubmitList)){
             List<String> unSubmitIds = unSubmitList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-            cancelProcess(unSubmitIds);
+            cancelProcess(new ApproveDTO.BatchCancelProcessDTO(unSubmitIds));
         }
         List<String> delIds = list.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
         // 删除

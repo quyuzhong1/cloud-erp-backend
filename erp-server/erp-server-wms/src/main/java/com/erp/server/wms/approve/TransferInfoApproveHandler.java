@@ -45,7 +45,7 @@ public class TransferInfoApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return transferInfoService.cancelProcess(Collections.singletonList(dto.getId()));
+        return transferInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override

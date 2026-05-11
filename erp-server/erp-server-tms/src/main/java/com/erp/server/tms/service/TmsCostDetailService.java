@@ -7,7 +7,6 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -102,4 +101,25 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      * @param cfgId
      */
     void deleteByMainIdAndCfgCostId(String mainId, String cfgId);
+
+    /**
+     * @description: 按主表id批量新增
+     * @author Will
+     * @date: 2026/04/02 16:10
+     * @param costDetailList
+     * @param dictCostAttributionEnum
+     * @return Boolean
+     */
+    Boolean batchImportAdd(List<TmsCostDetailDTO.AddDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum);
+
+    /**
+     * @description: 按主表id批量更新
+     * @author Will
+     * @date: 2026/04/02 20:10
+     * @param costDetailList
+     * @param dictCostAttributionEnum
+     * @param isImport
+     * @return Boolean
+     */
+    Boolean batchImportUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, DictCostAttributionEnum dictCostAttributionEnum, Boolean isImport);
 }

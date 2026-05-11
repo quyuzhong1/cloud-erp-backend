@@ -7,6 +7,7 @@ import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -19,8 +20,8 @@ import java.util.List;
 public interface PurchasePriceChangeFeign {
 
     @PostMapping ("/feign/purchasePriceChange/listByCodes")
-    List<PurchasePriceChangeEntity> listByCodes(List<String> list);
+    List<PurchasePriceChangeEntity> listByCodes(@RequestBody List<String> list);
 
     @PostMapping( "/feign/purchasePriceChange/updateApproveStatus")
-    void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO);
+    void updateApproveStatus(@RequestBody PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO);
 }

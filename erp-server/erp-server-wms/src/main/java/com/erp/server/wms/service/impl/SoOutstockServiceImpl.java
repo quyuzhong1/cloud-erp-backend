@@ -1209,6 +1209,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String orderType = entity.getOrderType();
             String b2cType = OrderTypeEnum.B2C.getCode();
             addDTO.setOrderType(orderType);
+            //发货单信息
+            addDTO.setSoDeliveryId(entity.getSourceId());
+            addDTO.setSoDeliveryCode(entity.getSourceCode());
             //表明是是b2b
             if (!b2cType.equals(orderType)) {
                 SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
@@ -1438,14 +1441,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-19 12:13
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -3088,7 +3092,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         generateB2cDTO.setDetailList(addDTOS);
         //重试时需要按照发货单发货时间扣减
         generateB2cDTO.setBillDate(outTime.toLocalDate());
+        fillBlankPlatformOutstockTrackNo(entity.getId(), warehouseId, trackNo);
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+    }
+
+    private void fillBlankPlatformOutstockTrackNo(String soB2cId, String warehouseId, String trackNo) {
+        if (CharSequenceUtil.isBlank(trackNo)) {
+            return;
+        }
+        List<SoOutstockEntity> outstockList = this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoId, soB2cId)
+                .eq(CharSequenceUtil.isNotBlank(warehouseId), SoOutstockEntity::getWarehouseId, warehouseId)
+                .eq(SoOutstockEntity::getSourceType, SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())
+                .and(wrapper -> wrapper.isNull(SoOutstockEntity::getTrackNo).or().eq(SoOutstockEntity::getTrackNo, CharSequenceUtil.EMPTY))
+                .list();
+        if (CollectionUtils.isEmpty(outstockList)) {
+            return;
+        }
+        outstockList.forEach(outstock -> outstock.setTrackNo(trackNo));
+        this.updateBatchById(outstockList);
     }
 
     @Override
@@ -4067,7 +4089,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
                 // 审核中撤销(独立事务)
                 if (ApproveStatusEnum.APPROVE_ING.equals(soOutstockEntity.getApproveStatus())){
-                    soOutstockService.cancelProcess(Collections.singletonList(soOutstockEntity.getId()));
+                    soOutstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(soOutstockEntity.getId())));
                 }
                 // 删除历史(独立事务)
                 soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));

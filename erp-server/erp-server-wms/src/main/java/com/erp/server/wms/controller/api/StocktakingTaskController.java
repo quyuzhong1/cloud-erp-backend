@@ -6,27 +6,29 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
 import com.erp.server.wms.query.StocktakingTaskQueryHandler;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.StocktakingProfitLossService;
+import com.erp.server.wms.service.StocktakingTaskDetailService;
+import com.erp.server.wms.service.StocktakingTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.core.controller.BaseController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -234,7 +236,7 @@ public class StocktakingTaskController extends BaseController {
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit = stocktakingTaskService.cancelProcess(id);
+                submit = stocktakingTaskService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("盘点任务 撤销流程失败>>>>{}", e);
                 StocktakingTaskEntity entity = stocktakingTaskService.getById(id);

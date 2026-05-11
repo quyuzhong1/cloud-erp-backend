@@ -220,16 +220,8 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 for (int attempt = 0; attempt <= maxRetries; attempt++) { // 包含初始请求+3次重试
                     try {
                         // 打印 convertPdfUrlToBase64 耗时
-                        long start2 = System.currentTimeMillis();
-                        String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
-                        long end2 = System.currentTimeMillis();
-                        log.warn("tiktok获取面单转换BASE64 耗时: {} ms, attempt: {}, packageId: {}", (end2 - start2),attempt, vo.getPackageId());
                         long start3 = System.currentTimeMillis();
-                        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                                .base64(base64)
-                                .fileName(logisticsGetLabelVO.getDeliveryNo() + ".pdf")
-                                .build();
-                        url = fileFeign.uploadFileByBase64(uploadBase64);
+                        url = PdfUtil.convertPdfUrlToErpUrl(packageDocumentDTO.getData().getDocUrl(),false);
                         long end3 = System.currentTimeMillis();
                         log.warn("tiktok获取面单上传fastdfs 耗时: {} ms, attempt: {}, packageId: {}", (end3 - start3),attempt, vo.getPackageId());
 

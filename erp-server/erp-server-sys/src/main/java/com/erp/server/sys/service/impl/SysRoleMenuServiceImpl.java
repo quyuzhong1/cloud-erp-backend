@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.core.constant.CommonConstants;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
@@ -20,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -81,12 +85,16 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         String roleId = batchDTO.getRoleId();
         List<SysRoleMenuEntity> batchList = new LinkedList<>();
         removeByRoleId(roleId);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
         if (CollectionUtils.isNotEmpty(menuIds)) {
             for (SysRoleMenuDataScopeDTO menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
                 entity.setMenuId(menuId.getMenuId());
                 entity.setRoleId(roleId);
                 entity.setDataScope(menuId.getDataScope());
+                // 处理公共字段
+                handleCommonField(entity, now, loginUser);
                 batchList.add(entity);
             }
             return this.saveBatch(batchList);
@@ -127,6 +135,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 .lambdaQuery()
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(StringUtils.isNotBlank(userType), SysMenuEntity::getSystem, userType)
+                .eq(BusinessCommonConstants.isArchive(), SysMenuEntity::getIsArchiveDisplay , Boolean.TRUE)
                 .list();
         if (CollectionUtils.isEmpty(allMenuList)) {
             return Collections.emptyList();
@@ -200,11 +209,12 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isEmpty(roleIds)) {
             return new ArrayList<>();
         }
+        boolean archive = BusinessCommonConstants.isArchive();
         //如果有系统管理员显示所有的
         if (roleIds.contains(CommonConstants.ADMIN_ROLE_ID)) {
-            return baseMapper.findAllMenuCode(functionType,userType);
+            return baseMapper.findAllMenuCode(functionType,userType , archive);
         } else {
-            return baseMapper.findMenuCodeByRoleIds(roleIds, functionType,userType);
+            return baseMapper.findMenuCodeByRoleIds(roleIds, functionType,userType , archive);
         }
     }
 
@@ -217,7 +227,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      **/
     @Override
     public List<String> findMenuCodeAll(String userType) {
-        return baseMapper.findAllMenuCode(null, userType);
+        return baseMapper.findAllMenuCode(null, userType , BusinessCommonConstants.isArchive());
     }
 
     /**
@@ -250,10 +260,14 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         List<String> menuIds = getMenuIdByRoleId(copyRoleId);
         if (CollectionUtils.isNotEmpty(menuIds)) {
             List<SysRoleMenuEntity> addList = new LinkedList<>();
+            LocalDateTime now = LocalDateTime.now();
+            LoginUser loginUser = UserContext.getNonLoginUser();
             for (String menuId : menuIds) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
                 entity.setRoleId(newRoleId);
                 entity.setMenuId(menuId);
+                // 处理公共字段
+                handleCommonField(entity, now, loginUser);
                 addList.add(entity);
             }
             this.saveBatch(addList);
@@ -365,6 +379,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 .eq(SysMenuEntity::getDisabled, Boolean.FALSE)
                 .eq(SysMenuEntity::getType,type)
                 .eq(SysMenuEntity::getSystem, userType)
+                .eq(BusinessCommonConstants.isArchive(), SysMenuEntity::getIsArchiveDisplay , Boolean.TRUE)
                 .list();
         if (CollectionUtils.isEmpty(allMenuList)) {
             return Collections.emptyList();
@@ -521,8 +536,21 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         entity.setMenuId(dto.getMenuId());
         entity.setRoleId(dto.getRoleId());
         entity.setDataScope(dto.getDataScope());
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        // 处理公共字段
+        handleCommonField(entity, now, loginUser);
         return this.save(entity);
 
+    }
+
+    private static void handleCommonField(SysRoleMenuEntity entity, LocalDateTime now, LoginUser loginUser) {
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(loginUser.getUid());
+        entity.setUpdateUserName(loginUser.getUserName());
+        entity.setCreateTime(now);
+        entity.setCreateUserId(loginUser.getUid());
+        entity.setCreateUserName(loginUser.getUserName());
     }
 
     @Override

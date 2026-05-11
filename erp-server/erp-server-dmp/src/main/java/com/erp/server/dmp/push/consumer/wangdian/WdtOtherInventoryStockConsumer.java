@@ -100,8 +100,10 @@ public class WdtOtherInventoryStockConsumer<T extends DmpSyncTaskIdDTO> extends 
     public ApiResult<?> handle(Object ext) {
         ApiResult<?> apiResult = null;
         try {
-        apiResult = dataProcess(ext);
-        }catch (Exception e){
+            apiResult = dataProcess(ext);
+        } catch (ServiceException e) {
+            apiResult = ApiResult.error(e.getCode(), e.getMsg());
+        } catch (Exception e) {
             //操作异常
             log.error("WdtOtherInventoryStockConsumer handle, ext: {}, e:", ext, e);
             apiResult = ApiResult.error(e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage());

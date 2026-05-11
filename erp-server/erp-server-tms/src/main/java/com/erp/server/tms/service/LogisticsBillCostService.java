@@ -3,14 +3,12 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.AsyncTaskRecordDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 
@@ -81,7 +79,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return BatchResultDTO
      */
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
-    
+
     BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
     
     BatchResultDTO delete(String id);
@@ -225,6 +223,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
 
+    void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
     BatchResultDTO pushAllocation(String id , String reportDate);
 
     /**
@@ -254,11 +254,56 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     LogisticsBillCostDTO.TotalCountDTO listTotalCount(LogisticsBillCostDTO.PagingParamDTO dto);
 
-    List<String> listByCanPushAllocation(AsyncTaskRecordDTO.TaskDTO dto);
+    List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
-    void batchAsyncPushAllocation(LogisticsBillCostDTO.PushDTO dto);
+    void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
-    void confirmImport(String key, String code, LocalDateTime dateTime);
+    /**
+     * 游标分页查询可下推分摊的费用ID（SQL层分批，不全量加载）
+     *
+     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @return 当前批次费用ID列表
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 统计可下推分摊的费用总条数
+     *
+     * @param dto 查询条件
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    List<LogisticsBillCostEntity> batchImportAdd(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.AddDTO> dtoList,String processingType);
+
+    /**
+     * @description: 批量导入新增
+     * @author Will
+     * @date: 2026/04/02 20:30
+     * @param dtoList
+     * @return List<AddDTO>
+     */
+    List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
+    /**
+     * 确认导入
+     * @author will
+     * @date 2026/4/16 11:24
+     * @param logisticsCostId
+     * @param code
+     * @param confirmDateTime
+     */
+    void confirmImport(String logisticsCostId, String code, LocalDateTime confirmDateTime);
 }

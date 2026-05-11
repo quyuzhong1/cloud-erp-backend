@@ -1,5 +1,6 @@
 package com.common.business.constant;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,13 +20,34 @@ public class BusinessCommonConstants {
 
     // Spring 环境
     private static String SPRING_PROFILES_ACTIVE;
+    
+    // 命名空间
+    private static String SPRING_NACOS_NAMESPACE;
+    
+    // 是否开启动态数据源
+    private static Boolean DYNAMIC_ENABLED = false;
 
     // 开发环境
     public static final String DEV = "dev";
+    
+    // 归档环境
+    public static final String ARCHIVE = "archive";
 
     @Value("${spring.profiles.active:dev}")
     private void setSpringProfilesActive(String springProfilesActive) {
         BusinessCommonConstants.SPRING_PROFILES_ACTIVE = springProfilesActive;
+    }
+    
+    @Value("${spring.cloud.nacos.discovery.namespace:dev}")
+    private void setSpringNacosNamespace(String springNacosNamespace) {
+    	BusinessCommonConstants.SPRING_NACOS_NAMESPACE = springNacosNamespace;
+    }
+    
+    @Value("${spring.datasource.dynamic.enabled:false}")
+    private void setDynamicEnabled(String dynamicEnabled) {
+    	if(StringUtils.isNotBlank(dynamicEnabled)) {
+    		BusinessCommonConstants.DYNAMIC_ENABLED = Boolean.valueOf(dynamicEnabled);
+    	}
     }
 
     /**
@@ -44,4 +66,17 @@ public class BusinessCommonConstants {
         return profiles[0];
     }
 
+    /**
+     * 效验是否归档环境
+     */
+    public static boolean isArchive() {
+        return SPRING_NACOS_NAMESPACE.toLowerCase().contains(ARCHIVE);
+    }
+    
+    /**
+     * 效验是否开启动态数据源
+     */
+    public static boolean isDynamicEnabled() {
+        return DYNAMIC_ENABLED;
+    }
 }

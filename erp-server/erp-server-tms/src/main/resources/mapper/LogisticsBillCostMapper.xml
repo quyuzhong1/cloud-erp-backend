@@ -351,27 +351,113 @@
     </select>
 
     <select id="listByCanPushAllocation" resultType="java.lang.String">
+        SELECT lbc.id
+        FROM logistics_bill_cost AS lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        LEFT JOIN (
+            SELECT DISTINCT cost_id
+            FROM small_bag_cost_allocation_main
+            WHERE is_deleted = FALSE
+              AND (
+                  report_date = #{params.reportDate}
+                  OR report_status = 'confirmed'
+                  OR fee_source = 'confirmed'
+              )
+        ) excl_confirmed ON lbc.id = excl_confirmed.cost_id
+        LEFT JOIN (
+            SELECT DISTINCT cost_id
+            FROM small_bag_cost_allocation_main
+            WHERE is_deleted = FALSE
+              AND (
+                  report_date = #{params.reportDate}
+                  OR report_status = 'confirmed'
+              )
+        ) excl_estimate ON lbc.id = excl_estimate.cost_id
+        WHERE lbc.is_deleted = FALSE
+          AND lb.is_allocate_cost_required = true
+          AND lbc.type = #{params.type}
+          AND lbc.reconciliation_month = #{params.reportDate}
+          AND (
+              (lbc.reconciliation_status = 'confirmed'      AND excl_confirmed.cost_id IS NULL)
+              OR
+              (lbc.reconciliation_status = 'estimateConfirm' AND excl_estimate.cost_id IS NULL)
+          )
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND lbc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="pageByCanPushAllocation" resultType="java.lang.String">
         SELECT
-            lbc.id
+        lbc.ID
         FROM
-            logistics_bill_cost AS lbc
+        logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         WHERE
-            lbc.is_deleted = FALSE
-          AND lbc.reconciliation_status = 'confirmed'
-          and lbc.type = #{params.type}
-          and lbc.reconciliation_month = #{params.reportDate}
-          AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' or fee_source ='confirmed' ))
-        UNION All
+        lbc.is_deleted = FALSE
+        AND lb.is_allocate_cost_required = true
+        AND lbc.TYPE = #{params.type}
+        AND lbc.reconciliation_month = #{params.reportDate}
+        AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
+        AND NOT EXISTS (
         SELECT
-            lbc.id
+        1
         FROM
-            logistics_bill_cost AS lbc
+        small_bag_cost_allocation_main sb
         WHERE
-            lbc.is_deleted = FALSE
-          AND lbc.reconciliation_status ='estimateConfirm'
-          and lbc.type = #{params.type}
-          and lbc.reconciliation_month = #{params.reportDate}
-          AND lbc.id NOT IN ( SELECT DISTINCT cost_id FROM small_bag_cost_allocation_main WHERE is_deleted = FALSE AND ( report_date = #{params.reportDate} OR report_status = 'confirmed' ))
+        sb.is_deleted = FALSE
+        AND sb.cost_id = lbc.ID
+        AND ( sb.report_date = #{params.reportDate} OR sb.report_status = 'confirmed' OR ( lbc.reconciliation_status = 'confirmed' AND sb.fee_source = 'confirmed' ) )
+        )
+        <if test="params.lastId != null and params.lastId != ''">
+            AND lbc.id &gt; #{params.lastId}
+        </if>
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND lbc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY
+        lbc.ID ASC
+        LIMIT #{params.batchSize}
+    </select>
+
+    <!-- 统计可下推分摊的总条数，用于设置 asyncTaskRecord 的 detailCount -->
+    <select id="countByCanPushAllocation" resultType="java.lang.Integer">
+        SELECT
+        COUNT(lbc.id)
+        FROM
+        logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        WHERE
+        lbc.is_deleted = FALSE
+        AND lb.is_allocate_cost_required = true
+        AND lbc.TYPE = #{params.type}
+        AND lbc.reconciliation_month = #{params.reportDate}
+        AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
+        AND NOT EXISTS (
+        SELECT
+        1
+        FROM
+        small_bag_cost_allocation_main sb
+        WHERE
+        sb.is_deleted = FALSE
+        AND sb.cost_id = lbc.ID
+        AND ( sb.report_date = #{params.reportDate} OR sb.report_status = 'confirmed' OR ( lbc.reconciliation_status = 'confirmed' AND sb.fee_source = 'confirmed' ) )
+        )
+        <if test="params.lastId != null and params.lastId != ''">
+            AND lbc.id &gt; #{params.lastId}
+        </if>
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND lbc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
     <!-- 查询计费重合计 -->

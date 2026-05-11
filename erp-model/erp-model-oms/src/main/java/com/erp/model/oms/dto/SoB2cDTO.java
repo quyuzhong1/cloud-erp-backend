@@ -4,6 +4,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
@@ -13,6 +14,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
@@ -300,9 +303,17 @@ public class SoB2cDTO implements Serializable {
         private Boolean isFullyManaged;
         
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
         
         /**
          * dynamicDataSource为doris时，1为只查询id，其他查询列表字段
@@ -313,6 +324,7 @@ public class SoB2cDTO implements Serializable {
          * 需要二次查询pg库
          */
         private Boolean secondQuery;
+        
     }
 
     @Data
@@ -1994,7 +2006,18 @@ public class SoB2cDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
         
+        /**
+         * 动态数据源，需要重新get方法
+         */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
 
     }
 
@@ -2138,7 +2161,18 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> logisticsChannelIdList;
         
+        /**
+         * 动态数据源，需要重新get方法
+         */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
     }
 
     /**

@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,7 +16,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.query.SoChangeQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import lombok.extern.slf4j.Slf4j;
@@ -272,7 +272,7 @@ public class SoChangeController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soChangeService.cancelProcess(dto.getIds());
+        Boolean result = soChangeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result ? success() : failure();
     }
 

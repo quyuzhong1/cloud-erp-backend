@@ -204,7 +204,11 @@ public enum ApiError implements Serializable {
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
     COMMON_STATUS_SAME(92134,"存在相同状态"),
+    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
+
     COMMON_NO_SKU(98128,"SKU不存在"),
+    COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
+    COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -234,6 +238,7 @@ public enum ApiError implements Serializable {
     AUTH_SSO_INVALID_PAYLOAD(2023, "单点登录Payload内容无效"),
     AUTH_SSO_USER_NOT_BOUND_ERP(2024, "用户未绑定ERP系统"),
     AUTH_SSO_SYSTEM_ERROR(2025, "单点登录系统异常：{0}"),
+    AUTH_ARCHIVE_DENIED(2026,"归档系统不允许增删改数据"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400
@@ -692,6 +697,7 @@ public enum ApiError implements Serializable {
     PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
     PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
+    PRODUCT_RETAIL_PRICE_MISSING_ZERO(5120, "{0}零售价都是0，会导致订单无法分摊"),
     PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
     PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
 
@@ -1325,7 +1331,7 @@ public enum ApiError implements Serializable {
     SO_B2C_ADD_GIFT_STATUS_FORBIDDEN(10715,"非待提交或审核不通过状态的订单不允许添加赠品"),
     SO_WDT_SALES_RAW_TRADE_PUSHSELF(10716,"ERP原始订单推送旺店通结果：新增订单的数量:【{0}】，更新订单的数量:【{1}】，错误信息:【{2}】"),
     SO_LOGISTICS_WAYBILL_NOT_OBTAINED(92118,"【{0}】面单未获取，无法打印，请获取后操作！"),
-    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货允许发货拦截"),
+    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货、异常订单允许发货拦截"),
     SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED(92248,"只有未开启B2B发货的允许手动发货"),
     SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
     SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
@@ -1750,7 +1756,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND(13619,"文件【{0}】导入的物流配置明细唯一键未找到"),
     LOGISTICS_SUPPLIER_NAME_NOT_FOUND(13620,"物流商名称【{0}】未找到"),
     LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR(13621,"导入唯一识别单号查询失败，请检查识别单号配置"),
-    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务创建失败参数【{0}】"),
+    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务已存在参数【{0}】"),
     LOGISTICS_PENDING_COST_NOT_FOUND(13623,"待确认费用分摊记录不存在"),
     LOGISTICS_SELECT_AT_LEAST_ONE(13624,"明细至少勾选一个识别单号"),
     LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED(13625,"数大臣单据字段【{0}】不允许重复"),
@@ -1758,8 +1764,22 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
     LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
     LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
+    LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED(13630,"推送类型不能为空"),
+    LOGISTICS_THIRD_CHANNEL_SAVE_FAILED(13631,"物流-第三方渠道关系单保存失败"),
+    LOGISTICS_THIRD_CHANNEL_NOT_FOUND(13632,"未找到渠道配置数据"),
+    LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN(13633,"该渠道配置已被使用，不能删除"),
+    LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED(13634,"渠道配置数据状态未变更"),
+    LOGISTICS_THIRD_CHANNEL_DUPLICATE(13635,"同一个平台下我司物流商【{0}】+渠道【{1}】，查询物流商+渠道仅可创建一条"),
+    LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND(13636,"物流商不存在"),
+    LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND(13637,"物流商渠道不存在"),
+    LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND(13638,"查询物流商【{0}】不存在"),
+    LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE(13639,"是否推送电话不能修改"),
+    LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED(13640,"手机号码不能为空"),
+    LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED(13641,"店铺Id不能为空"),
+    LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED(13642,"平台不能为空"),
+    LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED(13643,"推送明细不需要配置"),
+    LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED(13644,"查询物流商(中文)不能为空"),
     LOGISTICS_DECLARE_BILL_EXISTS_NOT_SOURCE(13630,"报关单未找到来源信息"),
-
     LOGISTICS_DECLARE_DETAIL_MID_DETAIL_MATCH_FAILED(13630,"{0}明细匹配失败，商品编码：{1}"),
     LOGISTICS_PRODUCT_LOGISTIC_NOT_FOUND(13631,"未找到商品物流信息，商品编码：{0}"),
     LOGISTICS_PRODUCT_LOGISTIC_DECLARE_INFO_INCOMPLETE(13632,"商品物流申报信息不完整，商品编码：{0}"),

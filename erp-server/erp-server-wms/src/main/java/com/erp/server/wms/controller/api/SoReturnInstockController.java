@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -21,10 +22,12 @@ import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoB2cReturnFeign;
 import com.erp.server.wms.query.SoReturnInstockQueryHandler;
+import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -36,7 +39,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +61,8 @@ public class SoReturnInstockController extends BaseController {
     private SoB2cReturnFeign soB2cReturnFeign;
     @Resource
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
     /**
      * 列表查询
      * @Author Luo_WG
@@ -299,7 +306,7 @@ public class SoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = soReturnInstockService.cancelProcess(dto.getIds());
+        Boolean flag = soReturnInstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 
@@ -337,8 +344,27 @@ public class SoReturnInstockController extends BaseController {
             serviceClass = SoReturnInstockService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<BatchResultDTO> resultDTOList = soReturnInstockService.deleteByIds(idsDTO.getIds(), true);
-        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+        List<String> ids = idsDTO.getIds().stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoReturnInstockEntity> entityList = soReturnInstockService.listByIds(ids);
+        Map<String, SoReturnInstockEntity> entityMap = entityList.stream().collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity()));
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        Map<String, List<SoReturnInstockDetailEntity>> detailMap = detailEntityList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getMainId));
+        for (String id : ids){
+            SoReturnInstockEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "退货入库单记录不存在"));
+                continue;
+            }
+            List<SoReturnInstockDetailEntity> details = detailMap.get(entity.getId());
+            try {
+                resultDTOS.add(soReturnInstockService.deleteByIds(entity,details));
+            }catch (Exception e){
+                log.error("退货入库单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

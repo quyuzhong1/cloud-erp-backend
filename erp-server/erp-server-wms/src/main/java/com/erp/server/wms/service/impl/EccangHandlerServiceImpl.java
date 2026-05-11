@@ -12,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
@@ -23,12 +24,15 @@ import com.sdk.wms.antu.service.AntuService;
 import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
 import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
 import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -113,7 +117,9 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
-        AntuUploadFileReq antuUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
+        AntuUploadFileReq antuUploadFileReq = "order_attach".equalsIgnoreCase(uploadFileReq.getModule())
+                ? ThirdWarehouseConverter.INSTANCE.reqToAntuB2bAttachmentUploadFileReq(uploadFileReq)
+                : ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
         if (CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             antuUploadFileReq.setFileType(uploadFileReq.getFileType());
         }
@@ -156,7 +162,17 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        return failure("ERP功能暂不支持");
+        AntuResponse<String> response = antuService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason(),getPlatForm());
+        if(!isSuccess(response.getAsk())){
+            return failure(response.getMessage());
+        }
+        if(Objects.isNull(response.getCancelStatus())){
+            return failure(response.getMessage());
+        }
+        if(response.getCancelStatus().equals(3)){
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
@@ -170,7 +186,54 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return failure("ERP功能暂不支持");
+        List<ThirdWarehouseQueryFbaOutboundResponse> resultList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(req.getPlatformOrderCodeList())) {
+            AntuGetOutboundReq antuGetOutboundReq = AntuGetOutboundReq.builder()
+                    .orderCodeArr(req.getPlatformOrderCodeList())
+                    .build();
+            AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(antuGetOutboundReq, getPlatForm());
+            if (!isSuccess(response.getAsk())) {
+                throw new ServiceException("查询B2B订单失败," + response.getMessage());
+            }
+            if (CollUtil.isNotEmpty(response.getData())) {
+                response.getData().forEach(antuOutboundResp -> {
+                    ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+                    res.setCode(antuOutboundResp.getReferenceNo());
+                    res.setPlatformOrderCode(antuOutboundResp.getOrderCode());
+                    res.setTrackNo(antuOutboundResp.getTrackNo());
+                    if (Objects.nonNull(antuOutboundResp.getOutBoundTime())) {
+                        res.setDeliveryTimeStr(antuOutboundResp.getOutBoundTime().toString());
+                    }
+                    res.setPlatformOriginalStatus(antuOutboundResp.getOrderStatus());
+                    res.setStatus(AntuEnums.B2BOrderStatusEnum.getErpOrderStatus(antuOutboundResp.getOrderStatus()));
+                    resultList.add(res);
+                });
+            }
+            return success(resultList);
+        }
+        req.getErpOrderCodeList().forEach(code -> {
+            AntuGetOutboundRefReq antuGetOutboundReq = AntuGetOutboundRefReq.builder()
+                    .referenceNo(code)
+                    .build();
+            AntuResponse<AntuOutboundResp> response = antuService.getOrderByRefCode(antuGetOutboundReq, getPlatForm());
+            if (!isSuccess(response.getAsk())) {
+                throw new ServiceException("查询B2B订单失败," + response.getMessage());
+            }
+            if (Objects.nonNull(response.getData())) {
+                AntuOutboundResp antuOutboundResp = response.getData();
+                ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+                res.setCode(code);
+                res.setPlatformOrderCode(antuOutboundResp.getOrderCode());
+                res.setTrackNo(antuOutboundResp.getTrackNo());
+                if(Objects.nonNull(antuOutboundResp.getOutBoundTime())){
+                    res.setDeliveryTimeStr(antuOutboundResp.getOutBoundTime().toString());
+                }
+                res.setPlatformOriginalStatus(antuOutboundResp.getOrderStatus());
+                res.setStatus(AntuEnums.B2BOrderStatusEnum.getErpOrderStatus(antuOutboundResp.getOrderStatus()));
+                resultList.add(res);
+            }
+        });
+        return success(resultList);
     }
 
     @Override
@@ -212,8 +275,48 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return failure("ERP功能暂不支持");
+        AntuCreateOutboundReq antuCreateOutboundReq = this.buildB2BOrder(createOutboundReq);
+        this.handleData(antuCreateOutboundReq);
+        AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
+        if(response.getMessage().contains("参考编号已存在")){
+            return success(response.getOrderCode());
+        }
+        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
+
+    private AntuCreateOutboundReq buildB2BOrder(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        AntuCreateOutboundReq antuCreateOutboundReq = new AntuCreateOutboundReq();
+        antuCreateOutboundReq.setReferenceNo(createOutboundReq.getReferenceNo());
+        antuCreateOutboundReq.setShippingMethod(createOutboundReq.getChannelCode());
+        antuCreateOutboundReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
+        antuCreateOutboundReq.setCountryCode(createOutboundReq.getReceiverCountryCode());
+        antuCreateOutboundReq.setProvince(createOutboundReq.getProvince());
+        antuCreateOutboundReq.setCity(createOutboundReq.getCity());
+        antuCreateOutboundReq.setAddress1(createOutboundReq.getAddress1());
+        antuCreateOutboundReq.setZipcode(createOutboundReq.getPostCode());
+        antuCreateOutboundReq.setName(createOutboundReq.getReceiverName());
+        antuCreateOutboundReq.setPhone(createOutboundReq.getTelNumber());
+        antuCreateOutboundReq.setIsSignature(createOutboundReq.getIsSignature()?1:0);
+        antuCreateOutboundReq.setIsInsurance(createOutboundReq.getIsInsurance()?1:0);
+        antuCreateOutboundReq.setOrderDesc(createOutboundReq.getRemark());
+        antuCreateOutboundReq.setVerify(1);
+        List<AntuCreateOutboundReq.Item> items = new ArrayList<>();
+        createOutboundReq.getItems().forEach(item->{
+            AntuCreateOutboundReq.Item outboundItem = new AntuCreateOutboundReq.Item();
+            outboundItem.setProductSku(item.getWarehousePlatformSku());
+            outboundItem.setQuantity(item.getDeliveryQty());
+            items.add(outboundItem);
+        });
+        if(StringUtils.isNotBlank(createOutboundReq.getFileId())){
+            List<AntuCreateOutboundReq.Attach> attaches = new ArrayList<>();
+            attaches.add(new AntuCreateOutboundReq.Attach(createOutboundReq.getFileType(),Integer.valueOf(createOutboundReq.getFileId())));
+            antuCreateOutboundReq.setAttach(attaches);
+        }
+        antuCreateOutboundReq.setItems(items);
+        antuCreateOutboundReq.setOrderKind("B2B");
+        return antuCreateOutboundReq;
+    }
+
     public boolean isSuccess(String ask){
         return "Success".equals(ask);
     }

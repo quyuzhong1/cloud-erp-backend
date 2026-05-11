@@ -30,18 +30,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 //生产 url : https://oms.goodcang.net  appToken : a39ab99c1437c991ec07fad4e1f78f8f appKey f7e4102f9b0b983e58bed3140dc22f1a
-//测试 url : https://uat-oms.eminxing.com appToken:  7013991264f611e98ea200e01b680258 appKey 6ff50abf64f611e98ea200e01b680258
+//测试 url : https://uat-oms.eminxing.com appToken:  7013991264f611e98ea200e01b680258 appKey 1e40adc162c6e98bcf3b00624bed0d99
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={GoodCangService.class, GoodCangUtils.class})
-@TestPropertySource(properties = {"warehouse.goodcang.url=https://oms.goodcang.net"})
+@TestPropertySource(properties = {"warehouse.goodcang.url=https://uat-oms.eminxing.com"})
 public class GoodCangServiceTest {
     @Resource
     private GoodCangService goodCangService;
 
     public GoodCangServiceTest(){
         Map<String,Object> authMap = new HashMap<>();
-        authMap.put("appToken","a39ab99c1437c991ec07fad4e1f78f8f");
-        authMap.put("appKey","f7e4102f9b0b983e58bed3140dc22f1a");
+        authMap.put("appToken","7013991264f611e98ea200e01b680258");
+        authMap.put("appKey","1e40adc162c6e98bcf3b00624bed0d99");
         ThirdWarehouseContext.setAuthMap(authMap);
     }
 
@@ -89,9 +89,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
-                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
-//                .orderCode("G1149-240515-0008")
+//                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
+//                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
+                .orderCodeArr(Arrays.asList("G1149-260422-0035"))
                 .page(1)
                 .pageSize(20)
                 .build();
@@ -209,6 +209,14 @@ public class GoodCangServiceTest {
         System.out.println(response);
         System.out.println(response.getData());
     }
+
+    @Test
+    public void getOrderByRefCodeTest() {
+        GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode("SFFH260422000009");
+        System.out.println(response);
+        System.out.println(response.getData());
+    }
+
     @Test
     public void cancelOutboundBillTest() {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-005",null);
@@ -294,7 +302,12 @@ public class GoodCangServiceTest {
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
-
+    @Test
+    public void taskStatusList() {
+        GoodCangResponse<List<GoodCangTaskResp>> response = goodCangService.taskStatusList(Arrays.asList("U946C98884"));
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
     @Test
     public void getInventoryLog() {
         Map<String, Object> hashMap = new HashMap<>();

@@ -5,6 +5,8 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -21,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,15 +63,25 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean saveOrUpdateMenu(MenuEntity sysMenu) {
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         String menuId = sysMenu.getMenuId();
         if (StringUtils.isBlank(menuId)) {
             menuId = IdWorker.getIdStr();
+            sysMenu.setCreateTime(now);
+            sysMenu.setCreateUserId(userId);
+            sysMenu.setCreateUserName(userName);
         }
         String parentId = sysMenu.getParentId();
         if (StringUtils.isBlank(parentId)) {
             sysMenu.setParentId("0");
         }
         sysMenu.setMenuId(menuId);
+        sysMenu.setUpdateTime(now);
+        sysMenu.setUpdateUserId(userId);
+        sysMenu.setUpdateUserName(userName);
         boolean save = this.saveOrUpdate(sysMenu);
         if (save) {
             //排序
@@ -184,14 +197,24 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
      */
 
     private void getSaveTree(String parentId, List<MenuEntity> batchList, SysMenuDTO item) {
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         MenuEntity entity = new MenuEntity();
         BeanMapperUtils.copy(item, entity);
         entity.setParentId(parentId);
         String menuId = item.getMenuId();
         if (StringUtils.isBlank(menuId)) {
             menuId = IdWorker.getIdStr();
+            entity.setCreateTime(now);
+            entity.setCreateUserId(userId);
+            entity.setCreateUserName(userName);
         }
         entity.setMenuId(menuId);
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
         batchList.add(entity);
         List<SysMenuDTO> childrenList = item.getChildrenList();
         if (CollectionUtils.isNotEmpty(childrenList)) {

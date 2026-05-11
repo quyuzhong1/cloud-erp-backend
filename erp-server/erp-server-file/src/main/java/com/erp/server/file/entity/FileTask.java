@@ -76,6 +76,23 @@ public class FileTask extends BaseEntity<FileTask> {
         return task;
     }
 
+    public static FileTask update(String id,String event, String fileName, String metaInfo) {
+        FileTask task = new FileTask();
+        //id
+        task.setId(id);
+
+        // 事件名称
+        task.setEvent(event);
+        // 文件
+        task.setFileName(fileName);
+        // 创建时候状态默认为等待中
+        task.setStatus(FileTaskStatusEnum.PENDING.name());
+        // 元数据信息
+        task.setMetaInfo(metaInfo);
+        task.setCount(0);
+        return task;
+    }
+
 
     /**
      * 非稳定状态

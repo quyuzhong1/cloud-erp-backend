@@ -37,11 +37,4 @@ public class FirstMileEstimatedBillEntity extends BaseEntity<FirstMileEstimatedB
      */
     @TableField("confirm_time")
     private LocalDateTime confirmTime;
-
-    /**
-     * 供应商类型（logistics 物流对账单，warehouse仓储对账单，custom自定义物流商）
-     * SupplierTypeEnum
-     */
-    @TableField("supplier_type")
-    private String supplierType;
 }

@@ -36,7 +36,7 @@ public class AssetDisposalApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        BatchResultDTO resultDTO = assetDisposalService.cancelProcess(dto.getId());
+        BatchResultDTO resultDTO = assetDisposalService.cancelProcess(dto);
         return resultDTO.getSuccess();
     }
 

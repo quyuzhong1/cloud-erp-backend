@@ -7,7 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
-import com.erp.server.plm.service.CfgSettingService;
+import com.erp.server.plm.service.PlmCfgSettingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +27,7 @@ import javax.annotation.Resource;
 public class CfgSettingController extends BaseController {
 
     @Resource
-    private CfgSettingService cfgSettingService;
+    private PlmCfgSettingService plmCfgSettingService;
 
     /**
      * 新增或更新
@@ -39,7 +39,7 @@ public class CfgSettingController extends BaseController {
     @PostMapping("/addOrUpdate")
     @LogAction(value = LogActionEnum.INSERT, desc = "系统配置新增或更新")
     public ApiResult<Boolean> addOrUpdate(@RequestBody @Validated PlmCfgSettingDTO.CommonDTO dto) {
-        return success(cfgSettingService.addOrUpdate(dto));
+        return success(plmCfgSettingService.addOrUpdate(dto));
     }
 
     /**
@@ -50,6 +50,6 @@ public class CfgSettingController extends BaseController {
      */
     @GetMapping("/view")
     public ApiResult<PlmCfgSettingDTO.CommonDTO> view() {
-        return success(cfgSettingService.view());
+        return success(plmCfgSettingService.view());
     }
 }
