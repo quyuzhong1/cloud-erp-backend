@@ -763,7 +763,8 @@
             fpbs.parent_sku_id,
             fpbs.parent_sku_no,
             fpbs.sku_id,
-            fpbs.sku_no
+            fpbs.sku_no,
+            fpbs.quantity
         FROM foreign_product_bom_info fpbi
         JOIN foreign_product_bom_sku fpbs
         ON fpbi.id = fpbs.bom_id
@@ -804,16 +805,16 @@
             qd.source_code AS sourceCode,
             'soDeliveryNotice' AS sourceType,
             qd.detail_id AS sourceDetailId,
-            hb.parent_sku_id AS skuId,
-            hb.parent_sku_no AS skuNo,
+            hb.sku_id AS skuId,
+            hb.sku_no AS skuNo,
             hb.bom_version AS bomVersion,
             fpl_child.customs_code AS customsCode,
             fpl_child.declare_chinese_name AS declareChineseName,
             fpl_child.declare_element AS declareElement,
             fpl_child.declare_unit AS declareUnit,
             fpl_child.declare_price AS price,
-            qd.plan_qty AS qty,
-            (qd.plan_qty * fpl_child.declare_price) AS totalPrice,
+            qd.plan_qty * hb.quantity AS qty,
+            (qd.plan_qty * hb.quantity * fpl_child.declare_price) AS totalPrice,
             fpl_child.declare_currency AS declareCurrency,
             fpl_child.declare_currency_symbol AS declareCurrencySymbol,
             fpl_child.source_country AS sourceCountry,
