@@ -1014,6 +1014,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     //产品尺寸变更
                     else if(ThirdNoticePushRecordNoticeNodeEnum.QC_BACK_FILL_PACKAGING.getCode().equals(feildValue)){
                         variablesMap.put(cfgQueryOptionEntity.getConditionField(), feildValue);
+                    } //取消发货（头程发货单）
+                    else if(ThirdNoticePushRecordNoticeNodeEnum.CANCEL_DELIVERY.getCode().equals(feildValue)){
+                        Boolean cancelDelivery = Optional.ofNullable(variablesMap.get(ThirdNoticePushRecordNoticeNodeEnum.CANCEL_DELIVERY.getCode()))
+                                .map(obj -> Boolean.TRUE.equals(obj))
+                                .orElse(Boolean.FALSE);
+                        return cancelDelivery;
                     }else {
                         //表字段值变化
                         if(diffFields.contains(feildValue)){

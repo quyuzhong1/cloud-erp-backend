@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -733,14 +734,21 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/batchCancelDelivery")
     public ApiResult<Object> batchCancelDelivery(@RequestBody @Valid ValidList<FirstMileDeliveryDTO.CancelDeliveryDTO> list) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        List<String> logisticsBillIds = new ArrayList<>();
         for (FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO :list) {
             BatchResultDTO resultDTO;
             try {
                 resultDTO = firstMileDeliveryService.cancelDelivery(cancelDeliveryDTO);
+                if(resultDTO.getSuccess()){
+                    logisticsBillIds.add(cancelDeliveryDTO.getLogisticsBillId());
+                }
             }catch (Exception e){
                 resultDTO = BatchResultDTO.fail(cancelDeliveryDTO.getPackingTaskId(), cancelDeliveryDTO.getPackingTaskId(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
+        }
+        if(CollUtil.isNotEmpty(logisticsBillIds)){
+            firstMileDeliveryService.sendMsg(logisticsBillIds);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
