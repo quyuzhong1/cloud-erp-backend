@@ -822,6 +822,11 @@ public class QcInfoDTO implements Serializable {
         private Integer qcBadQty;
 
         /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
+
+        /**
          * 质检结果
          */
         private QcResultEnum qcResult;
