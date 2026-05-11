@@ -8,10 +8,12 @@ import com.common.core.exception.FeignServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MessageUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.common.business.filter.RequestBodyTraceLogFilter;
 import com.netflix.client.ClientException;
 import lombok.extern.slf4j.Slf4j;
 import ma.glasnost.orika.MappingException;
 import org.apache.catalina.connector.ClientAbortException;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -27,9 +29,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.WebUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.SocketTimeoutException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
 
@@ -122,7 +129,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ApiResult<?> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+    public ApiResult<?> handleHttpMessageNotReadable(HttpMessageNotReadableException e, HttpServletRequest request) {
+        request.setAttribute(RequestBodyTraceLogFilter.ATTR_BODY_READ_EXCEPTION, Boolean.TRUE);
+        logBodyReadExceptionInfo(request, e);
+        if (hasCause(e, ClientAbortException.class, SocketTimeoutException.class)) {
+            log.warn("[HttpMessageNotReadableException] 请求体读取中断或超时: {}", e.getMessage());
+            return null;
+        }
         log.warn("[HttpMessageNotReadableException] {}", e.getMessage());
         log.error("[HttpMessageNotReadableException]异常信息", e);
         log.warn("[HttpMessageNotReadableException]详细信息 {}", ExceptionUtil.stacktraceToString(e));
@@ -218,6 +231,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ClientAbortException.class)
     @ResponseBody
     protected ApiResult<?> handleClientAbort(HttpServletRequest request, HttpServletResponse response, Throwable ex) {
+        logBodyReadExceptionInfo(request, ex);
         log.warn("[ClientAbortException] 请求中断: {}", ex.getMessage());
         // 客户端已断开连接，不能返回内容
         return null;
@@ -242,6 +256,74 @@ public class GlobalExceptionHandler {
             result.setData(data);
         }
         return result;
+    }
+
+    @SafeVarargs
+    private final boolean hasCause(Throwable throwable, Class<? extends Throwable>... causeTypes) {
+        Throwable cause = throwable;
+        while (cause != null) {
+            for (Class<? extends Throwable> causeType : causeTypes) {
+                if (causeType.isInstance(cause)) {
+                    return true;
+                }
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private void logBodyReadExceptionInfo(HttpServletRequest request, Throwable throwable) {
+        Throwable rootCause = getRootCause(throwable);
+        byte[] cachedBody = getCachedBody(request);
+        log.info("[RequestBodyTrace] service body read exception, traceId={}, method={}, uri={}, contentLength={}, contentType={}, transferEncoding={}, cachedBodyBytes={}, cachedBodySha256={}, remoteAddr={}, xForwardedFor={}, userAgent={}, exception={}, rootCause={}, rootMessage={}",
+                TraceContext.traceId(),
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getContentLengthLong(),
+                request.getContentType(),
+                request.getHeader("Transfer-Encoding"),
+                cachedBody == null ? -1 : cachedBody.length,
+                cachedBody != null && cachedBody.length > 0 ? sha256Hex(cachedBody) : null,
+                request.getRemoteAddr(),
+                request.getHeader("X-Forwarded-For"),
+                request.getHeader("User-Agent"),
+                throwable.getClass().getName(),
+                rootCause.getClass().getName(),
+                rootCause.getMessage());
+    }
+
+    private byte[] getCachedBody(HttpServletRequest request) {
+        ContentCachingRequestWrapper requestWrapper = WebUtils.getNativeRequest(request, ContentCachingRequestWrapper.class);
+        return requestWrapper == null ? null : requestWrapper.getContentAsByteArray();
+    }
+
+    private Throwable getRootCause(Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause;
+    }
+
+    private String sha256Hex(byte[] body) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return toHex(digest.digest(body));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 digest is not available", e);
+        }
+    }
+
+    private String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(b & 0xff);
+            if (hex.length() == 1) {
+                sb.append('0');
+            }
+            sb.append(hex);
+        }
+        return sb.toString();
     }
 
     /** 设置 HTTP 状态码（401 → UNAUTHORIZED, 403 → FORBIDDEN, 默认200） */

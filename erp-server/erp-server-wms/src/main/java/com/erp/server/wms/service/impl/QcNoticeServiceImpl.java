@@ -1247,6 +1247,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
                             : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
+                    qcResult.setAllowInstockQty(qcResultView.getAllowInstockQty());
                     qcResult.setQcGoodQty(goodQty);
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
@@ -1599,6 +1600,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
                             : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
+                    qcResult.setAllowInstockQty(qcInfoView.getAllowInstockQty());
                     qcResult.setQcGoodQty(goodQty);
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);

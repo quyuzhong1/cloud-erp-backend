@@ -124,7 +124,9 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setAmount(detailItem.getSellPrice());
                 detail.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 detail.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-                detail.setAllAmountLocalCurrency(detailItem.getSellPrice().multiply(new BigDecimal(actualQty)));
+                BigDecimal sharePrice = detailItem.getSharePrice() != null ? detailItem.getSharePrice() : detailItem.getSellPrice();
+                detail.setTaxAmount(sharePrice);
+                detail.setAllAmountLocalCurrency(sharePrice);
                 detail.setExchangeRate(new BigDecimal(1));
                 detail.setSoDetailId(detailItem.getSrcOrderDetailId());
                 detail.setRemark(detailItem.getRemark());

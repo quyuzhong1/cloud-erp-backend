@@ -367,6 +367,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                 detailEntity.setPlanQty(detailDTO.getPlanQty());
                 detailEntity.setActualQty(detailDTO.getActualQty());
+                fillWdtTaxAmount(detailEntity);
                 detailList.add(detailEntity);
                 //是否扣减库存 true 就要
                 boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
@@ -385,6 +386,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     if(amountPair != null) {
                     	detailEntity.setAmount(amountPair.getKey());
                     	detailEntity.setAllAmountLocalCurrency(amountPair.getValue());
+                        detailEntity.setTaxAmount(amountPair.getValue());
                     }
                     detailEntity.setId(IdWorker.getIdStr());
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
@@ -403,6 +405,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     detailEntity.setVirtualWarehouseId(virtualWarehouseId);
                     detailEntity.setPlanQty(detail.getPositionGoodsCount());
                     detailEntity.setActualQty(detail.getPositionGoodsCount());
+                    fillWdtTaxAmount(detailEntity);
                     detailList.add(detailEntity);
                     //是否扣减库存 true 就要
                     boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
@@ -543,12 +546,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
         							.divide(totalStd , 4 , RoundingMode.DOWN);
         					currTotalAmount = currTotalAmount.add(amount);
-							wdtSoOutStockDetailDTO.setAmount(amount);
-							wdtSoOutStockDetailDTO.setTaxAmount(amount);
+                            wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            wdtSoOutStockDetailDTO.setTaxAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            wdtSoOutStockDetailDTO.setAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
     					}else {
     						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAllAmountLocalCurrency.subtract(currTotalAllAmountLocalCurrency));
-    						wdtSoOutStockDetailDTO.setAmount(totalAmount.subtract(currTotalAmount));
-    						wdtSoOutStockDetailDTO.setTaxAmount(totalAmount.subtract(currTotalAmount));
+                            wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            wdtSoOutStockDetailDTO.setTaxAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            wdtSoOutStockDetailDTO.setAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
     					}
     					wdtSoOutStockDetailDTO.setPrice(wdtSoOutStockDetailDTO.getAmount().divide(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty()), 4, RoundingMode.HALF_UP));
     				}
@@ -792,6 +797,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             } else {
                 soOutstockDetailEntity.setAllAmountLocalCurrency(BigDecimal.ZERO);
             }
+            soOutstockDetailEntity.setTaxAmount(soOutstockDetailEntity.getAllAmountLocalCurrency());
             soOutstockDetailEntityList.add(soOutstockDetailEntity);
         }
         soOutstock.setDetailList(soOutstockDetailEntityList);
@@ -1048,7 +1054,21 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         return virtualWarehouseList.get(0).getVirtualWarehouseId();
     }
-    
+
+    private void fillWdtTaxAmount(SoOutstockDetailEntity detailEntity) {
+        BigDecimal taxAmount = detailEntity.getTaxAmount();
+        if (Objects.isNull(taxAmount)) {
+            taxAmount = detailEntity.getAllAmountLocalCurrency();
+        }
+        if (Objects.isNull(taxAmount)) {
+            taxAmount = detailEntity.getAmount();
+        }
+        taxAmount = Objects.nonNull(taxAmount) ? taxAmount : BigDecimal.ZERO;
+        detailEntity.setTaxAmount(taxAmount);
+        detailEntity.setAllAmountLocalCurrency(taxAmount);
+        detailEntity.setExchangeRate(BigDecimal.ONE);
+    }
+
     private Map<String, Pair<BigDecimal, BigDecimal>> splitAmountAndLocalCurrency(WdtSoOutStockDetailDTO detailDTO){
     	Map<String, Pair<BigDecimal, BigDecimal>> map = new HashMap<>();
     	List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();

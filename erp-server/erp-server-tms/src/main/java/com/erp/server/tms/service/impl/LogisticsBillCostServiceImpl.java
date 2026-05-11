@@ -1668,6 +1668,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostEntity> billEntityList = this.listByLogisticsBillIdList(billIds);
         //物流单记录
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
+        Map<String, TmsFirstMileReconciliationDetailEntity> estimatedMap = detailEntityList.stream()
+                .filter(e -> Objects.nonNull(e)
+                        && DetailReconciliationTypeEnum.ESTIMATED.getCode().equalsIgnoreCase(e.getType())
+                        && CharSequenceUtil.isNotBlank(e.getSourceId()))
+                .collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getSourceId, e -> e, (first, second) -> first));
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>();
         //根据物流单进行处理
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equals(e.getType())).collect(Collectors.toList());
@@ -1690,6 +1695,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 entity.setLogisticsBillId(detailEntity.getSourceId());
             }
             entity.setCurrency(mainEntity.getCurrency());
+            backfillEstimatedWeight(entity, estimatedMap.get(detailEntity.getSourceId()));
             //填充信息
             this.handleData(entity);
             TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(detailEntity.getSourceId());
@@ -1699,10 +1705,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 continue;
             }
             // 更新实际重量和体积重, 计费重
-            entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
-            entity.setWeightLogistics(actualDetailEntity.getActualWeight());
-            // 费用重取最大
-            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
+            entity.setVolumeWeightLogistics(defaultWeight(actualDetailEntity.getVolumeWeight()));
+            entity.setWeightLogistics(defaultWeight(actualDetailEntity.getActualWeight()));
+            entity.setBillingWeightLogistics(maxWeight(actualDetailEntity.getVolumeWeight(), actualDetailEntity.getActualWeight()));
             // 设置实际费用明细
             if (!CollectionUtils.isEmpty(actualDetailEntity.getUpdateList())) {
                 List<TmsCostDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(TmsCostDetailDTO.UpdateDTO.class, actualDetailEntity.getUpdateList());
@@ -1753,6 +1758,58 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 tmsCostDetailService.updateActual0ByMainId(delActualCostDetailIds);
             }
         }
+    }
+
+    /**
+     * 使用预估明细补齐费用记录的预估重量。
+     *
+     * @param entity 物流费用记录
+     * @param estimatedDetailEntity 预估对账明细
+     */
+    private void backfillEstimatedWeight(LogisticsBillCostEntity entity, TmsFirstMileReconciliationDetailEntity estimatedDetailEntity) {
+        if (Objects.isNull(entity) || Objects.isNull(estimatedDetailEntity)) {
+            return;
+        }
+        if (isBlankWeight(entity.getActualWeight()) && Objects.nonNull(estimatedDetailEntity.getActualWeight())) {
+            entity.setActualWeight(estimatedDetailEntity.getActualWeight());
+        }
+        if (isBlankWeight(entity.getVolumeWeight()) && Objects.nonNull(estimatedDetailEntity.getVolumeWeight())) {
+            entity.setVolumeWeight(estimatedDetailEntity.getVolumeWeight());
+        }
+        if (isBlankWeight(entity.getBillingWeight()) && Objects.nonNull(estimatedDetailEntity.getBillingWeight())) {
+            entity.setBillingWeight(estimatedDetailEntity.getBillingWeight());
+        }
+    }
+
+    /**
+     * 判断重量是否为空白值。
+     *
+     * @param value 重量
+     * @return 为空或零时返回true
+     */
+    private boolean isBlankWeight(BigDecimal value) {
+        return Objects.isNull(value) || BigDecimal.ZERO.compareTo(value) == 0;
+    }
+
+    /**
+     * 获取重量默认值。
+     *
+     * @param value 重量
+     * @return 非空重量或零
+     */
+    private BigDecimal defaultWeight(BigDecimal value) {
+        return Objects.nonNull(value) ? value : BigDecimal.ZERO;
+    }
+
+    /**
+     * 获取物流商计费重。
+     *
+     * @param volumeWeight 体积重
+     * @param actualWeight 实重
+     * @return 体积重和实重的较大值
+     */
+    private BigDecimal maxWeight(BigDecimal volumeWeight, BigDecimal actualWeight) {
+        return defaultWeight(volumeWeight).max(defaultWeight(actualWeight));
     }
 
     /**

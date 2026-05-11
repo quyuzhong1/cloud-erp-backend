@@ -125,12 +125,14 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
         Result<Object> resultData = null;
         List<JSONObject> allResultList = new ArrayList<>();
-        for (Map<String, Object> mongoData : findMongoData) {
+        boolean allShipmentFetched = true;
+        for (int i = 0; i < findMongoData.size(); i++) {
+            Map<String, Object> mongoData = findMongoData.get(i);
             String shipmentId = mongoData.getOrDefault("shipmentId", "").toString();
             if (StringUtils.isBlank(shipmentId)) {
-                resultData = null;
-                allResultList.clear();
-                break;
+                String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败: sid={}, shipmentId为空, taskId={}", sid, dmpInputTaskEntity.getId());
+                log.error(errorMsg);
+                throw new ServiceException(errorMsg);
             }
             // 请求参数
             FbaShipmentReqDTO fbaShipmentReqDTO = new FbaShipmentReqDTO(sid, startDate, endDate, shipmentId);
@@ -152,14 +154,19 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 return Collections.emptyList();
             }
 
-            if (isEmptyShipmentData(resultData)) {
+            List<JSONObject> shipmentList = extractShipmentList(resultData.getData());
+            if (CollectionUtils.isEmpty(shipmentList)) {
+                allShipmentFetched = false;
                 allResultList.clear();
                 break;
             }
-            allResultList.addAll(extractShipmentList(resultData.getData()));
+            allResultList.addAll(shipmentList);
+            if (i < findMongoData.size() - 1) {
+                sleepOneSecond();
+            }
         }
 
-        if (isEmptyShipmentData(resultData)) {
+        if (!allShipmentFetched || isEmptyShipmentData(resultData)) {
             int retryLimit = parseRetryLimit(retryCountStr);
             String retryTaskId = dmpInputTaskEntity.getParentTaskId();
             DmpInputTaskEntity retryTaskEntity = dmpInputTaskService.getById(retryTaskId);
@@ -184,7 +191,6 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 return Collections.emptyList();
             }
         }
-
         allResultList.forEach(e -> e.put("shopId", shopId));
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allResultList)));
     }
@@ -254,6 +260,15 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         } catch (Exception e) {
             log.warn("retryCount配置非法,使用默认重试次数3,retryCount={}", retryCountStr);
             return 3;
+        }
+    }
+
+    private void sleepOneSecond() {
+        try {
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("领星FBA货件明细请求休眠被中断,taskId={}", dmpInputTaskEntity.getId(), e);
         }
     }
 

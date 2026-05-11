@@ -65,7 +65,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -379,9 +378,21 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             ProductDetailEntity skuVO =skuVoOptional.get();
             detailEntity.setMainId(inStockEntity.getId());
             detailEntity.setSkuId(skuVO.getId());
-            if(Objects.nonNull(detailEntity.getAmount())){
-                detailEntity.setPrice(detailEntity.getAmount().divide(new BigDecimal(detailEntity.getRealQty()),4, RoundingMode.HALF_UP));
+            BigDecimal price = detailEntity.getPrice();
+            if (Objects.isNull(price) && Objects.nonNull(detailEntity.getAmount())) {
+                Integer realQty = Objects.nonNull(detailEntity.getRealQty()) && detailEntity.getRealQty() > 0 ? detailEntity.getRealQty() : 1;
+                price = MathUtil.divide(detailEntity.getAmount(), BigDecimal.valueOf(realQty));
             }
+            price = Objects.nonNull(price) ? price : BigDecimal.ZERO;
+            BigDecimal qty = BigDecimal.valueOf(Objects.nonNull(detailEntity.getRealQty()) ? detailEntity.getRealQty() : 0);
+            detailEntity.setPrice(price);
+            detailEntity.setTaxRate(BigDecimal.ZERO);
+            detailEntity.setTaxPrice(price);
+            detailEntity.setExchangeRate(BigDecimal.ONE);
+            detailEntity.setReturnAmount(MathUtil.multiplyWithFour(price, qty));
+            detailEntity.setTaxReturnAmount(MathUtil.multiplyWithFour(price, qty));
+            detailEntity.setReturnAmountLocalCurrency(detailEntity.getReturnAmount());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailEntity.getTaxReturnAmount());
             if(WmsConstant.WDT_NULL_LOCATION.contains(detailEntity.getWarehouseLocation())){
                 detailEntity.setWarehouseLocation("");
             }

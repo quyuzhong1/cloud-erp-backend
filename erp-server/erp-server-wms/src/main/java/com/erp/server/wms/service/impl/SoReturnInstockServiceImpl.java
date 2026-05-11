@@ -2181,6 +2181,114 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refreshPriceFields(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<SoReturnInstockEntity> mainList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(mainList)) {
+            return;
+        }
+        List<SoReturnInstockDetailEntity> detailList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        List<String> b2cSoIds = mainList.stream()
+                .filter(item -> OrderTypeEnum.B2C.getCode().equals(item.getType()))
+                .map(SoReturnInstockEntity::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoB2cDetailEntity> b2cDetailList = CollectionUtils.isEmpty(b2cSoIds) ? Collections.emptyList() : soB2cFeign.listDetailByMainIds(b2cSoIds);
+
+        List<String> soReturnIds = mainList.stream()
+                .map(SoReturnInstockEntity::getSoReturnId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoReturnDetailEntity> returnDetailList = CollectionUtils.isEmpty(soReturnIds) ? Collections.emptyList() : soReturnFeign.listDetailByMainIds(soReturnIds);
+        List<String> soIds = mainList.stream()
+                .filter(item -> !OrderTypeEnum.B2C.getCode().equals(item.getType()))
+                .map(SoReturnInstockEntity::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = CollectionUtils.isEmpty(soIds) ? Collections.emptyList() : soInfoFeign.listSoDetailByMainIds(soIds);
+
+        for (SoReturnInstockDetailEntity detail : detailList) {
+            SoReturnInstockEntity main = mainList.stream()
+                    .filter(item -> CharSequenceUtil.equals(item.getId(), detail.getMainId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(main)) {
+                continue;
+            }
+            if (OrderTypeEnum.B2C.getCode().equals(main.getType())) {
+                SoB2cDetailEntity b2cDetail = b2cDetailList.stream()
+                        .filter(item -> CharSequenceUtil.equals(item.getMainId(), main.getSoId()) && CharSequenceUtil.equals(item.getSkuId(), detail.getSkuId()))
+                        .findFirst()
+                        .orElse(null);
+                BigDecimal price = Objects.nonNull(b2cDetail) ? b2cDetail.getPrice() : detail.getPrice();
+                BigDecimal exchangeRate = Objects.nonNull(b2cDetail) ? b2cDetail.getExchangeRate() : detail.getExchangeRate();
+                fillDetailPrice(detail, price, BigDecimal.ZERO, price, exchangeRate);
+                continue;
+            }
+            if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(main.getSourceType()) || CharSequenceUtil.isNotBlank(main.getThirdCode())) {
+                BigDecimal price = Objects.nonNull(detail.getPrice()) ? detail.getPrice() : MathUtil.divide(detail.getReturnAmount(), BigDecimal.valueOf(defaultRealQty(detail)));
+                fillDetailPrice(detail, price, BigDecimal.ZERO, price, detail.getExchangeRate());
+                continue;
+            }
+            SoDetailEntity soDetail = findSourceSoDetail(detail, returnDetailList, soDetailList);
+            if (Objects.nonNull(soDetail)) {
+                fillDetailPrice(detail, soDetail.getPrice(), soDetail.getTaxRate(), soDetail.getTaxPrice(),
+                        Objects.nonNull(detail.getExchangeRate()) ? detail.getExchangeRate() : soDetail.getExchangeRate());
+            }
+        }
+        soReturnInstockDetailService.updateBatchById(detailList);
+    }
+
+    private SoDetailEntity findSourceSoDetail(SoReturnInstockDetailEntity detail, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList) {
+        String sourceDetailId = returnDetailList.stream()
+                .filter(item -> CharSequenceUtil.equals(item.getId(), detail.getSoReturnDetailId()))
+                .map(SoReturnDetailEntity::getSourceDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse(detail.getSourceDetailId());
+        SoDetailEntity soDetail = soDetailList.stream()
+                .filter(item -> CharSequenceUtil.equals(item.getId(), sourceDetailId))
+                .findFirst()
+                .orElse(null);
+        if (Objects.nonNull(soDetail)) {
+            return soDetail;
+        }
+        return soDetailList.stream()
+                .filter(item -> CharSequenceUtil.equals(item.getSkuId(), detail.getSkuId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void fillDetailPrice(SoReturnInstockDetailEntity detail, BigDecimal price, BigDecimal taxRate, BigDecimal taxPrice, BigDecimal exchangeRate) {
+        BigDecimal safePrice = Objects.nonNull(price) ? price : BigDecimal.ZERO;
+        BigDecimal safeTaxPrice = Objects.nonNull(taxPrice) ? taxPrice : safePrice;
+        BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
+        BigDecimal realQty = BigDecimal.valueOf(defaultRealQty(detail));
+        detail.setPrice(safePrice);
+        detail.setTaxRate(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO);
+        detail.setTaxPrice(safeTaxPrice);
+        detail.setExchangeRate(safeExchangeRate);
+        detail.setReturnAmount(MathUtil.multiplyWithFour(safePrice, realQty));
+        detail.setTaxReturnAmount(MathUtil.multiplyWithFour(safeTaxPrice, realQty));
+        detail.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detail.getReturnAmount(), safeExchangeRate));
+        detail.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(detail.getTaxReturnAmount(), safeExchangeRate));
+    }
+
+    private Integer defaultRealQty(SoReturnInstockDetailEntity detail) {
+        return Objects.nonNull(detail.getRealQty()) ? detail.getRealQty() : MathUtil.ZERO;
+    }
+
+    @Override
     public void downloadTemplate(HttpServletResponse response) {
         String path = "excel/soReturnInstockTemplate.xlsx";
         String excelName = "template.xlsx";
@@ -2336,6 +2444,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detail.setRemark(f.getRemark());
                 detail.setReturnReasonDict(soB2cReturnEntity.getReason());
                 b2cDetailEntityList.stream().filter(h -> h.getId().equals(f.getSoDetailId())).findFirst().ifPresent(g -> {
+                    detail.setPrice(g.getPrice());
+                    detail.setTaxRate(BigDecimal.ZERO);
+                    detail.setTaxPrice(g.getPrice());
                     detail.setReturnAmount(MathUtil.multiplyWithFour(g.getPrice(), BigDecimal.valueOf(detail.getRealQty())));
                     detail.setTaxReturnAmount(MathUtil.multiplyWithFour(g.getPrice(), BigDecimal.valueOf(detail.getRealQty())));
                     detail.setWarehouseId(instockDTO.getWarehouseId());

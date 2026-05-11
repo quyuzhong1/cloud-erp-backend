@@ -413,7 +413,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @param list
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
      */
-    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
+    TmsDeclareBillDTO.MergeDeclareBillDTO listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
     /**
      * 更新报关状态
      * @author will

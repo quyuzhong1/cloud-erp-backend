@@ -1903,6 +1903,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2c = OrderTypeEnum.B2C.getCode();
 
         List<String> customerIds = list.stream()
+                .filter(item -> StringUtils.isBlank(item.getPartitionId()))
                 .map(SoOutstockDTO.PagingViewDTO::getCustomerId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -1914,9 +1915,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 customerPartitionIdMap = customerInfoEntities.stream()
                         .filter(item -> StringUtils.isNotBlank(item.getId()))
                         .filter(item -> StringUtils.isNotBlank(item.getPartitionId()))
-                        .filter(item -> StringUtils.equalsAny(item.getBusinessMode(),
-                                CustomerInfoBusinessModeEnum.O2B.getCode(),
-                                CustomerInfoBusinessModeEnum.X2B.getCode()))
                         .collect(Collectors.toMap(CustomerInfoEntity::getId,
                                 CustomerInfoEntity::getPartitionId,
                                 (a, b) -> a));
@@ -3183,7 +3181,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         generateB2cDTO.setDetailList(addDTOS);
         //重试时需要按照发货单发货时间扣减
         generateB2cDTO.setBillDate(outTime.toLocalDate());
+        fillBlankPlatformOutstockTrackNo(entity.getId(), warehouseId, trackNo);
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+    }
+
+    private void fillBlankPlatformOutstockTrackNo(String soB2cId, String warehouseId, String trackNo) {
+        if (CharSequenceUtil.isBlank(trackNo)) {
+            return;
+        }
+        List<SoOutstockEntity> outstockList = this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoId, soB2cId)
+                .eq(CharSequenceUtil.isNotBlank(warehouseId), SoOutstockEntity::getWarehouseId, warehouseId)
+                .eq(SoOutstockEntity::getSourceType, SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())
+                .and(wrapper -> wrapper.isNull(SoOutstockEntity::getTrackNo).or().eq(SoOutstockEntity::getTrackNo, CharSequenceUtil.EMPTY))
+                .list();
+        if (CollectionUtils.isEmpty(outstockList)) {
+            return;
+        }
+        outstockList.forEach(outstock -> outstock.setTrackNo(trackNo));
+        this.updateBatchById(outstockList);
     }
 
     @Override
@@ -4246,6 +4262,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 更新
         soOutstockService.updateById(soOutstockEntity);
         soOutstockDetailService.updateBatchById(list);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void refreshAmountFields(List<String> ids, Boolean isPushKingdee) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<SoOutstockEntity> soOutstockEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soOutstockEntityList)) {
+            return;
+        }
+        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.listByMainIds(ids);
+        for (SoOutstockEntity entity : soOutstockEntityList) {
+            List<SoOutstockDetailEntity> currentDetailList = detailList.stream()
+                    .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), entity.getId()))
+                    .collect(Collectors.toList());
+            soOutstockDetailService.refreshAmountFields(currentDetailList, entity);
+        }
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            soOutstockDetailService.updateBatchById(detailList);
+        }
+        if (Boolean.TRUE.equals(isPushKingdee)) {
+            sendPushTask(soOutstockEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
     }
 
     private void syncToWdt(SoOutstockEntity entity,SyncOperateEnum operateEnum) {
