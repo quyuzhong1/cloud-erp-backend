@@ -281,6 +281,18 @@ public class SoReturnInstockDTO {
          */
         private BigDecimal returnAmount;
         /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
          *含税退货金额
          */
         private BigDecimal taxReturnAmount;
@@ -801,6 +813,18 @@ public class SoReturnInstockDTO {
          *退货金额
          */
         private BigDecimal returnAmount;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
         /**
          *含税退货金额
          */
