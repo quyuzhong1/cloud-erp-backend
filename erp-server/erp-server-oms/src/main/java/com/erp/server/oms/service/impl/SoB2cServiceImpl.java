@@ -9239,8 +9239,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String msg = getChangeSkuView(codeList);
             throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, msg);
         }
+        List<String> deliveryFailedCodes = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
-            checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "更换SKU");
+            try {
+                checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "更换SKU");
+            } catch (Exception e) {
+                deliveryFailedCodes.add(soB2cEntity.getCode());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(deliveryFailedCodes)) {
+            throw new ServiceException(CharSequenceUtil.format("销售订单【{}】已生成B2C发货单或三方仓发货单，不允许操作更换SKU", getChangeSkuView(deliveryFailedCodes)));
         }
         List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuViewDTOS = baseMapper.listChangeDeliverySkuView(ids);
         List<String> skuIds = changeDeliverySkuViewDTOS.stream().map(SoB2cDTO.ChangeDeliverySkuViewDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -9273,7 +9281,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(soId));
         List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryEntities = thirdWarehouseDeliveryFeign.listBySourceId(Collections.singletonList(soId));
-        if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities) || CollectionUtils.isNotEmpty(thirdWarehouseDeliveryEntities)) {
+        // 已取消的发货单视为无效，不阻塞后续操作
+        boolean hasActiveB2cDelivery = soB2cDeliveryEntities.stream()
+                .anyMatch(e -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()));
+        boolean hasActiveThirdDelivery = thirdWarehouseDeliveryEntities.stream()
+                .anyMatch(e -> !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()));
+        if (hasActiveB2cDelivery || hasActiveThirdDelivery) {
             throw new ServiceException(CharSequenceUtil.format("已生成B2C发货单或三方仓发货单，不允许操作{}", operationName));
         }
     }
