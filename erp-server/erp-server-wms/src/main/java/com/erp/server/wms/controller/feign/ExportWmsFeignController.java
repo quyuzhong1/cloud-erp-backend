@@ -224,6 +224,9 @@ public class ExportWmsFeignController {
     @Resource
     private QcApplicationService qcApplicationService;
 
+    @Resource
+    private WarehouseLocationSuggestAfterSalesService warehouseLocationSuggestAfterSalesService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sbdd.warehouse_id",
@@ -1340,5 +1343,14 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
     public PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
         return qcApplicationService.paging(dto);
+    }
+
+    /**
+     * 导出仓库位置建议售后单
+     */
+    @PostMapping("/exportWarehouseLocationSuggestAfterSales")
+    @WebAdvanceQuery(handler = WarehouseLocationSuggestAfterSalesQueryHandler.class)
+    public PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> exportWarehouseLocationSuggestAfterSales(@RequestBody @Validated PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> dto) {
+        return warehouseLocationSuggestAfterSalesService.paging(dto);
     }
 }

@@ -446,4 +446,7 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportQcApplication")
     PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(PagingDTO<QcApplicationDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportWarehouseLocationSuggestAfterSales")
+    public PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> exportWarehouseLocationSuggestAfterSales(@RequestBody @Validated PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> dto);
 }

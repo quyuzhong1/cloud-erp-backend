@@ -143,6 +143,11 @@ public class WarehouseLocationDTO implements Serializable {
 
 
         private Integer usableQty;
+
+        /**
+         * 父级id(库区id)
+         */
+        private String parentId;
     }
 
 
