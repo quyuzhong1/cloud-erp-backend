@@ -194,7 +194,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
             return Collections.emptyList();
         }
 
-        Map<String, Object> matchData = buildMatchData(paramMap, conditionList);
+        List<Map<String, Object>> matchDataList = buildMatchDataList(paramMap, conditionList);
         Map<String, String> valueTypeMap = conditionList.stream()
                 .filter(item -> StrUtil.isNotBlank(item.getConditionField()))
                 .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField,
@@ -222,7 +222,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                         LinkedHashMap::new, Collectors.toList()));
 
         return ruleList.stream()
-                .filter(rule -> matchDeclareRule(rule, ruleConditionMap, matchData, valueTypeMap))
+                .filter(rule -> matchDeclareRule(rule, ruleConditionMap, matchDataList, valueTypeMap))
                 .collect(Collectors.toList());
     }
 
@@ -265,25 +265,69 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .collect(Collectors.toList());
     }
 
-    Map<String, Object> buildMatchData(Map<String, String> paramMap, List<CfgConditionDTO.CommonDTO> conditionList) {
-        Map<String, Object> matchData = new HashMap<>();
+    /**
+     * 构建报关规则匹配数据列表。
+     *
+     * <p>批量报关时同一字段可能按英文逗号聚合多个取值，需要展开为多组单值匹配数据，
+     * 后续按全部展开结果校验同一条规则是否覆盖本次请求。</p>
+     *
+     * @param paramMap 条件参数集合
+     * @param conditionList 规则条件配置
+     * @return 规则匹配数据列表
+     */
+    List<Map<String, Object>> buildMatchDataList(Map<String, String> paramMap, List<CfgConditionDTO.CommonDTO> conditionList) {
+        List<Map<String, Object>> matchDataList = new ArrayList<>();
+        matchDataList.add(new HashMap<>());
         for (CfgConditionDTO.CommonDTO condition : conditionList) {
             String conditionField = condition.getConditionField();
             if (StrUtil.isBlank(conditionField)) {
                 continue;
             }
-            String value = paramMap.get(conditionField);
-            if(StringUtils.isNotBlank(value)){
-                matchData.put(conditionField, value);
+            List<String> valueList = splitMatchValues(paramMap.get(conditionField));
+            matchDataList = appendMatchDataList(matchDataList, conditionField, valueList);
+        }
+        for (Map<String, Object> matchData : matchDataList) {
+            matchData.put("detailList", Collections.singletonList(new HashMap<>(matchData)));
+        }
+        return matchDataList;
+    }
+
+    List<String> splitMatchValues(String value) {
+        if (StringUtils.isBlank(value)) {
+            return Collections.emptyList();
+        }
+        String[] splitValues = value.split(",");
+        List<String> valueList = new ArrayList<>(splitValues.length);
+        Set<String> uniqueValueSet = new HashSet<>();
+        for (String splitValue : splitValues) {
+            String trimValue = splitValue.trim();
+            if (StringUtils.isNotBlank(trimValue) && uniqueValueSet.add(trimValue)) {
+                valueList.add(trimValue);
             }
         }
-        matchData.put("detailList", Collections.singletonList(new HashMap<>(matchData)));
-        return matchData;
+        return valueList;
+    }
+
+    private List<Map<String, Object>> appendMatchDataList(List<Map<String, Object>> sourceList,
+                                                          String conditionField,
+                                                          List<String> valueList) {
+        if (CollUtil.isEmpty(valueList)) {
+            return sourceList;
+        }
+        List<Map<String, Object>> resultList = new ArrayList<>(sourceList.size() * valueList.size());
+        for (Map<String, Object> source : sourceList) {
+            for (String value : valueList) {
+                Map<String, Object> matchData = new HashMap<>(source);
+                matchData.put(conditionField, value);
+                resultList.add(matchData);
+            }
+        }
+        return resultList;
     }
 
     boolean matchDeclareRule(CfgDeclareRuleEntity rule,
                              Map<String, List<CfgDeclareRuleConditionEntity>> ruleConditionMap,
-                             Map<String, Object> matchData,
+                             List<Map<String, Object>> matchDataList,
                              Map<String, String> valueTypeMap) {
         List<CfgDeclareRuleConditionEntity> conditionList = ruleConditionMap.get(rule.getId());
         if (CollUtil.isEmpty(conditionList)) {
@@ -294,7 +338,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                         Comparator.nullsLast(Integer::compareTo)))
                 .map(condition -> buildConditionElement(condition, valueTypeMap))
                 .collect(Collectors.toList());
-        return Boolean.TRUE.equals(spElServer.matchExpressionByConditionList(conditionElementList, new HashMap<>(matchData), ""));
+        // 多值入参必须全部被同一条规则覆盖，避免仅匹配部分仓库或组织就返回规则。
+        return matchDataList.stream()
+                .allMatch(matchData -> Boolean.TRUE.equals(spElServer.matchExpressionByConditionList(
+                        conditionElementList, new HashMap<>(matchData), "")));
     }
 
     ConditionElement buildConditionElement(CfgDeclareRuleConditionEntity condition, Map<String, String> valueTypeMap) {
