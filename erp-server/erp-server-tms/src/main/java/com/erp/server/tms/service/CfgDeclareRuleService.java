@@ -14,8 +14,6 @@ import java.util.Map;
  */
 public interface CfgDeclareRuleService extends SuperService<CfgDeclareRuleEntity> {
 
-    BaseResultDTO.AddDTO add(CfgDeclareRuleDTO.AddDTO dto);
-
     Boolean add(CfgDeclareRuleDTO.SaveListDTO dto);
 
     Boolean update(CfgDeclareRuleDTO.UpdateDTO dto);

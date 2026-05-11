@@ -58,8 +58,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     private static final String RECEIVER = "receiver";
     private static final String RULE_TYPE = "ruleType";
     private static final String CONDITION_VALUE_TYPE_STRING = "String";
-    private static final String DUPLICATE_RULE_MESSAGE = "Duplicate ruleType/senderId/receiverId combination";
-    private static final String SAVE_FAILED_MESSAGE = "CfgDeclareRule save failed";
 
     @Resource
     private OperateLogService operateLogService;
@@ -77,24 +75,6 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public BaseResultDTO.AddDTO add(CfgDeclareRuleDTO.AddDTO addDTO) {
-        CfgDeclareRuleEntity entity = BeanMapperUtils.map(CfgDeclareRuleEntity.class, addDTO);
-        validateUniqueWithDb(entity);
-        fillCompanyNames(Collections.singletonList(entity));
-
-        boolean saved = super.save(entity);
-        if (!saved) {
-            throw new ServiceException(SAVE_FAILED_MESSAGE);
-        }
-
-        saveRuleConditions(entity.getId(), addDTO.getDetailList());
-        addCreateLog(entity);
-        return new BaseResultDTO.AddDTO(entity.getId(), entity.getId());
-    }
-
-    @Override
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
     public Boolean add(CfgDeclareRuleDTO.SaveListDTO dto) {
         List<CfgDeclareRuleDTO.SaveDTO> saveList = Optional.ofNullable(dto.getList()).orElse(Collections.emptyList());
         List<CfgDeclareRuleEntity> existingRules = this.lambdaQuery()
@@ -104,6 +84,8 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .collect(Collectors.toMap(CfgDeclareRuleEntity::getId, item -> item, (left, right) -> left));
 
         validateBatchSaveRequest(dto.getRuleType(), saveList, existingRuleMap);
+        Set<String> uniqueConditionFields = listUniqueConditionFields(dto.getRuleType());
+        validateSaveListUniqueConditions(dto.getRuleType(), saveList, uniqueConditionFields);
 
         List<CfgDeclareRuleEntity> saveEntities = saveList.stream()
                 .map(item -> {
@@ -132,17 +114,19 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
         CfgDeclareRuleEntity entity = BeanMapperUtils.map(CfgDeclareRuleEntity.class, addOrUpdateDTO);
         validateUniqueWithDb(entity);
+        List<CfgDeclareRuleConditionEntity> newDetails = buildConditionEntities(entity.getId(), addOrUpdateDTO.getDetailList(), true);
+        Set<String> uniqueConditionFields = listUniqueConditionFields(entity.getRuleType());
+        validateUpdateUniqueConditions(entity, newDetails, uniqueConditionFields);
         fillCompanyNames(Collections.singletonList(entity));
 
         boolean updated = super.updateById(entity);
         if (!updated) {
-            throw new ServiceException(SAVE_FAILED_MESSAGE);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SAVE_FAILED);
         }
 
         List<CfgDeclareRuleConditionEntity> oldDetails = cfgDeclareRuleConditionService.lambdaQuery()
                 .eq(CfgDeclareRuleConditionEntity::getRuleId, entity.getId())
                 .list();
-        List<CfgDeclareRuleConditionEntity> newDetails = buildConditionEntities(entity.getId(), addOrUpdateDTO.getDetailList(), true);
         commonService.updateDetail(entity.getId(), ModuleTypeEnum.CFG_DECLARE_RULE.getCode(),
                 cfgDeclareRuleConditionService, newDetails, oldDetails, Collections.singletonList("id"));
 
@@ -249,7 +233,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
             String uniqueKey = buildUniqueKey(item.getRuleType(), item.getSenderId(), item.getReceiverId());
             if (!uniqueKeySet.add(uniqueKey)) {
-                throw new ServiceException(ApiError.BILL_ALREADY_EXIST, DUPLICATE_RULE_MESSAGE);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SENDER_RECEIVER_DUPLICATE);
             }
         }
     }
@@ -263,6 +247,138 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .map(CfgDeclareRuleEntity::getId)
                 .filter(id -> !keepIdSet.contains(id))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 校验批量保存后的报关规则条件单值唯一。
+     *
+     * <p>add 接口按本次提交列表覆盖同 ruleType 下旧规则，只校验提交后的最终规则列表，
+     * 避免待删除旧规则造成重复误判。</p>
+     *
+     * @param ruleType 规则类型
+     * @param saveList 本次提交的规则列表
+     * @param uniqueConditionFields 需要校验单值唯一的条件字段
+     */
+    private void validateSaveListUniqueConditions(String ruleType,
+                                                  List<CfgDeclareRuleDTO.SaveDTO> saveList,
+                                                  Set<String> uniqueConditionFields) {
+        Set<String> uniqueKeySet = new HashSet<>();
+        for (CfgDeclareRuleDTO.SaveDTO saveDTO : saveList) {
+            addDtoConditionUniqueKeys(ruleType, saveDTO.getDetailList(), uniqueConditionFields, uniqueKeySet);
+        }
+    }
+
+    /**
+     * 校验修改后的报关规则条件单值唯一。
+     *
+     * <p>update 只校验当前规则新条件与其它规则是否冲突，不拦截其它历史规则之间已存在的重复数据。</p>
+     *
+     * @param entity 当前规则主表数据
+     * @param newDetails 当前规则新的条件明细
+     * @param uniqueConditionFields 需要校验单值唯一的条件字段
+     */
+    private void validateUpdateUniqueConditions(CfgDeclareRuleEntity entity,
+                                                List<CfgDeclareRuleConditionEntity> newDetails,
+                                                Set<String> uniqueConditionFields) {
+        if (CollUtil.isEmpty(uniqueConditionFields)) {
+            return;
+        }
+        Set<String> uniqueKeySet = new HashSet<>();
+        addEntityConditionUniqueKeys(entity.getRuleType(), newDetails, uniqueConditionFields, uniqueKeySet);
+
+        List<String> otherRuleIds = this.lambdaQuery()
+                .eq(CfgDeclareRuleEntity::getRuleType, entity.getRuleType())
+                .ne(CfgDeclareRuleEntity::getId, entity.getId())
+                .list()
+                .stream()
+                .map(CfgDeclareRuleEntity::getId)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(otherRuleIds)) {
+            return;
+        }
+
+        List<CfgDeclareRuleConditionEntity> otherDetails = cfgDeclareRuleConditionService.lambdaQuery()
+                .in(CfgDeclareRuleConditionEntity::getRuleId, otherRuleIds)
+                .in(CfgDeclareRuleConditionEntity::getField, uniqueConditionFields)
+                .list();
+        checkEntityConditionUniqueKeys(entity.getRuleType(), otherDetails, uniqueConditionFields, uniqueKeySet);
+    }
+
+    private void addDtoConditionUniqueKeys(String ruleType,
+                                           List<? extends CfgDeclareRuleConditionDTO.CommonDTO> detailList,
+                                           Set<String> uniqueConditionFields,
+                                           Set<String> uniqueKeySet) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (CfgDeclareRuleConditionDTO.CommonDTO detail : detailList) {
+            addConditionUniqueKeys(ruleType, detail.getField(), detail.getValue(), uniqueConditionFields, uniqueKeySet);
+        }
+    }
+
+    private void addEntityConditionUniqueKeys(String ruleType,
+                                              List<CfgDeclareRuleConditionEntity> detailList,
+                                              Set<String> uniqueConditionFields,
+                                              Set<String> uniqueKeySet) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (CfgDeclareRuleConditionEntity detail : detailList) {
+            addConditionUniqueKeys(ruleType, detail.getField(), detail.getValue(), uniqueConditionFields, uniqueKeySet);
+        }
+    }
+
+    private void checkEntityConditionUniqueKeys(String ruleType,
+                                                List<CfgDeclareRuleConditionEntity> detailList,
+                                                Set<String> uniqueConditionFields,
+                                                Set<String> uniqueKeySet) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        for (CfgDeclareRuleConditionEntity detail : detailList) {
+            checkConditionUniqueKeys(ruleType, detail.getField(), detail.getValue(), uniqueConditionFields, uniqueKeySet);
+        }
+    }
+
+    private Set<String> listUniqueConditionFields(String ruleType) {
+        List<CfgConditionDTO.CommonDTO> conditionList = cfgConditionService.listByType(ruleType);
+        if (CollUtil.isEmpty(conditionList)) {
+            return Collections.emptySet();
+        }
+        // 以报关规则条件配置为唯一校验来源，避免字段范围在代码中写死后与配置不一致。
+        return conditionList.stream()
+                .map(CfgConditionDTO.CommonDTO::getConditionField)
+                .filter(StrUtil::isNotBlank)
+                .map(String::trim)
+                .collect(Collectors.toSet());
+    }
+
+    private void addConditionUniqueKeys(String ruleType, String field, String value,
+                                        Set<String> uniqueConditionFields, Set<String> uniqueKeySet) {
+        handleConditionUniqueKeys(ruleType, field, value, uniqueConditionFields, uniqueKeySet, true);
+    }
+
+    private void checkConditionUniqueKeys(String ruleType, String field, String value,
+                                          Set<String> uniqueConditionFields, Set<String> uniqueKeySet) {
+        handleConditionUniqueKeys(ruleType, field, value, uniqueConditionFields, uniqueKeySet, false);
+    }
+
+    private void handleConditionUniqueKeys(String ruleType, String field, String value,
+                                           Set<String> uniqueConditionFields,
+                                           Set<String> uniqueKeySet, boolean addKey) {
+        String conditionField = StringUtils.trimToEmpty(field);
+        if (!uniqueConditionFields.contains(conditionField)) {
+            return;
+        }
+        // value 支持英文逗号聚合多个取值，需要展开后按单值判断是否与其它规则交叉。
+        List<String> valueList = splitMatchValues(value);
+        for (String itemValue : valueList) {
+            String uniqueKey = buildConditionUniqueKey(ruleType, conditionField, itemValue);
+            boolean duplicate = addKey ? !uniqueKeySet.add(uniqueKey) : uniqueKeySet.contains(uniqueKey);
+            if (duplicate) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_CONDITION_DUPLICATE, conditionField, itemValue);
+            }
+        }
     }
 
     /**
@@ -428,7 +544,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         if (old != null) {
             boolean updated = super.updateById(entity);
             if (!updated) {
-                throw new ServiceException(SAVE_FAILED_MESSAGE);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SAVE_FAILED);
             }
             refreshRuleConditions(entity.getId(), saveDTO.getDetailList());
             addUpdateLog(old, entity);
@@ -437,7 +553,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
         boolean saved = super.save(entity);
         if (!saved) {
-            throw new ServiceException(SAVE_FAILED_MESSAGE);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SAVE_FAILED);
         }
         refreshRuleConditions(entity.getId(), saveDTO.getDetailList());
         addCreateLog(entity);
@@ -486,7 +602,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .last("LIMIT 1")
                 .one();
         if (exist != null) {
-            throw new ServiceException(ApiError.BILL_ALREADY_EXIST, DUPLICATE_RULE_MESSAGE);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SENDER_RECEIVER_DUPLICATE);
         }
     }
 
@@ -525,6 +641,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
 
     private String buildUniqueKey(String ruleType, String senderId, String receiverId) {
         return StrUtil.join("|", ruleType, senderId, receiverId);
+    }
+
+    private String buildConditionUniqueKey(String ruleType, String field, String value) {
+        return StrUtil.join("|", ruleType, field, value);
     }
 
     private void addCreateLog(CfgDeclareRuleEntity entity) {
