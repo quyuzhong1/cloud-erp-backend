@@ -9,7 +9,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.WarehouseLocationSuggestAfterSalesExcelDto;
+import com.erp.model.wms.dto.excel.AfterSalesWarehouseLocationSuggestExcelDto;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -30,23 +30,23 @@ import java.util.stream.Collectors;
  * @date 2026-05-06
  */
 @Getter
-public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEventListener<LinkedHashMap<Integer, String>> {
+public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEventListener<LinkedHashMap<Integer, String>> {
     /**
      * 导入正确数据
      */
     @Getter
-    private List<WarehouseLocationSuggestAfterSalesExcelDto> successList = new ArrayList<>();
+    private List<AfterSalesWarehouseLocationSuggestExcelDto> successList = new ArrayList<>();
 
     /**
      * 导入数据，用于判断导入是否为空
      */
     @Getter
-    private List<WarehouseLocationSuggestAfterSalesExcelDto> allList = new ArrayList<>();
+    private List<AfterSalesWarehouseLocationSuggestExcelDto> allList = new ArrayList<>();
     /**
      * 导入错误数据
      */
     @Getter
-    private List<WarehouseLocationSuggestAfterSalesExcelDto> errorList = new ArrayList<>();
+    private List<AfterSalesWarehouseLocationSuggestExcelDto> errorList = new ArrayList<>();
 
     private PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
     private WarehouseLocationService warehouseLocationService = SpringUtil.getBean(WarehouseLocationService.class);
@@ -56,7 +56,7 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
     @Override
     public void invoke(LinkedHashMap<Integer, String> data, AnalysisContext context) {
 //        Integer rowIndex = context.readRowHolder().getRowIndex();
-        WarehouseLocationSuggestAfterSalesExcelDto dto = new WarehouseLocationSuggestAfterSalesExcelDto();
+        AfterSalesWarehouseLocationSuggestExcelDto dto = new AfterSalesWarehouseLocationSuggestExcelDto();
         dto.setSkuNo(data.get(0));
         dto.setEanCode(data.get(1));
         dto.setProductName(data.get(2));
@@ -72,7 +72,7 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
         allList.add(dto);
     }
 
-    private void verifyField(WarehouseLocationSuggestAfterSalesExcelDto dto) {
+    private void verifyField(AfterSalesWarehouseLocationSuggestExcelDto dto) {
         //sku编码校验
         if (CharSequenceUtil.isBlank(dto.getSkuNo())) {
             dto.setErrorMsg("SKU编码不能为空，");
@@ -161,7 +161,7 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
             return;
         }
         // 生成业务唯一 Key 的函数
-        Function<WarehouseLocationSuggestAfterSalesExcelDto, String> businessKeyFunc =
+        Function<AfterSalesWarehouseLocationSuggestExcelDto, String> businessKeyFunc =
                 dto -> dto.getSkuNo() + "|" + dto.getWarehouseName() + "|" + dto.getWarehouseAreaName() + "|" + dto.getSuggestWarehouseLocationCode();
 
         // 统计每个 Key 出现的次数
@@ -179,9 +179,9 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
             }
         });
         //获取解析正常数据的skuNo
-        List<String> skuNoList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(WarehouseLocationSuggestAfterSalesExcelDto::getSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> skuNoList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(AfterSalesWarehouseLocationSuggestExcelDto::getSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //获取解析正常的数据的仓库名称
-        List<String> warehouseNameList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(WarehouseLocationSuggestAfterSalesExcelDto::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> warehouseNameList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(AfterSalesWarehouseLocationSuggestExcelDto::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         //提前查询出所有相关的sku信息
         List<ProductDetailEntity> skuVOS = CollUtil.isNotEmpty(skuNoList) ? plmTaskFeign.listBySkuNos(skuNoList) : Collections.emptyList();
         //提前查询出所有的相关的仓库信息
@@ -195,7 +195,7 @@ public class WarehouseLocationSuggestAfterSalesExcelListener extends AnalysisEve
 
         Map<String, List<WarehouseLocationEntity>> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
         //
-        for (WarehouseLocationSuggestAfterSalesExcelDto excelDTO : allList) {
+        for (AfterSalesWarehouseLocationSuggestExcelDto excelDTO : allList) {
             if (CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())) {
                 continue;
             }

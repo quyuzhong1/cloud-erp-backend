@@ -5,8 +5,8 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
-import com.erp.server.wms.service.WarehouseLocationSuggestAfterSalesService;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,19 +22,19 @@ import java.util.List;
  * @date 2026/05/09
  */
 @RestController
-@RequestMapping("/pdaWarehouseLocationSuggestAfterSales")
+@RequestMapping("/pdaAfterSalesWarehouseLocationSuggest")
 @LogSystemModule("PDA售后推荐仓位管理")
-public class PdaWarehouseLocationSuggestAfterSalesController {
+public class PdaAfterSalesWarehouseLocationSuggestController {
 
     @Resource
-    private WarehouseLocationSuggestAfterSalesService warehouseLocationSuggestAfterSalesService;
+    private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
 
     @Resource
     private WarehouseService warehouseService;
 
 
     @GetMapping("/getSuggestWarehouseLocationListBySkuNoAndWarehouseInfo")
-    public ApiResult<List<WarehouseLocationSuggestAfterSalesDto.PdaListDto>> getSuggestWarehouseLocationListBySkuNoAndWarehouseInfo(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto dto) {
+    public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.PdaListDto>> getSuggestWarehouseLocationListBySkuNoAndWarehouseInfo(AfterSalesWarehouseLocationSuggestDto.PdaSearchDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
         List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
         if (CollUtil.isEmpty(dtos)){
@@ -46,7 +46,7 @@ public class PdaWarehouseLocationSuggestAfterSalesController {
         //当前只有一个仓位 【空仓位】 默认code为空
         dto.setWarehouseLocationCode("");
         //
-        List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> list  = warehouseLocationSuggestAfterSalesService.getSuggestWarehouseLocationList(dto);
+        List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> list  = afterSalesWarehouseLocationSuggestService.getSuggestWarehouseLocationList(dto);
         return ApiResult.success(list);
     }
 }

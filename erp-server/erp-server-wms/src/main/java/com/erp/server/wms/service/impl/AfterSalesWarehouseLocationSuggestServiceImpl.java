@@ -23,19 +23,19 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
-import com.erp.model.wms.dto.excel.WarehouseLocationSuggestAfterSalesExcelDto;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.dto.excel.AfterSalesWarehouseLocationSuggestExcelDto;
+import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseLocationSuggestAfterSalesEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.listener.WarehouseLocationSuggestAfterSalesExcelListener;
-import com.erp.server.wms.mapper.WarehouseLocationSuggestAfterSalesMapper;
+import com.erp.server.wms.listener.AfterSalesWarehouseLocationSuggestExcelListener;
+import com.erp.server.wms.mapper.AfterSalesWarehouseLocationSuggestMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.WarehouseLocationSuggestAfterSalesService;
+import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -61,7 +61,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WAREHOUSE_LOCAT
 
 @Service
 @Slf4j
-public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceImpl<WarehouseLocationSuggestAfterSalesMapper, WarehouseLocationSuggestAfterSalesEntity> implements WarehouseLocationSuggestAfterSalesService {
+public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceImpl<AfterSalesWarehouseLocationSuggestMapper, AfterSalesWarehouseLocationSuggestEntity> implements AfterSalesWarehouseLocationSuggestService {
 
     @Autowired
     private OperateLogService operateLogService;
@@ -80,31 +80,31 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
 
     @Override
-    public PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> paging(PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> pagingDTO) {
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> paging(PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<WarehouseLocationSuggestAfterSalesEntity> pageResult = this.baseMapper.paging(page, pagingDTO.getParams());
-        List<WarehouseLocationSuggestAfterSalesDto.ListDTO> list = fillViewList(pageResult.getRecords());
+        IPage<AfterSalesWarehouseLocationSuggestEntity> pageResult = this.baseMapper.paging(page, pagingDTO.getParams());
+        List<AfterSalesWarehouseLocationSuggestDto.ListDTO> list = fillViewList(pageResult.getRecords());
         return new PagingVO<>(list, (int) pageResult.getTotal(), (int) pageResult.getPages(), (int) pageResult.getCurrent());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addOrEdit(WarehouseLocationSuggestAfterSalesDto.AddOrEditDTO dto) {
-        WarehouseLocationSuggestAfterSalesEntity entity = new WarehouseLocationSuggestAfterSalesEntity();
+    public Boolean addOrEdit(AfterSalesWarehouseLocationSuggestDto.AddOrEditDTO dto) {
+        AfterSalesWarehouseLocationSuggestEntity entity = new AfterSalesWarehouseLocationSuggestEntity();
         BeanMapperUtils.copy(dto, entity);
 
         // 1. 严格通过 ID 判断是新增还是修改
         boolean isSave = StrUtil.isBlank(entity.getId());
-        WarehouseLocationSuggestAfterSalesEntity oldEntity = null;
+        AfterSalesWarehouseLocationSuggestEntity oldEntity = null;
 
         // 2. 查出当前业务组合（SKU+仓库+仓位）在数据库中的记录，用于冲突判定
-        LambdaQueryWrapper<WarehouseLocationSuggestAfterSalesEntity> conflictWrapper = Wrappers.lambdaQuery(WarehouseLocationSuggestAfterSalesEntity.class)
-                .eq(WarehouseLocationSuggestAfterSalesEntity::getSkuNo, entity.getSkuNo())
-                .eq(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId, entity.getWarehouseId())
-                .eq(WarehouseLocationSuggestAfterSalesEntity::getSuggestWarehouseLocationCode, entity.getSuggestWarehouseLocationCode())
+        LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> conflictWrapper = Wrappers.lambdaQuery(AfterSalesWarehouseLocationSuggestEntity.class)
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getSkuNo, entity.getSkuNo())
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getWarehouseId, entity.getWarehouseId())
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getSuggestWarehouseLocationCode, entity.getSuggestWarehouseLocationCode())
                 .last("LIMIT 1");
-        WarehouseLocationSuggestAfterSalesEntity conflictEntity = this.getOne(conflictWrapper, false);
+        AfterSalesWarehouseLocationSuggestEntity conflictEntity = this.getOne(conflictWrapper, false);
 
         if (isSave) {
             // 【新增逻辑】
@@ -144,7 +144,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
         operateLogService.addModuleOperateLogByObj(
                 oldEntity, // 新增时为 null，修改时为数据库原值
                 entity,
-                ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(),
+                ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(),
                 entity.getId(),
                 msg
         );
@@ -154,7 +154,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO delete(WarehouseLocationSuggestAfterSalesEntity entity) {
+    public BatchResultDTO delete(AfterSalesWarehouseLocationSuggestEntity entity) {
         this.removeById(entity.getId());
         //日志记录
         String operator = UserContext.getDefaultLoginUser().getUserName();
@@ -163,7 +163,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
         operateLogService.addModuleOperateLog(
                 msg,
-                ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(),
+                ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(),
                 entity.getId(),
                 "删除操作"
         );
@@ -171,7 +171,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
     }
 
     @Override
-    public void exportExcel(WarehouseLocationSuggestAfterSalesDto.ExportParamDTO dto) {
+    public void exportExcel(AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), dto);
     }
 
@@ -182,7 +182,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
         String userName = user.getUserName();
         String uid = user.getUid();
 
-        WarehouseLocationSuggestAfterSalesExcelListener listener = new WarehouseLocationSuggestAfterSalesExcelListener();
+        AfterSalesWarehouseLocationSuggestExcelListener listener = new AfterSalesWarehouseLocationSuggestExcelListener();
         try {
             ExcelReaderBuilder read = EasyExcel.read(file.getInputStream(), listener);
             ExcelReaderSheetBuilder sheet = read.sheet(0);
@@ -191,18 +191,18 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
         }
 
-        List<WarehouseLocationSuggestAfterSalesExcelDto> errorList = listener.getErrorList();
-        List<WarehouseLocationSuggestAfterSalesExcelDto> verifyList = listener.getSuccessList();
-        List<WarehouseLocationSuggestAfterSalesExcelDto> allList = listener.getAllList();
+        List<AfterSalesWarehouseLocationSuggestExcelDto> errorList = listener.getErrorList();
+        List<AfterSalesWarehouseLocationSuggestExcelDto> verifyList = listener.getSuccessList();
+        List<AfterSalesWarehouseLocationSuggestExcelDto> allList = listener.getAllList();
 
         if (!errorList.isEmpty()) {
-            ExcelUtil.export("错误数据", "sheet1", allList, WarehouseLocationSuggestAfterSalesExcelDto.class, response);
+            ExcelUtil.export("错误数据", "sheet1", allList, AfterSalesWarehouseLocationSuggestExcelDto.class, response);
         } else {
             log.info("开始封装实体数据，当前操作人：{}", userName);
             // 统一使用应用服务器时间
             LocalDateTime now = LocalDateTime.now();
 
-            List<WarehouseLocationSuggestAfterSalesEntity> entities = verifyList
+            List<AfterSalesWarehouseLocationSuggestEntity> entities = verifyList
                     .stream()
                     //增加去重逻辑，防止同一批次出现重复行导致数据库报错
                     .collect(Collectors.toMap(
@@ -213,7 +213,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
                     .values()
                     .stream()
                     .map(dto -> {
-                        WarehouseLocationSuggestAfterSalesEntity entity = new WarehouseLocationSuggestAfterSalesEntity();
+                        AfterSalesWarehouseLocationSuggestEntity entity = new AfterSalesWarehouseLocationSuggestEntity();
                         BeanMapperUtils.copy(dto, entity);
                         entity.setCreateUserId(uid);
                         entity.setCreateUserName(userName);
@@ -228,8 +228,8 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
             // 分批执行高速 UPSERT (每批 500 条)
             if (!entities.isEmpty()) {
-                List<List<WarehouseLocationSuggestAfterSalesEntity>> batches = ListUtils.partition(entities, 500);
-                for (List<WarehouseLocationSuggestAfterSalesEntity> batch : batches) {
+                List<List<AfterSalesWarehouseLocationSuggestEntity>> batches = ListUtils.partition(entities, 500);
+                for (List<AfterSalesWarehouseLocationSuggestEntity> batch : batches) {
                     try {
                         baseMapper.upsertBatch(batch);
                     } catch (Exception e) {
@@ -242,7 +242,7 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "excel/warehouseLocationSuggestAfterSalesExport.xlsx";
+        String path = "excel/afterSalesWarehouseLocationSuggestExport.xlsx";
         String excelName = "售后仓位推荐导入模板.xlsx";
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -268,34 +268,34 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateDisabled(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
+    public void updateDisabled(AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
-        WarehouseLocationSuggestAfterSalesEntity entity = new WarehouseLocationSuggestAfterSalesEntity();
+        AfterSalesWarehouseLocationSuggestEntity entity = new AfterSalesWarehouseLocationSuggestEntity();
         entity.setId(dto.getId());
         entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
         baseMapper.updateById(entity);
-        operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+        operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> updateStatusBatch(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
+    public List<BatchResultDTO> updateStatusBatch(AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto) {
         if (CollectionUtils.isEmpty(dto.getIds())) {
             return Collections.emptyList();
         }
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         LoginUser user = UserContext.getNonLoginUser();
 
-        List<WarehouseLocationSuggestAfterSalesEntity> list = baseMapper.selectBatchIds(dto.getIds());
+        List<AfterSalesWarehouseLocationSuggestEntity> list = baseMapper.selectBatchIds(dto.getIds());
 
-        List<WarehouseLocationSuggestAfterSalesEntity> updateList = new ArrayList<>();
-        for (WarehouseLocationSuggestAfterSalesEntity entity : list) {
+        List<AfterSalesWarehouseLocationSuggestEntity> updateList = new ArrayList<>();
+        for (AfterSalesWarehouseLocationSuggestEntity entity : list) {
             if (entity.getDisabled().equals(Boolean.parseBoolean(dto.getDisabled()))) {
                 continue;
             }
             entity.setDisabled(Boolean.valueOf(dto.getDisabled()));
             updateList.add(entity);
-            operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.WAREHOUSE_LOCATION_SUGGEST_AFTERSALES.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
+            operateLogService.addModuleOperateLog(String.format("更新售后推荐仓位状态：%s", entity.getDisabled() ? "禁用" : "启用"), ModuleTypeEnum.AFTERSALES_WAREHOUSE_LOCATION_SUGGEST.getCode(), entity.getId(), "状态变更", user.getUid(), user.getUserName());
         }
         if (!updateList.isEmpty()) {
             this.updateBatchById(updateList);
@@ -311,14 +311,14 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
      * @param entityList 实体列表
      * @return 列表视图
      */
-    private List<WarehouseLocationSuggestAfterSalesDto.ListDTO> fillViewList(List<WarehouseLocationSuggestAfterSalesEntity> entityList) {
+    private List<AfterSalesWarehouseLocationSuggestDto.ListDTO> fillViewList(List<AfterSalesWarehouseLocationSuggestEntity> entityList) {
         if (CollUtil.isEmpty(entityList)) {
             return Collections.emptyList();
         }
 
         // 1. 提取所有关联 ID/Code 提升批量查询效率
-        List<String> skuNoList = entityList.stream().map(WarehouseLocationSuggestAfterSalesEntity::getSkuNo).distinct().collect(Collectors.toList());
-        List<String> warehouseIdList = entityList.stream().map(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> skuNoList = entityList.stream().map(AfterSalesWarehouseLocationSuggestEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = entityList.stream().map(AfterSalesWarehouseLocationSuggestEntity::getWarehouseId).distinct().collect(Collectors.toList());
 
         // 2. 批量获取外部数据并转为 Map (空间换时间)
         // SKU 基础信息
@@ -353,9 +353,9 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
                         (oldVal, newVal) -> oldVal));
 
         // 3. 组装数据，直接通过 Map 获取，复杂度降至 O(1)
-        List<WarehouseLocationSuggestAfterSalesDto.ListDTO> dtoList = new ArrayList<>(entityList.size());
-        for (WarehouseLocationSuggestAfterSalesEntity entity : entityList) {
-            WarehouseLocationSuggestAfterSalesDto.ListDTO dto = new WarehouseLocationSuggestAfterSalesDto.ListDTO();
+        List<AfterSalesWarehouseLocationSuggestDto.ListDTO> dtoList = new ArrayList<>(entityList.size());
+        for (AfterSalesWarehouseLocationSuggestEntity entity : entityList) {
+            AfterSalesWarehouseLocationSuggestDto.ListDTO dto = new AfterSalesWarehouseLocationSuggestDto.ListDTO();
             BeanMapperUtils.copy(entity, dto);
 
             // 匹配 SKU 信息
@@ -389,23 +389,23 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
 
     @Override
-    public List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> getSuggestWarehouseLocationList(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto searchDto) {
-        LambdaQueryWrapper<WarehouseLocationSuggestAfterSalesEntity> wrapper = new LambdaQueryWrapper<>();
+    public List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> getSuggestWarehouseLocationList(AfterSalesWarehouseLocationSuggestDto.PdaSearchDto searchDto) {
+        LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(
-                        WarehouseLocationSuggestAfterSalesEntity::getSuggestWarehouseLocationCode,
-                        WarehouseLocationSuggestAfterSalesEntity::getPriority,
-                        WarehouseLocationSuggestAfterSalesEntity::getDisabled
+                        AfterSalesWarehouseLocationSuggestEntity::getSuggestWarehouseLocationCode,
+                        AfterSalesWarehouseLocationSuggestEntity::getPriority,
+                        AfterSalesWarehouseLocationSuggestEntity::getDisabled
                 )
-                .eq(WarehouseLocationSuggestAfterSalesEntity::getSkuNo, searchDto.getSkuNo())
-                .eq(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId, searchDto.getWarehouseId());
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getSkuNo, searchDto.getSkuNo())
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getWarehouseId, searchDto.getWarehouseId());
 
-        List<WarehouseLocationSuggestAfterSalesEntity> entityList = list(wrapper);
+        List<AfterSalesWarehouseLocationSuggestEntity> entityList = list(wrapper);
         if (CollUtil.isEmpty(entityList)) {
             return Collections.emptyList();
         }
-        List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> dtoList = new ArrayList<>(entityList.size());
-        for (WarehouseLocationSuggestAfterSalesEntity entity : entityList) {
-            WarehouseLocationSuggestAfterSalesDto.PdaListDto dto = new WarehouseLocationSuggestAfterSalesDto.PdaListDto();
+        List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> dtoList = new ArrayList<>(entityList.size());
+        for (AfterSalesWarehouseLocationSuggestEntity entity : entityList) {
+            AfterSalesWarehouseLocationSuggestDto.PdaListDto dto = new AfterSalesWarehouseLocationSuggestDto.PdaListDto();
             BeanMapperUtils.copy(entity, dto);
             dtoList.add(dto);
         }

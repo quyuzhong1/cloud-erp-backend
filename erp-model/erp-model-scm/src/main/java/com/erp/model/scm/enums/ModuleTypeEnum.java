@@ -102,7 +102,7 @@ public enum ModuleTypeEnum {
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
-    WAREHOUSE_LOCATION_SUGGEST_AFTERSALES("94", "售后仓位推荐"),
+    AFTERSALES_WAREHOUSE_LOCATION_SUGGEST("94", "售后仓位推荐"),
 
 
     CFG_RULE_COMMON("97", "规则设置"),

@@ -18,8 +18,8 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("warehouse_location_suggest_aftersales")
-public class WarehouseLocationSuggestAfterSalesEntity extends BaseEntity<WarehouseLocationSuggestAfterSalesEntity> {
+@TableName("aftersales_warehouse_location_suggest")
+public class AfterSalesWarehouseLocationSuggestEntity extends BaseEntity<AfterSalesWarehouseLocationSuggestEntity> {
 
     @TableField("sku_id")
     private String skuId;

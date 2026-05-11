@@ -3,7 +3,7 @@ package com.erp.server.file.business.wms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -18,26 +18,26 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WAREHOUSE_LOCAT
 
 @Component
 @Slf4j
-public class ExportWarehouseLocationSuggestAfterSalesHandler extends AbstractPageFileEventHandler<WarehouseLocationSuggestAfterSalesDto.ListDTO, WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> {
+public class ExportAfterSalesWarehouseLocationSuggestHandler extends AbstractPageFileEventHandler<AfterSalesWarehouseLocationSuggestDto.ListDTO, AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
-    protected PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> getPageData(PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> dto) {
-        return exportWmsFeign.exportWarehouseLocationSuggestAfterSales(dto);
+    protected PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> getPageData(PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> dto) {
+        return exportWmsFeign.exportAfterSalesWarehouseLocationSuggest(dto);
     }
 
     @Override
-    protected List<WarehouseLocationSuggestAfterSalesDto.ListDTO> getData(FileTask fileTask) {
-        WarehouseLocationSuggestAfterSalesDto.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO>() {
+    protected List<AfterSalesWarehouseLocationSuggestDto.ListDTO> getData(FileTask fileTask) {
+        AfterSalesWarehouseLocationSuggestDto.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
     protected String getExcelPath() {
-        return "excel/wms/warehouseLocationSuggestAfterSalesExport.xlsx";
+        return "excel/wms/afterSalesWarehouseLocationSuggestExport.xlsx";
     }
 
     @Override

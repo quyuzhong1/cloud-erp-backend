@@ -12,7 +12,7 @@ import lombok.Data;
  * @date 2026-05-06
  */
 @Data
-public class WarehouseLocationSuggestAfterSalesExcelDto {
+public class AfterSalesWarehouseLocationSuggestExcelDto {
 
     /**
      * sku编码
