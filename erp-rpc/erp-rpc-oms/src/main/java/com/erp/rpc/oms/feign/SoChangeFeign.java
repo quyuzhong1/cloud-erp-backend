@@ -31,12 +31,12 @@ public interface SoChangeFeign {
      * @param list
      */
     @PostMapping("feign/soChange/listByCodes")
-    List<SoChangeEntity> listByCodes(List<String> list);
+    List<SoChangeEntity> listByCodes(@RequestBody List<String> list);
 
 
     /**
      *  根据变更单号查询变更单信息
      */
     @PostMapping ("feign/soChange/updateApproveStatus")
-    void updateApproveStatus(SoChangeEntity entity);
+    void updateApproveStatus(@RequestBody SoChangeEntity entity);
 }

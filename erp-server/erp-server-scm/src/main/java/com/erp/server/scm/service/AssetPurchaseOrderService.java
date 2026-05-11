@@ -1,15 +1,15 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.fms.dto.AssetAcceptDTO;
+import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
 import com.erp.model.scm.dto.AssetPurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.scm.dto.AssetPurchaseOrderDTO;
-import com.common.business.vo.PagingVO;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -135,10 +135,10 @@ public interface AssetPurchaseOrderService extends SuperService<AssetPurchaseOrd
     * 撤销
     * @author wtr
     * @date: 2025-10-16
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 

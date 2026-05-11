@@ -32,7 +32,6 @@ import java.util.Map;
 /**
  * @author Lambda
  * @Classname QcBill
-
  * @Date 2023-04-14 15:20
  * @Created by yl
  */
@@ -52,6 +51,15 @@ public class QcInfoDTO implements Serializable {
          * 质检单id
          */
         private String id;
+        /**
+         * 质检状态
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
+         */
+        private String qcStatus;
 
 
         /**
@@ -118,7 +126,7 @@ public class QcInfoDTO implements Serializable {
          * 产品信息
          * 从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
          */
-        @Valid
+//        @Valid 前端进行区分web进行校验  pda端不校验
         private QcProductDTO.AddDTO qcProduct;
 
         /**
@@ -606,6 +614,27 @@ public class QcInfoDTO implements Serializable {
          * 质检标准
          */
         private QcNoticeDTO.QcStandardView qcStandardView;
+
+        /**
+         * 质检类型
+         */
+        private String qcType;
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+        /**
+         * 建议抽样数量
+         */
+        private Integer suggestSamplingQty;
+        /**
+         * 严重缺陷允收数（Ac）
+         */
+        private Integer majorAcceptQty;
+        /**
+         * 一般缺陷允收数（Re）
+         */
+        private Integer generalAcceptQty;
     }
 
 
@@ -624,8 +653,36 @@ public class QcInfoDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
 
+        /**
+         * 模糊搜索 质检通知单号/质检单号/SKU/EAN
+         */
+        private String searchKey;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class OpenPagingParamDTO implements Serializable {
+
+        /**
+         * 模糊搜索 质检通知单号/质检单号/SKU/EAN
+         */
+        private String searchKey;
+        /**
+         * 质检状态
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
+         */
+        private List<String> qcStatusList;
+        /**
+         * 质检人
+         */
+        private String userId;
     }
 
 
@@ -948,6 +1005,75 @@ public class QcInfoDTO implements Serializable {
         private String invalidRemark;
     }
 
+    /**
+     * 仓库分页信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OpenPagingViewDTO {
+        /**
+         * 质检单id
+         */
+        private String id;
+        /**
+         * 质检单号
+         */
+        private String code;
+        /**
+         * 质检人id
+         */
+        private String qcUserId;
+        /**
+         * 质检人名称
+         */
+        private String qcUserName;
+        /**
+         * 质检状态
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
+         */
+        private String qcStatus;
+        /**
+         * 质检状态名称
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
+         */
+        private String qcStatusName;
+        /**
+         * SKU
+         */
+        private String skuId;
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * EAN码
+         */
+        private String ean;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源单id
+         */
+        private String sourceId;
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+    }
 
     @Data
     @NoArgsConstructor
@@ -972,20 +1098,20 @@ public class QcInfoDTO implements Serializable {
     }
 
     /**
-    * 作废DTO
-    */
+     * 作废DTO
+     */
     @Data
     @NoArgsConstructor
     public static class InvalidDTO {
         /**
-        * ID集合
-        */
+         * ID集合
+         */
         @NotEmpty(message = "ID不能为空")
         private List<String> ids;
 
         /**
-        * 作废备注
-        */
+         * 作废备注
+         */
         @Size(max = 500, message = "作废备注最大长度不能超过500位")
         private String remark;
     }
@@ -1585,7 +1711,7 @@ public class QcInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ListQcStandardParamDTO{
+    public static class ListQcStandardParamDTO {
 
         /**
          * skuId
@@ -1608,7 +1734,7 @@ public class QcInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ListQcStandardResultDTO{
+    public static class ListQcStandardResultDTO {
 
         /**
          * 抽样方案id
@@ -1662,17 +1788,17 @@ public class QcInfoDTO implements Serializable {
         /**
          * 质检项目
          */
-        private List<QcInspectItemView>  qcInspectItemViewDTOList;
+        private List<QcInspectItemView> qcInspectItemViewDTOList;
 
         /**
          * 参考图片
          */
-        private List<QcImageView>  qcImageViewDTOList;
+        private List<QcImageView> qcImageViewDTOList;
     }
 
     @Data
     @NoArgsConstructor
-    public static class QcInspectItemView{
+    public static class QcInspectItemView {
 
         /**
          * 质检项目
@@ -1687,7 +1813,7 @@ public class QcInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class QcImageView{
+    public static class QcImageView {
 
         /**
          * 图片类型

@@ -426,8 +426,46 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list = this.lambdaQuery().orderByAsc(LogisticsChannelEntity::getDisabled).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
         Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
-
         return resultList;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listWithAll(String logisticsSupplierId) {
+        List<BaseDropDownDTO.DisabledDTO> resultList = new ArrayList<>();
+        resultList.add(new BaseDropDownDTO.DisabledDTO("all", "全部", false));
+        List<LogisticsChannelEntity> list = this.lambdaQuery()
+                .eq(StringUtils.isNotBlank(logisticsSupplierId),LogisticsChannelEntity::getMainId, logisticsSupplierId)
+                .orderByAsc(LogisticsChannelEntity::getDisabled)
+                .list();
+        List<BaseDropDownDTO.DisabledDTO> disabledDTOList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        Collections.sort(disabledDTOList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+        resultList.addAll(disabledDTOList);
+        return resultList;
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(List<String> channelNames) {
+        List<LogisticsChannelEntity> logisticsChannelEntities = this.listByName(channelNames);
+        if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
+        }
+        List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
+        List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
+        for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            baseDTO.setLogisticsSupplierId(baseDTO.getMainId());
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsSupplierEntity)) {
+                baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+                baseDTO.setLogisticsSupplierShortName(logisticsSupplierEntity.getShortName());
+                baseDTO.setSupplierId(logisticsSupplierEntity.getSupplierId());
+
+            }
+        }
+        return baseDTOS;
     }
 
     @Override

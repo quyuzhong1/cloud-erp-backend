@@ -1,6 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -9,8 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -124,10 +122,10 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @description: 取消流程
      * @author Will
      * @date: 2023/5/15 17:55
-     * @param ids
+     * @param dto
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
     /**
      * @param dto
      * @return Boolean

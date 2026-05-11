@@ -1,0 +1,214 @@
+package com.erp.server.dmp.service;
+
+import com.common.business.dto.PlatformOutboundDTO;
+import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
+import com.erp.server.dmp.inout.handler.output.task.mq.B2bThirdOutboundRocketMQTaskHandler;
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+public class B2bThirdOutboundRocketMQTaskHandlerTest {
+
+    private final TestB2bThirdOutboundRocketMQTaskHandler handler = new TestB2bThirdOutboundRocketMQTaskHandler();
+
+    @Test
+    public void shouldConvertDaMaiBlockStatusToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "BLOCK");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("BLOCK", dto.getThirdOrderStatus());
+        assertEquals("damai", dto.getProvider());
+    }
+
+    @Test
+    public void shouldConvertDaMaiNoActionStatusToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "SUBMIT");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("SUBMIT", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertZhongBaoStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("zhongbao", "-2");
+        entity.setAbnormalProblemReason("众包异常");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertEquals(ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(), dto.getOrderStatus());
+        assertEquals("-2", dto.getThirdOrderStatus());
+        assertEquals("众包异常", dto.getAbnormalProblemReason());
+    }
+
+    @Test
+    public void shouldConvertZhongBaoNoActionStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("zhongbao", "1");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("1", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertZhongBaoApprovedStatusToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("zhongbao", "3");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("3", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertZhongBaoWaitOutstockStatusToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("zhongbao", "4");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("4", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertZhongBaoOutstockStatusToShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("zhongbao", "5");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("5", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertDaMaiExceptionToCancelDelivery() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "EXCEPTION");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), dto.getOrderStatus());
+        assertEquals("EXCEPTION", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertDaMaiDiscardProcessedToWaitShipped() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "DISCARD_PROCESSED");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("DISCARD_PROCESSED", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertGoodCangStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("goodcang", "X");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), dto.getOrderStatus());
+        assertEquals("X", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertJiFengStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("jifeng", "4");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), dto.getOrderStatus());
+        assertEquals("4", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertImlStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("iml", "COMPLETE_OUTBOUND");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.SHIPPED.getCode(), dto.getOrderStatus());
+        assertEquals("COMPLETE_OUTBOUND", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertAntuStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("antu", "N");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(), dto.getOrderStatus());
+        assertEquals("N", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldConvertEccangStatus() {
+        DmpThirdOutboundEntity entity = buildEntity("eccang", "X");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals(ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), dto.getOrderStatus());
+        assertEquals("X", dto.getThirdOrderStatus());
+    }
+
+    @Test
+    public void shouldUseThirdWarehouseOrderCodeAsSourceCode() {
+        List<String> sourceCodeKeys = handler.exposeSourceCodeKeys();
+
+        assertEquals(1, sourceCodeKeys.size());
+        assertEquals("orderCode", sourceCodeKeys.get(0));
+    }
+
+    @Test
+    public void shouldKeepRawThirdStatusWhenNoErpStatusMapping() {
+        DmpThirdOutboundEntity entity = buildEntity("damai", "UNKNOWN_STATUS");
+
+        PlatformOutboundDTO dto = handler.convert(entity, "cfg-output-id");
+
+        assertNotNull(dto);
+        assertEquals("UNKNOWN_STATUS", dto.getThirdOrderStatus());
+        assertNull(dto.getOrderStatus());
+    }
+
+    private DmpThirdOutboundEntity buildEntity(String sourcePlatform, String orderStatus) {
+        DmpThirdOutboundEntity entity = new DmpThirdOutboundEntity();
+        entity.setId("1");
+        entity.setSourcePlatform(sourcePlatform);
+        entity.setReferenceNo("SFFH260330000001");
+        entity.setOrderCode("ORDER-001");
+        entity.setOrderStatus(orderStatus);
+        entity.setTrackingNo("TRACK-001");
+        return entity;
+    }
+
+    private static class TestB2bThirdOutboundRocketMQTaskHandler extends B2bThirdOutboundRocketMQTaskHandler {
+        @Override
+        protected boolean validateDataBlack(Object object, String cfgOutputId) {
+            return false;
+        }
+
+        private List<String> exposeSourceCodeKeys() {
+            return getSourceCodeKeys();
+        }
+    }
+}

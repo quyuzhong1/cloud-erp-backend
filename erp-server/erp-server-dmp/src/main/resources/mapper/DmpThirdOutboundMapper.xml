@@ -20,15 +20,19 @@
        <result column="date_shipping" property="dateShipping" />
        <result column="tracking_no" property="trackingNo" />
        <result column="abnormal_problem_reason" property="abnormalProblemReason" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
        <result column="input_task_id" property="inputTaskId" />
        <result column="convert_id" property="convertId" />
        <result column="next_level_id" property="nextLevelId" />
        <result column="unique_encrypt" property="uniqueEncrypt" />
        <result column="data_encrypt" property="dataEncrypt" />
+       <result column="intercept_status" property="interceptStatus" />
        <result column="sw_order_number" property="swOrderNumber" />
        <result column="warehouse_code" property="warehouseCode" />
        <result column="shipping_method" property="shippingMethod" />
        <result column="carrier_name" property="carrierName" />
+       <result column="order_type" property="orderType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -42,7 +46,9 @@
         update_user_id,
         version,
         is_deleted,
-        warehouse_platform_type, source_platform, order_code, reference_no, order_status, date_shipping, tracking_no, abnormal_problem_reason, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
+        warehouse_platform_type, source_platform, order_code, reference_no, order_status, date_shipping, tracking_no, abnormal_problem_reason,
+        platform_create_time, platform_update_time, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt,
+        intercept_status, sw_order_number, warehouse_code, shipping_method, carrier_name, order_type
     </sql>
 
 

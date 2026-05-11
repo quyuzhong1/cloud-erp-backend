@@ -58,4 +58,23 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
         }
         return baseMapper.listLatestFileTask(fileUrlList);
     }
+
+    @Override
+    public List<FileTask> listTimeOutImportTask(String code,Integer hours) {
+      return   lambdaQuery().eq(FileTask::getEvent,code)
+                .eq(FileTask::getStatus, FileTaskStatusEnum.PROCESS.name())
+                .lt(FileTask::getUpdateTime, LocalDateTime.now().minusHours(hours))
+                .list();
+    }
+
+    @Override
+    public void updateTaskStatus(List<String> taskIdList) {
+        if (CollUtil.isEmpty(taskIdList)) {
+            return;
+        }
+        this.lambdaUpdate()
+                .set(FileTask::getStatus, FileTaskStatusEnum.PENDING.name())
+                .in(FileTask::getId, taskIdList)
+                .update();
+    }
 }

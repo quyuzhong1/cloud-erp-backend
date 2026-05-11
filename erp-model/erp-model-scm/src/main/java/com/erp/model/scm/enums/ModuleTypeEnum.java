@@ -210,6 +210,9 @@ public enum ModuleTypeEnum {
 
     QC_APPLICATION("163", "质检申请单"),
     FILE_MANAGEMENT("164", "文件管理"),
+    MESSAGE("162","系统通知"),
+    SYS_VERSION("163","版本更新"),
+    PDA_VERSION("164","PDA系统升级"),
     CFG_DECLARE_RULE("165", "报关规则配置"),
 
 
@@ -234,6 +237,7 @@ public enum ModuleTypeEnum {
     B2B_THIRD_DELIVERY("157", "B2B三方发货单"),
     DMP_ADS_ERP_DIFF_OUTSTOCK_SYNC("158", "出库同步差异"),
     DMP_ADS_ERP_DIFF_RETURN_INSTOCK_SYNC("159", "退货同步差异"),
+    SO_B2B_DELIVERY_INTERCEPT("165", "B2B发货拦截单"),
     SKU_STD_RETAIL_PRICE("160", "sku标准零售价"),
 
     // doris

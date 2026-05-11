@@ -18,6 +18,7 @@ public enum ThirdDeliveryStatusEnum implements EnumMessage {
     INTERCEPTING("intercepting", "拦截中"),
     FAILED("failed", "创建失败"),
     CANCEL_DELIVERY("cancelDelivery", "取消发货"),
+    EXCEPTION_ORDER("exceptionOrder", "异常订单"),
     ;
     /**
      * 类型

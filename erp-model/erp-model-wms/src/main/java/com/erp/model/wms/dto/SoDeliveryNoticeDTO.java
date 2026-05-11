@@ -3,11 +3,14 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.*;
-
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -92,9 +95,17 @@ public class SoDeliveryNoticeDTO {
          */
         private List<LocalDate> createTimeList;
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
     }
 
     /**

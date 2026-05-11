@@ -278,6 +278,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     @TableField("order_route_type")
     private String orderRouteType;
 
+    /**
+     * 退货时间对应时区
+     */
+    @TableField("return_time_zone")
+    private String returnTimeZone;
+
     public static final String PLATFORM_DICT = "platform_dict";
 
     public static final String SHOP_CODE = "shop_code";

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -171,6 +172,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private CfgSettingService cfgSettingService;
     @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -190,7 +193,22 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
+        //查询渠道配置(针对尾程物流单)
+        String trackQueryMode = logisticsThirdChannelRefService.getTrackQueryModeBySalePlatform(logisticsBillEntity.getSalesPlatform(), logisticsBillEntity.getChannelId(), logisticsBillEntity.getLogisticsSupplierId());
+        boolean hasTrackQueryConfig = CharSequenceUtil.isNotBlank(trackQueryMode);
+        if (!hasTrackQueryConfig) {
+            trackQueryMode = TrackPlatformTypeEnum.TRACK123.getCode();
+        }
+        String finalTrackQueryMode = trackQueryMode;
+        List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        detailList.forEach(l -> l.setTrackQueryMode(finalTrackQueryMode));
+        if(!hasTrackQueryConfig){
+            detailList.forEach(l -> {
+                l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
+                l.setTrackEnable(false);
+            });
+        }
+        logisticsBillDetailService.add(logisticsBillEntity, detailList,true);
 
         //同步速递云运单
         pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -226,6 +244,57 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
     }
+
+    @Override
+    public Boolean batchImportAdd(List<LogisticsBillEntity> addDTOList) {
+        if (CollUtil.isEmpty(addDTOList)) {
+            return Boolean.TRUE;
+        }
+        List<LogisticsBillEntity> logisticsBillList = BeanUtil.copyToList(addDTOList, LogisticsBillEntity.class);
+        // 数据处理
+        batchHandleData(logisticsBillList);
+        boolean save = super.saveBatch(logisticsBillList);
+        if (!save) {
+            throw new ServiceException("物流单保存失败");
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 新增修改处理数据
+     */
+    private void batchHandleData(List<LogisticsBillEntity> logisticsBillList ) {
+        //查询分摊设置
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+
+        for (LogisticsBillEntity logisticsBillEntity : logisticsBillList) {
+            //费用分摊配置查询
+            logisticsBillEntity.setIsAllocateCostRequired(Boolean.FALSE);
+            if (ObjectUtil.isNotEmpty(cfgSetting) && ObjectUtil.isNotEmpty(cfgSetting.getDataJson())) {
+                CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
+                if (CollUtil.isNotEmpty(allocationSettingDTO.getPackageBillTypeList())) {
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.OTHER.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2C.getCode())
+                            && (CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) || CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.B2C.getCode()))) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2B.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.AFTER_SALE.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.AFTER_SALE.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                }
+            }
+        }
+    }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -272,10 +341,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     logisticsBillEntity.setSoDeliveryCode(businessDTO.getCode());
                 }
             } else  {
-                SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
-                if (ObjectUtil.isNotEmpty(soOutstockEntity) && Arrays.asList(SourceTypeEnum.SO_B2C_DELIVERY.getCode(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()).contains(soOutstockEntity.getSourceType())) {
-                    logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
-                    logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                //发货单id为空则查询销售出库单取发货单
+                if (CharSequenceUtil.isBlank(logisticsBillEntity.getSoDeliveryId())) {
+                    SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
+                    if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                        logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
+                        logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                    }
                 }
             }
         }

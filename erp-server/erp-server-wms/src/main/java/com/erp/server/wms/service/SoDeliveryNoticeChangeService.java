@@ -1,9 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 
 import java.util.List;
 
@@ -112,10 +114,10 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     * 撤销
     * @author lrp
     * @date: 2024-10-23
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
