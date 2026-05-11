@@ -13,10 +13,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
-import com.erp.model.wms.entity.WarehouseLocationSuggestAfterSalesEntity;
-import com.erp.server.wms.query.WarehouseLocationSuggestAfterSalesQueryHandler;
-import com.erp.server.wms.service.WarehouseLocationSuggestAfterSalesService;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
+import com.erp.server.wms.query.AfterSalesWarehouseLocationSuggestQueryHandler;
+import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -39,11 +39,11 @@ import java.util.Objects;
 @Slf4j
 @RestController
 @LogSystemModule("仓位售后推荐表")
-@RequestMapping("/warehouseLocationSuggestAfterSales")
-public class WarehouseLocationSuggestAfterSalesController extends BaseController {
+@RequestMapping("/afterSalesWarehouseLocationSuggest")
+public class AfterSalesWarehouseLocationSuggestController extends BaseController {
 
     @Resource
-    private WarehouseLocationSuggestAfterSalesService warehouseLocationSuggestAfterSalesService;
+    private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;
 
     @Resource
     private WarehouseService warehouseService;
@@ -58,11 +58,11 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            menuCode = "wms:warehouseLocationSuggestAfterSales:paging"
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:paging"
     )
-    @WebAdvanceQuery(handler = WarehouseLocationSuggestAfterSalesQueryHandler.class)
-    public ApiResult<PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO>> paging(@RequestBody PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> pagingDTO) {
-        PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> pagingResult = warehouseLocationSuggestAfterSalesService.paging(pagingDTO);
+    @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
+    public ApiResult<PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO>> paging(@RequestBody PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO) {
+        PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> pagingResult = afterSalesWarehouseLocationSuggestService.paging(pagingDTO);
         return ApiResult.success(pagingResult);
     }
 
@@ -90,8 +90,8 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增仓位售后推荐")
-    public ApiResult add(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.AddOrEditDTO dto) {
-        Boolean flag = warehouseLocationSuggestAfterSalesService.addOrEdit(dto);
+    public ApiResult add(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.AddOrEditDTO dto) {
+        Boolean flag = afterSalesWarehouseLocationSuggestService.addOrEdit(dto);
         return flag ? success() : failure();
     }
 
@@ -107,11 +107,11 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouseLocationSuggestAfterSales:update",
-            serviceClass = WarehouseLocationSuggestAfterSalesService.class,
+            menuCode = "wms:afterSalesWarehouseLocationSuggest:update",
+            serviceClass = AfterSalesWarehouseLocationSuggestService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.AddOrEditDTO dto) {
-        Boolean flag = warehouseLocationSuggestAfterSalesService.addOrEdit(dto);
+    public ApiResult update(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.AddOrEditDTO dto) {
+        Boolean flag = afterSalesWarehouseLocationSuggestService.addOrEdit(dto);
         return flag ? success() : failure();
     }
 
@@ -124,19 +124,19 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @PostMapping("/batchDelete")
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除仓位售后推荐")
-    public ApiResult<List<BatchResultDTO>> removeByIds(@RequestBody WarehouseLocationSuggestAfterSalesDto.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> removeByIds(@RequestBody AfterSalesWarehouseLocationSuggestDto.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        List<WarehouseLocationSuggestAfterSalesEntity> entities = warehouseLocationSuggestAfterSalesService.listByIds(dto.getIds());
+        List<AfterSalesWarehouseLocationSuggestEntity> entities = afterSalesWarehouseLocationSuggestService.listByIds(dto.getIds());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
-            WarehouseLocationSuggestAfterSalesEntity entity = entities.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            AfterSalesWarehouseLocationSuggestEntity entity = entities.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
             if (Objects.isNull(entity)) {
                 resultDTO = BatchResultDTO.fail(id, id, "售后推荐仓位不存在, 批量删除失败");
                 resultDTOS.add(resultDTO);
                 continue;
             }
             try {
-                resultDTO = warehouseLocationSuggestAfterSalesService.delete(entity);
+                resultDTO = afterSalesWarehouseLocationSuggestService.delete(entity);
             } catch (Exception e) {
                 log.error("售后推荐仓位不存在, 删除售后推荐仓位失败", e);
                 resultDTO = BatchResultDTO.fail(entity.getId(), null, e.getMessage());
@@ -146,16 +146,6 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-//    /**
-//     * 获取仓位售后推荐表
-//     *
-//     * @param id
-//     * @return
-//     */
-//    @RequestMapping("/getById")
-//    public WarehouseLocationSuggestAfterSalesEntity getById(String id) {
-//        return warehouseLocationSuggestAfterSalesService.getById(id);
-//    }
 
     /**
      * 导入仓位售后推荐Excel
@@ -167,7 +157,7 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
     @PostMapping("/importExcel")
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入仓位售后推荐Excel")
     public ApiResult<Void> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response) {
-        warehouseLocationSuggestAfterSalesService.importExcel(file, response);
+        afterSalesWarehouseLocationSuggestService.importExcel(file, response);
         return ApiResult.success();
     }
 
@@ -179,8 +169,8 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @PostMapping("/exportExcel")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位售后推荐Excel")
-    public ApiResult<Boolean> exportExcel(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.ExportParamDTO dto) {
-        warehouseLocationSuggestAfterSalesService.exportExcel(dto);
+    public ApiResult<Boolean> exportExcel(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto) {
+        afterSalesWarehouseLocationSuggestService.exportExcel(dto);
         return success(true);
     }
 
@@ -189,7 +179,7 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @GetMapping("/downloadTemplate")
     public void downloadTemplate(HttpServletResponse response) {
-        warehouseLocationSuggestAfterSalesService.downloadTemplate(response);
+        afterSalesWarehouseLocationSuggestService.downloadTemplate(response);
     }
 
     /**
@@ -197,8 +187,8 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @PostMapping("/updateStatus")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={id},状态值={disabled}(true=禁用,false=启用)")
-    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
-        warehouseLocationSuggestAfterSalesService.updateDisabled(dto);
+    public ApiResult<Void> updateStatus(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto) {
+        afterSalesWarehouseLocationSuggestService.updateDisabled(dto);
         return ApiResult.success();
     }
 
@@ -207,8 +197,8 @@ public class WarehouseLocationSuggestAfterSalesController extends BaseController
      */
     @PostMapping("/updateStatusBatch")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用/禁用 id={ids},状态值={disabled}(true=禁用,false=启用)")
-    public ApiResult<List<BatchResultDTO>> updateStatusBatch(@RequestBody @Validated WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto) {
-        List<BatchResultDTO> resultDTOList = warehouseLocationSuggestAfterSalesService.updateStatusBatch(dto);
+    public ApiResult<List<BatchResultDTO>> updateStatusBatch(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto) {
+        List<BatchResultDTO> resultDTOList = afterSalesWarehouseLocationSuggestService.updateStatusBatch(dto);
         return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
 

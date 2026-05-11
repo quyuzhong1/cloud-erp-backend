@@ -4,8 +4,8 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.WarehouseLocationSuggestAfterSalesDto;
-import com.erp.model.wms.entity.WarehouseLocationSuggestAfterSalesEntity;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -19,7 +19,7 @@ import java.util.List;
  * @author liuchao
  * @since 2026-04-30
  */
-public interface WarehouseLocationSuggestAfterSalesService extends SuperService<WarehouseLocationSuggestAfterSalesEntity> {
+public interface AfterSalesWarehouseLocationSuggestService extends SuperService<AfterSalesWarehouseLocationSuggestEntity> {
 
     /**
      * 仓位售后推荐分页查询
@@ -29,7 +29,7 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-04-30
      * @author liuchao
      */
-    PagingVO<WarehouseLocationSuggestAfterSalesDto.ListDTO> paging(PagingDTO<WarehouseLocationSuggestAfterSalesDto.SearchParamDTO> pagingDTO);
+    PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> paging(PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> pagingDTO);
 
     /**
      * 新增仓位售后推荐
@@ -39,7 +39,7 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-04-30
      * @author liuchao
      */
-    Boolean addOrEdit(WarehouseLocationSuggestAfterSalesDto.AddOrEditDTO dto);
+    Boolean addOrEdit(AfterSalesWarehouseLocationSuggestDto.AddOrEditDTO dto);
 
     /**
      * 删除仓位售后推荐
@@ -49,7 +49,7 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-04-30
      * @author liuchao
      */
-    BatchResultDTO delete(WarehouseLocationSuggestAfterSalesEntity entity);
+    BatchResultDTO delete(AfterSalesWarehouseLocationSuggestEntity entity);
 
     /**
      * 导出仓位售后推荐Excel
@@ -58,7 +58,7 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-04-30
      * @author liuchao
      */
-    void exportExcel(WarehouseLocationSuggestAfterSalesDto.ExportParamDTO dto);
+    void exportExcel(AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto);
 
     /**
      * 导入仓位售后推荐Excel
@@ -87,7 +87,7 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-04-30
      * @author liuchao
      */
-    void updateDisabled(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto);
+    void updateDisabled(AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto);
 
     /**
      * 批量更新状态
@@ -97,7 +97,7 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-04-30
      * @author liuchao
      */
-    List<BatchResultDTO> updateStatusBatch(WarehouseLocationSuggestAfterSalesDto.UpdateStatusDto dto);
+    List<BatchResultDTO> updateStatusBatch(AfterSalesWarehouseLocationSuggestDto.UpdateStatusDto dto);
 
 
     /**
@@ -108,5 +108,5 @@ public interface WarehouseLocationSuggestAfterSalesService extends SuperService<
      * @date 2026-05-09
      * @author liuchao
      */
-    List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> getSuggestWarehouseLocationList(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto dto);
+    List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> getSuggestWarehouseLocationList(AfterSalesWarehouseLocationSuggestDto.PdaSearchDto dto);
 }

@@ -21,7 +21,7 @@ import java.util.Map;
  * @date 2026-04-30
  */
 @Data
-public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
+public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
 
     /**
      * 搜索参数
@@ -276,7 +276,7 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
      */
     @EqualsAndHashCode(callSuper = true)
     @Data
-    public static class ExportParamDTO extends WarehouseLocationSuggestAfterSalesDto.SearchParamDTO {
+    public static class ExportParamDTO extends AfterSalesWarehouseLocationSuggestDto.SearchParamDTO {
         private List<String> ids;
     }
 

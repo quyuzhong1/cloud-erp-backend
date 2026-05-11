@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * @since 2026-04-30
  */
 @Component
-public class WarehouseLocationSuggestAfterSalesQueryHandler extends AbstractQueryHandler {
+public class AfterSalesWarehouseLocationSuggestQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
