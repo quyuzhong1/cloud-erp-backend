@@ -592,6 +592,11 @@ public class QcResultDTO {
          *  允许入库量汇总
          */
         private Integer totalAllowInstockQty;
+        /**
+         *  总数量
+         */
+        private Integer totalQty;
+
     }
 
 
@@ -618,6 +623,10 @@ public class QcResultDTO {
          * 允许入库数量
          */
         private Integer allowInstockQty;
+        /**
+         *  总数量
+         */
+        private Integer totalQty;
 
     }
 }

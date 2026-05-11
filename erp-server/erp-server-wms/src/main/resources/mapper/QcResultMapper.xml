@@ -83,8 +83,9 @@
             resultType="com.erp.model.wms.dto.QcResultDTO$TotalLotQualifiedQtyDTO">
         select
         qr.purchase_order_detail_id,
-        sum(lot_qualified_qty) as totalLotQualifiedQty,
-        sum(allow_instock_qty) as totalAllowInstockQty
+        sum(qr.lot_qualified_qty) as totalLotQualifiedQty,
+        sum(qr.allow_instock_qty) as totalAllowInstockQty,
+        sum( qr.total_qty ) as totalQty
         from qc_result qr
         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
         where qr.is_deleted = FALSE and qi.qc_status in ('finishQc','exemption') and qr.qc_result = 'conformity'
@@ -102,7 +103,8 @@
             qi.source_type as sourceType,
             qi.source_detail_id,
             qr.lot_qualified_qty as totalLotQualifiedQty,
-            qr.allow_instock_qty as allowInstockQty
+            qr.allow_instock_qty as allowInstockQty,
+            qr.total_qty as totalQty
         from qc_result qr
         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
         inner join po_receive_detail prd on prd.id = qi.source_detail_id and prd.is_deleted = FALSE
@@ -117,7 +119,8 @@
             qi.source_type as sourceType,
             qi.source_detail_id,
             qr.lot_qualified_qty as totalLotQualifiedQty,
-            qr.allow_instock_qty as allowInstockQty
+            qr.allow_instock_qty as allowInstockQty,
+            qr.total_qty as totalQty
         from qc_result qr
          inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
          inner join qc_notice qn on qn.id = qi.source_id and qn.is_deleted = FALSE
