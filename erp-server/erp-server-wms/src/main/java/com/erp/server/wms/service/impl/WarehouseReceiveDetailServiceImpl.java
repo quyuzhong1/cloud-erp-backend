@@ -384,8 +384,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         }
 
         //查询采购订单下的质检批次合格数量汇总
-        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalLotQualifiedQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
-        Map<String, Integer> totalLotQualifiedQtyMap = totalLotQualifiedQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalLotQualifiedQty));
+        List<QcResultDTO.TotalLotQualifiedQtyDTO> totalAllowInstockQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
+        Map<String, Integer> totalAllowInstockQtyMap = totalAllowInstockQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
 
         //查询采购订单下的其他收货单的收货数量汇总
         List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);
@@ -396,14 +396,14 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
         for (WarehouseReceiveDetailEntity receiveDetailEntity : receiveDetailLIst) {
             //采购订单明细下的批次质检合格数量汇总
-            Integer totalLotQualifiedQty = totalLotQualifiedQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
+            Integer allowInstockQty = totalAllowInstockQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
             //采购订单明细下的收货数量汇总
             Integer totalReceiveQty = totalReceiveQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
 
             //采购订单明细下收货单的待质检数量汇总（不包括本单）
             Integer totalWaitQcQty = totalWaitQcQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPodId(), receiveDetailEntity.getPurchaseOrderDetailId()) && !CharSequenceUtil.equals(obj.getDetailId(), receiveDetailEntity.getId())).map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty).reduce(MathUtil.ZERO, Integer::sum);
            //待质检量=∑收货数量-质检合格量-∑待质检量,小于0时默认为0
-            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(totalLotQualifiedQty) ? MathUtil.ZERO : totalLotQualifiedQty) - totalWaitQcQty;
+            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(allowInstockQty) ? MathUtil.ZERO : allowInstockQty) - totalWaitQcQty;
             if (waitQcQty < MathUtil.ZERO) {
                 waitQcQty = MathUtil.ZERO;
             }
@@ -415,11 +415,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Override
     public void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc) {
-        List<QcResultDTO.LotQualifiedQtyDTO> lotQualifiedQtyList = qcResultService.getLotQualifiedQtyByMainIdList(qcIdList);
-        if (CollUtil.isEmpty(lotQualifiedQtyList)) {
+        List<QcResultDTO.LotQualifiedQtyDTO> allowInstockQtyList = qcResultService.getLotQualifiedQtyByMainIdList(qcIdList);
+        if (CollUtil.isEmpty(allowInstockQtyList)) {
             return;
         }
-        List<String> sourceDetailIdList = lotQualifiedQtyList.stream().map(QcResultDTO.LotQualifiedQtyDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> sourceDetailIdList = allowInstockQtyList.stream().map(QcResultDTO.LotQualifiedQtyDTO::getSourceDetailId).distinct().collect(Collectors.toList());
         //质检通知单信息
         Map<String, QcNoticeDetailEntity> qcNoticeDetailEntityMap = qcNoticeDetailService.mapByIds(sourceDetailIdList);
         if (ObjectUtil.isNotEmpty(qcNoticeDetailEntityMap)) {
@@ -435,7 +435,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //更新待质检数量
         List<String> distQcIdList = qcIdList.stream().distinct().collect(Collectors.toList());
         for (String distQcId : distQcIdList) {
-            QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = lotQualifiedQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getQcId(), distQcId)).findFirst().orElse(null);
+            QcResultDTO.LotQualifiedQtyDTO lotQualifiedQtyDTO = allowInstockQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getQcId(), distQcId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(lotQualifiedQtyDTO)) {
                 continue;
             }
@@ -456,10 +456,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             Integer waitQcQty = MathUtil.ZERO;
             if (isFinishQc) {
                 //待质检量=∑收货数量-质检合格量,小于0时默认为0
-                waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalLotQualifiedQty();
+                waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getAllowInstockQty();
             } else {
                 //待质检量=∑收货数量+质检合格量,小于0时默认为0
-                waitQcQty = receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalLotQualifiedQty();
+                waitQcQty = receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getAllowInstockQty();
             }
             if (waitQcQty < MathUtil.ZERO) {
                 waitQcQty = MathUtil.ZERO;

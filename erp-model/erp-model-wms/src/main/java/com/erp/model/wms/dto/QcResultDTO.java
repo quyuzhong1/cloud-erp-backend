@@ -588,6 +588,10 @@ public class QcResultDTO {
          * 批次合格量汇总
          */
         private Integer totalLotQualifiedQty;
+        /**
+         *  允许入库量汇总
+         */
+        private Integer totalAllowInstockQty;
     }
 
 
@@ -610,5 +614,10 @@ public class QcResultDTO {
          * 批次合格量
          */
         private Integer totalLotQualifiedQty;
+        /**
+         * 允许入库数量
+         */
+        private Integer allowInstockQty;
+
     }
 }
