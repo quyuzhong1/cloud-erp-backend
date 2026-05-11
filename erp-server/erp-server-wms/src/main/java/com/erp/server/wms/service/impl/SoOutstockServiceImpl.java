@@ -1903,6 +1903,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String b2c = OrderTypeEnum.B2C.getCode();
 
         List<String> customerIds = list.stream()
+                .filter(item -> StringUtils.isBlank(item.getPartitionId()))
                 .map(SoOutstockDTO.PagingViewDTO::getCustomerId)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -1914,9 +1915,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 customerPartitionIdMap = customerInfoEntities.stream()
                         .filter(item -> StringUtils.isNotBlank(item.getId()))
                         .filter(item -> StringUtils.isNotBlank(item.getPartitionId()))
-                        .filter(item -> StringUtils.equalsAny(item.getBusinessMode(),
-                                CustomerInfoBusinessModeEnum.O2B.getCode(),
-                                CustomerInfoBusinessModeEnum.X2B.getCode()))
                         .collect(Collectors.toMap(CustomerInfoEntity::getId,
                                 CustomerInfoEntity::getPartitionId,
                                 (a, b) -> a));
