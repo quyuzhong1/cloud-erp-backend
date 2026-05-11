@@ -204,6 +204,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        addOrUpdateDTO.setSheetName(costImportEntity.getSheetName());
         addOrUpdateDTO.setCleanFileUrl(url);
         addOrUpdateDTO.setCleanFileName(fileName);
         if (CharSequenceUtil.equals(importDTO.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
