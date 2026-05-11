@@ -856,8 +856,7 @@
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
         left join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-        left join packing_task_detail ptd on fmdd.id = ptd.source_detail_id and ptd.is_deleted = false
-        left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false
+        left join packing_task pt on  (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id) and pt.is_deleted = false
         left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
         where fmd.is_deleted = false and fmd.declare_status = 'wait' and wc.box_no is not null and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
@@ -925,9 +924,8 @@
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
          INNER JOIN first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-         INNER JOIN packing_task_detail ptd on fmdd.id = ptd.source_detail_id and ptd.is_deleted = false
          INNER JOIN packing_task pt
-                    ON pt.id = ptd.main_id
+                    ON (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id)
                         AND pt.is_deleted = false
          INNER JOIN carton_detail cd
                     ON cd.packing_task_id = pt.id
@@ -961,9 +959,8 @@
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
          INNER JOIN first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-         INNER JOIN packing_task_detail ptd on fmdd.id = ptd.source_detail_id and ptd.is_deleted = false
          INNER JOIN packing_task pt
-                    ON pt.id = ptd.main_id
+                    ON (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id)
                         AND pt.is_deleted = false
          INNER JOIN carton_detail cd
                     ON cd.packing_task_id = pt.id
