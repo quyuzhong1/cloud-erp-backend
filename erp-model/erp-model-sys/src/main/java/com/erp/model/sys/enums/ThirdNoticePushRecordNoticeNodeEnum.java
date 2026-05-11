@@ -20,6 +20,8 @@ public enum ThirdNoticePushRecordNoticeNodeEnum implements EnumMessage {
     SUBSEQUENT_BATCH("subsequentBatch", "老品通知"),
     UNLOCK_VIRTUAL_INVENTORY("unLockVirtualInventory", "释放SKU虚拟仓库存"),
     SET_SKU_STD_RETAIL_PRICE("setSkuStdRetailPrice", "维护SKU标准零售价通知"),
+    //头程发货单
+    CANCEL_DELIVERY("cancelDelivery", "取消发货")
     ;
     /**
      * 类型
