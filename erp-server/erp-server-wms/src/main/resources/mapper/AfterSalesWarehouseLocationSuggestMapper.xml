@@ -42,7 +42,7 @@
         update_user_id AS updateUserId,
         update_user_name AS updateUserName,
         update_time AS updateTime
-        FROM warehouse_location_suggest_aftersales
+        FROM aftersales_warehouse_location_suggest
         WHERE is_deleted = false
         <if test="params.skuNo != null and params.skuNo != ''">
             AND sku_no LIKE CONCAT('%', #{params.skuNo}, '%')
@@ -70,7 +70,7 @@
 
 
     <insert id="upsertBatch">
-        INSERT INTO warehouse_location_suggest_aftersales (
+        INSERT INTO aftersales_warehouse_location_suggest (
         id, sku_id, sku_no, warehouse_id, warehouse_area_code,
         suggest_warehouse_location_code, priority, disabled,
         version, is_deleted,
@@ -92,7 +92,7 @@
         priority = EXCLUDED.priority,
         disabled = EXCLUDED.disabled,
         warehouse_area_code = EXCLUDED.warehouse_area_code,
-        version = warehouse_location_suggest_aftersales.version + 1,
+        version = aftersales_warehouse_location_suggest.version + 1,
         update_user_id = EXCLUDED.update_user_id,
         update_user_name = EXCLUDED.update_user_name,
         update_time = EXCLUDED.update_time -- 这里使用传入的最新时间
