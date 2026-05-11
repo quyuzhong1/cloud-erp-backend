@@ -681,10 +681,20 @@
         WHERE ${params.sqlMap.default} AND tf.is_deleted = FALSE
         AND (tf.dict_inventory_status = 'frozen' OR tf.dict_inventory_status = 'usable')
         <if test="params.dateType != null and params.dateType == 'approveDate'">
-            AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.trade_time
+            <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+                AND CAST(#{params.date} AS DATETIME) + INTERVAL 1 DAY > tf.trade_time
+            </if>
+            <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+                AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.trade_time
+            </if>
         </if>
         <if test="params.dateType != null and params.dateType == 'billDate'">
-            AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.bill_date
+            <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+                AND CAST(#{params.date} AS DATETIME) + INTERVAL 1 DAY > tf.bill_date
+            </if>
+            <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+                AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.bill_date
+            </if>
         </if>
         <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
             AND tf.warehouse_id IN
@@ -789,10 +799,20 @@
         AND (tf.dict_inventory_status = 'frozen' OR tf.dict_inventory_status = 'usable')
         AND ${params.sqlMap.default}
         <if test="params.dateType != null and params.dateType == 'approveDate'">
-            AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.trade_time
+            <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+                AND CAST(#{params.date} AS DATETIME) + INTERVAL 1 DAY > tf.trade_time
+            </if>
+            <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+                AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.trade_time
+            </if>
         </if>
         <if test="params.dateType != null and params.dateType == 'billDate'">
-            AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.bill_date
+            <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
+                AND CAST(#{params.date} AS DATETIME) + INTERVAL 1 DAY > tf.bill_date
+            </if>
+            <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
+                AND (#{params.date}::TIMESTAMP + INTERVAL '1 DAY') > tf.bill_date
+            </if>
         </if>
         <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
             AND tf.warehouse_id IN
