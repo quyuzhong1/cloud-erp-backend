@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -11,7 +12,6 @@ import com.erp.model.wms.entity.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 直接调拨单主表
@@ -167,7 +167,7 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
     /**
      * @param dto
      * @return Boolean

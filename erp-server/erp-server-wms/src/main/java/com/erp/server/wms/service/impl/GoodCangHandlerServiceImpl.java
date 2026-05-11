@@ -237,36 +237,71 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
         List<ThirdWarehouseQueryFbaOutboundResponse> responses = new ArrayList<>();
-        GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-                .orderCodeArr(req.getPlatformOrderCodeList())
-                .page(1)
-                .pageSize(20)
-                .build();
+        String failureMsg = null;
+        if (CollUtil.isNotEmpty(req.getPlatformOrderCodeList())) {
+            GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
+                    .orderCodeArr(req.getPlatformOrderCodeList())
+                    .page(1)
+                    .pageSize(20)
+                    .build();
 
-        GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
-        if (Objects.isNull(response)) {
-            return failure("谷仓查询订单响应为空");
+            GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
+            if (Objects.isNull(response)) {
+                failureMsg = "谷仓查询订单响应为空";
+            } else if(!isSuccess(response.getAsk(), response.getMessage())){
+                failureMsg = response.getMessage();
+            } else if (CollUtil.isNotEmpty(response.getData())) {
+                for (GoodCangOutboundResp goodCangOrderDTO : response.getData()) {
+                    responses.add(buildFbaOutboundResponse(goodCangOrderDTO));
+                }
+                return success(responses);
+            } else {
+                failureMsg = CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单");
+            }
+            log.warn(getPlatForm().getName() + "按谷仓订单号未查询到B2B订单, orderCode={}, response={}", req.getPlatformOrderCodeList(), JSONUtil.toJsonStr(response));
         }
-        if(!isSuccess(response.getAsk(), response.getMessage())){
-            return failure(response.getMessage());
+
+        if (CollUtil.isEmpty(req.getErpOrderCodeList())) {
+            return failure(CharSequenceUtil.blankToDefault(failureMsg, "未查询到谷仓订单"));
         }
-        List<GoodCangOutboundResp> data = response.getData();
-        if(CollUtil.isEmpty(data)){
-            log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", req.getPlatformOrderCodeList(), JSONUtil.toJsonStr(response));
-            return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单"));
+        for (String referenceNo : req.getErpOrderCodeList()) {
+            GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode(referenceNo);
+            if (Objects.isNull(response) || !isSuccess(response.getAsk(), response.getMessage()) || Objects.isNull(response.getData())) {
+                log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", referenceNo, JSONUtil.toJsonStr(response));
+                continue;
+            }
+            responses.add(buildFbaOutboundResponse(response.getData(), referenceNo));
         }
-        for (GoodCangOutboundResp goodCangOrderDTO : data) {
-            String code = goodCangOrderDTO.getOrderCode();
-            ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
-            res.setCode(code);
-            res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
-            res.setTrackNo(goodCangOrderDTO.getTrackNo());
-            res.setDeliveryTimeStr(String.valueOf(goodCangOrderDTO.getOutBoundTime()));
-            res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
-            res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
-            responses.add(res);
-        }
-        return success(responses);
+        return CollUtil.isNotEmpty(responses) ? success(responses) : failure(CharSequenceUtil.blankToDefault(failureMsg, "未查询到谷仓订单"));
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildFbaOutboundResponse(GoodCangOutboundResp goodCangOrderDTO) {
+        ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+        res.setCode(goodCangOrderDTO.getReferenceNo());
+        res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+        res.setTrackNo(goodCangOrderDTO.getTrackNo());
+        res.setDeliveryTimeStr(Objects.nonNull(goodCangOrderDTO.getOutBoundTime()) ? goodCangOrderDTO.getOutBoundTime().toString() : null);
+        res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
+        res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
+        return res;
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildFbaOutboundResponse(GoodCangOrderDTO goodCangOrderDTO, String referenceNo) {
+        ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+        res.setCode(CharSequenceUtil.blankToDefault(goodCangOrderDTO.getReferenceNo(), referenceNo));
+        res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+        res.setTrackNo(goodCangOrderDTO.getTrackingNo());
+        res.setDeliveryTimeStr(goodCangOrderDTO.getDateShipping());
+        res.setPlatformCreateTimeStr(goodCangOrderDTO.getDateCreate());
+        res.setPlatformUpdateTimeStr(goodCangOrderDTO.getDateModify());
+        res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
+        res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
+        res.setErrorType(goodCangOrderDTO.getAbnormalProblemReason());
+        res.setSwOrderNumber(goodCangOrderDTO.getPlatformOrderCode());
+        res.setWarehouseCode(goodCangOrderDTO.getWarehouseCode());
+        res.setShippingMethod(goodCangOrderDTO.getShippingMethod());
+        res.setCarrierName(goodCangOrderDTO.getCarrierName());
+        return res;
     }
 
     @Override

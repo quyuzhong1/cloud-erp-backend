@@ -40,4 +40,14 @@ public class DownloadTaskFeignController {
         fileName = fileName + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         return fileTaskContext.addNewImport(new FileTaskDTO(event,fileName, params));
     }
+
+    /**
+     *  重新导入
+     */
+    @PostMapping("/reImportTask")
+    public String reImportTask(@RequestParam String taskId,@RequestParam String fileName, @RequestParam String event, @RequestBody Object params) {
+        //单据名称+年月日时分秒
+        fileName = fileName + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+        return fileTaskContext.reImportTask(taskId,new FileTaskDTO(event,fileName, params));
+    }
 }

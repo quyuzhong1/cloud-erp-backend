@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -39,7 +40,7 @@ public class SysCodeDTO implements Serializable {
     /**
      * 最后更新时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     public SysCodeDTO (String category,Integer type) {
         this.category = category;

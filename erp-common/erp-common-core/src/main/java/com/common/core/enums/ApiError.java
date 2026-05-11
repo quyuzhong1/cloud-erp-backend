@@ -204,6 +204,8 @@ public enum ApiError implements Serializable {
     COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
     COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
     COMMON_STATUS_SAME(92134,"存在相同状态"),
+    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
+
     COMMON_NO_SKU(98128,"SKU不存在"),
     COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
     COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
@@ -695,6 +697,7 @@ public enum ApiError implements Serializable {
     PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
     PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
     PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
+    PRODUCT_RETAIL_PRICE_MISSING_ZERO(5120, "{0}零售价都是0，会导致订单无法分摊"),
     PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
     PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
 
@@ -1753,7 +1756,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND(13619,"文件【{0}】导入的物流配置明细唯一键未找到"),
     LOGISTICS_SUPPLIER_NAME_NOT_FOUND(13620,"物流商名称【{0}】未找到"),
     LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR(13621,"导入唯一识别单号查询失败，请检查识别单号配置"),
-    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务创建失败参数【{0}】"),
+    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务已存在参数【{0}】"),
     LOGISTICS_PENDING_COST_NOT_FOUND(13623,"待确认费用分摊记录不存在"),
     LOGISTICS_SELECT_AT_LEAST_ONE(13624,"明细至少勾选一个识别单号"),
     LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED(13625,"数大臣单据字段【{0}】不允许重复"),

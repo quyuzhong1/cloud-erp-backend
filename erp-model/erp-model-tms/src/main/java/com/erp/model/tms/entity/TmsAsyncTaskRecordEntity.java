@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -24,11 +23,21 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-@TableName("async_task_record")
-public class AsyncTaskRecordEntity extends BaseEntity<AsyncTaskRecordEntity> {
+@TableName("tms_async_task_record")
+public class TmsAsyncTaskRecordEntity extends BaseEntity<TmsAsyncTaskRecordEntity> {
 
     /**
-    * 单据名称
+    * 任务id
+    */
+    @TableField("code")
+    private String code;
+    /**
+    * 执行系统
+    */
+    @TableField("sys_module")
+    private String sysModule;
+    /**
+    * 单据名称  TmsAsyncTaskRecordBusinessTypeEnum
     */
     @TableField("business_type")
     private String businessType;
@@ -43,7 +52,17 @@ public class AsyncTaskRecordEntity extends BaseEntity<AsyncTaskRecordEntity> {
     @TableField("end_time")
     private LocalDateTime endTime;
     /**
-    * 状态：success=成功,part_success=部分成功,  failed=失败  枚举：AsyncTaskRecordStatusEnum
+    * 任务超时时间 单位：秒
+    */
+    @TableField("exec_timeout")
+    private Integer execTimeout;
+    /**
+    * 任务超时时间 单位：秒
+    */
+    @TableField("retry_times")
+    private Integer retryTimes;
+    /**
+    * 状态：pending=待执行,ing=进行中,finish=已完成,  failed=失败  枚举：TmsAsyncTaskRecordStatusEnum
     */
     @TableField("status")
     private String status;
@@ -53,7 +72,7 @@ public class AsyncTaskRecordEntity extends BaseEntity<AsyncTaskRecordEntity> {
     @TableField("data_json")
     private String dataJson;
     /**
-     *
+     *错误信息
      */
     @TableField("error_data")
     private String errorData;
@@ -62,6 +81,21 @@ public class AsyncTaskRecordEntity extends BaseEntity<AsyncTaskRecordEntity> {
      */
     @TableField("detail_count")
     private Integer detailCount;
+    /**
+     *错误数量
+     */
+    @TableField("error_count")
+    private Integer errorCount;
+    /**
+     *执行类型：auto=自动, manual=手动
+     */
+    @TableField("exec_type")
+    private String execType;
+    /**
+     * 是否已重试
+     */
+    @TableField("is_retry")
+    private Boolean isRetry;
 
     public static final String BUSINESS_TYPE = "business_type";
 

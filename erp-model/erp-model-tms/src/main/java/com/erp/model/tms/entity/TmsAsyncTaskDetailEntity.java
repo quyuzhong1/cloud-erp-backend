@@ -9,7 +9,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -24,8 +23,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
-@TableName("async_task_detail_record")
-public class AsyncTaskDetailRecordEntity extends BaseEntity<AsyncTaskDetailRecordEntity> {
+@TableName("tms_async_task_detail")
+public class TmsAsyncTaskDetailEntity extends BaseEntity<TmsAsyncTaskDetailEntity> {
 
     /**
     * 主表id
@@ -58,7 +57,7 @@ public class AsyncTaskDetailRecordEntity extends BaseEntity<AsyncTaskDetailRecor
     @TableField("end_time")
     private LocalDateTime endTime;
     /**
-    * 状态：success=成功,  failed=失败  枚举：AsyncTaskDetailRecordStatusEnum
+    * 状态：finish=已完成,  failed=失败
     */
     @TableField("status")
     private String status;

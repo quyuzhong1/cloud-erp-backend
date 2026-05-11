@@ -1,9 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.SubcontractIssueEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.erp.model.wms.entity.SubcontractIssueEntity;
 
 import java.util.List;
 
@@ -111,10 +113,10 @@ public interface SubcontractIssueService extends SuperService<SubcontractIssueEn
     * 撤销
     * @author will
     * @date: 2024-01-08
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel

@@ -11,6 +11,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
@@ -24,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -81,8 +84,12 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     public void setLead(UpdateUserStateDTO dto) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
         LambdaUpdateWrapper<SysDepartmentUserEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(SysDepartmentUserEntity::getLeadState, dto.getState());
+        updateWrapper.set(SysDepartmentUserEntity::getUpdateTime, LocalDateTime.now());
+        updateWrapper.set(SysDepartmentUserEntity::getUpdateUserId, loginUser.getUid());
+        updateWrapper.set(SysDepartmentUserEntity::getUpdateUserName, loginUser.getUserName());
         updateWrapper.in(SysDepartmentUserEntity::getId, dto.getIds());
         this.update(updateWrapper);
 
@@ -126,10 +133,20 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         List<String> addUserList=userIds.stream().filter(a->!existUserIdList.contains(a)).collect(Collectors.toList());
         //在添加
         List<SysDepartmentUserEntity> addList = new LinkedList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String currentUserId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         for (String userId : addUserList) {
             SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
             entity.setUserId(userId);
             entity.setDepartmentId(departmentId);
+            entity.setUpdateTime(now);
+            entity.setUpdateUserId(currentUserId);
+            entity.setUpdateUserName(userName);
+            entity.setCreateTime(now);
+            entity.setCreateUserId(currentUserId);
+            entity.setCreateUserName(userName);
             addList.add(entity);
         }
         if (CollectionUtils.isNotEmpty(addList)) {

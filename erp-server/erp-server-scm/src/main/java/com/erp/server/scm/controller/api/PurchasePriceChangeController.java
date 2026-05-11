@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -407,7 +408,7 @@ public class PurchasePriceChangeController extends BaseController {
                 continue;
             }
             try {
-                Boolean disabled = purchasePriceChangeService.cancelProcess(Collections.singletonList(id));
+                Boolean disabled = purchasePriceChangeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(id)));
                 if (disabled) {
                     resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "撤销采购调价单成功"));
                 } else {

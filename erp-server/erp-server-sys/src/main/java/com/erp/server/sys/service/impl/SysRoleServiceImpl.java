@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -80,6 +83,9 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
         addEntity.setRoleRemark(roleEntity.getRoleRemark());
         String newRoleId = IdWorker.getIdStr(addEntity);
         addEntity.setId(newRoleId);
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        // 处理公共字段
+        handleCommonField(addEntity, loginUser);
         Boolean saveResult = this.save(addEntity);
         if (saveResult) {
             //复制角色下的用户
@@ -95,7 +101,20 @@ public class SysRoleServiceImpl extends ServiceImpl<SysRoleMapper, SysRoleEntity
     @Override
     public boolean saveRoleEntity(SysRoleEntity sysRole) {
         checkRoleName(sysRole.getRoleName());
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        // 处理公共字段
+        handleCommonField(sysRole, loginUser);
         return this.save(sysRole);
+    }
+
+    private static void handleCommonField(SysRoleEntity sysRole, LoginUser loginUser) {
+        LocalDateTime now = LocalDateTime.now();
+        sysRole.setUpdateTime(now);
+        sysRole.setUpdateUserId(loginUser.getUid());
+        sysRole.setUpdateUserName(loginUser.getUserName());
+        sysRole.setCreateTime(now);
+        sysRole.setCreateUserId(loginUser.getUid());
+        sysRole.setCreateUserName(loginUser.getUserName());
     }
 
     @Override

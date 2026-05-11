@@ -7,12 +7,11 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * @Classname SysMenuVO
-
  * @Date 2022-07-19 10:39
  * @Created by yl
  */
@@ -59,13 +58,13 @@ public class SysMenuVO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
     /**
      * 更新时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
-    @JsonInclude(value= JsonInclude.Include.NON_NULL)
+    @JsonInclude(value = JsonInclude.Include.NON_NULL)
     private List<SysMenuVO> childrenList;
     /**
      * 禁用
@@ -82,4 +81,9 @@ public class SysMenuVO implements Serializable {
      * 所属系统,/api/sys/dictBasic/list?type=menuSystem
      */
     private String system;
+
+    /**
+     * 是否在归档系统可见
+     */
+    private Boolean isArchiveDisplay;
 }

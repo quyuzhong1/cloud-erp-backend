@@ -177,8 +177,10 @@ public class TmsCostDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-
+        /**
+         * 主表id
+         */
+        private String mainId;
     }
 
     /**
@@ -208,6 +210,11 @@ public class TmsCostDetailDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 主表id
+         */
+        private String mainId;
 
         public UpdateDTO(String id, String dictCostCategory, BigDecimal costValue, String cfgCostId, String type, String sourceType) {
             this.id = id;

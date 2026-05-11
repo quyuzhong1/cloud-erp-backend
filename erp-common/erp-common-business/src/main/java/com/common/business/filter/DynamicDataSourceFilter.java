@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 
 import javax.servlet.Filter;
@@ -35,31 +37,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DynamicDataSourceFilter implements Filter {
 	
-	private static final List<String> ARCHIVE_BLACK_URL = Arrays.asList(
-			"/workOption/"
-			);
-	
+	private static final long DORIS_QUERY_SETTING_CACHE_MILLIS = 10000L;
+	private static final int DORIS_QUERY_SETTING_CACHE_MAX_SIZE = 2048;
+	private static final Map<String, DorisQuerySettingCache> DORIS_QUERY_SETTING_CACHE = new ConcurrentHashMap<>();
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	String requestURI = "";
-    	requestURI = ((HttpServletRequest) request).getRequestURI();
-    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign") && ARCHIVE_BLACK_URL.stream().noneMatch(requestURI::contains)) {
-    		try {
-        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
-	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
-	            chain.doFilter(request, response);
-            } finally {
-                DynamicDataSourceContextHolder.poll();
-                DynamicDataSourceThreadLocal.remove();
-            }
-    	}else {
-    		DorisQuerySettingDTO dorisQuerySettingDTO = null;
-        	try {
-    			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
-    		} catch (Throwable e) {
-    			log.error("获取动态数据源配置错误" , e);
-    		}
+    	if(BusinessCommonConstants.isDynamicEnabled()) {
+    		String requestURI = "";
+        	requestURI = ((HttpServletRequest) request).getRequestURI();
+        	DorisQuerySettingDTO dorisQuerySettingDTO = getDorisQuerySettingDTO(requestURI);
         	if(dorisQuerySettingDTO == null) {
         		chain.doFilter(request, response);
         	}else {
@@ -92,9 +80,37 @@ public class DynamicDataSourceFilter implements Filter {
                     }
                 }
         	}
+    	}else {
+    		chain.doFilter(request, response);
     	}
     }
     
+    private DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
+        long currentTimeMillis = System.currentTimeMillis();
+        DorisQuerySettingCache cache = DORIS_QUERY_SETTING_CACHE.get(requestURI);
+        if(cache != null && !cache.isExpired(currentTimeMillis)) {
+            return cache.getDorisQuerySettingDTO();
+        }
+
+        DorisQuerySettingCache newCache = DORIS_QUERY_SETTING_CACHE.compute(requestURI, (key, oldCache) -> {
+            long now = System.currentTimeMillis();
+            if(oldCache != null && !oldCache.isExpired(now)) {
+                return oldCache;
+            }
+            DorisQuerySettingDTO dorisQuerySettingDTO = null;
+            try {
+                dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(key));
+            } catch (Throwable e) {
+                log.error("获取动态数据源配置错误" , e);
+            }
+            return new DorisQuerySettingCache(dorisQuerySettingDTO, now + DORIS_QUERY_SETTING_CACHE_MILLIS);
+        });
+        if(DORIS_QUERY_SETTING_CACHE.size() > DORIS_QUERY_SETTING_CACHE_MAX_SIZE) {
+            DORIS_QUERY_SETTING_CACHE.clear();
+        }
+        return newCache == null ? null : newCache.getDorisQuerySettingDTO();
+    }
+
     private DynamicDataSourceTypeEnum getDynamicDataSourceType(DorisQuerySettingDTO dorisQuerySettingDTO , ServletRequest requestWrapper) {
     	StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = requestWrapper.getReader()) {
@@ -204,6 +220,25 @@ public class DynamicDataSourceFilter implements Filter {
                 }
             }
             return sb.toString();
+        }
+    }
+
+    private static class DorisQuerySettingCache {
+
+        private final DorisQuerySettingDTO dorisQuerySettingDTO;
+        private final long expireTimeMillis;
+
+        private DorisQuerySettingCache(DorisQuerySettingDTO dorisQuerySettingDTO, long expireTimeMillis) {
+            this.dorisQuerySettingDTO = dorisQuerySettingDTO;
+            this.expireTimeMillis = expireTimeMillis;
+        }
+
+        private DorisQuerySettingDTO getDorisQuerySettingDTO() {
+            return dorisQuerySettingDTO;
+        }
+
+        private boolean isExpired(long currentTimeMillis) {
+            return currentTimeMillis >= expireTimeMillis;
         }
     }
 }

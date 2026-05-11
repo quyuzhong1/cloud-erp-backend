@@ -165,12 +165,14 @@ public enum BusinessNoTypeEnum {
     CODE_KOLC(121 ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
     CODE_DZ(122 ,"DZ","物流费用导入",BusinessNoConstant.DZ),
     CODE_FYPZ(123 ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
+    CODE_Z(124, "Z","tms异步任务记录", BusinessNoConstant.Z),
 
     CODE_BG(122 ,"BG","产品信息变更单",BusinessNoConstant.BG),
     CODE_ZJSQ(124 ,"ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
 
     CODE_CYFA(123 ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
     CODE_WDGL(124 ,"WDGL","文件管理",BusinessNoConstant.WDGL),
+    CODE_VJ(126 ,"VJ","保宏预报合同号",BusinessNoConstant.VJ),
 
     ;
 

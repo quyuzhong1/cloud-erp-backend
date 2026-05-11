@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -115,8 +116,8 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * 撤销流程
      * @author will
      * @date 2025/5/16 16:06
-     * @param id
+     * @param dto
      * @return BatchResultDTO
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 }

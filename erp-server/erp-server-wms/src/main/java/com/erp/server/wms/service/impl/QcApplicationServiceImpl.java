@@ -539,11 +539,10 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_APPLICATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.QC_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }

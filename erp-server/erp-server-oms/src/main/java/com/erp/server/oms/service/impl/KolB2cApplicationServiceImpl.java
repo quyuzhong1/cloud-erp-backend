@@ -1033,7 +1033,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }

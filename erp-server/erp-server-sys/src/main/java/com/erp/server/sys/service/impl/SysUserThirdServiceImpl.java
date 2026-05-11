@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,6 +50,16 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         thirdEntity.setThirdOpenId(thirdOpenId);
         thirdEntity.setThirdUserId(thirdUserId);
         thirdEntity.setThirdPartyType(bindingPlatform);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        thirdEntity.setUpdateTime(now);
+        thirdEntity.setUpdateUserId(userId);
+        thirdEntity.setUpdateUserName(userName);
+        thirdEntity.setCreateTime(now);
+        thirdEntity.setCreateUserId(userId);
+        thirdEntity.setCreateUserName(userName);
         this.save(thirdEntity);
     }
 
