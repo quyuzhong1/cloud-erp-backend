@@ -235,6 +235,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     KolB2cApplicationAddressEntity.setDistrict(district);
                 }else if (DictCityConstants.isNoDistrictId(KolB2cApplicationAddressEntity.getDistrictId())
                         && noDistrictCityIdSet.contains(KolB2cApplicationAddressEntity.getCityId())) {
+                    // 前端占位 districtId（__no_district__:<cityId>）超出 district_id 列长，
+                    // 命中"无区/县"分支后置空，避免落库时触发 value too long
+                    KolB2cApplicationAddressEntity.setDistrictId(null);
                     KolB2cApplicationAddressEntity.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
                 }else {
                     throw new ServiceException("区域不存在");
