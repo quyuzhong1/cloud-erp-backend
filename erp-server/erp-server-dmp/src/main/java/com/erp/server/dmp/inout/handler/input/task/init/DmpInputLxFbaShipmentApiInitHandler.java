@@ -126,7 +126,8 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         Result<Object> resultData = null;
         List<JSONObject> allResultList = new ArrayList<>();
         boolean allShipmentFetched = true;
-        for (Map<String, Object> mongoData : findMongoData) {
+        for (int i = 0; i < findMongoData.size(); i++) {
+            Map<String, Object> mongoData = findMongoData.get(i);
             String shipmentId = mongoData.getOrDefault("shipmentId", "").toString();
             if (StringUtils.isBlank(shipmentId)) {
                 String errorMsg = StrUtil.format("请求领星FBA货件明细列表失败: sid={}, shipmentId为空, taskId={}", sid, dmpInputTaskEntity.getId());
@@ -160,6 +161,9 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 break;
             }
             allResultList.addAll(shipmentList);
+            if (i < findMongoData.size() - 1) {
+                sleepOneSecond();
+            }
         }
 
         if (!allShipmentFetched || isEmptyShipmentData(resultData)) {
@@ -256,6 +260,15 @@ public class DmpInputLxFbaShipmentApiInitHandler extends DmpInputInitHandler {
         } catch (Exception e) {
             log.warn("retryCount配置非法,使用默认重试次数3,retryCount={}", retryCountStr);
             return 3;
+        }
+    }
+
+    private void sleepOneSecond() {
+        try {
+            Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("领星FBA货件明细请求休眠被中断,taskId={}", dmpInputTaskEntity.getId(), e);
         }
     }
 
