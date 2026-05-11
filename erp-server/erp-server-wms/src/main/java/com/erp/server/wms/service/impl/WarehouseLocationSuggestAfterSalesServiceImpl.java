@@ -389,9 +389,26 @@ public class WarehouseLocationSuggestAfterSalesServiceImpl extends SuperServiceI
 
 
     @Override
-    public List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> getSuggestWarehouseLocationList(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto dto) {
+    public List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> getSuggestWarehouseLocationList(WarehouseLocationSuggestAfterSalesDto.PdaSearchDto searchDto) {
+        LambdaQueryWrapper<WarehouseLocationSuggestAfterSalesEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(
+                        WarehouseLocationSuggestAfterSalesEntity::getSuggestWarehouseLocationCode,
+                        WarehouseLocationSuggestAfterSalesEntity::getPriority,
+                        WarehouseLocationSuggestAfterSalesEntity::getDisabled
+                )
+                .eq(WarehouseLocationSuggestAfterSalesEntity::getSkuNo, searchDto.getSkuNo())
+                .eq(WarehouseLocationSuggestAfterSalesEntity::getWarehouseId, searchDto.getWarehouseId());
 
-
-        return Collections.emptyList();
+        List<WarehouseLocationSuggestAfterSalesEntity> entityList = list(wrapper);
+        if (CollUtil.isEmpty(entityList)) {
+            return Collections.emptyList();
+        }
+        List<WarehouseLocationSuggestAfterSalesDto.PdaListDto> dtoList = new ArrayList<>(entityList.size());
+        for (WarehouseLocationSuggestAfterSalesEntity entity : entityList) {
+            WarehouseLocationSuggestAfterSalesDto.PdaListDto dto = new WarehouseLocationSuggestAfterSalesDto.PdaListDto();
+            BeanMapperUtils.copy(entity, dto);
+            dtoList.add(dto);
+        }
+        return dtoList;
     }
 }

@@ -317,24 +317,24 @@ public class WarehouseLocationSuggestAfterSalesDto implements Serializable {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class PdaListDto {
-        /**
-         * id
-         */
-        private String id;
-        /**
-         * sku编码
-         */
-        private String skuNo;
-
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
-
-        /**
-         * 库区code
-         */
-        private String warehouseAreaCode;
+//        /**
+//         * id
+//         */
+//        private String id;
+//        /**
+//         * sku编码
+//         */
+//        private String skuNo;
+//
+//        /**
+//         * 仓库id
+//         */
+//        private String warehouseId;
+//
+//        /**
+//         * 库区code
+//         */
+//        private String warehouseAreaCode;
         /**
          * 建议仓位code
          */
