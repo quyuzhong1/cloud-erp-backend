@@ -2827,7 +2827,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public void exportProductAll(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-        productSkuExcelDTO.setFieldList(buildAllExportFields());
+        productSkuExcelDTO.setFieldList(productSkuExcelDTO.getFieldList());
         downloadTaskFeign.saveDownloadTask("产品管理导出（全）", EXPORT_PLM_SKU_DYNAMIC.getCode(), productSkuExcelDTO);
     }
 

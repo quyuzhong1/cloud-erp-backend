@@ -244,6 +244,9 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                     kolAddressInfoEntity.setDistrict(district);
                 }else if (DictCityConstants.isNoDistrictId(kolAddressInfoEntity.getDistrictId())
                         && noDistrictCityIdSet.contains(kolAddressInfoEntity.getCityId())) {
+                    // 前端占位 districtId（__no_district__:<cityId>）超出 district_id 列长，
+                    // 命中"无区/县"分支后置空，避免落库时触发 value too long
+                    kolAddressInfoEntity.setDistrictId(null);
                     kolAddressInfoEntity.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
                 }else {
                     throw new ServiceException("区域不存在");

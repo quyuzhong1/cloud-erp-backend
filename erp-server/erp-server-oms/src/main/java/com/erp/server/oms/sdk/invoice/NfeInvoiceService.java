@@ -883,6 +883,8 @@ public class NfeInvoiceService {
             nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
             String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
             nfeClienteDTO.setCep(newCep);
+            // 巴西开票要求买家税号(CPF/CNPJ)只保留数字，去除".-/"等特殊符号；订单数据不变
+            nfeClienteDTO.setCpfCnpj(sanitizeCpfCnpj(nfeClienteDTO.getCpfCnpj()));
             nfeClienteDTO.setBairro(getBairroStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua(),nfeClienteDTO.getBairro()));
             if (CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())){
                 nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
@@ -895,6 +897,18 @@ public class NfeInvoiceService {
         fillProvinceInfo(nfeClienteDTO);
         nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
+    }
+
+    /**
+     * 清洗买家税号(CPF/CNPJ)：去除所有非数字字符，仅保留纯数字
+     * 巴西开票接口要求 cpf/cnpj 为纯数字，CPF=11位、CNPJ=14位；
+     * 实现方式与 CfgInvoiceSettingServiceImpl#formatCnpjToDatabase 保持一致
+     */
+    private String sanitizeCpfCnpj(String cpfCnpj) {
+        if (CharSequenceUtil.isBlank(cpfCnpj)) {
+            return cpfCnpj;
+        }
+        return cpfCnpj.replaceAll("[^0-9]", "");
     }
 
     private String getRuaStr(String dictPlatform, String rua) {
@@ -961,6 +975,8 @@ public class NfeInvoiceService {
             throw new ServiceException("公司买家IE号不允许为空");
         }
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
+        // 巴西开票要求买家税号(CPF/CNPJ)只保留数字，去除".-/"等特殊符号；订单数据不变
+        nfeClienteDTO.setCpfCnpj(sanitizeCpfCnpj(nfeClienteDTO.getCpfCnpj()));
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
             nfeClienteDTO.setBairro(receiverEntity.getFirstAddress() );
         }
