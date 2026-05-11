@@ -321,6 +321,12 @@ public class ImportHistoryRecordDTO implements Serializable {
         private Integer matchCount;
 
         /**
+         * sheet页名称不能为空
+         */
+        @NotBlank(message = "sheet页名称不能为空")
+        private String sheetName;
+
+        /**
          * 处理状态,ImportHistoryRecordStatusEnum
          */
         @NotBlank(message = "处理状态不能为空")

@@ -172,7 +172,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private void handleData(ImportHistoryRecordEntity entity) {
 
         //根据文件URL查询是否已存在记录，存在则更新，不存在则新增
-        ImportHistoryRecordEntity old = this.getByFileUrl(entity.getFileUrl());
+        ImportHistoryRecordEntity old = this.getByFileUrl(entity.getFileUrl(),entity.getSheetName());
         if (ObjectUtil.isNotEmpty(old)) {
             entity.setId(old.getId());
         }
@@ -1769,10 +1769,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param fileUrl
      * @return com.erp.model.tms.entity.ImportHistoryRecordEntity
      */
-    private ImportHistoryRecordEntity getByFileUrl(String fileUrl) {
-        if (CharSequenceUtil.isBlank(fileUrl)) {
-            throw new ServiceException("文件URL不能为空");
+    private ImportHistoryRecordEntity getByFileUrl(String fileUrl,String sheetName) {
+        if (CharSequenceUtil.isBlank(fileUrl) || CharSequenceUtil.isBlank(sheetName) ) {
+            throw new ServiceException("文件URL、sheet页名称不能为空");
         }
-        return this.lambdaQuery().eq(ImportHistoryRecordEntity::getFileUrl, fileUrl).last("limit 1").one();
+        return this.lambdaQuery().eq(ImportHistoryRecordEntity::getFileUrl, fileUrl).eq(ImportHistoryRecordEntity::getSheetName,sheetName).last("limit 1").one();
     }
 }
