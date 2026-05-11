@@ -163,6 +163,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private TransferInfoService transferInfoService;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Lazy
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
     @Resource
@@ -171,6 +172,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private WmsCartonService wmsCartonService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+    @Lazy
     @Resource
     private WmsDeliveryPlanService wmsDeliveryPlanService;
     @Resource
@@ -187,6 +189,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private TmsDeclareBillFeign tmsDeclareBillFeign;
     @Resource
     private com.erp.rpc.tms.feign.CfgSettingFeign tmsCfgSettingFeign;
+    @Lazy
     @Resource
     private PackingTaskService packingTaskService;
     @Resource
@@ -197,6 +200,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private PickingDetailService pickingDetailService;
     @Resource
     private CfgRulePickingStagingService cfgRulePickingStagingService;
+    @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
@@ -211,6 +215,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+    @Lazy
     @Resource
     private AwdOutstockService awdOutstockService;
     @Resource
@@ -3095,7 +3100,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    @Async("wmsErpExecutor")
+//    @Async("wmsErpExecutor")
     public void sendMsg(List<String> logisticsBillIds){
         List<LogisticsBillEntity> list = FeignQuery.create(LogisticsBillEntity.class).in(LogisticsBillEntity::getId, logisticsBillIds).list();
         if(CollUtil.isNotEmpty(list)){
