@@ -37,10 +37,10 @@ public class SysCodeEntity implements Serializable {
     private Integer num;
 
     /**
-     * 编码类型 (枚举SysNoEnum，1:sku,2:spu)
+     * 编码类型 枚举BusinessNoTypeEnum
      */
     @TableField("type")
-    private Integer type;
+    private String type;
 
     /**
      * 创建时间

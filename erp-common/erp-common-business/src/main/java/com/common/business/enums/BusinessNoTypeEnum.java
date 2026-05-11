@@ -13,11 +13,9 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public enum BusinessNoTypeEnum {
 
-    SKU_NO("1", "sku_no","sku编号",""),
-    SPU_NO("2", "spu_no","spu编号",""),
-    CODE_USER("15", "user_no","用户编号", ""),
-
-
+    SKU_NO("sku_no", "sku_no","sku编号",""),
+    SPU_NO("spu_no", "spu_no","spu编号",""),
+    CODE_USER("user_no", "user_no","用户编号", ""),
     Bom_NO("bom_no", "bom_no","bom编号", BusinessNoConstant.BOM),
     CODE_BH("bh", "bh","备货申请单编号", BusinessNoConstant.BH),
     CODE_GYS("gys", "gys","供应商编号", BusinessNoConstant.GYS),
