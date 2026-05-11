@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Service
 @Scope("prototype")
-public class DmpOutputAmzFbaInboundPlanShipmentRocketMQTaskHandler extends DmpOutputAmzFbaShipmentRocketMQTaskHandler {
+public class DmpOutputAmzFbaPlanShipmentRocketMQTaskHandler extends DmpOutputAmzFbaShipmentRocketMQTaskHandler {
 
     @Resource
     private DmpInputTaskService dmpInputTaskService;
