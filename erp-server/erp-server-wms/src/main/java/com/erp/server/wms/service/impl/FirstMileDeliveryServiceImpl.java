@@ -3072,7 +3072,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    @Async("wmsErpExecutor")
+//    @Async("wmsErpExecutor")
     public void sendMsg(List<String> logisticsBillIds){
         List<LogisticsBillEntity> list = FeignQuery.create(LogisticsBillEntity.class).in(LogisticsBillEntity::getId, logisticsBillIds).list();
         if(CollUtil.isNotEmpty(list)){
