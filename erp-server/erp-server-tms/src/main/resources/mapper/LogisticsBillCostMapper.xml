@@ -481,8 +481,9 @@
         set reconciliation_status = #{reconciliationStatus},
         confirm_time = case id
         <foreach collection="confirmList" item="item">
-            when #{item.logisticsCostId} then #{item.confirmDateTime}
+            when #{item.logisticsCostId} then cast(#{item.confirmDateTime,jdbcType=TIMESTAMP} as timestamp)
         </foreach>
+        else confirm_time
         end,
         confirm_user_id = #{confirmUserId},
         confirm_user_name = #{confirmUserName},
