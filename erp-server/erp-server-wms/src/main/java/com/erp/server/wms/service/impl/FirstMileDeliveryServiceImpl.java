@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -161,6 +162,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private TransferInfoService transferInfoService;
+    @Resource
+    private IdentifierGenerator identifierGenerator;
     @Resource
     private SkuMappingFeign skuMappingFeign;
     @Lazy
@@ -1216,7 +1219,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
                 //匹配到规则则进行中转调拨，否则直接生成调拨单
                 if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
-                    String batchNo = IdUtil.getSnowflake().nextIdStr();
+                    String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
                     List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
                     //中转循环调拨
                     generateTransferByRule(split,entity, detailEntityList,batchNo);
@@ -2893,7 +2896,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //匹配到规则则进行中转调拨，否则直接生成调拨单
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
-            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             List<String> split = CharSequenceUtil.split(entity.getTransferWarehouseIds(), ",");
             //中转循环调拨
             generateTransferByRule(split,entity, detailEntityList,batchNo);

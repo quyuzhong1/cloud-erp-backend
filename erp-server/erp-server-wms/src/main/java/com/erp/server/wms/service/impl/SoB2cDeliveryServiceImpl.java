@@ -4,13 +4,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -205,6 +205,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private TransferInfoService transferInfoService;
+    @Resource
+    private IdentifierGenerator identifierGenerator;
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
     @Resource
@@ -2496,7 +2498,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
             List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
             //批次号
-            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             //生成直接调拨单
             generateTransferInfo(entity,soB2cDeliveryDetailList,split,batchNo);
         }
