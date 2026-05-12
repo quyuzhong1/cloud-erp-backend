@@ -529,7 +529,9 @@
             sdn.warehouse_name as fromWarehouseName,
             sdn.warehouse_org_id as fromWarehouseOrgId,
             sdn.warehouse_org_name as fromWarehouseOrgName,
-            sdn.transfer_warehouse_ids as transferWarehouseIds
+            sdn.transfer_warehouse_ids as transferWarehouseIds,
+            sdn.sales_org_id AS salesOrgId,
+            sdn.sales_org_name AS salesOrgName
         from so_delivery_notice sdn
         left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
         left join packing_task_detail ptd on sdnd.id = ptd.source_detail_id and ptd.is_deleted = false

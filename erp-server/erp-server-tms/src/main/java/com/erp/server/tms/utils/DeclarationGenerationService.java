@@ -16,12 +16,26 @@ public class DeclarationGenerationService {
     private static final BigDecimal MAX_PRICE_TOLERANCE = new BigDecimal("10.00");
 
     /**
-     * 核心服务入口：从头程发货单明细生成报关单
-     *
-     * @param inputs 头程发货单明细列表
-     * @return 报关单集合
+     * 按默认五维度规则生成报关单算法结果
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param inputs 报关合并算法输入明细
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDTO>
      */
     public List<DeclarationGenerationDTO.OutputDeclarationDTO> generateDeclarations(List<DeclarationGenerationDTO.InputDetailDTO> inputs) {
+        return generateDeclarations(inputs, false);
+    }
+
+    /**
+     * 按指定合并维度生成报关单算法结果
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param inputs 报关合并算法输入明细
+     * @param includeSkuInMergeKey 是否将 SKU 纳入合并维度
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDTO>
+     */
+    public List<DeclarationGenerationDTO.OutputDeclarationDTO> generateDeclarations(List<DeclarationGenerationDTO.InputDetailDTO> inputs,
+                                                                                   boolean includeSkuInMergeKey) {
         if (inputs == null || inputs.isEmpty()) {
             return Collections.emptyList();
         }
@@ -37,7 +51,7 @@ public class DeclarationGenerationService {
             List<DeclarationGenerationDTO.InputDetailDTO> countryInputs = countryEntry.getValue();
 
             // 在单一国家维度内处理
-            List<DeclarationGenerationDTO.OutputDeclarationDTO> countryDeclarations = processCountry(country, countryInputs);
+            List<DeclarationGenerationDTO.OutputDeclarationDTO> countryDeclarations = processCountry(country, countryInputs, includeSkuInMergeKey);
             finalDeclarations.addAll(countryDeclarations);
         }
 
@@ -45,11 +59,32 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * 对外门面：基于发货明细生成合并报关结果。
+     * 按默认五维度规则生成合并报关结果
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetails 来源发货明细
+     * @param isMerge 是否合并报关
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
      */
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> generateMergeBills(
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails,
             Boolean isMerge) {
+        return generateMergeBills(sourceDetails, isMerge, false);
+    }
+
+    /**
+     * 按指定合并维度生成合并报关结果
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetails 来源发货明细
+     * @param isMerge 是否合并报关
+     * @param includeSkuInMergeKey 是否将 SKU 纳入合并维度
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> generateMergeBills(
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails,
+            Boolean isMerge,
+            boolean includeSkuInMergeKey) {
         if (sourceDetails == null || sourceDetails.isEmpty()) {
             return Collections.emptyList();
         }
@@ -57,24 +92,55 @@ public class DeclarationGenerationService {
         IdentityHashMap<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> sourceKeyMap = buildSourceKeyMap(sourceDetails);
         List<DeclarationGenerationDTO.OutputDeclarationDTO> declarations = new ArrayList<>();
         if (Boolean.TRUE.equals(isMerge)) {
-            declarations.addAll(generateDeclarations(toInputDetails(sourceDetails, sourceKeyMap)));
+            declarations.addAll(generateDeclarations(toInputDetails(sourceDetails, sourceKeyMap), includeSkuInMergeKey));
         } else {
             Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> bySource = sourceDetails.stream()
                     .collect(Collectors.groupingBy(this::resolveShipmentKey));
             for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : bySource.values()) {
-                declarations.addAll(generateDeclarations(toInputDetails(sourceGroup, sourceKeyMap)));
+                declarations.addAll(generateDeclarations(toInputDetails(sourceGroup, sourceKeyMap), includeSkuInMergeKey));
             }
         }
 
         return toMergeDeclareBillDTOs(declarations, sourceDetails, sourceKeyMap);
     }
 
+    /**
+     * 按默认五维度规则生成合并报关明细视图
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetails 来源发货明细
+     * @param isMerge 是否合并报关
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> generateMergeBillDetails(
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails,
             Boolean isMerge) {
         return generateMergeBills(sourceDetails, isMerge);
     }
 
+    /**
+     * 按指定合并维度生成合并报关明细视图
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetails 来源发货明细
+     * @param isMerge 是否合并报关
+     * @param includeSkuInMergeKey 是否将 SKU 纳入合并维度
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
+    public List<TmsDeclareBillDTO.MergeDeclareBillDTO> generateMergeBillDetails(
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails,
+            Boolean isMerge,
+            boolean includeSkuInMergeKey) {
+        return generateMergeBills(sourceDetails, isMerge, includeSkuInMergeKey);
+    }
+
+    /**
+     * 构建来源明细和算法明细唯一键的映射
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetails 来源发货明细
+     * @return java.util.IdentityHashMap<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO,java.lang.String>
+     */
     private IdentityHashMap<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> buildSourceKeyMap(
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails) {
         IdentityHashMap<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> sourceKeyMap = new IdentityHashMap<>();
@@ -89,6 +155,14 @@ public class DeclarationGenerationService {
         return sourceKeyMap;
     }
 
+    /**
+     * 将来源发货明细转换为报关合并算法输入明细
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceDetails 来源发货明细
+     * @param sourceKeyMap 来源明细唯一键映射
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.InputDetailDTO>
+     */
     private List<DeclarationGenerationDTO.InputDetailDTO> toInputDetails(
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails,
             Map<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> sourceKeyMap) {
@@ -103,7 +177,6 @@ public class DeclarationGenerationService {
             input.setDeclarationElements(source.getDeclareElement());
             input.setDeclarationUnit(source.getUnit());
             input.setDeclarationCurrency(source.getDeclareCurrency());
-            input.setModel(source.getSkuNo());
             input.setSku(source.getSkuNo());
             input.setPrice(source.getUnitPrice());
             input.setQuantity(source.getQty());
@@ -112,6 +185,15 @@ public class DeclarationGenerationService {
         return inputs;
     }
 
+    /**
+     * 将算法输出结果转换为合并报关明细视图
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param declarations 算法输出报关单结果
+     * @param sourceDetails 来源发货明细
+     * @param sourceKeyMap 来源明细唯一键映射
+     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     */
     private List<TmsDeclareBillDTO.MergeDeclareBillDTO> toMergeDeclareBillDTOs(
             List<DeclarationGenerationDTO.OutputDeclarationDTO> declarations,
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails,
@@ -188,6 +270,13 @@ public class DeclarationGenerationService {
         return result;
     }
 
+    /**
+     * 获取来源明细所属发货单维度键
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param source 来源发货明细
+     * @return java.lang.String
+     */
     private String resolveShipmentKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO source) {
         if (source.getSourceId() != null && !source.getSourceId().trim().isEmpty()) {
             return source.getSourceId();
@@ -201,6 +290,13 @@ public class DeclarationGenerationService {
         return "UNKNOWN_SHIPMENT";
     }
 
+    /**
+     * 构建业务单号和箱号的展示描述
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param source 来源发货明细
+     * @return java.lang.String
+     */
     private String buildBusinessDesc(TmsDeclareBillDTO.SourceDeliveryDetailDTO source) {
         String businessCode = source.getBusinessCode() == null ? "" : source.getBusinessCode();
         String boxNo = source.getBoxNo() == null ? "" : source.getBoxNo();
@@ -213,6 +309,13 @@ public class DeclarationGenerationService {
         return businessCode + "+" + boxNo;
     }
 
+    /**
+     * 构建合并规则提示语
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param sourceCount 参与合并的来源明细数量
+     * @return java.lang.String
+     */
     private String buildMergeRemark(int sourceCount) {
         if (sourceCount > 1) {
             return "按报关要素分组并校验单价极差<=10后合并";
@@ -221,9 +324,17 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * 处理单一国家维度下的数据
+     * 处理单一国家维度下的报关合并数据
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param country 国家编码
+     * @param countryInputs 当前国家下的算法输入明细
+     * @param includeSkuInMergeKey 是否将 SKU 纳入合并维度
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDTO>
      */
-    private List<DeclarationGenerationDTO.OutputDeclarationDTO> processCountry(String country, List<DeclarationGenerationDTO.InputDetailDTO> countryInputs) {
+    private List<DeclarationGenerationDTO.OutputDeclarationDTO> processCountry(String country,
+                                                                               List<DeclarationGenerationDTO.InputDetailDTO> countryInputs,
+                                                                               boolean includeSkuInMergeKey) {
         // Step 3: 发货单内聚合与价格极差切割
         Map<String, List<DeclarationGenerationDTO.InputDetailDTO>> byShipment = countryInputs.stream()
                 .filter(item -> item.getShipmentOrderId() != null)
@@ -233,7 +344,7 @@ public class DeclarationGenerationService {
 
         for (Map.Entry<String, List<DeclarationGenerationDTO.InputDetailDTO>> shipmentEntry : byShipment.entrySet()) {
             String shipmentId = shipmentEntry.getKey();
-            List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> mergedDetails = processShipment(shipmentEntry.getValue());
+            List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> mergedDetails = processShipment(shipmentEntry.getValue(), includeSkuInMergeKey);
             if (!mergedDetails.isEmpty()) {
                 shipmentBlocks.add(new DeclarationGenerationDTO.ShipmentBlock(shipmentId, mergedDetails));
             }
@@ -244,12 +355,18 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * 处理单一发货单内的合并与拆分逻辑
+     * 处理单一发货单内的明细合并逻辑
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param shipmentInputs 单一发货单下的算法输入明细
+     * @param includeSkuInMergeKey 是否将 SKU 纳入合并维度
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDetailDTO>
      */
-    private List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> processShipment(List<DeclarationGenerationDTO.InputDetailDTO> shipmentInputs) {
+    private List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> processShipment(List<DeclarationGenerationDTO.InputDetailDTO> shipmentInputs,
+                                                                                     boolean includeSkuInMergeKey) {
         // 1. 按合并键进行初次分组
         Map<DeclarationGenerationDTO.MergeKey, List<DeclarationGenerationDTO.InputDetailDTO>> groupedByKey = shipmentInputs.stream()
-                .collect(Collectors.groupingBy(DeclarationGenerationDTO.MergeKey::from));
+                .collect(Collectors.groupingBy(item -> DeclarationGenerationDTO.MergeKey.from(item, includeSkuInMergeKey)));
 
         List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> result = new ArrayList<>();
 
@@ -295,6 +412,10 @@ public class DeclarationGenerationService {
 
     /**
      * 将符合规则的一组明细聚合成一个报关单明细行
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param groupItems 待聚合的算法输入明细
+     * @return com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDetailDTO
      */
     private DeclarationGenerationDTO.OutputDeclarationDetailDTO aggregateGroup(List<DeclarationGenerationDTO.InputDetailDTO> groupItems) {
         DeclarationGenerationDTO.OutputDeclarationDetailDTO detail = new DeclarationGenerationDTO.OutputDeclarationDetailDTO();
@@ -330,7 +451,12 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * FFD 装箱算法与超限拆分逻辑
+     * 执行 FFD 装箱算法与超限拆分逻辑
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param country 国家编码
+     * @param blocks 发货单聚合块
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDTO>
      */
     private List<DeclarationGenerationDTO.OutputDeclarationDTO> performBinPacking(String country, List<DeclarationGenerationDTO.ShipmentBlock> blocks) {
         List<DeclarationGenerationDTO.OutputDeclarationDTO> finalDeclarations = new ArrayList<>();
@@ -383,7 +509,12 @@ public class DeclarationGenerationService {
     }
 
     /**
-     * 辅助方法：将 List 按指定大小分块
+     * 将列表按指定大小分块
+     * @author will
+     * @date 2026/5/9 15:00
+     * @param list 原始列表
+     * @param batchSize 每块大小
+     * @return java.util.List<java.util.List<T>>
      */
     private <T> List<List<T>> partitionList(List<T> list, int batchSize) {
         return IntStream.range(0, (list.size() + batchSize - 1) / batchSize)
