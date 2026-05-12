@@ -340,8 +340,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addEntity.setCustomsFee(BigDecimal.ZERO);
         }
 
-        //仓库id
+        //仓库id（B2B 手工新增：请求未带仓库时，用客户维护的默认发货仓库；前端已选仓库则以请求为准）
         String warehouseId = dto.getWarehouseId();
+        if (OrderTypeEnum.B2B.getCode().equals(dto.getOrderType())
+                && StringUtils.isBlank(warehouseId)
+                && StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+            if (customerInfoEntity != null && StringUtils.isNotBlank(customerInfoEntity.getDefaultShippingWarehouse())) {
+                warehouseId = customerInfoEntity.getDefaultShippingWarehouse();
+                addEntity.setWarehouseId(warehouseId);
+            }
+        }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String warehouseOrgId = "";
         if (CollectionUtils.isNotEmpty(warehouseList)) {
@@ -3970,6 +3979,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             updateDTO.setReceiveAddressId(dto.getCustomerAddressId());
             updateDTO.setCurrency(dto.getCurrency());
             updateDTO.setReceiveCondition(dto.getReceiveCondition());
+            updateDTO.setReceiveAccount(dto.getReceiveAccount());
             updateDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             updateDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             updateDTO.setAccountDeductAmount(dto.getAccountDeductAmount());
@@ -4059,6 +4069,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addDTO.setCurrency(dto.getCurrency());
             addDTO.setTelNumber(dto.getTelNumber());
             addDTO.setReceiveCondition(dto.getReceiveCondition());
+            addDTO.setReceiveAccount(dto.getReceiveAccount());
             addDTO.setPlatformCreateTime(dto.getPlatformCreateTime());
             addDTO.setPlatformUpdateTime(dto.getPlatformUpdateTime());
             addDTO.setAccountDeductAmount(dto.getAccountDeductAmount());

@@ -1210,7 +1210,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 CustomerInfoEntity::getShortName,
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled,
-                CustomerInfoEntity::getCurrency);
+                CustomerInfoEntity::getCurrency,
+                CustomerInfoEntity::getDefaultShippingWarehouse,
+                CustomerInfoEntity::getDefaultReceiveAccount);
         if (StringUtils.isNotBlank(permissionSql)) {
             queryWrapper.last(permissionSql + " ORDER BY create_time DESC");
         } else {
@@ -1307,6 +1309,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         //平台类型
         base.setBusinessMode(customer.getBusinessMode());
         base.setBusinessModeName(CustomerInfoBusinessModeEnum.getName(customer.getBusinessMode()));
+
+        base.setDefaultShippingWarehouse(customer.getDefaultShippingWarehouse());
+        base.setDefaultReceiveAccount(customer.getDefaultReceiveAccount());
 
         return base;
     }
