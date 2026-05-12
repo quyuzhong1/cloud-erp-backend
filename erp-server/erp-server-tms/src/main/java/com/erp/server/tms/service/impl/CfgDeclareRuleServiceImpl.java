@@ -3,9 +3,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.controller.vo.ApiResult;
@@ -87,13 +85,13 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         Set<String> uniqueConditionFields = listUniqueConditionFields(dto.getRuleType());
         validateSaveListUniqueConditions(dto.getRuleType(), saveList, uniqueConditionFields);
 
-        List<CfgDeclareRuleEntity> saveEntities = saveList.stream()
-                .map(item -> {
-                    CfgDeclareRuleEntity entity = BeanMapperUtils.map(CfgDeclareRuleEntity.class, item);
-                    entity.setRuleType(dto.getRuleType());
-                    return entity;
-                })
-                .collect(Collectors.toList());
+        List<CfgDeclareRuleEntity> saveEntities = new ArrayList<>(saveList.size());
+        for (int i = 0; i < saveList.size(); i++) {
+            CfgDeclareRuleEntity entity = BeanMapperUtils.map(CfgDeclareRuleEntity.class, saveList.get(i));
+            entity.setRuleType(dto.getRuleType());
+            entity.setIndex(i);
+            saveEntities.add(entity);
+        }
         fillCompanyNames(saveEntities);
 
         List<String> deleteRuleIds = getDeleteRuleIds(existingRules, saveList);
@@ -106,78 +104,50 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     @Override
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean update(CfgDeclareRuleDTO.UpdateDTO addOrUpdateDTO) {
-        CfgDeclareRuleEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "CfgDeclareRule"));
-
-        CfgDeclareRuleEntity entity = BeanMapperUtils.map(CfgDeclareRuleEntity.class, addOrUpdateDTO);
-        validateUniqueWithDb(entity);
-        List<CfgDeclareRuleConditionEntity> newDetails = buildConditionEntities(entity.getId(), addOrUpdateDTO.getDetailList(), true);
-        Set<String> uniqueConditionFields = listUniqueConditionFields(entity.getRuleType());
-        validateUpdateUniqueConditions(entity, newDetails, uniqueConditionFields);
-        fillCompanyNames(Collections.singletonList(entity));
-
-        boolean updated = super.updateById(entity);
-        if (!updated) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_SAVE_FAILED);
-        }
-
-        List<CfgDeclareRuleConditionEntity> oldDetails = cfgDeclareRuleConditionService.lambdaQuery()
-                .eq(CfgDeclareRuleConditionEntity::getRuleId, entity.getId())
-                .list();
-        commonService.updateDetail(entity.getId(), ModuleTypeEnum.CFG_DECLARE_RULE.getCode(),
-                cfgDeclareRuleConditionService, newDetails, oldDetails, Collections.singletonList("id"));
-
-        addUpdateLog(old, entity);
-        return Boolean.TRUE;
-    }
-
-    @Override
     public CfgDeclareRuleDTO.SaveListDTO paging(CfgDeclareRuleDTO.ListParamDTO dto) {
         return buildSaveListResult(dto.getRuleType(), this.baseMapper.paging(dto));
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> dropDownList(String type, String name) {
-        if (SENDER.equals(type)) {
-            return Collections.singletonList(buildDropDown(
-                    type,
-                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getCode(),
-                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getName(),
-                    accountingCompanyChildList(name)));
-        }
-
-        if (RECEIVER.equals(type)) {
+    public List<BaseDropDownDTO.Tree> dropDownList( String name) {
             List<BaseDropDownDTO.Tree> result = new ArrayList<>(2);
             result.add(buildDropDown(
-                    type,
+                    "",
                     CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getName(),
                     accountingCompanyChildList(name)));
             result.add(buildDropDown(
-                    type,
+                    "",
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getName(),
                     Collections.emptyList()));
             return result;
-        }
-
-        throw new ServiceException("type must be sender or receiver");
     }
 
+    /**
+     * 按规则类型和入参条件匹配一条启用状态的报关规则。
+     *
+     * <p>匹配逻辑由规则条件配置驱动：先根据 ruleType 读取该类型下需要参与匹配的字段，
+     * 再从 paramMap 中取出对应字段值构造匹配数据，最后逐条规则执行条件表达式匹配。
+     * 如果多条规则同时命中，返回主表 index 最小的规则，用于表达前端列表顺序对应的优先级。</p>
+     *
+     * @param paramMap 条件参数集合，必须包含 ruleType；其它 key 与规则条件配置的 conditionField 对齐
+     * @return index 最小的命中规则；参数不完整、无条件配置或无命中规则时返回 null
+     */
     @Override
-    public List<CfgDeclareRuleEntity> listMatchedRule(Map<String, String> paramMap) {
+    public CfgDeclareRuleEntity listMatchedRule(Map<String, String> paramMap) {
         if (paramMap == null || paramMap.isEmpty() || StrUtil.isBlank(paramMap.get(RULE_TYPE))) {
-            return Collections.emptyList();
+            return null;
         }
         String ruleType = paramMap.get(RULE_TYPE);
+
+        // 规则条件配置决定本次需要从 paramMap 中读取哪些业务字段参与匹配。
         List<CfgConditionDTO.CommonDTO> conditionList = cfgConditionService.listByType(ruleType);
         if (CollUtil.isEmpty(conditionList)) {
-            return Collections.emptyList();
+            return null;
         }
 
+        // 多值字段会被展开成多组匹配数据，保证同一条规则能覆盖所有入参取值。
         List<Map<String, Object>> matchDataList = buildMatchDataList(paramMap, conditionList);
         Map<String, String> valueTypeMap = conditionList.stream()
                 .filter(item -> StrUtil.isNotBlank(item.getConditionField()))
@@ -186,17 +156,21 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                         (left, right) -> left,
                         HashMap::new));
 
+        // 只取启用规则参与匹配；先按 index 升序读取，保持规则优先级与前端列表顺序一致。
         List<CfgDeclareRuleEntity> ruleList = this.lambdaQuery()
                 .eq(CfgDeclareRuleEntity::getRuleType, ruleType)
                 .eq(CfgDeclareRuleEntity::getDisabled, Boolean.FALSE)
+                .orderByAsc(CfgDeclareRuleEntity::getIndex)
+                .orderByDesc(CfgDeclareRuleEntity::getId)
                 .list();
         if (CollUtil.isEmpty(ruleList)) {
-            return Collections.emptyList();
+            return null;
         }
 
         List<String> ruleIdList = ruleList.stream()
                 .map(CfgDeclareRuleEntity::getId)
                 .collect(Collectors.toList());
+        // 一次性加载候选规则的条件明细，避免逐条规则查询数据库。
         Map<String, List<CfgDeclareRuleConditionEntity>> ruleConditionMap = cfgDeclareRuleConditionService.lambdaQuery()
                 .in(CfgDeclareRuleConditionEntity::getRuleId, ruleIdList)
                 .orderByAsc(CfgDeclareRuleConditionEntity::getIndex)
@@ -205,9 +179,12 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .collect(Collectors.groupingBy(CfgDeclareRuleConditionEntity::getRuleId,
                         LinkedHashMap::new, Collectors.toList()));
 
+        // 多条规则命中时，只返回 index 最小的一条；未命中则返回 null。
         return ruleList.stream()
                 .filter(rule -> matchDeclareRule(rule, ruleConditionMap, matchDataList, valueTypeMap))
-                .collect(Collectors.toList());
+                .min(Comparator.comparing(CfgDeclareRuleEntity::getIndex,
+                        Comparator.nullsLast(Integer::compareTo)))
+                .orElse(null);
     }
 
     void validateBatchSaveRequest(String ruleType,
@@ -521,6 +498,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 CfgDeclareRuleDTO.SaveDTO item = BeanMapperUtils.map(CfgDeclareRuleDTO.SaveDTO.class, row);
                 item.setId(row.getId());
                 item.setRuleType(StrUtil.isNotBlank(row.getRuleType()) ? row.getRuleType() : ruleType);
+                item.setIndex(row.getRuleIndex());
                 item.setDetailList(new ArrayList<>());
                 return item;
             });
@@ -532,8 +510,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 ruleDTO.getDetailList().add(detailDTO);
             }
         }
-
-        result.setList(new ArrayList<>(ruleMap.values()));
+        List<CfgDeclareRuleDTO.SaveDTO> saveList = new ArrayList<>(ruleMap.values());
+        saveList.sort(Comparator.comparing(CfgDeclareRuleDTO.SaveDTO::getIndex,
+                Comparator.nullsLast(Integer::compareTo)));
+        result.setList(saveList);
         return result;
     }
 

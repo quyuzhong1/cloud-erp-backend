@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -69,6 +70,17 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return com.common.core.controller.vo.ApiResult
      **/
     String add(SoDeliveryNoticeDTO.Add dto);
+
+    /**
+     * 消费B2B发货通知单自动生成报关明细任务
+     *
+     * @param dto 自动生成参数
+     * @return 是否处理成功
+     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-05-12
+     */
+    Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
 
     /**
      * 修改

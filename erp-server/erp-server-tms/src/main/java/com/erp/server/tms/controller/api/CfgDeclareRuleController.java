@@ -1,11 +1,8 @@
 package com.erp.server.tms.controller.api;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
@@ -22,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -45,33 +41,26 @@ public class CfgDeclareRuleController extends BaseController {
         return success();
     }
 
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "报关规则主表修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "tms:cfgDeclareRule:update",
-            serviceClass = CfgDeclareRuleService.class,
-            keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgDeclareRuleDTO.UpdateDTO dto) {
-        cfgDeclareRuleService.update(dto);
-        return success();
-    }
-
     @PostMapping("/paging")
     public ApiResult<CfgDeclareRuleDTO.SaveListDTO> paging(@RequestBody @Validated CfgDeclareRuleDTO.ListParamDTO dto) {
         return success(cfgDeclareRuleService.paging(dto));
     }
 
     @GetMapping("/dropDownList")
-    public ApiResult<List<BaseDropDownDTO.Tree>> dropDownList(@RequestParam("type") String type,
-                                                              @RequestParam(value = "name", required = false) String name) {
-        return success(cfgDeclareRuleService.dropDownList(type, name));
+    public ApiResult<List<BaseDropDownDTO.Tree>> dropDownList( @RequestParam(value = "name", required = false) String name) {
+        return success(cfgDeclareRuleService.dropDownList( name));
     }
 
     /**
-     * 引用取值：根据规则类型和条件参数匹配报关规则。
-     * 参数是Map<String, String> paramMap
-     * 需要传参：都是去重逗号拼接
+     * 引用取值：根据规则类型和业务条件匹配一条报关规则。
+     *
+     * <p>入参为 Map<String, String>，必须包含 ruleType，其它字段由报关规则条件配置决定。
+     * 同一字段支持用英文逗号拼接多个去重值，例如多个发货仓、目的仓或销售组织。</p>
+     *
+     * <p>出参只返回一条规则：未匹配时 data 为 null；匹配多条时，返回
+     * {@link CfgDeclareRuleEntity#getIndex()} 最小的规则。</p>
+     *
+     * <p>常用条件字段：</p>
      * countryCode
      * fromWarehouseId
      * salesOrgId
@@ -79,7 +68,7 @@ public class CfgDeclareRuleController extends BaseController {
      * destWarehouseId
      */
     @PostMapping("/listMatchedRule")
-    public ApiResult<List<CfgDeclareRuleEntity>> listMatchedRule(@RequestBody Map<String, String> paramMap) {
+    public ApiResult<CfgDeclareRuleEntity> listMatchedRule(@RequestBody Map<String, String> paramMap) {
         return success(cfgDeclareRuleService.listMatchedRule(paramMap));
     }
 

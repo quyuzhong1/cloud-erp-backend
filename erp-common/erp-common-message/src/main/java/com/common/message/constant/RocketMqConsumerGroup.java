@@ -323,6 +323,16 @@ public class RocketMqConsumerGroup {
      */
     public static final String WMS_VIRTUAL_DETAIL_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_consumer";
 
+    /**
+     * 头程发货单自动生成报关明细
+     */
+    public static final String WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_first_mile_declare_auto_generate_consumer";
+
+    /**
+     * B2B发货通知单自动生成报关明细
+     */
+    public static final String WMS_B2B_DECLARE_AUTO_GENERATE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_b2b_declare_auto_generate_consumer";
+
 
     /**
      *

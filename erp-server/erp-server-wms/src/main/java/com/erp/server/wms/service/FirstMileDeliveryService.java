@@ -5,6 +5,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -45,6 +46,17 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @date 2026-04-29
      */
     void autoGenerateByPacked(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum);
+
+    /**
+     * 消费头程报关自动生成任务
+     *
+     * @param dto 自动生成参数
+     * @return 是否处理成功
+     * @throws com.common.core.exception.ServiceException 自动生成失败时抛出
+     * @author jack
+     * @date 2026-05-12
+     */
+    Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto);
 
     /**
     * 修改
