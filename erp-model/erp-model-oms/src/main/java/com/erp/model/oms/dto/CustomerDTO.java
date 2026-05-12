@@ -769,16 +769,6 @@ public class CustomerDTO implements Serializable {
         private String defaultReceiveAccount;
 
         /**
-         * 默认发货仓库名称（defaultShippingWarehouse 存仓库 id）
-         */
-        private String defaultShippingWarehouseName;
-
-        /**
-         * 默认收款账号名称（defaultReceiveAccount 存银行账号 id，一般为账户名称展示）
-         */
-        private String defaultReceiveAccountName;
-
-        /**
          * 通讯地址
          */
         private String mailAddress;
@@ -1137,6 +1127,16 @@ public class CustomerDTO implements Serializable {
          * 币种
          */
         private String currency;
+
+        /**
+         * 默认发货仓库 id（B2B 客户维护）
+         */
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号 id（银行账号表）
+         */
+        private String defaultReceiveAccount;
     }
 
     /**
