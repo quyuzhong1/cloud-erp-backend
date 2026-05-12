@@ -1241,6 +1241,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         dto.setBusinessCode(entity.getBusinessCode());
         dto.setBoxNo(entity.getBoxNo());
         dto.setSkuNo(entity.getSkuNo());
+        dto.setBomHistoryId(entity.getBomHistoryId());
+        dto.setBomVersion(entity.getBomVersion());
         dto.setHsCode(entity.getHsCode());
         dto.setProductNameCn(entity.getProductNameCn());
         dto.setDeclareElement(entity.getDeclareElement());

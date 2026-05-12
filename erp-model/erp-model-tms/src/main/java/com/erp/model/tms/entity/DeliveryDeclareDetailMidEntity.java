@@ -191,6 +191,16 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("sales_org_name")
     private String salesOrgName;
+    /**
+    * bom历史记录id（表product_bom_history）
+    */
+    @TableField("bom_history_id")
+    private String bomHistoryId;
+    /**
+    * bom版本（表product_bom_info）
+    */
+    @TableField("bom_version")
+    private String bomVersion;
 
 
     public static final String REMARK = "remark";

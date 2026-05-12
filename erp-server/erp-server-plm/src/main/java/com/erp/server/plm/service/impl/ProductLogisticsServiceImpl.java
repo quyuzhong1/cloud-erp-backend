@@ -58,6 +58,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private ProductBomSkuHistoryService productBomSkuHistoryService;
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
@@ -261,14 +264,14 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         }
         //先处理组合品情况
         List<String> skuIds = productLogisticDTOList.stream().map(ProductDetailDTO.ProductLogisticDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> allBomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> allBomChildrenSkuDTOS = productBomSkuHistoryService.listHistoryBomChildBySkuIds(skuIds);
         List<String> childrenSkuIds = allBomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailDTO.ProductLogisticDTO> allChildList = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(childrenSkuIds)){
             allChildList = baseMapper.listProductLogisticsByIds(childrenSkuIds);
         }
         for (ProductDetailDTO.ProductLogisticDTO productLogisticDTO : productLogisticDTOList) {
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(productLogisticDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = allBomChildrenSkuDTOS.stream().filter(v->v.getParentSkuId().equals(productLogisticDTO.getSkuId()) && CharSequenceUtil.equals(v.getBomVersion(),v.getThisBomVersion())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
                 Map<String,Integer> bomchildMap = bomChildrenSkuDTOList.stream().collect(Collectors.toMap(BomChildrenSkuDTO::getSkuId,BomChildrenSkuDTO::getQuantity,(v1,v2)->v1));
                 productLogisticDTO.setIsCombination(true);
@@ -276,6 +279,8 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                 childList.forEach(v->{
                     v.setChildQty(bomchildMap.getOrDefault(v.getSkuId(),1));
                 });
+                productLogisticDTO.setBomVersion(bomChildrenSkuDTOList.get(0).getBomVersion());
+                productLogisticDTO.setBomHistoryId(bomChildrenSkuDTOList.get(0).getBomHistoryId());
                 productLogisticDTO.setChildList(childList);
             }else{
                 productLogisticDTO.setIsCombination(false);

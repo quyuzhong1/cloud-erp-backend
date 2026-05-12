@@ -348,7 +348,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             });
             return;
         }
-        sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
     }
 
     /**
@@ -2454,15 +2453,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, packingStatus)
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
-        if (CharSequenceUtil.equals(packingStatus, PackingTaskStatusEnum.PACKED.getCode())) {
-            FirstMileDeliveryEntity entity = this.getById(id);
-            if (Objects.nonNull(entity)) {
-                autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_ADD);
-                if (CharSequenceUtil.equals(entity.getApproveStatus(), com.common.business.enums.ApproveStatusEnum.APPROVE.getCode())) {
-                    autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_APPROVE);
-                }
-            }
-        }
+//        if (CharSequenceUtil.equals(packingStatus, PackingTaskStatusEnum.PACKED.getCode())) {
+//            FirstMileDeliveryEntity entity = this.getById(id);
+//            if (Objects.nonNull(entity)) {
+//                autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_ADD);
+//                if (CharSequenceUtil.equals(entity.getApproveStatus(), com.common.business.enums.ApproveStatusEnum.APPROVE.getCode())) {
+//                    autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_APPROVE);
+//                }
+//            }
+//        }
     }
 
     @Override
@@ -3303,6 +3302,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 ? new HashMap<>()
                 : countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
 
+
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = new ArrayList<>();
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDetailList) {
             if (Objects.isNull(detailDTO)) {
@@ -3319,6 +3319,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     BeanUtil.copyProperties(detailDTO, childDetailDTO);
                     childDetailDTO.setSkuId(childLogisticsDTO.getSkuId());
                     childDetailDTO.setSkuNo(childLogisticsDTO.getSkuNo());
+                    childDetailDTO.setBomVersion(childLogisticsDTO.getBomVersion());
+                    childDetailDTO.setBomHistoryId(childLogisticsDTO.getBomHistoryId());
                     childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
                     fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO);
                     result.add(childDetailDTO);
