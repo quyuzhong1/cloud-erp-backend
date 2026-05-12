@@ -462,8 +462,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cDetailEntity> addDetailList = new ArrayList<>();
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
-            if(!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus()) && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())){
-                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"只有待配货和配货中可以拆分还原"));
+            if(!SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())
+                    && !SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus())
+                    && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
+                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"只有待配货、配货中和已发货可以拆分还原"));
+                continue;
+            }
+            // 与 bomSplitAndSave 对齐：仅当订单未生成 B2C 发货单/三方仓发货单时才允许还原捆绑
+            try {
+                soB2cService.checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "还原捆绑");
+            } catch (Exception e) {
+                batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), e.getMessage()));
                 continue;
             }
             List<SoB2cDetailEntity> detailList = allSoB2cDetailEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
