@@ -25,6 +25,8 @@
        <result column="contract_no" property="contractNo" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
+       <result column="bom_history_id" property="bomHistoryId" />
+       <result column="bom_version" property="bomVersion" />
        <result column="currency" property="currency" />
        <result column="currency_symbol" property="currencySymbol" />
        <result column="declare_id" property="declareId" />
@@ -71,6 +73,8 @@
         dddm.contract_no AS contractNo,
         dddm.sku_id AS skuId,
         dddm.sku_no AS skuNo,
+        dddm.bom_history_id AS bomHistoryId,
+        dddm.bom_version AS bomVersion,
         dddm.currency AS currency,
         dddm.currency_symbol AS currencySymbol,
         dddm.declare_id AS declareId,
@@ -167,6 +171,8 @@
         dddm.box_no as boxNo,
         dddm.sku_id as skuId,
         dddm.sku_no as skuNo,
+        dddm.bom_history_id as bomHistoryId,
+        dddm.bom_version as bomVersion,
         fpl.customs_code as hsCode,
         fpl.declare_chinese_name as productNameCn,
         fpl.declare_element as declareElement,

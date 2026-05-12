@@ -2086,6 +2086,16 @@ public class TmsDeclareBillDTO implements Serializable {
         private String skuNo;
 
         /**
+         * bomSku历史的主键id（product_bom_history）
+         */
+        private String bomHistoryId;
+
+        /**
+         * bom版本（product_bom_history）
+         */
+        private String bomVersion;
+
+        /**
          * 客户SKU
          */
         private String platformSkuNo;

@@ -153,6 +153,16 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String skuNo;
 
         /**
+        * bom历史记录id（表product_bom_history）
+        */
+        private String bomHistoryId;
+
+        /**
+        * bom版本（表product_bom_info）
+        */
+        private String bomVersion;
+
+        /**
         * 币种
         */
         private String currency;
@@ -356,6 +366,16 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String skuNo;
 
         /**
+         * bom历史记录id（表product_bom_history）
+         */
+        private String bomHistoryId;
+
+        /**
+         * bom版本（表product_bom_info）
+         */
+        private String bomVersion;
+
+        /**
          * 中国海关编码
          */
         private String hsCode;
@@ -477,6 +497,16 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 商品SKU
         */
         private String skuNo;
+
+        /**
+        * bom历史记录id（表product_bom_history）
+        */
+        private String bomHistoryId;
+
+        /**
+        * bom版本（表product_bom_info）
+        */
+        private String bomVersion;
 
         /**
         * 币种
@@ -698,6 +728,18 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         */
         @Size(max = 64,message = "商品SKU最大长度不能超过64位")
         private String skuNo;
+
+        /**
+        * bom历史记录id（表product_bom_history）
+        */
+        @Size(max = 19,message = "bom历史记录id最大长度不能超过19位")
+        private String bomHistoryId;
+
+        /**
+        * bom版本（表product_bom_info）
+        */
+        @Size(max = 50,message = "bom版本最大长度不能超过50位")
+        private String bomVersion;
 
         /**
         * 币种

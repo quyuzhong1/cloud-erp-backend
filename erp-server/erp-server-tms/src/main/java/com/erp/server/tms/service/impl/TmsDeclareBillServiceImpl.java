@@ -2481,6 +2481,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         midEntity.setContractNo(declareCode);
         midEntity.setSkuId(StringUtils.defaultString(sourceDetail.getSkuId()));
         midEntity.setSkuNo(StringUtils.defaultString(sourceDetail.getSkuNo()));
+        midEntity.setBomHistoryId(StringUtils.defaultString(sourceDetail.getBomHistoryId()));
+        midEntity.setBomVersion(StringUtils.defaultString(sourceDetail.getBomVersion()));
         midEntity.setCurrency(StringUtils.defaultString(declareDetail.getDeclareCurrency()));
         midEntity.setCurrencySymbol(StringUtils.defaultString(declareDetail.getDeclareCurrencySymbol()));
         midEntity.setDeclareId(declareId);
@@ -2521,6 +2523,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setBoxNo(entity.getBoxNo());
         detailDTO.setSkuId(entity.getSkuId());
         detailDTO.setSkuNo(entity.getSkuNo());
+        detailDTO.setBomHistoryId(entity.getBomHistoryId());
+        detailDTO.setBomVersion(entity.getBomVersion());
         detailDTO.setHsCode(entity.getHsCode());
         detailDTO.setProductNameCn(entity.getProductNameCn());
         detailDTO.setDeclareElement(entity.getDeclareElement());
