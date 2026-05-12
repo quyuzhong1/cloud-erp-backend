@@ -51,7 +51,10 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
     @Override
     public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey,String useType) {
-        List<CfgQueryOptionEntity> list = lambdaQuery().eq(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()).orderByDesc(CfgQueryOptionEntity::getId).list();
+        List<CfgQueryOptionEntity> list = lambdaQuery()
+                .eq(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
+                .eq(CfgQueryOptionEntity::getUseType, CfgQueryOptionUseTypeEnum.ALL_DATA.getCode())
+                .orderByDesc(CfgQueryOptionEntity::getId).list();
         List<CfgQueryOptionDTO.ListDTO> result = new ArrayList<>();
         for (CfgQueryOptionEntity cfgQueryOptionEntity : list) {
             CfgQueryOptionDTO.ListDTO item = new CfgQueryOptionDTO.ListDTO();
@@ -72,6 +75,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         //公共字段
         LambdaQueryWrapper<CfgQueryOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode());
+        queryWrapper.eq(CfgQueryOptionEntity::getUseType, CfgQueryOptionUseTypeEnum.CFG_APPROVE_SYNC.getCode());
         List<CfgQueryOptionEntity> common = baseMapper.selectList(queryWrapper);
         common.stream().forEach(item -> item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getName()+"-"+item.getConditionFieldName()));
 
