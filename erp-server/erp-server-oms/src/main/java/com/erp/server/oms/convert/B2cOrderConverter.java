@@ -134,6 +134,16 @@ public interface B2cOrderConverter {
             @Mapping(target = "sourceType", ignore = true),
             @Mapping(target = "soCode", source = "code"),
             @Mapping(target = "detailList", ignore = true),
+            @Mapping(target = "billType", ignore = true),
+            @Mapping(target = "cancelStatus", ignore = true),
+            @Mapping(target = "handleResult", ignore = true),
+            @Mapping(target = "handleStatus", ignore = true),
+            @Mapping(target = "handleTime", ignore = true),
+            @Mapping(target = "handleUserName", ignore = true),
+            @Mapping(target = "interceptStatus", ignore = true),
+            @Mapping(target = "logisticsChannelId", ignore = true),
+            @Mapping(target = "logisticsChannelName", ignore = true),
+            @Mapping(target = "transportNo", ignore = true)
     })
     SoB2cDeliveryInterceptDTO.AddDTO convertIntercept(SoB2cEntity entity);
 

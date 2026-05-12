@@ -34,6 +34,7 @@ import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -73,6 +74,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -213,8 +215,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
+        if(CollectionUtils.isEmpty(records)){
+            return;
+        }
         List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, SkuVO> skuVOMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         Map<String, String> shopNameMap = new HashMap<>();
         if (CollUtil.isNotEmpty(shopIdList)){
@@ -234,10 +240,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
             record.setSourceTypeName(SoB2cDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
             //产品信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(record.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                record.setSkuNo(productDetailEntity.getSkuNo());
-                record.setProductName(productDetailEntity.getName());
+            SkuVO skuVO = skuVOMap.get(record.getSkuId());
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                record.setSkuNo(skuVO.getSkuNo());
+                record.setProductName(skuVO.getSkuName());
             }
             //店铺名称
             record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
@@ -977,6 +983,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                 soB2cDeliveryInterceptEntity.setSoDeliveryCode(thirdWarehouseDeliveryEntity.getCode());
                 soB2cDeliveryInterceptEntity.setDeliveryId(thirdWarehouseDeliveryEntity.getId());
+                soB2cDeliveryInterceptEntity.setShopId(thirdWarehouseDeliveryEntity.getShopId());
+                soB2cDeliveryInterceptEntity.setPlatformCode(thirdWarehouseDeliveryEntity.getPlatformCode());
             }
         }
 
@@ -984,6 +992,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(Objects.nonNull(soB2cDelivery)){
             soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
+            soB2cDeliveryInterceptEntity.setShopId(soB2cDelivery.getShopId());
+            soB2cDeliveryInterceptEntity.setPlatformCode(soB2cDelivery.getPlatformCode());
         }
     }
 

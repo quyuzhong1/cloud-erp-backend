@@ -48,7 +48,6 @@
         so.remark AS remark,
         so.customer_remark AS customerRemark,
         so.dict_platform AS dictPlatform,
-        sod.id as detailId,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
         sod.plan_qty AS planQty,
@@ -68,17 +67,9 @@
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name,
-        COALESCE(si.partition_id, sbr.partition_id) as partitionId
+        so.partition_id as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
-        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-        LEFT JOIN erp_oms.so_info si ON so.so_id = si.id
-        LEFT JOIN erp_oms.so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
-        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-        LEFT JOIN so_info si ON so.so_id = si.id
-        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE AND sod.is_deleted=FALSE
@@ -152,17 +143,9 @@
            sod.remark AS detailRemark,
         sod.customer_po as customerPO,
            sod.remark AS detailRemark,
-           COALESCE(si.partition_id, sbr.partition_id) as partitionId
+            so.partition_id as partitionId
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
-        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-        LEFT JOIN erp_oms.so_info si ON so.so_id = si.id
-        LEFT JOIN erp_oms.so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
-        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-        LEFT JOIN so_info si ON so.so_id = si.id
-        LEFT JOIN so_b2c_receiver sbr ON so.so_id = sbr.main_id
-        </if>
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE AND  sod.is_deleted=FALSE

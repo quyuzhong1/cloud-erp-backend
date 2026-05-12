@@ -495,6 +495,7 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotBlank(message = "销售订单不能为空")
         private String soId;
+        private String partitionId;
 
         /**
          * 来源id
@@ -1062,6 +1063,10 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotBlank(message = "销售订单不能为空")
         private String soId;
+        /**
+         * 分区id
+         */
+        private String partitionId;
 
         /**
          * 来源id
@@ -1663,6 +1668,10 @@ public class SoOutstockDTO implements Serializable {
          * 销售订单id
          */
         private String soId;
+        /**
+         * 分区id
+         */
+        private String partitionId;
         /**
          * 店铺id
          */

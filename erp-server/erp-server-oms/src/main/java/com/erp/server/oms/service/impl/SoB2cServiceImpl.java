@@ -3711,6 +3711,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         thirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
         thirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        thirdWarehouseDeliveryEntity.setShopId(entity.getShopId());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
         thirdWarehouseDeliveryEntity.setCode(code);
@@ -7668,16 +7669,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         if (Objects.nonNull(soB2cReceiver)) {
             dto.setCountry(soB2cReceiver.getCountry());
+            dto.setPartitionId(soB2cReceiver.getPartitionId());
         }
-//        if (CharSequenceUtil.isBlank(dto.getSalesDeptId())) {
-//            SysDepartmentUserNumberDTO deptUser = null;
-//            if (!StringUtil.isEmpty(dto.getSellerId())) {
-//                deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
-//            }
-//            if (Objects.nonNull(deptUser)) {
-//                dto.setSalesDeptId(deptUser.getDepartmentId());
-//            }
-//        }
 
         dto.setSalesOrgId(entity.getOrgId());
         dto.setSalesOrgName(entity.getOrgName());

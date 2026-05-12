@@ -334,6 +334,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
             soOutstock.setDictPlatform(customerInfo.getPlatformType());
+            soOutstock.setPartitionId(customerInfo.getPartitionId());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -749,6 +750,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCustomerName(customerInfo.getName());
         soOutstock.setSellerId(customerInfo.getSellerId());
         soOutstock.setSellerName(customerInfo.getSellerName());
+        soOutstock.setPartitionId(customerInfo.getPartitionId());
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
         soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
@@ -908,6 +910,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCode(code);
         //金蝶无店铺id
         soOutstock.setShopId("");
+        soOutstock.setPartitionId("");
         //运输单号
         soOutstock.setTrackNo(entity.getFCarriageNO());
         //第三方单据编号

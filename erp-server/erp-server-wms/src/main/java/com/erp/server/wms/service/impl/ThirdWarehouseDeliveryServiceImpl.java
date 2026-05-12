@@ -27,6 +27,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpAmzSoOutstockDetailEntity;
 import com.erp.model.oms.dto.GenerateDeliveryAndOutStockDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -51,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_THIRD_WAREHOUSE_DELIVERY_REPORT;
@@ -175,6 +177,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         addThirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
         addThirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        addThirdWarehouseDeliveryEntity.setShopId(entity.getShopId());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);
         addThirdWarehouseDeliveryEntity.setCode(code);
@@ -225,34 +228,50 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
         }
+        fillList(list);
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillList(List<ThirdWarehouseDeliveryDTO.PagingViewDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
         List<String> shopIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getShopId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
+        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntityList = CollectionUtil.isEmpty(warehouseIds)?new ArrayList<>():warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
-        List<String> errorSoIds = list.stream()
-                .filter(v -> Objects.equals(v.getSignOrderError(), SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode()))
-                .map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId)
-                .distinct()
-                .collect(Collectors.toList());
-        List<SoB2cErrorEntity> soB2cErrorEntityList = soB2cFeign.listSoB2cErrorByMainIds(errorSoIds);
-
+        Map<String, String> warehouseMap = warehouseEntityList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        List<String> soIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        SoB2cErrorDTO.MainIdsDTO mainIdsDTO = new SoB2cErrorDTO.MainIdsDTO();
+        mainIdsDTO.setMainIds(soIds);
+        mainIdsDTO.setType(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
+        List<SoB2cErrorEntity> soB2cErrorEntityList = CollUtil.isEmpty(soIds) ? Collections.emptyList() : soB2cFeign.getByMainIdsAndType(mainIdsDTO);
+        Map<String, String> errorMap = soB2cErrorEntityList.stream().collect(Collectors.toMap(SoB2cErrorEntity::getMainId, SoB2cErrorEntity::getMessage));
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
+        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
         for (ThirdWarehouseDeliveryDTO.PagingViewDTO pagingViewDTO : list) {
             pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
-            shopInfoEntityList.stream()
-                    .filter(shop -> shop.getId().equals(pagingViewDTO.getShopId()))
-                    .findFirst().ifPresent(shopInfoEntity -> pagingViewDTO.setShopName(shopInfoEntity.getName()));
+            pagingViewDTO.setShopName(shopMap.get(pagingViewDTO.getShopId()));
             pagingViewDTO.setStatusName(SoB2cWarehouseDeliveryStatusEnum.getName(pagingViewDTO.getStatus()));
-            warehouseEntityList.stream()
-                    .filter(warehouse -> Objects.equals(warehouse.getId(), pagingViewDTO.getWarehouseId()))
-                    .findFirst().ifPresent(warehouseEntity -> pagingViewDTO.setWarehouseName(warehouseEntity.getName()));
-            if(pagingViewDTO.getSignOrderError().equals(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode())){
-                SoB2cErrorEntity soB2cErrorEntity = soB2cErrorEntityList.stream()
-                        .filter(error -> error.getMainId().equals(pagingViewDTO.getSoId()))
-                        .findFirst().orElse(new SoB2cErrorEntity());
-                pagingViewDTO.setAbnormalProblemReason(soB2cErrorEntity.getMessage());
+            pagingViewDTO.setWarehouseName(warehouseMap.get(pagingViewDTO.getWarehouseId()));
+            pagingViewDTO.setAbnormalProblemReason(errorMap.get(pagingViewDTO.getSoId()));
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(pagingViewDTO.getSoId());
+            if (Objects.nonNull(soB2cEntity)){
+                pagingViewDTO.setThirdCode(soB2cEntity.getShippingOrderNo());
+                pagingViewDTO.setOutstockDate(soB2cEntity.getSoOutstockDate());
+                pagingViewDTO.setSignOrderError(soB2cEntity.getSignOrderError());
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityMap.get(pagingViewDTO.getSoId());
+            if (Objects.nonNull(soB2cLogisticsEntity)) {
+                pagingViewDTO.setTransportNo(soB2cLogisticsEntity.getCode());
+                pagingViewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
+                pagingViewDTO.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+                pagingViewDTO.setChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
             }
         }
-        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -313,17 +332,14 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     @Override
     public List<ThirdWarehouseDeliveryDTO.TabListDTO> tabList() {
         List<ThirdWarehouseDeliveryDTO.TabListDTO> tabListDTOS = this.baseMapper.listCount();
+        Map<String, Integer> tabMap = tabListDTOS.stream().collect(Collectors.toMap(ThirdWarehouseDeliveryDTO.TabListDTO::getTabFlag, ThirdWarehouseDeliveryDTO.TabListDTO::getCount));
         SoB2cWarehouseDeliveryStatusEnum[] tabEnums = SoB2cWarehouseDeliveryStatusEnum.values();
         List<ThirdWarehouseDeliveryDTO.TabListDTO> result = new ArrayList<>();
         for (SoB2cWarehouseDeliveryStatusEnum tabEnum : tabEnums) {
             ThirdWarehouseDeliveryDTO.TabListDTO tabListDTO = new ThirdWarehouseDeliveryDTO.TabListDTO();
             tabListDTO.setTabFlag(tabEnum.getCode());
             tabListDTO.setTabFlagName(tabEnum.getName());
-            tabListDTO.setCount(tabListDTOS.stream().
-                    filter(v -> v.getTabFlag().equals(tabEnum.getCode()))
-                    .map(ThirdWarehouseDeliveryDTO.TabListDTO::getCount)
-                    .findFirst()
-                    .orElse(0));
+            tabListDTO.setCount(tabMap.getOrDefault(tabEnum.getCode(), 0));
             result.add(tabListDTO);
         }
         return result;
@@ -413,6 +429,7 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         ThirdWarehouseDeliveryEntity addThirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
         addThirdWarehouseDeliveryEntity.setSoCode(soOutstockEntity.getSoCode());
         addThirdWarehouseDeliveryEntity.setSoId(soOutstockEntity.getSoId());
+        addThirdWarehouseDeliveryEntity.setShopId(soOutstockEntity.getShopId());
         addThirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_WFHD);

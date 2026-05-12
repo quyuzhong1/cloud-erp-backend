@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -115,21 +116,6 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
     @Override
     public void exportExcel(SoB2cRefundDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("退款订单导出", EXPORT_BI_RETURN_INFO.getCode(), dto);
-    }
-
-    @Override
-    public PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
-        SoB2cRefundDTO.PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        Page<SoB2cRefundDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<SoB2cRefundDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
-        List<SoB2cRefundDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO<>(pageData);
-        }
-        //填充数据
-        fillDb(list);
-        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -350,11 +336,15 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
      * @param list
      */
     private void fillDb(List<SoB2cRefundDTO.PagingViewDTO> list) {
-        List<String> soIds = list.stream().map(v->v.getSoId()).distinct().collect(Collectors.toList());
-        List<String> skuIds = list.stream().map(v->v.getSkuId()).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> soIds = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVoList = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> skuMap = skuVoList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
         List<SoOutstockDetailEntity> allOutList = soOutstockFeign.listDetailBySoIds(soIds);
-
+        Map<String, Integer> activeQtyMap = allOutList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId, Collectors.mapping(SoOutstockDetailEntity::getActualQty, Collectors.reducing(MathUtil.ZERO, Integer::sum))));
         //查询审核流程
         List<String> ids = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_REFUND.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
@@ -362,23 +352,17 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
+        Map<String, String> approveUserMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
         for (SoB2cRefundDTO.PagingViewDTO item : list) {
             String dictPlatform = item.getDictPlatform();
             item.setPlatformName(PlatformDictEnum.getNameByCode(dictPlatform));
-            String status = item.getStatus();
-            String name = RefundOrderStatusEnum.getName(status);
-            item.setStatusName(name);
-            SkuVO skuVO = skuVoList.stream().filter(s->s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-            item.setProductName(skuVO.getSkuName());
-            List<SoOutstockDetailEntity> outList = allOutList.stream().filter(s->s.getSoId().equals(item.getSoId()) && s.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
-            item.setOutQty(outList.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
-
+            item.setStatusName(RefundOrderStatusEnum.getName(item.getStatus()));
+            item.setProductName(skuMap.get(item.getSkuId()));
+            item.setOutQty(activeQtyMap.getOrDefault(item.getSoId(), MathUtil.ZERO));
             //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
-            }
+            item.setApproveUserName(CharSequenceUtil.blankToDefault(approveUserMap.get(item.getId()),item.getApproveUserName()));
+            item.setCompleteRefundAmount(item.getRefundAmount() + item.getCurrency());
         }
     }
 }

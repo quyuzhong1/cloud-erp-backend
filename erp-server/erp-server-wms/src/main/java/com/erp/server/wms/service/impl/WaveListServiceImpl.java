@@ -55,6 +55,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Resource
     private SoB2cDeliveryService deliveryService;
     @Resource
+    private SoB2cDeliveryDetailService deliveryDetailService;
+    @Resource
     private PickingCartTypeService pickingCartTypeService;
     @Resource
     private WaveListCartTypeMapper waveListCartTypeMapper;
@@ -63,8 +65,6 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Resource
     private PickingDetailMapper pickingDetailMapper;
-    @Resource
-    private PickingListsMapper pickingListsMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -93,8 +93,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
         List<String> deliveryIdList = dto.getDeliveryIdList();
         List<SoB2cDeliveryEntity> deliveryList = deliveryService.getBaseMapper().selectBatchIds(deliveryIdList);
-        Map<String, SoB2cDeliveryEntity> deliveryMap = deliveryList.stream().collect(Collectors.toMap(item1 -> item1.getId(), item2 -> item2));
-
+        Map<String, SoB2cDeliveryEntity> deliveryMap = deliveryList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2));
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntityList = deliveryDetailService.listByMainIds(deliveryIdList);
+        Map<String, List<SoB2cDeliveryDetailEntity>> deliveryDetailGroup = soB2cDeliveryDetailEntityList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDetailEntity::getMainId));
         List<WaveListDetailEntity> detailList = new ArrayList<>(deliveryIdList.size());
         for (int i = 0; i < deliveryIdList.size(); i++) {
             String deliveryId = deliveryIdList.get(i);
@@ -106,8 +107,13 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             detailEntity.setDeliveryCode(soB2cDeliveryEntity.getCode());
             detailEntity.setSoId(soB2cDeliveryEntity.getSourceId());
             detailEntity.setSoCode(soB2cDeliveryEntity.getSoCode());
+            detailEntity.setShopId(soB2cDeliveryEntity.getShopId());
             detailEntity.setPickingStatus(PickingStatusEnum.NOT_START.getCode());
             detailEntity.setLogisticsChannelName(soB2cDeliveryEntity.getLogisticsChannelName());
+            List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = deliveryDetailGroup.get(deliveryId);
+            if (CollUtil.isNotEmpty(deliveryDetailEntityList)) {
+                detailEntity.setWarehouseId(deliveryDetailEntityList.get(0).getWarehouseId());
+            }
             //记录日志
             String msg = StrUtil.format("用户【{}】新增【{}】单据编码为【{}】", UserContext.getDefaultLoginUser().getUserName(), "波次" , entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAVE_LIST.getCode(), deliveryId, "新增操作");
@@ -117,17 +123,6 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         waveListDetailService.saveBatch(detailList);
         operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getUserName());
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
-    }
-
-
-    @Override
-    public int countDelivery(PermissionsDTO param) {
-        return baseMapper.countDelivery(param);
-    }
-
-    @Override
-    public List<String> listDeliveryIdByStatus(String status) {
-        return baseMapper.listDeliveryIdByStatus(status);
     }
 
     @Override
@@ -173,13 +168,12 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
-        List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
-        Map<String, String> typeMap = cartTypeList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2.getName()));
         if (records.isEmpty()){
             return Collections.emptyList();
         }
-
-        List<String> waveIds = records.stream().map(item -> item.getId()).collect(Collectors.toList());
+        List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
+        Map<String, String> typeMap = cartTypeList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2.getName()));
+        List<String> waveIds = records.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<WaveListCartTypeEntity> waveCartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().in("wave_id", waveIds));
         Map<String, List<WaveListCartTypeEntity>> cartTypeMap = waveCartTypeList.stream().collect(Collectors.groupingBy(item -> item.getWaveId()));
         List<WaveListDTO.ViewDTO> viewDTOList = new ArrayList<>(records.size());
@@ -394,11 +388,6 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<String> listDeliveryIdBySql(String compareCodeSplicingValueSql) {
-        return baseMapper.listDeliveryIdBySql(compareCodeSplicingValueSql);
-    }
-
-    @Override
     public SoB2cDeliveryDTO.PrintPickingMainDTO printPickingBill(List<String> ids) {
         SoB2cDeliveryDTO.PrintPickingMainDTO printPickingMainDTO = new SoB2cDeliveryDTO.PrintPickingMainDTO();
         List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> resultList = new ArrayList<>();
@@ -446,13 +435,6 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         }
         printPickingMainDTO.setPrintPickingMainViewDTOList(resultList);
         return printPickingMainDTO;
-    }
-
-    @Override
-    public Boolean updateStatusById(String waveId, String status) {
-      return   lambdaUpdate().eq(WaveListEntity::getId,waveId)
-                .set(WaveListEntity::getStatus,status)
-                .update();
     }
 
     @Override

@@ -730,7 +730,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
     public PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(@RequestBody PagingDTO<SoReturnInstockDTO.PagingParam> dto) {
-        return soReturnInstockService.exportSoReturnInStock(dto);
+        return soReturnInstockService.paging(dto);
     }
 
     @PostMapping("/soReturnNotice")
@@ -742,7 +742,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnNoticeQueryHandler.class)
     public PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(@RequestBody PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
-       return soReturnNoticeService.exportSoReturnNotice(dto);
+       return soReturnNoticeService.paging(dto);
     }
 
     @PostMapping("/soReturnReceive")
@@ -754,7 +754,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnReceiveQueryHandler.class)
     public PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(@RequestBody PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
-        return soReturnReceiveService.exportSoReturnReceive(dto);
+        return soReturnReceiveService.paging(dto);
     }
 
     @PostMapping("/stocktakingProfitLoss")
@@ -1141,7 +1141,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/exportThirdWarehouseDelivery")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         return thirdWarehouseDeliveryService.paging(dto);
     }

@@ -177,12 +177,11 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         params.setPermissionSql(dto.getPermissionSql());
         Page<SoB2cReturnDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<SoB2cReturnDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
-        List<SoB2cReturnDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(pageData);
         }
         //填充数据
-        fillDb(list);
+        fillDb(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
@@ -778,54 +777,56 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
         List<String> shopIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getShopId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity>shopInfoEntityList = CollectionUtils.isNotEmpty(shopIds)?shopInfoService.listByIds(shopIds):new ArrayList<>();
+        List<ShopInfoEntity> shopInfoEntityList = CollectionUtils.isNotEmpty(shopIds)?shopInfoService.listByIds(shopIds):new ArrayList<>();
+        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+
         List<String> skuIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+
         List<String> soIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getSoId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> allSoOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
+        Map<String, List<SoOutstockDetailEntity>> stockDetailMap = allSoOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId));
+
         List<SoReturnInstockDetailEntity> allSoReturnInstockDetailList = soReturnInstockFeign.getSoReturnInstockByReturnIds(ids);
+        Map<String, List<SoReturnInstockDetailEntity>> instockDetailMap = allSoReturnInstockDetailList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId));
+
         for (SoB2cReturnDTO.PagingViewDTO pagingViewDTO : list) {
             pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
-            ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingViewDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
-            pagingViewDTO.setShopName(shopInfoEntity.getName());
+            pagingViewDTO.setShopName(shopMap.get(pagingViewDTO.getShopId()));
             pagingViewDTO.setTypeName(ReturnTypeEnum.getName(pagingViewDTO.getType()));
             pagingViewDTO.setStatusName(SoB2cReturnStatusEnum.getName(pagingViewDTO.getStatus()));
-            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(new SkuVO());
-            pagingViewDTO.setProductName(skuVO.getSkuName());
-            List<SoOutstockDetailEntity> soOutstockDetailEntityList = allSoOutstockDetailEntityList.stream().filter(v->v.getSoId().equals(pagingViewDTO.getSoId()) && v.getSkuId().equals(pagingViewDTO.getSkuId())).collect(Collectors.toList());
-            pagingViewDTO.setOutQty(soOutstockDetailEntityList.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
-            List<SoReturnInstockDetailEntity> allSoReturnInstockDetailEntityList = allSoReturnInstockDetailList.stream().filter(v->v.getSoReturnDetailId().equals(pagingViewDTO.getDetailId())).collect(Collectors.toList());
-            List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = allSoReturnInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode()) &&v.getSoReturnDetailId().equals(pagingViewDTO.getDetailId())).collect(Collectors.toList());
-            String instockCode = allSoReturnInstockDetailEntityList.stream().map(v->v.getCode()).collect(Collectors.joining(","));
+            pagingViewDTO.setProductName(skuMap.get(pagingViewDTO.getSkuId()));
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = stockDetailMap.get(pagingViewDTO.getSoId());
+            pagingViewDTO.setOutQty(soOutstockDetailEntityList.stream().filter(e -> e.getSkuId().equals(pagingViewDTO.getSkuId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum));
+
+            List<SoReturnInstockDetailEntity> allSoReturnInstockDetailEntityList = instockDetailMap.get(pagingViewDTO.getDetailId());
+            String instockCode = allSoReturnInstockDetailEntityList.stream().map(SoReturnInstockDetailEntity::getCode).distinct().collect(Collectors.joining(","));
             pagingViewDTO.setInstockCode(instockCode);
-
+            pagingViewDTO.setCompleteOrderAmount(pagingViewDTO.getOrderAmount() + pagingViewDTO.getCurrency());
             //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(pagingViewDTO.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                pagingViewDTO.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,pagingViewDTO.getApproveUserName()));
-            }
+            pagingViewDTO.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(pagingViewDTO.getId()),pagingViewDTO.getApproveUserName()));
 
-            if(StringUtils.isBlank(ReturnReasonEnum.getName(pagingViewDTO.getReason()))){
-                if(StringUtils.isNotBlank(SoB2cReturnReasonEnum.getName(pagingViewDTO.getReason()))){
-                    pagingViewDTO.setReason(SoB2cReturnReasonEnum.getName(pagingViewDTO.getReason()));
-                }
-            }else{
+            if (StringUtils.isBlank(ReturnReasonEnum.getName(pagingViewDTO.getReason()))) {
+                pagingViewDTO.setReason(StringUtils.defaultIfBlank(SoB2cReturnReasonEnum.getName(pagingViewDTO.getReason()), pagingViewDTO.getReason()));
+            } else {
                 pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
             }
-
-            pagingViewDTO.setInstockQty(soReturnInstockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).map(v->v.getRealQty()).reduce(MathUtil.ZERO, Integer::sum));
+            List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = instockDetailMap.get(pagingViewDTO.getDetailId()).stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            pagingViewDTO.setInstockQty(soReturnInstockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum));
             if(CollectionUtils.isNotEmpty(soReturnInstockDetailEntityList)){
                 pagingViewDTO.setSysInstockTime(soReturnInstockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
             }
-            if(pagingViewDTO.getInstockQty() == 0){
+            if (pagingViewDTO.getInstockQty() == 0) {
                 pagingViewDTO.setInstockStatusName("未入库");
-            }else if (pagingViewDTO.getInstockQty() < pagingViewDTO.getReturnQty()){
+            } else if (pagingViewDTO.getInstockQty() < pagingViewDTO.getReturnQty()) {
                 pagingViewDTO.setInstockStatusName("部分入库");
-            }else if (pagingViewDTO.getInstockQty().equals(pagingViewDTO.getReturnQty())){
+            } else if (pagingViewDTO.getInstockQty().equals(pagingViewDTO.getReturnQty())) {
                 pagingViewDTO.setInstockStatusName("已入库");
-            }else {
+            } else {
                 pagingViewDTO.setInstockStatusName("超出退货");
             }
         }
