@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.erp.model.plm.validation.PlmProductInfoWarrantyRequired;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -210,9 +212,9 @@ public class ProductInfoDTO {
     private List<AttachmentDTO.AttachDTO> instructionAttachmentList;
 
     /**
-     * 产品质保期
+     * 产品质保期（见 {@link PlmProductInfoWarrantyRequired}：普通保存必填；多规格自动生成可不传）
      */
-    @NotBlank(message = "产品质保期不能为空")
+    @NotBlank(message = "产品质保期不能为空", groups = PlmProductInfoWarrantyRequired.class)
     private String warrantyPeriod;
 
     /**
