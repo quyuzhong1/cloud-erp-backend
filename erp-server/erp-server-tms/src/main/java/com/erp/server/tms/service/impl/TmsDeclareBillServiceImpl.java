@@ -93,6 +93,22 @@ import static com.erp.model.tms.enums.CfgSettingEnum.CONTRACT_AGREEMENT_NO;
 @Slf4j
 @Service
 public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMapper, TmsDeclareBillEntity> implements TmsDeclareBillService {
+    private void agentDebugLog(String location, String message, String hypothesisId, Map<String, Object> data) {
+        try (java.io.FileWriter writer = new java.io.FileWriter("f:\\IdeaProjects\\antigravity-erp\\debug-8752d9.log", true)) {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sessionId", "8752d9");
+            payload.put("runId", "pre-fix");
+            payload.put("hypothesisId", hypothesisId);
+            payload.put("location", location);
+            payload.put("message", message);
+            payload.put("data", data);
+            payload.put("timestamp", System.currentTimeMillis());
+            writer.write(JSONUtil.toJsonStr(payload));
+            writer.write(System.lineSeparator());
+        } catch (Exception ignored) {
+        }
+    }
+
     @Resource
     private OperateLogService operateLogService;
 
@@ -1593,7 +1609,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList));
 
             //保存合并数据（合同号：原单号_1、_2…）
-            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence);
+            batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
         }
         return Boolean.TRUE;
     }
@@ -1653,7 +1669,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList));
 
             //保存合并数据（合同号：原单号_1、_2…）
-            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence);
+            batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
         }
         String splitMsg = CharSequenceUtil.format("拆分报关单：拆分为{}{}", declareDTO.getSplitDeclareDTOList().size(), "票");
         operateLogService.addModuleOperateLog(splitMsg, SourceTypeEnum.B2B_DECLARE_BILL.getCode(), declareBillEntity.getId(), "拆分操作");
@@ -2473,12 +2489,48 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 StringUtils.defaultString(detailDTO.getSkuId()));
     }
 
+    /**
+     * 判断自动生成请求是否已完整生成。
+     *
+     * @param mergeDetailList 本次请求明细
+     * @param generatedMidList 已生成中间表明细
+     * @return 是否幂等成功
+     */
+    private boolean isGeneratedIdempotentSuccess(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
+                                                 List<DeliveryDeclareDetailMidEntity> generatedMidList) {
+        if (CollUtil.isEmpty(mergeDetailList) || CollUtil.isEmpty(generatedMidList)) {
+            return false;
+        }
+        Set<String> expectedKeySet = mergeDetailList.stream()
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(this::buildSourceDetailKey)
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(expectedKeySet)) {
+            return false;
+        }
+        Set<String> generatedKeySet = generatedMidList.stream()
+                .filter(Objects::nonNull)
+                .map(this::buildSourceDetailKey)
+                .collect(Collectors.toSet());
+        return expectedKeySet.equals(generatedKeySet);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
-        return batchAddMergeDetail(type, list, null);
+        return batchAddMergeDetail(type, list, null, Boolean.FALSE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, Boolean idempotent) {
+        return batchAddMergeDetail(type, list, null, Boolean.TRUE.equals(idempotent));
     }
 
     /**
@@ -2486,7 +2538,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *
      * @param splitCodeSequence 非空时表示拆分保存：合同号为「原报关单合同号_1、_2…」递增，贯穿多次调用（多箱/多票拆分）
      */
-    private Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence) {
+    private Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list,
+                                        TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence,
+                                        boolean idempotent) {
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
         }
@@ -2520,6 +2574,27 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
                 .in(DeliveryDeclareDetailMidEntity::getSourceDetailId, sourceDetailIdSet)
                 .list();
+
+        if (idempotent && CollUtil.isNotEmpty(existsMidList)) {
+            List<DeliveryDeclareDetailMidEntity> generatedMidList = existsMidList.stream()
+                    .filter(item -> StringUtils.isNotBlank(item.getDeclareId())
+                            || DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode().equals(item.getGenerateStatus()))
+                    .collect(Collectors.toList());
+            if (isGeneratedIdempotentSuccess(mergeDetailList, generatedMidList)) {
+                log.info("自动生成报关明细幂等命中，type={}，sourceDetailCount={}", type, sourceDetailIdSet.size());
+                return Boolean.TRUE;
+            }
+            if (CollUtil.isNotEmpty(generatedMidList)) {
+                String repeatSourceCode = generatedMidList.stream()
+                        .map(DeliveryDeclareDetailMidEntity::getSourceCode)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.joining("、"));
+                throw new ServiceException(StringUtils.isBlank(repeatSourceCode)
+                        ? "所选明细已生成报关单，请勿重复保存"
+                        : CharSequenceUtil.format("来源单【{}】已生成报关单，请勿重复保存", repeatSourceCode));
+            }
+        }
 
         // 拆分保存多轮调用：上一轮已生成报关单及中间表，不能按「已生成」拦截，也不能删除刚生成的报关单
         if (splitCodeSequence == null) {
@@ -2764,7 +2839,31 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CharSequenceUtil.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
             //头程报关单
             FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO(sourceIdList,null,WmsDeclareStatusEnum.FINISH.getCode());
-            wmsFirstMileDeliveryFeign.updateStatus(dto);
+            // region agent log
+            Map<String, Object> beforeUpdateData = new HashMap<>();
+            beforeUpdateData.put("declareBillType", type);
+            beforeUpdateData.put("sourceIdCount", sourceIdList.size());
+            beforeUpdateData.put("declareStatus", WmsDeclareStatusEnum.FINISH.getCode());
+            beforeUpdateData.put("txActive", org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+            beforeUpdateData.put("thread", Thread.currentThread().getName());
+            agentDebugLog("TmsDeclareBillServiceImpl.updateSourceDeclareStatus:beforeWmsUpdateStatus",
+                    "TMS before WMS callback updateStatus",
+                    "H2,H3,H4",
+                    beforeUpdateData);
+            // endregion
+            Boolean updateResult = wmsFirstMileDeliveryFeign.updateStatus(dto);
+            // region agent log
+            Map<String, Object> afterUpdateData = new HashMap<>();
+            afterUpdateData.put("declareBillType", type);
+            afterUpdateData.put("sourceIdCount", sourceIdList.size());
+            afterUpdateData.put("updateResult", updateResult);
+            afterUpdateData.put("txActive", org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
+            afterUpdateData.put("thread", Thread.currentThread().getName());
+            agentDebugLog("TmsDeclareBillServiceImpl.updateSourceDeclareStatus:afterWmsUpdateStatus",
+                    "TMS after WMS callback updateStatus",
+                    "H2,H3,H4",
+                    afterUpdateData);
+            // endregion
         } else {
             //b2b报关单
             SoDeliveryNoticeDTO.DeclareStatusDTO dto = new SoDeliveryNoticeDTO.DeclareStatusDTO(sourceIdList, WmsDeclareStatusEnum.FINISH.getCode());

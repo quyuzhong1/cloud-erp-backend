@@ -6,7 +6,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
@@ -163,6 +162,18 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @return Boolean
      */
     Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) ;
+
+    /**
+     * 批量保存合并后的报关明细
+     *
+     * @param type 报关单类型
+     * @param list 合并报关明细
+     * @param idempotent 是否按自动生成幂等处理
+     * @return Boolean
+     * @author jack
+     * @date 2026/5/12
+     */
+    Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, Boolean idempotent);
 
     /**
      * 合并报关单数据
