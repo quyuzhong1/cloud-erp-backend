@@ -39,7 +39,4 @@
 
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.AfterSalePackDetailDTO$ListDTO">
-
-    </select>
 </mapper>

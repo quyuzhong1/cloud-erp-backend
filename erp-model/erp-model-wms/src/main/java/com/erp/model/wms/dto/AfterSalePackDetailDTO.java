@@ -96,6 +96,11 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * skuId
+         */
+        private String warehouseLocationId;
+
+        /**
          * 装箱数量
          */
         private Integer packQty;
@@ -163,6 +168,21 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 仓位id,warehouse_location.id
+         */
+        private String warehouseLocationId;
+
+        /**
+         * 仓位code
+         */
+        private String warehouseLocationCode;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 装箱数量
          */
         private Integer packQty;
@@ -186,7 +206,6 @@ public class AfterSalePackDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
 
     }
 
@@ -224,6 +243,12 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuId;
 
         /**
+         * skuId
+         */
+        @NotBlank(message = "仓位id,warehouse_location.id")
+        private String warehouseLocationId;
+
+        /**
          * 装箱数量
          */
         @NotNull(message = "装箱数量不能为空")
@@ -240,6 +265,5 @@ public class AfterSalePackDetailDTO implements Serializable {
         private Integer diffQty;
 
     }
-
 
 }

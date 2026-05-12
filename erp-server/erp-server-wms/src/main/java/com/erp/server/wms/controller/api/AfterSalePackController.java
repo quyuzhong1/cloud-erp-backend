@@ -41,7 +41,7 @@ public class AfterSalePackController extends BaseController {
     private AfterSalePackService afterSalePackService;
 
     /**
-     * 箱码申请
+     * 申请箱唛
      *
      * @param dto AfterSalePackDTO.BoxCodeApplicationDTO
      * @return ApiResult<List < String>>
@@ -49,7 +49,7 @@ public class AfterSalePackController extends BaseController {
      * @date: 2026-05-12
      */
     @PostMapping("/boxCodeApplication")
-    @LogAction(value = LogActionEnum.INSERT, desc = "箱码申请")
+    @LogAction(value = LogActionEnum.INSERT, desc = "申请箱唛")
     public ApiResult<List<String>> boxCodeApplication(@RequestBody @Validated AfterSalePackDTO.BoxCodeApplicationDTO dto) {
         return success(afterSalePackService.boxCodeApplication(dto));
     }
@@ -164,6 +164,20 @@ public class AfterSalePackController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = afterSalePackService.delete(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 根据code查询详情
+     *
+     * @param code String
+     * @return ApiResult<AfterSalePackDTO.ViewDTO>>
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    @GetMapping("/viewByCode")
+    @LogViewService
+    public ApiResult<AfterSalePackDTO.ViewDTO> viewByCode(@RequestParam("code") String code) {
+        return success(afterSalePackService.viewByCode(code));
     }
 
 }

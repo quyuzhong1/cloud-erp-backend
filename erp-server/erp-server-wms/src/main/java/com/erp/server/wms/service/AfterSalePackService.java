@@ -23,7 +23,7 @@ import java.util.List;
 public interface AfterSalePackService extends SuperService<AfterSalePackEntity> {
 
     /**
-     * 箱码申请
+     * 申请箱唛
      *
      * @param dto AfterSalePackDTO.BoxCodeApplicationDTO
      * @return List<String>
@@ -94,4 +94,14 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      * @date: 2026-05-12
      */
     List<BatchResultDTO> delete(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 根据code查询详情
+     *
+     * @param code String
+     * @return AfterSalePackDTO.ViewDTO
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    AfterSalePackDTO.ViewDTO viewByCode(String code);
 }

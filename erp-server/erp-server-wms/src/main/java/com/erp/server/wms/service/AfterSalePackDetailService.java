@@ -7,8 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
 
-import javax.servlet.http.HttpServletResponse;
-
 /**
  * <p>
  * 售后装箱明细表 服务类
@@ -39,12 +37,11 @@ public interface AfterSalePackDetailService extends SuperService<AfterSalePackDe
      */
     Boolean update(AfterSalePackDetailDTO.UpdateDTO dto);
 
-
     /**
      * 分页列表查询
      *
      * @param pagingParamDTO
-     * @return PagingVO<AfterSalePackingDetailDTO.ListDTO>>
+     * @return PagingVO<AfterSalePackDetailDTO.ListDTO>>
      * @author lei.nie
      * @date: 2026-05-12
      */
@@ -60,15 +57,4 @@ public interface AfterSalePackDetailService extends SuperService<AfterSalePackDe
      */
     AfterSalePackDetailDTO.ViewDTO view(String id);
 
-
-    /**
-     * 导出Excel
-     *
-     * @param dto
-     * @param response
-     * @return
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    void exportList(AfterSalePackDetailDTO.ExportDTO dto, HttpServletResponse response);
 }

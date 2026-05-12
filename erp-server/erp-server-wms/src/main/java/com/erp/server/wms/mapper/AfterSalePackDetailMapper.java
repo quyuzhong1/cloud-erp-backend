@@ -8,8 +8,6 @@ import com.erp.model.wms.entity.AfterSalePackDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
-
 /**
  * <p>
  * 售后装箱明细表 Mapper 接口
@@ -29,13 +27,5 @@ public interface AfterSalePackDetailMapper extends BaseMapper<AfterSalePackDetai
      * @return
      */
     IPage<AfterSalePackDetailDTO.ListDTO> paging(Page query, @Param("params") AfterSalePackDetailDTO.PagingParamDTO params);
-
-    /**
-     * 导出Excel查询
-     *
-     * @param params
-     * @return
-     */
-    List<AfterSalePackDetailDTO.ListDTO> listExport(@Param("params") AfterSalePackDetailDTO.ExportDTO params);
 
 }

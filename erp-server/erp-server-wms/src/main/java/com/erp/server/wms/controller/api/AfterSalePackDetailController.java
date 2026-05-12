@@ -18,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 售后装箱明细表
@@ -104,26 +103,6 @@ public class AfterSalePackDetailController extends BaseController {
     @LogViewService
     public ApiResult<AfterSalePackDetailDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(afterSalePackDetailService.view(id));
-    }
-
-    /**
-     * 导出Excel数据
-     *
-     * @param dto
-     * @param response
-     * @return
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:afterSalePackDetail:export",
-            tableAlias = ""
-    )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "售后装箱明细表导出Excel数据")
-    public void exportList(@RequestBody @Validated AfterSalePackDetailDTO.ExportDTO dto, HttpServletResponse response) {
-        afterSalePackDetailService.exportList(dto, response);
     }
 
 }

@@ -106,6 +106,11 @@ public class AfterSalePackDTO implements Serializable {
         private String type;
 
         /**
+         * 箱唛类型名称
+         */
+        private String typeName;
+
+        /**
          * 单据使用状态 false 未使用 true 已使用
          */
         private Boolean usageStatus;
@@ -166,7 +171,6 @@ public class AfterSalePackDTO implements Serializable {
         private String supplierName;
     }
 
-
     /**
      * 导出Excel
      */
@@ -216,6 +220,11 @@ public class AfterSalePackDTO implements Serializable {
          * 箱唛类型
          */
         private String type;
+
+        /**
+         * 箱唛类型名称
+         */
+        private String typeName;
 
         /**
          * 单据使用状态 false 未使用 true 已使用
