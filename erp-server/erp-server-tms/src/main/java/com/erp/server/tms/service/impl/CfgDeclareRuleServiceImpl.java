@@ -109,31 +109,19 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> dropDownList(String type, String name) {
-        if (SENDER.equals(type)) {
-            return Collections.singletonList(buildDropDown(
-                    type,
-                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getCode(),
-                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getName(),
-                    accountingCompanyChildList(name)));
-        }
-
-        if (RECEIVER.equals(type)) {
+    public List<BaseDropDownDTO.Tree> dropDownList( String name) {
             List<BaseDropDownDTO.Tree> result = new ArrayList<>(2);
             result.add(buildDropDown(
-                    type,
+                    "",
                     CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getName(),
                     accountingCompanyChildList(name)));
             result.add(buildDropDown(
-                    type,
+                    "",
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getName(),
                     Collections.emptyList()));
             return result;
-        }
-
-        throw new ServiceException("type must be sender or receiver");
     }
 
     /**

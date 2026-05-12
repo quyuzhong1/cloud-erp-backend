@@ -93,22 +93,6 @@ import static com.erp.model.tms.enums.CfgSettingEnum.CONTRACT_AGREEMENT_NO;
 @Slf4j
 @Service
 public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMapper, TmsDeclareBillEntity> implements TmsDeclareBillService {
-    private void agentDebugLog(String location, String message, String hypothesisId, Map<String, Object> data) {
-        try (java.io.FileWriter writer = new java.io.FileWriter("f:\\IdeaProjects\\antigravity-erp\\debug-8752d9.log", true)) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("sessionId", "8752d9");
-            payload.put("runId", "pre-fix");
-            payload.put("hypothesisId", hypothesisId);
-            payload.put("location", location);
-            payload.put("message", message);
-            payload.put("data", data);
-            payload.put("timestamp", System.currentTimeMillis());
-            writer.write(JSONUtil.toJsonStr(payload));
-            writer.write(System.lineSeparator());
-        } catch (Exception ignored) {
-        }
-    }
-
     @Resource
     private OperateLogService operateLogService;
 
@@ -2836,31 +2820,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CharSequenceUtil.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
             //头程报关单
             FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO(sourceIdList,null,WmsDeclareStatusEnum.FINISH.getCode());
-            // region agent log
-            Map<String, Object> beforeUpdateData = new HashMap<>();
-            beforeUpdateData.put("declareBillType", type);
-            beforeUpdateData.put("sourceIdCount", sourceIdList.size());
-            beforeUpdateData.put("declareStatus", WmsDeclareStatusEnum.FINISH.getCode());
-            beforeUpdateData.put("txActive", org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
-            beforeUpdateData.put("thread", Thread.currentThread().getName());
-            agentDebugLog("TmsDeclareBillServiceImpl.updateSourceDeclareStatus:beforeWmsUpdateStatus",
-                    "TMS before WMS callback updateStatus",
-                    "H2,H3,H4",
-                    beforeUpdateData);
-            // endregion
             Boolean updateResult = wmsFirstMileDeliveryFeign.updateStatus(dto);
-            // region agent log
-            Map<String, Object> afterUpdateData = new HashMap<>();
-            afterUpdateData.put("declareBillType", type);
-            afterUpdateData.put("sourceIdCount", sourceIdList.size());
-            afterUpdateData.put("updateResult", updateResult);
-            afterUpdateData.put("txActive", org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
-            afterUpdateData.put("thread", Thread.currentThread().getName());
-            agentDebugLog("TmsDeclareBillServiceImpl.updateSourceDeclareStatus:afterWmsUpdateStatus",
-                    "TMS after WMS callback updateStatus",
-                    "H2,H3,H4",
-                    afterUpdateData);
-            // endregion
         } else {
             //b2b报关单
             SoDeliveryNoticeDTO.DeclareStatusDTO dto = new SoDeliveryNoticeDTO.DeclareStatusDTO(sourceIdList, WmsDeclareStatusEnum.FINISH.getCode());
