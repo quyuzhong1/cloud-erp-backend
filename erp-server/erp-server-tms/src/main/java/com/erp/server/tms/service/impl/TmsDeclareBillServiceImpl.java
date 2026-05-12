@@ -1842,6 +1842,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     BeanUtil.copyProperties(detailDTO, sourceDeliveryDetailDTO);
                     sourceDeliveryDetailDTO.setSkuId(logisticDTO.getSkuId());
                     sourceDeliveryDetailDTO.setSkuNo(logisticDTO.getSkuNo());
+                    sourceDeliveryDetailDTO.setBomVersion(logisticDTO.getBomVersion());
+                    sourceDeliveryDetailDTO.setBomHistoryId(logisticDTO.getBomHistoryId());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
                     fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
                     applyDeclareLineDefaults(sourceDeliveryDetailDTO);

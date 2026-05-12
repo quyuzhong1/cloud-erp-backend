@@ -1202,6 +1202,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     BeanUtil.copyProperties(detailDTO, childDetailDTO);
                     childDetailDTO.setSkuId(childLogisticsDTO.getSkuId());
                     childDetailDTO.setSkuNo(childLogisticsDTO.getSkuNo());
+                    childDetailDTO.setBomVersion(childLogisticsDTO.getBomVersion());
+                    childDetailDTO.setBomHistoryId(childLogisticsDTO.getBomHistoryId());
                     childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
                     fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO);
                     result.add(childDetailDTO);

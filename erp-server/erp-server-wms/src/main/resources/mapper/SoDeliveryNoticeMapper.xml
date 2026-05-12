@@ -585,7 +585,7 @@
         JOIN foreign_product_bom_sku fpbs
         ON fpbi.id = fpbs.bom_id
         WHERE fpbi.is_deleted = false
-        AND fpbs.is_deleted = false
+        AND fpbs.is_deleted = false and fpbi.state = 4
         )
         -- 分支1：不需要拆分的明细（无BOM 或 combination_declare_type = 'combine'）
         SELECT
@@ -597,6 +597,8 @@
         sdn.source_code AS businessCode,
         sdnd.sku_id AS skuId,
         sdnd.sku_no AS skuNo,
+        '' AS parentSkuId,
+        '' AS bomVersion,
         sdnd.platform_sku_no AS platformSkuNo,
         cd.pack_qty AS qty,
         cd.box_no AS boxNo,
@@ -644,6 +646,8 @@
         sdn.source_code AS businessCode,
         hb.sku_id AS skuId,                     -- 子SKU ID
         hb.sku_no AS skuNo,                     -- 子SKU 编码
+        hb.parent_sku_id AS parentSkuId,
+        hb.bom_version AS bomVersion,
         '' AS platformSkuNo,                    -- 子SKU无平台编码，置空
         cd.pack_qty * quantity AS qty,                     -- 原箱数量（每个子SKU继承相同数量）
         cd.box_no AS boxNo,
