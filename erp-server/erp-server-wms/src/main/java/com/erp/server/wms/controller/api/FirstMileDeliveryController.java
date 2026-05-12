@@ -801,7 +801,7 @@ public class FirstMileDeliveryController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>>
      */
     @PostMapping("/listAfterPushFmDeclareNoMerge")
-    public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> listAfterPushFmDeclareNoMerge(@RequestBody @Valid ValidList<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list)  {
+    public ApiResult<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclareNoMerge(@RequestBody @Valid ValidList<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list)  {
         return success(firstMileDeliveryService.listAfterPushFmDeclareNoMerge(list.getList()));
     }
 }

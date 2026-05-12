@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -25,10 +26,6 @@ import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
-import com.erp.model.tms.entity.CfgDeclareRuleConditionEntity;
-import com.erp.model.tms.entity.CfgDeclareRuleEntity;
-import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.DeclareStatusEnum;
@@ -388,6 +385,13 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }else {
             return Boolean.FALSE;
         }
+    }
+
+    @Override
+    public List<DeliveryDeclareDetailMidEntity> listBySourceIdList(List<String> sourceIds) {
+        return lambdaQuery()
+                .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIds)
+                .list();
     }
 
     /**

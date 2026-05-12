@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.entity.TmsDeclareBillEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
@@ -135,4 +137,12 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     Boolean autoGenerateMidData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list);
 
     Boolean batchAddMergeDetail(List<TmsDeclareBillDTO.MergeDeclareBillDTO> list);
+    /**
+     * 来源id集合
+     * @author will
+     * @date 2026/5/12 09:26
+     * @param sourceIds
+     * @return java.util.List<com.erp.model.tms.entity.TmsDeclareBillEntity>
+     */
+    List<DeliveryDeclareDetailMidEntity> listBySourceIdList(List<String> sourceIds);
 }
