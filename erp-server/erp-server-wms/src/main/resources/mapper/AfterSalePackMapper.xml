@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.AfterSalePackMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.AfterSalePackEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="type" property="type" />
+       <result column="usage_status" property="usageStatus" />
+       <result column="pack_status" property="packStatus" />
+       <result column="is_difference" property="isDifference" />
+       <result column="sku_species_qty" property="skuSpeciesQty" />
+       <result column="total_qty" property="totalQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code,
+        source_id,
+        source_code,
+        source_type,
+        type,
+        usage_status,
+        pack_status,
+        is_difference,
+        sku_species_qty,
+        total_qty
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
+        select t.id,
+        t.create_user_id as createUserId,
+        t.create_user_name as createUserName,
+        t.create_time as createTime,
+        t.update_user_id as updateUserId,
+        t.update_user_name as updateUserName,
+        t.update_time as updateTime,
+        t.version,
+        t.is_deleted as isDeleted,
+        t.code,
+        t.source_id as sourceId,
+        t.source_code as sourceCode,
+        t.source_type as sourceType,
+        t.type,
+        t.usage_status as usageStatus,
+        t.pack_status as packStatus,
+        t.is_difference as isDifference,
+        t.sku_species_qty as skuSpeciesQty,
+        t.total_qty as totalQty,
+        pt.supplier_id as supplierId,
+        pt.supplier_name as supplierName
+        from after_sale_pack t
+        left join po_return pt on t.source_id = pt.id and pt.is_deleted = false
+        WHERE 1 = 1
+        and t.is_deleted = false
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ao.update_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
+
+    </select>
+
+</mapper>
