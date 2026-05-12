@@ -82,13 +82,14 @@ public class JituService {
         String url = getPreUrl() + "/gateway/edi/entryOrder/create";
         authMap.put("msg_type","ENTRYORDERCREATE");
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
         String bodyStr = "";
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
-            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
             ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
+            ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
@@ -105,12 +106,13 @@ public class JituService {
         String url = getPreUrl() + "/gateway/edi/order/cancel";
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
         String bodyStr = "";
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
-            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
             ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
+            ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
@@ -128,12 +130,13 @@ public class JituService {
         authMap.put("msg_type", "CREATESTOCKOUTORDER");
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
         String bodyStr = "";
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
-            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
             ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
+            ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
@@ -151,12 +154,13 @@ public class JituService {
         authMap.put("msg_type", "CANCELORDER");
         authMap.put("logistics_interface", JSONUtil.toJsonStr(request));
         String bodyStr = "";
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
         try {
             bodyStr = AuthUtils.doPost(url, authMap);
-            ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(authMap));
             ThirdWarehouseContext.setResponseJson(bodyStr);
             log.warn("bodyStr: {}", bodyStr);
         } catch (IOException e) {
+            ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
             throw new RuntimeException(e);
         }
