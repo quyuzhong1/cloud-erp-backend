@@ -19,9 +19,15 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,46 +40,81 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity>  implements SysCodeService {
 
+    /**
+     * 单号生成分布式锁等待时间（秒）。
+     * 注意：单号生成涉及 Seata 分支事务，sys_code 行会被全局锁保护到全局事务提交，
+     * 5s 在并发或长事务场景下经常吃不消，调到 30s 给排队留足空间。
+     */
+    private static final long SYS_CODE_LOCK_WAIT_SECONDS = 30L;
+
     @Autowired
     private RedissonClient redisson;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    private TransactionTemplate transactionTemplate;
+
+    @PostConstruct
+    public void initTransactionTemplate() {
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String getSkuNo(SysCodeSkuDTO dto) {
-        //加锁
+        // 单条复用批量逻辑，避免双份维护
+        return getSkuNoBatch(dto, 1).get(0);
+    }
+
+    @Override
+    public List<String> getSkuNoBatch(SysCodeSkuDTO dto, int count) {
+        if (count <= 0) {
+            return Collections.emptyList();
+        }
+        // 1) 锁必须包住事务提交点：旧实现是 @Transactional 包外、锁包内，导致 unlock 早于 commit，
+        //    下一持锁者会读到旧 num 进而生成重复编码（再触发上游的 isExistSKuNo 递归 → 锁竞争雪崩）。
+        //    这里改为：先拿 Redisson 锁，锁内部用 TransactionTemplate 显式开启/提交事务。
+        // 2) 不再 catch (Exception) 兜底为 BILL_DATA_LOCKED，避免把真实 SQL/网络异常掩盖成"锁失败"。
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
-        boolean isLock;
+        boolean acquired = false;
         try {
-            // 内部会自动续期
-            isLock = lock.tryLock(5, TimeUnit.SECONDS);
-            log.info("是否获取到分布式锁: {}", isLock);
-            if (!isLock) {
+            acquired = lock.tryLock(SYS_CODE_LOCK_WAIT_SECONDS, TimeUnit.SECONDS);
+            if (!acquired) {
+                log.warn("生成 sku 编号未获取到分布式锁: type={}, category={}", dto.getType(), dto.getCategory());
                 throw new ServiceException(ApiError.BILL_DATA_LOCKED);
             }
-            SysCodeDTO sysCodeDto = new SysCodeDTO();
-            BeanMapperUtils.copy(dto,sysCodeDto);
-            //生成单号
-            getOrSaveSysCode(sysCodeDto);
-
-            StringBuffer sysCode = new StringBuffer();
-            sysCode.append(sysCodeDto.getCategory())
-                    .append(String.format("%03d",sysCodeDto.getNum()));
-            if (StringUtils.isBlank(sysCode)) {
-                throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
-            }
-            //更新当前顺序码
-            updateNumByCode(sysCodeDto.getId(),sysCodeDto.getNum());
-            return sysCode.toString();
-        } catch (Exception e) {
-            log.error("生成单号获取锁异常",e);
+            return transactionTemplate.execute(status -> doGenSkuNo(dto, count));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("生成 sku 编号获取锁被中断", e);
             throw new ServiceException(ApiError.BILL_DATA_LOCKED);
         } finally {
-            //释放锁  锁是否存在，是当前执行线程的锁
-            if(lock.isLocked() && lock.isHeldByCurrentThread()){
-                // 释放锁
+            if (acquired && lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
         }
+    }
+
+    /**
+     * 在锁与事务保护下，一次性发放 count 个连续 sku 编号。
+     * 顺序码保持与单条 getSkuNo 一致：[category] + 3 位填充顺序号。
+     */
+    private List<String> doGenSkuNo(SysCodeSkuDTO dto, int count) {
+        SysCodeDTO sysCodeDto = new SysCodeDTO();
+        BeanMapperUtils.copy(dto, sysCodeDto);
+        getOrSaveSysCode(sysCodeDto);
+        int startNum = sysCodeDto.getNum();
+        List<String> codes = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            String code = sysCodeDto.getCategory() + String.format("%03d", startNum + i);
+            if (StringUtils.isBlank(code)) {
+                throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
+            }
+            codes.add(code);
+        }
+        // updateNumByCode 内部会再 +1，要让 num 推进到 startNum + count，传 startNum + count - 1
+        updateNumByCode(sysCodeDto.getId(), startNum + count - 1);
+        return codes;
     }
 
     @Override

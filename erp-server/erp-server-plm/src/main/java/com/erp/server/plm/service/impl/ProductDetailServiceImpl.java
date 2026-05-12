@@ -2190,7 +2190,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //过滤掉重复的变体属性
         List<ProductDetailEntity> detailEntityList = this.getSkuListByProductId(id);
-        //把变体属性放入实体类
+        // 颜色变体校验所需基础数据：循环外查一次即可，避免每个变体都打一遍 productVariantService
+        List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
+        if (CollectionUtils.isEmpty(productVariantDTOS)) {
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_INFO_EMPTY);
+        }
+        ProductVariantDTO productVariantDTO = productVariantDTOS.stream().filter(obj -> obj.getPropertyType().equals("颜色")).findAny().orElse(null);
+        if (ObjectUtils.isEmpty(productVariantDTO)) {
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_EMPTY);
+        }
+        List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
+        if (CollectionUtils.isEmpty(productVariantPropertyList)) {
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_ATTR_EMPTY);
+        }
+        ProductUnitEntity productUnitEntity = productUnitService.checkUnitName("Pcs");
+
+        //把变体属性放入实体类（先不取号，避免在循环里 N 次 Feign+分布式锁竞争）
         List<ProductDetailEntity> list = new ArrayList<>();
         for (String req : varianList) {
             //判断是否已经存在该变体属性
@@ -2198,9 +2213,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (count > 0) {
                 continue;
             }
+            //获取颜色（保留单变体的颜色合法性校验）
+            List<String> split = Arrays.asList(req.split(","));
+            ProductVariantPropertyDTO propertyDto = productVariantPropertyList.stream().filter(obj -> split.contains(obj.getPropertyValue())).findAny().orElse(null);
+            if (ObjectUtils.isEmpty(propertyDto) || StringUtils.isBlank(propertyDto.getPropertyCode())) {
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_NOT_FOUND);
+            }
+
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
-            ProductUnitEntity productUnitEntity = productUnitService.checkUnitName("Pcs");
             if (ObjectUtils.isNotEmpty(productUnitEntity)) {
                 productDetailEntity.setUnitId(productUnitEntity.getId());
                 productDetailEntity.setUnitName(productUnitEntity.getName());
@@ -2208,33 +2229,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setProductId(id);
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
             productDetailEntity.setNameEn(variantAutoAddDTO.getProductSpuBaseInfoDTO().getNameEn());
-            //获取颜色
-            List<String> split = Arrays.asList(req.split(","));
-            //查询变体信息
-            List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
-            if (CollectionUtils.isEmpty(productVariantDTOS)) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_INFO_EMPTY);
-            }
-            //变体颜色信息
-            ProductVariantDTO productVariantDTO = productVariantDTOS.stream().filter(obj -> obj.getPropertyType().equals("颜色")).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(productVariantDTO)) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_EMPTY);
-            }
-            //变体颜色属性值
-            List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
-            if (CollectionUtils.isEmpty(productVariantPropertyList)) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_ATTR_EMPTY);
-            }
-            ProductVariantPropertyDTO propertyDto = productVariantPropertyList.stream().filter(obj -> split.contains(obj.getPropertyValue())).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(propertyDto) || StringUtils.isBlank(propertyDto.getPropertyCode())) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_NOT_FOUND);
-            }
-            //生成sku编码
-            String skuNo = sysCodeService.getSkuNo(id, propertyDto.getPropertyCode());
-            productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
             list.add(productDetailEntity);
+        }
+
+        // 当传入的变体组合在库中已全部存在时，list 为空。
+        // mybatis-plus 3.4.2 的 saveBatch(emptyList) 会返回 false（!isEmpty && ... 短路），
+        // 这里直接当作"无新增"成功返回，避免误报 "新增sku明细失败！"。
+        if (CollectionUtils.isEmpty(list)) {
+            return this.getSkuListByProductId(id);
+        }
+
+        // 一次性批量取号，替代旧实现"每变体一次 Feign + Redisson 锁"，规避 SYS_GEN_DOCNO 锁竞争雪崩
+        List<String> skuNos = sysCodeService.getSkuNoBatch(id, list.size());
+        if (skuNos.size() != list.size()) {
+            throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
+        }
+        for (int i = 0; i < list.size(); i++) {
+            list.get(i).setSkuNo(skuNos.get(i));
         }
 
         boolean bool = this.saveBatch(list);
