@@ -90,6 +90,8 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
+    private static final String AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER =
+            "DmpInputAmzFbaInboundPlanShipmentApiInitHandler";
 
     @Resource
     private MongoService mongoService;
@@ -125,6 +127,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private DmpInputCreateFactory dmpInputCreateFactory;
     @Resource
     private DmpCfgInputService dmpCfgInputService;
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
     @Resource
     private DmpCfgInputDetailService dmpCfgInputDetailService;
     @Resource
@@ -167,6 +171,17 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             // 执行历史逻辑
             return oldDmpPullShipment(dto, shopInfoDTO, shopId);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto) {
+        String shopId = dto.getShopId();
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        return newDmpPullInboundPlanShipment(dto, shopInfoDTO);
     }
 
     /**
@@ -721,6 +736,49 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 //                });
 //            }
 //        }
+        return true;
+    }
+
+    /**
+     * 新中台手动拉取: 亚马逊FBA入库计划货件
+     */
+    private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+        List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
+                .stream()
+                .map(AmazonShopInfoDTO.ShopNameDTO::getShopId)
+                .distinct()
+                .collect(Collectors.toList());
+        DmpCfgInputConvertEntity initConvertEntity = dmpCfgInputConvertService.lambdaQuery()
+                .eq(DmpCfgInputConvertEntity::getInputStatus, "init")
+                .eq(DmpCfgInputConvertEntity::getConvertClass, AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER)
+                .eq(DmpCfgInputConvertEntity::getDisabled, false)
+                .last(" LIMIT 1 ")
+                .one();
+        if (null == initConvertEntity) {
+            ServiceException.runError("FBA入库计划货件查询配置不存在");
+        }
+        DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getId, initConvertEntity.getMainId())
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .last(" LIMIT 1 ")
+                .one();
+        if (null == inputEntity) {
+            ServiceException.runError("FBA入库计划货件查询配置不存在");
+        }
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
+                .in(DmpCfgInputDetailEntity::getNextLevelId, sameAccountShopIds)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            ServiceException.runError("FBA入库计划货件查询配置明细不存在");
+        }
+        List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
+        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
+        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
     }
 }

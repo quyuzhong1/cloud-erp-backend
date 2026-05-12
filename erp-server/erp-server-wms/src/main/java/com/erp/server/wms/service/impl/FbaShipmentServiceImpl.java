@@ -431,6 +431,21 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto) {
+        ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
+        if (null == shopInfoEntity) {
+            throw new ServiceException(ApiError.SHOP_NOT_FOUND);
+        }
+        if (!AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfoEntity.getAuthStatus())) {
+            throw new ServiceException(ApiError.SHOP_AUTH_SHIPMENT_ERROR);
+        }
+        DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
+        dmpAmazonFeign.pullInboundPlanShipment(pullShipmentDTO);
+        return true;
+    }
+
+    @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
         List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
         List<String> ids= requisitionApplicationEntityList.stream().map(v->v.getId()).collect(Collectors.toList());

@@ -48,6 +48,13 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     Boolean pullShipment(FbaShipmentDTO.PullShipmentDTO dto);
 
     /**
+     * 手动拉取FBA入库计划货件
+     * @param dto 请求参数
+     * @return 是否成功
+     */
+    Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto);
+
+    /**
      * 查询发货记录
      * @Author Luo_WG
      * @Date 2023/10/30 17:38
