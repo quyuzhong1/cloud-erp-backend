@@ -115,6 +115,7 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_B
 @Slf4j
 @Service
 public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBillCostMapper, LogisticsBillCostEntity> implements LogisticsBillCostService {
+    private static final int IMPORT_CONFIRM_BATCH_SIZE = 1000;
     @Resource
     private OperateLogService operateLogService;
 
@@ -2409,22 +2410,33 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public void confirmImport(String id, String reconciliationStatus, LocalDateTime confirmTime) {
-        LogisticsBillCostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "尾程费用(自发货)"));
+    public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus) {
+        if (CollUtil.isEmpty(confirmList)) {
+            return;
+        }
+        if (CharSequenceUtil.isBlank(reconciliationStatus)) {
+            throw new ServiceException("对账状态不能为空");
+        }
 
-        //状态变更
-        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
-                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
-                .set(LogisticsBillCostEntity::getConfirmTime, confirmTime)
-                .set(LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
-                .set(LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
-                .update();
+        LinkedHashMap<String, ImportHistoryRecordDTO.ImportConfirmDTO> confirmMap = new LinkedHashMap<>();
+        for (ImportHistoryRecordDTO.ImportConfirmDTO confirmDTO : confirmList) {
+            if (ObjectUtil.isNull(confirmDTO) || CharSequenceUtil.isBlank(confirmDTO.getLogisticsCostId())) {
+                continue;
+            }
+            confirmMap.put(confirmDTO.getLogisticsCostId(), confirmDTO);
+        }
+        if (CollUtil.isEmpty(confirmMap)) {
+            return;
+        }
 
-        // 状态变更日志
-        log.info("状态变更日志数据，id集合：【{}】", id);
-        String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
+        String confirmUserId = UserContext.getDefaultLoginUser().getUid();
+        String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
+        List<ImportHistoryRecordDTO.ImportConfirmDTO> distinctConfirmList = new ArrayList<>(confirmMap.values());
+        int updateCount = 0;
+        for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
+            updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
+        }
+        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}", confirmList.size(), distinctConfirmList.size(), updateCount);
     }
 
     @Override
