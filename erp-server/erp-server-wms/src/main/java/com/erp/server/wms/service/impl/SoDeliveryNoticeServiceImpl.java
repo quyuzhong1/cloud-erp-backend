@@ -35,6 +35,9 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
@@ -59,6 +62,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.dto.*;
@@ -94,12 +98,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.csource.common.MyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
@@ -234,6 +242,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private com.erp.rpc.tms.feign.CfgSettingFeign tmsCfgSettingFeign;
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private MQProducerService<AutoGenerateBillDTO> b2bDeclareMqProducerService;
 
 
     @Override
@@ -2167,23 +2177,128 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             return;
         }
         try {
-            Boolean originalValue = UserContext.getIsUserSystem();
-            UserContext.setIsUserSystem(Boolean.TRUE);
-            try {
-                // 跨服务自动生成报关明细中间表时临时切换系统标识，避免使用前台用户上下文。
-                if (Boolean.TRUE.equals(checkCfg) && !checkB2bDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
-                    return;
-                }
-                List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushB2bDeclare(
-                        new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
-                deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
-            } finally {
-                UserContext.setIsUserSystem(originalValue);
-            }
+            registerB2bDeclareAutoGenerateTask(entity, billGenerateTimingEnum, checkCfg);
         } catch (Exception e) {
-            log.error("发货通知单{}自动生成报关明细中间表失败", entity.getCode(), e);
+            log.error("发货通知单{}登记自动生成报关明细任务失败", entity.getCode(), e);
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
                     "发货通知单", entity.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 提交后发送B2B报关自动生成任务，避免业务事务内同步回调WMS。
+     *
+     * @param entity 发货通知单
+     * @param billGenerateTimingEnum 单据生成时机
+     * @param checkCfg 是否校验自动生成配置
+     */
+    private void registerB2bDeclareAutoGenerateTask(SoDeliveryNoticeEntity entity, BillGenerateTimingEnum billGenerateTimingEnum, Boolean checkCfg) {
+        if (Objects.isNull(entity) || Objects.isNull(billGenerateTimingEnum)) {
+            return;
+        }
+        if (!WmsDeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus())) {
+            return;
+        }
+        if (Boolean.TRUE.equals(checkCfg) && !checkB2bDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
+            return;
+        }
+        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                .id(entity.getId())
+                .billGenerateTimingEnum(billGenerateTimingEnum)
+                .sourceTypeEnum(SourceTypeEnum.SO_DELIVERY_NOTICE)
+                .checkCfg(Boolean.TRUE.equals(checkCfg))
+                .build();
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        sendB2bDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+                    } catch (Exception e) {
+                        log.error("发货通知单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
+                    }
+                }
+            });
+            return;
+        }
+        sendB2bDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+    }
+
+    /**
+     * 发送B2B报关自动生成任务。
+     *
+     * @param dto 自动生成参数
+     * @param code 发货通知单号
+     */
+    private void sendB2bDeclareAutoGenerateTask(AutoGenerateBillDTO dto, String code) {
+        SendResult sendResult = b2bDeclareMqProducerService.syncClassMsg(
+                RocketMqTopic.WMS_B2B_DECLARE_AUTO_GENERATE_TOPIC,
+                RocketMqTagEnum.WMS_B2B_DECLARE_AUTO_GENERATE_TAG.getName(),
+                dto,
+                dto.getId());
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            throw new ServiceException(CharSequenceUtil.format("发货通知单{}发送自动生成报关明细任务失败：{}", code, cn.hutool.json.JSONUtil.toJsonStr(sendResult)));
+        }
+        log.info("发货通知单{}已发送自动生成报关明细任务", code);
+    }
+
+    /**
+     * 消费B2B发货通知单自动生成报关明细任务。
+     *
+     * @param dto 自动生成参数
+     * @return 是否处理成功
+     * @throws ServiceException 自动生成失败时抛出
+     */
+    @Override
+    public Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
+        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getId())) {
+            log.warn("B2B发货通知单自动生成报关明细任务参数为空");
+            return Boolean.FALSE;
+        }
+        if (!SourceTypeEnum.SO_DELIVERY_NOTICE.equals(dto.getSourceTypeEnum())) {
+            log.warn("B2B发货通知单自动生成报关明细任务来源类型不匹配，id={}, sourceType={}", dto.getId(), dto.getSourceTypeEnum());
+            return Boolean.FALSE;
+        }
+        SoDeliveryNoticeEntity entity = super.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            log.warn("B2B发货通知单自动生成报关明细任务未找到来源单，id={}", dto.getId());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            log.info("发货通知单{}已作废，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (BillGenerateTimingEnum.AFTER_APPROVE.equals(dto.getBillGenerateTimingEnum())
+                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            log.info("发货通知单{}非已审核状态，跳过审核后自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (!WmsDeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus())) {
+            log.info("发货通知单{}报关状态非待生成，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(dto.getCheckCfg())
+                && !checkB2bDeclareAutoGenerateCfg(dto.getBillGenerateTimingEnum())) {
+            log.info("发货通知单{}未开启当前时机自动生成报关明细配置，跳过", entity.getCode());
+            return Boolean.TRUE;
+        }
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushB2bDeclare(
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+            if (CollectionUtils.isEmpty(sourceDetailList)) {
+                log.warn("发货通知单{}未查询到可生成报关明细的来源数据，跳过自动生成", entity.getCode());
+                return Boolean.TRUE;
+            }
+            Boolean autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
+            if (!Boolean.TRUE.equals(autoGenerateResult)) {
+                throw new ServiceException(CharSequenceUtil.format("发货通知单{}自动生成报关明细中间表返回失败", entity.getCode()));
+            }
+            log.info("发货通知单{}自动生成报关明细中间表成功", entity.getCode());
+            return Boolean.TRUE;
+        } finally {
+            UserContext.setIsUserSystem(originalValue);
         }
     }
 

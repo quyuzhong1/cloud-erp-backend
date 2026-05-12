@@ -77,22 +77,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private static final String RULE_TYPE_B2B_DECLARE = "b2bDeclareBill";
     private static final String CONDITION_VALUE_TYPE_STRING = "String";
 
-    private void agentDebugLog(String location, String message, String hypothesisId, Map<String, Object> data) {
-        try (java.io.FileWriter writer = new java.io.FileWriter("f:\\IdeaProjects\\antigravity-erp\\debug-8752d9.log", true)) {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("sessionId", "8752d9");
-            payload.put("runId", "pre-fix");
-            payload.put("hypothesisId", hypothesisId);
-            payload.put("location", location);
-            payload.put("message", message);
-            payload.put("data", data);
-            payload.put("timestamp", System.currentTimeMillis());
-            writer.write(cn.hutool.json.JSONUtil.toJsonStr(payload));
-            writer.write(System.lineSeparator());
-        } catch (Exception ignored) {
-        }
-    }
-
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -351,7 +335,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     /**
      * 自动生成报关明细中间表
      *
-     * @param dto 自动生成参数
+     * @param list 自动生成参数
      * @return 是否生成成功
      * @throws ServiceException 自动生成失败时抛出
      * @author jack
@@ -362,16 +346,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean autoGenerateMidData(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list) {
-        // region agent log
-        Map<String, Object> entryData = new HashMap<>();
-        entryData.put("sourceDetailCount", CollUtil.isEmpty(list) ? 0 : list.size());
-        entryData.put("txActive", org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
-        entryData.put("thread", Thread.currentThread().getName());
-        agentDebugLog("DeliveryDeclareDetailMidServiceImpl.autoGenerateMidData:entry",
-                "TMS autoGenerateMidData entry",
-                "H1,H2,H3",
-                entryData);
-        // endregion
         // 自动生成依赖来源明细和来源类型，缺一则不触发生成。
         if (CollUtil.isEmpty(list)) {
             log.warn("自动生成报关明细中间表失败：来源明细为空");
@@ -400,18 +374,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         }
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillList = tmsDeclareBillService.autoMergeDeclareBillView(
                 new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.FALSE, sourceDetailList));
-        // region agent log
-        Map<String, Object> mergeData = new HashMap<>();
-        mergeData.put("sourceType", sourceType);
-        mergeData.put("sourceDetailCount", sourceDetailList.size());
-        mergeData.put("mergeBillCount", CollUtil.isEmpty(mergeDeclareBillList) ? 0 : mergeDeclareBillList.size());
-        mergeData.put("txActive", org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive());
-        mergeData.put("thread", Thread.currentThread().getName());
-        agentDebugLog("DeliveryDeclareDetailMidServiceImpl.autoGenerateMidData:afterMergeView",
-                "TMS autoGenerateMidData after merge view",
-                "H1,H3,H4",
-                mergeData);
-        // endregion
         if (CollUtil.isEmpty(mergeDeclareBillList)) {
             log.warn("自动生成报关明细中间表失败：合并报关结果为空，sourceType={}，sourceDetailCount={}", sourceType, sourceDetailList.size());
             return Boolean.FALSE;
