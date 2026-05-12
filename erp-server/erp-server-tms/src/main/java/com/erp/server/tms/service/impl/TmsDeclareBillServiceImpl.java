@@ -166,7 +166,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = wmsFirstMileDeliveryFeign.getCanGenerateDeclare(querySourceDTO);
         if (CollectionUtils.isEmpty(deliveryDTOList)) {
-            throw new ServiceException("没有可生成报关单的发货单");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DELIVERY_NOT_FOUND);
         }
         TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
         if (CollUtil.isEmpty(addDTO.getMergeDetailList())) {
@@ -199,7 +199,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 detailEntityList.add(detailEntity);
             }
             if (CollUtil.isEmpty(detailEntityList)) {
-                throw new ServiceException("请选择需要保存的报关明细");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
             }
             Set<String> boxNoSet = mergeDetailList.stream()
                     .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
@@ -229,7 +229,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         //50个明细为一个报关单
         List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
         if(CollectionUtils.isEmpty(allProductDetailList)){
-            throw new ServiceException("没有可生成报关单的明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
         }
         List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, limitSkuNo);
         for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
@@ -260,7 +260,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         log.info("开始新增报关单");
         boolean save = super.save(tmsDeclareBillEntity);
         if(!save) {
-            throw new ServiceException("报关单保存失败");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_SAVE_FAILED);
         }
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】【{}】【{}】合同号为【{}】", UserContext.getDefaultLoginUser().getUserName(),isMerged?"合并":"新增", "报关单" , tmsDeclareBillEntity.getCode());
@@ -306,7 +306,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         String sourceType = resolveDeclareSourceType(old.getType());
         if(!old.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
-            throw new ServiceException("报关单状态不是待确认，不能编辑");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_WAIT_STATUS_REQUIRED_FOR_EDIT);
         }
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
         validateDeclareMergeDetails(mergeDetailList);
@@ -335,7 +335,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         tmsDeclareBillEntity.setCode(old.getCode());
         boolean save = super.updateById(tmsDeclareBillEntity);
         if(!save) {
-            throw new ServiceException("报关单保存失败");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_SAVE_FAILED);
         }
         detailService.deleteDetailByMainIdList(Collections.singletonList(old.getId()));
         List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(mergeDetailList.size());
@@ -346,10 +346,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             detailEntityList.add(detailEntity);
         }
         if (CollUtil.isEmpty(detailEntityList)) {
-            throw new ServiceException("请选择需要保存的报关明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         if (!detailService.saveBatch(detailEntityList)) {
-            throw new ServiceException("报关单明细保存失败");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_FAILED);
         }
         deliveryDeclareDetailMidService.lambdaUpdate()
                 .eq(DeliveryDeclareDetailMidEntity::getDeclareId, old.getId())
@@ -556,7 +556,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(entity.getType().equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
             List<TmsDeclareBillDTO.DeliveryDTO> deliveryDTOList = this.getCanGenerateDeliveryOrder(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(listBillSourceDTO.getSourceIdList()).build());
             if(CollectionUtils.isEmpty(deliveryDTOList)){
-                throw new ServiceException("未找到发货单信息");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DELIVERY_NOT_FOUND);
             }
             List<TmsDeclareBillDTO.PackingDTO> allPackDTOList = deliveryDTOList.stream()
                     .filter(v -> CollectionUtils.isNotEmpty(v.getPackingDTOList()))
@@ -577,7 +577,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }else if(entity.getType().equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode())){
             List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = this.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(listBillSourceDTO.getSourceIdList()).build());
             if(CollectionUtils.isEmpty(deliveryDTOList)){
-                throw new ServiceException("未找到销售出库单信息");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_SO_OUT_NOT_FOUND);
             }
             List<TmsDeclareBillDTO.PackingDTO> allPackDTOList = deliveryDTOList.stream()
                     .filter(v -> CollectionUtils.isNotEmpty(v.getPackingDTOList()))
@@ -707,7 +707,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             TmsDeclareBillEntity declareBillEntity = getDeclareBillByIdAndType(id, sourceTypeEnum);
             DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
             if (Objects.isNull(targetStatus)) {
-                throw new ServiceException("报关状态无效");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_INVALID);
             }
             if (DeclareStatusEnum.WAIT.getCode().equals(declareBillEntity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
                 fillDeclareConfirmUser(dto);
@@ -965,7 +965,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(selectedDetailList)) {
-            throw new ServiceException("选中的SKU信息不能为空");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SELECTED_SKU_REQUIRED);
         }
         List<String> sourceIdList = selectedDetailList.stream()
                 .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
@@ -973,7 +973,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(sourceIdList)) {
-            throw new ServiceException("未找到来源单据，无法查询报关表头");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_HEADER_NOT_FOUND);
         }
 
         TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO = new TmsDeclareBillDTO.SelectedSkuHeaderDTO();
@@ -1269,7 +1269,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = this.getCanGenerateSoOut(querySourceDTO);
         if (CollectionUtils.isEmpty(deliveryDTOList)) {
-            throw new ServiceException("没有可生成报关单的销售发货通知单");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_SO_DELIVERY_NOT_FOUND);
         }
         TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
         if (CollUtil.isEmpty(addDTO.getMergeDetailList())) {
@@ -1302,7 +1302,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 detailEntityList.add(detailEntity);
             }
             if (CollUtil.isEmpty(detailEntityList)) {
-                throw new ServiceException("请选择需要保存的报关明细");
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
             }
             Set<String> boxNoSet = mergeDetailList.stream()
                     .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
@@ -1329,7 +1329,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         BeanMapperUtils.copy(deliveryDTO, baseTmsDeclareBillEntity);
         baseTmsDeclareBillEntity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
         baseTmsDeclareBillEntity.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        throw new ServiceException("请选择需要保存的报关明细");
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
     }
 
 
@@ -1425,7 +1425,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         boolean updateFlag = this.update(updateWrapper);
                 
         if (!updateFlag) {
-            throw new ServiceException("报关单批量更新失败");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BATCH_UPDATE_FAILED);
         }
 
         TmsDeclareBillEntity newEntity = getById(dto.getId());
@@ -1449,7 +1449,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             try {
                 LocalDate.parse(dateStr);
             } catch (Exception e) {
-                throw new ServiceException(CharSequenceUtil.format("{}格式错误，请使用yyyy-MM-dd", fieldEnum.getName()));
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_FIELD_DATE_FORMAT_INVALID, fieldEnum.getName());
             }
         }
         if (TmsDeclareBillBatchFieldEnum.SHIPPING_FEE.equals(fieldEnum)
@@ -1465,7 +1465,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             try {
                 new BigDecimal(valueStr);
             } catch (Exception e) {
-                throw new ServiceException(CharSequenceUtil.format("{}格式错误，请输入数字", fieldEnum.getName()));
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_FIELD_NUMBER_FORMAT_INVALID, fieldEnum.getName());
             }
         }
     }
@@ -1521,10 +1521,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getType(), SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            throw new ServiceException("非头程报关单，无法查看拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_FM_SPLIT_VIEW_FORBIDDEN);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException("仅待确认报关单可以拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
         }
 
         List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList = deliveryDeclareDetailMidService.listByDeclareBillIdList(Collections.singletonList(id));
@@ -1558,17 +1558,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         List<String> declareIdList = declareDTO.getSplitDeclareDTOList().stream().map(TmsDeclareBillDTO.SplitDeclareDTO::getId).distinct().collect(Collectors.toList());
         if (declareIdList.size() != MathUtil.ONE) {
-            throw new ServiceException("批量添加拆分明细只能关联同一张报关单");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_SINGLE_BILL_REQUIRED);
         }
         TmsDeclareBillEntity declareBillEntity = super.getById(declareIdList.get(0));
         if (ObjectUtil.isEmpty(declareBillEntity)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getType(), SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
-            throw new ServiceException("非头程报关单，无法添加拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_FM_SPLIT_ADD_FORBIDDEN);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException("仅待确认报关单可以拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
         }
 
         String splitBaseCode = declareBillEntity.getCode();
@@ -1590,7 +1590,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             //按规则合并数据
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = sourceDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()) && CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo())).collect(Collectors.toList());
-            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList));
+            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
+                    new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList), Boolean.FALSE);
 
             //保存合并数据（合同号：原单号_1、_2…）
             batchAddMergeDetail(SourceTypeEnum.FM_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
@@ -1621,17 +1622,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         List<String> declareIdList = declareDTO.getSplitDeclareDTOList().stream().map(TmsDeclareBillDTO.SplitDeclareDTO::getId).distinct().collect(Collectors.toList());
         if (declareIdList.size() != MathUtil.ONE) {
-            throw new ServiceException("批量添加拆分明细只能关联同一张报关单");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_SINGLE_BILL_REQUIRED);
         }
         TmsDeclareBillEntity declareBillEntity = super.getById(declareIdList.get(0));
         if (ObjectUtil.isEmpty(declareBillEntity)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
-            throw new ServiceException("非B2B报关单，无法添加拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_SPLIT_ADD_FORBIDDEN);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException("仅待确认报关单可以拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
         }
 
         String splitBaseCode = declareBillEntity.getCode();
@@ -1650,7 +1651,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             //按规则合并数据
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = sourceDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()) && CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo())).collect(Collectors.toList());
-            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList));
+            List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
+                    new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList),
+                    isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
 
             //保存合并数据（合同号：原单号_1、_2…）
             batchAddMergeDetail(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), mergeDeclareBillDTOS, splitCodeSequence, Boolean.FALSE);
@@ -1671,7 +1674,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .findFirst()
                 .ifPresent(obj -> {
                     String declareCode = CharSequenceUtil.blankToDefault(obj.getCode(), obj.getId());
-                    throw new ServiceException(CharSequenceUtil.format("报关单【{}】仅待确认状态可以操作合并", declareCode));
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_WAIT_STATUS_REQUIRED, declareCode);
                 });
         return deliveryDeclareDetailMidService.listSourceByDeclareIdList(ids);
     }
@@ -1683,7 +1686,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
         //境外收货人类型需要一致
-        long count = tmsDeclareBillList.stream().distinct().map(TmsDeclareBillEntity::getReceiverType).count();
+        long count = tmsDeclareBillList.stream().map(TmsDeclareBillEntity::getReceiverType).distinct().count();
         if (count > 1) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_RECEIVER_TYPE_DIFF);
         }
@@ -1693,10 +1696,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .findFirst()
                 .ifPresent(obj -> {
                     String declareCode = CharSequenceUtil.blankToDefault(obj.getCode(), obj.getId());
-                    throw new ServiceException(CharSequenceUtil.format("报关单【{}】仅待确认状态可以操作合并", declareCode));
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_WAIT_STATUS_REQUIRED, declareCode);
                 });
+        Set<String> declareTypeSet = tmsDeclareBillList.stream()
+                .map(TmsDeclareBillEntity::getType)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (declareTypeSet.size() > 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+        }
+        TmsDeclareBillEntity firstDeclareBill = tmsDeclareBillList.get(0);
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(ids);
-        return autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE,sourceDeliveryDetailList));
+        return autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE,sourceDeliveryDetailList),
+                isB2bCustomerReceiver(firstDeclareBill.getType(), firstDeclareBill.getReceiverType()));
     }
 
 
@@ -1708,6 +1720,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     @Override
     public  List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO) {
+        return autoMergeDeclareBillView(viewDTO, null);
+    }
+
+    private List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO,
+                                                                                Boolean includeSkuInMergeKey) {
         if (CollectionUtils.isEmpty(viewDTO.getSourceDeliveryDetailList())) {
             return Collections.emptyList();
         }
@@ -1716,7 +1733,78 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return Collections.emptyList();
         }
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge());
+        boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(result) : includeSkuInMergeKey;
+        return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), sixDimensionMerge);
+    }
+
+    /**
+     * B2B报关单且境外收货人为客户时，按 SKU + 五维度合并；其它场景按不含 SKU 的五维度合并。
+     */
+    private boolean isSixDimensionMerge(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        String declareBillType = resolveDeclareBillType(sourceDetailList);
+        if (!CharSequenceUtil.equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), declareBillType)) {
+            return false;
+        }
+        CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(buildDeclareRuleMatchParamMap(declareBillType, sourceDetailList));
+        if (cfgDeclareRule == null) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
+        }
+        return CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), cfgDeclareRule.getReceiverType());
+    }
+
+    private boolean isB2bCustomerReceiver(String declareBillType, String receiverType) {
+        return CharSequenceUtil.equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode(), declareBillType)
+                && CharSequenceUtil.equals(CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(), receiverType);
+    }
+
+    private String resolveDeclareBillType(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        Set<String> sourceTypeSet = sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceType)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        boolean hasFmSource = sourceTypeSet.contains(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())
+                || sourceTypeSet.contains(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+        boolean hasB2bSource = sourceTypeSet.contains(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())
+                || sourceTypeSet.contains(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
+        if (hasFmSource && hasB2bSource) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+        }
+        if (hasFmSource) {
+            return SourceTypeEnum.FM_DECLARE_BILL.getCode();
+        }
+        if (hasB2bSource) {
+            return SourceTypeEnum.B2B_DECLARE_BILL.getCode();
+        }
+        boolean hasSalesOrg = sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(item -> StringUtils.isNotBlank(item.getSalesOrgId()));
+        return hasSalesOrg ? SourceTypeEnum.B2B_DECLARE_BILL.getCode() : SourceTypeEnum.FM_DECLARE_BILL.getCode();
+    }
+
+    private Map<String, String> buildDeclareRuleMatchParamMap(String declareBillType,
+                                                              List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("ruleType", declareBillType);
+        paramMap.put("countryCode", joinDistinct(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getCountryId)
+                .collect(Collectors.toList())));
+        paramMap.put("fromWarehouseId", joinDistinct(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getFromWarehouseId)
+                .collect(Collectors.toList())));
+        paramMap.put("transferWarehouseId", joinDistinct(sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .collect(Collectors.toList())));
+        if (CharSequenceUtil.equals(declareBillType, SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
+            paramMap.put("destWarehouseId", joinDistinct(sourceDetailList.stream()
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getDestWarehouseId)
+                    .collect(Collectors.toList())));
+        } else {
+            paramMap.put("salesOrgId", joinDistinct(sourceDetailList.stream()
+                    .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSalesOrgId)
+                    .collect(Collectors.toList())));
+        }
+        return paramMap;
     }
 
     /**
@@ -1809,7 +1897,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(filteredList)) {
-            throw new ServiceException("请选择需要保存的报关明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         if (Boolean.TRUE.equals(isMerge)) {
             return mergeEditedDetails(filteredList);
@@ -1837,7 +1925,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             sourceDetailList = Collections.emptyList();
         }
         if (CollUtil.isEmpty(sourceDetailList)) {
-            throw new ServiceException("没有可生成报关单的明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
         }
         sourceDetailList.forEach(item -> item.setSourceType(sourceTypeEnum.getCode()));
         return sourceDetailList;
@@ -1883,7 +1971,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
         }
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        return flattenMergeDeclareBillList(declarationGenerationService.generateMergeBillDetails(sourceDetailList, Boolean.TRUE));
+        return flattenMergeDeclareBillList(declarationGenerationService.generateMergeBillDetails(sourceDetailList, Boolean.TRUE, isSixDimensionMerge(sourceDetailList)));
     }
 
     /**
@@ -1895,7 +1983,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> flattenMergeDeclareBillList(List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillList) {
         if (CollUtil.isEmpty(mergeDeclareBillList)) {
-            throw new ServiceException("请选择需要保存的报关明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = mergeDeclareBillList.stream()
                 .filter(Objects::nonNull)
@@ -1905,7 +1993,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(mergeDetailList)) {
-            throw new ServiceException("请选择需要保存的报关明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         mergeDetailList.forEach(this::applyMergeDeclareDetailDefaults);
         return mergeDetailList;
@@ -1943,10 +2031,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private void validateDeclareMergeDetails(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
         if (CollUtil.isEmpty(mergeDetailList)) {
-            throw new ServiceException("请选择需要保存的报关明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         if (mergeDetailList.size() > limitSkuNo) {
-            throw new ServiceException(CharSequenceUtil.format("合并后SKU条数不可超过{}条", limitSkuNo));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_SKU_LIMIT_EXCEEDED, limitSkuNo);
         }
         validateDuplicateSkuRows(mergeDetailList);
         Set<String> countrySet = new HashSet<>();
@@ -1959,7 +2047,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             validateDeclareDetailSources(detailDTO, rowNo, countrySet, sourceDetailKeySet);
         }
         if (countrySet.size() > 1) {
-            throw new ServiceException("不同业务单号必须归属同一个国家");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_MERGE_COUNTRY_MISMATCH);
         }
     }
 
@@ -1984,7 +2072,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         requireNotBlank(detailDTO.getSourceCargo(), rowNo, "境内货源地");
         requireNotBlank(detailDTO.getExemption(), rowNo, "征免");
         if (CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
-            throw new ServiceException(CharSequenceUtil.format("第{}行来源明细不能为空", rowNo));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_REQUIRED, rowNo);
         }
     }
 
@@ -2011,7 +2099,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             requireNotBlank(sourceDetail.getSkuNo(), rowNo, "来源SKU");
             requirePositive(sourceDetail.getQty(), rowNo, "来源数量");
             if (!sourceDetailKeySet.add(buildSourceDetailKey(sourceDetail))) {
-                throw new ServiceException(CharSequenceUtil.format("第{}行来源明细重复，请勿重复保存", rowNo));
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_DUPLICATE, rowNo);
             }
             validateSourceValue(detailDTO.getDeclareCurrency(), sourceDetail.getDeclareCurrency(), rowNo, "币制");
             validateSourceValue(detailDTO.getSourceCountry(), sourceDetail.getSourceCountry(), rowNo, "原产国(地区)");
@@ -2022,7 +2110,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             sourceQty += Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty();
         }
         if (!Objects.equals(detailDTO.getQty(), sourceQty)) {
-            throw new ServiceException(CharSequenceUtil.format("第{}行数量必须等于来源明细数量合计", rowNo));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_QTY_MISMATCH, rowNo);
         }
     }
 
@@ -2035,7 +2123,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private void validateSourceDetailNotGenerated(Set<String> sourceDetailIdSet, String currentDeclareId) {
         if (CollUtil.isEmpty(sourceDetailIdSet)) {
-            throw new ServiceException("未找到来源明细，无法保存报关单");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
         List<DeliveryDeclareDetailMidEntity> existsMidList;
         if (StringUtils.isNotBlank(currentDeclareId)) {
@@ -2058,9 +2146,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .filter(StringUtils::isNotBlank)
                     .distinct()
                     .collect(Collectors.joining("、"));
-            throw new ServiceException(StringUtils.isBlank(repeatSourceCode)
-                    ? "所选明细已生成报关单，请勿重复保存"
-                    : CharSequenceUtil.format("来源单【{}】已生成报关单，请勿重复保存", repeatSourceCode));
+            if (StringUtils.isBlank(repeatSourceCode)) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_SELECTED_DETAIL_GENERATED);
+            }
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_GENERATED, repeatSourceCode);
         }
     }
 
@@ -2093,13 +2182,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 }
                 DeliveryDeclareDetailMidEntity oldMid = oldKeyMap.get(buildSourceDetailKey(sourceDetail));
                 if (Objects.isNull(oldMid)) {
-                    throw new ServiceException("业务单号、SKU、箱号不可编辑");
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_BOX_IMMUTABLE);
                 }
                 if (!StringUtils.equals(StringUtils.defaultString(oldMid.getSourceId()), StringUtils.defaultString(sourceDetail.getSourceId()))
                         || !StringUtils.equals(StringUtils.defaultString(oldMid.getBusinessCode()), StringUtils.defaultString(sourceDetail.getBusinessCode()))
                         || !StringUtils.equals(StringUtils.defaultString(oldMid.getSkuNo()), StringUtils.defaultString(sourceDetail.getSkuNo()))
                         || !Objects.equals(Objects.isNull(oldMid.getQty()) ? 0 : oldMid.getQty(), Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty())) {
-                    throw new ServiceException("业务单号、SKU、数量不可编辑");
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_QTY_IMMUTABLE);
                 }
             }
         }
@@ -2125,7 +2214,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             for (String rowSku : rowSkuSet) {
                 Integer firstRow = skuRowMap.putIfAbsent(rowSku, i + 1);
                 if (Objects.nonNull(firstRow)) {
-                    throw new ServiceException(CharSequenceUtil.format("相同SKU【{}】存在不同行明细：第{}行、第{}行", rowSku, firstRow, i + 1));
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_DUPLICATE_SKU_ROW, rowSku, firstRow, i + 1);
                 }
             }
         }
@@ -2186,7 +2275,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return;
         }
         if (!StringUtils.equals(StringUtils.defaultString(detailValue), sourceValue)) {
-            throw new ServiceException(CharSequenceUtil.format("第{}行{}与来源明细不一致", rowNo, fieldName));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SOURCE_VALUE_MISMATCH, rowNo, fieldName);
         }
     }
 
@@ -2222,7 +2311,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private void requireNotBlank(String value, int rowNo, String fieldName) {
         if (StringUtils.isBlank(value)) {
-            throw new ServiceException(CharSequenceUtil.format("第{}行{}不能为空", rowNo, fieldName));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED, rowNo, fieldName);
         }
     }
 
@@ -2236,7 +2325,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private void requireNotNull(Object value, int rowNo, String fieldName) {
         if (Objects.isNull(value)) {
-            throw new ServiceException(CharSequenceUtil.format("第{}行{}不能为空", rowNo, fieldName));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_REQUIRED, rowNo, fieldName);
         }
     }
 
@@ -2250,7 +2339,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private void requirePositive(Integer value, int rowNo, String fieldName) {
         if (Objects.isNull(value) || value <= 0) {
-            throw new ServiceException(CharSequenceUtil.format("第{}行{}必须大于0", rowNo, fieldName));
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_FIELD_POSITIVE_REQUIRED, rowNo, fieldName);
         }
     }
 
@@ -2538,7 +2627,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(mergeDetailList)) {
-            throw new ServiceException("请选择需要保存的报关明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         validateBatchMergeDeclareBills(list);
 
@@ -2551,7 +2640,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
         if (CollUtil.isEmpty(sourceDetailIdSet)) {
-            throw new ServiceException("未找到来源明细，无法保存报关单");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
 
         List<DeliveryDeclareDetailMidEntity> existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
@@ -2574,9 +2663,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         .filter(StringUtils::isNotBlank)
                         .distinct()
                         .collect(Collectors.joining("、"));
-                throw new ServiceException(StringUtils.isBlank(repeatSourceCode)
-                        ? "所选明细已生成报关单，请勿重复保存"
-                        : CharSequenceUtil.format("来源单【{}】已生成报关单，请勿重复保存", repeatSourceCode));
+                if (StringUtils.isBlank(repeatSourceCode)) {
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_SELECTED_DETAIL_GENERATED);
+                }
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_GENERATED, repeatSourceCode);
             }
         }
 
@@ -2595,10 +2685,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         continue;
                     }
                     if (!CharSequenceUtil.equals(oldBill.getType(), declareBillType)) {
-                        throw new ServiceException(CharSequenceUtil.format("报关单【{}】类型与当前保存不一致，无法合并替换", CharSequenceUtil.blankToDefault(oldBill.getCode(), declareBillId)));
+                        throw new ServiceException(ApiError.LOGISTICS_DECLARE_REPLACE_TYPE_MISMATCH, CharSequenceUtil.blankToDefault(oldBill.getCode(), declareBillId));
                     }
                     if (!CharSequenceUtil.equals(oldBill.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-                        throw new ServiceException(CharSequenceUtil.format("报关单【{}】非待确认状态，无法合并替换", CharSequenceUtil.blankToDefault(oldBill.getCode(), declareBillId)));
+                        throw new ServiceException(ApiError.LOGISTICS_DECLARE_REPLACE_WAIT_STATUS_REQUIRED, CharSequenceUtil.blankToDefault(oldBill.getCode(), declareBillId));
                     }
                     deleteDeclareBillById(declareBillId);
                 }
@@ -2613,9 +2703,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                             .filter(StringUtils::isNotBlank)
                             .distinct()
                             .collect(Collectors.joining("、"));
-                    throw new ServiceException(StringUtils.isBlank(repeatSourceCode)
-                            ? "所选明细已生成报关单，请勿重复保存"
-                            : CharSequenceUtil.format("来源单【{}】已生成报关单，请勿重复保存", repeatSourceCode));
+                    if (StringUtils.isBlank(repeatSourceCode)) {
+                        throw new ServiceException(ApiError.LOGISTICS_DECLARE_SELECTED_DETAIL_GENERATED);
+                    }
+                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_GENERATED, repeatSourceCode);
                 }
             }
         }
@@ -2681,7 +2772,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     String boxKey = buildDeclareBoxKey(sourceDetail);
                     Integer existBillIndex = boxBillIndexMap.putIfAbsent(boxKey, i + 1);
                     if (Objects.nonNull(existBillIndex) && existBillIndex != i + 1) {
-                        throw new ServiceException(CharSequenceUtil.format("同一业务单同一箱号必须在同一个报关单：第{}票、第{}票", existBillIndex, i + 1));
+                        throw new ServiceException(ApiError.LOGISTICS_DECLARE_BOX_SINGLE_BILL_REQUIRED, existBillIndex, i + 1);
                     }
                 }
             }
@@ -2749,7 +2840,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(paramMap);
         if (cfgDeclareRule == null) {
-            throw new ServiceException("未找到匹配的报关规则，请检查来源单信息是否正确");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
         }
         declareBillEntity.setSenderId(cfgDeclareRule.getSenderId());
         declareBillEntity.setReceiverId(cfgDeclareRule.getReceiverId());
@@ -2835,10 +2926,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
-            throw new ServiceException("非B2B报关单，无法查看拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_B2B_SPLIT_VIEW_FORBIDDEN);
         }
         if (!CharSequenceUtil.equals(declareBillEntity.getDeclareStatus(), DeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException("仅待确认报关单可以拆分明细");
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_WAIT_STATUS_REQUIRED);
         }
 
         List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList = deliveryDeclareDetailMidService.listByDeclareBillIdList(Collections.singletonList(id));

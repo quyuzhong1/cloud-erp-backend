@@ -26,7 +26,6 @@ public class DeclarationGenerationDTO implements Serializable {
         private String declarationElements;
         private String declarationUnit;
         private String declarationCurrency;
-        private String model;
 
         // 基础数据
         private String sku;
@@ -70,25 +69,25 @@ public class DeclarationGenerationDTO implements Serializable {
         private  String declarationElements;
         private  String declarationUnit;
         private  String declarationCurrency;
-        private  String model;
+        private  String sku;
 
-        private MergeKey(String hsCode, String customsName, String elements, String unit, String currency, String model) {
+        private MergeKey(String hsCode, String customsName, String elements, String unit, String currency, String sku) {
             this.hsCode = hsCode == null ? "" : hsCode;
             this.customsName = customsName == null ? "" : customsName;
             this.declarationElements = elements == null ? "" : elements;
             this.declarationUnit = unit == null ? "" : unit;
             this.declarationCurrency = currency == null ? "" : currency;
-            this.model = model == null ? "" : model;
+            this.sku = sku == null ? "" : sku;
         }
 
-        public static MergeKey from(DeclarationGenerationDTO.InputDetailDTO dto) {
+        public static MergeKey from(DeclarationGenerationDTO.InputDetailDTO dto, boolean includeSkuInMergeKey) {
             return new MergeKey(
                     dto.getHsCode(),
                     dto.getCustomsName(),
                     dto.getDeclarationElements(),
                     dto.getDeclarationUnit(),
                     dto.getDeclarationCurrency(),
-                    dto.getModel()
+                    includeSkuInMergeKey ? dto.getSku() : ""
             );
         }
     }
