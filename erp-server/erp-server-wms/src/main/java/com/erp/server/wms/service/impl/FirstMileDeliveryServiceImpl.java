@@ -2704,32 +2704,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .map(WmsCartonDetailDTO.ListPackingDetailDTO::getPackageWeight)
                     .reduce(BigDecimal.ZERO, BigDecimal::add));
         }
-        //合并相同的sku
-        for (TmsDeclareBillDTO.DeliveryDTO deliveryDTO : result) {
-            List<TmsDeclareBillDTO.ProductDetail> productDetails = deliveryDTO.getProductDetailList();
-            if(productDetails == null){
-                productDetails = new ArrayList<>();
-            }
-            // 根据 skuId 进行分组，并对数量进行求和
-            List<TmsDeclareBillDTO.ProductDetail> mergedDetails = new ArrayList<>(productDetails.stream()
-                    .collect(Collectors.toMap(
-                            TmsDeclareBillDTO.ProductDetail::getSkuId,
-                            Function.identity(),
-                            (existing, replacement) -> {
-                                // 合并数量
-                                existing.setQty(existing.getQty() + replacement.getQty());
-                                // 其他字段取第一个出现的值
-                                return existing;
-                            }
-                    ))
-                    .values());
-            mergedDetails.forEach(v->{
-                if(Objects.nonNull(v.getPrice())){
-                    v.setTotalPrice(v.getPrice().multiply(new BigDecimal(v.getQty())));
-                }
-            });
-            deliveryDTO.setProductDetailList(mergedDetails);
-        }
         return result;
     }
 

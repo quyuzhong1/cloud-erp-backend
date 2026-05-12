@@ -916,7 +916,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return Collections.emptyList();
         }
 
-        return  new ArrayList<>();//lambdaQuery().in(TmsDeclareBillEntity::getSourceId, sourceIds).list();//TODO
+        List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList = deliveryDeclareDetailMidService.listBySourceIdList(sourceIds);
+        if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
+            return Collections.emptyList();
+        }
+        List<String> declareIds =deliveryDeclareDetailMidList.stream().map(DeliveryDeclareDetailMidEntity::getDeclareId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(declareIds)) {
+            return Collections.emptyList();
+        }
+        return this.listByIds(declareIds);
     }
 
     @Override
