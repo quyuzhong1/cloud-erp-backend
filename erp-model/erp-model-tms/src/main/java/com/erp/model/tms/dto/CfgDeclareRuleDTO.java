@@ -53,6 +53,7 @@ public class CfgDeclareRuleDTO implements Serializable {
         private String receiverId;
         private String receiverName;
         private Boolean disabled;
+        private Integer ruleIndex;
         private String detailId;
         private String ruleId;
         private String leftBracket;
@@ -86,6 +87,7 @@ public class CfgDeclareRuleDTO implements Serializable {
         private String receiverId;
         private String receiverName;
         private Boolean disabled;
+        private Integer index;
         private List<CfgDeclareRuleConditionDTO.ListDTO> detailList;
     }
 
@@ -150,5 +152,7 @@ public class CfgDeclareRuleDTO implements Serializable {
         private String receiverName;
 
         private Boolean disabled;
+
+        private Integer index;
     }
 }

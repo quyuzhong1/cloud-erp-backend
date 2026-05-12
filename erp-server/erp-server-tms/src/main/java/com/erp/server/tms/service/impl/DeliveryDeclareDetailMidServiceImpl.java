@@ -1049,6 +1049,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         List<CfgDeclareRuleEntity> ruleList = cfgDeclareRuleService.lambdaQuery()
                 .eq(CfgDeclareRuleEntity::getRuleType, ruleType)
                 .eq(CfgDeclareRuleEntity::getDisabled, Boolean.FALSE)
+                .orderByAsc(CfgDeclareRuleEntity::getIndex)
                 .list();
         if (CollectionUtils.isEmpty(ruleList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_RULE_NOT_FOUND);

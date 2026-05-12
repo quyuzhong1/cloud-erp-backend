@@ -20,6 +20,7 @@
         <result column="receiver_id" property="receiverId"/>
         <result column="receiver_name" property="receiverName"/>
         <result column="disabled" property="disabled"/>
+        <result column="index" property="index"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -39,7 +40,8 @@
         receiver_type,
         receiver_id,
         receiver_name,
-        disabled
+        disabled,
+        index
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.CfgDeclareRuleDTO$ListDTO">
@@ -53,6 +55,7 @@
             cdr.receiver_id,
             cdr.receiver_name,
             cdr.disabled,
+            cdr.index AS ruleIndex,
             cd.id AS detailId,
             cd.rule_id AS ruleId,
             cd.left_bracket,
@@ -71,7 +74,7 @@
         <if test="params != null and params.ruleType != null and params.ruleType != ''">
             AND cdr.rule_type = #{params.ruleType}
         </if>
-        ORDER BY cdr.id DESC, cd.index ASC
+        ORDER BY cdr.index ASC, cd.index ASC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -92,6 +95,7 @@
             receiver_id,
             receiver_name,
             disabled,
+            index AS ruleIndex,
             approve_status,
             create_time,
             create_user_name

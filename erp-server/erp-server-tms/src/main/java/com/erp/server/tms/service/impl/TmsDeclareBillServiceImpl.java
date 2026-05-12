@@ -2763,19 +2763,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             String salesOrgId = headerParamDTO.getSourceDeliveryDetailList().stream().map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSalesOrgId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.joining(","));
             paramMap.put("salesOrgId", salesOrgId);
         }
-        List<CfgDeclareRuleEntity> cfgDeclareRuleList = cfgDeclareRuleService.listMatchedRule(paramMap);
-        if (CollUtil.isEmpty(cfgDeclareRuleList)) {
+        CfgDeclareRuleEntity cfgDeclareRule = cfgDeclareRuleService.listMatchedRule(paramMap);
+        if (cfgDeclareRule == null) {
             throw new ServiceException("未找到匹配的报关规则，请检查来源单信息是否正确");
         }
-        if (cfgDeclareRuleList.size() > 1) {
-            throw new ServiceException("找到多条匹配的报关规则，请检查来源单信息是否正确");
-        }
-        declareBillEntity.setSenderId(cfgDeclareRuleList.get(0).getSenderId());
-        declareBillEntity.setReceiverId(cfgDeclareRuleList.get(0).getReceiverId());
-        declareBillEntity.setSenderName(cfgDeclareRuleList.get(0).getSenderName());
-        declareBillEntity.setReceiverName(cfgDeclareRuleList.get(0).getReceiverName());
-        declareBillEntity.setSenderType(cfgDeclareRuleList.get(0).getSenderType());
-        declareBillEntity.setReceiverType(cfgDeclareRuleList.get(0).getReceiverType());
+        declareBillEntity.setSenderId(cfgDeclareRule.getSenderId());
+        declareBillEntity.setReceiverId(cfgDeclareRule.getReceiverId());
+        declareBillEntity.setSenderName(cfgDeclareRule.getSenderName());
+        declareBillEntity.setReceiverName(cfgDeclareRule.getReceiverName());
+        declareBillEntity.setSenderType(cfgDeclareRule.getSenderType());
+        declareBillEntity.setReceiverType(cfgDeclareRule.getReceiverType());
     }
 
     /**

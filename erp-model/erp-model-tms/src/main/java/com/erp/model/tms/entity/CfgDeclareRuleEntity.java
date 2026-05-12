@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import lombok.NoArgsConstructor;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -66,6 +65,11 @@ public class CfgDeclareRuleEntity extends BaseEntity<CfgDeclareRuleEntity> {
     */
     @TableField("disabled")
     private Boolean disabled;
+    /**
+    * 顺序
+    */
+    @TableField("index")
+    private Integer index;
 
 
     public static final String RULE_TYPE = "rule_type";
@@ -83,6 +87,8 @@ public class CfgDeclareRuleEntity extends BaseEntity<CfgDeclareRuleEntity> {
     public static final String RECEIVER_NAME = "receiver_name";
 
     public static final String DISABLED = "disabled";
+
+    public static final String INDEX = "index";
 
     @Override
     public Serializable pkVal() {
