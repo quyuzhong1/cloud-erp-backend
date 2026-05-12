@@ -126,7 +126,7 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Slf4j
 @Service
 public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeliveryMapper, FirstMileDeliveryEntity> implements FirstMileDeliveryService {
-    @Resource
+     @Resource
     private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -212,6 +212,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private SysPostFeign sysPostFeign;
     @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+    @Resource
+    private MQProducerService<AutoGenerateBillDTO> firstMileDeclareMqProducerService;
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
     @Lazy
@@ -299,27 +301,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if(packed){
                 try {
                     if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                        Boolean autoGenerateResult;
-                        // 跨服务自动生成报关明细中间表时临时切换系统标识，避免使用前台用户上下文。
-                        Boolean originalValue = UserContext.getIsUserSystem();
-                        UserContext.setIsUserSystem(Boolean.TRUE);
-                        try {
-                            if (!checkFirstMileDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
-                                return;
-                            }
-                            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushFmDeclare(
-                                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
-                            autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
-                        } finally {
-                            //恢复系统标识
-                            UserContext.setIsUserSystem(originalValue);
-                        }
-                        if(autoGenerateResult){
-                            log.info("头程发货单{}自动生成报关明细中间表成功", entity.getCode());
-                        }
+                        registerFirstMileDeclareAutoGenerateTask(entity, billGenerateTimingEnum);
                     }
                 }catch (Exception e){
-                    log.error("头程发货单{}自动生成报关明细中间表失败：{}", entity.getCode(), e.getMessage(), e);
+                    log.error("头程发货单{}登记自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
                     throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
                             "头程发货单", entity.getCode(), e.getMessage());
                 }
@@ -327,15 +312,150 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
     }
 
+    /**
+     * 提交后发送头程报关自动生成任务，避免审核事务内同步回调 WMS。
+     *
+     * @param entity 头程发货单
+     * @param billGenerateTimingEnum 单据生成时机
+     */
+    private void registerFirstMileDeclareAutoGenerateTask(FirstMileDeliveryEntity entity, BillGenerateTimingEnum billGenerateTimingEnum) {
+        if (Objects.isNull(entity) || Objects.isNull(billGenerateTimingEnum)) {
+            return;
+        }
+        if (!checkFirstMileDeclareAutoGenerateCfg(billGenerateTimingEnum)) {
+            return;
+        }
+        AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
+                .id(entity.getId())
+                .billGenerateTimingEnum(billGenerateTimingEnum)
+                .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
+                .checkCfg(Boolean.TRUE)
+                .build();
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+                    } catch (Exception e) {
+                        log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
+                    }
+                }
+            });
+            return;
+        }
+        sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+    }
+
+    /**
+     * 发送头程报关自动生成任务。
+     *
+     * @param dto 自动生成参数
+     * @param code 头程发货单号
+     */
+    private void sendFirstMileDeclareAutoGenerateTask(AutoGenerateBillDTO dto, String code) {
+        SendResult sendResult = firstMileDeclareMqProducerService.syncClassMsg(
+                RocketMqTopic.WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_TOPIC,
+                RocketMqTagEnum.WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_TAG.getName(),
+                dto,
+                dto.getId());
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            throw new ServiceException(CharSequenceUtil.format("头程发货单{}发送自动生成报关明细任务失败：{}", code, JSONUtil.toJsonStr(sendResult)));
+        }
+        log.info("头程发货单{}已发送自动生成报关明细任务", code);
+    }
+
+    /**
+     * 消费头程报关自动生成任务。
+     *
+     * @param dto 自动生成参数
+     * @return 是否处理成功
+     * @throws ServiceException 自动生成失败时抛出
+     */
+    @Override
+    public Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
+        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getId())) {
+            log.warn("头程发货单自动生成报关明细任务参数为空");
+            return Boolean.FALSE;
+        }
+        if (!SourceTypeEnum.FIRST_MILE_DELIVERY.equals(dto.getSourceTypeEnum())) {
+            log.warn("头程发货单自动生成报关明细任务来源类型不匹配，id={}, sourceType={}", dto.getId(), dto.getSourceTypeEnum());
+            return Boolean.FALSE;
+        }
+        FirstMileDeliveryEntity entity = super.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            log.warn("头程发货单自动生成报关明细任务未找到来源单，id={}", dto.getId());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            log.info("头程发货单{}已作废，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (BillGenerateTimingEnum.AFTER_APPROVE.equals(dto.getBillGenerateTimingEnum())
+                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            log.info("头程发货单{}非已审核状态，跳过审核后自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
+            log.info("头程发货单{}报关状态非待生成，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(dto.getCheckCfg())
+                && !checkFirstMileDeclareAutoGenerateCfg(dto.getBillGenerateTimingEnum())) {
+            log.info("头程发货单{}未开启当前时机自动生成报关明细配置，跳过", entity.getCode());
+            return Boolean.TRUE;
+        }
+        List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
+        boolean packed = CollectionUtils.isNotEmpty(taskEntityList)
+                && taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));
+        if (!packed) {
+            log.info("头程发货单{}未全部装箱，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        Boolean originalValue = UserContext.getIsUserSystem();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        try {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushFmDeclare(
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+            if (CollectionUtils.isEmpty(sourceDetailList)) {
+                throw new ServiceException(CharSequenceUtil.format("头程发货单{}未查询到可生成报关明细的来源数据", entity.getCode()));
+            }
+            Boolean autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
+            if (!Boolean.TRUE.equals(autoGenerateResult)) {
+                throw new ServiceException(CharSequenceUtil.format("头程发货单{}自动生成报关明细中间表返回失败", entity.getCode()));
+            }
+            log.info("头程发货单{}自动生成报关明细中间表成功", entity.getCode());
+            return Boolean.TRUE;
+        } finally {
+            UserContext.setIsUserSystem(originalValue);
+        }
+    }
+
+    /**
+     * 检查头程申报自动生成配置
+     * <p>
+     * 根据指定的单据生成时机枚举，检查系统配置是否允许自动生成头程申报单。
+     * 需要满足以下条件：
+     * 1. 单据生成时机枚举不为空
+     * 2. 自动开单配置存在且未禁用
+     * 3. 配置中启用了自动头程申报功能
+     * 4. 配置的头程申报生成时机与传入的时机匹配
+     * </p>
+     *
+     * @param billGenerateTimingEnum 单据生成时机枚举，用于匹配配置中的生成时机
+     * @return Boolean.TRUE表示满足自动生成条件，Boolean.FALSE表示不满足
+     */
     private Boolean checkFirstMileDeclareAutoGenerateCfg(BillGenerateTimingEnum billGenerateTimingEnum) {
         if (Objects.isNull(billGenerateTimingEnum)) {
             return Boolean.FALSE;
         }
+        // 获取自动开单配置
         com.erp.model.tms.entity.CfgSettingEntity cfgSettingEntity =
                 tmsCfgSettingFeign.getByKey(com.erp.model.tms.enums.CfgSettingEnum.BILL_AUTO_ADD.getCode());
         if (Objects.isNull(cfgSettingEntity) || Boolean.TRUE.equals(cfgSettingEntity.getDisabled())) {
             return Boolean.FALSE;
         }
+        // 解析配置数据并验证头程申报自动生成条件
         com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO cfg =
                 BeanUtil.toBean(cfgSettingEntity.getDataJson(), com.erp.model.tms.dto.CfgSettingValueDTO.BillAutoAddDTO.class);
         return Objects.nonNull(cfg)
@@ -1249,30 +1369,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             throw new ServiceException(CharSequenceUtil.format("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", entity.getCode(), e.getMessage()));
                         }
 
-                        try {
-                            if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
-                                Boolean autoGenerateResult;
-                                // 跨服务自动生成报关明细中间表时临时切换系统标识，避免使用前台用户上下文。
-                                Boolean originalValue = UserContext.getIsUserSystem();
-                                UserContext.setIsUserSystem(Boolean.TRUE);
-                                try {
-                                    if (!checkFirstMileDeclareAutoGenerateCfg(BillGenerateTimingEnum.AFTER_APPROVE)) {
-                                        return Boolean.TRUE;
-                                    }
-                                    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushFmDeclare(
-                                            new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
-                                    autoGenerateResult = deliveryDeclareDetailMidFeign.autoGenerateMidData(sourceDetailList);
-                                } finally {
-                                    UserContext.setIsUserSystem(originalValue);
-                                }
-                                if(autoGenerateResult){
-                                    log.info("头程发货单{}审核后自动生成报关明细中间表成功", entity.getCode());
-                                }
-                            }
-                        }catch (Exception e){
-                            log.error("头程发货单{}审核后自动生成报关明细中间表失败：{}", entity.getCode(), e.getMessage(), e);
-                            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_AUTO_GENERATE_FAILED,
-                                    "头程发货单", entity.getCode(), e.getMessage());
+                        if(WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())){
+                            registerFirstMileDeclareAutoGenerateTask(entity, BillGenerateTimingEnum.AFTER_APPROVE);
                         }
                     }
                 }
@@ -2611,12 +2709,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CharSequenceUtil.isBlank(dto.getDeclareStatus()) && CharSequenceUtil.isBlank(dto.getLogisticsStatus())){
             return false;
         }
-        return this.lambdaUpdate()
+        Boolean updateResult = this.lambdaUpdate()
                 .in(FirstMileDeliveryEntity :: getId,dto.getIds())
                 .set(CharSequenceUtil.isNotBlank(dto.getLogisticsStatus()),FirstMileDeliveryEntity::getLogisticsStatus, dto.getLogisticsStatus())
                 .set(CharSequenceUtil.isNotBlank(dto.getDeclareStatus()),FirstMileDeliveryEntity::getDeclareStatus,dto.getDeclareStatus())
                 .update();
-
+        return updateResult;
     }
 
     @Override
