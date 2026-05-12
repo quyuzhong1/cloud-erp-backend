@@ -359,4 +359,11 @@ public interface RedisCacheConstants {
         return StrUtil.format(SYS_NOTICE_SSE_NODE_TOPIC, application, nodeId);
     }
     String SO_B2C_DELIVERY_WITH_NOT_OUTBOUND_KEY = "oms:b2c:deliveryWithNotOutbound:";
+
+    /**
+     * 动态数据源 Doris 路由配置全量刷新广播 channel
+     * 由 DMP 进程在 cfg_setting(type=doris_query_cfg) 重建本地缓存后 publish；
+     * 各业务节点订阅后原子替换本地全量快照
+     */
+    String DORIS_QUERY_CFG_REFRESH_CHANNEL = "erp:doris_query_cfg:refresh";
 }
