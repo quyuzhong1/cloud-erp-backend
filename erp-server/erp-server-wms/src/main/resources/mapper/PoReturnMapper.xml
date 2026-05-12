@@ -7,6 +7,7 @@
         pro.id,
         pro.code,
         pro.purchase_order_code AS purchaseOrderCode,
+        pro.supplier_id AS supplierId,
         pro.supplier_name AS supplierName,
         pro.approve_status AS approveStatus,
         pro.invalid_status AS invalidStatus,
@@ -388,7 +389,7 @@
         LEFT JOIN po_instock_detail pid ON pi.ID = pid.main_id
         AND pid.is_deleted =
         FALSE INNER JOIN purchase_order po ON pi.purchase_order_id = po.ID
-        AND po."type" != 'CGDD06-SYS' and pi.approve_status = 'approve'
+        AND po."type" != 'CGDD06-SYS' and po."type" != 'CGDD99-SYS' and pi.approve_status = 'approve'
         <where>
             1=1 and pid.tax_price != 0
             <if test="params.skuIdList != null and params.skuIdList.size > 0">
