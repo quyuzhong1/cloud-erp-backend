@@ -3,6 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
@@ -298,12 +299,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     List<LogisticsBillCostEntity> batchImportUpdate(List<LogisticsBillEntity> logisticsBillList, List<LogisticsBillDetailEntity> logisticsBillDetailList, List<LogisticsBillCostDTO.UpdateDTO> dtoList,String processingType);
     /**
-     * 确认导入
+     * 批量确认导入
      * @author will
-     * @date 2026/4/16 11:24
-     * @param logisticsCostId
-     * @param code
-     * @param confirmDateTime
+     * @param confirmList 导入确认数据
+     * @param code 对账状态
      */
-    void confirmImport(String logisticsCostId, String code, LocalDateTime confirmDateTime);
+    void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String code);
 }
