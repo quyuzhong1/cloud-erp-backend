@@ -467,7 +467,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param list
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
      */
-    List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushFmDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
+    TmsDeclareBillDTO.MergeDeclareBillDTO listAfterPushFmDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list);
 
     void sendMsg(List<String> logisticsBillIds);
 }
