@@ -21,9 +21,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.redis.core.StringRedisTemplate;
+
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
+import com.common.business.dto.DorisQuerySettingFullCacheDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
@@ -116,6 +120,12 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private Map<String , DorisQuerySettingDTO> dorisQueryCfgSettingMappingCache;
 
+	/**
+	 * Doris 路由配置当前版本号，每次 {@link #initDorisQueryCfgSetting()} 重建时刷新为 System.currentTimeMillis()。
+	 * 同时作为 Redis 广播消息及 Feign 全量返回的 version 字段，订阅端据此严格单调比较忽略乱序消息。
+	 */
+	private volatile long dorisQueryCfgVersion = 0L;
+
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
@@ -144,7 +154,10 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgDbService dmpCfgDbService;
 	@Autowired
 	private CfgSettingService cfgSettingService;
-	
+
+	@Autowired(required = false)
+	private StringRedisTemplate stringRedisTemplate;
+
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
 			dmpBasicSystemCache = dmpBasicSystemService.lambdaQuery()
@@ -676,6 +689,48 @@ public class DmpHandlerCache implements CommandLineRunner{
 			}
 			return d;
 		} , (c1 , c2) -> c1));
+		dorisQueryCfgVersion = System.currentTimeMillis();
+		publishDorisQueryCfgRefresh();
+	}
+
+	/**
+	 * 给跨进程业务节点 Feign 拉全量使用：返回当前内存全量 + 版本号，
+	 * 节点据此原子替换本地 {@code DorisQuerySettingLocalCache} 快照。
+	 */
+	public DorisQuerySettingFullCacheDTO getAllDorisQuerySettings() {
+		if(dorisQueryCfgSettingMappingCache == null) {
+			this.initDorisQueryCfgSetting();
+		}
+		DorisQuerySettingFullCacheDTO dto = new DorisQuerySettingFullCacheDTO();
+		dto.setVersion(dorisQueryCfgVersion);
+		dto.setData(new HashMap<>(dorisQueryCfgSettingMappingCache));
+		return dto;
+	}
+
+	/**
+	 * 手动触发重建并广播；供 {@code DmpInoutController#refreshDorisCfg} 使用，
+	 * 内部直接复用 {@link #initDorisQueryCfgSetting()}（已包含发布广播）。
+	 */
+	public void rebuildAndPublishDorisQueryCfg() {
+		this.initDorisQueryCfgSetting();
+	}
+
+	private void publishDorisQueryCfgRefresh() {
+		if(stringRedisTemplate == null) {
+			return;
+		}
+		try {
+			DorisQuerySettingFullCacheDTO payload = new DorisQuerySettingFullCacheDTO();
+			payload.setVersion(dorisQueryCfgVersion);
+			payload.setData(new HashMap<>(dorisQueryCfgSettingMappingCache));
+			stringRedisTemplate.convertAndSend(
+					RedisCacheConstants.DORIS_QUERY_CFG_REFRESH_CHANNEL,
+					JSON.toJSONString(payload));
+			log.info("publishDorisQueryCfgRefresh ok, size={}, version={}",
+					payload.getData().size(), payload.getVersion());
+		} catch (Throwable e) {
+			log.warn("publishDorisQueryCfgRefresh failed, subscribers will fallback to 5min sync", e);
+		}
 	}
 
 
