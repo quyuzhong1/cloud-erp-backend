@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;

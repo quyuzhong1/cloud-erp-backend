@@ -175,10 +175,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             processBatch();
             successList.clear();
         }
-        //添加匹配结果
-        addMatchExcelResult();
         //对所有确认数据进行批量确认
         importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
+        //添加匹配结果
+        addMatchExcelResult();
     }
     /**
      * 添加匹配结果
