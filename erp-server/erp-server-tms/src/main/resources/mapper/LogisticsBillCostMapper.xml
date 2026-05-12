@@ -47,24 +47,7 @@
           and lbc.is_deleted = false and lb.shop_id = #{shopId}
     </update>
 
-    <!-- 批量确认接口 -->
-    <update id="batchConfirmImport">
-        update logistics_bill_cost
-        set reconciliation_status = #{reconciliationStatus},
-        confirm_time = case id
-        <foreach collection="confirmList" item="item">
-            when #{item.logisticsCostId} then #{item.confirmDateTime}
-        </foreach>
-        end,
-        confirm_user_id = #{confirmUserId},
-        confirm_user_name = #{confirmUserName},
-        update_time = NOW()
-        where is_deleted = false
-        and id in
-        <foreach collection="confirmList" item="item" open="(" separator="," close=")">
-            #{item.logisticsCostId}
-        </foreach>
-    </update>
+
 
     <!-- tab列表 -->
     <select id="listCount" resultType="java.lang.Integer">
