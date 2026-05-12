@@ -536,6 +536,11 @@ public enum RocketMqTagEnum {
      */
     WMS_FIRST_MILE_DECLARE_AUTO_GENERATE_TAG(6008,RocketMqTagEnum.SYNC_WMS,"wms_first_mile_declare_auto_generate_tag"),
 
+    /**
+     * B2B发货通知单自动生成报关明细
+     */
+    WMS_B2B_DECLARE_AUTO_GENERATE_TAG(6009,RocketMqTagEnum.SYNC_WMS,"wms_b2b_declare_auto_generate_tag"),
+
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 
     /**
