@@ -172,7 +172,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private void handleData(ImportHistoryRecordEntity entity) {
 
         //根据文件URL查询是否已存在记录，存在则更新，不存在则新增
-        ImportHistoryRecordEntity old = this.getByFileUrl(entity.getFileUrl());
+        ImportHistoryRecordEntity old = this.getByFileUrl(entity.getFileUrl(),entity.getSheetName());
         if (ObjectUtil.isNotEmpty(old)) {
             entity.setId(old.getId());
         }
@@ -736,8 +736,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),importDTO.getProcessingType())) {
             return;
         }
-        confirmPairList.forEach(obj -> logisticsBillCostService.confirmImport(obj.getLogisticsCostId(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getConfirmDateTime()));
-    }
+        logisticsBillCostService.batchConfirmImport(confirmPairList, ReconciliationStatusEnum.CONFIRMED.getCode());    }
 
     /**
      * 更新匹配结果
@@ -1095,9 +1094,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                                                 CfgLogisticsCostImportEntity costImportEntity, List<String> errorMsgList, String costAttribution, Map<String, List<TmsCostDetailEntity>> mainIdListMap) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
-        if (CharSequenceUtil.equals(excelDTO.getSoDeliveryCode(),"FHD26030900006")) {
-            System.out.println("23234");
-        }
+
         //需要导入或更新的物流费用数据
         LogisticsBillCostDTO.ImportDataDTO  importDataDTO= new LogisticsBillCostDTO.ImportDataDTO();
 
@@ -1114,6 +1111,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             payTypeCode = logisticsPayTypeEnum.PAY.getCode();
         }
         excelDTO.setPayType(payTypeCode);
+        List<String> emptyUniqueKeyFieldList = uniqueKeyList.stream()
+                .filter(uniqueKey -> ObjectUtil.isEmpty(successJson.get(uniqueKey.getTargetField()))
+                        || CharSequenceUtil.isBlank(String.valueOf(successJson.get(uniqueKey.getTargetField()))))
+                .map(uniqueKey -> CharSequenceUtil.blankToDefault(uniqueKey.getSourceField(), uniqueKey.getTargetField()))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(emptyUniqueKeyFieldList)) {
+            errorMsgList.add("识别号对应字段不能为空：" + String.join("、", emptyUniqueKeyFieldList));
+            return importDataDTO;
+        }
         //查询根据唯一键匹配物流单
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream().filter(obj -> uniqueKeyList.stream().allMatch(uniqueKey -> CharSequenceUtil.equals(String.valueOf(successJson.get(uniqueKey.getTargetField())), BeanUtil.getFieldValue(obj, uniqueKey.getTargetField()).toString()))).collect(Collectors.toList());
 
@@ -1770,10 +1777,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param fileUrl
      * @return com.erp.model.tms.entity.ImportHistoryRecordEntity
      */
-    private ImportHistoryRecordEntity getByFileUrl(String fileUrl) {
-        if (CharSequenceUtil.isBlank(fileUrl)) {
-            throw new ServiceException("文件URL不能为空");
+    private ImportHistoryRecordEntity getByFileUrl(String fileUrl,String sheetName) {
+        if (CharSequenceUtil.isBlank(fileUrl) || CharSequenceUtil.isBlank(sheetName) ) {
+            throw new ServiceException("文件URL、sheet页名称不能为空");
         }
-        return this.lambdaQuery().eq(ImportHistoryRecordEntity::getFileUrl, fileUrl).last("limit 1").one();
+        return this.lambdaQuery().eq(ImportHistoryRecordEntity::getFileUrl, fileUrl).eq(ImportHistoryRecordEntity::getSheetName,sheetName).last("limit 1").one();
     }
 }

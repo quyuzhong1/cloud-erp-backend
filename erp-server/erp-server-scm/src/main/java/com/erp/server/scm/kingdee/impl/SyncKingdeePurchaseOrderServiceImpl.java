@@ -29,6 +29,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -220,7 +221,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("purchaseDate", LocalDateTimeUtil.format(entity.getPurchaseDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //单据类型
-        resultMap.put("type",entity.getType());
+        resultMap.put("type",Objects.equals(entity.getType(), PurchaseOrderTypeEnum.ENUM_REPAIR.getCode()) ? PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode() : entity.getType());
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());

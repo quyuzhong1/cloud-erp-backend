@@ -121,6 +121,10 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         List<CfgAmzFulfillmentCenterEntity> list = cfgAmzFulfillmentCenterService.lambdaQuery()
                 .eq(CfgAmzFulfillmentCenterEntity::getCode, entity.getFulfillmentCenter())
                 .list();
+        if (org.apache.commons.lang3.StringUtils.isBlank(dto.getFulfillmentCenterCountry())) {
+            throw new ServiceException("领星接口同步延迟，暂未加载到最新数据，请稍后重新拉取");
+        }
+
         if (list.isEmpty()) {
             CfgAmzFulfillmentCenterEntity cfgAmzFulfillmentCenterEntity = new CfgAmzFulfillmentCenterEntity();
             cfgAmzFulfillmentCenterEntity.setCode(entity.getFulfillmentCenter());
