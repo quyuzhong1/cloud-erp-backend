@@ -16,12 +16,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import org.springframework.data.redis.core.StringRedisTemplate;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -155,8 +155,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	@Autowired
 	private CfgSettingService cfgSettingService;
 
-	@Autowired(required = false)
-	private StringRedisTemplate stringRedisTemplate;
+	@Autowired
+	private RedissonClient redissonClient;
 
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
@@ -716,18 +716,17 @@ public class DmpHandlerCache implements CommandLineRunner{
 	}
 
 	private void publishDorisQueryCfgRefresh() {
-		if(stringRedisTemplate == null) {
+		if(redissonClient == null) {
 			return;
 		}
 		try {
 			DorisQuerySettingFullCacheDTO payload = new DorisQuerySettingFullCacheDTO();
 			payload.setVersion(dorisQueryCfgVersion);
 			payload.setData(new HashMap<>(dorisQueryCfgSettingMappingCache));
-			stringRedisTemplate.convertAndSend(
-					RedisCacheConstants.DORIS_QUERY_CFG_REFRESH_CHANNEL,
-					JSON.toJSONString(payload));
-			log.info("publishDorisQueryCfgRefresh ok, size={}, version={}",
-					payload.getData().size(), payload.getVersion());
+			RTopic topic = redissonClient.getTopic(RedisCacheConstants.DORIS_QUERY_CFG_REFRESH_CHANNEL);
+			long received = topic.publish(JSON.toJSONString(payload));
+			log.info("publishDorisQueryCfgRefresh ok, size={}, version={}, receivedBy={}",
+					payload.getData().size(), payload.getVersion(), received);
 		} catch (Throwable e) {
 			log.warn("publishDorisQueryCfgRefresh failed, subscribers will fallback to 5min sync", e);
 		}
