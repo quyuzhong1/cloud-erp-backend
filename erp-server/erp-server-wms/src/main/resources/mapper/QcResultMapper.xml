@@ -88,7 +88,7 @@
         sum( qr.total_qty ) as totalQty
         from qc_result qr
         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
-        where qr.is_deleted = FALSE and qi.qc_status in ('finishQc','exemption') and qr.qc_result = 'conformity'
+        where qr.is_deleted = FALSE and qi.qc_status in ('finishQc','exemption')
         and qr.purchase_order_detail_id in
         <foreach collection="podIdList" item="podId" open="(" separator="," close=")">
             #{podId}
@@ -108,7 +108,7 @@
         from qc_result qr
         inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
         inner join po_receive_detail prd on prd.id = qi.source_detail_id and prd.is_deleted = FALSE
-        where qr.is_deleted = FALSE  and qi.source_type = 'poReceive' and qr.qc_result = 'conformity'
+        where qr.is_deleted = FALSE  and qi.source_type = 'poReceive'
         and qi.id in
         <foreach collection="qcIdList" item="item" open="(" separator="," close=")">
             #{item}
@@ -124,7 +124,7 @@
         from qc_result qr
          inner join qc_info qi on qi.id = qr.main_id and qi.is_deleted = FALSE
          inner join qc_notice qn on qn.id = qi.source_id and qn.is_deleted = FALSE
-        where qr.is_deleted = FALSE  and qi.source_type = 'qcNotice' and qn.source_type = 'poReceive' and qr.qc_result = 'conformity'
+        where qr.is_deleted = FALSE  and qi.source_type = 'qcNotice' and qn.source_type = 'poReceive'
         and qi.id in
         <foreach collection="qcIdList" item="item" open="(" separator="," close=")">
             #{item}
