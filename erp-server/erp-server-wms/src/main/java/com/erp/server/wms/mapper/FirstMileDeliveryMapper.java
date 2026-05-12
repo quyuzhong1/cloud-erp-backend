@@ -46,8 +46,6 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     * @param params
     * @return
     */
-    List<FirstMileDeliveryDTO.ListDTO> listExport(@Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
-
     Page<FirstMileDeliveryDTO.ListDTO> listExport(@Param("page") Page<FirstMileDeliveryDTO.ListDTO> page, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
 

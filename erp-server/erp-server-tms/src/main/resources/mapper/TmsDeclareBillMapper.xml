@@ -186,18 +186,18 @@
         WITH delivery_notice as (
         select
             declare_id,
-            array_to_string(array_agg(DISTINCT business_code),',') as bussinessCode,
+            array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
             array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
             array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
             array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName,
-            array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgname
+            array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgName
         from delivery_declare_detail_mid
         where is_deleted = false and source_type = 'soDeliveryNotice'
         group by declare_id
         )
         SELECT
             db.id,
-            db.declar_confirm_date as declarConfirmDate,
+            db.declar_confirm_date as declareConfirmDate,
             db.code,
             (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
             db.declare_status as declareStatus,
@@ -209,13 +209,15 @@
             db.gross_weight as  grossWeight,
             db.declare_date as   declareDate,
             db.declare_type as   declareType,
+            db.declar_user_name as declareUserName,
+            db.remark,
             db.create_user_name as   createUserName,
             db.create_time as   createTime,
-            dn.bussinessCode,
+            dn.businessCode,
             dn.sourceCode,
             dn.fromWarehouseName,
             dn.transferWarehouseName,
-            dn.salesOrgname
+            dn.salesOrgName
         from  tms_declare_bill db
         left join delivery_notice dn on db.id = dn.declare_id
         where
@@ -240,7 +242,7 @@
         WITH delivery_notice as (
         select
             declare_id,
-            array_to_string(array_agg(DISTINCT business_code),',') as bussinessCode,
+            array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
             array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
             array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
             array_to_string(array_agg(DISTINCT dest_warehouse_name),',') as destWarehouseName,
@@ -251,7 +253,7 @@
         )
         SELECT
             db.id,
-            db.declar_confirm_date as declarConfirmDate,
+            db.declar_confirm_date as declareConfirmDate,
             db.code,
             (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
             db.declare_status as declareStatus,
@@ -263,9 +265,11 @@
             db.gross_weight as  grossWeight,
             db.declare_date as   declareDate,
             db.declare_type as   declareType,
+            db.declar_user_name as declareUserName,
+            db.remark,
             db.create_user_name as   createUserName,
             db.create_time as   createTime,
-            dn.bussinessCode,
+            dn.businessCode,
             dn.sourceCode,
             dn.fromWarehouseName,
             dn.destWarehouseName,

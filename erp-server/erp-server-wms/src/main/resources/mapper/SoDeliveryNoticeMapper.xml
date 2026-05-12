@@ -114,6 +114,7 @@
         sdnd.delivery_qty AS deliveryQty,
         sdnd.customer_po AS customerPO,
         sdnd.to_country AS toCountry,
+        sdn.declare_status AS declareStatus,
         sdn.seller_name AS sellerName,
         sdn.require_date AS requireDate,
         sdn.plan_delivery_date AS planDeliveryDate,
