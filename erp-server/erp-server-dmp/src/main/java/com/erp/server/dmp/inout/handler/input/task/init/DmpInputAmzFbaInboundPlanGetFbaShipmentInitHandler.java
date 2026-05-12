@@ -38,12 +38,12 @@ import java.util.Set;
 import java.util.LinkedHashSet;
 
 /**
- * FBA InboundPlan 货件详情拉取（仅调用 getShipment，一个 API 一个任务）
+ * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程
  */
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzFbaInboundPlanShipmentGetShipmentInitHandler extends DmpInputAmzCommonInitHandler {
+public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInputAmzCommonInitHandler {
 
     @Resource
     private RedisUtil redisUtil;
@@ -93,7 +93,20 @@ public class DmpInputAmzFbaInboundPlanShipmentGetShipmentInitHandler extends Dmp
                         log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因=shipmentConfirmationId为空", inboundPlanId, shipmentRawId);
                         continue;
                     }
-                    shipmentDetailData.add((JSONObject) JSON.toJSON(shipmentDetail));
+                    JSONObject shipmentDetailJson = (JSONObject) JSON.toJSON(shipmentDetail);
+                    // getShipment 响应中通常不带 marketplaceId，需要从上游 getInboundPlan 结果传下来
+                    shipmentDetailJson.putIfAbsent("inboundPlanId", inboundPlanId);
+                    Object parentMarketplaceIdsObj = parentMongo.get("marketplaceIds");
+                    if (parentMarketplaceIdsObj != null) {
+                        shipmentDetailJson.putIfAbsent("marketplaceIds", parentMarketplaceIdsObj);
+                    }
+                    if (StringUtils.isBlank(shipmentDetailJson.getString("marketplaceId"))) {
+                        String parentMarketplaceId = resolveParentMarketplaceId(parentMongo);
+                        if (StringUtils.isNotBlank(parentMarketplaceId)) {
+                            shipmentDetailJson.put("marketplaceId", parentMarketplaceId);
+                        }
+                    }
+                    shipmentDetailData.add(shipmentDetailJson);
                 } catch (ApiException e) {
                     if (e.getCode() == 429) {
                         BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
@@ -132,6 +145,22 @@ public class DmpInputAmzFbaInboundPlanShipmentGetShipmentInitHandler extends Dmp
             }
         }
         return shipmentRawIdSet;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String resolveParentMarketplaceId(Map<String, Object> parentMongo) {
+        Object marketplaceIdObj = parentMongo.get("marketplaceId");
+        if (marketplaceIdObj != null && StringUtils.isNotBlank(marketplaceIdObj.toString())) {
+            return marketplaceIdObj.toString();
+        }
+        Object marketplaceIdsObj = parentMongo.get("marketplaceIds");
+        if (marketplaceIdsObj instanceof List && CollUtil.isNotEmpty((List<Object>) marketplaceIdsObj)) {
+            Object first = ((List<Object>) marketplaceIdsObj).get(0);
+            if (first != null && StringUtils.isNotBlank(first.toString())) {
+                return first.toString();
+            }
+        }
+        return "";
     }
 
     private String resolveAuthShopIdByTaskChain() {

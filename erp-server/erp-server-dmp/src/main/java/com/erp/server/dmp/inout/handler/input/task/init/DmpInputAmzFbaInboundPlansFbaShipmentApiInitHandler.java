@@ -39,12 +39,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FBA InboundPlan 列表拉取（仅调用 listInboundPlans，一个 API 一个任务）
+ * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器
  */
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzFbaInboundPlanShipmentApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
     private static final List<String> DEFAULT_STATUS_LIST = Arrays.asList("ACTIVE", "SHIPPED");
 
@@ -71,8 +71,8 @@ public class DmpInputAmzFbaInboundPlanShipmentApiInitHandler extends DmpInputIni
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
         List<String> inboundPlanStatusList = parseStatusList(dmpInputTaskEntity.getExtendJson());
-        int lookbackDays = parseLookbackDays();
-        OffsetDateTime thresholdTime = OffsetDateTime.now().minusDays(lookbackDays);
+        int lookbackMinutes = parseLookbackMinutes();
+        OffsetDateTime thresholdTime = OffsetDateTime.now().minusMinutes(lookbackMinutes);
 
         Map<String, Integer> statusCountMap = new LinkedHashMap<>();
         Map<String, InboundPlanSummary> inboundPlanSummaryMap = new LinkedHashMap<>();
@@ -165,25 +165,38 @@ public class DmpInputAmzFbaInboundPlanShipmentApiInitHandler extends DmpInputIni
     }
 
     /**
-     * lookbackDays 配置读取方式对齐 DmpInputLxFbaShipmentApiInitHandler(limitSecond)
+     * lookbackMinutes 优先，兼容 lookbackDays（按天换算分钟）
      */
-    private int parseLookbackDays() {
-        String lookbackDaysStr = "7";
+    private int parseLookbackMinutes() {
+        int defaultLookbackMinutes = 7 * 24 * 60;
+        String lookbackMinutesStr = String.valueOf(defaultLookbackMinutes);
         String extendJson = dmpCfgInputEntity.getExtendJson();
         if (StringUtils.isNotBlank(extendJson)) {
             JSONObject parseObject = JSON.parseObject(extendJson);
             if (parseObject != null) {
-                String sourceLookbackDays = parseObject.getString("lookbackDays");
-                if (StringUtils.isNotBlank(sourceLookbackDays)) {
-                    lookbackDaysStr = sourceLookbackDays;
+                String sourceLookbackMinutes = parseObject.getString("lookbackMinutes");
+                if (StringUtils.isNotBlank(sourceLookbackMinutes)) {
+                    lookbackMinutesStr = sourceLookbackMinutes;
+                } else {
+                    String sourceLookbackDays = parseObject.getString("lookbackDays");
+                    if (StringUtils.isNotBlank(sourceLookbackDays)) {
+                        try {
+                            int lookbackDays = Integer.parseInt(sourceLookbackDays);
+                            if (lookbackDays > 0) {
+                                return lookbackDays * 24 * 60;
+                            }
+                        } catch (Exception ignore) {
+                            return defaultLookbackMinutes;
+                        }
+                    }
                 }
             }
         }
         try {
-            int lookbackDays = Integer.parseInt(lookbackDaysStr);
-            return lookbackDays > 0 ? lookbackDays : 7;
+            int lookbackMinutes = Integer.parseInt(lookbackMinutesStr);
+            return lookbackMinutes > 0 ? lookbackMinutes : defaultLookbackMinutes;
         } catch (Exception ignore) {
-            return 7;
+            return defaultLookbackMinutes;
         }
     }
 

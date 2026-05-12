@@ -91,7 +91,7 @@ import java.util.stream.Stream;
 @Service
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private static final String AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER =
-            "DmpInputAmzFbaInboundPlanShipmentApiInitHandler";
+            "DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler";
 
     @Resource
     private MongoService mongoService;

@@ -89,27 +89,18 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
             dmpDataMap.put("fulfillmentCenter", fulfillmentCenter);
         }
 
-        String fulfillmentCenterCountry = getNestedString(mongoData, "destination", "address", "countryCode");
-        if (CharSequenceUtil.isNotBlank(fulfillmentCenterCountry)) {
-            dmpDataMap.put("fulfillmentCenterCountry", fulfillmentCenterCountry);
-        }
+//        String fulfillmentCenterCountry = getNestedString(mongoData, "destination", "address", "countryCode");
+//        if (CharSequenceUtil.isNotBlank(fulfillmentCenterCountry)) {
+//            dmpDataMap.put("fulfillmentCenterCountry", fulfillmentCenterCountry);
+//        }
 
         String marketplaceCountryCode = resolveCountryCodeByMarketplace(mongoData);
+        dmpDataMap.put("countryId", marketplaceCountryCode);
+        dmpDataMap.put("fulfillmentCenterCountry", marketplaceCountryCode);
         Address sourceAddress = parseSourceAddress(mongoData);
         if (sourceAddress != null) {
-            String countryCode = CharSequenceUtil.isNotBlank(marketplaceCountryCode)
-                    ? marketplaceCountryCode
-                    : sourceAddress.getCountryCode();
-            if (CharSequenceUtil.isNotBlank(countryCode)) {
-                dmpDataMap.put("countryId", countryCode);
-            }
             dmpDataMap.put("deliveryFromAddress", buildFullAddress(sourceAddress));
         } else {
-            if (CharSequenceUtil.isNotBlank(marketplaceCountryCode)) {
-                dmpDataMap.put("countryId", marketplaceCountryCode);
-            } else {
-                dmpDataMap.putIfAbsent("countryId", "");
-            }
             dmpDataMap.putIfAbsent("deliveryFromAddress", "");
         }
 
