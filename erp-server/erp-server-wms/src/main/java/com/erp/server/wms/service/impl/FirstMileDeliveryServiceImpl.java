@@ -345,7 +345,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             });
             return;
         }
-        sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
     }
 
     /**
@@ -2446,15 +2445,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         lambdaUpdate().set(FirstMileDeliveryEntity::getPackingStatus, packingStatus)
                 .eq(FirstMileDeliveryEntity::getId, id)
                 .update();
-        if (CharSequenceUtil.equals(packingStatus, PackingTaskStatusEnum.PACKED.getCode())) {
-            FirstMileDeliveryEntity entity = this.getById(id);
-            if (Objects.nonNull(entity)) {
-                autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_ADD);
-                if (CharSequenceUtil.equals(entity.getApproveStatus(), com.common.business.enums.ApproveStatusEnum.APPROVE.getCode())) {
-                    autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_APPROVE);
-                }
-            }
-        }
+//        if (CharSequenceUtil.equals(packingStatus, PackingTaskStatusEnum.PACKED.getCode())) {
+//            FirstMileDeliveryEntity entity = this.getById(id);
+//            if (Objects.nonNull(entity)) {
+//                autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_ADD);
+//                if (CharSequenceUtil.equals(entity.getApproveStatus(), com.common.business.enums.ApproveStatusEnum.APPROVE.getCode())) {
+//                    autoGenerateByPacked(entity, BillGenerateTimingEnum.AFTER_APPROVE);
+//                }
+//            }
+//        }
     }
 
     @Override
