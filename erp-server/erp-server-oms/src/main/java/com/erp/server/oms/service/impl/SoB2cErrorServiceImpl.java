@@ -101,7 +101,6 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         if (Objects.nonNull(soB2cErrorEntity)){
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());
             soB2cErrorEntity.setMessage(addDTO.getMessage());
-            soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
         }else {
             soB2cErrorEntity = new SoB2cErrorEntity();
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());

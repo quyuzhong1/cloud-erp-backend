@@ -210,6 +210,10 @@ public enum ModuleTypeEnum {
 
     QC_APPLICATION("163", "质检申请单"),
     FILE_MANAGEMENT("164", "文件管理"),
+    MESSAGE("162","系统通知"),
+    SYS_VERSION("163","版本更新"),
+    PDA_VERSION("164","PDA系统升级"),
+
 
 
 
