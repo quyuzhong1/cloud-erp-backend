@@ -47,6 +47,7 @@ import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -172,6 +173,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     @Resource
     private CfgSettingService cfgSettingService;
+
+    @Resource
+    private BankAccountService bankAccountService;
 
     /**
      * 获取到分组的id 集合
@@ -687,6 +691,18 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
             List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
             view.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
+        }
+        if (StringUtils.isNotBlank(customer.getDefaultShippingWarehouse())) {
+            WarehouseEntity warehouseEntity = FeignQuery.getById(WarehouseEntity.class, customer.getDefaultShippingWarehouse());
+            if (warehouseEntity != null) {
+                view.setDefaultShippingWarehouseName(warehouseEntity.getName());
+            }
+        }
+        if (StringUtils.isNotBlank(customer.getDefaultReceiveAccount())) {
+            BankAccountEntity bankAccountEntity = bankAccountService.getById(customer.getDefaultReceiveAccount());
+            if (bankAccountEntity != null) {
+                view.setDefaultReceiveAccountName(bankAccountEntity.getAccountName());
+            }
         }
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
@@ -1307,6 +1323,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         //平台类型
         base.setBusinessMode(customer.getBusinessMode());
         base.setBusinessModeName(CustomerInfoBusinessModeEnum.getName(customer.getBusinessMode()));
+
+        base.setDefaultShippingWarehouse(customer.getDefaultShippingWarehouse());
+        base.setDefaultReceiveAccount(customer.getDefaultReceiveAccount());
 
         return base;
     }

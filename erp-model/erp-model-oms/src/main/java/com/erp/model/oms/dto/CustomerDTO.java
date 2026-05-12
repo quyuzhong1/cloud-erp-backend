@@ -482,6 +482,18 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
+         * 默认发货仓库
+         */
+        @Size(max = 64, message = "默认发货仓库最大64字符")
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        @Size(max = 64, message = "默认收款账号最大64字符")
+        private String defaultReceiveAccount;
+
+        /**
          * 通讯地址
          */
         @Size(max = 255, message = "通讯地址最大255字符")
@@ -747,6 +759,26 @@ public class CustomerDTO implements Serializable {
         private String customerProperty;
 
         /**
+         * 默认发货仓库
+         */
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        private String defaultReceiveAccount;
+
+        /**
+         * 默认发货仓库名称（defaultShippingWarehouse 存仓库 id）
+         */
+        private String defaultShippingWarehouseName;
+
+        /**
+         * 默认收款账号名称（defaultReceiveAccount 存银行账号 id，一般为账户名称展示）
+         */
+        private String defaultReceiveAccountName;
+
+        /**
          * 通讯地址
          */
         private String mailAddress;
@@ -959,6 +991,18 @@ public class CustomerDTO implements Serializable {
          * 客户属性
          */
         private String customerProperty;
+
+        /**
+         * 默认发货仓库
+         */
+        @Size(max = 64, message = "默认发货仓库最大64字符")
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        @Size(max = 64, message = "默认收款账号最大64字符")
+        private String defaultReceiveAccount;
 
         /**
          * 通讯地址
@@ -1278,6 +1322,16 @@ public class CustomerDTO implements Serializable {
          */
         private String salesDeptName;
 
+        /**
+         * 默认发货仓库
+         */
+        private String defaultShippingWarehouse;
+
+        /**
+         * 默认收款账号
+         */
+        private String defaultReceiveAccount;
+
 
     }
 
@@ -1430,6 +1484,14 @@ public class CustomerDTO implements Serializable {
          *客户属性
          */
         private String customerProperty;
+        /**
+         * 默认发货仓库
+         */
+        private String defaultShippingWarehouse;
+        /**
+         * 默认收款账号
+         */
+        private String defaultReceiveAccount;
         /**
          *通讯地址
          */

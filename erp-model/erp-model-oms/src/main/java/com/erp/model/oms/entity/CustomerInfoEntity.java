@@ -203,6 +203,18 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String customerProperty;
 
     /**
+     * 默认发货仓库
+     */
+    @TableField("default_shipping_warehouse")
+    private String defaultShippingWarehouse;
+
+    /**
+     * 默认收款账号
+     */
+    @TableField("default_receive_account")
+    private String defaultReceiveAccount;
+
+    /**
      * 通讯地址
      */
     @TableField("mail_address")
