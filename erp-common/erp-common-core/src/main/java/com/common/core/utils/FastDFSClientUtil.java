@@ -386,4 +386,42 @@ public class FastDFSClientUtil {
 		}
 		return result;
 	}
+
+    public static String uploadFile2Client(long fileSize, UploadCallback callback, String fileName, Map<String, String> metaList) throws IOException, MyException {
+        NameValuePair[] nameValuePairs = null;
+        if (metaList != null) {
+            nameValuePairs = new NameValuePair[metaList.size()];
+            int index = 0;
+            for (Map.Entry<String, String> entry : metaList.entrySet()) {
+                nameValuePairs[index++] = new NameValuePair(entry.getKey(), entry.getValue());
+            }
+        }
+        String filePath = getStorageClient().upload_file1("", fileSize, callback, FilenameUtils.getExtension(fileName), nameValuePairs);
+        return checkFileId(filePath);
+    }
+
+    /**
+     * 上传文件
+     *
+     * @param file     文件对象
+     * @param fileName 文件名
+     * @param metaList 文件元数据
+     * @return
+     */
+    public synchronized static String streamUploadFile(File file, String fileName, Map<String, String> metaList) {
+        try {
+            long size = file.length();
+            // 使用 File 打开流，避免 getAbsolutePath/getCanonicalPath 与路径字符串在相对路径、符号链接等场景下与 JVM 解析不一致
+            UploadCallback sender = out -> {
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    IOUtils.copy(fis, out);
+                }
+                return 0;
+            };
+            return uploadFile2Client(size, sender, fileName, metaList);
+        } catch (Exception e) {
+            log.error("uploadFile  ",e);
+        }
+        return null;
+    }
 }

@@ -93,6 +93,10 @@ public class FileTask extends BaseEntity<FileTask> {
         return task;
     }
 
+    public String getUniqueWithFileName() {
+        return super.getId() + "_" + this.getFileName() + "_" + System.currentTimeMillis();
+    }
+
 
     /**
      * 非稳定状态

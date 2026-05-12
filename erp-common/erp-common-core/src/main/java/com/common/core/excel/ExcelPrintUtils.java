@@ -1271,6 +1271,157 @@ public class ExcelPrintUtils {
 		return dataList;
 	}
 
+    public <T> void exportDynamicHeadersExcelToFile(File outputFile, String sheetName, List<List<String>> head, List<List<T>> data) {
+        try (FileOutputStream out = new FileOutputStream(outputFile)) {
+            HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
+            EasyExcelFactory.write(out)
+                    .registerConverter(new SqlDateNumberConverter())
+                    .registerConverter(new SqlDateStringConverter())
+                    .registerConverter(new SqlTimestampStringConverter())
+                    .head(head).registerWriteHandler(horizontalCellStyleStrategy).registerWriteHandler(new ExcelCellWidthStyleStrategy()).sheet(sheetName).doWrite(data);
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    /**
+     * 列表模板导出到本地文件（避免整表字节数组驻留内存）
+     */
+    public void patchExportListToFile(File outputFile, List<?> list, String excelPath, WriteHandler... writeHandlers) throws IOException {
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+            ClassPathResource classPathResource = new ClassPathResource(excelPath);
+            try (InputStream inputStream = classPathResource.getInputStream()) {
+                ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(inputStream).autoCloseStream(false);
+                for (WriteHandler handler : writeHandlers) {
+                    excelWriterBuilder.registerWriteHandler(handler);
+                }
+                ExcelWriter excelWriter = excelWriterBuilder.build();
+                registerPatchExportListConverters(excelWriter);
+                WriteSheet writeSheet = EasyExcelFactory.writerSheet().build();
+                try {
+                    excelWriter.fill(list, writeSheet);
+                } finally {
+                    excelWriter.finish();
+                }
+            }
+        }
+    }
+
+    /**
+     * 打开列表模板 Writer（分批 fill 后须 {@link ExcelWriter#finish()}）。
+     * 模板先读入内存再交给 EasyExcel，避免 Classpath 模板流长期未关；模板体积一般较小。
+     */
+    public ExcelWriter openTemplateListWriter(OutputStream outputStream, String excelPath, WriteHandler... writeHandlers) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource(excelPath);
+        final byte[] templateBytes;
+        try (InputStream in = classPathResource.getInputStream()) {
+            templateBytes = IOUtils.toByteArray(in);
+        }
+        return openTemplateListWriter(outputStream, templateBytes, writeHandlers);
+    }
+
+    /**
+     * 使用已预处理（例如 POI 克隆多 sheet）的模板字节打开列表模板 Writer。
+     */
+    public ExcelWriter openTemplateListWriter(OutputStream outputStream, byte[] templateBytes, WriteHandler... writeHandlers) throws IOException {
+        InputStream templateIn = new ByteArrayInputStream(templateBytes);
+        ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(templateIn).autoCloseStream(true);
+        for (WriteHandler handler : writeHandlers) {
+            excelWriterBuilder.registerWriteHandler(handler);
+        }
+        ExcelWriter excelWriter = excelWriterBuilder.build();
+        registerPatchExportListConverters(excelWriter);
+        return excelWriter;
+    }
+
+    private static void registerPatchExportListConverters(ExcelWriter excelWriter) {
+        LocalDateTimeConverter converter = new LocalDateTimeConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+        EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+
+        EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+
+        EasyExcelListConverter listConverter = new EasyExcelListConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
+
+        ByteArrayImageConverter byteArrayImageConverter = new ByteArrayImageConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey()), byteArrayImageConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey(), byteArrayImageConverter.supportExcelTypeKey()), byteArrayImageConverter);
+    }
+
+    /**
+     * 主子表模板导出到本地文件
+     */
+    public <T> void patchExportDetailToFile(File outputFile, List<?> list, T obj, String excelPath) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource(excelPath);
+        try (FileOutputStream outputStream = new FileOutputStream(outputFile);
+             InputStream inputStream = classPathResource.getInputStream()) {
+            ExcelWriter excelWriter = EasyExcel.write(outputStream).withTemplate(inputStream).registerWriteHandler(new ExcelFillCellMergeStrategy()).build();
+            LocalDateTimeConverter converter = new LocalDateTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+            EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+
+            EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+            try {
+                excelWriter.fill(list, fillConfig, writeSheet);
+
+                if (obj != null) {
+                    excelWriter.fill(obj, writeSheet);
+                }
+            } finally {
+                excelWriter.finish();
+            }
+        }
+    }
+
+    /**
+     * 多 sheet 模板填充写入本地文件
+     */
+    public void sheetPatchExportToFile(File outputFile, List<Pair<Integer, List<?>>> pairList, String excelPath) throws IOException {
+        ClassPathResource classPathResource = new ClassPathResource(excelPath);
+        try (FileOutputStream out = new FileOutputStream(outputFile);
+             InputStream inputStream = classPathResource.getInputStream()) {
+            ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(inputStream).build();
+            LocalDateTimeConverter converter = new LocalDateTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+            EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+
+            EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+            try {
+                for (Pair<Integer, List<?>> pair : pairList) {
+                    WriteSheet writeSheet = EasyExcel.writerSheet(pair.getKey()).build();
+                    excelWriter.fill(pair.getValue(), writeSheet);
+                }
+            } finally {
+                excelWriter.finish();
+            }
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
 	public static void main(String[] args) throws Exception{
 		String filePath = "C:\\Users\\Administrator\\Desktop\\新建 XLS 工作表.xls";
 		InputStream inputStream = new FileInputStream(filePath);
