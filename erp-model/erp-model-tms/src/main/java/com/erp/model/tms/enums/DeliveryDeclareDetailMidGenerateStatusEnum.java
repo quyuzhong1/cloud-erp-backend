@@ -14,7 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum DeliveryDeclareDetailMidGenerateStatusEnum implements EnumMessage {
 
     WAIT("wait", "未生成"),
-    FINISH("finish", "已生成");
+    FINISH("finish", "已生成"),
+    ;
     @EnumValue
     @JsonValue
     private final String code;
