@@ -71,7 +71,7 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "优先级", index = 6)
-    private String priority;
+    private String sort;
 
     /**
      * 启用状态（启用/禁用）

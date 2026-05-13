@@ -49,8 +49,8 @@ public class AfterSalesWarehouseLocationSuggestEntity extends BaseEntity<AfterSa
     /**
      * 优先级
      */
-    @TableField("priority")
-    private Integer priority;
+    @TableField("sort")
+    private Integer sort;
     /**
      * 状态
      * 是否禁用

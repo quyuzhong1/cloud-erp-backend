@@ -393,7 +393,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(
                         AfterSalesWarehouseLocationSuggestEntity::getSuggestWarehouseLocationCode,
-                        AfterSalesWarehouseLocationSuggestEntity::getPriority,
+                        AfterSalesWarehouseLocationSuggestEntity::getSort,
                         AfterSalesWarehouseLocationSuggestEntity::getDisabled
                 )
                 .eq(AfterSalesWarehouseLocationSuggestEntity::getSkuNo, searchDto.getSkuNo())

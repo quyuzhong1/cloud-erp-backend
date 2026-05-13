@@ -63,7 +63,7 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         dto.setWarehouseName(data.get(3));
         dto.setWarehouseAreaName(data.get(4));
         dto.setSuggestWarehouseLocationCode(data.get(5));
-        dto.setPriority(data.get(6));
+        dto.setSort(data.get(6));
         dto.setStatus(data.get(7));
         verifyField(dto);
         if (CharSequenceUtil.isNotBlank(dto.getErrorMsg())) {
@@ -115,14 +115,15 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
             return;
         }
         //优先级校验
-        if (CharSequenceUtil.isBlank(dto.getPriority())) {
+        if (CharSequenceUtil.isBlank(dto.getSort())) {
             dto.setErrorMsg("优先级不能为空");
+            return;
         }
-        if (!StrUtils.isInteger(dto.getPriority())) {
+        if (!StrUtils.isInteger(dto.getSort())) {
             dto.setErrorMsg("优先级请填写数字");
             return;
         }
-        if (Integer.parseInt(dto.getPriority()) > 9) {
+        if (Integer.parseInt(dto.getSort()) > 9) {
             dto.setErrorMsg("优先级的值不能大于9");
             return;
         }

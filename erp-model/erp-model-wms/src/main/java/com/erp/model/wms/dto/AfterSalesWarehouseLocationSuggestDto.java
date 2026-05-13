@@ -110,7 +110,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 优先级
          */
-        private Integer priority;
+        private Integer sort;
     }
 
     /**
@@ -154,7 +154,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 优先级
          */
-        private Integer priority;
+        private Integer sort;
         /**
          * 是否禁用
          */
@@ -253,7 +253,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 优先级
          */
-        private Integer priority;
+        private Integer sort;
 
         /**
          * 状态名称，（启用/禁用）
