@@ -24,18 +24,18 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
     private String skuId;
 
     /**
-     * 所属库区
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "EAN码", index = 1)
-    private String eanCode;
-
-    /**
      * 产品名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "产品名称", index = 2)
+    @ExcelProperty(value = "产品名称", index = 1)
     private String productName;
+
+    /**
+     * 所属库区
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "EAN码", index = 2)
+    private String eanCode;
 
     /**
      * 所属仓库名称

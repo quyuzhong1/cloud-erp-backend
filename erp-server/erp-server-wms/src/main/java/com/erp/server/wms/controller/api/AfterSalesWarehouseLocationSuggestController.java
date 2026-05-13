@@ -40,7 +40,7 @@ import java.util.Objects;
 @RestController
 @LogSystemModule("仓位售后推荐表")
 @RequestMapping("/afterSalesWarehouseLocationSuggest")
-public class AfterSalesWarehouseLocationSuggestController extends BaseController {
+    public class AfterSalesWarehouseLocationSuggestController extends BaseController {
 
     @Resource
     private AfterSalesWarehouseLocationSuggestService afterSalesWarehouseLocationSuggestService;

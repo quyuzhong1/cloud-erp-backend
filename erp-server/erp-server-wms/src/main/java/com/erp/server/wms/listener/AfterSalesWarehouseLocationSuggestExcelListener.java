@@ -58,8 +58,8 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
 //        Integer rowIndex = context.readRowHolder().getRowIndex();
         AfterSalesWarehouseLocationSuggestExcelDto dto = new AfterSalesWarehouseLocationSuggestExcelDto();
         dto.setSkuNo(data.get(0));
-        dto.setEanCode(data.get(1));
-        dto.setProductName(data.get(2));
+        dto.setProductName(data.get(1));
+        dto.setEanCode(data.get(2));
         dto.setWarehouseName(data.get(3));
         dto.setWarehouseAreaName(data.get(4));
         dto.setWarehouseLocationCode(data.get(5));

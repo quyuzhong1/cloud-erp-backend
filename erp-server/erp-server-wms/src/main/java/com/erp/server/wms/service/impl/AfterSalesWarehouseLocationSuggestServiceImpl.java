@@ -381,6 +381,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             dto.setWarehouseLocationName(locationEntity.getName());
 
             dto.setDisabled(entity.getDisabled());
+            dto.setStatusName(entity.getDisabled()?"禁用":"启用");
             dto.setUpdateUser(entity.getUpdateUserName());
             dtoList.add(dto);
         }
