@@ -38,6 +38,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -144,6 +145,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery().in(WarehouseLocationEntity::getCode, warehouseLocationCodes).list();
             Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> item));
             List<AfterSalePackDetailEntity> detailEntityList = new ArrayList<>();
+            List<AfterSalePackDetailEntity> addList = new ArrayList<>();
+            List<AfterSalePackDetailEntity> updateList = new ArrayList<>();
             for (AfterSalePackDetailDTO.UpdateDTO dto : detailList) {
                 ProductDetailEntity productDetailEntity = productMap.get(dto.getSkuNo());
                 if (ObjectUtil.isNull(productDetailEntity)) {
@@ -163,6 +166,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                     detailEntity.setWarehouseLocationId(warehouseLocationEntity.getId());
                     detailEntity.setPackQty(dto.getPackQty());
                     detailEntityList.add(detailEntity);
+                    updateList.add(detailEntity);
                 } else {
                     AfterSalePackDetailEntity afterSalePackDetailEntity = new AfterSalePackDetailEntity();
                     BeanMapperUtils.copy(dto, afterSalePackDetailEntity);
@@ -170,12 +174,23 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                     afterSalePackDetailEntity.setSkuId(productDetailEntity.getId());
                     afterSalePackDetailEntity.setWarehouseLocationId(warehouseLocationEntity.getId());
                     detailEntityList.add(afterSalePackDetailEntity);
+                    addList.add(afterSalePackDetailEntity);
                 }
             }
             afterSalePackEntity.setSkuSpeciesQty(productMap.size());
             afterSalePackEntity.setTotalQty(detailList.stream().mapToInt(AfterSalePackDetailDTO.UpdateDTO::getPackQty).sum());
             afterSalePackEntity.setPackStatus(Boolean.TRUE);
             afterSalePackDetailService.saveBatch(detailEntityList);
+            // 这是添加
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(afterSalePackEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
+            // 修改的
+            for (AfterSalePackDetailEntity update : updateList) {
+                AfterSalePackDetailEntity old = map.get(update.getId());
+                if (old != null) {
+                    operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", "");
+                }
+            }
         }
     }
 
@@ -227,9 +242,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 数据处理
         fillList(list);
-
         // 导出数据
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String excelPath = "excel/afterSalePack.xlsx";
         String name = "售后装箱单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
