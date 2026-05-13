@@ -2337,7 +2337,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  是否合并,true是，false否
          */
-        private Boolean isMultipleMerge = false;
+        private Boolean isMultipleMerge = true;
         /**
          *  下推的主表ids
          */
@@ -2355,10 +2355,7 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotBlank(message = "选择id不能为空")
         private String id;
-        /**
-         *  下推的明细ids
-         */
-        private String detailId;
+
         /**
          *  skuId
          */
@@ -2377,7 +2374,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  是否批量合并,true是，false否
          */
-        private Boolean isMultipleMerge = false;
+        private Boolean isMultipleMerge = true;
         /**
          * 需要报关信息
          */
