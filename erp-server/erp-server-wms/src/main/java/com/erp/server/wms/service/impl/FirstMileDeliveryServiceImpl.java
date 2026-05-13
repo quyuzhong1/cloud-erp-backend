@@ -416,7 +416,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushFmDeclare(
-                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId())));
             if (CollectionUtils.isEmpty(sourceDetailList)) {
                 throw new ServiceException(CharSequenceUtil.format("头程发货单{}未查询到可生成报关明细的来源数据", entity.getCode()));
             }
