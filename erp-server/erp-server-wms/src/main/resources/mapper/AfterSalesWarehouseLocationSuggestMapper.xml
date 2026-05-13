@@ -21,7 +21,10 @@
         awls.update_user_name AS updateUserName,
         awls.update_time AS updateTime
         FROM aftersales_warehouse_location_suggest awls
+        <if test="(params.productName != null and params.productName != '') or (params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default.contains('pd.'))">
         LEFT JOIN product_detail pd ON pd.id = awls.sku_id AND pd.is_deleted = false
+        </if>
+        <if test="(params.ean != null and params.ean != '') or (params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default.contains('ppu.'))">
         LEFT JOIN (
             SELECT DISTINCT ON (ppu_inner.sku_id)
                 ppu_inner.sku_id,
@@ -29,7 +32,8 @@
             FROM product_purchase ppu_inner
             WHERE ppu_inner.is_deleted = false
             ORDER BY ppu_inner.sku_id, ppu_inner.update_time DESC NULLS LAST, ppu_inner.id DESC
-        ) ppu ON ppu.sku_id = pd.id
+        ) ppu ON ppu.sku_id = awls.sku_id
+        </if>
         WHERE awls.is_deleted = false
         <if test="params.skuNo != null and params.skuNo != ''">
             AND awls.sku_no LIKE CONCAT('%', #{params.skuNo}, '%')
