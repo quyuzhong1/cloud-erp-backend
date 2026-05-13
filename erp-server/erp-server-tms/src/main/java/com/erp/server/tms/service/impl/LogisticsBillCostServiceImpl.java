@@ -116,7 +116,6 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_B
 @Service
 public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBillCostMapper, LogisticsBillCostEntity> implements LogisticsBillCostService {
     private static final int IMPORT_CONFIRM_BATCH_SIZE = 1000;
-
     @Resource
     private OperateLogService operateLogService;
 
@@ -430,36 +429,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostList));
         }
         return logisticsBillCostList;
-    }
-
-    @Override
-    public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus) {
-        if (CollUtil.isEmpty(confirmList)) {
-            return;
-        }
-        if (CharSequenceUtil.isBlank(reconciliationStatus)) {
-            throw new ServiceException("对账状态不能为空");
-        }
-
-        LinkedHashMap<String, ImportHistoryRecordDTO.ImportConfirmDTO> confirmMap = new LinkedHashMap<>();
-        for (ImportHistoryRecordDTO.ImportConfirmDTO confirmDTO : confirmList) {
-            if (ObjectUtil.isNull(confirmDTO) || CharSequenceUtil.isBlank(confirmDTO.getLogisticsCostId())) {
-                continue;
-            }
-            confirmMap.put(confirmDTO.getLogisticsCostId(), confirmDTO);
-        }
-        if (CollUtil.isEmpty(confirmMap)) {
-            return;
-        }
-
-        String confirmUserId = UserContext.getDefaultLoginUser().getUid();
-        String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
-        List<ImportHistoryRecordDTO.ImportConfirmDTO> distinctConfirmList = new ArrayList<>(confirmMap.values());
-        int updateCount = 0;
-        for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
-            updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
-        }
-        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}", confirmList.size(), distinctConfirmList.size(), updateCount);
     }
 
     /**
@@ -2434,6 +2403,35 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return pushAllocatedCostCountDTO;
     }
 
+    @Override
+    public void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String reconciliationStatus) {
+        if (CollUtil.isEmpty(confirmList)) {
+            return;
+        }
+        if (CharSequenceUtil.isBlank(reconciliationStatus)) {
+            throw new ServiceException("对账状态不能为空");
+        }
+
+        LinkedHashMap<String, ImportHistoryRecordDTO.ImportConfirmDTO> confirmMap = new LinkedHashMap<>();
+        for (ImportHistoryRecordDTO.ImportConfirmDTO confirmDTO : confirmList) {
+            if (ObjectUtil.isNull(confirmDTO) || CharSequenceUtil.isBlank(confirmDTO.getLogisticsCostId())) {
+                continue;
+            }
+            confirmMap.put(confirmDTO.getLogisticsCostId(), confirmDTO);
+        }
+        if (CollUtil.isEmpty(confirmMap)) {
+            return;
+        }
+
+        String confirmUserId = UserContext.getDefaultLoginUser().getUid();
+        String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
+        List<ImportHistoryRecordDTO.ImportConfirmDTO> distinctConfirmList = new ArrayList<>(confirmMap.values());
+        int updateCount = 0;
+        for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
+            updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
+        }
+        log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}", confirmList.size(), distinctConfirmList.size(), updateCount);
+    }
 
     @Override
     public List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {

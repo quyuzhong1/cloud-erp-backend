@@ -40,7 +40,7 @@ public class QcOpenApi {
      * @return
      */
     @OpenApi("qcPaging")
-    public ApiResult<PagingVO<QcInfoDTO.OpenPagingViewDTO>> qcPaging(@RequestBody @Validated PagingDTO<QcInfoDTO.OpenPagingParamDTO> dto) {
+    public ApiResult<PagingVO<QcInfoDTO.OpenPagingViewDTO>> qcPaging(@RequestBody @Validated PagingDTO<QcInfoDTO.PagingParamDTO> dto) {
         return qcInfoFeign.qcPaging(dto);
     }
 
