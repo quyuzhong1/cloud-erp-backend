@@ -117,10 +117,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         */
         private String sourceType;
 
-        /**
-        * 来源明细id
-        */
-        private String sourceDetailId;
 
         /**
         * 业务单据id
@@ -463,10 +459,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         */
         private String sourceType;
 
-        /**
-        * 来源明细id
-        */
-        private String sourceDetailId;
 
         /**
         * 业务单据id
@@ -680,13 +672,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         @NotBlank(message = "单据分类: firstMileDelivery=头程发货单, soDeliveryNotice=B2B发货通知单不能为空")
         @Size(max = 255,message = "单据分类: firstMileDelivery=头程发货单, soDeliveryNotice=B2B发货通知单最大长度不能超过255位")
         private String sourceType;
-
-        /**
-        * 来源明细id
-        */
-        @NotBlank(message = "来源明细id不能为空")
-        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
-        private String sourceDetailId;
 
         /**
         * 业务单据id
