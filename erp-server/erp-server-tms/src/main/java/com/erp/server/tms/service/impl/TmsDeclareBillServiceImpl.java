@@ -2588,7 +2588,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                               Set<String> countrySet,
                                               Set<String> sourceDetailKeySet) {
         int sourceQty = 0;
-        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : detailDTO.getSourceDeliveryDetailList()) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = mergeSourceDetailsInSameDeclareDetail(detailDTO.getSourceDeliveryDetailList());
+        detailDTO.setSourceDeliveryDetailList(sourceDetailList);
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetailList) {
             if (Objects.isNull(sourceDetail)) {
                 continue;
             }
@@ -2609,6 +2611,35 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (!Objects.equals(detailDTO.getQty(), sourceQty)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_QTY_MISMATCH, rowNo);
         }
+    }
+
+    /**
+     * 同一报关明细行内部，按来源单据+箱号+SKU聚合来源明细数量。
+     *
+     * @param sourceDetailList 来源明细集合
+     * @return 聚合后的来源明细集合
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> mergeSourceDetailsInSameDeclareDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        if (CollUtil.isEmpty(sourceDetailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailMap = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetailList) {
+            if (Objects.isNull(sourceDetail)) {
+                continue;
+            }
+            String key = buildSourceDetailKey(sourceDetail);
+            TmsDeclareBillDTO.SourceDeliveryDetailDTO exist = sourceDetailMap.get(key);
+            if (Objects.isNull(exist)) {
+                TmsDeclareBillDTO.SourceDeliveryDetailDTO copy = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+                BeanUtil.copyProperties(sourceDetail, copy);
+                sourceDetailMap.put(key, copy);
+                continue;
+            }
+            exist.setQty((Objects.isNull(exist.getQty()) ? 0 : exist.getQty())
+                    + (Objects.isNull(sourceDetail.getQty()) ? 0 : sourceDetail.getQty()));
+        }
+        return new ArrayList<>(sourceDetailMap.values());
     }
 
     /**
