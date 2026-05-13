@@ -523,7 +523,7 @@
             sdn.source_code as businessCode,
             sdnd.sku_id as skuId,
             sdnd.sku_no as skuNo,
-            wc.delivery_qty as qty,
+            wcd.pack_qty as qty,
             wc.box_no,
             ci.country_id,
             sdn.warehouse_id as fromWarehouseId,
@@ -538,6 +538,7 @@
         left join packing_task_detail ptd on sdnd.id = ptd.source_detail_id and ptd.is_deleted = false
         left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false and pt.packing_status = 'packed'
         left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
+        left join wms_carton_detail wcd on wc.id = wcd.main_id and wcd.is_deleted = false
         left join customer_info ci on sdn.customer_id = ci.id and ci.is_deleted = false
         where sdn.is_deleted = false and sdn.declare_status = 'wait' and wc.box_no is not null and sdn.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
