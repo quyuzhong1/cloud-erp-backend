@@ -1673,6 +1673,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleEntity> afterSaleEntityList = super.listByIds(afterSaleIdList);
         // 根据id和code分组
         Map<String, AfterSaleEntity> afterSaleEntityMap = afterSaleEntityList.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
+        // 查询售后进度记录
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.lambdaQuery()
+                .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
+                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
+                .list();
+        // 筛选出商家寄出快递单号不为空的数据
+        List<String> strList = afterSaleProgressList.stream().map(AfterSaleProgressEntity::getTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(strList)) {
+            String content = StrUtil.format("单据编号：【{}】的商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作", String.join(",", strList));
+            throw new ServiceException(content);
+        }
+        Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<LogisticsOrderEntity> entityList = new ArrayList<>();
         for (AfterSaleDTO.OrderInfoDTO orderInfoDTO : dto.getOrderInfoDTOList()) {
             AfterSaleEntity afterSaleEntity = afterSaleEntityMap.get(orderInfoDTO.getId());
@@ -1695,11 +1707,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = logisticsOrderFeign.addBatch(entityList);
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
         // 更新运单号
-        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.lambdaQuery()
-                .in(AfterSaleProgressEntity::getMainId, afterSaleIdList)
-                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
-                .list();
-        Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
         List<AfterSaleEntity> updateAfterSaleList = new ArrayList<>();
         List<AfterSaleProgressEntity> progressEntityList = new ArrayList<>();
         List<BatchResultDTO> resultList = new ArrayList<>();
@@ -1868,6 +1875,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     @Override
     public List<AfterSaleDTO.OrderInfoDTO> getPlaceOrderPreview(BaseIdsDTO.IdsDTO dto) {
         List<AfterSaleDTO.OrderInfoDTO> list = this.baseMapper.getPlaceOrderPreview(dto.getIds());
+        // 筛选出商家寄出快递单号不为空的数据
+        List<String> strList = list.stream().map(AfterSaleDTO.OrderInfoDTO::getOutboundTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(strList)) {
+            String content = StrUtil.format("单据编号：【{}】的商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作", String.join(",", strList));
+            throw new ServiceException(content);
+        }
         // 过滤出商家寄出快递单号为空的数据
         List<AfterSaleDTO.OrderInfoDTO> filterList = list.stream().filter(item -> StringUtils.isBlank(item.getOutboundTrackNo())).collect(Collectors.toList());
         ApiResult<List<BaseDropDownDTO.CommonDTO>> listApiResult = omsDropDownFeign.listInternalSalesPlatform(DictBasicTypeEnum.MINI_PROGRAM_SALES_PLATFORM_INTERNAL.getType());
@@ -1879,7 +1892,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         }
-        return list;
+        return filterList;
     }
 
     @Override
