@@ -155,11 +155,14 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     // 如果是 Map，可能是单条明细数据，转换为 List
                     rawDetail.add((Map<String, Object>) object);
                 } else {
-                    log.warn("数据无需处理，sysParentField = {},object = {}", sysParentField,object);
-                   continue;
+                    // 数据缺失或类型不符；不能 continue：飞书要求 fieldList.value 必须是 JSONArray，
+                    // 一旦缺失会报"明细控件(fieldList)值不是数组"，整张表单被拒。
+                    // 这里记录日志后继续走 processDetailTable，由它把 value 设为空数组兜底。
+                    log.warn("fieldList 明细数据缺失或类型不符: thirdFieldId={}, sysParentField={}, value={}",
+                            fieldId, sysParentField, object);
                 }
 
-                // 3. 直接塞进去，不解析子字段
+                // 3. 直接塞进去，不解析子字段（rawDetail 为空时也会 set 空 JSONArray）
                 processDetailTable(formField, fieldMapByThirdId, tidToIdListMap, valueMapListMap, rawDetail);
             } else {
                 // 普通控件走你原来的逻辑
@@ -273,12 +276,15 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                                     Map<String, List<String>> tidToIdListMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap,
                                     List<Map<String, Object>> detailList) {
 
+        // 不论 children 是否存在，都先把 value 兜底为 JSONArray，避免飞书侧报
+        // "明细控件(fieldList)值不是数组"
+        JSONArray detailValue = new JSONArray();
         JSONArray children = formField.getJSONArray("children");
         if (children == null) {
+            formField.set("value", detailValue);
             return;
         }
 
-        JSONArray detailValue = new JSONArray();
         if (detailList != null && !detailList.isEmpty()) {
             for (Map<String, Object> detailRow : detailList) {
                 JSONArray row = new JSONArray();

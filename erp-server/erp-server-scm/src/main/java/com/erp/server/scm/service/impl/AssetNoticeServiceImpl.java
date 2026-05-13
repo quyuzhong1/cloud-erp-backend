@@ -987,8 +987,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     /**
      * 构造提交流程的变量集合
-     * 附件存放在独立的 attachment 表，需要主动查询并补充到 variablesMap，
-     * 否则飞书流程模板里映射到 attachmentUrlList/attachmentNameList 等字段时取不到值。
+     * 附件存放在独立的 attachment 表，明细存放在 asset_notice_detail 表，
+     * 都需要主动查询并补充到 variablesMap，否则飞书流程模板里映射到
+     * attachmentUrlList/attachmentNameList/明细 fieldList 等字段时取不到值，
+     * 飞书会报"明细控件(fieldList)值不是数组"或"控件值不合法或者为空"。
      */
     private Map<String, Object> getVariablesMap(AssetNoticeEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
@@ -1009,6 +1011,21 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         variablesMap.put("attachmentUrlList", attachmentUrlList);
         variablesMap.put("attachmentNameList", attachmentNameList);
         variablesMap.put("attachmentMap", attachmentMap);
+
+        // 主动查询明细列表并补充到 variablesMap，飞书 form 中的 fieldList 控件依赖此数据
+        // 兼容运营在 cfg_process_field_map.sys_parent_id 上配置的几种常见命名：
+        //   detailList（与 AssetAcceptServiceImpl 保持一致的惯例）
+        //   assetNoticeDetailList / assetNoticeDetailDTOList（按实体属性命名）
+        List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.list(
+                new LambdaQueryWrapper<AssetNoticeDetailEntity>()
+                        .eq(AssetNoticeDetailEntity::getMainId, entity.getId()));
+        List<Map<String, Object>> detailMapList = CollUtil.isEmpty(detailList) ? new ArrayList<>()
+                : BeanUtil.copyToList(detailList, Map.class).stream()
+                .map(m -> (Map<String, Object>) m)
+                .collect(Collectors.toList());
+        variablesMap.put("detailList", detailMapList);
+        variablesMap.put("assetNoticeDetailList", detailMapList);
+        variablesMap.put("assetNoticeDetailDTOList", detailMapList);
         return variablesMap;
     }
     private void fillOne(AssetNoticeDTO.ViewDTO data) {
