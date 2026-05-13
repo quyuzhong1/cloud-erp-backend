@@ -103,6 +103,7 @@
             sdn.code as sourceCode,
             so.id as soOutstockId,
             so.code as soOutstockCode,
+            so.order_type as businessType,
             wc.box_no as boxNo,
             concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
             box_length*box_width*box_height as multiplySize,
