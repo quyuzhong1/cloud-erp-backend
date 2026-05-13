@@ -233,6 +233,7 @@ public class DeclarationGenerationService {
                 if (linkedSourceList.isEmpty()) {
                     continue;
                 }
+                linkedSourceList = mergeSourceDetailsByBoxSku(linkedSourceList);
 
                 TmsDeclareBillDTO.SourceDeliveryDetailDTO first = linkedSourceList.get(0);
                 String businessDesc = linkedSourceList.stream()
@@ -285,6 +286,43 @@ public class DeclarationGenerationService {
             result.add(TmsDeclareBillDTO.MergeDeclareBillDTO.builder().declareBillList(declareBillList).build());
         }
         return result;
+    }
+
+    /**
+     * 合并同一来源单据、箱号、SKU 的来源明细。
+     *
+     * @param sourceDetails 算法关联回来的来源明细
+     * @return 按来源箱SKU聚合后的来源明细
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> mergeSourceDetailsByBoxSku(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails) {
+        if (sourceDetails == null || sourceDetails.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> mergedMap = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetails) {
+            if (sourceDetail == null) {
+                continue;
+            }
+            String key = buildSourceBoxSkuKey(sourceDetail);
+            TmsDeclareBillDTO.SourceDeliveryDetailDTO merged = mergedMap.get(key);
+            if (merged == null) {
+                TmsDeclareBillDTO.SourceDeliveryDetailDTO copy = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+                org.springframework.beans.BeanUtils.copyProperties(sourceDetail, copy);
+                mergedMap.put(key, copy);
+                continue;
+            }
+            int currentQty = merged.getQty() == null ? 0 : merged.getQty();
+            int appendQty = sourceDetail.getQty() == null ? 0 : sourceDetail.getQty();
+            merged.setQty(currentQty + appendQty);
+        }
+        return new ArrayList<>(mergedMap.values());
+    }
+
+    private String buildSourceBoxSkuKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
+        return String.join("|",
+                StringUtils.defaultString(sourceDetail.getSourceId()),
+                StringUtils.defaultString(sourceDetail.getBoxNo()),
+                StringUtils.defaultString(sourceDetail.getSkuId()));
     }
 
     /**
