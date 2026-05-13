@@ -146,11 +146,14 @@ public class DeclarationGenerationService {
         IdentityHashMap<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> sourceKeyMap = new IdentityHashMap<>();
         for (int i = 0; i < sourceDetails.size(); i++) {
             TmsDeclareBillDTO.SourceDeliveryDetailDTO source = sourceDetails.get(i);
-            String sourceDetailId = source.getSourceDetailId();
-            if (sourceDetailId == null || sourceDetailId.trim().isEmpty()) {
-                sourceDetailId = "ROW";
+            String sourceKey = String.join("|",
+                    StringUtils.defaultString(source.getSourceId()),
+                    StringUtils.defaultString(source.getBoxNo()),
+                    StringUtils.defaultString(source.getSkuId()));
+            if (StringUtils.isBlank(sourceKey.replace("|", ""))) {
+                sourceKey = "ROW";
             }
-            sourceKeyMap.put(source, sourceDetailId + "#" + i);
+            sourceKeyMap.put(source, sourceKey + "#" + i);
         }
         return sourceKeyMap;
     }
