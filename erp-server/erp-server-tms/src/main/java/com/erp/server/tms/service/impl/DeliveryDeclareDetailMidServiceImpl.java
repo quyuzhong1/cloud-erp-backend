@@ -323,9 +323,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
 
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = new ArrayList<>();
         if(Objects.equals(sourceType, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())){
-            sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds,sourceDetailIds));
+            sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds));
         }else if(Objects.equals(sourceType, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())){
-            sourceDetailList = soDeliveryNoticeFeign.listBeforePushB2bDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds,sourceDetailIds));
+            sourceDetailList = soDeliveryNoticeFeign.listBeforePushB2bDeclare(new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.TRUE, sourceIds));
         }
         sourceDetailList.stream().forEach(e -> e.setSourceType(sourceType));
         return tmsDeclareBillService.autoMergeDeclareBillView(

@@ -2281,7 +2281,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listBeforePushB2bDeclare(
-                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId()), null));
+                    new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(entity.getId())));
             if (CollectionUtils.isEmpty(sourceDetailList)) {
                 log.warn("发货通知单{}未查询到可生成报关明细的来源数据，跳过自动生成", entity.getCode());
                 return Boolean.TRUE;
