@@ -124,9 +124,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     private void handleAfterSalePackDetail(List<AfterSalePackDetailDTO.UpdateDTO> detailList, AfterSalePackEntity afterSalePackingEntity) {
         if (CollectionUtils.isNotEmpty(detailList)) {
             // 查询sku信息
-            List<String> skuIds = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getSkuId).distinct().collect(Collectors.toList());
-            List<ProductDetailEntity> productList = productDetailFeign.listByIds(skuIds);
-            Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item));
+            List<String> skuNos = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productList = productDetailFeign.listBySkuNos(skuNos);
+            Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item));
             // 查询售后装箱明细信息
             List<String> ids = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
             Map<String, AfterSalePackDetailEntity> map = new HashMap<>();
@@ -135,16 +135,16 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 map = afterSalePackingDetailEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item));
             }
             // 查询仓位信息
-            List<String> warehouseLocationIds = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getWarehouseLocationId).distinct().collect(Collectors.toList());
-            List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByIds(warehouseLocationIds);
-            Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item));
+            List<String> warehouseLocationCodes = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getWarehouseLocationCode).distinct().collect(Collectors.toList());
+            List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery().in(WarehouseLocationEntity::getCode, warehouseLocationCodes).list();
+            Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> item));
             List<AfterSalePackDetailEntity> detailEntityList = new ArrayList<>();
             for (AfterSalePackDetailDTO.UpdateDTO dto : detailList) {
-                ProductDetailEntity productDetailEntity = productMap.get(dto.getSkuId());
+                ProductDetailEntity productDetailEntity = productMap.get(dto.getSkuNo());
                 if (ObjectUtil.isNull(productDetailEntity)) {
                     throw new ServiceException("商品不存在");
                 }
-                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(dto.getWarehouseLocationId());
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(dto.getWarehouseLocationCode());
                 if (ObjectUtil.isNull(warehouseLocationEntity)) {
                     throw new ServiceException("仓位不存在");
                 }
@@ -153,16 +153,17 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                     if (ObjectUtil.isNull(detailEntity)) {
                         throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱明细");
                     }
-                    detailEntity.setSkuId(dto.getSkuId());
-                    detailEntity.setSkuNo(productDetailEntity.getSkuNo());
-                    detailEntity.setWarehouseLocationId(dto.getWarehouseLocationId());
+                    detailEntity.setSkuId(productDetailEntity.getId());
+                    detailEntity.setSkuNo(dto.getSkuNo());
+                    detailEntity.setWarehouseLocationId(warehouseLocationEntity.getId());
                     detailEntity.setPackQty(dto.getPackQty());
                     detailEntityList.add(detailEntity);
                 } else {
                     AfterSalePackDetailEntity afterSalePackingDetailEntity = new AfterSalePackDetailEntity();
                     BeanMapperUtils.copy(dto, afterSalePackingDetailEntity);
                     afterSalePackingDetailEntity.setMainId(afterSalePackingEntity.getId());
-                    afterSalePackingDetailEntity.setSkuNo(productDetailEntity.getSkuNo());
+                    afterSalePackingDetailEntity.setSkuId(productDetailEntity.getId());
+                    afterSalePackingDetailEntity.setWarehouseLocationId(warehouseLocationEntity.getId());
                     detailEntityList.add(afterSalePackingDetailEntity);
                 }
             }

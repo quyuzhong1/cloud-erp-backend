@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -236,17 +235,14 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String mainId;
 
         /**
-         * skuId
+         * skuNo
          */
-        @NotBlank(message = "skuId不能为空")
-        @Size(max = 19, message = "skuId最大长度不能超过19位")
-        private String skuId;
+        private String skuNo;
 
         /**
-         * skuId
+         * 仓位code
          */
-        @NotBlank(message = "仓位id,warehouse_location.id")
-        private String warehouseLocationId;
+        private String warehouseLocationCode;
 
         /**
          * 装箱数量
