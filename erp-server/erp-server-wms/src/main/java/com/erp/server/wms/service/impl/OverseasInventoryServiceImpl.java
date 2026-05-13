@@ -218,15 +218,8 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     }
 
     private boolean checkMatch(ListingInfoWithSkuMappingDTO mappingDTO, OverseasInventoryDTO.ListDTO data, List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOList) {
-        if (null == mappingDTO || null == data) {
-            return false;
-        }
-        if (!CharSequenceUtil.equalsIgnoreCase(mappingDTO.getDictPlatform(), data.getDictPlatform())
-                || !CharSequenceUtil.equalsIgnoreCase(mappingDTO.getPlatformSkuNo(), data.getPlatformSku())) {
-            return false;
-        }
         // 不分仓库
-        if (Boolean.TRUE.equals(mappingDTO.getHasMappingAll())){
+        if (mappingDTO.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku()) && mappingDTO.getHasMappingAll()){
             return true;
         }
 
@@ -242,7 +235,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         }
         String warehouseId = warehouseDTO.getWarehouseId();
 
-        return CharSequenceUtil.equalsIgnoreCase(mappingDTO.getWarehouseId(), warehouseId);
+        return mappingDTO.getDictPlatform().equalsIgnoreCase(data.getDictPlatform())
+                && mappingDTO.getPlatformSkuNo().equals(data.getPlatformSku())
+                && mappingDTO.getWarehouseId().equalsIgnoreCase(warehouseId);
     }
 
     private OverseasProviderDTO.ListWithWarehouseDTO findWarehouseMatch(String platform,
