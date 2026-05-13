@@ -42,7 +42,7 @@ import java.util.Map;
  * FBA InboundPlan 列表拉取 - 拉取FBA货件前置处理器
  */
 @Slf4j
-@Service
+@Service("dmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler")
 @Scope("prototype")
 public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
@@ -70,7 +70,10 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
         }
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-        List<String> inboundPlanStatusList = parseStatusList(dmpInputTaskEntity.getExtendJson());
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+        List<String> inboundPlanStatusList = parseStatusList(extendJson);
+        String sortBy = parseSortBy(extendJson);
+        String sortOrder = parseSortOrder(extendJson);
         int lookbackMinutes = parseLookbackMinutes();
         OffsetDateTime thresholdTime = OffsetDateTime.now().minusMinutes(lookbackMinutes);
 
@@ -82,7 +85,7 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             boolean reachedOlderData = false;
             do {
                 try {
-                    ListInboundPlansResponse response = api.listInboundPlans(30, nextToken, status, "LAST_UPDATED_TIME", "DESC");
+                    ListInboundPlansResponse response = api.listInboundPlans(30, nextToken, status, sortBy, sortOrder);
                     List<InboundPlanSummary> inboundPlans = response != null ? response.getInboundPlans() : null;
                     if (CollUtil.isNotEmpty(inboundPlans)) {
                         for (InboundPlanSummary inboundPlan : inboundPlans) {
@@ -162,6 +165,38 @@ public class DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler extends DmpInpu
             return Collections.singletonList(status);
         }
         return DEFAULT_STATUS_LIST;
+    }
+
+    private String parseSortBy(String extendJson) {
+        final String defaultSortBy = "LAST_UPDATED_TIME";
+        if (StringUtils.isBlank(extendJson)) {
+            return defaultSortBy;
+        }
+        JSONObject extendObj = JSONObject.parseObject(extendJson);
+        if (extendObj == null) {
+            return defaultSortBy;
+        }
+        String sortBy = StringUtils.trimToEmpty(extendObj.getString("sortBy")).toUpperCase();
+        if ("CREATION_TIME".equals(sortBy) || "LAST_UPDATED_TIME".equals(sortBy)) {
+            return sortBy;
+        }
+        return defaultSortBy;
+    }
+
+    private String parseSortOrder(String extendJson) {
+        final String defaultSortOrder = "DESC";
+        if (StringUtils.isBlank(extendJson)) {
+            return defaultSortOrder;
+        }
+        JSONObject extendObj = JSONObject.parseObject(extendJson);
+        if (extendObj == null) {
+            return defaultSortOrder;
+        }
+        String sortOrder = StringUtils.trimToEmpty(extendObj.getString("sortOrder")).toUpperCase();
+        if ("ASC".equals(sortOrder) || "DESC".equals(sortOrder)) {
+            return sortOrder;
+        }
+        return defaultSortOrder;
     }
 
     /**
