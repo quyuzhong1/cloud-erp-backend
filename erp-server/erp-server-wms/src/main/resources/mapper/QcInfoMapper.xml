@@ -475,19 +475,6 @@
         FROM qc_info qb
         LEFT JOIN qc_product qp ON qp.main_id=qb.id AND qp.is_deleted=FALSE
         LEFT JOIN qc_result qi ON qi.main_id=qb.id AND qi.is_deleted=FALSE
-        WHERE qb.is_deleted=FALSE
-        and qb.invalid_status=FALSE
-        and qi.qc_type != ''
-        <if test="params.userId != null and params.userId != ''">
-            and (qc_user_id = #{params.userId} or qc_user_id = '')
-        </if>
-        <if test="params.qcStatusList != null and params.qcStatusList.size > 0">
-            and qb.qc_status in
-            <foreach collection="params.qcStatusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-
         WHERE ${params.sqlMap.default}
         and qb.is_deleted=FALSE
         <!--权限-->
