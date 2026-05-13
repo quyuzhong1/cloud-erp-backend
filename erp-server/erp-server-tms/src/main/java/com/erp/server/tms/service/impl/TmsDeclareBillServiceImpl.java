@@ -2895,7 +2895,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
-        detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
         detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
         detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
         detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());

@@ -1115,9 +1115,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).in(ProductLogisticsEntity::getSkuId, skuIdList).list();
         Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
 
-        //查询单位名称
-        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
-
         //币别明细
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
@@ -1128,12 +1125,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setHsCode(productLogisticsEntity.getCustomsCode());
                 deliveryDetailDTO.setProductNameCn(productLogisticsEntity.getDeclareChineseName());
                 deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
-                deliveryDetailDTO.setUnitName(productLogisticsEntity.getDeclareUnit());
-                //报关单位名称
-                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getName().equals(deliveryDetailDTO.getUnit())).findFirst().orElse(null);
-                if (Objects.nonNull(unitEntity)) {
-                    deliveryDetailDTO.setUnit(unitEntity.getValue());
-                }
+                deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
                 deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
                 deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
                 deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
@@ -1234,7 +1226,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
-        detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
         detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
         detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
         detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());

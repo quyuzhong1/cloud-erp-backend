@@ -2240,10 +2240,6 @@ public class TmsDeclareBillDTO implements Serializable {
         private String unit;
 
         /**
-         * 报关单位名称
-         */
-        private String unitName;
-        /**
          * 单价
          */
         private BigDecimal unitPrice;
