@@ -164,7 +164,6 @@
         select
         dddm.source_id as sourceId,
         dddm.source_code as sourceCode,
-        dddm.source_detail_id as sourceDetailId,
         dddm.source_type as sourceType,
         dddm.business_id as businessId,
         dddm.business_code as businessCode,
