@@ -77,6 +77,22 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
     void exportDeclare(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
+
+    /**
+     * 多 sheet 报关单导出
+     *
+     * <p>业务规则：</p>
+     * <ul>
+     *   <li>单条记录 → 1 个 xlsx，包含 报关单 / 合同 两个 sheet（发票 / 装箱单 / 装箱明细 暂未实现）</li>
+     *   <li>多条记录 → ZIP 包，包内每个 xlsx 同上述结构</li>
+     *   <li>单次导出条数上限 100 条，超过抛业务异常</li>
+     *   <li>合同 sheet 多明细行币别不一致时，取首行币别并打印 warn 日志</li>
+     * </ul>
+     *
+     * @param pagingParamDTO 查询参数
+     * @param response       响应流
+     */
+    void exportDeclareMulti(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException;
     /**
      * 更新备注
      * @author will

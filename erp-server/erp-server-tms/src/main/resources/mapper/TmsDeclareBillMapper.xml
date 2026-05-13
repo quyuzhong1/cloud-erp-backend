@@ -94,6 +94,7 @@
                 db.create_user_name as   createUserName,
                 db.create_time as   createTime
         from  tms_declare_bill  db
+        inner join delivery_declare_detail_mid dddm on db.id = dddm.declare_id and dddm.is_deleted = false
         where
             ${params.sqlMap.default}
           and db.is_deleted = false
@@ -139,7 +140,7 @@
         select
             db.id,
             db.type,
-            db.source_code as   sourceCode,
+            dddm.source_code  as   sourceCode,
             db.pre_input_no as  preInputNo,
             db.dest_customs as  destCustoms,
             db.sender_id as   senderId,
@@ -167,6 +168,7 @@
             db.other_fee as             otherFee,
             db.country_name as countryName
         from tms_declare_bill db
+        inner join delivery_declare_detail_mid dddm on db.id = dddm.declare_id and dddm.is_deleted = false
         where   ${params.sqlMap.default}
           and db.is_deleted = false
           and db.type = #{params.type}

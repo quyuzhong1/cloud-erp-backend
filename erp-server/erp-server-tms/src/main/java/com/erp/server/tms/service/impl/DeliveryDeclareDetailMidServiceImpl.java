@@ -151,15 +151,15 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         List<DeliveryDeclareDetailMidDTO.TabListDTO> result = new ArrayList<>();
         result.add(new DeliveryDeclareDetailMidDTO.TabListDTO("all","全部",0));
 
-        DeliveryDeclareDetailMidGenerateStatusEnum[] statusList = DeliveryDeclareDetailMidGenerateStatusEnum.values();
-        for (DeliveryDeclareDetailMidGenerateStatusEnum statusEnum : statusList) {
-            DeliveryDeclareDetailMidDTO.TabListDTO tabListDTO = list.stream().filter(e -> Objects.equals(statusEnum.getCode(), e.getTabFlag())).findFirst().orElse(null);
-            if(Objects.nonNull(tabListDTO)){
-                result.add(tabListDTO);
-            }else {
-                list.add(new DeliveryDeclareDetailMidDTO.TabListDTO(statusEnum.getCode(),statusEnum.getName(), 0));
-            }
-        }
+        DeliveryDeclareDetailMidDTO.TabListDTO wait = list.stream().filter(e -> Objects.equals(DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode(), e.getTabFlag()))
+                .findFirst().orElse(new DeliveryDeclareDetailMidDTO.TabListDTO(DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode(),DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getName(),0));
+        DeliveryDeclareDetailMidDTO.TabListDTO finish = list.stream().filter(e -> Objects.equals(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode(), e.getTabFlag()))
+                .findFirst().orElse(new DeliveryDeclareDetailMidDTO.TabListDTO(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode(),DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getName(),0));
+
+        wait.setTabFlagName(DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getName());
+        result.add(wait);
+        finish.setTabFlagName(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getName());
+        result.add(finish);
         return result;
     }
 
