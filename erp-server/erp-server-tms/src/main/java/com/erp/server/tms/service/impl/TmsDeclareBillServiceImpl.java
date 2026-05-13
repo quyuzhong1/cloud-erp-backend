@@ -2030,10 +2030,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             splitDeclareDTO.setId(id);
             splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
             splitDeclareDTO.setSourceId(value.get(0).getSourceId());
+            splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
             //sku信息描述格式：skuNo*qty,skuNo*qty
             String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
             splitDeclareDTO.setSkuDesc(skuDesc);
-            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSourceDetailId(), obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
             splitDeclareDTO.setSkuDetailList(splitDetailDTOList);
             splitDeclareDTOList.add(splitDeclareDTO);
         }
@@ -2065,21 +2066,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
                 ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
                 : null;
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
 
         //删除原本的报关单
         deleteDeclareBillById(declareBillEntity.getId());
 
-        List<String> ids = declareDTO.getSplitDeclareDTOList().stream()
-                .filter(Objects::nonNull)
-                .map(TmsDeclareBillDTO.SplitDeclareDTO::getSourceId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(ids);
         for (TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO : declareDTO.getSplitDeclareDTOList()) {
 
             //按规则合并数据
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = sourceDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()) && CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetail(sourceDeliveryDetailList, splitDeclareDTO);
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
                     new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList), Boolean.FALSE);
 
@@ -2093,10 +2088,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDeclareBillById (String id) {
-        // 删除报关单关联的中间表（按报关单主键 declare_id，与来源单 source_id 无关）
-        deliveryDeclareDetailMidService.lambdaUpdate()
-                .eq(DeliveryDeclareDetailMidEntity::getDeclareId, id)
-                .remove();
+        // 恢复报关单关联的中间表为待生成，保留来源箱明细历史数据。
+        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(Collections.singletonList(id));
         //删除明细数据
         detailService.deleteDetailByMainIdList(Collections.singletonList(id));
         //删除主表数据
@@ -2129,18 +2122,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.SplitDeclareCodeSequence splitCodeSequence = StringUtils.isNotBlank(splitBaseCode)
                 ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
                 : null;
-
-        List<String> ids = declareDTO.getSplitDeclareDTOList().stream()
-                .filter(Objects::nonNull)
-                .map(TmsDeclareBillDTO.SplitDeclareDTO::getSourceId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(ids);
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
         for (TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO : declareDTO.getSplitDeclareDTOList()) {
 
             //按规则合并数据
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = sourceDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()) && CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetail(sourceDeliveryDetailList, splitDeclareDTO);
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
                     new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList),
                     isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
@@ -2199,6 +2185,26 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(ids);
         return autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE,sourceDeliveryDetailList),
                 isB2bCustomerReceiver(firstDeclareBill.getType(), firstDeclareBill.getReceiverType()));
+    }
+
+    /**
+     * 按拆分选择的来源单据、箱号和 SKU 过滤来源明细。
+     *
+     * @param sourceDeliveryDetailList 原报关单来源明细
+     * @param splitDeclareDTO 拆分选择
+     * @return 本次拆分对应的来源明细
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> filterSplitSourceDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
+                                                                                   TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO) {
+        Set<String> skuIdSet = Optional.ofNullable(splitDeclareDTO.getSkuDetailList()).orElse(Collections.emptyList()).stream()
+                .map(TmsDeclareBillDTO.SplitDetailDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        return Optional.ofNullable(sourceDeliveryDetailList).orElse(Collections.emptyList()).stream()
+                .filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), splitDeclareDTO.getSourceId()))
+                .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
+                .filter(obj -> CollUtil.isEmpty(skuIdSet) || skuIdSet.contains(obj.getSkuId()))
+                .collect(Collectors.toList());
     }
 
 
@@ -3475,10 +3481,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             List<DeliveryDeclareDetailMidEntity> value = entry.getValue();
             splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
             splitDeclareDTO.setSourceId(value.get(0).getSourceId());
+            splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
             //sku信息描述格式：skuNo*qty,skuNo*qty
             String skuDesc = value.stream().map(obj -> CharSequenceUtil.format("{}*{}", obj.getSkuNo(), obj.getQty())).collect(Collectors.joining(","));
             splitDeclareDTO.setSkuDesc(skuDesc);
-            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSourceDetailId(), obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
+            List<TmsDeclareBillDTO.SplitDetailDTO> splitDetailDTOList = value.stream().map(obj -> new TmsDeclareBillDTO.SplitDetailDTO(obj.getSkuId(), obj.getSkuNo(), obj.getQty())).collect(Collectors.toList());
             splitDeclareDTO.setSkuDetailList(splitDetailDTOList);
             splitDeclareDTOList.add(splitDeclareDTO);
         }
