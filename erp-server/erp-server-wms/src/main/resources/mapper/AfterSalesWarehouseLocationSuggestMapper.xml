@@ -1,54 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.AfterSalesWarehouseLocationSuggestMapper">
-    <!--<resultMap id="baseResultMap" type="com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity">
-        <id column="id" property="id" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_code" property="sourceCode" />
-        <result column="source_type" property="sourceType" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="qty" property="qty" />
-        <result column="status" property="status" />
-        <result column="from_warehouse_area" property="fromWarehouseArea" />
-        <result column="from_warehouse_location" property="fromWarehouseLocation" />
-        <result column="to_warehouse_area" property="toWarehouseArea" />
-        <result column="to_warehouse_location" property="toWarehouseLocation" />
-        <result column="suggest_qty" property="suggestQty" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-    </resultMap>-->
 
     <select id="paging" resultType="com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity">
         SELECT
-        id,
-        sku_id AS skuId,
-        sku_no AS skuNo,
-        warehouse_id AS warehouseId,
-        warehouse_area_code AS warehouseAreaCode,
-        suggest_warehouse_location_code AS suggestWarehouseLocationCode,
-        priority,
-        disabled,
-        version,
-        is_deleted AS isDeleted,
-        create_user_id AS createUserId,
-        create_user_name AS createUserName,
-        create_time AS createTime,
-        update_user_id AS updateUserId,
-        update_user_name AS updateUserName,
-        update_time AS updateTime
-        FROM aftersales_warehouse_location_suggest
-        WHERE is_deleted = false
+        awls.id,
+        awls.sku_id AS skuId,
+        awls.sku_no AS skuNo,
+        awls.warehouse_id AS warehouseId,
+        awls.warehouse_area_code AS warehouseAreaCode,
+        awls.warehouse_location_code AS warehouseLocationCode,
+        awls.sort,
+        awls.disabled,
+        awls.version,
+        awls.is_deleted AS isDeleted,
+        awls.create_user_id AS createUserId,
+        awls.create_user_name AS createUserName,
+        awls.create_time AS createTime,
+        awls.update_user_id AS updateUserId,
+        awls.update_user_name AS updateUserName,
+        awls.update_time AS updateTime
+        FROM aftersales_warehouse_location_suggest awls
+        LEFT JOIN product_detail pd ON pd.id = awls.sku_id AND pd.is_deleted = false
+        LEFT JOIN LATERAL (
+            SELECT ppu_inner.ean
+            FROM product_purchase ppu_inner
+            WHERE ppu_inner.sku_id = pd.id AND ppu_inner.is_deleted = false
+            ORDER BY ppu_inner.update_time DESC NULLS LAST
+            LIMIT 1
+        ) ppu ON true
+        WHERE awls.is_deleted = false
         <if test="params.skuNo != null and params.skuNo != ''">
-            AND sku_no LIKE CONCAT('%', #{params.skuNo}, '%')
+            AND awls.sku_no LIKE CONCAT('%', #{params.skuNo}, '%')
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
-            AND warehouse_id = #{params.warehouseId}
+            AND awls.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.productName != null and params.productName != ''">
+            AND pd.name ILIKE CONCAT('%', #{params.productName}::text, '%')
+        </if>
+        <if test="params.ean != null and params.ean != ''">
+            AND ppu.ean = #{params.ean}::text
         </if>
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
@@ -63,7 +55,7 @@
             </foreach>
             ,
         </if>
-        create_time DESC
+        awls.create_time DESC
     </select>
 
 
@@ -72,7 +64,7 @@
     <insert id="upsertBatch">
         INSERT INTO aftersales_warehouse_location_suggest (
         id, sku_id, sku_no, warehouse_id, warehouse_area_code,
-        suggest_warehouse_location_code, priority, disabled,
+        warehouse_location_code, sort, disabled,
         version, is_deleted,
         create_user_id, create_user_name, create_time,
         update_user_id, update_user_name, update_time
@@ -80,16 +72,16 @@
         <foreach collection="list" item="item" separator=",">
             (
             #{item.id}, #{item.skuId}, #{item.skuNo}, #{item.warehouseId}, #{item.warehouseAreaCode},
-            #{item.suggestWarehouseLocationCode}, #{item.priority}, #{item.disabled},
+            #{item.warehouseLocationCode}, #{item.sort}, #{item.disabled},
             0, false,
             #{item.createUserId}, #{item.createUserName}, #{item.createTime},
             #{item.updateUserId}, #{item.updateUserName}, #{item.updateTime}
             )
         </foreach>
-        ON CONFLICT (sku_no, warehouse_id, suggest_warehouse_location_code)
+        ON CONFLICT (sku_no, warehouse_id, warehouse_location_code)
         WHERE is_deleted = false
         DO UPDATE SET
-        priority = EXCLUDED.priority,
+        sort = EXCLUDED.sort,
         disabled = EXCLUDED.disabled,
         warehouse_area_code = EXCLUDED.warehouse_area_code,
         version = aftersales_warehouse_location_suggest.version + 1,

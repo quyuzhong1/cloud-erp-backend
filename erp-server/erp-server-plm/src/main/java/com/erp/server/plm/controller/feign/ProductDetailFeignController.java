@@ -37,4 +37,11 @@ public class ProductDetailFeignController {
     ProductDetailEntity getSkuBySyncKingdeeId(@RequestBody String syncKingdeeId){
         return productDetailService.getSkuBySyncKingdeeId(syncKingdeeId);
     }
+
+    @PostMapping("feign/productDetail/listBySkuNos")
+    List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNos) {
+        return productDetailService.lambdaQuery()
+                .in(ProductDetailEntity::getSkuNo, skuNos)
+                .list();
+    }
 }

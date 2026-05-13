@@ -8,7 +8,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,6 +55,16 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          * 库区类型
          */
         private String warehouseAreaType;
+
+        /**
+         * 产品名称（模糊，对应 product_detail.name）
+         */
+        private String productName;
+
+        /**
+         * EAN 码（模糊，对应 product_purchase.ean，与列表展示口径一致）
+         */
+        private String ean;
 
         /**
          * 页面高级查询
@@ -110,7 +125,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 优先级
          */
-        private Integer priority;
+        private Integer sort;
     }
 
     /**
@@ -146,15 +161,15 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 推荐仓位code
          */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
         /**
          * 推荐仓位id
          */
-        private String suggestWarehouseLocationId;
+        private String warehouseLocationId;
         /**
          * 优先级
          */
-        private Integer priority;
+        private Integer sort;
         /**
          * 是否禁用
          */
@@ -238,27 +253,31 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 推荐仓位id
          */
-        private String suggestWarehouseLocationId;
+        private String warehouseLocationId;
 
         /**
          * 推荐仓位编码
          */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
 
         /**
          * 推荐仓位名称
          */
-        private String suggestWarehouseLocationName;
+        private String warehouseLocationName;
 
         /**
          * 优先级
          */
-        private Integer priority;
+        private Integer sort;
 
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
         /**
          * 状态名称，（启用/禁用）
          */
-        private Boolean disabled;
+        private String statusName;
 
         /**
          * 更新人
@@ -313,6 +332,146 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String warehouseLocationCode;
     }
 
+    /**
+     * PDA 售后：货品上架提交（单 SKU，源仓位可为空仓位）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaGoodsShelvingSubmitDto {
+
+        @NotBlank(message = "仓库id不能为空")
+        @Size(max = 19, message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+
+        @Size(max = 50, message = "源仓位编码最大长度不能超过50位")
+        private String sourceWarehouseLocationCode;
+
+        @NotBlank(message = "目标仓位不能为空")
+        @Size(max = 50, message = "目标仓位编码最大长度不能超过50位")
+        private String targetWarehouseLocationCode;
+
+        @NotBlank(message = "sku编码不能为空")
+        @Size(max = 255, message = "sku编码最大长度不能超过255位")
+        private String skuNo;
+
+        @Size(max = 19, message = "skuId最大长度不能超过19位")
+        private String skuId;
+
+        @NotNull(message = "数量不能为空")
+        @Min(value = 1, message = "数量必须大于0")
+        private Integer qty;
+
+        // /**
+        //  * 备注（暂不使用，后续需要再放开）
+        //  */
+        // @Size(max = 500, message = "备注最大长度不能超过500位")
+        // private String remark;
+    }
+
+    /**
+     * 箱唛查询入参（箱唛号对应 {@link com.erp.model.wms.entity.AfterSalePackEntity#getCode()}）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BoxLabelQueryRequestDto {
+
+        /**
+         * 仓库 id（可选；查询装箱详情仅按箱唛号，本字段可保留兼容旧请求体）
+         */
+        @Size(max = 19, message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+
+        /**
+         * 箱唛号（售后装箱单 code）
+         */
+        @NotBlank(message = "箱唛号不能为空")
+        @Size(max = 64, message = "箱唛号最大长度不能超过64位")
+        private String boxLabelCode;
+    }
+
+    /**
+     * PDA 售后：整箱移仓 — 提交。
+     * <p>{@link #lines} 与 {@code /queryBoxByLabel} 返回结构对齐：对 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getDetailViewDTOList()}
+     * 每一项合并主单 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getCode()}（箱唛）即可，行内字段与
+     * {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO} 同名（{@code mainId} 与主单 {@code id} 一致）。</p>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaFullBoxTransferSubmitDto {
+
+        @NotBlank(message = "仓库id不能为空")
+        @Size(max = 19, message = "仓库id最大长度不能超过19位")
+        private String warehouseId;
+
+        @NotBlank(message = "目标仓位不能为空")
+        @Size(max = 50, message = "目标仓位编码最大长度不能超过50位")
+        private String targetWarehouseLocationCode;
+
+        /**
+         * 展平明细：每行在 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO} 基础上增加主单 {@code code}（箱唛）。
+         */
+        @NotEmpty(message = "移仓明细不能为空")
+        @Valid
+        private List<PdaFullBoxTransferSubmitLineDto> lines;
+
+        /**
+         * 附加备注（写入每条明细备注前缀「整箱移仓」之后）
+         */
+        @Size(max = 500, message = "备注最大长度不能超过500位")
+        private String remark;
+    }
+
+    /**
+     * 整箱移仓 — 单行提交参数，字段命名与 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO}、
+     * {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO} 对齐，便于前端将 {@code /queryBoxByLabel} 结果
+     * （主单 + {@code detailViewDTOList} 每一项）直接拼成 {@code lines}。
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PdaFullBoxTransferSubmitLineDto {
+
+        /**
+         * 售后装箱单主键，与主单 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getId()}、
+         * 明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getMainId()} 相同。
+         */
+        @NotBlank(message = "装箱主键mainId不能为空")
+        @Size(max = 19, message = "装箱主键最大长度不能超过19位")
+        private String mainId;
+
+        /**
+         * 箱唛，与 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getCode()} 相同；提交时用于再次校验 usageStatus；不传则仅按 mainId 查主单。
+         */
+        @Size(max = 64, message = "箱唛最大长度不能超过64位")
+        private String code;
+
+        /**
+         * SKU 编码，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getSkuNo()} 相同。
+         */
+        @NotBlank(message = "sku编码不能为空")
+        @Size(max = 255, message = "sku编码最大长度不能超过255位")
+        private String skuNo;
+
+        /**
+         * SKU 主键，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getSkuId()} 相同。
+         */
+        @Size(max = 19, message = "skuId最大长度不能超过19位")
+        private String skuId;
+
+        /**
+         * 源仓位编码，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getWarehouseLocationCode()} 相同。
+         */
+        @NotBlank(message = "仓位编码不能为空")
+        @Size(max = 50, message = "仓位编码最大长度不能超过50位")
+        private String warehouseLocationCode;
+
+        /**
+         * 本行移动数量，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getPackQty()} 相同。
+         */
+        @NotNull(message = "装箱数量不能为空")
+        @Min(value = 1, message = "装箱数量必须大于0")
+        private Integer packQty;
+    }
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -338,6 +497,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 建议仓位code
          */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
     }
 }

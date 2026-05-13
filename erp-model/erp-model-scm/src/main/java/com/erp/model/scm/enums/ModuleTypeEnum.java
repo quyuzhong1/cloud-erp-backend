@@ -220,7 +220,7 @@ public enum ModuleTypeEnum {
 
     LOGISTICS_ORDER("168", "物流下单"),
 
-
+    AFTER_SALE_PACK("190", "售后装箱"),
 
 
 

@@ -1,0 +1,41 @@
+package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.AfterSalePackDTO;
+import com.erp.model.wms.entity.AfterSalePackEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+
+/**
+ * <p>
+ * 售后装箱表 Mapper 接口
+ * </p>
+ *
+ * @author lei.nie
+ * @since 2026-05-12
+ */
+@Mapper
+public interface AfterSalePackMapper extends BaseMapper<AfterSalePackEntity> {
+
+    /**
+     * 分页查询
+     *
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<AfterSalePackDTO.ListDTO> paging(Page query, @Param("params") AfterSalePackDTO.PagingParamDTO params);
+
+    /**
+     * 导出Excel查询
+     *
+     * @param params
+     * @return
+     */
+    List<AfterSalePackDTO.ListDTO> listExport(@Param("params") AfterSalePackDTO.ExportDTO params);
+
+}

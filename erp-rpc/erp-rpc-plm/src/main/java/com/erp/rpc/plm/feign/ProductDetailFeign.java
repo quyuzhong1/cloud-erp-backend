@@ -26,4 +26,7 @@ public interface ProductDetailFeign extends BaseDataFeign {
 
     @GetMapping("feign/productDetail/getProductInfoBySkuId")
     ProductDetailDTO.ServiceToWavePickingDTO getProductInfoBySkuId(@RequestParam String skuId);
+
+    @PostMapping("feign/productDetail/listBySkuNos")
+    List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNos);
 }

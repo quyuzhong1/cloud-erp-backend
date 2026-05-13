@@ -43,14 +43,14 @@ public class AfterSalesWarehouseLocationSuggestEntity extends BaseEntity<AfterSa
     /**
      * 推荐仓位code
      */
-    @TableField("suggest_warehouse_location_code")
-    private String suggestWarehouseLocationCode;
+    @TableField("warehouse_location_code")
+    private String warehouseLocationCode;
 
     /**
      * 优先级
      */
-    @TableField("priority")
-    private Integer priority;
+    @TableField("sort")
+    private Integer sort;
     /**
      * 状态
      * 是否禁用
