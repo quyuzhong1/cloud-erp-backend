@@ -3198,8 +3198,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .collect(Collectors.toList()));
         TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO = querySelectedSkuHeader(headerParamDTO, SourceTypeEnum.getEnum(type));
         declareBillEntity.setTransportNo(headerDTO.getTransportNo());
-        declareBillEntity.setLogisticsSupplierId(headerDTO.getLogisticsSupplierId());
-        declareBillEntity.setLogisticsSupplierName(headerDTO.getLogisticsSupplierName());
         declareBillEntity.setBoxQty(Objects.isNull(headerDTO.getBoxQty()) ? 0 : headerDTO.getBoxQty());
         declareBillEntity.setGrossWeight(Objects.isNull(headerDTO.getGrossWeight()) ? BigDecimal.ZERO : headerDTO.getGrossWeight());
         declareBillEntity.setNetWeight(Objects.isNull(headerDTO.getNetWeight()) ? BigDecimal.ZERO : headerDTO.getNetWeight());
