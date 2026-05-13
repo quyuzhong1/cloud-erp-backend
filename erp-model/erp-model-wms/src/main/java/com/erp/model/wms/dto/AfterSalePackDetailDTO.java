@@ -80,7 +80,7 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String id;
 
         /**
-         * 售后装箱id,after_sale_packing.id
+         * 售后装箱id,after_sale_pack.id
          */
         private String mainId;
 
@@ -152,7 +152,7 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String id;
 
         /**
-         * 售后装箱id,after_sale_packing.id
+         * 售后装箱id,after_sale_pack.id
          */
         private String mainId;
 
@@ -229,9 +229,9 @@ public class AfterSalePackDetailDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
 
         /**
-         * 售后装箱id,after_sale_packing.id
+         * 售后装箱id,after_sale_pack.id
          */
-        @Size(max = 50, message = "售后装箱id,after_sale_packing.id最大长度不能超过50位")
+        @Size(max = 50, message = "售后装箱id,after_sale_pack.id最大长度不能超过50位")
         private String mainId;
 
         /**
