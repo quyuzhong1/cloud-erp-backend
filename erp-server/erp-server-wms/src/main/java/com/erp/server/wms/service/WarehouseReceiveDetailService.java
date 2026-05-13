@@ -109,4 +109,23 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
     void updateKingdeeDetailId(JSONArray list);
 
     void updateInfo(WarehouseReceiveDetailEntity wrd);
+    /**
+     * 重算收货单下的待质检数量
+     * @author will
+     * @date 2026/3/30 15:03
+     * @param podIdList
+     * @param detailIdList
+     * @return  void
+     */
+     void recalculateWaitQcQty(List<String> podIdList, List<String> detailIdList);
+    /**
+     * 更新收货单下的待质检数量
+     * @author will
+     * @date 2026/3/30 17:43
+     * @param qcIdList
+     * @param isFinishQc
+     * @return  void
+     */
+    void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc);
+
 }

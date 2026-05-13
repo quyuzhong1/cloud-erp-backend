@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -34,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,9 +56,16 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdateSysDept(SysDepartmentEntity sysDepartment) {
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String currentUserId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         String id = sysDepartment.getId();
         if (StringUtils.isBlank(id)) {
             id = IdWorker.getIdStr();
+            sysDepartment.setCreateTime(now);
+            sysDepartment.setCreateUserId(currentUserId);
+            sysDepartment.setCreateUserName(userName);
         }
         String parentId = sysDepartment.getParentId();
         if (StringUtils.isBlank(parentId)) {
@@ -82,6 +92,9 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (sysDepartment.getId().equals(sysDepartment.getParentId())) {
             throw new ServiceException("部门不能设置自己为上级部门");
         }
+        sysDepartment.setUpdateTime(now);
+        sysDepartment.setUpdateUserId(currentUserId);
+        sysDepartment.setUpdateUserName(userName);
         this.saveOrUpdate(sysDepartment);
 
 
@@ -517,14 +530,24 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
      * @date 2022-07-11 17:56
      */
     private void getSaveTree(String parentId, List<SysDepartmentEntity> batchList, SysDepartmentDTO item) {
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String currentUserId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         SysDepartmentEntity entity = new SysDepartmentEntity();
         BeanMapperUtils.copy(item, entity);
         entity.setParentId(parentId);
         String id = item.getId();
         if (StringUtils.isBlank(id)) {
             id = IdWorker.getIdStr();
+            entity.setCreateTime(now);
+            entity.setCreateUserId(currentUserId);
+            entity.setCreateUserName(userName);
         }
         entity.setId(id);
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(currentUserId);
+        entity.setUpdateUserName(userName);
         batchList.add(entity);
         List<SysDepartmentDTO> subList = item.getChildrenList();
         if (CollectionUtils.isNotEmpty(subList)) {

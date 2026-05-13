@@ -191,4 +191,19 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @return BatchResultDTO
      */
     BatchResultDTO handleHisData(String id);
+
+    /**
+     * 上传发票
+     *
+     * @param dto PoReconciliationDetailDTO.UploadFileDTO
+     */
+    void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto);
+
+    /**
+     * 下载发票
+     *
+     * @param ids List<String>
+     * @return List<BatchResultDTO>
+     */
+    List<BatchResultDTO> downloadInvoice(List<String> ids);
 }

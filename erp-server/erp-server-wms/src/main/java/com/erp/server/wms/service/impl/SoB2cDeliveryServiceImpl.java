@@ -4,13 +4,13 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -205,6 +205,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Resource
     private TransferInfoService transferInfoService;
+    @Resource
+    private IdentifierGenerator identifierGenerator;
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
     @Resource
@@ -511,9 +513,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<SoB2cDeliveryDTO.AllocateCargoViewDTO> viewList = new ArrayList<>();
         List<PickingListsEntity> list = pickingListsService.list(Wrappers.<PickingListsEntity>lambdaQuery().in(PickingListsEntity::getSourceId, deliveryIds));
         List<String> pickingIds = list.stream().map(PickingListsEntity::getId).collect(Collectors.toList());
-        List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingIds));
+        List<PickingDetailEntity> pickingDetails = pickingDetailService.listByMainIdList(pickingIds);
         List<String> skuIds = pickingDetails.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<SkuVO> skuVOList = CollUtil.isNotEmpty(skuIds) ? plmTaskFeign.listSkuProductByIds(skuIds) : new ArrayList<>();
         List<PrintWayBillPdfDetailDTO> allDetailDTOList = new ArrayList<>();
         for (PickingDetailEntity pickingDetail : pickingDetails) {
             PickingListsEntity pickingLists = list.stream()
@@ -1021,10 +1023,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, Object> map = BeanUtil.beanToMap(printWayBillPdfDTO);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(printWayBillPdfDTO.getDetailList());
         map.put("detail", detail);
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(printWayBillPdfDTO));
-        String base = Base64.getEncoder().encodeToString(bytes);
-        FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder().base64(base).fileName(RandomUtil.randomNumbers(5) + ".pdf").build();
-        String url = fileFeign.uploadFileByBase64(uploadBase64);
+        String url = JasperHelperUtil.exportToPdfUrl(inputStream, map, Collections.singletonList(printWayBillPdfDTO));
         base64UrlList.add(url);
     }
 
@@ -2499,7 +2498,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
             List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
             //批次号
-            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             //生成直接调拨单
             generateTransferInfo(entity,soB2cDeliveryDetailList,split,batchNo);
         }
@@ -2883,16 +2882,22 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private void fillList(List<SoB2cDeliveryDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-
+        Map<String, String> skuNameMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName, (v1, v2) -> v1));
 
         //查询订单
         List<String> soIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (v1, v2) -> v1));
         List<String> ids = records.stream().map(SoB2cDeliveryDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByDeliveryIds(ids);
+        Map<String, String> interceptMap = soB2cDeliveryInterceptEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryInterceptEntity::getDeliveryId, SoB2cDeliveryInterceptEntity::getId, (v1, v2) -> v1));
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(ids);
         List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = FeignQuery.create(SoB2cLogisticsEntity.class).in(SoB2cLogisticsEntity::getMainId, soIds).list();
+        Map<String, String> waveCodeMap = deliveryList.stream().collect(Collectors.toMap(WaveListDTO.WaveDeliveryDTO::getDeliveryId, WaveListDTO.WaveDeliveryDTO::getWaveCode, (v1, v2) -> v1));
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
+        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity(), (v1, v2) -> v1));
+        List<SoB2cLabelEntity> b2cLabelEntityList = soB2cFeign.listSoB2cLabelByMainIdList(soIds);
+        Map<String, String> labelMap = b2cLabelEntityList.stream().collect(Collectors.toMap(SoB2cLabelEntity::getMainId, SoB2cLabelEntity::getLogisticsLabelUrl, (v1, v2) -> v1));
         //中转仓map
         List<String> warehouseIds = records.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getTransferWarehouseIds()))
                 .flatMap(req -> Arrays.stream(req.getTransferWarehouseIds().split(",")))
@@ -2900,7 +2905,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, String> warehouseMap =  CollUtil.isNotEmpty(warehouseIds) ? warehouseService.listWarehouseNameByIds(warehouseIds).stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, WarehouseDTO.UpdateDTO::getName)) : new HashMap<>();
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
-            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(record.getSourceId());
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 record.setIsIntercept(soB2cEntity.getIsIntercept() && !record.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()));
                 record.setPackageStatus(soB2cEntity.getPackageStatus());
@@ -2919,16 +2924,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //拣货类型中文
             record.setPickingTypeName(PickingTypeEnum.getName(record.getPickingType()));
             //产品信息
-            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(record.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(skuVO)) {
-                record.setSkuNo(skuVO.getSkuNo());
-                record.setProductName(skuVO.getSkuName());
-            }
+            record.setProductName(skuNameMap.getOrDefault(record.getSkuId(), ""));
             //波次号
-            WaveListDTO.WaveDeliveryDTO dto = deliveryList.stream()
-                    .filter(e -> e.getDeliveryId().equals(record.getId()))
-                    .findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
-            record.setWaveCode(dto.getWaveCode());
+            record.setWaveCode(waveCodeMap.get(record.getId()));
             String warehouseLocation = views.stream().filter(e -> e.getSourceId().equals(record.getId()))
                     .filter(e -> e.getSkuId().equals(record.getSkuId()))
                     .map(PickingListsDTO.SourceView::getWarehouseLocation)
@@ -2949,13 +2947,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if(!record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()) && record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
                 record.setTag("发");
             }
-            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v-> v.getDeliveryId().equals(record.getId()) && v.getHandleStatus().equals(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode())).findFirst().orElse(null);
-            if(Objects.nonNull(soB2cDeliveryInterceptEntity)){
-                record.setInterceptId(soB2cDeliveryInterceptEntity.getId());
+            record.setInterceptId(interceptMap.get(record.getId()));
+            SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityMap.get(record.getSourceId());
+            if (Objects.nonNull(soB2cLogisticsEntity)){
+                record.setLogisticsCode(soB2cLogisticsEntity.getCode());
+                record.setTrackCode(soB2cLogisticsEntity.getTrackNo());
             }
-            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(v->v.getMainId().equals(record.getSourceId())).findFirst().orElse(new SoB2cLogisticsEntity());
-            record.setLogisticsCode(soB2cLogisticsEntity.getCode());
-            record.setTrackCode(soB2cLogisticsEntity.getTrackNo());
+            record.setLogisticsLabelUrl(labelMap.get(record.getSourceId()));
             if (CharSequenceUtil.isNotBlank(record.getLogisticsLabelUrl())){
                 record.setLogisticsLabelUrlName("已获取");
             }else {

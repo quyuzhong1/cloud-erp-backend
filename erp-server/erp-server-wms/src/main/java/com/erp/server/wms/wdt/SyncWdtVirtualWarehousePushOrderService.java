@@ -1,5 +1,7 @@
 package com.erp.server.wms.wdt;
 
+import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.erp.model.wms.entity.VirtualWarehousePushHandleDetailEntity;
 
 import java.util.List;
@@ -23,4 +25,6 @@ public interface SyncWdtVirtualWarehousePushOrderService {
      */
     void saveTaskList(List<VirtualWarehousePushHandleDetailEntity> handleDetailList,List<String> transferIdList,
                                          String sourceCode, String operateCode, String sourceType);
+
+    String saveWdtInventoryTask(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailEntityList);
 }

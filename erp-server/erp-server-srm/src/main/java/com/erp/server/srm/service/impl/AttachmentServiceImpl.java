@@ -6,7 +6,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.srm.dto.AttachmentDTO;
-import com.erp.model.srm.entity.AttachmentEntity;
+import com.erp.model.srm.entity.SrmAttachmentEntity;
 import com.erp.server.srm.mapper.AttachmentMapper;
 import com.erp.server.srm.service.AttachmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,15 +27,15 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, AttachmentEntity> implements AttachmentService {
+public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, SrmAttachmentEntity> implements AttachmentService {
 
     @Override
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
         int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
         if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
-            List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
+            List<SrmAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                SrmAttachmentEntity entity = new SrmAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
                 if (CollectionUtils.isNotEmpty(attachmentNameList) && nameSize > i) {
                         entity.setAttachName(attachmentNameList.get(i));
@@ -56,9 +56,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         if (CollectionUtils.isEmpty(businessIds)) {
             return Collections.emptyList();
         }
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
-        List<AttachmentEntity> list = this.list(queryWrapper);
+        LambdaQueryWrapper<SrmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SrmAttachmentEntity::getBusinessId, businessIds);
+        List<SrmAttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
@@ -68,10 +68,10 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
 
     @Override
     public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AttachmentEntity::getAttachUrl, dto.getAttachUrl());
+        LambdaQueryWrapper<SrmAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SrmAttachmentEntity::getAttachUrl, dto.getAttachUrl());
         if (StringUtils.isNotBlank(dto.getBusinessId())) {
-            queryWrapper.eq(AttachmentEntity::getBusinessId, dto.getBusinessId());
+            queryWrapper.eq(SrmAttachmentEntity::getBusinessId, dto.getBusinessId());
         }
         this.remove(queryWrapper);
     }

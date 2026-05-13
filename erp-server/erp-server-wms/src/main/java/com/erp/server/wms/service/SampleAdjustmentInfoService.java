@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.wms.entity.SampleAdjustmentInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -129,10 +130,10 @@ public interface SampleAdjustmentInfoService extends SuperService<SampleAdjustme
     * 撤销
     * @author wuhaotian
     * @date: 2025-11-14
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

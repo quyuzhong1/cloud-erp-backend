@@ -155,6 +155,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_OMS_KOL_B2B_APPLICATION("IMPORT_OMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
     EXPORT_OMS_KOL_B2C_APPLICATION("EXPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导出","","",""),
     IMPORT_OMS_KOL_B2C_APPLICATION("IMPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolB2cApplication",""),
+    IMPORT_OMS_B2C_MANUAL_DELIVERY("IMPORT_OMS_B2C_MANUAL_DELIVERY","B2C销售订单手动发货","com.erp.rpc.oms.feign.ImportOmsFeign","importB2cManualDelivery",""),
+
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据","","",""),
@@ -245,6 +247,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_FIRST_MILE_PACKING_BOX("EXPORT_WMS_FIRST_MILE_PACKING_BOX", "箱号对照表清单导出","","",""),
     EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH("EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH", "仓位补货","","",""),
     EXPORT_WMS_DAILY_QC_BILL("EXPORT_WMS_DAILY_QC_BILL", "质检日报数据","","",""),
+    EXPORT_WMS_QC_STANDARD("EXPORT_WMS_QC_STANDARD", "质检标准数据","","","ExportWmsQcStandardHandler"),
     EXPORT_WMS_QC_BILL("EXPORT_WMS_QC_BILL", "质检单数据","","",""),
     EXPORT_WMS_QC_REPORT_DETAIL("EXPORT_WMS_QC_REPORT_DETAIL", "质检报告数据","","",""),
     EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL("EXPORT_WMS_QC_EFFECTIVENESS_PERSONNEL", "质检报表质检人员","","",""),
@@ -323,6 +326,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_AWD_OUT_STOCK("EXPORT_WMS_AWD_OUT_STOCK", "AWD出库货件导出","","",""),
     EXPORT_WMS_AWD_INVENTORY("EXPORT_WMS_AWD_INVENTORY", "AWD库存导出","","",""),
 
+    EXPORT_WMS_QC_APPLICATION("EXPORT_WMS_QC_APPLICATION", "质检申请导出","","",""),
+    IMPORT_WMS_QC_APPLICATION_DETAIL("IMPORT_WMS_QC_APPLICATION_DETAIL", "质检申请明细导入","com.erp.rpc.wms.feign.ImportWmsFeign","importQcApplicationDetail",""),
+
 
     //tms
     EXPORT_TMS_LOGISTICS_ADDRESS("EXPORT_TMS_LOGISTICS_ADDRESS", "物流地址列表","","",""),
@@ -355,9 +361,11 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_FM_WEIGHT_ALLOCATION("EXPORT_TMS_FM_WEIGHT_ALLOCATION", "头程重量分摊导出","","",""),
     EXPORT_TMS_LOGISTICS_LARGE("EXPORT_TMS_LOGISTICS_LARGE", "物流大表导出","","",""),
     EXPORT_TMS_FIRST_MILE_CHANGE_RECORD("EXPORT_TMS_FIRST_MILE_CHANGE_RECORD", "头程调整记录导出","","",""),
-    EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF("EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF", "物流-第三方渠道关系表导出","","",""),
+    EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF("EXPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF", "轨迹查询策略导出","","",""),
+    IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF("IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF", "轨迹查询策略导入","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsThirdChannelRef",""),
     EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出","","",""),
     EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出","","",""),
+    EXPORT_TMS_LOGISTICS_ORDER("EXPORT_TMS_LOGISTICS_ORDER", "物流下单导出","","",""),
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入尾程费用(自发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用(平台发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
@@ -365,6 +373,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_CFG_LOGISTICS_COST("EXPORT_TMS_CFG_LOGISTICS_COST","费用配置导出","","",""),
     IMPORT_TMS_CFG_LOGISTICS_COST("IMPORT_TMS_CFG_LOGISTICS_COST","费用配置导入","com.erp.rpc.tms.feign.ImportTmsFeign","importCfgLogisticsCost",""),
     IMPORT_TMS_IMPORT_HISTORY_RECORD("IMPORT_TMS_IMPORT_HISTORY_RECORD","物流商费用导入","com.erp.rpc.tms.feign.ImportTmsFeign","preprocessingImportExcel",""),
+
+    EXPORT_TMS_ASYNC_TASK_RECORD("EXPORT_TMS_ASYNC_TASK_RECORD","异步任务导出","","",""),
+    EXPORT_TMS_ASYNC_TASK_DETAIL("EXPORT_TMS_ASYNC_TASK_DETAIL","异步任务错误导出","","",""),
 
     //mrp
     EXPORT_MRP_REPLENISHMENT_RULE("EXPORT_MRP_REPLENISHMENT_RULE", "补货规则","","",""),

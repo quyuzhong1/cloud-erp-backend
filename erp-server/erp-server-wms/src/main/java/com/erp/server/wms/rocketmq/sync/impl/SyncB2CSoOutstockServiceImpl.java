@@ -22,16 +22,22 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.plm.dto.SkuStdCostDTO;
+import com.erp.model.plm.entity.PlmCfgSettingEntity;
+import com.erp.model.plm.entity.SkuStdRetailPriceEntity;
+import com.erp.model.plm.enums.SkuStdSettingEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -147,6 +153,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    
+    @Resource
+    private MQProducerService mqProducerService;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -453,37 +462,123 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * @return
      */
     private List<WdtSoOutStockDetailDTO> buildOutStockDetail(SoOutstockEntity soOutstock, List<WdtSoOutStockDetailDTO> detailList) {
-        //获取仓库配置
+    	DictBasicEntity basicEntity = null;
+    	//获取仓库配置
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList("mergeSkuWarehouse"));
-        if (CollectionUtils.isEmpty(dictList)) {
-            return detailList;
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            basicEntity = dictList.stream().filter(e -> e.getValue().equals(soOutstock.getWarehouseId())).findFirst().orElse(null);
         }
-        DictBasicEntity basicEntity = dictList.stream().filter(e -> e.getValue().equals(soOutstock.getWarehouseId())).findFirst().orElse(null);
         if (Objects.isNull(basicEntity)) {
-            return detailList;
-        }
-        //兼容历史数据，没有组合sku和数量就不合并
-        Map<String, List<WdtSoOutStockDetailDTO>> suiteMap = detailList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuiteNo()) && Objects.nonNull(e.getSuiteQty())).collect(Collectors.groupingBy(e -> e.getSuiteNo() + "-" + e.getSuiteQty()));
-        //存在仓库配置
-        List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS = new ArrayList<>();
-        for (String key : suiteMap.keySet()) {
-            List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS1 = suiteMap.get(key);
-            WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO = soOutStockDetailDTOS1.get(0);
-            wdtSoOutStockDetailDTO.setSkuNo(wdtSoOutStockDetailDTO.getSuiteNo());
-            wdtSoOutStockDetailDTO.setPlanQty(wdtSoOutStockDetailDTO.getSuiteQty());
-            wdtSoOutStockDetailDTO.setActualQty(wdtSoOutStockDetailDTO.getSuiteQty());
-            wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add));
-            wdtSoOutStockDetailDTO.setAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-            List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
-            wdtSoOutStockDetailDTO.setPositionDetailsList(positionDetailsList);
-            //单价处理 明细*qty之和 / 合并数量
-            BigDecimal totalPrice = soOutStockDetailDTOS1.stream().map(e -> e.getPrice().multiply(new BigDecimal(e.getActualQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
-            wdtSoOutStockDetailDTO.setPrice(totalPrice.divide(new BigDecimal(wdtSoOutStockDetailDTO.getSuiteQty()), 2, RoundingMode.HALF_UP));
+        	List<PlmCfgSettingEntity> list = FeignQuery.create(PlmCfgSettingEntity.class).eq(PlmCfgSettingEntity::getKey, "sku_std_setting").list();
+    		if(CollUtil.isEmpty(list)) {
+    			return detailList;
+    		}
+    		
+    		String skuStdSetting = list.get(0).getRemark();
+    		SkuStdSettingEnum skuStdSettingEnum = SkuStdSettingEnum.getByCode(skuStdSetting);
+    		if(skuStdSettingEnum == null) {
+    			return detailList;
+    		}
+    		Map<String, List<WdtSoOutStockDetailDTO>> suiteMap = detailList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuiteNo()) && Objects.nonNull(e.getSuiteQty())).collect(Collectors.groupingBy(e -> e.getSuiteNo() + "-" + e.getSuiteQty()));
+    		List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS = new ArrayList<>();
+    		
+    		Set<String> suiteSkuSet = new HashSet<>();
+    		for(List<WdtSoOutStockDetailDTO> v : suiteMap.values()) {
+    			suiteSkuSet.addAll(v.stream().map(WdtSoOutStockDetailDTO::getSkuNo).collect(Collectors.toSet()));
+    		}
+    		Map<String, BigDecimal> skuPriceMap = new HashMap<>();
+    		String tableName = "";
+    		if(SkuStdSettingEnum.RETAIL_STD == skuStdSettingEnum) {
+    			tableName = "sku_std_retail_price";
+    			List<SkuStdRetailPriceEntity> skuStdRetailPriceEntityList = FeignQuery.create(SkuStdRetailPriceEntity.class).in(SkuStdRetailPriceEntity::getSkuNo, suiteSkuSet).list();
+    			skuPriceMap = skuStdRetailPriceEntityList.stream().collect(Collectors.toMap(SkuStdRetailPriceEntity::getSkuNo, SkuStdRetailPriceEntity::getStdRetailPriceVat , (s1 , s2) -> s1));
+    		}else if(SkuStdSettingEnum.COST_AVG == skuStdSettingEnum){
+    			tableName = "dmp_sku_cost";
+    			List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(new ArrayList<>(suiteSkuSet));
+    			skuPriceMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getActualTaxCost , (s1 , s2) -> s1));
+    		}else {
+    			return detailList;
+    		}
+    		
+    		suiteSkuSet.removeAll(skuPriceMap.keySet());
+    		if(CollUtil.isNotEmpty(suiteSkuSet)) {
+    			WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+    	        warnMsgInfo.setBizName("预警消息");
+    	        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+    	        warnMsgInfo.setTitle(skuStdSettingEnum.getName());
+    	        warnMsgInfo.setTableName(tableName);
+    	        warnMsgInfo.setKeyInfo("旺店通销售出库单分摊金额时，如下SKU未维护" + skuStdSettingEnum.getName() + ":" + suiteSkuSet.stream().collect(Collectors.joining("、" , "{" , "}")));
+    	        warnMsgInfo.setTableId("无");
+    	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+    	        mqProducerService.sendWarnMsg(warnMsgInfo);
+    			return detailList;
+    		}
+    		
+    		for(Map.Entry<String, List<WdtSoOutStockDetailDTO>> suiteInfo : suiteMap.entrySet()) {
+    			List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOList = suiteInfo.getValue();
+    			BigDecimal totalStd = BigDecimal.ZERO;
+    			BigDecimal totalAllAmountLocalCurrency = BigDecimal.ZERO;
+    			BigDecimal totalAmount = BigDecimal.ZERO;
+    			for(WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO : wdtSoOutStockDetailDTOList) {
+    				totalStd = totalStd.add(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()).multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString())));
+    				totalAllAmountLocalCurrency = totalAllAmountLocalCurrency.add(wdtSoOutStockDetailDTO.getAllAmountLocalCurrency());
+    				totalAmount = totalAmount.add(wdtSoOutStockDetailDTO.getAmount());
+    			}
+    			if(totalStd.compareTo(BigDecimal.ZERO) != 0) {
+    				int index = 0;
+    				BigDecimal currTotalAllAmountLocalCurrency = BigDecimal.ZERO;
+    				BigDecimal currTotalAmount = BigDecimal.ZERO;
+    				for(WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO : wdtSoOutStockDetailDTOList) {
+    					index = index + 1;
+    					if(index != wdtSoOutStockDetailDTOList.size()) {
+    						BigDecimal allAmountLocalCurrency = totalAllAmountLocalCurrency
+        							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
+        							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
+        							.divide(totalStd , 4 , RoundingMode.DOWN);
+    						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
+							wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
+							
+        					BigDecimal amount = totalAmount
+        							.multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
+        							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
+        							.divide(totalStd , 4 , RoundingMode.DOWN);
+        					currTotalAmount = currTotalAmount.add(amount);
+							wdtSoOutStockDetailDTO.setAmount(amount);
+    					}else {
+    						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAllAmountLocalCurrency.subtract(currTotalAllAmountLocalCurrency));
+    						wdtSoOutStockDetailDTO.setAmount(totalAmount.subtract(currTotalAmount));
+    					}
+    					wdtSoOutStockDetailDTO.setPrice(wdtSoOutStockDetailDTO.getAmount().divide(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty()), 4, RoundingMode.HALF_UP));
+    				}
+    			}
+    			soOutStockDetailDTOS.addAll(wdtSoOutStockDetailDTOList);
+    		}
+    		soOutStockDetailDTOS.addAll(detailList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSuiteNo()) || Objects.isNull(e.getSuiteQty())).collect(Collectors.toList()));
+    		return soOutStockDetailDTOS;
+        }else {
+    		Map<String, List<WdtSoOutStockDetailDTO>> suiteMap = detailList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuiteNo()) && Objects.nonNull(e.getSuiteQty())).collect(Collectors.groupingBy(e -> e.getSuiteNo() + "-" + e.getSuiteQty()));
+            //存在仓库配置
+            List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS = new ArrayList<>();
+            for (String key : suiteMap.keySet()) {
+                List<WdtSoOutStockDetailDTO> soOutStockDetailDTOS1 = suiteMap.get(key);
+                WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO = soOutStockDetailDTOS1.get(0);
+                wdtSoOutStockDetailDTO.setSkuNo(wdtSoOutStockDetailDTO.getSuiteNo());
+                wdtSoOutStockDetailDTO.setPlanQty(wdtSoOutStockDetailDTO.getSuiteQty());
+                wdtSoOutStockDetailDTO.setActualQty(wdtSoOutStockDetailDTO.getSuiteQty());
+                wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add));
+                wdtSoOutStockDetailDTO.setAmount(soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+                List<PositionDetailsList> positionDetailsList = soOutStockDetailDTOS1.stream().map(WdtSoOutStockDetailDTO::getPositionDetailsList).filter(Objects::nonNull).flatMap(Collection::stream).collect(Collectors.toList());
+                wdtSoOutStockDetailDTO.setPositionDetailsList(positionDetailsList);
+                //单价处理 明细*qty之和 / 合并数量
+                BigDecimal totalPrice = soOutStockDetailDTOS1.stream().map(e -> e.getPrice().multiply(new BigDecimal(e.getActualQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                wdtSoOutStockDetailDTO.setPrice(totalPrice.divide(new BigDecimal(wdtSoOutStockDetailDTO.getSuiteQty()), 2, RoundingMode.HALF_UP));
 
-            soOutStockDetailDTOS.add(wdtSoOutStockDetailDTO);
+                soOutStockDetailDTOS.add(wdtSoOutStockDetailDTO);
+            }
+            soOutStockDetailDTOS.addAll(detailList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSuiteNo()) || Objects.isNull(e.getSuiteQty())).collect(Collectors.toList()));
+            return soOutStockDetailDTOS;
         }
-        soOutStockDetailDTOS.addAll(detailList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSuiteNo()) || Objects.isNull(e.getSuiteQty())).collect(Collectors.toList()));
-        return soOutStockDetailDTOS;
+        
     }
 
 

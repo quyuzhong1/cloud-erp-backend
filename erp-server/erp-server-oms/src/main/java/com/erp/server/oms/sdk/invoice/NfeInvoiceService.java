@@ -371,6 +371,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setCfgId(invoiceSettingDetail.getId());
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark("响应数据为空");
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             return Boolean.FALSE;
         }
@@ -432,6 +435,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(statusEnum.getCode());
             invoiceInfoEntity.setQueryId(responseData.getUuid());
             invoiceInfoEntity.setRemark(CharSequenceUtil.isNotBlank(responseData.getMotivo()) ? responseData.getMotivo() : "处理中");
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             return Boolean.TRUE;
         } else {
@@ -456,6 +462,9 @@ public class NfeInvoiceService {
             invoiceInfoEntity.setStatus(statusEnum.getCode());
             invoiceInfoEntity.setQueryId(responseData.getUuid());
             invoiceInfoEntity.setRemark(CharSequenceUtil.format("status:{}, motivo:{}", status, motivo));
+            invoiceInfoEntity.setInvoiceAddress(invoiceAddress);
+            invoiceInfoEntity.setSellerTaxNo(sellerTaxNo);
+            invoiceInfoEntity.setCompanyName(companyName);
             invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
             
             if (isErrorStatus) {

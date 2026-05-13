@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -25,6 +26,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.StocktakingProfitLossDTO;
@@ -344,7 +346,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         StocktakingProfitLossEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException("未找到盘盈盘亏单");
@@ -356,6 +359,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         LoginUser user = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
         revokeDTO.setUserId(user.getUid());
@@ -536,7 +540,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(mappingList.isEmpty()){
             return;
         }
-        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+        Map<String, String> thirdWarehouseMap = mappingList.stream()
+                .filter(item -> CharSequenceUtil.isBlank(item.getInventorySyncMode()) || !Objects.equals(InventorySyncModeEnum.INVENTORY.getCode(), item.getInventorySyncMode()))
+                .collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
 
         detailList = detailList.stream().filter(item -> thirdWarehouseMap.containsKey(item.getWarehouseId())).collect(Collectors.toList());
         Map<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> collect = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));
@@ -578,7 +584,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         if(mappingList.isEmpty()){
             return;
         }
-        Map<String, String> thirdWarehouseMap = mappingList.stream().collect(Collectors.toMap(item1 -> item1.getSysWarehouseId(), item2 -> item2.getThirdWarehouseCode()));
+        Map<String, String> thirdWarehouseMap = mappingList.stream()
+                .filter(item -> CharSequenceUtil.isBlank(item.getInventorySyncMode()) || !Objects.equals(InventorySyncModeEnum.INVENTORY.getCode(), item.getInventorySyncMode()))
+                .collect(Collectors.toMap(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId, ThirdMappingDTO.WarehouseMappingDTO::getThirdWarehouseCode));
 
         detailList = detailList.stream().filter(item -> thirdWarehouseMap.containsKey(item.getWarehouseId())).collect(Collectors.toList());
         Map<String, List<StocktakingProfitLossDetailDTO.ViewDTO>> collect = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId()));

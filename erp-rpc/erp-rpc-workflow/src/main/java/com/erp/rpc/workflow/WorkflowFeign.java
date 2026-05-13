@@ -258,7 +258,7 @@ public interface WorkflowFeign {
      * @return
      */
     @PostMapping("/feign/process/listHistoryTaskByProcessId")
-    List<ApproveNodeRecordVO> listHistoryTaskByProcessId(String processId);
+    List<ApproveNodeRecordVO> listHistoryTaskByProcessId(@RequestBody String processId);
 
     /**
      * 根据业务id获取流程实例信息

@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdsDTO.IdsDTO;
@@ -76,11 +75,6 @@ public class SkuStdRetailPriceController extends BaseController {
      * @return
      */
      @PostMapping("/tabList")
-     @DataPermission(operationType = DataAttributeEnum.LIST,
-             tableField = "create_user_id",
-             menuCode = "plm:skuStdRetailPrice:paging",
-             tableAlias = "g"
-     )
      public ApiResult<List<SkuStdRetailPriceDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(skuStdRetailPriceService.tabList(dto));
      }
@@ -93,11 +87,6 @@ public class SkuStdRetailPriceController extends BaseController {
      * @return ApiResult<PagingVO<SkuStdRetailPriceDTO.ListDTO>>
      */
      @PostMapping("/paging")
-     @DataPermission(operationType = DataAttributeEnum.LIST,
-             tableField = "create_user_id",
-             menuCode = "plm:skuStdRetailPrice:paging",
-             tableAlias = "g"
-     )
      @WebAdvanceQuery(handler = SkuStdRetailPriceQueryHandler.class)
      public ApiResult<PagingVO<SkuStdRetailPriceDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SkuStdRetailPriceDTO.PagingParamDTO> dto) {
          return success(skuStdRetailPriceService.paging(dto));
@@ -190,11 +179,6 @@ public class SkuStdRetailPriceController extends BaseController {
     */
     @PostMapping("/batchUpdate")
     @LogAction(value = LogActionEnum.UPDATE, desc = "sku标准零售价表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "plm:skuStdRetailPrice:update",
-        serviceClass = SkuStdRetailPriceService.class,
-        keyIdName = "id")
     public ApiResult<Boolean> batchUpdate(@RequestBody @Validated List<SkuStdRetailPriceDTO.UpdateDTO> dtoList) {
     	skuStdRetailPriceService.batchAdd(BeanUtil.copyToList(dtoList, SkuStdRetailPriceDTO.AddDTO.class) , true, false);
     	return success(true);
@@ -208,11 +192,6 @@ public class SkuStdRetailPriceController extends BaseController {
     * @return ApiResult<SkuStdRetailPriceDTO.ViewDTO>>
     */
     @PostMapping("/batchDelete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:skuStdRetailPrice:delete",
-            serviceClass = SkuStdRetailPriceService.class,
-            keyIdName = "id")
     @LogViewService
     public ApiResult<Boolean> batchDelete(@RequestBody @Validated IdsDTO ids) {
     	List<SkuStdRetailPriceEntity> listByIds = skuStdRetailPriceService.listByIds(ids.getIds());

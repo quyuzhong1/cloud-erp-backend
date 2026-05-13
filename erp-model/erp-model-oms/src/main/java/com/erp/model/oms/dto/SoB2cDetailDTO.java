@@ -19,6 +19,14 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class SoB2cDetailDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    public static class MainDTO {
+        //销售订单id
+        private String id;
+        // 明细列表
+        private List<ListDTO> detailList;
+    }
 
     /**
      * 列表
@@ -414,6 +422,14 @@ public class SoB2cDetailDTO implements Serializable {
         private BigDecimal firstMileShippingCost;
         //清关税费
         private BigDecimal clearanceCustomsTax;
+        /**
+         * 分摊来源
+         */
+        private String priceAllocationSource;
+        /**
+         * 分摊来源金额
+         */
+        private BigDecimal allocationAmount;
     }
 
     /**

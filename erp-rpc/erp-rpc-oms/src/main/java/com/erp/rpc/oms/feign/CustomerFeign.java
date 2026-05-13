@@ -176,14 +176,14 @@ public interface CustomerFeign {
      * @return
      */
     @PostMapping("feign/customer/listByCodes")
-    List<CustomerInfoEntity> listByCodes(List<String> list);
+    List<CustomerInfoEntity> listByCodes(@RequestBody List<String> list);
 
     /**
      * 更新 客户信息审核状态
      * @param entity
      */
     @PostMapping("feign/customer/updateApproveStatus")
-    void updateApproveStatus(CustomerInfoEntity entity);
+    void updateApproveStatus(@RequestBody CustomerInfoEntity entity);
 
     /**
      * 释放同步订货通

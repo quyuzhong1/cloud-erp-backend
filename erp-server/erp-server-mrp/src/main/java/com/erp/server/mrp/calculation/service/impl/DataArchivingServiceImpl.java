@@ -1,6 +1,7 @@
 package com.erp.server.mrp.calculation.service.impl;
 
 import cn.hutool.core.date.DateUtil;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.entity.CfgDataArchivingEntity;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
@@ -48,7 +49,7 @@ public class DataArchivingServiceImpl implements DataArchivingService {
 
     @Override
     public void dataArchiving(LocalDate calculationDate, Integer cleanDay) {
-        String redisKey = "mrp:data:archiving";
+        String redisKey = RedisCacheConstants.MRP_DATA_ARCHIVING_KEY;
         redisTemplate.delete(redisKey);
         if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 7200, TimeUnit.SECONDS))) {
             try {

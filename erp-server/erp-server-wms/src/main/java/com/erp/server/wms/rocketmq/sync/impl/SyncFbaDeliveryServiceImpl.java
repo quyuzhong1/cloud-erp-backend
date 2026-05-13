@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.utils.RedisUtil;
@@ -10,7 +11,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
@@ -40,7 +41,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -80,7 +84,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
         // 加工品处理（如果时JG-开头的需要去掉）
         entity.getItemList().stream().forEach(item->{
-            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisKeyConstant.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
+            RedisMabngSkuEntity mabangSkuInfo = redisUtil.getHashMap(RedisCacheConstants.MABANG_STOCK_SKU_LIST_KEY, item.getSkuNo());
             if(Objects.isNull(mabangSkuInfo)) {
                 log.warn("马帮FBA发货单【{}】的加工组合品SKU【{}】在马帮SKU列表中不存在", entity.getDeliveryNo(), item.getSkuNo());
                 throw new ServiceException(ApiError.PRODUCT_SKU_MABANG_FIN_CODE_NOT_FOUND, item.getSkuNo());
@@ -133,7 +137,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 machineInfoService.disApprove(machineInfoEntity);
             } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)) {
                 // 撤销
-                machineInfoService.cancelProcess(Collections.singletonList(machineInfoEntity.getId()));
+                machineInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(machineInfoEntity.getId())));
             }
             if(!Objects.equals(machineInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
                 // 作废

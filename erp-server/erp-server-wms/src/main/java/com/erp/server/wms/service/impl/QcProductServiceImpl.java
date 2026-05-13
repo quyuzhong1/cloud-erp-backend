@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -86,13 +87,14 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (!Objects.isNull(oldEntity)) {
             skuIdList.add(oldEntity.getSkuId());
         }
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPurchaseByIds(skuIdList);
 
         SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
             qcProductEntity.setProductGrade(skuVO.getProductGrade());
             qcProductEntity.setVariantProperty(skuVO.getVariantProperty());
             qcProductEntity.setSkuNo(skuVO.getSkuNo());
+            qcProductEntity.setEan(skuVO.getEan());
         }
         //产品信息
         List<String> productImageNameList = qcProduct.getProductImageNameList();
@@ -143,7 +145,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         QcProductDTO.ViewDTO productView = new QcProductDTO.ViewDTO();
         if (product != null) {
             BeanMapper.copy(product, productView);
-            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(product.getSkuId()));
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(Collections.singletonList(product.getSkuId()));
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(product.getId()));
             List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
@@ -161,6 +163,15 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
                 productView.setProductName(skuVO.getSkuName());
                 productView.setSkuNo(skuVO.getSkuNo());
                 productView.setVariantProperty(skuVO.getVariantProperty());
+                productView.setProductLength(Objects.nonNull(productView.getProductLength()) && BigDecimal.ZERO.compareTo(productView.getProductLength()) != 0 ? productView.getProductLength() : skuVO.getProductLength());
+                productView.setProductWidth(Objects.nonNull(productView.getProductWidth()) && BigDecimal.ZERO.compareTo(productView.getProductWidth()) != 0 ? productView.getProductWidth() : skuVO.getProductWidth());
+                productView.setProductHeight(Objects.nonNull(productView.getProductHeight()) && BigDecimal.ZERO.compareTo(productView.getProductHeight()) != 0 ? productView.getProductHeight() : skuVO.getProductHeight());
+                productView.setBoxLength(Objects.nonNull(productView.getBoxLength()) && BigDecimal.ZERO.compareTo(productView.getBoxLength()) != 0 ? productView.getBoxLength() : skuVO.getProductLength());
+                productView.setBoxWidth(Objects.nonNull(productView.getBoxWidth()) && BigDecimal.ZERO.compareTo(productView.getBoxWidth()) != 0 ? productView.getBoxWidth() : skuVO.getProductWidth());
+                productView.setBoxHeight(Objects.nonNull(productView.getBoxHeight()) && BigDecimal.ZERO.compareTo(productView.getBoxHeight()) != 0 ? productView.getBoxHeight() : skuVO.getProductHeight());
+                productView.setProductNetWeight(Objects.nonNull(productView.getProductNetWeight()) && BigDecimal.ZERO.compareTo(productView.getProductNetWeight()) != 0 ? productView.getProductNetWeight() : skuVO.getNetWeight());
+                productView.setBoxWeight(Objects.nonNull(productView.getBoxWeight()) && BigDecimal.ZERO.compareTo(productView.getBoxWeight()) != 0 ? productView.getBoxWeight() : skuVO.getGrossWeight());
+                productView.setBoxQty(Objects.nonNull(productView.getBoxQty()) && productView.getBoxQty() != 0 ? productView.getBoxQty() : skuVO.getBoxQty());
             }
 
         }

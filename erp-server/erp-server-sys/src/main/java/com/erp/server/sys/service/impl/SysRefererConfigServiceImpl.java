@@ -33,7 +33,7 @@ public class SysRefererConfigServiceImpl extends SuperServiceImpl<SysRefererConf
      * @return 配置列表
      */
     @Override
-    @Cacheable(value = "sysRefererConfig", key = "#appType + ':' + #appId ")
+    @Cacheable(value = "cache:sys:refererConfig", key = "#appType + ':' + #appId ")
     public List<SysRefererConfigEntity> getByAppIdAndType(String appId, String appType) {
         log.info("查询应用配置，appId：{}，appType：{}", appId, appType);
         return this.lambdaQuery()
@@ -49,7 +49,7 @@ public class SysRefererConfigServiceImpl extends SuperServiceImpl<SysRefererConf
      * @return 配置列表
      */
     @Override
-    @Cacheable(value = "sysRefererConfig", key = "#appId")
+    @Cacheable(value = "cache:sys:refererConfig", key = "#appId")
     public List<SysRefererConfigEntity> getByAppId(String appId) {
         log.info("查询应用配置，appId：{}", appId);
         return this.lambdaQuery()

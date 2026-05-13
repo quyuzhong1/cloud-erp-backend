@@ -10,11 +10,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -334,6 +337,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         if (ObjectUtils.isEmpty(params.getDate())) {
             params.setDate(LocalDate.now());
         }
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         IPage<InventoryReportDTO.ListDailyInventoryDTO> pageData = baseMapper.dailyInventoryPaging(query, pagingParamDTO.getParams());
         handleDailyInventory(pageData.getRecords());
         return new PagingVO(pageData);
@@ -347,6 +355,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         if (ObjectUtils.isEmpty(params.getDate())) {
             params.setDate(LocalDate.now());
         }
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         IPage<InventoryReportDTO.ListDailyInventoryDTO> pageData = baseMapper.dailyInventoryPagingByLocation(query, pagingParamDTO.getParams());
         handleDailyInventory(pageData.getRecords());
         return new PagingVO(pageData);
@@ -457,24 +470,33 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             return;
         }
         List<String> warehouseIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getWarehouseId).collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIdList);
+        List<WarehouseEntity> warehouseList = warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName, WarehouseEntity::getKingdeeWarehouseCode, WarehouseEntity::getDisabled).in(WarehouseEntity::getId, warehouseIdList).list();
+        Map<String, WarehouseEntity> warehouseEntityMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, Function.identity()));
         List<String> orgIdList = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
+        Map<String, String> orgMap = orgList.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getName));
+        //sku信息查询
+        List<String> skuIds = dataList.stream().map(InventoryReportDTO.ListDailyInventoryDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuSaleByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         for (InventoryReportDTO.ListDailyInventoryDTO inventoryDTO : dataList) {
-            //销售状态
-            inventoryDTO.setSaleStateName(SaleStateEnum.getNameByCode(inventoryDTO.getSaleState()));
             //仓库信息
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(inventoryDTO.getWarehouseId())).findFirst().orElse(null);
+            WarehouseEntity updateDTO = warehouseEntityMap.get(inventoryDTO.getWarehouseId());
             if (ObjectUtils.isNotEmpty(updateDTO)) {
                 inventoryDTO.setWarehouseCode(updateDTO.getKingdeeWarehouseCode());
                 inventoryDTO.setWarehouseName(updateDTO.getName());
                 inventoryDTO.setDisabled(updateDTO.getDisabled());
             }
             //组织信息
-            BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(obj -> obj.getId().equals(inventoryDTO.getOrgId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(codeDTO)) {
-                inventoryDTO.setOrgName(codeDTO.getName());
+            inventoryDTO.setOrgName(orgMap.getOrDefault(inventoryDTO.getOrgId(), inventoryDTO.getOrgName()));
+            //sku信息
+            SkuVO skuVO = skuMap.get(inventoryDTO.getSkuId());
+            if (Objects.nonNull(skuVO)) {
+                inventoryDTO.setSkuNo(skuVO.getSkuNo());
+                inventoryDTO.setProductName(skuVO.getSkuName());
+                inventoryDTO.setSaleState(skuVO.getSaleState());
+                //销售状态
+                inventoryDTO.setSaleStateName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
             }
         }
     }

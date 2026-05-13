@@ -74,7 +74,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
         SoB2cReturnEntity exist;
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
             if (StringUtils.isBlank(dto.getPlatformOrderNo())
-                    || StringUtils.isBlank(dto.getBatchNo())
+                    || StringUtils.isBlank(dto.getUniqueId())
                     || StringUtils.isBlank(dto.getShopId())
             ){
                 ServiceException.runError("平台退货单消费:平台订单号/批次号/shopId不能为空");
@@ -86,7 +86,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
             exist = soB2cReturnService.lambdaQuery()
                     .eq(SoB2cReturnEntity::getPlatformOrderNo, dto.getPlatformOrderNo())
                     .eq(SoB2cReturnEntity::getShopId, dto.getShopId())
-                    .eq(SoB2cReturnEntity::getBatchNo, dto.getBatchNo())
+                    .eq(SoB2cReturnEntity::getBatchNo, dto.getUniqueId())
                     .last("LIMIT 1")
                     .one()
                     ;

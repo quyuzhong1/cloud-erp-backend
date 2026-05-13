@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
@@ -48,5 +49,29 @@ public class AddressParseDTO implements Serializable {
 
         private BigDecimal confidence;
         private String sourceText;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class BatchParseRequestDTO extends ParseRequestDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class BatchParseResultDTO extends ParseResultDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
     }
 }

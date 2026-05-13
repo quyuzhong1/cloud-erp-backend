@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapp
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -24,12 +25,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.fms.dto.AssetStocktakingDTO;
 import com.erp.model.fms.dto.AssetStocktakingDetailDTO;
-import com.erp.model.fms.entity.AssetStocktakingEntity;
-import com.erp.model.fms.entity.AssetStocktakingDetailEntity;
-import com.erp.model.fms.entity.AssetProfitLossEntity;
-import com.erp.model.fms.entity.AssetProfitLossDetailEntity;
-import com.erp.model.fms.entity.AssetCardEntity;
-import com.erp.model.fms.entity.AssetCardDetailEntity;
+import com.erp.model.fms.entity.*;
 import com.erp.model.fms.enums.AssetProfitLossTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -38,16 +34,12 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.fms.mapper.AssetStocktakingMapper;
-import com.erp.server.fms.service.AssetStocktakingService;
-import com.erp.server.fms.service.AssetStocktakingDetailService;
-import com.erp.server.fms.service.AssetProfitLossService;
-import com.erp.server.fms.service.AssetProfitLossDetailService;
-import com.erp.server.fms.service.AssetCardService;
-import com.erp.server.fms.service.AssetCardDetailService;
-import com.erp.server.fms.service.OperateLogService;
+import com.erp.server.fms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,8 +50,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 /**
  * <p>
  * 资产盘点表 服务实现类
@@ -696,7 +686,8 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetStocktakingEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产盘点单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -713,6 +704,7 @@ public class AssetStocktakingServiceImpl extends SuperServiceImpl<AssetStocktaki
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产盘点单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_STOCKTAKING.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_STOCKTAKING.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

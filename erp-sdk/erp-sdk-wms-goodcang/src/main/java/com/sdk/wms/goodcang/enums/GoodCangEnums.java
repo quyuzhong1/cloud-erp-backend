@@ -3,11 +3,7 @@ package com.sdk.wms.goodcang.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
-import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
-import com.erp.model.wms.enums.OverseasInstockTypeEnum;
+import com.erp.model.wms.enums.*;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
@@ -470,6 +466,45 @@ public enum GoodCangEnums {
         }
     }
 
+
+    /**
+     * 出库单状态
+     */
+    @Getter
+    public enum B2BOrderStatusEnum {
+        TO_BE_SHIPPED("W","待发货", ThirdDeliveryStatusEnum.WAIT_SHIPPED),
+        SHIPPED("D","已发货",ThirdDeliveryStatusEnum.SHIPPED),
+        ABNORMAL("N","异常订单",ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        PROBLEM("P","问题件", ThirdDeliveryStatusEnum.EXCEPTION_ORDER),
+        REMOVED("X","已删除",ThirdDeliveryStatusEnum.CANCEL_DELIVERY),
+        ;
+        private final String code;
+        private final String name;
+        private final ThirdDeliveryStatusEnum erpSoStatus;
+
+        B2BOrderStatusEnum(String code, String name,ThirdDeliveryStatusEnum erpSoStatus) {
+            this.code = code;
+            this.name = name;
+            this.erpSoStatus = erpSoStatus;
+        }
+
+        public static String getErpOrderStatus(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getErpSoStatus)
+                    .map(ThirdDeliveryStatusEnum::getCode)
+                    .orElse("");
+        }
+
+        public static String getName(String code){
+            return Arrays.stream(B2BOrderStatusEnum.values())
+                    .filter(item -> code.equals(item.getCode()))
+                    .findFirst()
+                    .map(B2BOrderStatusEnum::getName)
+                    .orElse(null);
+        }
+    }
 
     /**
      * 退件类型

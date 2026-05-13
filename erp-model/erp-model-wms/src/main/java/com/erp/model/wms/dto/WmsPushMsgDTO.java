@@ -103,6 +103,32 @@ public class WmsPushMsgDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO {
+        /**
+         * 目标系统
+         */
+        private String targetPlatform;
+
+        /**
+         * 来源类型
+         */
+        private String syncOperate;
+
+        /**
+         * 来源id
+         */
+        private List<String> sourceIdList;
+
+        /**
+         * 来源Code
+         */
+        private List<String> sourceCodeList;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {

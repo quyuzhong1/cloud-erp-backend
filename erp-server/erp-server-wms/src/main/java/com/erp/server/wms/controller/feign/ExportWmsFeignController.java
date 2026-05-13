@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -141,6 +140,9 @@ public class ExportWmsFeignController {
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
 
+    @Resource
+    private QcStandardService qcStandardService;
+
 
     @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
@@ -218,6 +220,9 @@ public class ExportWmsFeignController {
     private AwdOutstockService awdOutstockService;
     @Resource
     private AwdInventoryService awdInventoryService;
+
+    @Resource
+    private QcApplicationService qcApplicationService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -344,6 +349,12 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(@RequestBody PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         return inventoryService.getInventoryPageData(dto);
+    }
+
+    @PostMapping("/qcStandard")
+    @WebAdvanceQuery(handler = QcStandardQueryHandler.class)
+    public PagingVO<QcStandardDTO.ExportDTO> exportQcStandard(@RequestBody PagingDTO<QcStandardDTO.PagingParamDTO> dto) {
+        return qcStandardService.exportList(dto);
     }
 
     @PostMapping("/getSampleRecipientPageData")
@@ -1307,5 +1318,14 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = AwdInventoryQueryHandler.class)
     public PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto) {
         return awdInventoryService.paging(dto);
+    }
+
+    /**
+     * 导出质检申请单
+     */
+    @PostMapping("/exportQcApplication")
+    @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
+    public PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
+        return qcApplicationService.paging(dto);
     }
 }

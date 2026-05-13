@@ -106,7 +106,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     private ProcessTaskManagementFeign processTaskManagementFeign;
 
     @Resource
-    private CfgSettingService cfgSettingService;
+    private PlmCfgSettingService plmCfgSettingService;
     @Resource
     private BasicDictService basicDictService;
 
@@ -2976,7 +2976,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //初始化消息发送的URL
         String url =fsAppUrl;
         //根据不同的环境选择对应的URL
-        PlmCfgSettingEntity pilotApplicationNoticeUrl = cfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "pilotApplicationNoticeUrl").one();
+        PlmCfgSettingEntity pilotApplicationNoticeUrl = plmCfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "pilotApplicationNoticeUrl").one();
         if(null != pilotApplicationNoticeUrl){
             Map<String, Object> dataJson = pilotApplicationNoticeUrl.getDataJson();
             boolean uat = BusinessCommonConstants.hasProfile("uat");

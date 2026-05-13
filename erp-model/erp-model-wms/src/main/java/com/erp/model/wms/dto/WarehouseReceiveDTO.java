@@ -506,6 +506,10 @@ public class WarehouseReceiveDTO implements Serializable {
          * 送货单号
          */
         private String deliveryCode;
+        /**
+         * 待质检数量
+         */
+        private Integer waitQcQty;
     }
 
     @Data

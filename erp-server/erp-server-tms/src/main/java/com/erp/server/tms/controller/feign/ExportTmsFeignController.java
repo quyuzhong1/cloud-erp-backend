@@ -88,6 +88,11 @@ public class ExportTmsFeignController {
     private TmsCfgSailingService tmsCfgSailingService;
     @Resource
     private CfgLogisticsCostImportService cfgLogisticsCostImportService;
+    @Resource
+    private TmsAsyncTaskRecordService tmsAsyncTaskRecordService;
+
+    @Resource
+    private LogisticsOrderService logisticsOrderService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -422,5 +427,22 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
     public PagingVO<CfgLogisticsCostImportDTO.ListDTO> exportTmsCfgLogisticsCost(@RequestBody PagingDTO<CfgLogisticsCostImportDTO.PagingParamDTO> dto) {
         return cfgLogisticsCostImportService.paging(dto);
+    }
+
+
+    @PostMapping("/exportTmsAsyncTaskRecord")
+    @WebAdvanceQuery(handler = TmsAsyncTaskRecordQueryHandler.class)
+    public PagingVO<TmsAsyncTaskRecordDTO.ListDTO> exportTmsAsyncTaskRecord(@RequestBody PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto) {
+        return tmsAsyncTaskRecordService.paging(dto);
+    }
+    @PostMapping("/exportTmsAsyncTaskDetail")
+    public PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> exportTmsAsyncTaskDetail(@RequestBody PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> dto) {
+        return tmsAsyncTaskRecordService.pagingError(dto);
+    }
+
+    @PostMapping("/exportTmsLogisticsOrder")
+    @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
+    public PagingVO<LogisticsOrderDTO.ListDTO> exportTmsLogisticsOrder(@RequestBody PagingDTO<LogisticsOrderDTO.PagingParamDTO> dto) {
+        return logisticsOrderService.paging(dto);
     }
 }

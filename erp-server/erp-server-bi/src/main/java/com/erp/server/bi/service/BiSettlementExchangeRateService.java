@@ -105,4 +105,12 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
     BigDecimal listRedisByCurrencyCode (String date, String targetCurrencyCode, String sourceCurrencyCode);
 
     void syncLastestRateToDht();
+    /**
+     * 查询唯一汇率信息
+     * @author will
+     * @date 2026/4/8 16:58
+     * @param exchangeParamDTO
+     * @return com.erp.model.bi.entity.BiSettlementExchangeRateEntity
+     */
+    BiSettlementExchangeRateEntity getByExchangeParamUnique(BiSettlementExchangeRateDTO.ExchangeParamDTO exchangeParamDTO);
 }

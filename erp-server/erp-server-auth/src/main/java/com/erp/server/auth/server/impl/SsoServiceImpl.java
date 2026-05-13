@@ -1,6 +1,7 @@
 package com.erp.server.auth.server.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.IdUtils;
 import com.erp.server.auth.server.AuthTokenService;
@@ -113,7 +114,7 @@ public class SsoServiceImpl implements SsoService {
                 }
                 
                 // 6. 生成Redis键值对存储对称密钥
-                String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, sessionId);
+                String redisKey = String.format(RedisCacheConstants.SSO_SIGN_SESSION+"%s:%s:%s", appId, userId, sessionId);
                 redissonClient.getBucket(redisKey).set(payload.getSymmetricKey(), 24, TimeUnit.HOURS);
                 log.info("存储对称密钥到Redis，key：{}", redisKey);
                 
@@ -366,8 +367,8 @@ public class SsoServiceImpl implements SsoService {
             }
 
             // 5. 生成Redis键值对存储对称密钥
-            // 格式：sign:session:{appId}:{userId}:{sessionId}
-            String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, sessionId);
+            // 格式：auth:sso:signSession:{appId}:{userId}:{sessionId}
+            String redisKey = String.format(RedisCacheConstants.SSO_SIGN_SESSION+"%s:%s:%s", appId, userId, sessionId);
             redissonClient.getBucket(redisKey).set(payload.getSymmetricKey(), 5, TimeUnit.MINUTES);
             log.info("存储对称密钥到Redis，key：{}，userId：{}，过期时间：5分钟", redisKey, userId);
 

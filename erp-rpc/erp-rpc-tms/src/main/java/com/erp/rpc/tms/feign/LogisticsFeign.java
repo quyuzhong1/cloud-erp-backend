@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -95,6 +96,9 @@ public interface LogisticsFeign {
 
     @PostMapping("/feign/logistics/listChannelInfoById")
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(@RequestBody List<String> channelIds);
+
+    @PostMapping("/feign/logistics/listChannelInfoByName")
+    List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(@RequestBody List<String> channelNames);
 
     @GetMapping("/feign/logistics/getLogisticsChannelConstraint")
     LogisticsChannelDTO.LogisticsChannelConstraintDTO getLogisticsChannelConstraint(@RequestParam(value = "channelId")String channelId,@RequestParam(value = "country")String country);
@@ -196,4 +200,11 @@ public interface LogisticsFeign {
 
     @GetMapping("/feign/logistics/getChannelByCodeAndOverseasWarehouseId")
     LogisticsSaleChannelEntity getChannelByCodeAndOverseasWarehouseId(@RequestParam("logisticsProductCode")String logisticsProductCode, @RequestParam("transferWarehouseId") String transferWarehouseId);
+
+    /**
+     * @return
+     */
+    @PostMapping("/feign/logistics/updateTrack")
+    void updateTrack(@RequestBody LogisticsTrackDTO.Kuaidi100Detail dto);
+
 }

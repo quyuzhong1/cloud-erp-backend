@@ -38,7 +38,15 @@ public class TypeConversionWorker {
         if (CharSequenceUtil.isBlank(fileData)){
             return fileData;
         }
-        return fileData.replace("data:application/pdf;base64,","");
+        return fileData.replaceFirst("(?i)^data:application/pdf;base64,", "");
+    }
+
+    @Named("replaceBase64DataUrlPrefix")
+    public String replaceBase64DataUrlPrefix(String fileData){
+        if (CharSequenceUtil.isBlank(fileData)){
+            return fileData;
+        }
+        return fileData.replaceFirst("(?i)^data:[^;]+;base64,", "");
     }
 
     @Named("getPdfFileName")
@@ -63,6 +71,22 @@ public class TypeConversionWorker {
             return value;
         }
         return value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    @Named("decimalToPlainString")
+    public String decimalToPrintData(BigDecimal value){
+        if (Objects.isNull(value)){
+            return "";
+        }
+        return value.stripTrailingZeros().toPlainString();
+    }
+
+    @Named("decimal2ToPlainString")
+    public String decimal2ToPlainString(BigDecimal value){
+        if (Objects.isNull(value)){
+            return "";
+        }
+        return value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
 
     @Named("booleanToInt")

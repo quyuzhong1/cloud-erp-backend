@@ -3,8 +3,12 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
@@ -473,10 +477,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/6/14 17:28
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      **/
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 批量删除
@@ -862,4 +866,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     ProductDetailEntity getSkuBySyncKingdeeId(String syncKingdeeId);
 
     void sendSinglePushTask (ProductDetailEntity entity, String operate);
+    /**
+     * 根据skuid 集合获取到sku采购信息（基础信息+产品信息+采购信息）
+     *
+     * @param skuNos
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     * @author will
+     * @date 2024-04-25 12:06
+     */
+    List<SkuVO> listSkuPurchaseBySkuNos(List<String> skuNos);
 }

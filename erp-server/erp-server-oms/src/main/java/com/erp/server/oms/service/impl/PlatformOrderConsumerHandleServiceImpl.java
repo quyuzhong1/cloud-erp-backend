@@ -144,13 +144,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
-        //如果已发货且仓库为空且是平台仓订单
-        //TikTok平台仓订单不再回退店铺绑定仓，缺映射时保留异常，等重试重新按平台仓库映射
+        //如果已发货且仓库为空且是平台仓订单，则统一回退店铺绑定仓
         if (isShipped
                 && isWarehouseEmpty
                 && hasPlatformWarehouse
-                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())
-                && !PlatformDictEnum.TIK_TOK.getCode().equals(mainEntity.getDictPlatform())) {
+                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);

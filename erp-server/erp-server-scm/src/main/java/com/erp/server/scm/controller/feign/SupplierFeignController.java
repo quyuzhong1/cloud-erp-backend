@@ -147,7 +147,7 @@ public class SupplierFeignController extends BaseController {
     }
 
      @PostMapping("/updateApproveStatus")
-    void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO){
+    void updateApproveStatus(@RequestBody SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO){
         supplierService.updateApproveStatus(updateApproveStatusDTO);
     }
 

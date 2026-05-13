@@ -256,7 +256,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-          throw new ServiceException(ApiError.HTTP_UNKNOWN);
+            throw new ServiceException(ApiError.HTTP_UNKNOWN);
         }
     }
 
@@ -716,6 +716,7 @@ public class ExcelUtil {
         for (String s : heads) {
             hs.add(Arrays.asList(s));
         }
+
         List<List<String>> list2 = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
             List<String> objects = new ArrayList<>();
@@ -727,29 +728,32 @@ public class ExcelUtil {
             list2.add(objects);
         }
 
+        ExcelWriter excelWriter = null;
         try {
             File tempDirectory = FileUtils.getTempDirectory();
-            File filePath = new File(tempDirectory,"template"+ LocalDate.now() +".xlsx");
-            File tempFile = File.createTempFile(fileName, ".xlsx");
-            if (!filePath.exists()) {
-                EasyExcel.write(filePath).sheet(fileName).doWrite(new ArrayList<>());
+            FileUtils.forceMkdir(tempDirectory);
+
+            String prefix = StringUtils.isBlank(fileName) ? "excel" : fileName;
+            prefix = prefix.replaceAll("[\\\\/:*?\"<>|]", "_");
+            if (prefix.length() < 3) {
+                prefix = "excel_" + prefix;
             }
-            if (list2.size() > BATCH_COUNT){
-                List<List<List<String>>> partition = ListUtil.partition(list2, BATCH_COUNT);
-                // 初始化写入器（append模式）
-                ExcelWriter excelWriter = EasyExcel.write(tempFile)
-                        .withTemplate(filePath)
+
+            File tempFile = File.createTempFile(prefix + "_", ".xlsx", tempDirectory);
+
+            if (list2.size() > BATCH_COUNT) {
+                excelWriter = EasyExcel.write(tempFile)
                         .head(hs)
                         .registerWriteHandler(getStyleStrategy())
                         .inMemory(false)
                         .build();
-                WriteSheet sheet = EasyExcel.writerSheet(fileName).build();// 单例化sheet
+
+                WriteSheet sheet = EasyExcel.writerSheet(fileName).build();
+                List<List<List<String>>> partition = ListUtil.partition(list2, BATCH_COUNT);
                 for (List<List<String>> batch : partition) {
-                    excelWriter.write(batch, sheet); // 真正增量写入
+                    excelWriter.write(batch, sheet);
                 }
-                // 必须关闭资源
-                excelWriter.finish();
-            }else {
+            } else {
                 EasyExcel.write(tempFile)
                         .head(hs)
                         .registerWriteHandler(getStyleStrategy())
@@ -758,8 +762,16 @@ public class ExcelUtil {
             }
 
             return tempFile;
+        } catch (IOException e) {
+            log.error("创建Excel临时文件失败，fileName={}", fileName, e);
+            throw new ServiceException("创建Excel临时文件失败：{}", e.getMessage());
         } catch (Exception e) {
+            log.error("自定义Excel导出失败，fileName={}", fileName, e);
             throw new ServiceException(ApiError.HTTP_UNKNOWN);
+        } finally {
+            if (excelWriter != null) {
+                excelWriter.finish();
+            }
         }
     }
 

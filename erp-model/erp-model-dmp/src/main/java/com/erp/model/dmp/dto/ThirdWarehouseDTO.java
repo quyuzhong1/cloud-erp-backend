@@ -1,14 +1,15 @@
 package com.erp.model.dmp.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -370,5 +371,56 @@ public class ThirdWarehouseDTO implements Serializable {
          * 分类
          */
         private String category;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryMapDTO {
+        /**
+         * erp系统id  仓库id
+         */
+        private String sysId;
+        /**
+         * erp系统名称  仓库名称
+         */
+        private String sysName;
+        /**
+         * 第三方仓库id  第三方仓库id
+         */
+        private String thirdId;
+        /**
+         * 第三方仓库名称  第三方仓库名称
+         */
+        private String thirdName;
+        /**
+         * 第三方仓库编号  第三方仓库编号
+         */
+        private String thirdCode;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QueryMapParamDTO {
+        /**
+         * 系统类型
+         * ThirdSysTypeEnum
+         */
+        private String sysType;
+        /**
+         * 分类
+         * ThirdSysTypeEnum
+         */
+        private String category;
+        /**
+         * 库存同步模式
+         * InventorySyncModeEnum
+         * inventory 库存同步 ，order 单据同步
+         */
+        private String inventorySyncMode;
+
+
+        private List<String> sysIdList;
     }
 }

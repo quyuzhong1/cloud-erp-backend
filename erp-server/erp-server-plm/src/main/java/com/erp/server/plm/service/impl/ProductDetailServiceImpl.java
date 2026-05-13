@@ -24,6 +24,7 @@ import com.common.business.constant.IsConstant;
 import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -45,7 +46,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
@@ -64,7 +65,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
@@ -337,7 +337,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ProductRefBuService productRefBuService;
-    
+
     @Resource
     private SkuStdRetailPriceService skuStdRetailPriceService;
 
@@ -786,7 +786,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    @Cacheable(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY,keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:plm:getNoInventorySku",keyGenerator = "myKeyGenerator")
     public List<SkuVO> getNoInventorySku() {
         return this.baseMapper.getNoInventorySku();
     }
@@ -876,11 +876,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> costDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_COST_SHOW_LIST, skuFiledConfigList);
             costShow.setDisableFieldList(costDisableFields);
         }
-        
+
         productManyDetail.setProductCostShowDTOList(costShowDTOList);
-        
+
         productManyDetail.setProductRetailPriceShowDTOList(this.getProductRetailPriceShowDTOList(list));
-        
+
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1510,10 +1510,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isNotEmpty(productSaleDTO)) {
                 productLogisticsDTO.setProductPropertyId(productSaleDTO.getProductPropertyId());
                 productLogisticsDTO.setProductProperty(productSaleDTO.getProductProperty());
-            }
-            //保险属性
-            if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
-                productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
+                // 保险属性以销售信息为准，同步覆盖物流表
+                productLogisticsDTO.setInsuranceProperty(productSaleDTO.getInsuranceProperty());
             }
             //SKU操作日志
             addProductLogisticsLog(productLogisticsDTO, id);
@@ -1602,7 +1600,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
         //发送消息
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
-        
+
         // 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
         // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
         // 为了不阻塞主流程，这里也异步调用，但使用独立的线程避免线程池嵌套死锁
@@ -1610,7 +1608,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StrUtil.isNotBlank(imagesUrl)) {
             final String finalSkuId = skuId;
             final String finalImagesUrl = imagesUrl;
-            
+
             // 构建URL到图片名称的映射（如果有imageInfoList的话）
             final Map<String, String> urlToNameMap = new HashMap<>();
             if (CollUtil.isNotEmpty(productSkuBaseInfoDTO.getImageInfoList())) {
@@ -1620,12 +1618,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
             }
-            
+
             // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
             // handleProductImagesAfterSave内部会使用zipImageExecutorPool，外部不能再使用同一个线程池
             CompletableFuture.runAsync(() -> {
                 try {
-                    log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}", 
+                    log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}",
                             finalSkuId, finalImagesUrl, urlToNameMap.size());
                     refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl, urlToNameMap);
                     log.info("完成异步处理产品图片，skuId={}", finalSkuId);
@@ -1635,7 +1633,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             });
         }
-        
+
         return true;
     }
 
@@ -1679,16 +1677,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //校验包装尺寸：长≥宽≥高
             compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN);
             compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN);
-            
+
             //校验箱规尺寸：长≥宽≥高
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN);
-            
+
             //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN);
-            
+
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN);
         }
@@ -2012,7 +2010,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //发送通知
         handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
-        
+
         // 处理产品保存后的图片URL（创建attachment记录、创建ref记录、异步生成缩略图）
         for (ProductDetailDTO productDetailDTO : productDetailLists) {
             String imagesUrl = productDetailDTO.getImagesUrl();
@@ -2020,7 +2018,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (StrUtil.isNotBlank(imagesUrl) && StrUtil.isNotBlank(skuId)) {
                 final String finalSkuId = skuId;
                 final String finalImagesUrl = imagesUrl;
-                
+
                 // 构建URL到图片名称的映射（如果有imageInfoList的话）
                 final Map<String, String> urlToNameMap = new HashMap<>();
                 if (CollUtil.isNotEmpty(productDetailDTO.getImageInfoList())) {
@@ -2030,13 +2028,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         }
                     }
                 }
-                
+
                 // 异步执行，不阻塞主流程
                 // 注意：handleProductImagesAfterSave方法内部已经异步处理，但会等待任务完成
                 // 使用ForkJoinPool.commonPool()避免与zipImageExecutorPool嵌套导致死锁
                 CompletableFuture.runAsync(() -> {
                     try {
-                        log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}", 
+                        log.info("开始异步处理产品图片，skuId={}, imagesUrl={}, 名称映射数量={}",
                                 finalSkuId, finalImagesUrl, urlToNameMap.size());
                         refProductImgAttachmentService.handleProductImagesAfterSave(finalSkuId, finalImagesUrl, urlToNameMap);
                         log.info("完成异步处理产品图片，skuId={}", finalSkuId);
@@ -2047,7 +2045,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 });
             }
         }
-        
+
         return true;
     }
 
@@ -2731,7 +2729,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             syncLingXingProductDetailService.syncDataToLingxing(productBy);
             //增加缓存清除
-            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productBy.getId());
+            redisUtil.hdel(RedisCacheConstants.LIST_SKU_INFO, productBy.getId());
         }
         return true;
     }
@@ -3566,9 +3564,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (costEntity.getTargetTaxCost() == null) {
                 throw new ServiceException(ApiError.PRODUCT_TARGET_COST_REQUIRED);
             }
-            if (costEntity.getRetailPrice() == null) {
-                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_REQUIRED);
-            }
+//            if (costEntity.getRetailPrice() == null) {
+//                throw new ServiceException(ApiError.PRODUCT_RETAIL_PRICE_REQUIRED);
+//            }
             if (costEntity.getMassCost() == null) {
                 throw new ServiceException(ApiError.PRODUCT_MASS_PRODUCTION_COST_REQUIRED);
             }
@@ -4504,7 +4502,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ApproveTypeEnum.getName(dto.getType()) + "]，审批意见：" + dto.getComment()));
         //增加缓存清除
-        redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
+        redisUtil.hdel(RedisCacheConstants.LIST_SKU_INFO, entity.getId());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "操作成功");
     }
 
@@ -4655,7 +4653,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         ProductDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -4671,6 +4670,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("取消流程SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_COMMIT.getName() + "]"));
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_DETAIL.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -4829,7 +4829,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.COMMON_FIELD_CODE_INVALID, dto.getUpdateFiledCode());
             }
-            if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            if (ProductBatchFieldEnum.INSURANCE_PROPERTY.getCode().equals(dto.getUpdateFiledCode())) {
+                String insuranceProperty = Objects.toString(dto.getValues(), "");
+                List<ProductLogisticsDTO> productLogisticsDTOList = dto.getIds().stream().map(skuId -> {
+                    ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
+                    productLogisticsDTO.setSkuId(skuId);
+                    productLogisticsDTO.setInsuranceProperty(insuranceProperty);
+                    return productLogisticsDTO;
+                }).collect(Collectors.toList());
+                productLogisticsService.saveOrUpdateBatch(productLogisticsDTOList);
+
+                List<ProductSaleDTO> productSaleDTOList = dto.getIds().stream().map(skuId -> {
+                    ProductSaleDTO productSaleDTO = new ProductSaleDTO();
+                    productSaleDTO.setSkuId(skuId);
+                    productSaleDTO.setInsuranceProperty(insuranceProperty);
+                    return productSaleDTO;
+                }).collect(Collectors.toList());
+                productSaleService.saveOrUpdateBatch(productSaleDTOList);
+                flag = Boolean.TRUE;
+            } else if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
                 String productPropertyId = Objects.toString(dto.getValues(), "");
                 List<ProductLogisticsDTO> productLogisticsDTOList = dto.getIds().stream().map(skuId -> {
                     ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
@@ -4918,7 +4936,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> updateSkuIds = new ArrayList<>();
         for (String skuId : skuIds) {
             //查询redis缓存
-            String redisKey = format(RedisKeyConstant.SKU_OCCUPY_CODE, skuId, Boolean.TRUE);
+            String redisKey = format(RedisCacheConstants.SKU_OCCUPY_CODE, skuId, Boolean.TRUE);
             Collection<String> keys = redisUtil.keys(redisKey);
             if (CollectionUtils.isNotEmpty(keys)) {
                 continue;
@@ -4938,7 +4956,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //更新缓存数据
         for (String skuId : updateSkuIds) {
             //添加缓存
-            String redisKey = format(RedisKeyConstant.SKU_OCCUPY_CODE, skuId, Boolean.TRUE);
+            String redisKey = format(RedisCacheConstants.SKU_OCCUPY_CODE, skuId, Boolean.TRUE);
             redisUtil.set(redisKey, skuId, RedisService.ONE_DAY_CACHE_TIME);
         }
         return Boolean.TRUE;
@@ -5078,6 +5096,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }else {
         	//已存在数据
             skuParamDTO.setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
+        }
+        //已存在数据
+        if (CollUtil.isEmpty(skuParamDTO.getStatusList())){
+            skuParamDTO.setStatusList(Collections.singletonList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
         }
         List<String> saleMethodList = skuParamDTO.getSaleMethodList();
         List<String> saleMethodParams = new ArrayList<>();
@@ -7056,6 +7078,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         });
     }
+
+    @Override
+    public List<SkuVO> listSkuPurchaseBySkuNos(List<String> skuNos) {
+        if(CollectionUtils.isEmpty(skuNos)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuPurchaseBySkuNos(skuNos);
+    }
+
     /**
      * @description: 推送金蝶
      * @author Will
@@ -7122,7 +7153,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuIds)){
             return Collections.emptyList();
         }
-        List<SkuVO> skuVOS = redisUtil.multiGet(RedisKeyConstant.LIST_SKU_INFO, skuIds);
+        List<SkuVO> skuVOS = redisUtil.multiGet(RedisCacheConstants.LIST_SKU_INFO, skuIds);
         //过滤空数据
         skuVOS = skuVOS.stream().filter(Objects::nonNull).collect(Collectors.toList());
         //汇总已查询到的sku
@@ -7136,7 +7167,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuInfos)){
             return skuVOS;
         }
-        redisUtil.putAllHashMap(RedisKeyConstant.LIST_SKU_INFO, skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())));
+        redisUtil.putAllHashMap(RedisCacheConstants.LIST_SKU_INFO, skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())));
         if (CollectionUtils.isEmpty(skuVOS)){
             skuVOS = skuInfos;
         }else {
@@ -7305,7 +7336,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             operateLogService.addSysLogByOther(new OperateLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
                     .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent + logContent2));
-            
+
             // 当包装尺寸长宽高变更时，同步更新旺店通货品长宽高
             // 只同步审核通过的产品
             if(productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
@@ -7411,7 +7442,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
             //增加缓存清除
-            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
+            redisUtil.hdel(RedisCacheConstants.LIST_SKU_INFO, productDetailEntity.getId());
             // 当包装尺寸长宽高变更时，同步更新旺店通货品长宽高
             // 只同步审核通过的产品
             if(productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
@@ -7464,16 +7495,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //校验包装尺寸：长≥宽≥高
             compareDimensions(productPackDTO.getProductLength(), productPackDTO.getProductWidth(), ApiError.COMMON_PRODUCT_LENGTH_LT_WIDTH_FORBIDDEN);
             compareDimensions(productPackDTO.getProductWidth(), productPackDTO.getProductHeight(), ApiError.COMMON_PRODUCT_WIDTH_LT_HEIGHT_FORBIDDEN);
-            
+
             //校验箱规尺寸：长≥宽≥高
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getBoxWidth(), ApiError.COMMON_BOX_LENGTH_LT_WIDTH_FORBIDDEN);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getBoxHeight(), ApiError.COMMON_BOX_WIDTH_LT_HEIGHT_FORBIDDEN);
-            
+
             //校验箱规必须大于等于包装尺寸
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.COMMON_BOX_LENGTH_LT_PRODUCT_FORBIDDEN);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.COMMON_BOX_WIDTH_LT_PRODUCT_FORBIDDEN);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.COMMON_BOX_HEIGHT_LT_PRODUCT_FORBIDDEN);
-            
+
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.COMMON_GROSS_WEIGHT_LT_NET_WEIGHT_FORBIDDEN);
         }
