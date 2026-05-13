@@ -214,7 +214,7 @@ public enum ModuleTypeEnum {
     FILE_MANAGEMENT("164", "文件管理"),
 
 
-    AFTER_SALE_PACKING("190", "售后装箱"),
+    AFTER_SALE_PACK("190", "售后装箱"),
 
 
 
