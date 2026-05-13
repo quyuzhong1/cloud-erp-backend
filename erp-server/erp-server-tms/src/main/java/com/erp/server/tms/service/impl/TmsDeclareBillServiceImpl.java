@@ -840,6 +840,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> delete(TmsDeclareBillDTO.DeleteDTO dto) {
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
@@ -858,6 +859,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isNotEmpty(removeIds)){
             this.removeByIds(removeIds);
         }
+        //删除明细数据
+        detailService.deleteDetailByMainIdList(removeIds);
+
         if(CollectionUtils.isNotEmpty(updateFhdSourceIds)){
             updateFhdSourceIds = updateFhdSourceIds.stream().distinct().collect(Collectors.toList());
             FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
