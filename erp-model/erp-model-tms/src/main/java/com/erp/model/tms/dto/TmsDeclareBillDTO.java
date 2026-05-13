@@ -2052,10 +2052,6 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String sourceId;
         /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
-        /**
          *  来源类型
          */
         private String sourceType;
@@ -2243,7 +2239,6 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  下推的明细ids
          */
-        @NotBlank(message = "选择detailId不能为空")
         private String detailId;
         /**
          *  skuId

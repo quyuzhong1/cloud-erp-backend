@@ -730,30 +730,38 @@
         select
             *
         from (
-        -- 1. 公共子查询：获取需要处理的发货通知明细（等待报关 + 有箱子）
-        WITH qualified_details AS MATERIALIZED (
-        SELECT
-            fmd.id AS source_id,
-            fmd.code AS source_code,
-            fmdd.id AS detail_id,
-            fmdd.sku_id,
-            fmdd.sku_no,
-            fmdd.plan_qty
-        FROM first_mile_delivery fmd
-        JOIN first_mile_delivery_detail fmdd
-        on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-        WHERE fmd.is_deleted = false
-        AND fmd.declare_status = 'wait'
-        AND EXISTS (
-            SELECT 1
-            FROM packing_task_detail ptd
-            JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted = false
-            JOIN wms_carton wc ON wc.packing_task_id = pt.id
-            AND wc.is_deleted = false
+        WITH carton_detail AS MATERIALIZED (
+            SELECT
+                wc.packing_task_id,
+                wcd.sku_id,
+                wcd.sku_no,
+                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+            FROM wms_carton wc
+            INNER JOIN wms_carton_detail wcd
+            ON wcd.main_id = wc.id
+            AND wcd.is_deleted = false
+            AND COALESCE(wcd.pack_qty, 0) > 0
+            WHERE wc.is_deleted = false
             AND wc.box_no IS NOT NULL
-            WHERE ptd.is_deleted = false
-            AND ptd.source_detail_id = fmdd.id
-        )
+            GROUP BY wc.packing_task_id, wcd.sku_id, wcd.sku_no
+        ),
+        qualified_details AS MATERIALIZED (
+            SELECT
+                fmd.id AS source_id,
+                fmd.code AS source_code,
+                cd.sku_id,
+                cd.sku_no,
+                SUM(cd.pack_qty)::INTEGER AS qty
+            FROM first_mile_delivery fmd
+            INNER JOIN packing_task pt
+            ON (pt.source_id = fmd.id OR pt.source_id = fmd.source_id)
+            AND pt.is_deleted = false
+            AND pt.packing_status = 'packed'
+            INNER JOIN carton_detail cd
+            ON cd.packing_task_id = pt.id
+            WHERE fmd.is_deleted = false
+            AND fmd.declare_status = 'wait'
+            GROUP BY fmd.id, fmd.code, cd.sku_id, cd.sku_no
         ),
         -- 2. BOM 信息（物化）
         has_bom AS MATERIALIZED (
@@ -775,8 +783,7 @@
         SELECT
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
-            'soDeliveryNotice' AS sourceType,
-            qd.detail_id AS sourceDetailId,
+            'firstMileDelivery' AS sourceType,
             qd.sku_id AS skuId,
             qd.sku_no AS skuNo,
             '' AS bomVersion,
@@ -785,26 +792,25 @@
             fpl.declare_element AS declareElement,
             fpl.declare_unit AS declareUnit,
             fpl.declare_price AS price,
-            qd.plan_qty AS qty,
-            (qd.plan_qty * fpl.declare_price) AS totalPrice,
+            qd.qty AS qty,
+            (qd.qty * fpl.declare_price) AS totalPrice,
             fpl.declare_currency AS declareCurrency,
             fpl.declare_currency_symbol AS declareCurrencySymbol,
             fpl.source_country AS sourceCountry,
             fpl.source_cargo AS sourceCargo,
             fpl.exemption
         FROM qualified_details qd
-        LEFT JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
         LEFT JOIN foreign_product_logistics fpl
         ON fpl.sku_id = qd.sku_id
         AND fpl.is_deleted = false
-        WHERE (hb.bom_id IS NULL OR fpl.combination_declare_type = 'combine')
+        WHERE (NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = qd.sku_id)
+        OR fpl.combination_declare_type = 'combine')
         UNION ALL
         -- ========== 分支 2：有 BOM 且组合申报类型为 'split' ==========
         SELECT
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
-            'soDeliveryNotice' AS sourceType,
-            qd.detail_id AS sourceDetailId,
+            'firstMileDelivery' AS sourceType,
             hb.sku_id AS skuId,
             hb.sku_no AS skuNo,
             hb.bom_version AS bomVersion,
@@ -813,8 +819,8 @@
             fpl_child.declare_element AS declareElement,
             fpl_child.declare_unit AS declareUnit,
             fpl_child.declare_price AS price,
-            qd.plan_qty * hb.quantity AS qty,
-            (qd.plan_qty * hb.quantity * fpl_child.declare_price) AS totalPrice,
+            qd.qty * hb.quantity AS qty,
+            (qd.qty * hb.quantity * fpl_child.declare_price) AS totalPrice,
             fpl_child.declare_currency AS declareCurrency,
             fpl_child.declare_currency_symbol AS declareCurrencySymbol,
             fpl_child.source_country AS sourceCountry,
@@ -836,39 +842,57 @@
     <!-- 查询合并前头程报关单 -->
     <select id="listBeforePushFmDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
+        WITH carton_detail AS (
+            SELECT
+                wc.packing_task_id,
+                wc.box_no,
+                wcd.sku_id,
+                wcd.sku_no,
+                COALESCE(wcd.fn_sku, '') AS fn_sku,
+                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+            FROM wms_carton wc
+            INNER JOIN wms_carton_detail wcd
+            ON wcd.main_id = wc.id
+            AND wcd.is_deleted = false
+            AND COALESCE(wcd.pack_qty, 0) > 0
+            WHERE wc.is_deleted = false
+            AND wc.box_no IS NOT NULL
+            GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
+        )
         select
             fmd.id as sourceId,
             fmd.code as sourceCode,
             'firstMileDelivery' as sourceType,
-            fmdd.id as sourceDetailId,
             fmd.source_id as businessId,
             fmd.source_code as businessCode,
-            fmdd.sku_id as skuId,
-            fmdd.sku_no as skuNo,
+            cd.sku_id as skuId,
+            cd.sku_no as skuNo,
             fmd.country_id as countryId,
             fmd.country_name as countryName,
-            wcd.pack_qty as qty,
-            wc.box_no,
+            cd.pack_qty as qty,
+            cd.box_no as boxNo,
             fmd.delivery_warehouse_id as fromWarehouseId,
             fmd.delivery_warehouse_name as fromWarehouseName,
             fmd.delivery_warehouse_id as destWarehouseId,
             fmd.delivery_warehouse_name as destWarehouseName,
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
-        left join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-        left join packing_task pt on  (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id) and pt.is_deleted = false and pt.packing_status = 'packed'
-        left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
-        left join wms_carton_detail wcd on wc.id = wcd.main_id and wcd.is_deleted = false
-        where fmd.is_deleted = false and fmd.declare_status = 'wait' and wc.box_no is not null and fmd.id in
+        inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false and pt.packing_status = 'packed'
+        inner join carton_detail cd
+        on pt.id = cd.packing_task_id
+        and exists (
+            select 1
+            from packing_task_detail ptd
+            where ptd.is_deleted = false
+            and ptd.main_id = pt.id
+            and ptd.sku_id = cd.sku_id
+            and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        )
+        where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        <if test="detailIds != null and detailIds.size > 0">
-            and fmdd.id in
-            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
+        ORDER BY fmd.code, cd.box_no, cd.sku_no
     </select>
 
     <!-- 查询头程报关按箱号最小维度来源明细 -->
@@ -910,11 +934,10 @@
             fmd.id AS sourceId,
             fmd.code AS sourceCode,
             'firstMileDelivery' AS sourceType,
-            fmdd.id AS sourceDetailId,
             fmd.source_id AS businessId,
             fmd.source_code AS businessCode,
-            fmdd.sku_id AS skuId,
-            fmdd.sku_no AS skuNo,
+            cd.sku_id AS skuId,
+            cd.sku_no AS skuNo,
             '' AS parentSkuId,
             '' AS bomVersion,
             cd.pack_qty AS qty,
@@ -926,17 +949,15 @@
             fmd.delivery_warehouse_name as destWarehouseName,
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
-         INNER JOIN first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
          INNER JOIN packing_task pt
                     ON (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id)
                         AND pt.is_deleted = false and pt.packing_status = 'packed'
          INNER JOIN carton_detail cd
                     ON cd.packing_task_id = pt.id
-                        AND cd.sku_id = fmdd.sku_id
          LEFT JOIN has_bom hb
-                   ON hb.parent_sku_id = fmdd.sku_id
+                   ON hb.parent_sku_id = cd.sku_id
          LEFT JOIN foreign_product_logistics fpl_parent
-                   ON fpl_parent.sku_id = fmdd.sku_id
+                   ON fpl_parent.sku_id = cd.sku_id
                        AND fpl_parent.is_deleted = false
         WHERE fmd.is_deleted = false
           AND fmd.declare_status = 'wait'
@@ -947,7 +968,6 @@
             fmd.id AS sourceId,
             fmd.code AS sourceCode,
             'firstMileDelivery' AS sourceType,
-            fmdd.id AS sourceDetailId,
             fmd.source_id AS businessId,
             fmd.source_code AS businessCode,
             hb.sku_id AS skuId,                     -- 子SKU ID
@@ -963,15 +983,13 @@
             fmd.delivery_warehouse_name as destWarehouseName,
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
-         INNER JOIN first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
          INNER JOIN packing_task pt
                     ON (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id)
                         AND pt.is_deleted = false and pt.packing_status = 'packed'
          INNER JOIN carton_detail cd
                     ON cd.packing_task_id = pt.id
-                        AND cd.sku_id = fmdd.sku_id               -- 箱子中实际装的是父SKU
          INNER JOIN has_bom hb
-                    ON hb.parent_sku_id = fmdd.sku_id
+                    ON hb.parent_sku_id = cd.sku_id
          INNER JOIN foreign_product_logistics fpl_parent
                     ON fpl_parent.sku_id = hb.sku_id
                         AND fpl_parent.is_deleted = false
@@ -980,7 +998,7 @@
           AND fmd.declare_status = 'wait') sn
         where 1 = 1 and
         <foreach collection="list" item="item" separator="or" open="(" close=")">
-            (sn.sourceId = #{item.id} and sn.sourceDetailId = #{item.detailId} and sn.skuId = #{item.skuId})
+            (sn.sourceId = #{item.id} and sn.skuId = #{item.skuId})
         </foreach>
         ORDER BY sn.sourceCode, sn.boxNo, sn.skuNo
     </select>

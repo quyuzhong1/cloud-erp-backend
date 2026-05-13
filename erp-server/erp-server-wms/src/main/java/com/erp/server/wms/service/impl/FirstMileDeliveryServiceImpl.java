@@ -3386,7 +3386,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private String buildB2bMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
         return String.join("|",
                 StringUtils.defaultString(detailDTO.getSourceId()),
-                StringUtils.defaultString(detailDTO.getSourceDetailId()),
+                StringUtils.defaultString(detailDTO.getBoxNo()),
                 StringUtils.defaultString(detailDTO.getSkuId()));
     }
 

@@ -412,54 +412,59 @@
     <select id="listNotGenerateB2bDetailPaging"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$NotGenerateDetailDTO">
         select * from (
-      -- 1. 公共子查询：获取需要处理的发货通知明细（等待报关 + 有箱子）
-      WITH qualified_details AS MATERIALIZED (
-          SELECT
-          sdn.id AS source_id,
-          sdn.code AS source_code,
-          sdnd.id AS detail_id,
-          sdnd.sku_id,
-          sdnd.sku_no,
-          sdnd.delivery_qty
-          FROM so_delivery_notice sdn
-          JOIN so_delivery_notice_detail sdnd
-          ON sdnd.main_id = sdn.id
-          AND sdnd.is_deleted = false
-          WHERE sdn.is_deleted = false
-          AND sdn.declare_status = 'wait'
-          AND EXISTS (
-          SELECT 1
-          FROM packing_task_detail ptd
-          JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted = false
-          JOIN wms_carton wc ON wc.packing_task_id = pt.id
-          AND wc.is_deleted = false
-          AND wc.box_no IS NOT NULL
-          WHERE ptd.is_deleted = false
-          AND ptd.source_detail_id = sdnd.id
-          )
-         ),
-    -- 2. BOM 信息（物化）
-      has_bom AS MATERIALIZED (
-   SELECT
-       fpbi.id AS bom_id,
-        fpbi.bom_version,
-        fpbs.parent_sku_id,
-        fpbs.parent_sku_no,
-        fpbs.sku_id,
-        fpbs.sku_no,
-        fpbs.quantity
-    FROM foreign_product_bom_info fpbi
-    JOIN foreign_product_bom_sku fpbs
-        ON fpbi.id = fpbs.bom_id
-    WHERE fpbi.is_deleted = false
-      AND fpbs.is_deleted = false
-)
--- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
+        WITH carton_detail AS MATERIALIZED (
+            SELECT
+                wc.packing_task_id,
+                wcd.sku_id,
+                wcd.sku_no,
+                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+            FROM wms_carton wc
+            INNER JOIN wms_carton_detail wcd
+            ON wcd.main_id = wc.id
+            AND wcd.is_deleted = false
+            AND COALESCE(wcd.pack_qty, 0) > 0
+            WHERE wc.is_deleted = false
+            AND wc.box_no IS NOT NULL
+            GROUP BY wc.packing_task_id, wcd.sku_id, wcd.sku_no
+        ),
+        qualified_details AS MATERIALIZED (
+            SELECT
+                sdn.id AS source_id,
+                sdn.code AS source_code,
+                cd.sku_id,
+                cd.sku_no,
+                SUM(cd.pack_qty)::INTEGER AS qty
+            FROM so_delivery_notice sdn
+            INNER JOIN packing_task pt
+            ON pt.source_id = sdn.id
+            AND pt.is_deleted = false
+            AND pt.packing_status = 'packed'
+            INNER JOIN carton_detail cd
+            ON cd.packing_task_id = pt.id
+            WHERE sdn.is_deleted = false
+            AND sdn.declare_status = 'wait'
+            GROUP BY sdn.id, sdn.code, cd.sku_id, cd.sku_no
+        ),
+        has_bom AS MATERIALIZED (
+            SELECT
+                fpbi.id AS bom_id,
+                fpbi.bom_version,
+                fpbs.parent_sku_id,
+                fpbs.parent_sku_no,
+                fpbs.sku_id,
+                fpbs.sku_no,
+                fpbs.quantity
+            FROM foreign_product_bom_info fpbi
+            JOIN foreign_product_bom_sku fpbs
+            ON fpbi.id = fpbs.bom_id
+            WHERE fpbi.is_deleted = false
+            AND fpbs.is_deleted = false
+        )
+        -- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
         SELECT
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
             'soDeliveryNotice' AS sourceType,
-            qd.detail_id AS sourceDetailId,
             qd.sku_id AS skuId,
             qd.sku_no AS skuNo,
             '' AS bomVersion,
@@ -468,24 +473,23 @@
             fpl.declare_element AS declareElement,
             fpl.declare_unit AS declareUnit,
             fpl.declare_price AS price,
-            qd.delivery_qty AS qty,
-            (qd.delivery_qty * fpl.declare_price) AS totalPrice,
+            qd.qty AS qty,
+            (qd.qty * fpl.declare_price) AS totalPrice,
             fpl.declare_currency AS declareCurrency,
             fpl.declare_currency_symbol AS declareCurrencySymbol,
             fpl.source_country AS sourceCountry,
             fpl.source_cargo AS sourceCargo,
             fpl.exemption
         FROM qualified_details qd
-        LEFT JOIN has_bom hb ON hb.parent_sku_id = qd.sku_id
         LEFT JOIN foreign_product_logistics fpl ON fpl.sku_id = qd.sku_id AND fpl.is_deleted = false
-        WHERE (hb.bom_id IS NULL OR fpl.combination_declare_type = 'combine')
+        WHERE (NOT EXISTS (SELECT 1 FROM has_bom hb WHERE hb.parent_sku_id = qd.sku_id)
+        OR fpl.combination_declare_type = 'combine')
         UNION ALL
--- ========== 分支 2：有 BOM 且组合申报类型为 'split' ==========
+        -- ========== 分支 2：有 BOM 且组合申报类型为 'split' ==========
         SELECT
             qd.source_id AS sourceId,
             qd.source_code AS sourceCode,
             'soDeliveryNotice' AS sourceType,
-            qd.detail_id AS sourceDetailId,
             hb.sku_id AS skuId,
             hb.sku_no AS skuNo,
             hb.bom_version AS bomVersion,
@@ -494,8 +498,8 @@
             fpl_child.declare_element AS declareElement,
             fpl_child.declare_unit AS declareUnit,
             fpl_child.declare_price AS price,
-            qd.delivery_qty * hb.quantity AS qty,
-            (qd.delivery_qty  * hb.quantity * fpl_child.declare_price) AS totalPrice,
+            qd.qty * hb.quantity AS qty,
+            (qd.qty * hb.quantity * fpl_child.declare_price) AS totalPrice,
             fpl_child.declare_currency AS declareCurrency,
             fpl_child.declare_currency_symbol AS declareCurrencySymbol,
             fpl_child.source_country AS sourceCountry,
@@ -514,17 +518,33 @@
     <!-- `b2b订单下推发货通知单时，查询b2b订单的发货明细，作为发货通知单的来源单据明细展示` -->
     <select id="listBeforePushB2bDeclare"
             resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$SourceDeliveryDetailDTO">
+        WITH carton_detail AS (
+            SELECT
+            wc.packing_task_id,
+            wc.box_no,
+            wcd.sku_id,
+            wcd.sku_no,
+            COALESCE(wcd.fn_sku, '') AS fn_sku,
+            SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+        FROM wms_carton wc
+        INNER JOIN wms_carton_detail wcd
+        ON wcd.main_id = wc.id
+        AND wcd.is_deleted = false
+        AND COALESCE(wcd.pack_qty, 0) > 0
+        WHERE wc.is_deleted = false
+        AND wc.box_no IS NOT NULL
+        GROUP BY wc.packing_task_id, wc.box_no, wcd.sku_id, wcd.sku_no, COALESCE(wcd.fn_sku, '')
+        )
         select
             sdn.id as sourceId,
             sdn.code as sourceCode,
             'soDeliveryNotice' as sourceType,
-            sdnd.id as sourceDetailId,
             sdn.source_id as businessId,
             sdn.source_code as businessCode,
-            sdnd.sku_id as skuId,
-            sdnd.sku_no as skuNo,
-            wcd.pack_qty as qty,
-            wc.box_no,
+            cd.sku_id as skuId,
+            cd.sku_no as skuNo,
+            cd.pack_qty as qty,
+            cd.box_no as boxNo,
             ci.country_id,
             sdn.warehouse_id as fromWarehouseId,
             sdn.warehouse_name as fromWarehouseName,
@@ -534,22 +554,23 @@
             sdn.sales_org_id AS salesOrgId,
             sdn.sales_org_name AS salesOrgName
         from so_delivery_notice sdn
-        left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-        left join packing_task_detail ptd on sdnd.id = ptd.source_detail_id and ptd.is_deleted = false
-        left join packing_task pt on ptd.main_id = pt.id and pt.is_deleted = false and pt.packing_status = 'packed'
-        left join wms_carton wc on pt.id = wc.packing_task_id and wc.is_deleted = false
-        left join wms_carton_detail wcd on wc.id = wcd.main_id and wcd.is_deleted = false
+        inner join packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false and pt.packing_status = 'packed'
+        inner join carton_detail cd
+        on pt.id = cd.packing_task_id
+        and exists (
+        select 1
+        from packing_task_detail ptd
+        where ptd.is_deleted = false
+        and ptd.main_id = pt.id
+        and ptd.sku_id = cd.sku_id
+        and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
+        )
         left join customer_info ci on sdn.customer_id = ci.id and ci.is_deleted = false
-        where sdn.is_deleted = false and sdn.declare_status = 'wait' and wc.box_no is not null and sdn.id in
+        where sdn.is_deleted = false and sdn.declare_status = 'wait' and sdn.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        <if test="detailIds != null and detailIds.size > 0">
-            and sdnd.id in
-            <foreach collection="detailIds" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
+        ORDER BY sdn.code, cd.box_no, cd.sku_no
     </select>
 
     <!-- 查询B2B报关按箱号最小维度来源明细 -->
@@ -558,12 +579,12 @@
         select * from (
         WITH carton_detail AS (
         SELECT
-        wc.packing_task_id,
-        wc.box_no,
-        wcd.sku_id,
-        wcd.sku_no,
-        COALESCE(wcd.fn_sku, '') AS fn_sku,
-        SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
+            wc.packing_task_id,
+            wc.box_no,
+            wcd.sku_id,
+            wcd.sku_no,
+            COALESCE(wcd.fn_sku, '') AS fn_sku,
+            SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
         FROM wms_carton wc
         INNER JOIN wms_carton_detail wcd
         ON wcd.main_id = wc.id
@@ -575,13 +596,13 @@
         ),
         has_bom AS MATERIALIZED (
         SELECT
-        fpbi.id AS bom_id,
-        fpbi.bom_version,
-        fpbs.parent_sku_id,
-        fpbs.parent_sku_no,
-        fpbs.sku_id,
-        fpbs.sku_no,
-        fpbs.quantity
+            fpbi.id AS bom_id,
+            fpbi.bom_version,
+            fpbs.parent_sku_id,
+            fpbs.parent_sku_no,
+            fpbs.sku_id,
+            fpbs.sku_no,
+            fpbs.quantity
         FROM foreign_product_bom_info fpbi
         JOIN foreign_product_bom_sku fpbs
         ON fpbi.id = fpbs.bom_id
@@ -590,48 +611,38 @@
         )
         -- 分支1：不需要拆分的明细（无BOM 或 combination_declare_type = 'combine'）
         SELECT
-        sdn.id AS sourceId,
-        sdn.code AS sourceCode,
-        'soDeliveryNotice' AS sourceType,
-        sdnd.id AS sourceDetailId,
-        sdn.source_id AS businessId,
-        sdn.source_code AS businessCode,
-        sdnd.sku_id AS skuId,
-        sdnd.sku_no AS skuNo,
-        '' AS parentSkuId,
-        '' AS bomVersion,
-        sdnd.platform_sku_no AS platformSkuNo,
-        cd.pack_qty AS qty,
-        cd.box_no AS boxNo,
-        ci.country_id AS countryId,
-        sdn.warehouse_id AS fromWarehouseId,
-        sdn.warehouse_name AS fromWarehouseName,
-        sdn.warehouse_org_id AS fromWarehouseOrgId,
-        sdn.warehouse_org_name AS fromWarehouseOrgName,
-        sdn.transfer_warehouse_ids AS transferWarehouseIds,
-        sdn.sales_org_id AS salesOrgId,
-        sdn.sales_org_name AS salesOrgName
+            sdn.id AS sourceId,
+            sdn.code AS sourceCode,
+            'soDeliveryNotice' AS sourceType,
+            sdn.source_id AS businessId,
+            sdn.source_code AS businessCode,
+            cd.sku_id AS skuId,
+            cd.sku_no AS skuNo,
+            '' AS parentSkuId,
+            '' AS bomVersion,
+            cd.pack_qty AS qty,
+            cd.box_no AS boxNo,
+            ci.country_id AS countryId,
+            sdn.warehouse_id AS fromWarehouseId,
+            sdn.warehouse_name AS fromWarehouseName,
+            sdn.warehouse_org_id AS fromWarehouseOrgId,
+            sdn.warehouse_org_name AS fromWarehouseOrgName,
+            sdn.transfer_warehouse_ids AS transferWarehouseIds,
+            sdn.sales_org_id AS salesOrgId,
+            sdn.sales_org_name AS salesOrgName
         FROM so_delivery_notice sdn
-        INNER JOIN so_delivery_notice_detail sdnd
-        ON sdnd.main_id = sdn.id
-        AND sdnd.is_deleted = false
-        INNER JOIN packing_task_detail ptd
-        ON ptd.source_detail_id = sdnd.id
-        AND ptd.is_deleted = false
         INNER JOIN packing_task pt
-        ON pt.id = ptd.main_id
+        ON sdn.id = pt.source_id
         AND pt.is_deleted = false and pt.packing_status = 'packed'
         INNER JOIN carton_detail cd
         ON cd.packing_task_id = pt.id
-        AND cd.sku_id = sdnd.sku_id
-        AND (COALESCE(ptd.fn_sku, '') = '' OR cd.fn_sku = COALESCE(ptd.fn_sku, ''))
         LEFT JOIN customer_info ci
         ON ci.id = sdn.customer_id
         AND ci.is_deleted = false
         LEFT JOIN has_bom hb
-        ON hb.parent_sku_id = sdnd.sku_id
+        ON hb.parent_sku_id = cd.sku_id
         LEFT JOIN foreign_product_logistics fpl_parent
-        ON fpl_parent.sku_id = sdnd.sku_id
+        ON fpl_parent.sku_id = cd.sku_id
         AND fpl_parent.is_deleted = false
         WHERE sdn.is_deleted = false
         AND sdn.declare_status = 'wait'
@@ -639,43 +650,33 @@
         UNION ALL
         -- 分支2：需要拆分的明细（有BOM 且 combination_declare_type = 'split'）
         SELECT
-        sdn.id AS sourceId,
-        sdn.code AS sourceCode,
-        'soDeliveryNotice' AS sourceType,
-        sdnd.id AS sourceDetailId,
-        sdn.source_id AS businessId,
-        sdn.source_code AS businessCode,
-        hb.sku_id AS skuId,                     -- 子SKU ID
-        hb.sku_no AS skuNo,                     -- 子SKU 编码
-        hb.parent_sku_id AS parentSkuId,
-        hb.bom_version AS bomVersion,
-        '' AS platformSkuNo,                    -- 子SKU无平台编码，置空
-        cd.pack_qty * quantity AS qty,                     -- 原箱数量（每个子SKU继承相同数量）
-        cd.box_no AS boxNo,
-        ci.country_id AS countryId,
-        sdn.warehouse_id AS fromWarehouseId,
-        sdn.warehouse_name AS fromWarehouseName,
-        sdn.warehouse_org_id AS fromWarehouseOrgId,
-        sdn.warehouse_org_name AS fromWarehouseOrgName,
-        sdn.transfer_warehouse_ids AS transferWarehouseIds,
-        sdn.sales_org_id AS salesOrgId,
-        sdn.sales_org_name AS salesOrgName
+            sdn.id AS sourceId,
+            sdn.code AS sourceCode,
+            'soDeliveryNotice' AS sourceType,
+            sdn.source_id AS businessId,
+            sdn.source_code AS businessCode,
+            hb.sku_id AS skuId,                     -- 子SKU ID
+            hb.sku_no AS skuNo,                     -- 子SKU 编码
+            hb.parent_sku_id AS parentSkuId,
+            hb.bom_version AS bomVersion,
+            cd.pack_qty * quantity AS qty,                     -- 原箱数量（每个子SKU继承相同数量）
+            cd.box_no AS boxNo,
+            ci.country_id AS countryId,
+            sdn.warehouse_id AS fromWarehouseId,
+            sdn.warehouse_name AS fromWarehouseName,
+            sdn.warehouse_org_id AS fromWarehouseOrgId,
+            sdn.warehouse_org_name AS fromWarehouseOrgName,
+            sdn.transfer_warehouse_ids AS transferWarehouseIds,
+            sdn.sales_org_id AS salesOrgId,
+            sdn.sales_org_name AS salesOrgName
         FROM so_delivery_notice sdn
-        INNER JOIN so_delivery_notice_detail sdnd
-        ON sdnd.main_id = sdn.id
-        AND sdnd.is_deleted = false
-        INNER JOIN packing_task_detail ptd
-        ON ptd.source_detail_id = sdnd.id
-        AND ptd.is_deleted = false
         INNER JOIN packing_task pt
-        ON pt.id = ptd.main_id
+        ON sdn.id = pt.source_id
         AND pt.is_deleted = false and pt.packing_status = 'packed'
         INNER JOIN carton_detail cd
         ON cd.packing_task_id = pt.id
-        AND cd.sku_id = sdnd.sku_id               -- 箱子中实际装的是父SKU
-        AND (COALESCE(ptd.fn_sku, '') = '' OR cd.fn_sku = COALESCE(ptd.fn_sku, ''))
         INNER JOIN has_bom hb
-        ON hb.parent_sku_id = sdnd.sku_id
+        ON hb.parent_sku_id = cd.sku_id
         INNER JOIN foreign_product_logistics fpl_parent
         ON fpl_parent.sku_id = hb.sku_id
         AND fpl_parent.is_deleted = false
@@ -687,7 +688,7 @@
         AND sdn.declare_status = 'wait') sn
         where 1 = 1 and
         <foreach collection="list" item="item" separator="or" open="(" close=")">
-             (sn.sourceId = #{item.id} and sn.sourceDetailId = #{item.detailId} and sn.skuId = #{item.skuId})
+             (sn.sourceId = #{item.id} and sn.skuId = #{item.skuId})
         </foreach>
         ORDER BY sn.sourceCode, sn.boxNo, sn.skuNo
     </select>

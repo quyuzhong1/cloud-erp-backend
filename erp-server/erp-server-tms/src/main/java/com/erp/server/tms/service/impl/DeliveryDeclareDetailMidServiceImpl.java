@@ -1200,7 +1200,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         dto.setSourceId(entity.getSourceId());
         dto.setSourceCode(entity.getSourceCode());
         dto.setSourceType(entity.getSourceType());
-        dto.setSourceDetailId(entity.getSourceDetailId());
         dto.setBusinessId(entity.getBusinessId());
         dto.setBusinessCode(entity.getBusinessCode());
         dto.setBoxNo(entity.getBoxNo());
