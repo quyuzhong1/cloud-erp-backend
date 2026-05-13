@@ -409,7 +409,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     private int writeOffsetBatches(File outFile, P params) throws IOException {
-        ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
         PagingDTO<P> dto = new PagingDTO<>();
         dto.setPageSize(getPageSize());
@@ -430,7 +429,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         WriteHandler[] handlers = getWriteHandler().toArray(new WriteHandler[0]);
 
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
-            ExcelWriter excelWriter = excelPrintUtils.openTemplateListWriter(fos, expandedTemplate, handlers);
+            ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expandedTemplate, handlers);
             try {
                 cursor.writeSheet = EasyExcel.writerSheet(cursor.sheetNo).build();
 

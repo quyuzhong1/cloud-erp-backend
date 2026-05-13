@@ -1311,7 +1311,7 @@ public class ExcelPrintUtils {
      * 打开列表模板 Writer（分批 fill 后须 {@link ExcelWriter#finish()}）。
      * 模板先读入内存再交给 EasyExcel，避免 Classpath 模板流长期未关；模板体积一般较小。
      */
-    public ExcelWriter openTemplateListWriter(OutputStream outputStream, String excelPath, WriteHandler... writeHandlers) throws IOException {
+    public static ExcelWriter openTemplateListWriter(OutputStream outputStream, String excelPath, WriteHandler... writeHandlers) throws IOException {
         ClassPathResource classPathResource = new ClassPathResource(excelPath);
         final byte[] templateBytes;
         try (InputStream in = classPathResource.getInputStream()) {
@@ -1323,18 +1323,19 @@ public class ExcelPrintUtils {
     /**
      * 使用已预处理（例如 POI 克隆多 sheet）的模板字节打开列表模板 Writer。
      */
-    public ExcelWriter openTemplateListWriter(OutputStream outputStream, byte[] templateBytes, WriteHandler... writeHandlers) throws IOException {
-        InputStream templateIn = new ByteArrayInputStream(templateBytes);
-        ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(templateIn).autoCloseStream(true);
-        for (WriteHandler handler : writeHandlers) {
-            excelWriterBuilder.registerWriteHandler(handler);
+    public static ExcelWriter openTemplateListWriter(OutputStream outputStream, byte[] templateBytes, WriteHandler... writeHandlers) throws IOException {
+        try (InputStream templateIn = new ByteArrayInputStream(templateBytes)) {
+            ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(templateIn).autoCloseStream(true);
+            for (WriteHandler handler : writeHandlers) {
+                excelWriterBuilder.registerWriteHandler(handler);
+            }
+            ExcelWriter excelWriter = excelWriterBuilder.build();
+            registerPatchExportListConverters(excelWriter);
+            return excelWriter;
         }
-        ExcelWriter excelWriter = excelWriterBuilder.build();
-        registerPatchExportListConverters(excelWriter);
-        return excelWriter;
     }
 
-    private static void registerPatchExportListConverters(ExcelWriter excelWriter) {
+    public static void registerPatchExportListConverters(ExcelWriter excelWriter) {
         LocalDateTimeConverter converter = new LocalDateTimeConverter();
         excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
         excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
