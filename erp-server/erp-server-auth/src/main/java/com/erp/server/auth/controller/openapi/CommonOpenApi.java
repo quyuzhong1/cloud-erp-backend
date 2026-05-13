@@ -64,7 +64,7 @@ public class CommonOpenApi {
 
 
     @OpenApi("scmDropDownSupplierAllList")
-    public ApiResult<List<BaseDropDownDTO.RemarkDTO>> scmDropDownSupplierAllList(String key) {
+    public ApiResult<List<BaseDropDownDTO.RemarkDTO>> scmDropDownSupplierAllList() {
         return scmDictFeign.listALLSupplierDropDown();
     }
 }
