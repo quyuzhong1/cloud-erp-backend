@@ -3020,7 +3020,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         midEntity.setSourceType(sourceType);
         midEntity.setSourceId(StringUtils.defaultIfBlank(sourceDetail.getSourceId(), StringUtils.defaultString(fallbackSourceId)));
         midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
-        midEntity.setSourceDetailId("");
         midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
         midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
         midEntity.setBusinessType(sourceType);
