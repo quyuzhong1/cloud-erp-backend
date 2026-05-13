@@ -374,38 +374,83 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             return Collections.emptyList();
         }
 
-        Map<String, String> nameToUrlMap = (Map<String, String>) value;
+        // 兼容字段映射的几种 sysField 输入形态：
+        //   1) Map<name, url>  —— 标准格式（attachmentMap）
+        //   2) Collection<url> —— URL 列表（attachmentUrlList），文件名从 URL 末段兜底
+        //   3) String          —— 单个 URL
+        // 直接裸强转 Map 会在配置不匹配时抛 ClassCastException，导致 submit 失败
+        Map<String, String> nameToUrlMap = new LinkedHashMap<>();
+        if (value instanceof Map) {
+            ((Map<?, ?>) value).forEach((k, v) -> {
+                if (k != null && v != null) {
+                    nameToUrlMap.put(k.toString(), v.toString());
+                }
+            });
+        } else if (value instanceof Collection) {
+            for (Object url : (Collection<?>) value) {
+                if (url == null) {
+                    continue;
+                }
+                String urlStr = url.toString();
+                if (StrUtil.isBlank(urlStr)) {
+                    continue;
+                }
+                nameToUrlMap.put(extractFileName(urlStr), urlStr);
+            }
+        } else {
+            String urlStr = value.toString();
+            if (StrUtil.isNotBlank(urlStr)) {
+                nameToUrlMap.put(extractFileName(urlStr), urlStr);
+            }
+        }
+
+        if (nameToUrlMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<String> codeList = new ArrayList<>();
-            for (String fileName : nameToUrlMap.keySet()) {
-                String url = nameToUrlMap.get(fileName);
-                File tempFile = null;
-                try {
-                    // 获取文件内容
-                    byte[] fileByte = FastDFSClientUtil.getFileByte(url);
+        for (Map.Entry<String, String> entry : nameToUrlMap.entrySet()) {
+            String fileName = entry.getKey();
+            String url = entry.getValue();
+            File tempFile = null;
+            try {
+                // 获取文件内容
+                byte[] fileByte = FastDFSClientUtil.getFileByte(url);
 
-                    // 创建临时文件
-                    tempFile = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
-                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                        fos.write(fileByte);
-                        fos.flush();
-                    }
+                // 创建临时文件
+                tempFile = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+                try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                    fos.write(fileByte);
+                    fos.flush();
+                }
 
-                    // 上传到飞书
-                    String fileCode = fsService.uploadApprovalFile(tempFile, fileName);
-                    codeList.add(fileCode);
-                } catch (Exception e) {
-                    log.error("处理附件失败: {}", fileName, e);
-                } finally {
-                    // 清理临时文件
-                    if (tempFile != null && tempFile.exists()) {
-                        boolean delete = tempFile.delete();
-                        if (!delete) {
-                            log.error("附件清理失败" );
-                        }
+                // 上传到飞书
+                String fileCode = fsService.uploadApprovalFile(tempFile, fileName);
+                codeList.add(fileCode);
+            } catch (Exception e) {
+                log.error("处理附件失败: {}", fileName, e);
+            } finally {
+                // 清理临时文件
+                if (tempFile != null && tempFile.exists()) {
+                    boolean delete = tempFile.delete();
+                    if (!delete) {
+                        log.error("附件清理失败");
                     }
                 }
             }
+        }
         return codeList;
+    }
+
+    /**
+     * 从 URL 兜底提取文件名（取最后一个 / 之后的部分），URL 末段为空时退化为整段 URL
+     */
+    private String extractFileName(String url) {
+        int idx = url.lastIndexOf('/');
+        if (idx < 0 || idx == url.length() - 1) {
+            return url;
+        }
+        return url.substring(idx + 1);
     }
 
     private String formatToRFC3339(Object dateValue) {
