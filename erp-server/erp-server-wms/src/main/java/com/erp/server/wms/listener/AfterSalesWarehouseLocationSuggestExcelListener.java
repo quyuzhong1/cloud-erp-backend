@@ -62,7 +62,7 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         dto.setProductName(data.get(2));
         dto.setWarehouseName(data.get(3));
         dto.setWarehouseAreaName(data.get(4));
-        dto.setSuggestWarehouseLocationCode(data.get(5));
+        dto.setWarehouseLocationCode(data.get(5));
         dto.setSort(data.get(6));
         dto.setStatus(data.get(7));
         verifyField(dto);
@@ -106,11 +106,11 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
             return;
         }
         //推荐仓位校验
-        if (CharSequenceUtil.isBlank(dto.getSuggestWarehouseLocationCode())) {
+        if (CharSequenceUtil.isBlank(dto.getWarehouseLocationCode())) {
             dto.setErrorMsg("推荐仓位编码不能为空");
             return;
         }
-        if (dto.getSuggestWarehouseLocationCode().length() > 32) {
+        if (dto.getWarehouseLocationCode().length() > 32) {
             dto.setErrorMsg("推荐仓位编码过长");
             return;
         }
@@ -163,7 +163,7 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         }
         // 生成业务唯一 Key 的函数
         Function<AfterSalesWarehouseLocationSuggestExcelDto, String> businessKeyFunc =
-                dto -> dto.getSkuNo() + "|" + dto.getWarehouseName() + "|" + dto.getWarehouseAreaName() + "|" + dto.getSuggestWarehouseLocationCode();
+                dto -> dto.getSkuNo() + "|" + dto.getWarehouseName() + "|" + dto.getWarehouseAreaName() + "|" + dto.getWarehouseLocationCode();
 
         // 统计每个 Key 出现的次数
         Map<String, Long> countMap = allList.stream().collect(Collectors.groupingBy(businessKeyFunc, Collectors.counting()));
@@ -240,7 +240,7 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
                     if (CollUtil.isEmpty(locationList)) {
                         errorMsgList.add("未能找到仓库仓位，请确定仓位编码是否正确");
                     } else {
-                        List<WarehouseLocationEntity> enableLocationList = locationList.stream().filter(i -> Objects.equals(i.getCode(), excelDTO.getSuggestWarehouseLocationCode())).filter(i -> !i.getDisabled()).collect(Collectors.toList());
+                        List<WarehouseLocationEntity> enableLocationList = locationList.stream().filter(i -> Objects.equals(i.getCode(), excelDTO.getWarehouseLocationCode())).filter(i -> !i.getDisabled()).collect(Collectors.toList());
                         if (CollUtil.isEmpty(enableLocationList)) {
                             errorMsgList.add("该仓位不存在");
                         } else if (enableLocationList.size() > 1) {
@@ -249,8 +249,8 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
                             excelDTO.setWarehouseAreaId(enableLocationList.get(0).getParentId());
                             WarehouseLocationEntity warehouseAreaEntity = locationEntityMap.get(excelDTO.getWarehouseAreaId());
                             excelDTO.setWarehouseAreaCode(warehouseAreaEntity.getCode());
-                            excelDTO.setSuggestWarehouseLocationId(enableLocationList.get(0).getId());
-                            excelDTO.setSuggestWarehouseLocationCode(enableLocationList.get(0).getCode());
+                            excelDTO.setWarehouseLocationId(enableLocationList.get(0).getId());
+                            excelDTO.setWarehouseLocationCode(enableLocationList.get(0).getCode());
                         }
                     }
                 }

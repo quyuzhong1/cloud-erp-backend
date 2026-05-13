@@ -146,11 +146,11 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 推荐仓位code
          */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
         /**
          * 推荐仓位id
          */
-        private String suggestWarehouseLocationId;
+        private String warehouseLocationId;
         /**
          * 优先级
          */
@@ -238,17 +238,17 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 推荐仓位id
          */
-        private String suggestWarehouseLocationId;
+        private String warehouseLocationId;
 
         /**
          * 推荐仓位编码
          */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
 
         /**
          * 推荐仓位名称
          */
-        private String suggestWarehouseLocationName;
+        private String warehouseLocationName;
 
         /**
          * 优先级
@@ -338,6 +338,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /**
          * 建议仓位code
          */
-        private String suggestWarehouseLocationCode;
+        private String warehouseLocationCode;
     }
 }

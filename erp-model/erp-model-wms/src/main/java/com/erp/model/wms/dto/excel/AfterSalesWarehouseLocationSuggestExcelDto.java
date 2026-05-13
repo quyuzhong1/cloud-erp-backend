@@ -62,9 +62,9 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "推荐仓位编码", index = 5)
-    private String suggestWarehouseLocationCode;
+    private String warehouseLocationCode;
     @ExcelIgnore
-    private String suggestWarehouseLocationId;
+    private String warehouseLocationId;
 
     /**
      * 优先级

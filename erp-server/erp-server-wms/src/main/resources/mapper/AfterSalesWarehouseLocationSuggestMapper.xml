@@ -31,7 +31,7 @@
         sku_no AS skuNo,
         warehouse_id AS warehouseId,
         warehouse_area_code AS warehouseAreaCode,
-        suggest_warehouse_location_code AS suggestWarehouseLocationCode,
+        warehouse_location_code AS warehouseLocationCode,
         sort,
         disabled,
         version,
@@ -72,7 +72,7 @@
     <insert id="upsertBatch">
         INSERT INTO aftersales_warehouse_location_suggest (
         id, sku_id, sku_no, warehouse_id, warehouse_area_code,
-        suggest_warehouse_location_code, sort, disabled,
+        warehouse_location_code, sort, disabled,
         version, is_deleted,
         create_user_id, create_user_name, create_time,
         update_user_id, update_user_name, update_time
@@ -80,13 +80,13 @@
         <foreach collection="list" item="item" separator=",">
             (
             #{item.id}, #{item.skuId}, #{item.skuNo}, #{item.warehouseId}, #{item.warehouseAreaCode},
-            #{item.suggestWarehouseLocationCode}, #{item.sort}, #{item.disabled},
+            #{item.warehouseLocationCode}, #{item.sort}, #{item.disabled},
             0, false,
             #{item.createUserId}, #{item.createUserName}, #{item.createTime},
             #{item.updateUserId}, #{item.updateUserName}, #{item.updateTime}
             )
         </foreach>
-        ON CONFLICT (sku_no, warehouse_id, suggest_warehouse_location_code)
+        ON CONFLICT (sku_no, warehouse_id, warehouse_location_code)
         WHERE is_deleted = false
         DO UPDATE SET
         sort = EXCLUDED.sort,

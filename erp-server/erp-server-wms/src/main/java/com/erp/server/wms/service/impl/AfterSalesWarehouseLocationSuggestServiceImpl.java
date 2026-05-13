@@ -102,7 +102,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> conflictWrapper = Wrappers.lambdaQuery(AfterSalesWarehouseLocationSuggestEntity.class)
                 .eq(AfterSalesWarehouseLocationSuggestEntity::getSkuNo, entity.getSkuNo())
                 .eq(AfterSalesWarehouseLocationSuggestEntity::getWarehouseId, entity.getWarehouseId())
-                .eq(AfterSalesWarehouseLocationSuggestEntity::getSuggestWarehouseLocationCode, entity.getSuggestWarehouseLocationCode())
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getWarehouseLocationCode, entity.getWarehouseLocationCode())
                 .last("LIMIT 1");
         AfterSalesWarehouseLocationSuggestEntity conflictEntity = this.getOne(conflictWrapper, false);
 
@@ -159,7 +159,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         //日志记录
         String operator = UserContext.getDefaultLoginUser().getUserName();
         String msg = StrUtil.format("用户【{}】对 SKU【{}】推荐仓位编码【{}】 执行了【{}】相关的【{}】操作",
-                operator, entity.getSkuNo(), entity.getSuggestWarehouseLocationCode(), "删除", "仓位售后推荐");
+                operator, entity.getSkuNo(), entity.getWarehouseLocationCode(), "删除", "仓位售后推荐");
 
         operateLogService.addModuleOperateLog(
                 msg,
@@ -206,7 +206,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
                     .stream()
                     //增加去重逻辑，防止同一批次出现重复行导致数据库报错
                     .collect(Collectors.toMap(
-                            dto -> dto.getSkuNo() + "_" + dto.getWarehouseId() + "_" + dto.getSuggestWarehouseLocationId(),
+                            dto -> dto.getSkuNo() + "_" + dto.getWarehouseId() + "_" + dto.getWarehouseLocationId(),
                             dto -> dto,
                             (oldVal, newVal) -> newVal
                     ))
@@ -375,10 +375,10 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             dto.setWarehouseAreaName(areaEntity.getName());
 
             // 匹配仓位 (使用组合 Key)
-            String locationKey = entity.getWarehouseId() + "_" + entity.getSuggestWarehouseLocationCode() + "_" + WarehouseLocationTypeEnum.LOCATION;
+            String locationKey = entity.getWarehouseId() + "_" + entity.getWarehouseLocationCode() + "_" + WarehouseLocationTypeEnum.LOCATION;
             WarehouseLocationEntity locationEntity = locationMap.getOrDefault(locationKey, new WarehouseLocationEntity());
-            dto.setSuggestWarehouseLocationId(locationEntity.getId());
-            dto.setSuggestWarehouseLocationName(locationEntity.getName());
+            dto.setWarehouseLocationId(locationEntity.getId());
+            dto.setWarehouseLocationName(locationEntity.getName());
 
             dto.setDisabled(entity.getDisabled());
             dto.setUpdateUser(entity.getUpdateUserName());
@@ -392,7 +392,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
     public List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> getSuggestWarehouseLocationList(AfterSalesWarehouseLocationSuggestDto.PdaSearchDto searchDto) {
         LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(
-                        AfterSalesWarehouseLocationSuggestEntity::getSuggestWarehouseLocationCode,
+                        AfterSalesWarehouseLocationSuggestEntity::getWarehouseLocationCode,
                         AfterSalesWarehouseLocationSuggestEntity::getSort,
                         AfterSalesWarehouseLocationSuggestEntity::getDisabled
                 )
