@@ -1165,11 +1165,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())) {
             throw new ServiceException(ApiError.SO_B2C_SPLIT_KOL_FORBIDDEN);
         }
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.SO_B2C_SPLIT_FORBIDDEN_BY_STATUS);
         }
         soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "拆分合并");
+        if(!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())){
+            if(Objects.nonNull(soB2cLogisticsEntity) && StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
+                throw new ServiceException("已获取跟踪号，请取消物流单后再执行拆分");
+            }
+        }
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.SO_B2C_SHOPEE_SPLIT_FORBIDDEN, entity.getCode());
         }
