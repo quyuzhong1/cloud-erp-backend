@@ -26,6 +26,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
@@ -562,8 +563,9 @@ public class SoInfoController extends BaseController {
             menuCode = "oms:so:exportSoContractPdf",
             serviceClass = SoInfoService.class,
             keyIdName = "id")
-    public void exportSoContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-         soInfoService.exportSoContractPdf(dto.getId(),response);
+    public ApiResult<SysCommonDTO.AttachmentDTO> exportSoContractPdf(@RequestBody @Valid BaseIdDTO dto) {
+        SysCommonDTO.AttachmentDTO attachmentDTO = soInfoService.exportSoContractPdf(dto.getId());
+        return ObjectUtil.isNotEmpty(attachmentDTO) ? success(attachmentDTO) : failure();
     }
 
     /**
