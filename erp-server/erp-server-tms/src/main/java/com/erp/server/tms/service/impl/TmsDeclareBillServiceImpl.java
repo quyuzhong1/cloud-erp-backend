@@ -177,8 +177,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
             validateDeclareMergeDetails(mergeDetailList);
-            Set<String> sourceDetailIdSet = collectSourceDetailIdSet(mergeDetailList);
-            validateSourceDetailNotGenerated(sourceDetailIdSet, null);
+            Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
+            validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), null);
 
             TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
             BeanMapperUtils.copy(addDTO, declareBillEntity);
@@ -311,8 +311,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(updateDTO.getMergeDetailList(), updateDTO.getIsMerge());
         validateDeclareMergeDetails(mergeDetailList);
         validateUpdateImmutableSourceFields(old.getId(), mergeDetailList);
-        Set<String> sourceDetailIdSet = collectSourceDetailIdSet(mergeDetailList);
-        validateSourceDetailNotGenerated(sourceDetailIdSet, old.getId());
+        Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
+        validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), sourceType, old.getId());
         if(Objects.isNull(updateDTO.getShippingFee())){
             updateDTO.setShippingFee(BigDecimal.ZERO);
         }
@@ -1280,8 +1280,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
             validateDeclareMergeDetails(mergeDetailList);
-            Set<String> sourceDetailIdSet = collectSourceDetailIdSet(mergeDetailList);
-            validateSourceDetailNotGenerated(sourceDetailIdSet, null);
+            Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
+            validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), null);
 
             TmsDeclareBillEntity declareBillEntity = new TmsDeclareBillEntity();
             BeanMapperUtils.copy(addDTO, declareBillEntity);
@@ -2096,7 +2096,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             if (Objects.isNull(sourceDetail)) {
                 continue;
             }
-            requireNotBlank(sourceDetail.getSourceDetailId(), rowNo, "来源明细");
             requireNotBlank(sourceDetail.getSourceId(), rowNo, "来源单据");
             requireNotBlank(sourceDetail.getSkuNo(), rowNo, "来源SKU");
             requirePositive(sourceDetail.getQty(), rowNo, "来源数量");
@@ -2117,28 +2116,33 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 校验来源明细是否已生成报关单
+     * 校验来源箱明细是否已生成报关单
      * @author will
      * @date 2026/5/7 14:08
-     * @param sourceDetailIdSet
-     * @param currentDeclareId
+     * @param sourceKeySet 来源单据+箱号+SKU维度唯一键集合
+     * @param sourceIdSet 来源单据id集合
+     * @param sourceType 来源类型
+     * @param currentDeclareId 当前报关单id
      */
-    private void validateSourceDetailNotGenerated(Set<String> sourceDetailIdSet, String currentDeclareId) {
-        if (CollUtil.isEmpty(sourceDetailIdSet)) {
+    private void validateSourceNotGenerated(Set<String> sourceKeySet, Set<String> sourceIdSet, String sourceType, String currentDeclareId) {
+        if (CollUtil.isEmpty(sourceKeySet)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
         List<DeliveryDeclareDetailMidEntity> existsMidList;
         if (StringUtils.isNotBlank(currentDeclareId)) {
             existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
-                    .in(DeliveryDeclareDetailMidEntity::getSourceDetailId, sourceDetailIdSet)
+                    .eq(StringUtils.isNotBlank(sourceType), DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
+                    .in(CollUtil.isNotEmpty(sourceIdSet), DeliveryDeclareDetailMidEntity::getSourceId, sourceIdSet)
                     .ne(DeliveryDeclareDetailMidEntity::getDeclareId, currentDeclareId)
                     .list();
         } else {
             existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
-                    .in(DeliveryDeclareDetailMidEntity::getSourceDetailId, sourceDetailIdSet)
+                    .eq(StringUtils.isNotBlank(sourceType), DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
+                    .in(CollUtil.isNotEmpty(sourceIdSet), DeliveryDeclareDetailMidEntity::getSourceId, sourceIdSet)
                     .list();
         }
         List<DeliveryDeclareDetailMidEntity> generatedMidList = existsMidList.stream()
+                .filter(item -> sourceKeySet.contains(buildSourceDetailKey(item)))
                 .filter(item -> StringUtils.isNotBlank(item.getDeclareId())
                         || DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode().equals(item.getGenerateStatus()))
                 .collect(Collectors.toList());
@@ -2170,16 +2174,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         Map<String, DeliveryDeclareDetailMidEntity> oldKeyMap = oldMidList.stream()
                 .collect(Collectors.toMap(this::buildSourceDetailKey, item -> item, (a, b) -> a));
-        Set<String> oldSourceDetailIdSet = oldMidList.stream()
-                .map(DeliveryDeclareDetailMidEntity::getSourceDetailId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
         for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
             if (CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
                 continue;
             }
             for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : detailDTO.getSourceDeliveryDetailList()) {
-                if (Objects.isNull(sourceDetail) || !oldSourceDetailIdSet.contains(sourceDetail.getSourceDetailId())) {
+                if (Objects.isNull(sourceDetail)) {
                     continue;
                 }
                 DeliveryDeclareDetailMidEntity oldMid = oldKeyMap.get(buildSourceDetailKey(sourceDetail));
@@ -2223,19 +2223,37 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 收集来源明细id
+     * 收集来源箱明细唯一键
      * @author will
      * @date 2026/5/7 14:08
-     * @param mergeDetailList
+     * @param mergeDetailList 报关明细集合
      * @return java.util.Set<java.lang.String>
      */
-    private Set<String> collectSourceDetailIdSet(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+    private Set<String> collectSourceKeySet(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
         return mergeDetailList.stream()
                 .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
                 .filter(CollUtil::isNotEmpty)
                 .flatMap(Collection::stream)
                 .filter(Objects::nonNull)
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceDetailId)
+                .map(this::buildSourceDetailKey)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 收集来源单据id
+     * @author will
+     * @date 2026/5/13 11:34
+     * @param mergeDetailList 报关明细集合
+     * @return java.util.Set<java.lang.String>
+     */
+    private Set<String> collectSourceIdSet(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+        return mergeDetailList.stream()
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
     }
@@ -2476,7 +2494,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         midEntity.setSourceType(sourceType);
         midEntity.setSourceId(StringUtils.defaultIfBlank(sourceDetail.getSourceId(), StringUtils.defaultString(fallbackSourceId)));
         midEntity.setSourceCode(StringUtils.defaultString(sourceDetail.getSourceCode()));
-        midEntity.setSourceDetailId(StringUtils.defaultString(sourceDetail.getSourceDetailId()));
+        midEntity.setSourceDetailId("");
         midEntity.setBusinessId(StringUtils.defaultString(sourceDetail.getBusinessId()));
         midEntity.setBusinessCode(StringUtils.defaultString(sourceDetail.getBusinessCode()));
         midEntity.setBusinessType(sourceType);
@@ -2519,7 +2537,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         detailDTO.setSourceId(entity.getSourceId());
         detailDTO.setSourceCode(entity.getSourceCode());
         detailDTO.setSourceType(entity.getSourceType());
-        detailDTO.setSourceDetailId(entity.getSourceDetailId());
         detailDTO.setBusinessId(entity.getBusinessId());
         detailDTO.setBusinessCode(entity.getBusinessCode());
         detailDTO.setBoxNo(entity.getBoxNo());
@@ -2548,7 +2565,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private String buildSourceDetailKey(DeliveryDeclareDetailMidEntity entity) {
         return CharSequenceUtil.join("|",
                 StringUtils.defaultString(entity.getSourceId()),
-                StringUtils.defaultString(entity.getSourceDetailId()),
                 StringUtils.defaultString(entity.getBoxNo()),
                 StringUtils.defaultString(entity.getSkuId()));
     }
@@ -2563,7 +2579,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private String buildSourceDetailKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
         return CharSequenceUtil.join("|",
                 StringUtils.defaultString(detailDTO.getSourceId()),
-                StringUtils.defaultString(detailDTO.getSourceDetailId()),
                 StringUtils.defaultString(detailDTO.getBoxNo()),
                 StringUtils.defaultString(detailDTO.getSkuId()));
     }
@@ -2637,22 +2652,26 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
         validateBatchMergeDeclareBills(list);
 
-        Set<String> sourceDetailIdSet = mergeDetailList.stream()
+        Set<String> sourceKeySet = mergeDetailList.stream()
                 .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
                 .filter(CollUtil::isNotEmpty)
                 .flatMap(Collection::stream)
                 .filter(Objects::nonNull)
-                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceDetailId)
+                .map(this::buildSourceDetailKey)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
-        if (CollUtil.isEmpty(sourceDetailIdSet)) {
+        if (CollUtil.isEmpty(sourceKeySet)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
         }
+        Set<String> sourceIdSet = collectSourceIdSet(mergeDetailList);
 
         List<DeliveryDeclareDetailMidEntity> existsMidList = deliveryDeclareDetailMidService.lambdaQuery()
                 .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
-                .in(DeliveryDeclareDetailMidEntity::getSourceDetailId, sourceDetailIdSet)
+                .in(CollUtil.isNotEmpty(sourceIdSet), DeliveryDeclareDetailMidEntity::getSourceId, sourceIdSet)
                 .list();
+        existsMidList = existsMidList.stream()
+                .filter(item -> sourceKeySet.contains(buildSourceDetailKey(item)))
+                .collect(Collectors.toList());
 
         if (idempotent && CollUtil.isNotEmpty(existsMidList)) {
             List<DeliveryDeclareDetailMidEntity> generatedMidList = existsMidList.stream()
@@ -2660,7 +2679,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                             || DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode().equals(item.getGenerateStatus()))
                     .collect(Collectors.toList());
             if (isGeneratedIdempotentSuccess(mergeDetailList, generatedMidList)) {
-                log.info("自动生成报关明细幂等命中，type={}，sourceDetailCount={}", type, sourceDetailIdSet.size());
+                log.info("自动生成报关明细幂等命中，type={}，sourceKeyCount={}", type, sourceKeySet.size());
                 return Boolean.TRUE;
             }
             if (CollUtil.isNotEmpty(generatedMidList)) {

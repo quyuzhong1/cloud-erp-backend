@@ -1126,11 +1126,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setHsCode(productLogisticsEntity.getCustomsCode());
                 deliveryDetailDTO.setProductNameCn(productLogisticsEntity.getDeclareChineseName());
                 deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
-                deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
+                deliveryDetailDTO.setUnitName(productLogisticsEntity.getDeclareUnit());
                 //报关单位名称
-                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(deliveryDetailDTO.getUnit())).findFirst().orElse(null);
+                BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getName().equals(deliveryDetailDTO.getUnit())).findFirst().orElse(null);
                 if (Objects.nonNull(unitEntity)) {
-                    deliveryDetailDTO.setUnitName(unitEntity.getName());
+                    deliveryDetailDTO.setUnit(unitEntity.getValue());
                 }
                 deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
                 deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
@@ -1269,7 +1269,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private String buildB2bMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
         return String.join("|",
                 StringUtils.defaultString(detailDTO.getSourceId()),
-                StringUtils.defaultString(detailDTO.getSourceDetailId()),
+                StringUtils.defaultString(detailDTO.getBoxNo()),
                 StringUtils.defaultString(detailDTO.getSkuId()));
     }
 
