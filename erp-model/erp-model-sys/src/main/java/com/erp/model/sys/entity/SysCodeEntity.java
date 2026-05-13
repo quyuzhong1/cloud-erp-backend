@@ -39,7 +39,7 @@ public class SysCodeEntity extends BaseEntity<SysCodeEntity> {
      *     这里显式指定 jdbcType=VARCHAR，使 INSERT/UPDATE/select-by-entity 走 VARCHAR 绑定，
      *     避免 BadSqlGrammarException: operator does not exist: character varying = integer。
      */
-    @TableField(value = "type", jdbcType = JdbcType.VARCHAR)
+    @TableField(value = "type")
     private Integer type;
 
 }

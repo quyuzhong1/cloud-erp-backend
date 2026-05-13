@@ -249,7 +249,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         // LambdaQueryWrapper 直接传 Integer 会被 JDBC 按 INTEGER 绑定，
         // 触发 PSQL "operator does not exist: character varying = integer"。
         // 这里显式按 String 传，使参数走 VARCHAR 绑定。
-        queryWrapper.eq(SysCodeEntity::getType, dto.getType() == null ? null : String.valueOf(dto.getType()));
+        queryWrapper.eq(SysCodeEntity::getType, dto.getType() == null ? null : dto.getType());
         queryWrapper.eq(SysCodeEntity::getCategory,dto.getCategory());
         queryWrapper.last("LIMIT 1");
         SysCodeEntity sysCodeEntity = this.getOne(queryWrapper);
