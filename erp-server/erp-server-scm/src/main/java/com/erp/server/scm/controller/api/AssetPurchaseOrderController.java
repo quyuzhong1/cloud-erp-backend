@@ -551,7 +551,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @GetMapping("/listAssetPurchaseContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:assetPurchaseOrder:exportAssetPurchaseContractPdf",
+            menuCode = "scm:assetPurchaseOrder:listPurchaseContractPdf",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "id")
     public ApiResult<AssetPurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
@@ -629,7 +629,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGeneratePurchaseChangeOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "scm:assetNotice:viewGenerateAssetAccept",
+            menuCode = "scm:assetNotice:viewGeneratePurchaseChangeOrder",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
