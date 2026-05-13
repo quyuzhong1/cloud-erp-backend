@@ -355,6 +355,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(!save) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_SAVE_FAILED);
         }
+        List<DeliveryDeclareDetailMidEntity> oldMidList = deliveryDeclareDetailMidService.listByDeclareBillIdList(Collections.singletonList(old.getId()));
         detailService.deleteDetailByMainIdList(Collections.singletonList(old.getId()));
         List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(mergeDetailList.size());
         for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
@@ -369,14 +370,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (!detailService.saveBatch(detailEntityList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_FAILED);
         }
-        deliveryDeclareDetailMidService.lambdaUpdate()
-                .eq(DeliveryDeclareDetailMidEntity::getDeclareId, old.getId())
-                .remove();
         List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
                 sourceType, null, old.getId(), old.getCode());
-        if (CollUtil.isNotEmpty(addMidList)) {
-            deliveryDeclareDetailMidService.saveBatch(addMidList);
-        }
+        saveOrRestoreUpdateMidData(oldMidList, addMidList, old.getId(), old.getCode());
         updateSourceDeclareStatus(old.getType(),addMidList);
         log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
@@ -846,8 +842,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillEntity> entityList = this.listByIds(dto.getIds());
         List<BatchResultDTO> resultList = new ArrayList<>();
         List<String> removeIds = new ArrayList<>();
-        List<String> updateFhdSourceIds = new ArrayList<>();
-        List<String> updateOutSourceIds = new ArrayList<>();
         for (TmsDeclareBillEntity entity : entityList) {
             if(!entity.getDeclareStatus().equals(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode())){
                 resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"只有待确认的单据才能删除"));
@@ -856,27 +850,162 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             resultList.add(BatchResultDTO.success(entity.getId(),entity.getCode(),"删除成功"));
             removeIds.add(entity.getId());
         }
+        if (CollectionUtils.isEmpty(removeIds)) {
+            return resultList;
+        }
+        //查询中间表数据
+        List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList = deliveryDeclareDetailMidService.listByDeclareBillIdList(removeIds);
+        if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
+        }
         if(CollectionUtils.isNotEmpty(removeIds)){
             this.removeByIds(removeIds);
         }
         //删除明细数据
         detailService.deleteDetailByMainIdList(removeIds);
+        //中间表恢复为待生成，不删除历史来源明细
+        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(removeIds);
+        updateWaitStatusForNoGeneratedSources(deliveryDeclareDetailMidList);
+        return resultList;
+    }
 
-        if(CollectionUtils.isNotEmpty(updateFhdSourceIds)){
-            updateFhdSourceIds = updateFhdSourceIds.stream().distinct().collect(Collectors.toList());
+    /**
+     * 对恢复为待生成的来源单据回写待报关状态。
+     *
+     * @param deliveryDeclareDetailMidList 本次恢复的中间表明细
+     */
+    private void updateWaitStatusForNoGeneratedSources(List<DeliveryDeclareDetailMidEntity> deliveryDeclareDetailMidList) {
+        if (CollUtil.isEmpty(deliveryDeclareDetailMidList)) {
+            return;
+        }
+        // 头程来源只在不存在其它已生成中间表时回写为待报关。
+        List<String> fmSourceIdList = deliveryDeclareDetailMidList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode()))
+                .map(DeliveryDeclareDetailMidEntity::getSourceId).distinct().collect(Collectors.toList());
+        fmSourceIdList = filterNoGeneratedSourceIds(fmSourceIdList, SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
+        if(CollectionUtils.isNotEmpty(fmSourceIdList)){
             FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-            updateStatusDTO.setIds(updateFhdSourceIds);
+            updateStatusDTO.setIds(fmSourceIdList);
             updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.WAIT.code);
             wmsFirstMileDeliveryFeign.updateStatus(updateStatusDTO);
         }
-        if(CollectionUtils.isNotEmpty(updateOutSourceIds)){
-            updateOutSourceIds = updateOutSourceIds.stream().distinct().collect(Collectors.toList());
+
+        // B2B来源只在不存在其它已生成中间表时回写为待报关。
+        List<String> b2bSourceIdList = deliveryDeclareDetailMidList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+                .map(DeliveryDeclareDetailMidEntity::getSourceId).distinct().collect(Collectors.toList());
+        b2bSourceIdList = filterNoGeneratedSourceIds(b2bSourceIdList, SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        if(CollectionUtils.isNotEmpty(b2bSourceIdList)){
             SoDeliveryNoticeDTO.DeclareStatusDTO updateStatusDTO = new SoDeliveryNoticeDTO.DeclareStatusDTO();
-            updateStatusDTO.setIds(updateOutSourceIds);
+            updateStatusDTO.setIds(b2bSourceIdList);
             updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.WAIT.code);
             soDeliveryNoticeFeign.updateDeclareStatus(updateStatusDTO);
         }
-        return resultList;
+    }
+
+    /**
+     * 过滤仍存在已生成中间表的来源单据。
+     *
+     * @param sourceIds 候选来源单据id集合
+     * @param sourceType 来源类型
+     * @return 可回写待报关状态的来源单据id集合
+     */
+    private List<String> filterNoGeneratedSourceIds(List<String> sourceIds, String sourceType) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return Collections.emptyList();
+        }
+        // 查询同来源单据下是否仍有已生成报关信息。
+        List<DeliveryDeclareDetailMidEntity> generatedMidList = deliveryDeclareDetailMidService.lambdaQuery()
+                .in(DeliveryDeclareDetailMidEntity::getSourceId, sourceIds)
+                .eq(DeliveryDeclareDetailMidEntity::getSourceType, sourceType)
+                .eq(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
+                .list();
+        if (CollUtil.isEmpty(generatedMidList)) {
+            return sourceIds;
+        }
+        // 有已生成记录的来源单据不能回写待报关。
+        Set<String> generatedSourceIdSet = generatedMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        return sourceIds.stream()
+                .filter(sourceId -> !generatedSourceIdSet.contains(sourceId))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 编辑报关单时同步新旧中间表。
+     *
+     * @param oldMidList 编辑前已绑定当前报关单的中间表
+     * @param newMidList 编辑后需要绑定当前报关单的中间表
+     * @param declareId 报关单id
+     * @param declareCode 报关单号
+     */
+    private void saveOrRestoreUpdateMidData(List<DeliveryDeclareDetailMidEntity> oldMidList,
+                                            List<DeliveryDeclareDetailMidEntity> newMidList,
+                                            String declareId,
+                                            String declareCode) {
+        // 用来源单据+箱号+SKU识别同一来源箱明细。
+        Map<String, DeliveryDeclareDetailMidEntity> oldMidMap = CollUtil.isEmpty(oldMidList)
+                ? new HashMap<>()
+                : oldMidList.stream().collect(Collectors.toMap(this::buildSourceDetailKey, item -> item, (a, b) -> a));
+        Set<String> retainedOldMidIds = new HashSet<>();
+        List<DeliveryDeclareDetailMidEntity> addMidList = new ArrayList<>();
+        for (DeliveryDeclareDetailMidEntity newMid : Optional.ofNullable(newMidList).orElse(Collections.emptyList())) {
+            DeliveryDeclareDetailMidEntity oldMid = oldMidMap.get(buildSourceDetailKey(newMid));
+            if (Objects.isNull(oldMid)) {
+                // 新增的来源箱明细直接保存为已生成。
+                addMidList.add(newMid);
+                continue;
+            }
+            // 保留的来源箱明细复用旧中间表行，并更新报关关联。
+            retainedOldMidIds.add(oldMid.getId());
+            updateRetainedMidData(oldMid, newMid, declareId, declareCode);
+        }
+        if (CollUtil.isNotEmpty(addMidList)) {
+            deliveryDeclareDetailMidService.saveBatch(addMidList);
+        }
+        List<DeliveryDeclareDetailMidEntity> restoreMidList = Optional.ofNullable(oldMidList).orElse(Collections.emptyList()).stream()
+                .filter(item -> !retainedOldMidIds.contains(item.getId()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(restoreMidList)) {
+            return;
+        }
+        // 编辑时被删除的来源箱明细恢复为待生成。
+        deliveryDeclareDetailMidService.restoreWaitGenerateByIds(restoreMidList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getId)
+                .collect(Collectors.toList()));
+        // 删除来源后，必要时回写来源单据为待报关。
+        updateWaitStatusForNoGeneratedSources(restoreMidList);
+    }
+
+    /**
+     * 更新编辑后仍保留的中间表行。
+     *
+     * @param oldMid 旧中间表行
+     * @param newMid 新构建的中间表数据
+     * @param declareId 报关单id
+     * @param declareCode 报关单号
+     */
+    private void updateRetainedMidData(DeliveryDeclareDetailMidEntity oldMid,
+                                       DeliveryDeclareDetailMidEntity newMid,
+                                       String declareId,
+                                       String declareCode) {
+        // 复用旧行主键，只刷新报关关联和可能变更的申报字段。
+        deliveryDeclareDetailMidService.lambdaUpdate()
+                .eq(DeliveryDeclareDetailMidEntity::getId, oldMid.getId())
+                .set(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode())
+                .set(DeliveryDeclareDetailMidEntity::getDeclareId, declareId)
+                .set(DeliveryDeclareDetailMidEntity::getDeclareCode, declareCode)
+                .set(DeliveryDeclareDetailMidEntity::getDeclareDetailId, newMid.getDeclareDetailId())
+                .set(DeliveryDeclareDetailMidEntity::getContractNo, declareCode)
+                .set(DeliveryDeclareDetailMidEntity::getQty, newMid.getQty())
+                .set(DeliveryDeclareDetailMidEntity::getCurrency, newMid.getCurrency())
+                .set(DeliveryDeclareDetailMidEntity::getCurrencySymbol, newMid.getCurrencySymbol())
+                .set(DeliveryDeclareDetailMidEntity::getHsCode, newMid.getHsCode())
+                .set(DeliveryDeclareDetailMidEntity::getProductNameCn, newMid.getProductNameCn())
+                .set(DeliveryDeclareDetailMidEntity::getDeclareElement, newMid.getDeclareElement())
+                .set(DeliveryDeclareDetailMidEntity::getUnit, newMid.getUnit())
+                .set(DeliveryDeclareDetailMidEntity::getUnitPrice, newMid.getUnitPrice())
+                .update();
     }
 
     private void fillExport(List<TmsDeclareBillDTO.ExportDTO> list) {
