@@ -1679,9 +1679,17 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
                 .list();
         // 筛选出商家寄出快递单号不为空的数据
-        List<String> strList = afterSaleProgressList.stream().map(AfterSaleProgressEntity::getTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(strList)) {
-            String content = StrUtil.format("单据编号：【{}】的商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作", String.join(",", strList));
+        List<String> idList = afterSaleProgressList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getTrackNo()))
+                .map(AfterSaleProgressEntity::getMainId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(idList)) {
+            List<String> codeList = afterSaleEntityList.stream()
+                    .filter(e -> e.getId() != null && idList.contains(e.getId()))
+                    .map(AfterSaleEntity::getCode)
+                    .collect(Collectors.toList());
+            String content = StrUtil.format("单据编号：【{}】的商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作", String.join(",", codeList));
             throw new ServiceException(content);
         }
         Map<String, AfterSaleProgressEntity> afterSaleProgressMap = afterSaleProgressList.stream().collect(Collectors.toMap(AfterSaleProgressEntity::getMainId, w -> w));
@@ -1876,9 +1884,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     public List<AfterSaleDTO.OrderInfoDTO> getPlaceOrderPreview(BaseIdsDTO.IdsDTO dto) {
         List<AfterSaleDTO.OrderInfoDTO> list = this.baseMapper.getPlaceOrderPreview(dto.getIds());
         // 筛选出商家寄出快递单号不为空的数据
-        List<String> strList = list.stream().map(AfterSaleDTO.OrderInfoDTO::getOutboundTrackNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(strList)) {
-            String content = StrUtil.format("单据编号：【{}】的商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作", String.join(",", strList));
+        List<String> codeList = list.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getOutboundTrackNo()))
+                .map(AfterSaleDTO.OrderInfoDTO::getCode)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(codeList)) {
+            String content = StrUtil.format("单据编号：【{}】的商家寄出快递单号不为空，不能进行下单，请先取消物流订单后操作", String.join(",", codeList));
             throw new ServiceException(content);
         }
         // 过滤出商家寄出快递单号为空的数据
