@@ -1071,7 +1071,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             SoB2cEntity add = soB2cService.add(addDTO, code);
             soIdList.add(add.getId());
             soCodeList.add(add.getCode());
-            //迭代1.27.4 拆分的子订单的审核状态默认等于原订单审核状态 订单状态：如果子件不是审核通过，则默认待配货；如果子单是审核通过，则子件走仓库和物流规则，按实际规则执行结果确认订单状态
+            boolean sourceShipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus());
+            // 已发货订单拆分后保持已发货，不再重新走仓库和物流规则。
             add.setApproveStatus(entity.getApproveStatus());
             if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
                 String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
@@ -1082,7 +1083,15 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
                 approveOneDTO.setIsUserSystem(true);
                 soB2cService.approveEnd(approveOneDTO,add,true);
-                needRuleList.add(add);
+                if (sourceShipped) {
+                    this.lambdaUpdate()
+                            .eq(SoB2cEntity::getId, add.getId())
+                            .set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
+                            .update(new SoB2cEntity());
+                    add.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                } else {
+                    needRuleList.add(add);
+                }
             }else{
                 if(ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())){
                     String submitMsg = CharSequenceUtil.format("订单拆分子单自动提交" );
@@ -1156,15 +1165,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (CharSequenceUtil.equals(entity.getSourceType(), SourceTypeEnum.KOL_B2C_APPLICATION.getCode())) {
             throw new ServiceException(ApiError.SO_B2C_SPLIT_KOL_FORBIDDEN);
         }
-        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.SO_B2C_SPLIT_FORBIDDEN_BY_STATUS);
         }
         soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "拆分合并");
-        if(Objects.nonNull(soB2cLogisticsEntity) && StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
-            throw new ServiceException("已获取跟踪号，请取消物流单后再执行拆分");
-        }
         if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.SO_B2C_SHOPEE_SPLIT_FORBIDDEN, entity.getCode());
         }
