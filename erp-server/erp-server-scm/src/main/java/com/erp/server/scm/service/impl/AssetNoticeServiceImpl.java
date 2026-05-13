@@ -978,11 +978,38 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         startDTO.setBusinessKey(SourceTypeEnum.ASSET_NOTICE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
+    }
+
+    /**
+     * 构造提交流程的变量集合
+     * 附件存放在独立的 attachment 表，需要主动查询并补充到 variablesMap，
+     * 否则飞书流程模板里映射到 attachmentUrlList/attachmentNameList 等字段时取不到值。
+     */
+    private Map<String, Object> getVariablesMap(AssetNoticeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        Class<AssetNoticeEntity> entityClass = AssetNoticeEntity.class;
+        TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
+        String type = tableName.value();
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIdAndType(Arrays.asList(entity.getId()), type);
+        List<String> attachmentUrlList = new ArrayList<>();
+        List<String> attachmentNameList = new ArrayList<>();
+        Map<String, Object> attachmentMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(attachmentList)) {
+            for (AttachmentDTO.UpdateDTO attachment : attachmentList) {
+                attachmentUrlList.add(attachment.getAttachUrl());
+                attachmentNameList.add(attachment.getAttachName());
+                attachmentMap.put(attachment.getAttachName(), attachment.getAttachUrl());
+            }
+        }
+        variablesMap.put("attachmentUrlList", attachmentUrlList);
+        variablesMap.put("attachmentNameList", attachmentNameList);
+        variablesMap.put("attachmentMap", attachmentMap);
+        return variablesMap;
     }
     private void fillOne(AssetNoticeDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
