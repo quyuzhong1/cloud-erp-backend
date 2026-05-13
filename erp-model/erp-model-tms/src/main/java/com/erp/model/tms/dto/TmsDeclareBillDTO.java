@@ -2220,10 +2220,6 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotEmpty(message = "选择ids不能为空")
         private List<String> ids;
-        /**
-         *  下推的明细ids
-         */
-        private List<String> detailIds;
     }
 
     @Data

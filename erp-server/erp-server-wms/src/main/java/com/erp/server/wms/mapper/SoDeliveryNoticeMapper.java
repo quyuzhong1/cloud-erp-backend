@@ -89,10 +89,9 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @author will
      * @date 2026/4/24 16:29
      * @param ids 发货通知单id集合
-     * @param detailIds 发货通知单明细id集合
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
      */
-    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids, @Param("detailIds") List<String> detailIds);
+    List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(@Param("ids") List<String> ids);
 
     /**
      * 查询B2B报关按箱号最小维度来源明细

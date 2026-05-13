@@ -1917,7 +1917,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
      */
     private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceDetailsForAdd(String sourceId, SourceTypeEnum sourceTypeEnum) {
-        TmsDeclareBillDTO.PushDeclareBeforeParamDTO paramDTO = new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(sourceId), null);
+        TmsDeclareBillDTO.PushDeclareBeforeParamDTO paramDTO = new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(sourceId));
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList;
         if (SourceTypeEnum.FIRST_MILE_DELIVERY == sourceTypeEnum) {
             sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(paramDTO);
@@ -2816,6 +2816,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> declareBillList,
                                             TmsDeclareBillEntity declareBillEntity) {
         declareBillEntity.setType(type);
+        applyBatchDeclareBillDefaults(declareBillEntity);
         declareBillEntity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
         declareBillEntity.setDeclareDate(LocalDate.now());
         declareBillEntity.setShippingFee(BigDecimal.ZERO);
@@ -2840,6 +2841,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .collect(Collectors.toList()));
         TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO = querySelectedSkuHeader(headerParamDTO, SourceTypeEnum.getEnum(type));
         declareBillEntity.setTransportNo(headerDTO.getTransportNo());
+        declareBillEntity.setLogisticsSupplierId(headerDTO.getLogisticsSupplierId());
+        declareBillEntity.setLogisticsSupplierName(headerDTO.getLogisticsSupplierName());
         declareBillEntity.setBoxQty(Objects.isNull(headerDTO.getBoxQty()) ? 0 : headerDTO.getBoxQty());
         declareBillEntity.setGrossWeight(Objects.isNull(headerDTO.getGrossWeight()) ? BigDecimal.ZERO : headerDTO.getGrossWeight());
         declareBillEntity.setNetWeight(Objects.isNull(headerDTO.getNetWeight()) ? BigDecimal.ZERO : headerDTO.getNetWeight());
@@ -2873,6 +2876,20 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         declareBillEntity.setReceiverName(cfgDeclareRule.getReceiverName());
         declareBillEntity.setSenderType(cfgDeclareRule.getSenderType());
         declareBillEntity.setReceiverType(cfgDeclareRule.getReceiverType());
+    }
+
+    /**
+     * 填充批量保存报关单默认字段，保持与自动下推保存入口一致。
+     * @author will
+     * @date 2026/5/13 12:32
+     * @param declareBillEntity 报关单主表
+     */
+    private void applyBatchDeclareBillDefaults(TmsDeclareBillEntity declareBillEntity) {
+        declareBillEntity.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
+        declareBillEntity.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
+        declareBillEntity.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
+        declareBillEntity.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
+        declareBillEntity.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
     }
 
     /**
