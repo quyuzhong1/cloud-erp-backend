@@ -126,6 +126,24 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     Boolean deleteDeliveryDeclareDetailMid(List<String> sourceIds);
 
     /**
+     * 按报关单id恢复中间表为待生成状态
+     * @author will
+     * @date 2026/5/13 16:14
+     * @param declareBillIds 报关单id集合
+     * @return java.lang.Boolean
+     */
+    Boolean restoreWaitGenerateByDeclareBillIds(List<String> declareBillIds);
+
+    /**
+     * 按中间表id恢复为待生成状态
+     * @author will
+     * @date 2026/5/13 16:19
+     * @param ids 中间表id集合
+     * @return java.lang.Boolean
+     */
+    Boolean restoreWaitGenerateByIds(List<String> ids);
+
+    /**
      * 自动生成报关明细中间表
      *
      * @param dto 自动生成参数
