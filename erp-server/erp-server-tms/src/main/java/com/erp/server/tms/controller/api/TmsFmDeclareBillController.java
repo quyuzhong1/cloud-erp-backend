@@ -237,12 +237,27 @@ public class TmsFmDeclareBillController extends BaseController {
         return success();
     }*/
 
+//    @PostMapping("/exportDeclareMulti")
+//    @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
+//    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
+//    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+//        pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+//        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
+//        return success();
+//    }
+
+    /**
+     * 导出报关 - 多 sheet 版（报关单 + 合同；发票 / 装箱单 / 装箱明细 后续补充）
+     *
+     * <p>与 {@link #exportDeclare} 业务口径一致，仅产物形态不同：单条 → 含多 sheet 的 xlsx；多条 → ZIP 包，
+     * 包内每个 xlsx 同样多 sheet。单次导出最多 100 条，超过抛业务异常。</p>
+     */
     @PostMapping("/exportDeclare")
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "多sheet导出头程报关单报关信息")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+    public ApiResult<Object> exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
+        tmsDeclareBillService.exportDeclareMulti(pagingParamDTO, response);
         return success();
     }
 

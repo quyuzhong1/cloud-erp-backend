@@ -4,14 +4,25 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.converters.ConverterKeyBuild;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.fill.FillConfig;
+import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.core.excel.EasyExcelLocalDateConverter;
+import com.common.core.excel.EasyExcelLocalTimeConverter;
+import com.common.core.excel.EasyExcelListConverter;
+import com.common.core.excel.LocalDateTimeConverter;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
@@ -65,6 +76,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,13 +84,19 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.erp.model.tms.enums.CfgSettingEnum.CONTRACT_AGREEMENT_NO;
 
@@ -867,7 +885,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> sourceCodeList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSourceCode).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = fmLogisticService.listByOutstcockCode(sourceCodeList);
         List<String> orgIdList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSenderId).distinct().collect(Collectors.toList());
-        List<SysAccountingCompanyEntity> allAccountingCompanyEntityList = sysUserFeign.listCompanyById(orgIdList);
+        List<SysAccountingCompanyEntity> allAccountingCompanyEntityList = Optional.ofNullable(sysUserFeign.listCompanyById(orgIdList))
+                .orElse(Collections.emptyList());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DECLARE_DECLARE_TYPE.getType(),
                 DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType(),
                 DictBasicEnum.DECLARE_NATURE_LEVY.getType(),
@@ -1386,6 +1405,344 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             ExcelPrintUtils.exportZipStream(excelDataList,response,excelPath,"报关单"+DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP));
         }
+    }
+
+    /**
+     * 多 sheet 报关单导出（报关单 + 合同；发票 / 装箱单 / 装箱明细 后续补充）
+     */
+    private static final String DECLARE_MULTI_EXCEL_PATH = "excel/declareExportMulti.xlsx";
+
+    /**
+     * 多 sheet 报关单单次导出条数上限
+     *
+     * <p>每条记录都会重新打开模板渲染多个 sheet 并写入 ZIP，IO/CPU 开销随条数线性增长，
+     * 限制 100 条避免大批量导出拖垮接口。</p>
+     */
+    private static final int DECLARE_MULTI_EXPORT_LIMIT = 100;
+
+    @Override
+    public void exportDeclareMulti(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+        // 复用单 sheet 导出的状态过滤口径，保持业务边界一致
+        pagingParamDTO.setExportDeclareStatus(Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode()));
+        List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        if (list.size() > DECLARE_MULTI_EXPORT_LIMIT) {
+            throw new ServiceException(ApiError.FILE_EXPORT_SIZE_EXCEED_LIMIT, DECLARE_MULTI_EXPORT_LIMIT);
+        }
+
+        fillExport(list);
+        fillExportMulti(list);
+
+        String name = "报关单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+
+        if (list.size() == 1) {
+            TmsDeclareBillDTO.ExportDTO exportDTO = list.get(0);
+            try {
+                writeMultiSheet(exportDTO, response, date + name);
+            } catch (Exception e) {
+                log.error("多 sheet 报关单导出失败, 单号【{}】", exportDTO.getCode(), e);
+                throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+            }
+            return;
+        }
+
+        try {
+            writeMultiSheetZip(list, response, "报关单" + date);
+        } catch (Exception e) {
+            log.error("多 sheet 报关单 ZIP 导出失败", e);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
+    /**
+     * 在 fillExport 基础上补充多 sheet 导出所需的合同信息
+     *
+     * <p>业务规则：</p>
+     * <ul>
+     *   <li>卖方地址：复用 senderId 查到的核算公司 companyAddress</li>
+     *   <li>买方地址：头程按 receiverId 查 SysAccountingCompanyEntity；B2B 走销售出库 / 发货通知单关联客户（待接入）</li>
+     *   <li>合同号 = code；合同日期 = declareDate；目的地 = countryName；付款条件 = dictTransactionMethodName</li>
+     *   <li>币别取明细首行币别，多币别仅打 warn 不抛异常</li>
+     *   <li>合同明细由 productDetailList 逐行映射</li>
+     * </ul>
+     */
+    private void fillExportMulti(List<TmsDeclareBillDTO.ExportDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        // 卖方核算公司：senderId -> 公司主数据
+        List<String> senderIdList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getSenderId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SysAccountingCompanyEntity> senderCompanyMap = CollectionUtils.isEmpty(senderIdList)
+                ? Collections.emptyMap()
+                : Optional.ofNullable(sysUserFeign.listCompanyById(senderIdList))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (v1, v2) -> v1));
+
+        // 头程买方核算公司：receiverId -> 公司主数据
+        // ExportDTO 当前未输出 receiverId，从 entity 二次查询补齐，避免改动原 Mapper SQL
+        List<String> billIdList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> billIdToReceiverIdMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(billIdList)) {
+            billIdToReceiverIdMap = super.lambdaQuery()
+                    .in(TmsDeclareBillEntity::getId, billIdList)
+                    .select(TmsDeclareBillEntity::getId, TmsDeclareBillEntity::getReceiverId)
+                    .list().stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getReceiverId()))
+                    .collect(Collectors.toMap(TmsDeclareBillEntity::getId, TmsDeclareBillEntity::getReceiverId, (v1, v2) -> v1));
+        }
+        List<String> receiverIdList = billIdToReceiverIdMap.values().stream().distinct().collect(Collectors.toList());
+        Map<String, SysAccountingCompanyEntity> receiverCompanyMap = CollectionUtils.isEmpty(receiverIdList)
+                ? Collections.emptyMap()
+                : Optional.ofNullable(sysUserFeign.listCompanyById(receiverIdList))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (v1, v2) -> v1));
+
+        for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+            String receiverId = billIdToReceiverIdMap.get(exportDTO.getId());
+            String buyerAddress = resolveBuyerAddress(exportDTO, receiverId, receiverCompanyMap);
+            SysAccountingCompanyEntity sellerCompany = senderCompanyMap.get(exportDTO.getSenderId());
+            String sellerAddress = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getCompanyAddress(), "");
+            exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress, buyerAddress));
+        }
+    }
+
+    /**
+     * 解析合同 sheet 买方地址
+     *
+     * <p>头程报关单从核算公司主数据取地址；B2B 报关单从销售出库 / 发货通知单关联的客户主数据取，
+     * 当前 B2B 暂未接入新接口，分支仅打日志占位。</p>
+     */
+    private String resolveBuyerAddress(TmsDeclareBillDTO.ExportDTO exportDTO,
+                                       String receiverId,
+                                       Map<String, SysAccountingCompanyEntity> receiverCompanyMap) {
+        if (CharSequenceUtil.equals(exportDTO.getType(), SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
+            if (StringUtils.isBlank(receiverId)) {
+                return "";
+            }
+            SysAccountingCompanyEntity company = receiverCompanyMap.get(receiverId);
+            return Objects.isNull(company) ? "" : Objects.toString(company.getCompanyAddress(), "");
+        }
+        if (CharSequenceUtil.equals(exportDTO.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
+            // TODO: [待补充任务编号] B2B 多 sheet 导出 - 买方地址来源为 B2B 发货通知单中的客户信息字段，
+            // 待 B2B 接入新接口时实现：根据 sourceId / sourceCode 反查 SoDeliveryNoticeEntity.customerId，
+            // 再走客户主数据 Feign 取 customerAddress。
+            log.info("B2B 报关单【{}】多 sheet 导出买方地址逻辑待实现", exportDTO.getCode());
+            return "";
+        }
+        return "";
+    }
+
+    /**
+     * 组装合同 sheet 信息
+     *
+     * <p>金额计算规则：</p>
+     * <ul>
+     *   <li>合同总值 = 复用 fillExport 已计算的 ExportDTO.totalPrice，统一保留 4 位小数</li>
+     *   <li>大写：含币别中文名前缀，调用 hutool Convert.digitToChinese</li>
+     *   <li>明细行单价 / 总价均按 4 位小数保留</li>
+     * </ul>
+     */
+    private TmsDeclareBillDTO.ContractInfo buildContractInfo(TmsDeclareBillDTO.ExportDTO exportDTO,
+                                                             String sellerAddress,
+                                                             String buyerAddress) {
+        TmsDeclareBillDTO.ContractInfo contractInfo = new TmsDeclareBillDTO.ContractInfo();
+        contractInfo.setSellerName(Objects.toString(exportDTO.getSenderName(), ""));
+        contractInfo.setSellerAddress(sellerAddress);
+        contractInfo.setBuyerName(Objects.toString(exportDTO.getReceiverName(), ""));
+        contractInfo.setBuyerAddress(buyerAddress);
+        contractInfo.setContractNo(Objects.toString(exportDTO.getCode(), ""));
+        contractInfo.setContractDate(exportDTO.getDeclareDate());
+        contractInfo.setDestination(Objects.toString(exportDTO.getCountryName(), ""));
+        contractInfo.setPaymentTerms(Objects.toString(exportDTO.getDictTransactionMethodName(), ""));
+        contractInfo.setPackingMarks("");
+
+        List<TmsDeclareBillDTO.ExportProductDetail> productDetailList = exportDTO.getProductDetailList();
+        contractInfo.setContractDetailList(convertContractDetailList(productDetailList));
+
+        String currencyName = resolveContractCurrency(exportDTO, productDetailList);
+        contractInfo.setCurrency(currencyName);
+
+        BigDecimal totalAmount = Objects.isNull(exportDTO.getTotalPrice()) ? BigDecimal.ZERO : exportDTO.getTotalPrice();
+        totalAmount = totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP);
+        contractInfo.setTotalAmount(totalAmount);
+        contractInfo.setTotalAmountUpper(toAmountUpper(currencyName, totalAmount));
+        return contractInfo;
+    }
+
+    /**
+     * 解析合同币别
+     *
+     * <p>多明细行币别不一致时，取首行币别并打印 warn 日志，便于线上排查异常数据。</p>
+     */
+    private String resolveContractCurrency(TmsDeclareBillDTO.ExportDTO exportDTO,
+                                           List<TmsDeclareBillDTO.ExportProductDetail> productDetailList) {
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            return "";
+        }
+        String firstCurrency = productDetailList.get(0).getDeclareCurrencyName();
+        boolean multiCurrency = productDetailList.stream()
+                .map(TmsDeclareBillDTO.ExportProductDetail::getDeclareCurrencyName)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .count() > 1;
+        if (multiCurrency) {
+            log.warn("报关单【{}】合同 sheet 存在多币别，按首行币别【{}】展示总额", exportDTO.getCode(), firstCurrency);
+        }
+        return Objects.toString(firstCurrency, "");
+    }
+
+    /**
+     * 产品明细 -> 合同明细行映射
+     */
+    private List<TmsDeclareBillDTO.ContractDetailItem> convertContractDetailList(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList) {
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            return Collections.emptyList();
+        }
+        return productDetailList.stream().map(detail -> {
+            TmsDeclareBillDTO.ContractDetailItem item = new TmsDeclareBillDTO.ContractDetailItem();
+            item.setDeclareChineseName(Objects.toString(detail.getDeclareChineseName(), ""));
+            item.setQty(detail.getQty());
+            item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
+            item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
+            item.setDeclareCurrency(Objects.toString(detail.getDeclareCurrencyName(), ""));
+            item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 金额转中文大写，含币别中文名前缀
+     */
+    private String toAmountUpper(String currencyName, BigDecimal amount) {
+        String chinese = Convert.digitToChinese(amount.doubleValue());
+        return StringUtils.isBlank(currencyName) ? chinese : currencyName + " " + chinese;
+    }
+
+    /**
+     * 单条记录写入：1 个 xlsx，多 sheet 编排
+     */
+    private void writeMultiSheet(TmsDeclareBillDTO.ExportDTO exportDTO,
+                                 HttpServletResponse response,
+                                 String fileName) throws Exception {
+        OutputStream out = null;
+        BufferedOutputStream bos = null;
+        try {
+            ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
+            try (InputStream inputStream = classPathResource.getInputStream()) {
+                ExcelPrintUtils.getOutputStream(fileName, response);
+                out = response.getOutputStream();
+                bos = new BufferedOutputStream(out);
+                ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
+                registerCommonConverters(excelWriter);
+                fillMultiSheetForOne(excelWriter, exportDTO);
+                excelWriter.finish();
+            }
+        }catch (Exception e) {
+            log.error("多 sheet 报关单导出失败, 单号【{}】", exportDTO.getCode(), e);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        } finally {
+            if (Objects.nonNull(bos)) {
+                bos.flush();
+            }
+            if (Objects.nonNull(out)) {
+                out.flush();
+                out.close();
+            }
+        }
+    }
+
+    /**
+     * 多条记录写入：ZIP 包，包内每个 xlsx 都按 多 sheet 模板渲染
+     */
+    private void writeMultiSheetZip(List<TmsDeclareBillDTO.ExportDTO> list,
+                                    HttpServletResponse response,
+                                    String zipName) throws Exception {
+        OutputStream outputStream = ExcelPrintUtils.getZipOutputStream(zipName, response);
+        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+                ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
+                try (InputStream inputStream = classPathResource.getInputStream();
+                     ByteArrayOutputStream entryOut = new ByteArrayOutputStream()) {
+                    ExcelWriter excelWriter = EasyExcel.write(entryOut).withTemplate(inputStream).build();
+                    registerCommonConverters(excelWriter);
+                    fillMultiSheetForOne(excelWriter, exportDTO);
+                    excelWriter.finish();
+                    zipOut.putNextEntry(new ZipEntry("报关单" + exportDTO.getCode() + ".xlsx"));
+                    zipOut.write(entryOut.toByteArray());
+                    zipOut.closeEntry();
+                }
+            }
+        }
+    }
+
+    /**
+     * 把一条报关单数据填充到所有 sheet
+     *
+     * <p>当前实现 sheet0 报关单 + sheet1 合同；发票 / 装箱单 / 装箱明细 三个 sheet 待补充。</p>
+     */
+    private void fillMultiSheetForOne(ExcelWriter excelWriter, TmsDeclareBillDTO.ExportDTO exportDTO) {
+        // sheet 0：报关单（与单 sheet 模板字段口径一致）
+        WriteSheet sheetDeclare = EasyExcel.writerSheet(0).build();
+        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+        excelWriter.fill(exportDTO.getProductDetailList(), fillConfig, sheetDeclare);
+        excelWriter.fill(exportDTO, sheetDeclare);
+
+        // sheet 1：合同
+        TmsDeclareBillDTO.ContractInfo contractInfo = exportDTO.getContractInfo();
+        if (Objects.nonNull(contractInfo)) {
+            WriteSheet sheetContract = EasyExcel.writerSheet(1).build();
+            excelWriter.fill(new FillWrapper("contractDetail", contractInfo.getContractDetailList()), sheetContract);
+            excelWriter.fill(contractInfo, sheetContract);
+        }
+
+        // TODO: [待补充任务编号] 后续补充 发票 / 装箱单 / 装箱明细 三个 sheet 的填充逻辑：
+        //   1. 在 declareExportMulti.xlsx 模板中追加 sheet2 / sheet3 / sheet4，
+        //      使用命名集合占位符 {invoiceDetail.x} / {packingDetail.x} / {packingItemDetail.x}；
+        //   2. 在 ExportDTO 上扩展 InvoiceInfo / PackingInfo / PackingItemInfo 子对象；
+        //   3. 在 fillExportMulti 中补齐对应字段的回填逻辑；
+        //   4. 在此处按 sheetNo 2/3/4 调用 excelWriter.fill(...)。
+    }
+
+    /**
+     * 注册 EasyExcel 常用 Converter（与 ExcelPrintUtils 保持一致）
+     */
+    private void registerCommonConverters(ExcelWriter excelWriter) {
+        LocalDateTimeConverter dateTimeConverter = new LocalDateTimeConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(dateTimeConverter.supportJavaTypeKey()), dateTimeConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(dateTimeConverter.supportJavaTypeKey(), dateTimeConverter.supportExcelTypeKey()), dateTimeConverter);
+
+        EasyExcelLocalTimeConverter localTimeConverter = new EasyExcelLocalTimeConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(localTimeConverter.supportJavaTypeKey()), localTimeConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(localTimeConverter.supportJavaTypeKey(), localTimeConverter.supportExcelTypeKey()), localTimeConverter);
+
+        EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+
+        EasyExcelListConverter listConverter = new EasyExcelListConverter();
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
+        excelWriter.writeContext().currentWriteHolder().converterMap()
+                .put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
     }
 
     @Override
@@ -2841,8 +3198,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .collect(Collectors.toList()));
         TmsDeclareBillDTO.SelectedSkuHeaderDTO headerDTO = querySelectedSkuHeader(headerParamDTO, SourceTypeEnum.getEnum(type));
         declareBillEntity.setTransportNo(headerDTO.getTransportNo());
-        declareBillEntity.setLogisticsSupplierId(headerDTO.getLogisticsSupplierId());
-        declareBillEntity.setLogisticsSupplierName(headerDTO.getLogisticsSupplierName());
         declareBillEntity.setBoxQty(Objects.isNull(headerDTO.getBoxQty()) ? 0 : headerDTO.getBoxQty());
         declareBillEntity.setGrossWeight(Objects.isNull(headerDTO.getGrossWeight()) ? BigDecimal.ZERO : headerDTO.getGrossWeight());
         declareBillEntity.setNetWeight(Objects.isNull(headerDTO.getNetWeight()) ? BigDecimal.ZERO : headerDTO.getNetWeight());

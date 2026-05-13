@@ -48,18 +48,6 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     private String businessType;
 
     /**
-     * 物流商id
-     */
-    @TableField("logistics_supplier_id")
-    private String logisticsSupplierId;
-
-    /**
-     * 物流商名称
-     */
-    @TableField("logistics_supplier_name")
-    private String logisticsSupplierName;
-
-    /**
      * 提运单号，头程的话这个值是空的，B2B的话是页面手动输入
      */
     @TableField("transport_no")

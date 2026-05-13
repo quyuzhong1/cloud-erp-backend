@@ -834,6 +834,129 @@ public class TmsDeclareBillDTO implements Serializable {
          * 产品明细
          */
         private List<ExportProductDetail> productDetailList;
+
+        /**
+         * 合同 sheet 信息
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染，旧的单 sheet 导出（exportDeclare）模板未引用，
+         * 不会输出到 xlsx，对原导出行为透明。</p>
+         */
+        private ContractInfo contractInfo;
+    }
+
+    /**
+     * 报关单导出 - 合同 sheet 主表信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ContractInfo {
+
+        /**
+         * 卖方
+         */
+        private String sellerName;
+
+        /**
+         * 卖方地址（境内核算公司地址）
+         */
+        private String sellerAddress;
+
+        /**
+         * 买方
+         */
+        private String buyerName;
+
+        /**
+         * 买方地址
+         *
+         * <p>头程取核算公司地址；B2B 取销售出库 / 发货通知单关联客户地址（B2B 分支待接入）。</p>
+         */
+        private String buyerAddress;
+
+        /**
+         * 合同号码（合同协议号）
+         */
+        private String contractNo;
+
+        /**
+         * 合同日期（取报关日期 declareDate）
+         */
+        private LocalDate contractDate;
+
+        /**
+         * 币别名称
+         *
+         * <p>多明细行币别不一致时，取首行币别并打印 warn 日志。</p>
+         */
+        private String currency;
+
+        /**
+         * 合同总值（保留 4 位小数）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 合同总值大写（含币别中文名称前缀）
+         */
+        private String totalAmountUpper;
+
+        /**
+         * 包装及唛头（暂无数据源，预留占位）
+         */
+        private String packingMarks;
+
+        /**
+         * 装运目的地（取报关单目的国家名称）
+         */
+        private String destination;
+
+        /**
+         * 付款条件（取成交方式名称 dictTransactionMethodName）
+         */
+        private String paymentTerms;
+
+        /**
+         * 合同明细行
+         */
+        private List<ContractDetailItem> contractDetailList;
+    }
+
+    /**
+     * 报关单导出 - 合同 sheet 明细行
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ContractDetailItem {
+
+        /**
+         * 货物名称（报关中文名）
+         */
+        private String declareChineseName;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 单位（报关单位名称）
+         */
+        private String declareUnitName;
+
+        /**
+         * 单价（保留 4 位小数）
+         */
+        private BigDecimal price;
+
+        /**
+         * 币别（币别名称）
+         */
+        private String declareCurrency;
+
+        /**
+         * 金额（保留 4 位小数）
+         */
+        private BigDecimal totalPrice;
     }
 
     /**
