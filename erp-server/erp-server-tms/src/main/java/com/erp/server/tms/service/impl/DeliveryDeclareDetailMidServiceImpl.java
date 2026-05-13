@@ -204,6 +204,48 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     /**
+     * 按报关单id恢复中间表为待生成状态。
+     *
+     * @param declareBillIds 报关单id集合
+     * @return 是否处理成功
+     */
+    @Override
+    public Boolean restoreWaitGenerateByDeclareBillIds(List<String> declareBillIds) {
+        if (CollUtil.isEmpty(declareBillIds)) {
+            return Boolean.TRUE;
+        }
+        // 恢复生成状态，并解除与已删除报关单的关联。
+        return lambdaUpdate()
+                .in(DeliveryDeclareDetailMidEntity::getDeclareId, declareBillIds)
+                .set(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())
+                .set(DeliveryDeclareDetailMidEntity::getDeclareId, "")
+                .set(DeliveryDeclareDetailMidEntity::getDeclareCode, "")
+                .set(DeliveryDeclareDetailMidEntity::getDeclareDetailId, "")
+                .update();
+    }
+
+    /**
+     * 按中间表id恢复为待生成状态。
+     *
+     * @param ids 中间表id集合
+     * @return 是否处理成功
+     */
+    @Override
+    public Boolean restoreWaitGenerateByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        // 编辑报关单删掉来源明细时，只恢复对应中间表行，不影响其它来源行。
+        return lambdaUpdate()
+                .in(DeliveryDeclareDetailMidEntity::getId, ids)
+                .set(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())
+                .set(DeliveryDeclareDetailMidEntity::getDeclareId, "")
+                .set(DeliveryDeclareDetailMidEntity::getDeclareCode, "")
+                .set(DeliveryDeclareDetailMidEntity::getDeclareDetailId, "")
+                .update();
+    }
+
+    /**
      * 查询报关明细中间表详情
      *
      * @param id 主键id
