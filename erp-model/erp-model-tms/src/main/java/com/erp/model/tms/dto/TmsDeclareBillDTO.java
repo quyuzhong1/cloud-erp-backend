@@ -1989,6 +1989,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String sourceId;
         /**
+         *  业务单号
+         */
+        private String businessCode;
+        /**
          *  箱号
          */
         private String boxNo;
@@ -2010,10 +2014,6 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SplitDetailDTO {
-        /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
         /**
          *  skuId
          */

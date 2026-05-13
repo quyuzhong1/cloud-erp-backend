@@ -1300,7 +1300,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .productNameCn(detailDTO.getProductNameCn())
                 .declareElement(detailDTO.getDeclareElement())
                 .unit(detailDTO.getUnit())
-                .unitName(detailDTO.getUnitName())
                 .unitPrice(detailDTO.getUnitPrice())
                 .qty(qty)
                 .totalAmount(totalAmount)
