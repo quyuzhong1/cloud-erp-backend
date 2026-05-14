@@ -1058,6 +1058,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setHeight(null);
             logisticsAddDTO.setWeight(null);
             logisticsAddDTO.setLogisticsChannelId("");
+            logisticsAddDTO.setTrackNo("");
+            logisticsAddDTO.setCode("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
             //财务信息
             addDTO.setShippingFee(shippingFee);
