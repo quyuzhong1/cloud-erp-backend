@@ -366,4 +366,11 @@ public interface RedisCacheConstants {
      * 各业务节点订阅后原子替换本地全量快照
      */
     String DORIS_QUERY_CFG_REFRESH_CHANNEL = "erp:doris_query_cfg:refresh";
+
+    /**
+     * 动态数据源 Doris 路由配置全量持久化 key
+     * DMP 每次广播前先写入此 Bucket（持久化全量 + version），业务节点启动时 @PostConstruct
+     * 直接读取避免冷启动空窗（与周期广播互补，遵循"先写 Bucket 再 publish"的写入顺序）
+     */
+    String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
 }
