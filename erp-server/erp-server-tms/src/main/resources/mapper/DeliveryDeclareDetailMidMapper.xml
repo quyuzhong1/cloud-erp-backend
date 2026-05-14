@@ -118,6 +118,7 @@
         SELECT
         <include refid="Base_Column_List"/>
         FROM delivery_declare_detail_mid dddm
+        left join tms_declare_bill tdb on  dddm.declare_id=tdb.id and tdb.is_deleted=FALSE
         WHERE
             ${params.sqlMap.default}
         AND dddm.is_deleted=FALSE
@@ -150,6 +151,7 @@
             select
                 <include refid="Base_Column_List" />
             from delivery_declare_detail_mid dddm
+            left join tms_declare_bill tdb on  dddm.declare_id=tdb.id and tdb.is_deleted=FALSE
             where dddm.is_deleted = false and dddm.declare_id in
             <foreach collection="declareBillIdList" item="declareBillId" open="(" separator="," close=")">
                 #{declareBillId}
