@@ -45,6 +45,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -54,13 +55,18 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -168,6 +174,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private CfgDeclareRuleService cfgDeclareRuleService;
+
+    @Resource
+    private ProductPackFeign productPackFeign;
+
+    @Resource
+    private PackingTaskFeign packingTaskFeign;
+
+    /**
+     * 多 sheet 报关单导出模板（sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细）
+     */
+    private static final String DECLARE_MULTI_EXCEL_PATH = "excel/declareExportMulti.xlsx";
+
+    /**
+     * 多 sheet 报关单单次导出条数上限
+     *
+     * <p>每条记录都会重新打开模板渲染多个 sheet 并写入 ZIP，IO/CPU 开销随条数线性增长，
+     * 限制 100 条避免大批量导出拖垮接口。</p>
+     */
+    private static final int DECLARE_MULTI_EXPORT_LIMIT = 100;
 
 
     @Override
@@ -1567,18 +1592,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
-    /**
-     * 多 sheet 报关单导出（报关单 + 合同；发票 / 装箱单 / 装箱明细 后续补充）
-     */
-    private static final String DECLARE_MULTI_EXCEL_PATH = "excel/declareExportMulti.xlsx";
-
-    /**
-     * 多 sheet 报关单单次导出条数上限
-     *
-     * <p>每条记录都会重新打开模板渲染多个 sheet 并写入 ZIP，IO/CPU 开销随条数线性增长，
-     * 限制 100 条避免大批量导出拖垮接口。</p>
-     */
-    private static final int DECLARE_MULTI_EXPORT_LIMIT = 100;
 
     @Override
     public void exportDeclareMulti(TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
@@ -1618,7 +1631,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 在 fillExport 基础上补充多 sheet 导出所需的合同信息
+     * 在 fillExport 基础上补充多 sheet 导出所需的合同 / 发票 / 装箱单 / 装箱明细 信息
      *
      * <p>业务规则：</p>
      * <ul>
@@ -1626,7 +1639,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *   <li>买方地址：头程按 receiverId 查 SysAccountingCompanyEntity；B2B 走销售出库 / 发货通知单关联客户（待接入）</li>
      *   <li>合同号 = code；合同日期 = declareDate；目的地 = countryName；付款条件 = dictTransactionMethodName</li>
      *   <li>币别取明细首行币别，多币别仅打 warn 不抛异常</li>
-     *   <li>合同明细由 productDetailList 逐行映射</li>
+     *   <li>装箱单 sheet 明细净重 = product_pack.net_weight × qty（4 位精度），TOTAL 净重为明细累加</li>
+     *   <li>装箱明细 sheet 走 sourceCode -&gt; packing_task -&gt; wms_carton_spec -&gt; wms_carton_detail，
+     *       装箱重量取 wms_carton_detail.gross_weight（即装箱 SKU 在该箱内的预计毛重）</li>
      * </ul>
      */
     private void fillExportMulti(List<TmsDeclareBillDTO.ExportDTO> list) {
@@ -1670,12 +1685,86 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .stream()
                 .collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (v1, v2) -> v1));
 
+        // 装箱单 sheet 明细净重：批量拿 product_pack.net_weight
+        List<String> allSkuIdList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getProductDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .map(TmsDeclareBillDTO.ExportProductDetail::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, BigDecimal> skuNetWeightMap = CollectionUtils.isEmpty(allSkuIdList)
+                ? Collections.emptyMap()
+                : Optional.ofNullable(productPackFeign.listBySkuIds(allSkuIdList))
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(e -> StringUtils.isNotBlank(e.getSkuId()))
+                .collect(Collectors.toMap(
+                        ProductPackEntity::getSkuId,
+                        e -> Objects.isNull(e.getNetWeight()) ? BigDecimal.ZERO : e.getNetWeight(),
+                        (v1, v2) -> v1));
+
+        // 装箱明细 sheet：sourceCode -> packing_task -> wms_carton_spec -> wms_carton_detail
+        List<String> allSourceCodeList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        // sourceCode -> taskIdList，用于按 sourceCode 归集 cartonSpecView
+        Map<String, List<String>> sourceCodeToTaskIdsMap = Collections.emptyMap();
+        // taskId -> sourceCode，反查回填
+        Map<String, String> taskIdToSourceCodeMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(allSourceCodeList)) {
+            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allSourceCodeList))
+                    .orElse(Collections.emptyList());
+            sourceCodeToTaskIdsMap = packingTaskList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getSourceCode()) && StringUtils.isNotBlank(e.getId()))
+                    .collect(Collectors.groupingBy(
+                            PackingTaskEntity::getSourceCode,
+                            Collectors.mapping(PackingTaskEntity::getId, Collectors.toList())));
+            taskIdToSourceCodeMap = packingTaskList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getId()) && StringUtils.isNotBlank(e.getSourceCode()))
+                    .collect(Collectors.toMap(PackingTaskEntity::getId, PackingTaskEntity::getSourceCode, (v1, v2) -> v1));
+        }
+        // taskId -> WmsCartonSpecView，便于按 sourceCode 关联回 ExportDTO
+        Map<String, WmsCartonSpecDTO.WmsCartonSpecView> taskIdToCartonViewMap = Collections.emptyMap();
+        List<String> allTaskIdList = sourceCodeToTaskIdsMap.values().stream()
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(allTaskIdList)) {
+            taskIdToCartonViewMap = Optional.ofNullable(packingTaskFeign.listCartonSpecByTaskIds(allTaskIdList))
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getTaskId()))
+                    .collect(Collectors.toMap(WmsCartonSpecDTO.WmsCartonSpecView::getTaskId, Function.identity(), (v1, v2) -> v1));
+        }
+
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
             String receiverId = billIdToReceiverIdMap.get(exportDTO.getId());
             String buyerAddress = resolveBuyerAddress(exportDTO, receiverId, receiverCompanyMap);
             SysAccountingCompanyEntity sellerCompany = senderCompanyMap.get(exportDTO.getSenderId());
             String sellerAddress = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getCompanyAddress(), "");
             exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress, buyerAddress));
+            exportDTO.setInvoiceInfo(buildInvoiceInfo(exportDTO));
+
+            // 装箱单 sheet：明细按报关商品维度循环，主表 + TOTAL 合计
+            List<TmsDeclareBillDTO.PackingListItem> packingListItemList =
+                    convertPackingListItemList(exportDTO.getProductDetailList(), skuNetWeightMap);
+            exportDTO.setPackingListInfo(buildPackingListInfo(exportDTO, packingListItemList));
+
+            // 装箱明细 sheet：按 sourceCode -> task -> carton -> SKU 三层展开
+            List<WmsCartonSpecDTO.WmsCartonSpecView> currentViewList = Collections.emptyList();
+            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getSourceCode(), Collections.emptyList());
+            if (CollUtil.isNotEmpty(currentTaskIdList) && !taskIdToCartonViewMap.isEmpty()) {
+                currentViewList = currentTaskIdList.stream()
+                        .map(taskIdToCartonViewMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getSourceCode(), currentViewList, taskIdToSourceCodeMap));
         }
     }
 
@@ -1696,7 +1785,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return Objects.isNull(company) ? "" : Objects.toString(company.getCompanyAddress(), "");
         }
         if (CharSequenceUtil.equals(exportDTO.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
-            // TODO: [待补充任务编号] B2B 多 sheet 导出 - 买方地址来源为 B2B 发货通知单中的客户信息字段，
+            // TODO: [B2B多sheet导出买方地址] B2B 多 sheet 导出 - 买方地址来源为 B2B 发货通知单中的客户信息字段，
             // 待 B2B 接入新接口时实现：根据 sourceId / sourceCode 反查 SoDeliveryNoticeEntity.customerId，
             // 再走客户主数据 Feign 取 customerAddress。
             log.info("B2B 报关单【{}】多 sheet 导出买方地址逻辑待实现", exportDTO.getCode());
@@ -1743,6 +1832,40 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * 组装发票 sheet 主表信息
+     *
+     * <p>金额计算规则：</p>
+     * <ul>
+     *   <li>合计数量 = 明细 qty 求和，明细 qty 为空按 0 处理</li>
+     *   <li>合计金额 = 明细 totalPrice 求和，统一保留 4 位小数</li>
+     *   <li>币别符号取明细首行 declareCurrency 对应符号；多币别日志由合同 sheet 统一输出，避免重复 warn</li>
+     * </ul>
+     */
+    private TmsDeclareBillDTO.InvoiceInfo buildInvoiceInfo(TmsDeclareBillDTO.ExportDTO exportDTO) {
+        TmsDeclareBillDTO.InvoiceInfo invoiceInfo = new TmsDeclareBillDTO.InvoiceInfo();
+        invoiceInfo.setSellerName(Objects.toString(exportDTO.getSenderName(), ""));
+        invoiceInfo.setBuyerName(Objects.toString(exportDTO.getReceiverName(), ""));
+        invoiceInfo.setNo(Objects.toString(exportDTO.getCode(), ""));
+        invoiceInfo.setDate(exportDTO.getDeclareDate());
+        invoiceInfo.setMarks("");
+
+        List<TmsDeclareBillDTO.ExportProductDetail> productDetailList = exportDTO.getProductDetailList();
+        int totalQty = CollectionUtils.isEmpty(productDetailList) ? 0 : productDetailList.stream()
+                .map(TmsDeclareBillDTO.ExportProductDetail::getQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+        BigDecimal totalAmount = CollectionUtils.isEmpty(productDetailList) ? BigDecimal.ZERO : productDetailList.stream()
+                .map(TmsDeclareBillDTO.ExportProductDetail::getTotalPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        invoiceInfo.setTotalQty(totalQty);
+        invoiceInfo.setTotalAmount(totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP));
+        invoiceInfo.setCurrencySymbol(resolveInvoiceCurrencySymbol(productDetailList));
+        return invoiceInfo;
+    }
+
+    /**
      * 解析合同币别
      *
      * <p>多明细行币别不一致时，取首行币别并打印 warn 日志，便于线上排查异常数据。</p>
@@ -1765,6 +1888,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * 解析发票 sheet 币别符号
+     *
+     * <p>多币别异常日志由合同 sheet 统一输出；发票仅取首行币别符号，避免重复日志。</p>
+     */
+    private String resolveInvoiceCurrencySymbol(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList) {
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            return "";
+        }
+        String currencyCode = productDetailList.get(0).getDeclareCurrency();
+        if (StringUtils.isBlank(currencyCode)) {
+            return "";
+        }
+        return Objects.toString(CurrencyEnum.getSymbolByCode(currencyCode), "");
+    }
+
+    /**
      * 产品明细 -> 合同明细行映射
      */
     private List<TmsDeclareBillDTO.ContractDetailItem> convertContractDetailList(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList) {
@@ -1781,6 +1920,148 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
             return item;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 产品明细 -> 发票明细行映射
+     */
+    private List<TmsDeclareBillDTO.InvoiceDetailItem> convertInvoiceDetailList(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList) {
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            return Collections.emptyList();
+        }
+        return productDetailList.stream().map(detail -> {
+            TmsDeclareBillDTO.InvoiceDetailItem item = new TmsDeclareBillDTO.InvoiceDetailItem();
+            item.setMarkNo("N/M");
+            item.setDeclareChineseName(Objects.toString(detail.getDeclareChineseName(), ""));
+            item.setQty(detail.getQty());
+            item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
+            item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
+            item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 报关商品明细 -&gt; 装箱单 sheet 明细行
+     *
+     * <p>计算规则：净重 = product_pack.net_weight × qty，4 位精度，HALF_UP；
+     * sku 未在 product_pack 维护时按 0 处理，不阻断导出。</p>
+     */
+    private List<TmsDeclareBillDTO.PackingListItem> convertPackingListItemList(List<TmsDeclareBillDTO.ExportProductDetail> productDetailList,
+                                                                               Map<String, BigDecimal> skuNetWeightMap) {
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            return Collections.emptyList();
+        }
+        return productDetailList.stream().map(detail -> {
+            TmsDeclareBillDTO.PackingListItem item = new TmsDeclareBillDTO.PackingListItem();
+            item.setDescription(Objects.toString(detail.getDeclareChineseName(), ""));
+            int qty = Objects.isNull(detail.getQty()) ? 0 : detail.getQty();
+            item.setQty(qty);
+            BigDecimal singleNetWeight = StringUtils.isBlank(detail.getSkuId())
+                    ? BigDecimal.ZERO
+                    : skuNetWeightMap.getOrDefault(detail.getSkuId(), BigDecimal.ZERO);
+            BigDecimal lineNetWeight = singleNetWeight.multiply(BigDecimal.valueOf(qty)).setScale(MathUtil.scale, RoundingMode.HALF_UP);
+            item.setNetWeight(lineNetWeight);
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 组装装箱单 sheet 主表 + TOTAL 合计 + 明细行集合
+     *
+     * <p>TOTAL 合计：</p>
+     * <ul>
+     *   <li>总数(件) = 主表 boxQty</li>
+     *   <li>总毛重 = 主表 grossWeight</li>
+     *   <li>总数量 = 明细 qty 之和（== ExportDTO.totalQty）</li>
+     *   <li>总净重 = 明细 N.W. 之和（4 位精度）；不再回退主表 netWeight，避免与单行规则不一致</li>
+     * </ul>
+     */
+    private TmsDeclareBillDTO.PackingListInfo buildPackingListInfo(TmsDeclareBillDTO.ExportDTO exportDTO,
+                                                                   List<TmsDeclareBillDTO.PackingListItem> itemList) {
+        TmsDeclareBillDTO.PackingListInfo info = new TmsDeclareBillDTO.PackingListInfo();
+        info.setBuyers(Objects.toString(exportDTO.getReceiverName(), ""));
+        info.setDate(exportDTO.getDeclareDate());
+        info.setInvoiceNo(Objects.toString(exportDTO.getCode(), ""));
+        info.setContractNo(Objects.toString(exportDTO.getCode(), ""));
+        info.setShippedBy(Objects.toString(exportDTO.getCountryName(), ""));
+        info.setBoxNoLabel(buildBoxNoLabel(exportDTO.getBoxQty()));
+        // From / TO / Marks / 付款条件 暂无明确数据源，预留占位
+        info.setFromArea("");
+        info.setToArea("");
+        info.setPaymentTerms("");
+        info.setMarks("");
+
+        info.setTotalBoxQty(Objects.isNull(exportDTO.getBoxQty()) ? 0 : exportDTO.getBoxQty());
+        info.setTotalGrossWeight(Objects.isNull(exportDTO.getGrossWeight()) ? BigDecimal.ZERO : exportDTO.getGrossWeight());
+
+        int totalQty = CollectionUtils.isEmpty(itemList) ? 0 : itemList.stream()
+                .map(TmsDeclareBillDTO.PackingListItem::getQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+        BigDecimal totalNetWeight = CollectionUtils.isEmpty(itemList) ? BigDecimal.ZERO : itemList.stream()
+                .map(TmsDeclareBillDTO.PackingListItem::getNetWeight)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(MathUtil.scale, RoundingMode.HALF_UP);
+        info.setTotalQty(totalQty);
+        info.setTotalNetWeight(totalNetWeight);
+
+        info.setItemList(CollectionUtils.isEmpty(itemList) ? Collections.emptyList() : itemList);
+        return info;
+    }
+
+    /**
+     * 箱号文案：1-N，N = boxQty；boxQty &lt;= 1 时退化为 "1"；缺失时返回空串
+     */
+    private String buildBoxNoLabel(Integer boxQty) {
+        if (Objects.isNull(boxQty) || boxQty <= 0) {
+            return "";
+        }
+        if (boxQty <= 1) {
+            return "1";
+        }
+        return "1-" + boxQty;
+    }
+
+    /**
+     * 装箱明细 sheet 行展开：view -&gt; carton -&gt; detail 三层
+     *
+     * <p>装箱重量取 wms_carton_detail.gross_weight（即装箱 SKU 在该箱内的预计毛重，单位 kg）。
+     * 单号优先取 view.sourceCode；为空时按 taskId 反查 packing_task.source_code，
+     * 仍取不到时回退当前 ExportDTO.sourceCode，确保单元格不空。</p>
+     */
+    private List<TmsDeclareBillDTO.PackingDetailItem> buildPackingDetailItemList(String fallbackSourceCode,
+                                                                                 List<WmsCartonSpecDTO.WmsCartonSpecView> viewList,
+                                                                                 Map<String, String> taskIdToSourceCodeMap) {
+        if (CollectionUtils.isEmpty(viewList)) {
+            return Collections.emptyList();
+        }
+        List<TmsDeclareBillDTO.PackingDetailItem> result = new ArrayList<>();
+        for (WmsCartonSpecDTO.WmsCartonSpecView view : viewList) {
+            if (Objects.isNull(view) || CollectionUtils.isEmpty(view.getWmsCartonList())) {
+                continue;
+            }
+            String sourceCode = StringUtils.isNotBlank(view.getSourceCode())
+                    ? view.getSourceCode()
+                    : taskIdToSourceCodeMap.getOrDefault(view.getTaskId(), Objects.toString(fallbackSourceCode, ""));
+            for (WmsCartonSpecDTO.ViewDTO carton : view.getWmsCartonList()) {
+                if (Objects.isNull(carton) || CollectionUtils.isEmpty(carton.getDetailList())) {
+                    continue;
+                }
+                for (WmsCartonDetailDTO.ViewDTO detail : carton.getDetailList()) {
+                    TmsDeclareBillDTO.PackingDetailItem item = new TmsDeclareBillDTO.PackingDetailItem();
+                    item.setSourceCode(sourceCode);
+                    item.setBoxNo(carton.getBoxNo());
+                    item.setSkuNo(Objects.toString(detail.getSkuNo(), ""));
+                    item.setPackQty(detail.getPackQty());
+                    item.setGrossWeight(Objects.isNull(detail.getGrossWeight()) ? BigDecimal.ZERO : detail.getGrossWeight());
+                    result.add(item);
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -1826,32 +2107,55 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 多条记录写入：ZIP 包，包内每个 xlsx 都按 多 sheet 模板渲染
+     *
+     * <p>鲁棒性策略：先在内存里逐条渲染并收集成功条目，再统一写响应，避免单条出错让浏览器收到空 ZIP。</p>
+     * <ul>
+     *   <li>单条渲染失败：仅丢弃当前单号 + ERROR 日志，不影响其他条目</li>
+     *   <li>全部失败：直接抛 RuntimeException 由外层统一映射为 FILE_EXPORT_FAILED，避免写出 0 entry ZIP</li>
+     * </ul>
      */
     private void writeMultiSheetZip(List<TmsDeclareBillDTO.ExportDTO> list,
                                     HttpServletResponse response,
                                     String zipName) throws Exception {
-        OutputStream outputStream = ExcelPrintUtils.getZipOutputStream(zipName, response);
-        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-                ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
-                try (InputStream inputStream = classPathResource.getInputStream();
-                     ByteArrayOutputStream entryOut = new ByteArrayOutputStream()) {
-                    ExcelWriter excelWriter = EasyExcel.write(entryOut).withTemplate(inputStream).build();
-                    registerCommonConverters(excelWriter);
-                    fillMultiSheetForOne(excelWriter, exportDTO);
-                    excelWriter.finish();
-                    zipOut.putNextEntry(new ZipEntry("报关单" + exportDTO.getCode() + ".xlsx"));
-                    zipOut.write(entryOut.toByteArray());
-                    zipOut.closeEntry();
-                }
+        // 内存预渲染：单号 -> xlsx 字节内容
+        Map<String, byte[]> entryMap = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+            ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
+            try (InputStream inputStream = classPathResource.getInputStream();
+                 ByteArrayOutputStream entryOut = new ByteArrayOutputStream()) {
+                ExcelWriter excelWriter = EasyExcel.write(entryOut).withTemplate(inputStream).build();
+                registerCommonConverters(excelWriter);
+                fillMultiSheetForOne(excelWriter, exportDTO);
+                excelWriter.finish();
+                entryMap.put(Objects.toString(exportDTO.getCode(), "unknown"), entryOut.toByteArray());
+            } catch (Exception e) {
+                // 单条出错只影响当前单号，避免整批报关单的 ZIP 全部不可下载
+                log.error("多 sheet 报关单 ZIP 导出 - 单条渲染失败, 单号【{}】", exportDTO.getCode(), e);
             }
         }
+        if (entryMap.isEmpty()) {
+            // 全部失败时直接抛业务异常；此时尚未调用 getZipOutputStream，response 未被设为 octet-stream，
+            // GlobalExceptionHandler 可正常回写 ApiResult JSON
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+
+        OutputStream outputStream = ExcelPrintUtils.getZipOutputStream(zipName, response);
+        try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+            for (Map.Entry<String, byte[]> entry : entryMap.entrySet()) {
+                zipOut.putNextEntry(new ZipEntry("报关单" + entry.getKey() + ".xlsx"));
+                zipOut.write(entry.getValue());
+                zipOut.closeEntry();
+            }
+        }
+        // 主动 commit response，避免 controller 返回 ApiResult 时 Spring 用 octet-stream 二次序列化失败：
+        // ZipOutputStream.close() 不一定立即触发 ServletOutputStream commit，必须显式 flushBuffer。
+        response.flushBuffer();
     }
 
     /**
      * 把一条报关单数据填充到所有 sheet
      *
-     * <p>当前实现 sheet0 报关单 + sheet1 合同；发票 / 装箱单 / 装箱明细 三个 sheet 待补充。</p>
+     * <p>sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细。</p>
      */
     private void fillMultiSheetForOne(ExcelWriter excelWriter, TmsDeclareBillDTO.ExportDTO exportDTO) {
         // sheet 0：报关单（与单 sheet 模板字段口径一致）
@@ -1868,12 +2172,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             excelWriter.fill(contractInfo, sheetContract);
         }
 
-        // TODO: [待补充任务编号] 后续补充 发票 / 装箱单 / 装箱明细 三个 sheet 的填充逻辑：
-        //   1. 在 declareExportMulti.xlsx 模板中追加 sheet2 / sheet3 / sheet4，
-        //      使用命名集合占位符 {invoiceDetail.x} / {packingDetail.x} / {packingItemDetail.x}；
-        //   2. 在 ExportDTO 上扩展 InvoiceInfo / PackingInfo / PackingItemInfo 子对象；
-        //   3. 在 fillExportMulti 中补齐对应字段的回填逻辑；
-        //   4. 在此处按 sheetNo 2/3/4 调用 excelWriter.fill(...)。
+        // sheet 2：发票
+        // EasyExcel 2.2.7 已知 bug：fill(Map, sheet) 不支持 "prefix.field" 形式的复合 key，
+        // 模板里的 {invoice.xxx} 占位符必须走 FillWrapper(prefix, ...) 路径，否则 doFill 触发 NPE。
+        // 主表为单行数据，用单元素集合 + 默认 forceNewRow=false 即可就地填入占位符行。
+        TmsDeclareBillDTO.InvoiceInfo invoiceInfo = exportDTO.getInvoiceInfo();
+        if (Objects.nonNull(invoiceInfo)) {
+            WriteSheet sheetInvoice = EasyExcel.writerSheet(2).build();
+            excelWriter.fill(new FillWrapper("invoiceDetail", convertInvoiceDetailList(exportDTO.getProductDetailList())), sheetInvoice);
+            excelWriter.fill(new FillWrapper("invoice", Collections.singletonList(invoiceInfo)), sheetInvoice);
+        }
+
+        // sheet 3：装箱单（先填明细命名集合，再填主表 + TOTAL 合计，避免主表覆盖明细行模板）
+        // 与发票 sheet 同因，{packingList.xxx} 必须走 FillWrapper 路径。
+        TmsDeclareBillDTO.PackingListInfo packingListInfo = exportDTO.getPackingListInfo();
+        if (Objects.nonNull(packingListInfo)) {
+            WriteSheet sheetPackingList = EasyExcel.writerSheet(3).build();
+            excelWriter.fill(new FillWrapper("packingListItem", packingListInfo.getItemList()), sheetPackingList);
+            excelWriter.fill(new FillWrapper("packingList", Collections.singletonList(packingListInfo)), sheetPackingList);
+        }
+
+        // sheet 4：装箱明细（仅明细行循环，无主表汇总）
+        WriteSheet sheetPackingDetail = EasyExcel.writerSheet(4).build();
+        excelWriter.fill(new FillWrapper("packingDetailItem", exportDTO.getPackingDetailItemList()), sheetPackingDetail);
     }
 
     /**
