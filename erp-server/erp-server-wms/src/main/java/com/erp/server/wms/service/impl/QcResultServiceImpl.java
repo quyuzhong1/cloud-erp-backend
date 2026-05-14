@@ -281,6 +281,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                 entity.setQcSampleRate(BigDecimal.ZERO);
                 entity.setQcResult(QcResultEnum.CONFORMITY.getCode());
                 entity.setLotQualifiedQty(entity.getTotalQty());
+                entity.setAllowInstockQty(entity.getAllowInstockQty());
             }
             
             if (CollectionUtils.isNotEmpty(qcResultEntities)) {
