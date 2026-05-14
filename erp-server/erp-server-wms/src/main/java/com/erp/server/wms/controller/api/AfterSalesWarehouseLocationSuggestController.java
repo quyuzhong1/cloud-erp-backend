@@ -12,12 +12,16 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.entity.AfterSalesWarehouseLocationSuggestEntity;
 import com.erp.server.wms.query.AfterSalesWarehouseLocationSuggestQueryHandler;
 import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +51,9 @@ import java.util.Objects;
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private ObjectMapper objectMapper;
 
     /**
      * 高级查询
@@ -162,16 +169,56 @@ import java.util.Objects;
     }
 
     /**
-     * 导出仓位售后推荐Excel
+     * 导出仓位售后推荐Excel（请求体与列表分页一致：含 {@code params}、{@code params.advanceQueryDTOList}、{@code params.ids} 等）
      *
-     * @param dto 导出参数
+     * @param body 原始 JSON，兼容仅有查询条件平铺在根节点的旧写法
      * @return 导出结果
      */
     @PostMapping("/exportExcel")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓位售后推荐Excel")
-    public ApiResult<Boolean> exportExcel(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto) {
-        afterSalesWarehouseLocationSuggestService.exportExcel(dto);
+    public ApiResult<Boolean> exportExcel(@RequestBody JsonNode body) {
+        afterSalesWarehouseLocationSuggestService.exportExcel(parseExportPagingRequest(body));
         return success(true);
+    }
+
+    private PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> parseExportPagingRequest(JsonNode body) {
+        if (body == null || body.isNull()) {
+            throw new ServiceException("导出参数不能为空");
+        }
+        try {
+            if (body.hasNonNull("params")) {
+                PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> paging =
+                        objectMapper.convertValue(body, new TypeReference<PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO>>() {
+                        });
+                mergeRootLevelIdsIntoExportParams(body, paging.getParams());
+                return paging;
+            }
+            PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto = new PagingDTO<>();
+            dto.setCurrPage(body.hasNonNull("currPage") ? body.get("currPage").asInt() : 1);
+            dto.setPageSize(body.hasNonNull("pageSize") ? body.get("pageSize").asInt() : 30);
+            dto.setIsSearchCount(!body.has("isSearchCount") || body.get("isSearchCount").asBoolean());
+            AfterSalesWarehouseLocationSuggestDto.ExportParamDTO params =
+                    objectMapper.convertValue(body, AfterSalesWarehouseLocationSuggestDto.ExportParamDTO.class);
+            dto.setParams(params);
+            return dto;
+        } catch (IllegalArgumentException e) {
+            log.warn("导出参数解析失败", e);
+            throw new ServiceException("导出参数解析失败");
+        }
+    }
+
+    /**
+     * 部分前端把勾选 id 放在分页根节点 {@code ids}，合并进 {@code params.ids} 供导出与列表 SQL 一致。
+     */
+    private void mergeRootLevelIdsIntoExportParams(JsonNode body, AfterSalesWarehouseLocationSuggestDto.ExportParamDTO params) {
+        if (params == null || !body.has("ids") || body.get("ids").isNull() || !body.get("ids").isArray()) {
+            return;
+        }
+        List<String> rootIds = objectMapper.convertValue(body.get("ids"), new TypeReference<List<String>>() {
+        });
+        if (rootIds != null && !rootIds.isEmpty()) {
+            params.setIds(rootIds);
+        }
     }
 
     /**

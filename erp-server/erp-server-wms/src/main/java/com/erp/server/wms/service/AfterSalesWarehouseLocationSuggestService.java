@@ -52,13 +52,13 @@ public interface AfterSalesWarehouseLocationSuggestService extends SuperService<
     BatchResultDTO delete(AfterSalesWarehouseLocationSuggestEntity entity);
 
     /**
-     * 导出仓位售后推荐Excel
+     * 导出仓位售后推荐Excel（入参与列表分页一致：{@code currPage}、{@code params}（含高级查询、ids）等）
      *
-     * @param dto 导出参数
+     * @param pagingDTO 分页及查询参数
      * @date 2026-04-30
      * @author liuchao
      */
-    void exportExcel(AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto);
+    void exportExcel(PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> pagingDTO);
 
     /**
      * 导入仓位售后推荐Excel

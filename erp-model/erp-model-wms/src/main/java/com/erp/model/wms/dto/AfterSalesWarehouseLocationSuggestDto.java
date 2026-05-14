@@ -72,6 +72,11 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
+         * 勾选导出：主键列表（与列表接口一致，放在 params 内）
+         */
+        private List<String> ids;
+
+        /**
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
@@ -291,12 +296,11 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     }
 
     /**
-     * 导出
+     * 导出查询参数（与列表 {@link SearchParamDTO} 一致，可配合 {@link com.common.business.dto.base.PagingDTO} 的 params 使用）
      */
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class ExportParamDTO extends AfterSalesWarehouseLocationSuggestDto.SearchParamDTO {
-        private List<String> ids;
     }
 
     /**
@@ -399,7 +403,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     @NoArgsConstructor
     public static class PdaFullBoxTransferSubmitDto {
 
-        @NotBlank(message = "仓库id不能为空")
+//        @NotBlank(message = "仓库id不能为空")
         @Size(max = 19, message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 
