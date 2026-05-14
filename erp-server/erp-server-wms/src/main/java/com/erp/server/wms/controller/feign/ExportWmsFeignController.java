@@ -24,6 +24,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -1337,7 +1338,9 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
     @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
-    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> dto) {
-        return afterSalesWarehouseLocationSuggestService.paging(dto);
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
+        PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();
+        BeanUtils.copyProperties(dto, wrap);
+        return afterSalesWarehouseLocationSuggestService.paging(wrap);
     }
 }

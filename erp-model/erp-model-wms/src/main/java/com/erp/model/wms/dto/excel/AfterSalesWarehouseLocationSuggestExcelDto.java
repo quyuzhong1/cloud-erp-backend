@@ -41,7 +41,7 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
      * 所属仓库名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "所属仓库名称", index = 3)
+    @ExcelProperty(value = "所属仓库", index = 3)
     private String warehouseName;
     @ExcelIgnore
     private String warehouseId;
