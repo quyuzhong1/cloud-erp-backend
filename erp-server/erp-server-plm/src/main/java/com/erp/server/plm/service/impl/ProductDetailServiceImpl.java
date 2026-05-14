@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,11 +21,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.IsConstant;
+import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -338,6 +341,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private SkuStdRetailPriceService skuStdRetailPriceService;
 
+    @Resource
+    private ProductRefSkuService productRefSkuService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -592,6 +598,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
+        productNoSpecDetailAllDTO.setProductRefSkuList(productRefSkuService.listBySkuId(noSpecDetailById.getSkuId()));
 
         //产品辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productAccessoriesService.getByProductId(productId);
@@ -637,7 +644,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String productId = productDetailEntity.getProductId();
         ProductInfoEntity infoEntity = productInfoService.getById(productId);
         if (ObjectUtil.isNotEmpty(infoEntity) && infoEntity.getSpecType() == 2) {
-          return getNoSpecDetailById(productId);
+            ProductNoSpecDetailAllDTO detail = getNoSpecDetailById(productId);
+            detail.setProductRefSkuList(productRefSkuService.listBySkuId(skuId));
+            return detail;
         }
 
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
@@ -739,6 +748,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.listBySkuId(skuId);
         productNoSpecDetailAllDTO.setProductCertificateShowDTOList(certificateShowDTOList);
+        productNoSpecDetailAllDTO.setProductRefSkuList(productRefSkuService.listBySkuId(skuId));
 
 
         //产品辅料信息
@@ -996,6 +1006,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         productManyDetail.setProductCertificateShowDTOList(certificateShowDTOList);
+        productManyDetail.setProductRefSkuList(productRefSkuService.listByProductId(productId));
         //产品选择的变体查询
         List<ProductVariantOptionEntity> productVariantOptionEntityList = productVariantOptionService.list(productId);
         productManyDetail.setProductVariantOptionEntityList(productVariantOptionEntityList);
@@ -1524,6 +1535,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productCertificateList.forEach(obj -> obj.setSkuId(skuId));
             productCertificateService.productAddOrUpdate(productCertificateList);
         }
+        if (productNoSpecDTO.getProductRefSkuList() != null) {
+            productRefSkuService.replaceNoSpec(id, skuId, productNoSpecDTO.getProductRefSkuList());
+        }
 
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(id);
@@ -1934,6 +1948,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(productCertificateList)) {
             productCertificateService.productAddOrUpdate(productCertificateList);
         }
+        if (productManySpecDTO.getProductRefSkuList() != null) {
+            List<ProductDetailEntity> currentSkuList = this.getSkuListByProductId(productInfoDTO.getId());
+            productRefSkuService.replaceManySpec(productInfoDTO.getId(), currentSkuList, productManySpecDTO.getProductRefSkuList());
+        }
         //更新规划中的首批入库时间和上市时间
         productPlanService.updateRealDateByProductId(productInfoDTO.getId());
 
@@ -2172,7 +2190,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //过滤掉重复的变体属性
         List<ProductDetailEntity> detailEntityList = this.getSkuListByProductId(id);
-        //把变体属性放入实体类
+        // 颜色变体校验所需基础数据：循环外查一次即可，避免每个变体都打一遍 productVariantService
+        List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
+        if (CollectionUtils.isEmpty(productVariantDTOS)) {
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_INFO_EMPTY);
+        }
+        ProductVariantDTO productVariantDTO = productVariantDTOS.stream().filter(obj -> obj.getPropertyType().equals("颜色")).findAny().orElse(null);
+        if (ObjectUtils.isEmpty(productVariantDTO)) {
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_EMPTY);
+        }
+        List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
+        if (CollectionUtils.isEmpty(productVariantPropertyList)) {
+            throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_ATTR_EMPTY);
+        }
+        ProductUnitEntity productUnitEntity = productUnitService.checkUnitName("Pcs");
+
+        //把变体属性放入实体类（先不取号，避免在循环里 N 次 Feign+分布式锁竞争）
         List<ProductDetailEntity> list = new ArrayList<>();
         for (String req : varianList) {
             //判断是否已经存在该变体属性
@@ -2180,9 +2213,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (count > 0) {
                 continue;
             }
+            //获取颜色（保留单变体的颜色合法性校验）
+            List<String> split = Arrays.asList(req.split(","));
+            ProductVariantPropertyDTO propertyDto = productVariantPropertyList.stream().filter(obj -> split.contains(obj.getPropertyValue())).findAny().orElse(null);
+            if (ObjectUtils.isEmpty(propertyDto) || StringUtils.isBlank(propertyDto.getPropertyCode())) {
+                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_NOT_FOUND);
+            }
+
             ProductDetailEntity productDetailEntity = new ProductDetailEntity();
             productDetailEntity.setVariantProperty(req);
-            ProductUnitEntity productUnitEntity = productUnitService.checkUnitName("Pcs");
             if (ObjectUtils.isNotEmpty(productUnitEntity)) {
                 productDetailEntity.setUnitId(productUnitEntity.getId());
                 productDetailEntity.setUnitName(productUnitEntity.getName());
@@ -2190,33 +2229,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setProductId(id);
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
             productDetailEntity.setNameEn(variantAutoAddDTO.getProductSpuBaseInfoDTO().getNameEn());
-            //获取颜色
-            List<String> split = Arrays.asList(req.split(","));
-            //查询变体信息
-            List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
-            if (CollectionUtils.isEmpty(productVariantDTOS)) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_INFO_EMPTY);
-            }
-            //变体颜色信息
-            ProductVariantDTO productVariantDTO = productVariantDTOS.stream().filter(obj -> obj.getPropertyType().equals("颜色")).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(productVariantDTO)) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_EMPTY);
-            }
-            //变体颜色属性值
-            List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
-            if (CollectionUtils.isEmpty(productVariantPropertyList)) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_ATTR_EMPTY);
-            }
-            ProductVariantPropertyDTO propertyDto = productVariantPropertyList.stream().filter(obj -> split.contains(obj.getPropertyValue())).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(propertyDto) || StringUtils.isBlank(propertyDto.getPropertyCode())) {
-                throw new ServiceException(ApiError.PRODUCT_VARIANT_COLOR_NOT_FOUND);
-            }
-            //生成sku编码
-            String skuNo = sysCodeService.getSkuNo(id, propertyDto.getPropertyCode());
-            productDetailEntity.setSkuNo(skuNo);
             productDetailEntity.setChargeId(productSpuBaseInfoDTO.getChargeId());
             productDetailEntity.setChargeName(productSpuBaseInfoDTO.getChargeName());
             list.add(productDetailEntity);
+        }
+
+        // 当传入的变体组合在库中已全部存在时，list 为空。
+        // mybatis-plus 3.4.2 的 saveBatch(emptyList) 会返回 false（!isEmpty && ... 短路），
+        // 这里直接当作"无新增"成功返回，避免误报 "新增sku明细失败！"。
+        if (CollectionUtils.isEmpty(list)) {
+            return this.getSkuListByProductId(id);
+        }
+
+        // 一次性批量取号，替代旧实现"每变体一次 Feign + Redisson 锁"，规避 SYS_GEN_DOCNO 锁竞争雪崩
+        List<String> skuNos = sysCodeService.getSkuNoBatch(id, list.size());
+        if (skuNos.size() != list.size()) {
+            throw new ServiceException(ApiError.COMMON_CODE_GENERATE_FAILED);
+        }
+        for (int i = 0; i < list.size(); i++) {
+            list.get(i).setSkuNo(skuNos.get(i));
         }
 
         boolean bool = this.saveBatch(list);
@@ -2281,21 +2312,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(idList);
-        //2.删除包装信息
+        //2.删除关联SKU信息
+        productRefSkuService.removeBySkuIds(idList);
+        //3.删除包装信息
         productPackService.removePack(idList);
-        //3.删除物流信息
+        //4.删除物流信息
         productLogisticsService.removeLogistics(idList);
-        //4.删除销售信息
+        //5.删除销售信息
         productSaleService.removeSale(idList);
-        //5.删除采购信息
+        //6.删除采购信息
         productPurchaseService.removePurchase(idList);
-        //6.删除成本信息
+        //7.删除成本信息
         productCostService.removeCost(idList);
-        //7.删除任务关联sku 信息
+        //8.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(idList);
-        //7.删除目的国海关编码
+        //9.删除目的国海关编码
         productCustomsService.removeBySkuId(idList);
-        //8.删除sku信息
+        //10.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
         ProductDetailEntity productDetailEntity = this.getById(skuId);
@@ -2357,23 +2390,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(skuIds);
-        //2.删除包装信息
+        //2.删除关联SKU信息
+        productRefSkuService.removeBySkuIds(skuIds);
+        //3.删除包装信息
         productPackService.removePack(skuIds);
-        //3.删除物流信息
+        //4.删除物流信息
         productLogisticsService.removeLogistics(skuIds);
-        //4.删除销售信息
+        //5.删除销售信息
         productSaleService.removeSale(skuIds);
-        //5.删除采购信息
+        //6.删除采购信息
         productPurchaseService.removePurchase(skuIds);
-        //6.删除成本信息
+        //7.删除成本信息
         productCostService.removeCost(skuIds);
-        //7.删除目的国海关编码
+        //8.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
 
-        //8.删除产品与BU线关联（避免删除产品后删除BU线仍提示已绑定产品）
+        //9.删除产品与BU线关联（避免删除产品后删除BU线仍提示已绑定产品）
         productRefBuService.removeByProductId(id);
 
-        //9.删除spu信息
+        //10.删除spu信息
         ProductInfoEntity infoEntity = productInfoService.getById(id);
         if (ObjectUtil.isNotEmpty(infoEntity)) {
             productInfoService.removeById(infoEntity.getId());
@@ -2719,6 +2754,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    public void exportProductAll(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+        productSkuExcelDTO.setFieldList(productSkuExcelDTO.getFieldList());
+        downloadTaskFeign.saveDownloadTask("产品管理导出（全）", EXPORT_PLM_SKU_DYNAMIC.getCode(), productSkuExcelDTO);
+    }
+
+    @Override
     public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO> dto ) {
         Page<ProductSkuExcelDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ProductDetailExcelExportDTO> pageData = productDetailMapper.getExportSkuExcel(query,dto.getParams());
@@ -2805,6 +2846,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             Map<String, String> finalDictValueMaps = dictValueMaps;
 
+            List<String> mainSupplierIds = list.stream()
+                    .map(ProductDetailExcelExportDTO::getMainSupplier)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds)
+                    ? new HashMap<>()
+                    : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
             Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
             Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
             for(Map.Entry<String, BasicCategoryEntity> idBasicCategoryMap : idBasicCategoryMaps.entrySet()) {
@@ -2862,6 +2912,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         req.setPurchaseUser(userName);
                     }
                 }
+                if (StringUtils.isNotBlank(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                    req.setMainSupplier(supplierMap.get(req.getMainSupplier()).getName());
+                }
                 if (StringUtils.isNotBlank(req.getSaleCountry())) {
                     req.setSaleCountry(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
                             .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
@@ -2873,6 +2926,39 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
         }
         return new PagingVO<>(pageData);
+    }
+
+    private List<ProductSkuExcelDTO.ExportField> buildAllExportFields() {
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userId);
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
+        boolean isAdmin = CollUtil.isNotEmpty(roleIdList) && roleIdList.contains("1");
+        Set<String> permissionCodeSet = CollUtil.isEmpty(requestPermissionsList)
+                ? Collections.emptySet()
+                : requestPermissionsList.stream()
+                .map(UserRequestPermissionsDTO::getPermissionsCode)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        List<ProductSkuExcelDTO.ExportField> fieldList = new ArrayList<>();
+        for (Field field : ProductDetailExcelExportDTO.class.getDeclaredFields()) {
+            ExcelProperty excelProperty = field.getAnnotation(ExcelProperty.class);
+            if (Objects.isNull(excelProperty) || excelProperty.value().length == 0) {
+                continue;
+            }
+            MenuCode menuCode = field.getAnnotation(MenuCode.class);
+            if (!isAdmin && Objects.nonNull(menuCode) && StringUtils.isNotBlank(menuCode.value()) && !permissionCodeSet.contains(menuCode.value())) {
+                continue;
+            }
+            ProductSkuExcelDTO.ExportField exportField = new ProductSkuExcelDTO.ExportField();
+            exportField.setField(field.getName());
+            exportField.setFieldName(excelProperty.value()[0]);
+            fieldList.add(exportField);
+        }
+        if (CollUtil.isEmpty(fieldList)) {
+            throw new ServiceException("暂无可导出的字段");
+        }
+        return fieldList;
     }
 
     private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){
@@ -3152,6 +3238,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
             //批量更新产品明细归属spu
             this.lambdaUpdate().in(ProductDetailEntity::getId, skuIds).set(ProductDetailEntity::getProductId, newProductId).update();
+            productRefSkuService.updateProductIdBySkuIds(skuIds, newProductId);
             //调整前后校验spu是否存在关联关系，不存在，就删除
             //根据产品id获取sku明细列表
             List<ProductDetailEntity> productDetailEntityList = this.lambdaQuery().select(ProductDetailEntity::getId,ProductDetailEntity::getProductId).in(ProductDetailEntity::getProductId, oldProductIds).list();
@@ -4611,19 +4698,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //1.删除证书信息
         productCertificateService.deleteBySkuIdList(ids);
-        //2.删除包装信息
+        //2.删除关联SKU信息
+        productRefSkuService.removeBySkuIds(ids);
+        //3.删除包装信息
         productPackService.removePack(ids);
-        //3.删除物流信息
+        //4.删除物流信息
         productLogisticsService.removeLogistics(ids);
-        //4.删除销售信息
+        //5.删除销售信息
         productSaleService.removeSale(ids);
-        //5.删除采购信息
+        //6.删除采购信息
         productPurchaseService.removePurchase(ids);
-        //6.删除成本信息
+        //7.删除成本信息
         productCostService.removeCost(ids);
-        //7.删除任务关联sku 信息
+        //8.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(ids);
-        //8.删除sku信息
+        //9.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductDetailEntity::getId, ids);
         List<ProductDetailEntity> productDetailEntityList = this.listByIds(ids);

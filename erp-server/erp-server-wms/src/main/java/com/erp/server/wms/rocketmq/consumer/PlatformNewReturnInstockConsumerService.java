@@ -24,13 +24,11 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.*;
-import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SkuMappingFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
@@ -95,6 +93,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 	@Resource
 	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+	@Resource
+	private SoB2cReturnFeign soB2cReturnFeign;
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -201,6 +202,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		List<SoB2cReturnEntity> soB2cReturnEntityList = FeignQuery.create(SoB2cReturnEntity.class).eq(SoB2cReturnEntity::getPlatformOrderNo,soB2cEntity.getPlatformCode()).list();
 		if(CollectionUtils.isEmpty(soB2cReturnEntityList)){
 			return;
+		}
+		List<SoB2cReturnEntity> updateList = soB2cReturnEntityList.stream().filter(v->v.getStatus().equals(SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode())).map(v->v.setStatus((SoB2cReturnStatusEnum.RETURNED.getCode()))).collect(Collectors.toList());
+		if(CollectionUtils.isNotEmpty(updateList)){
+			log.warn("匹配到销售订单{}的退货单{}，将退货单状态修改为已退货",soB2cEntity.getCode(),updateList.stream().map(SoB2cReturnEntity::getCode).collect(Collectors.joining(",")));
+			soB2cReturnFeign.updateBatch(updateList);
 		}
 		List<String> soB2cReturnIds = soB2cReturnEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
 		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.create(SoB2cReturnDetailEntity.class).in(SoB2cReturnDetailEntity::getMainId,soB2cReturnIds).list();
