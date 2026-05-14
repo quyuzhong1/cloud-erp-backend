@@ -70,6 +70,14 @@ public class PackingTaskFeignController extends BaseController {
     }
 
     /**
+     * 根据来源单号批量查询装箱任务
+     */
+    @PostMapping("/listBySourceCodes")
+    List<PackingTaskEntity> listBySourceCodes(@RequestBody List<String> sourceCodes){
+        return packingTaskService.listBySourceCodes(sourceCodes);
+    }
+
+    /**
      * 根据发货单单号查询是否有装箱重量
      */
     @PostMapping("/checkCartonWeightBySourceCodes")
