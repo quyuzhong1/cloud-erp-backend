@@ -272,5 +272,4 @@ public class KingdeeSubcontractOrderConsumerServiceImpl implements KingdeeSubcon
         }
         return  isAdd;
     }
-
 }

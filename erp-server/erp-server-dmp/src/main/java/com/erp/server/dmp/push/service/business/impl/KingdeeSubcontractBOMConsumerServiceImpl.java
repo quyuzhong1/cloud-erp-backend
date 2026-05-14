@@ -313,8 +313,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
-        //entry.put("FIssueType", "2");
-        entry.put("FIssueType", (counter % 2 == 1) ? "2" : "1");
+        entry.put("FIssueType", "2");
         //变更前
         entry.put("FChangeType","2");
         //分子
@@ -421,8 +420,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
-        //entry.put("FIssueType", "1");
-        entry.put("FIssueType", (counter % 2 == 1) ? "2" : "1");
+        entry.put("FIssueType", "2");
         //变更后
         entry.put("FChangeType","3");
         //分子
@@ -517,7 +515,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
-        entry.put("FIssueType", "1");
+        entry.put("FIssueType", "2");
         //需求日期
         entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
