@@ -22,6 +22,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -322,7 +323,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     @Override
     public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> paging(PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        VirtualWarehouseAllocationDTO.PagingParamDTO params = dto.getParams();
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<VirtualWarehouseAllocationDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         if (CollUtil.isEmpty(pageData.getRecords())) {
@@ -1201,17 +1208,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 .set(VirtualWarehouseAllocationEntity::getRemark, updateRemarkDTO.getRemark())
                 .eq(VirtualWarehouseAllocationEntity::getId, updateRemarkDTO.getId())
                 .update();
-    }
-
-    @Override
-    public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page<VirtualWarehouseAllocationDTO.ListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-        if (!CollectionUtils.isEmpty(page.getRecords())) {
-            //填充数据
-            setInfo(page.getRecords());
-        }
-        return new PagingVO<>(page);
     }
 
     @Override
