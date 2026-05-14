@@ -1,4 +1,5 @@
 package com.erp.server.plm.mapper;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.plm.dto.MoldRefSkuDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -58,5 +59,11 @@ public interface MoldInfoMapper extends BaseMapper<MoldInfoEntity> {
     List<MoldInfoDTO.SearchMoldDTO> searchMold(@Param("params") MoldInfoDTO.SearchDTO searchDTO);
 
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(String assetId);
+
+    /**
+     * 通过 @WebAdvanceQuery 切面预先把 advanceQueryDTOList 解析为 sqlMap，
+     * 这里只查询 id / code / project_name 等关联字段供调用方做 IN 关联。
+     */
+    List<MoldInfoEntity> listMoldInfoAdvanceQuery(@Param("params") AdvanceQueryContainer params);
 
 }

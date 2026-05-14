@@ -181,4 +181,19 @@ mi.is_alert_strategy_generated AS isAlertStrategyGenerated
             mrs.is_deleted = FALSE
             and mi.id = #{assetId}
     </select>
+
+    <!-- 高级查询模具档案：外部通过 @WebAdvanceQuery 切面填充 params.sqlMap.default -->
+    <select id="listMoldInfoAdvanceQuery" resultMap="BaseResultMap">
+        SELECT
+            mi.id,
+            mi.code,
+            mi.name,
+            mi.project_code,
+            mi.project_name
+        FROM mold_info mi
+        WHERE mi.is_deleted = FALSE
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+    </select>
 </mapper>
