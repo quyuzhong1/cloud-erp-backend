@@ -807,20 +807,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     dto.setAmount(MathUtil.multiplyWithTwo(dto.getRepairPrice(),dto.getRepairQty()).setScale(4, RoundingMode.DOWN));
                 } else if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0){
                     //委外返修子行
-                    PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
-                            obj.getSkuId().equals(dto.getSkuId())
-                                    && obj.getSupplierId().equals(dto.getSupplierId())
-                                    && obj.getQty().equals(dto.getQty())
-                                    && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
-                            .findFirst().orElse(null);
-                    if (ObjUtil.isEmpty(viewDTO)) {
-                        throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
-                    }
-                    dto.setPrice(viewDTO.getTaxPrice());
-                    dto.setTaxRate(viewDTO.getTaxRate());
-                    dto.setCurrency(viewDTO.getCurrency());
-                    dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                    dto.setPrice(dto.getPrice());
+                    dto.setTaxRate(dto.getTaxRate());
+                    dto.setCurrency(dto.getCurrency());
+                    dto.setCurrencySymbol(dto.getCurrencySymbol());
+                    dto.setAmount(MathUtil.multiplyWithTwo(dto.getPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
                 }
             }
 

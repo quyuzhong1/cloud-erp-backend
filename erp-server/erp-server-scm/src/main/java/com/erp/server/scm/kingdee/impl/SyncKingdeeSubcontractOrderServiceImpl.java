@@ -31,6 +31,7 @@ import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -57,6 +58,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcontractOrderService {
+
+    private static final String WAREHOUSE_TYPE = "warehouseType";
+    private static final String SUPPLIER_WAREHOUSE_TYPE = "supplier";
 
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
@@ -176,6 +180,23 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         //仓库信息
         List<String> warehouseIds = details.stream().map(SubcontractOrderDetailEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
+        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            warehouseMap = warehouseList.stream().filter(Objects::nonNull).collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getId, e -> e, (oldValue, newValue) -> oldValue));
+        }
+        Map<String, String> warehouseTypeMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            List<String> warehouseTypeIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getTypeId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(warehouseTypeIds)) {
+                List<DictBasicEntity> warehouseTypeList = FeignQuery.create(DictBasicEntity.class)
+                        .in(DictBasicEntity::getId, warehouseTypeIds)
+                        .eq(DictBasicEntity::getType, WAREHOUSE_TYPE)
+                        .list();
+                if (CollectionUtils.isNotEmpty(warehouseTypeList)) {
+                    warehouseTypeMap = warehouseTypeList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getValue, (oldValue, newValue) -> oldValue));
+                }
+            }
+        }
 
         //供应商信息
         List<String> supplierIds = details.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.toList());
@@ -210,15 +231,22 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
             //单据日期
             jsonObject.set("billDate",LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-
             //仓库编码
-            if (CollectionUtils.isNotEmpty(warehouseList)) {
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-                jsonObject.set("kingdeeWarehouseCode",updateDTO.getKingdeeWarehouseCode());
-                //库存组织
-                if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-                    String inStockOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
-                    jsonObject.set("inStockOrgCode",inStockOrgCode);
+            if (!warehouseMap.isEmpty()) {
+                WarehouseDTO.UpdateDTO updateDTO = warehouseMap.get(detailEntity.getWarehouseId());
+                if (ObjectUtils.isNotEmpty(updateDTO)) {
+                    jsonObject.set("kingdeeWarehouseCode",updateDTO.getKingdeeWarehouseCode());
+                    String warehouseTypeCode = warehouseTypeMap.get(updateDTO.getTypeId());
+                    boolean isSupplierWarehouse = Objects.equals(SUPPLIER_WAREHOUSE_TYPE, warehouseTypeCode);
+                    // 仅供应商仓库传仓位，其他仓库不传仓位字段
+                    if (isSupplierWarehouse && StringUtils.isNotBlank(detailEntity.getWarehouseLocation())) {
+                        jsonObject.set("warehouseLocation", detailEntity.getWarehouseLocation());
+                    }
+                    //库存组织
+                    if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                        String inStockOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+                        jsonObject.set("inStockOrgCode",inStockOrgCode);
+                    }
                 }
             }
             //采购组织编码
