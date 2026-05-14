@@ -260,8 +260,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollectionUtils.isEmpty(entityList) || entityList.size() != distinctIds.size()) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
         }
+        //必须勾选2条以上
+        if(distinctIds.size() < 2){
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_MERGE_MIN_COUNT_REQUIRED);
+        }
 
-        //仅支持未生成/未确认
+        //仅支持待生成和待确认生成报关单
         List<String> declareIds = entityList.stream().map(DeliveryDeclareDetailMidEntity::getDeclareId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if(CollUtil.isNotEmpty(declareIds)){
             List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillService.lambdaQuery().in(TmsDeclareBillEntity::getId, declareIds).list();
@@ -275,6 +279,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
         }
 
+        //单据分类是相同的单据【B2B和头程】
         Set<String> sourceTypeSet = entityList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getSourceType)
                 .filter(CharSequenceUtil::isNotBlank)
