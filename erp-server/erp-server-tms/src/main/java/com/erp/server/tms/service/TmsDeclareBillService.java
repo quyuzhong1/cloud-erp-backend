@@ -1,5 +1,7 @@
 package com.erp.server.tms.service;
 
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -7,6 +9,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -73,6 +76,11 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     TmsDeclareBillDTO.StatisticsVO statisticsBySoOut(PermissionsDTO permissionsDTO);
 
     Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO dto);
+
+    BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,
+                             List<TmsDeclareBillDetailEntity> detailEntityList,
+                             SourceTypeEnum sourceTypeEnum,
+                             boolean isMerged);
 
     PagingVO<TmsDeclareBillDTO.PagingVO> export(PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto);
 
