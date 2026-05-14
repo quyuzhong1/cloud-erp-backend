@@ -327,6 +327,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return CollUtil.isEmpty(sourceIdList) ? "" : sourceIdList.get(0);
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum,boolean isMerged) {
 

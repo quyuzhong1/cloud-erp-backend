@@ -3,6 +3,7 @@ import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.tms.entity.DeliveryDeclareDetailMidEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import org.apache.ibatis.annotations.Mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -62,4 +63,29 @@ public interface DeliveryDeclareDetailMidMapper extends BaseMapper<DeliveryDecla
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
      */
     List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceByDeclareIdList(@Param("declareBillIdList") List<String> declareBillIdList);
+
+    /**
+     * 根据 BOM 历史 id 查询历史父子件。
+     *
+     * @param bomHistoryIds BOM 历史 id 集合
+     * @return BOM 历史父子件
+     */
+    List<BomChildrenSkuDTO> listBomHistoryByIds(@Param("bomHistoryIds") List<String> bomHistoryIds);
+
+    /**
+     * 根据组合品父 SKU 查询全部历史父子件。
+     *
+     * @param parentSkuIds 组合品父 SKU id 集合
+     * @return BOM 历史父子件
+     */
+    List<BomChildrenSkuDTO> listBomHistoryByParentSkuIds(@Param("parentSkuIds") List<String> parentSkuIds);
+
+    /**
+     * 查询来源单是否仍存在待生成中间表明细。
+     *
+     * @param sourceType 来源类型
+     * @param sourceIds 来源单 id 集合
+     * @return 仍存在待生成明细的来源单 id
+     */
+    List<String> listWaitSourceIds(@Param("sourceType") String sourceType, @Param("sourceIds") List<String> sourceIds);
 }
