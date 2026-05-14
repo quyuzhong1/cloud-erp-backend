@@ -35,6 +35,12 @@
         ) ppu ON ppu.sku_id = awls.sku_id
         </if>
         WHERE awls.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            AND awls.id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         <if test="params.skuNo != null and params.skuNo != ''">
             AND awls.sku_no LIKE CONCAT('%', #{params.skuNo}, '%')
         </if>
@@ -60,6 +66,7 @@
             </foreach>
             ,
         </if>
+        awls.sku_no ASC,
         awls.create_time DESC
     </select>
 

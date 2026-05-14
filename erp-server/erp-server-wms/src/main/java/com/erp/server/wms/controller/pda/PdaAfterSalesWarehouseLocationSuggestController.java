@@ -61,6 +61,16 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
     @LogAction(value = LogActionEnum.INSERT, desc = "售后PDA货品上架")
     @PostMapping("/submitGoodsShelving")
     public ApiResult<String> submitGoodsShelving(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
+        //当前只有一个仓库 【东莞售后仓库】
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
+        if (CollUtil.isEmpty(dtos)){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
+        }else if (dtos.size() > 1){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
+        }
+        dto.setWarehouseId(dtos.get(0).getId());
+        //当前只有一个仓位 【空仓位】 默认code为空
+        dto.setSourceWarehouseLocationCode("");
         return ApiResult.success(pdaAfterSalesWarehouseMoveService.submitGoodsShelving(dto));
     }
 
@@ -70,6 +80,14 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
     @LogAction(value = LogActionEnum.INSERT, desc = "售后PDA整箱移仓")
     @PostMapping("/submitFullBoxTransfer")
     public ApiResult<String> submitFullBoxTransfer(@RequestBody @Validated AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
+        //当前只有一个仓库 【东莞售后仓库】
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
+        if (CollUtil.isEmpty(dtos)){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库");
+        }else if (dtos.size() > 1){
+            throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
+        }
+        dto.setWarehouseId(dtos.get(0).getId());
         return ApiResult.success(pdaAfterSalesWarehouseMoveService.submitFullBoxTransfer(dto));
     }
 
@@ -80,8 +98,8 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
      * @author liuchao
      * @date 2026/05/12
      */
-    @PostMapping("/getSuggestWarehouseLocationListBySkuNoAndWarehouseInfo")
-    public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.PdaListDto>> getSuggestWarehouseLocationListBySkuNoAndWarehouseInfo(@RequestBody AfterSalesWarehouseLocationSuggestDto.PdaSearchDto dto) {
+    @PostMapping("/listBySkuNoAndWarehouseInfo")
+    public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.PdaListDto>> listBySkuNoAndWarehouseInfo(@RequestBody AfterSalesWarehouseLocationSuggestDto.PdaSearchDto dto) {
         //当前只有一个仓库 【东莞售后仓库】
         List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
         if (CollUtil.isEmpty(dtos)){

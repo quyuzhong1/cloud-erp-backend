@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -33,9 +34,9 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.AfterSalesWarehouseLocationSuggestExcelListener;
 import com.erp.server.wms.mapper.AfterSalesWarehouseLocationSuggestMapper;
+import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -170,9 +171,46 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         return BatchResultDTO.success(entity.getId(), null, "删除成功");
     }
 
+    /**
+     * 兼容前端勾选导出：仅传 inList 且未带 field 时，按主表主键解析为 awls.id。
+     */
+    private static void normalizeExportAdvanceQuery(AfterSalesWarehouseLocationSuggestDto.SearchParamDTO params) {
+        if (params == null || CollUtil.isEmpty(params.getAdvanceQueryDTOList())) {
+            return;
+        }
+        for (AdvanceQueryDTO q : params.getAdvanceQueryDTOList()) {
+            if (q == null || StrUtil.isNotBlank(q.getField())) {
+                continue;
+            }
+            if (!"inList".equals(q.getCompare())) {
+                continue;
+            }
+            Object val = q.getValue();
+            if (!(val instanceof Collection) || CollUtil.isEmpty((Collection<?>) val)) {
+                continue;
+            }
+            Object first = ((Collection<?>) val).iterator().next();
+            if (first != null && looksLikeSnowflakeId(first.toString())) {
+                q.setField("awls.id");
+            }
+        }
+    }
+
+    private static boolean looksLikeSnowflakeId(String s) {
+        return s != null && s.matches("\\d{15,22}");
+    }
+
     @Override
-    public void exportExcel(AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), dto);
+    public void exportExcel(PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> pagingDTO) {
+        if (pagingDTO == null) {
+            throw new ServiceException("导出参数不能为空");
+        }
+        if (pagingDTO.getParams() == null) {
+            pagingDTO.setParams(new AfterSalesWarehouseLocationSuggestDto.ExportParamDTO());
+        }
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
+        normalizeExportAdvanceQuery(pagingDTO.getParams());
+        downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), pagingDTO);
     }
 
     @Transactional(rollbackFor = Exception.class)
