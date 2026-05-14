@@ -155,5 +155,5 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @param params
      * @return
      */
-    IPage<QcInfoDTO.OpenPagingViewDTO> qcPaging(@Param("query") Page query, @Param("params") QcInfoDTO.OpenPagingParamDTO params);
+    IPage<QcInfoDTO.OpenPagingViewDTO> qcPaging(@Param("query") Page query, @Param("params") QcInfoDTO.PagingParamDTO params);
 }
