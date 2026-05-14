@@ -34,6 +34,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -259,10 +260,21 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollectionUtils.isEmpty(entityList) || entityList.size() != distinctIds.size()) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
         }
+
+        //仅支持未生成/未确认
+        List<String> declareIds = entityList.stream().map(DeliveryDeclareDetailMidEntity::getDeclareId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(declareIds)){
+            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillService.lambdaQuery().in(TmsDeclareBillEntity::getId, declareIds).list();
+            if (tmsDeclareBillEntities.stream().anyMatch(item -> !CharSequenceUtil.equals(item.getDeclareStatus(),
+                    DeclareStatusEnum.WAIT.getCode()))) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
+            }
+        }
         if (entityList.stream().anyMatch(item -> !CharSequenceUtil.equals(item.getGenerateStatus(),
                 DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
         }
+
         Set<String> sourceTypeSet = entityList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getSourceType)
                 .filter(CharSequenceUtil::isNotBlank)
