@@ -597,6 +597,20 @@ public class DmpHandlerCache implements CommandLineRunner{
 					this.initDorisQueryCfgSetting();
 				}
 			}, 1, freshCacheTime, TimeUnit.SECONDS);
+
+			// 周期性全量广播：覆盖"启动时订阅者还没就绪"以及"订阅链路抖动消息丢失"的场景，
+			// 业务节点 LocalCache.apply 内部按 version 单调递增校验，重复广播只对刚启动的节点生效。
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				try {
+					if(dorisQueryCfgSettingMappingCache == null) {
+						this.initDorisQueryCfgSetting();
+					} else {
+						this.publishDorisQueryCfgRefresh();
+					}
+				} catch (Throwable e) {
+					log.warn("doris query cfg periodic broadcast failed", e);
+				}
+			}, 1, 5, TimeUnit.MINUTES);
 		}
 	}
 	
@@ -723,8 +737,11 @@ public class DmpHandlerCache implements CommandLineRunner{
 			DorisQuerySettingFullCacheDTO payload = new DorisQuerySettingFullCacheDTO();
 			payload.setVersion(dorisQueryCfgVersion);
 			payload.setData(new HashMap<>(dorisQueryCfgSettingMappingCache));
+			String body = JSON.toJSONString(payload);
+			// 严格顺序：先写 Bucket（新节点启动 @PostConstruct 同步读取依据），再 publish（在线节点实时刷新）
+			redissonClient.<String>getBucket(RedisCacheConstants.DORIS_QUERY_CFG_FULL_KEY).set(body);
 			RTopic topic = redissonClient.getTopic(RedisCacheConstants.DORIS_QUERY_CFG_REFRESH_CHANNEL);
-			long received = topic.publish(JSON.toJSONString(payload));
+			long received = topic.publish(body);
 			log.info("publishDorisQueryCfgRefresh ok, size={}, version={}, receivedBy={}",
 					payload.getData().size(), payload.getVersion(), received);
 		} catch (Throwable e) {
