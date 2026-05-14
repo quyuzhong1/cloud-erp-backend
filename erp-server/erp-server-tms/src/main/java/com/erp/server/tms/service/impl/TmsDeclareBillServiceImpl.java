@@ -174,10 +174,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
+        List<String> sourceIdList = resolveAddSourceIdList(addDTO);
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
 //                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
-                .ids(Arrays.asList(addDTO.getSourceId()))
+                .ids(sourceIdList)
                 .build();
         if (!Boolean.TRUE.equals(addDTO.getIsAuto())) {
             querySourceDTO.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
@@ -187,10 +188,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DELIVERY_NOT_FOUND);
         }
         TmsDeclareBillDTO.DeliveryDTO deliveryDTO = deliveryDTOList.get(0);
-        if (CollUtil.isEmpty(addDTO.getMergeDetailList())) {
-            addDTO.setMergeDetailList(prepareAddMergeDetailList(addDTO, SourceTypeEnum.FIRST_MILE_DELIVERY));
-        }
-
         // 新增页面下推保存逻辑：按前端提交的合并明细直接生成报关单
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
@@ -231,7 +228,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.FM_DECLARE_BILL, false);
 
             List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
-                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), addDTO.getSourceId(), addResult.getId(), addResult.getCode());
+                    SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), firstSourceId(sourceIdList), addResult.getId(), addResult.getCode());
             if (CollUtil.isNotEmpty(addMidList)) {
                 deliveryDeclareDetailMidService.saveBatch(addMidList);
             }
@@ -259,11 +256,44 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         //更新发货单的报关状态
         if (!Boolean.TRUE.equals(addDTO.getIsAuto())) {
             FirstMileDeliveryDTO.UpdateStatusDTO dto = new FirstMileDeliveryDTO.UpdateStatusDTO();
-            dto.setIds(Arrays.asList(addDTO.getSourceId()));
+            dto.setIds(sourceIdList);
             dto.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
             wmsFirstMileDeliveryFeign.updateStatus(dto);
         }
         return true;
+    }
+
+    /**
+     * 从新增报关单的合并后明细中解析来源单据id集合。
+     *
+     * @param addDTO 新增报关单参数
+     * @return 来源单据id集合
+     */
+    private List<String> resolveAddSourceIdList(TmsDeclareBillDTO.AddDTO addDTO) {
+        // 新增入口不再接收单独 sourceId，来源以底层拆分后的 sourceDeliveryDetailList 为准。
+        List<String> sourceIdList = Optional.ofNullable(addDTO.getMergeDetailList()).orElse(Collections.emptyList()).stream()
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIdList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
+        }
+        return sourceIdList;
+    }
+
+    /**
+     * 获取首个来源单据id，用于兼容中间表构建中的 fallbackSourceId。
+     *
+     * @param sourceIdList 来源单据id集合
+     * @return 首个来源单据id
+     */
+    private String firstSourceId(List<String> sourceIdList) {
+        return CollUtil.isEmpty(sourceIdList) ? "" : sourceIdList.get(0);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -1411,10 +1441,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
+        List<String> sourceIdList = resolveAddSourceIdList(addDTO);
         TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
 //                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
                 .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
-                .ids(Arrays.asList(addDTO.getSourceId()))
+                .ids(sourceIdList)
                 .build();
         if (!Boolean.TRUE.equals(addDTO.getIsAuto())) {
             querySourceDTO.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
@@ -1424,10 +1455,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_SO_DELIVERY_NOT_FOUND);
         }
         TmsDeclareBillDTO.SoOutDTO deliveryDTO = deliveryDTOList.get(0);
-        if (CollUtil.isEmpty(addDTO.getMergeDetailList())) {
-            addDTO.setMergeDetailList(prepareAddMergeDetailList(addDTO, SourceTypeEnum.SO_DELIVERY_NOTICE));
-        }
-
         // 新增页面下推保存逻辑：按前端提交的合并明细直接生成报关单
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
@@ -1468,7 +1495,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             BaseResultDTO.AddDTO addResult = service.add(declareBillEntity, detailEntityList, SourceTypeEnum.B2B_DECLARE_BILL, false);
 
             List<DeliveryDeclareDetailMidEntity> addMidList = buildDeclareDetailMidList(mergeDetailList, detailEntityList,
-                    SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), addDTO.getSourceId(), addResult.getId(), addResult.getCode());
+                    SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), firstSourceId(sourceIdList), addResult.getId(), addResult.getCode());
             if (CollUtil.isNotEmpty(addMidList)) {
                 deliveryDeclareDetailMidService.saveBatch(addMidList);
             }
@@ -2377,8 +2404,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             return prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
         }
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = listSourceDetailsForAdd(addDTO.getSourceId(), sourceTypeEnum);
-        return mergeSourceDetails(sourceDetailList, addDTO.getIsMerge());
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
     }
 
     /**

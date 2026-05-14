@@ -730,54 +730,86 @@
         select
             *
         from (
-        WITH carton_detail AS MATERIALIZED (
+        WITH qualified_delivery AS MATERIALIZED (
             SELECT
-                wc.packing_task_id,
+                fmd.id,
+                fmd.source_id,
+                fmd.code
+            FROM first_mile_delivery fmd
+            WHERE fmd.is_deleted = false
+            AND fmd.declare_status = 'wait'
+        ),
+        qualified_task AS MATERIALIZED (
+            SELECT
+                qd.id AS source_id,
+                qd.code AS source_code,
+                pt.id AS packing_task_id
+            FROM qualified_delivery qd
+            INNER JOIN packing_task pt
+            ON pt.source_id = qd.id
+            AND pt.is_deleted = false
+            AND pt.packing_status = 'packed'
+            UNION ALL
+            SELECT
+                qd.id AS source_id,
+                qd.code AS source_code,
+                pt.id AS packing_task_id
+            FROM qualified_delivery qd
+            INNER JOIN packing_task pt
+            ON pt.source_id = qd.source_id
+            AND pt.is_deleted = false
+            AND pt.packing_status = 'packed'
+            WHERE qd.source_id IS NOT NULL
+            AND qd.source_id != ''
+            AND qd.source_id != qd.id
+        ),
+        carton_detail AS MATERIALIZED (
+            SELECT
+                qt.source_id,
+                qt.source_code,
                 wcd.sku_id,
                 wcd.sku_no,
-                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS pack_qty
-            FROM wms_carton wc
+                SUM(COALESCE(wcd.pack_qty, 0))::INTEGER AS qty
+            FROM qualified_task qt
+            INNER JOIN wms_carton wc
+            ON wc.packing_task_id = qt.packing_task_id
+            AND wc.is_deleted = false
+            AND wc.box_no IS NOT NULL
             INNER JOIN wms_carton_detail wcd
             ON wcd.main_id = wc.id
             AND wcd.is_deleted = false
             AND COALESCE(wcd.pack_qty, 0) > 0
-            WHERE wc.is_deleted = false
-            AND wc.box_no IS NOT NULL
-            GROUP BY wc.packing_task_id, wcd.sku_id, wcd.sku_no
+            GROUP BY qt.source_id, qt.source_code, wcd.sku_id, wcd.sku_no
         ),
         qualified_details AS MATERIALIZED (
             SELECT
-                fmd.id AS source_id,
-                fmd.code AS source_code,
-                cd.sku_id,
-                cd.sku_no,
-                SUM(cd.pack_qty)::INTEGER AS qty
-            FROM first_mile_delivery fmd
-            INNER JOIN packing_task pt
-            ON (pt.source_id = fmd.id OR pt.source_id = fmd.source_id)
-            AND pt.is_deleted = false
-            AND pt.packing_status = 'packed'
-            INNER JOIN carton_detail cd
-            ON cd.packing_task_id = pt.id
-            WHERE fmd.is_deleted = false
-            AND fmd.declare_status = 'wait'
-            GROUP BY fmd.id, fmd.code, cd.sku_id, cd.sku_no
+                source_id,
+                source_code,
+                sku_id,
+                sku_no,
+                SUM(qty)::INTEGER AS qty
+            FROM carton_detail
+            GROUP BY source_id, source_code, sku_id, sku_no
         ),
-        -- 2. BOM 信息（物化）
         has_bom AS MATERIALIZED (
-        SELECT
-            fpbi.id AS bom_id,
-            fpbi.bom_version,
-            fpbs.parent_sku_id,
-            fpbs.parent_sku_no,
-            fpbs.sku_id,
-            fpbs.sku_no,
-            fpbs.quantity
-        FROM foreign_product_bom_info fpbi
-        JOIN foreign_product_bom_sku fpbs
-        ON fpbi.id = fpbs.bom_id
-        WHERE fpbi.is_deleted = false
-        AND fpbs.is_deleted = false
+            SELECT
+                fpbi.id AS bom_id,
+                fpbi.bom_version,
+                fpbs.parent_sku_id,
+                fpbs.parent_sku_no,
+                fpbs.sku_id,
+                fpbs.sku_no,
+                fpbs.quantity
+            FROM foreign_product_bom_info fpbi
+            JOIN foreign_product_bom_sku fpbs
+            ON fpbi.id = fpbs.bom_id
+            WHERE fpbi.is_deleted = false
+            AND fpbs.is_deleted = false
+            AND EXISTS (
+                SELECT 1
+                FROM qualified_details qd
+                WHERE qd.sku_id = fpbs.parent_sku_id
+            )
         )
         -- ========== 分支 1：无 BOM 或组合申报类型为 'combine' ==========
         SELECT
