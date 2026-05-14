@@ -1,15 +1,23 @@
 package com.erp.server.scm.query;
 
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.enums.AssetPurchaseOrderTabListEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Author: wtr
@@ -45,21 +53,39 @@ public class AssetPurchaseOrderQueryHandler extends AbstractQueryHandler {
                 return this.getQueryAllSql();
             }
         }
-        //TODO
 
-        // 项目名称查询：根据项目名称远程查询对应的模具编码，然后使用 in 查询
+        // 项目名称查询：把当前高级查询条件透传到 PLM 端走 @WebAdvanceQuery 切面解析，
+        // 远端按 mi.project_name 完整支持 EQ / CONTAINS / STARTS_WITH 等所有比较符
+        // 和大小写不敏感匹配；这里只用拿到的模具 ID 在主表上做 IN 关联。
         if ("projectName".equals(field)) {
-            String projectName = value != null ? value.toString() : null;
-            if (StringUtils.isNotBlank(projectName)) {
-                // 远程查询根据项目名称获取模具编码列表
-                List<String> moldCodes = plmTaskFeign.listMoldCodesByProjectName(projectName);
-                if (CollectionUtils.isNotEmpty(moldCodes)) {
-                    // 使用模具编码列表进行 in 查询
-                    super.buildDefaultDTO("apod.asset_code", moldCodes);
-                } else {
-                    // 如果没有找到匹配的模具编码，返回空结果
+            QueryConditionEnum compareCode = AdvanceQueryContext.getCompareCode();
+            if (compareCode == null) {
+                return null;
+            }
+            AdvanceQueryDTO advanceQueryDTO = AdvanceQueryDTO.buildSplicingSQLDTO(
+                    "mi.project_name", compareCode, value, QueryDataTypeEnum.STRING);
+            List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+            advanceQueryDTOList.add(advanceQueryDTO);
+            AdvanceQueryContainer container = AdvanceQueryContainer.builder()
+                    .advanceQueryDTOList(advanceQueryDTOList).build();
+            List<MoldInfoEntity> moldInfoList = plmTaskFeign.listMoldInfoAdvanceQuery(container);
+            List<String> moldIds = CollectionUtils.isEmpty(moldInfoList) ? new ArrayList<>()
+                    : moldInfoList.stream().map(MoldInfoEntity::getId)
+                            .filter(Objects::nonNull).distinct().collect(Collectors.toList());
+            if (compareCode == QueryConditionEnum.NE
+                    || compareCode == QueryConditionEnum.NOT_IN_LIST
+                    || compareCode == QueryConditionEnum.NOT_CONTAINS) {
+                if (moldIds.isEmpty()) {
+                    return this.getQueryAllSql();
+                }
+                super.buildSplicingSQLDTO("apod.asset_id",
+                        QueryConditionEnum.NOT_IN_LIST, moldIds, QueryDataTypeEnum.STRING);
+            } else {
+                if (moldIds.isEmpty()) {
                     return this.getQueryEmptySql();
                 }
+                super.buildSplicingSQLDTO("apod.asset_id",
+                        QueryConditionEnum.IN_LIST, moldIds, QueryDataTypeEnum.STRING);
             }
         }
 

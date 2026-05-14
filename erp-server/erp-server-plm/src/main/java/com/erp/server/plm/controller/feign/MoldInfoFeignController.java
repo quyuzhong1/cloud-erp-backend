@@ -1,5 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
@@ -64,6 +66,18 @@ public class MoldInfoFeignController {
     @PostMapping("/searchMoldRefSkuByAssetId")
     List<AssetNoticeDetailDTO.AssetDetailRefSkuDTO> searchMoldRefSkuByAssetId(@RequestBody String assetId){
         return moldInfoMapper.searchMoldRefSkuByAssetId(assetId);
+    }
+
+    /**
+     * 高级查询模具档案：调用方把 advanceQueryDTOList 的 field 用 mi.xxx 别名传入，
+     * 经 @WebAdvanceQuery 切面解析后写入 container.sqlMap，
+     * 由 mapper 用 ${params.sqlMap.default} 拼接，完整支持 EQ / CONTAINS / STARTS_WITH
+     * 等所有比较符及大小写不敏感匹配。
+     */
+    @PostMapping("/listMoldInfoAdvanceQuery")
+    @WebAdvanceQuery
+    List<MoldInfoEntity> listMoldInfoAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer) {
+        return moldInfoMapper.listMoldInfoAdvanceQuery(advanceQueryContainer);
     }
 
     /**

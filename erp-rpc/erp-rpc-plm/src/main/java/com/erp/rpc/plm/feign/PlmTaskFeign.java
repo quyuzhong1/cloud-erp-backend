@@ -721,6 +721,13 @@ public interface PlmTaskFeign {
     List<String> listMoldCodesByProjectName(@RequestBody String projectName);
 
     /**
+     * 通过高级查询条件查询模具档案，远端走 @WebAdvanceQuery 切面解析 sqlMap。
+     * 调用方把 advanceQueryDTOList 的 field 用 mi.xxx 别名传入。
+     */
+    @PostMapping("feign/moldInfo/listMoldInfoAdvanceQuery")
+    List<MoldInfoEntity> listMoldInfoAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
+
+    /**
      * 获取模具信息
      * @param dto
      */
