@@ -68,7 +68,7 @@ public enum BusinessNoTypeEnum {
     CODE_YHSQ("yhsq", "yhsq","要货申请",BusinessNoConstant.YHSQ),
     CODE_FHDC("fhdc", "fhdc","b2c发货单",BusinessNoConstant.FHDC),
     CODE_FHLJ("fhlj", "fhlj","b2c发货拦截单",BusinessNoConstant.FHLJ),
-    CODE_FHLJB(124, "fhljb","b2b发货拦截单",BusinessNoConstant.FHLJB),
+    CODE_FHLJB("fhljb", "fhljb","b2b发货拦截单",BusinessNoConstant.FHLJB),
     CODE_FLD("fld", "fld","委外发料单",BusinessNoConstant.FLD),
     CODE_SHD("shd", "shd","送货单",BusinessNoConstant.SHD),
     CODE_DZD("dzd", "dzd","对账单",BusinessNoConstant.DZD),
