@@ -3,6 +3,8 @@ package com.erp.server.workflow.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.constant.SqlConstants;
 import com.erp.model.workflow.dto.ActivityDTO;
 import com.erp.model.workflow.entity.ActHistoryActivityEntity;
@@ -13,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -58,11 +61,24 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
         if (StringUtils.isNotBlank(activityDTO.getAuditStatus())) {
             saveEntity.setAuditStatus(activityDTO.getAuditStatus());
         }
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        saveEntity.setUpdateTime(now);
+        saveEntity.setUpdateUserId(userId);
+        saveEntity.setUpdateUserName(userName);
+        saveEntity.setCreateTime(now);
+        saveEntity.setCreateUserId(userId);
+        saveEntity.setCreateUserName(userName);
         this.save(saveEntity);
 
         if (!Objects.isNull(entity)) {
             //当前的节点 就上上一个节点 的下一节点
             entity.setNextActivityId(nowActivityId);
+            entity.setUpdateTime(now);
+            entity.setUpdateUserId(userId);
+            entity.setUpdateUserName(userName);
             this.updateById(entity);
         }
 

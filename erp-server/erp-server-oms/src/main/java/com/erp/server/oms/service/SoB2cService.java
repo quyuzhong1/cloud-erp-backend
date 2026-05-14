@@ -1017,6 +1017,22 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
 
     /**
+     * 是否允许更换发货SKU
+     *
+     * @param entity 订单
+     * @return true-允许
+     */
+    Boolean allowChangeDeliverySku(SoB2cEntity entity);
+
+    /**
+     * 校验是否已生成B2C发货单或三方仓发货单
+     *
+     * @param soId 订单id
+     * @param operationName 操作名称
+     */
+    void checkGeneratedDeliveryForOperation(String soId, String operationName);
+
+    /**
      * 更新是否更换sku状态
      *
      * @param ids

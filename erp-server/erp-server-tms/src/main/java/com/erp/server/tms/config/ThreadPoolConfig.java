@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.*;
+
 /**
  * @Classname ThreadPoolConfig
 
@@ -71,6 +73,44 @@ public class ThreadPoolConfig {
     }
     @Bean(name = "tmsLogisticsLabelPool")
     public ExecutorService tmsLogisticsLabelPool() {
+        // 1. 先创建原始的 ThreadPoolExecutor
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+                10,
+                20,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(200),
+                r -> {
+                    Thread t = new Thread(r);
+                    t.setName("tms-label-" + t.getId());
+                    return t;
+                },
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+        // 2. 用 TraceableExecutorService 包装（自动传递 TraceId）
+        return new TraceableExecutorService(executor);
+    }
+
+    /**
+     * 导入历史记录线程池
+     * @author will
+     * @date 2025/10/10 14:59
+     * @return ExecutorService
+     */
+    @Bean(name = "importHistoryRecordPool")
+    public ExecutorService importHistoryRecordPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(10000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
+    }
+
+
+    @Bean(name = "tmsLogisticsOrderPool")
+    public ExecutorService tmsLogisticsOrderPool() {
         // 1. 先创建原始的 ThreadPoolExecutor
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
                 10,

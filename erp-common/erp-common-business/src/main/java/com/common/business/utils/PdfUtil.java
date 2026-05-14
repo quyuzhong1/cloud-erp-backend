@@ -1,8 +1,10 @@
 package com.common.business.utils;
 
 import cn.hutool.core.net.URLDecoder;
+import cn.hutool.core.util.RandomUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfCopy;
@@ -295,7 +297,43 @@ public class PdfUtil {
             e.printStackTrace();
         }
     }
+    public static String convertPdfUrlToErpUrl(String pdfUrl,boolean needEscape) throws IOException {
+        {
+            if(needEscape){
+                String decoded = StringEscapeUtils.unescapeJava(pdfUrl)
+                        .replaceAll("%(?![0-9a-fA-F]{2})", "%25");
+                pdfUrl = URLDecoder.decode(decoded, StandardCharsets.UTF_8);
+            }
+            URL url = new URL(pdfUrl);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+            try (InputStream inputStream = url.openStream()) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                int totalBytesRead = 0;
+
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
+                }
+
+                // 如果没有读取到任何数据，返回null
+                if (totalBytesRead == 0) {
+                    log.error("下载的PDF为空 URL:{}", pdfUrl);
+                    throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
+                }
+            }
+
+            byte[] pdfBytes = outputStream.toByteArray();
+
+            // 再次检查字节数组是否为空
+            if (pdfBytes.length == 0) {
+                log.error("下载的PDF为空 URL:{}", pdfUrl);
+                throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
+            }
+            return FastDFSClientUtil.uploadFile(pdfBytes, RandomUtil.randomNumbers(5) + ".pdf", null);
+        }
+    }
     public static String convertPdfUrlToBase64(String pdfUrl,boolean needEscape) throws IOException {
         if(needEscape){
             String decoded = StringEscapeUtils.unescapeJava(pdfUrl)

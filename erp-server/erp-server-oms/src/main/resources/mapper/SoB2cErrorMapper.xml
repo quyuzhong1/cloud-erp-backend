@@ -16,6 +16,7 @@
        <result column="param_json" property="paramJson" />
        <result column="message" property="message" />
        <result column="return_json" property="returnJson"  />
+        <result column="is_deleted" property="isDeleted" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -28,53 +29,104 @@
         update_user_name,
         update_time,
         version,
-        main_id, type, param_json, message, return_json
+        main_id, type, param_json, message, return_json, is_deleted
     </sql>
-    <delete id="deleteB2cError">
+
+    <!--<delete id="deleteB2cError">
         DELETE FROM so_b2c_error WHERE main_id=#{params.mainId}
             <if test="params.type != null and params.type != ''">
                 and type = #{params.type}
             </if>
             and detail_id = ''
-    </delete>
-    <delete id="deleteByCodeAndType">
+    </delete>-->
+    <update id="deleteB2cError">
+        UPDATE so_b2c_error
+        SET is_deleted = true,
+        update_time = NOW()
+        WHERE main_id = #{params.mainId}
+        <if test="params.type != null and params.type != ''">
+            AND type = #{params.type}
+        </if>
+        AND detail_id = ''
+    </update>
+
+    <!--<delete id="deleteByCodeAndType">
         DELETE FROM so_b2c_error
         WHERE main_id=(select id from so_b2c where code = #{code} and is_deleted=false limit 1)
                                        and  type = #{type}
 
-    </delete>
-    <delete id="batchDeleteB2cError">
+    </delete>-->
+    <update id="deleteByCodeAndType">
+        UPDATE so_b2c_error
+        SET is_deleted = true,
+            update_time = NOW()
+        WHERE main_id = (SELECT id FROM so_b2c WHERE code = #{code} AND is_deleted = false LIMIT 1)
+          AND type = #{type}
+    </update>
+
+    <!--<delete id="batchDeleteB2cError">
         DELETE FROM so_b2c_error WHERE type = #{params.type}
         and main_id in
         <foreach collection="params.mainIds" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-    </delete>
+    </delete>-->
+    <update id="batchDeleteB2cError">
+        UPDATE so_b2c_error
+        SET is_deleted = true,
+        update_time = NOW()
+        WHERE type = #{params.type}
+        AND main_id IN
+        <foreach collection="params.mainIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
 
-    <delete id="deleteB2cErrorByDetailId">
+    <!--<delete id="deleteB2cErrorByDetailId">
         DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type}
         and detail_id in
         <foreach collection="params.detailIdList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-    </delete>
+    </delete>-->
+    <update id="deleteB2cErrorByDetailId">
+        UPDATE so_b2c_error
+        SET is_deleted = true,
+        update_time = NOW()
+        WHERE main_id = #{params.mainId}
+        AND type = #{params.type}
+        AND detail_id IN
+        <foreach collection="params.detailIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
 
     <!-- 根据主表ids删除 -->
-    <delete id="deleteByMainIds">
+    <!--<delete id="deleteByMainIds">
         DELETE FROM so_b2c_error WHERE
         main_id in
         <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-    </delete>
+    </delete>-->
+    <!-- 根据主表ids删除 -->
+    <update id="deleteByMainIds">
+        UPDATE so_b2c_error
+        SET is_deleted = true,
+        update_time = NOW()
+        WHERE main_id IN
+        <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
 
     <select id="getTypeCountDTO" resultType="com.erp.model.oms.dto.SoB2cErrorDTO$TypeCountDTO">
         SELECT sbe.type,COUNT ( 1 ) AS typeCount
         FROM
             so_b2c_error sbe
             left join so_b2c sb2c on sbe.main_id = sb2c.id
-        WHERE
-            sbe.main_id != '' and sb2c.is_deleted = false and sb2c.approve_status = 'approve'
+        WHERE sbe.is_deleted = false
+           AND sbe.main_id != '' and sb2c.is_deleted = false and sb2c.approve_status = 'approve'
 	    AND sbe.type IN ( 'getLogisticsCode', 'submitDelivery', 'orderForecast', 'generateTransferInfo', 'virtualFreezeQty', 'generateOutstock', 'signDelivery' )
         GROUP BY sbe.type
     </select>
@@ -109,7 +161,8 @@
                sb2c.dict_platform as dictPlatform
         from so_b2c_error sbe
         inner join so_b2c sb2c on sb2c.is_deleted = false and sb2c.id = sbe.main_id
-        where sbe.id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+        where sbe.is_deleted = false
+        and sbe.id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         and sbe.type in ('signDelivery','getLogisticsCode','orderForecast','thirdWarehouseOutException')
     </select>
 </mapper>

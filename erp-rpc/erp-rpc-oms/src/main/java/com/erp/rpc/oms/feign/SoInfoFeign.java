@@ -14,6 +14,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -97,21 +98,21 @@ public interface SoInfoFeign {
      * @param list
      */
     @PostMapping("feign/soInfo/listByCodes")
-    List<SoInfoEntity> listByCodes(List<String> list);
+    List<SoInfoEntity> listByCodes(@RequestBody List<String> list);
 
     /**
      * 根据code查询
      * @param soCode
      */
     @PostMapping("feign/soInfo/getByCode")
-    SoInfoEntity getByCode(String soCode);
+    SoInfoEntity getByCode(@RequestParam("soCode") String soCode);
 
     /**
      * 修改单据审批状态
      * @param updateApprovalStatusDTO
      */
     @PostMapping("feign/soInfo/updateApproveStatus")
-    void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
+    void updateApproveStatus(@RequestBody SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 
     /**
      * 更新订货通平台订单ID

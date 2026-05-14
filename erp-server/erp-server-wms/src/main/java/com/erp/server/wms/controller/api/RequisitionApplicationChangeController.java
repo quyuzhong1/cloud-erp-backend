@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -360,7 +361,7 @@ public class RequisitionApplicationChangeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = requisitionApplicationChangeService.cancelProcess(id);
+                cancelResult = requisitionApplicationChangeService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("要货申请变更单撤回流程失败",e);
                 RequisitionApplicationChangeEntity entity = idEntityMap.get(id);

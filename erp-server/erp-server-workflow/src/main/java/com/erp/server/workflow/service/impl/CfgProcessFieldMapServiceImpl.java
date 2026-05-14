@@ -258,8 +258,14 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
 
             if ((thirdFieldType == CfgQueryOptionFieldTypeEnum.INPUT || thirdFieldType == CfgQueryOptionFieldTypeEnum.TEXTAREA) &&
-                    (sysFieldType == CfgQueryOptionFieldTypeEnum.NUMBER || sysFieldType == CfgQueryOptionFieldTypeEnum.ATTACHMENTV2)) {
-                throw new ServiceException("飞书文本不可生成数值，附件类型");
+                    (sysFieldType == CfgQueryOptionFieldTypeEnum.NUMBER
+                            || sysFieldType == CfgQueryOptionFieldTypeEnum.ATTACHMENTV2
+                            || sysFieldType == CfgQueryOptionFieldTypeEnum.RADIOV2
+                            || sysFieldType == CfgQueryOptionFieldTypeEnum.CHECKBOXV2
+                            || sysFieldType == CfgQueryOptionFieldTypeEnum.DATE)) {
+                // 飞书文本控件期望的是字符串/单行文本值，把单选/多选/日期/附件/纯数值塞进去
+                // 飞书侧会按文本长度、字典值等校验失败，提交时报 "validate form error 控件值不合法或者为空"
+                throw new ServiceException("飞书文本【{}】不可映射到数值/附件/单选/多选/日期 类型字段", dto.getThirdField());
             }
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.NUMBER && sysFieldType == CfgQueryOptionFieldTypeEnum.ATTACHMENTV2) {
                 throw new ServiceException("飞书数值不可生成附件");
@@ -304,6 +310,11 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     private void validateRequiredFsFields(String processDefinitionId, String type, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapDTOList) {
         // 1. 如果关键参数为空，则跳过校验 (某些场景可能不需要此校验)
         if (StrUtil.hasBlank(processDefinitionId, type)) {
+            return;
+        }
+        // 仅飞书流程才需要拉飞书审批定义校验必填字段；ERP 流程的 processDefinitionId 不是飞书 approval code，
+        // 若误调 fsService.getApproval 会因 "approval code not found" 而失败，导致整个 cfgProcess 更新被阻塞
+        if (!CfgProcessRuleTypeEnum.FSPROCESS.getCode().equals(type)) {
             return;
         }
 

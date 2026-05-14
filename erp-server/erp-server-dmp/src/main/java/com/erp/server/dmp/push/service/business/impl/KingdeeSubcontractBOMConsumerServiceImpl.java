@@ -132,6 +132,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 Map<String, Object> bomChangeViewMap = new HashMap<>();
                 bomChangeViewMap.put("syncKingdeeId",query.get("FId"));
                 JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
+                log.warn("委外用料清单变更单查询报文：{}" , view.toString());
                 //处理旧单
                 JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),syncKingdeeId,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveOldParam = new KingdeeParamDTO.SaveParamDTO(convertOldData);

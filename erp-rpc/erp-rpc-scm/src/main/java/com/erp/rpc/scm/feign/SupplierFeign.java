@@ -98,7 +98,7 @@ public interface SupplierFeign {
     BatchResultDTO add(@RequestBody SupplierDTO.InsertDTO addDTO);
 
     @PostMapping("/feign/supplier/updateApproveStatus")
-    void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
+    void updateApproveStatus(@RequestBody SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
 
     /**
      * 获取工厂所在地

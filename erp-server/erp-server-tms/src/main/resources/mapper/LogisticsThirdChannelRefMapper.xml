@@ -150,6 +150,29 @@
             )
     </select>
 
+    <select id="getTrackQueryModeBySalePlatform" resultType="java.lang.String">
+        select ltcr.platform_type
+        from logistics_third_channel_ref ltcr
+        where
+              ltcr.is_deleted = false
+          and ltcr.disabled = false
+          AND (
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = #{channelId} and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id ='all' and ltcr.logistics_supplier_id = #{logisticsSupplierId})
+                OR
+            (ltcr.dict_platform = #{salePlatform} AND ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
+            )
+        order by
+            case
+                when ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = #{channelId} and ltcr.logistics_supplier_id = #{logisticsSupplierId} then 1
+                when ltcr.dict_platform = #{salePlatform} and ltcr.logistics_channel_id = 'all' and ltcr.logistics_supplier_id = #{logisticsSupplierId} then 2
+                when ltcr.dict_platform = #{salePlatform} and ltcr.logistics_supplier_id = 'all' and ltcr.logistics_channel_id = 'all' then 3
+            end asc,
+            ltcr.create_time desc
+        limit 1
+    </select>
+
     <select id="listByTrackNos" resultType="com.erp.model.tms.dto.LogisticsThirdChannelRefDTO$ListByTrackNosDTO">
         SELECT
             ltcr.ID AS thirdRefId,

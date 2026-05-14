@@ -68,6 +68,7 @@ public enum BusinessNoTypeEnum {
     CODE_YHSQ("yhsq", "yhsq","要货申请",BusinessNoConstant.YHSQ),
     CODE_FHDC("fhdc", "fhdc","b2c发货单",BusinessNoConstant.FHDC),
     CODE_FHLJ("fhlj", "fhlj","b2c发货拦截单",BusinessNoConstant.FHLJ),
+    CODE_FHLJB(124, "fhljb","b2b发货拦截单",BusinessNoConstant.FHLJB),
     CODE_FLD("fld", "fld","委外发料单",BusinessNoConstant.FLD),
     CODE_SHD("shd", "shd","送货单",BusinessNoConstant.SHD),
     CODE_DZD("dzd", "dzd","对账单",BusinessNoConstant.DZD),
@@ -160,16 +161,19 @@ public enum BusinessNoTypeEnum {
     CODE_KOLB("KOLB", "KOLB","B2B寄样申请单",BusinessNoConstant.KOLB),
 
 
-    CODE_DR("DR", "DR","企业达人库",BusinessNoConstant.DR),
-    CODE_KOLC("KOLC", "KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
-    CODE_DZ("DZ", "DZ","物流费用导入",BusinessNoConstant.DZ),
-    CODE_FYPZ("FYPZ", "FYPZ","费用配置",BusinessNoConstant.FYPZ),
+    CODE_DR("DR" ,"DR","企业达人库",BusinessNoConstant.DR),
+    CODE_KOLC("KOLC" ,"KOLC","B2C寄样申请单",BusinessNoConstant.KOLC),
+    CODE_DZ("DZ" ,"DZ","物流费用导入",BusinessNoConstant.DZ),
+    CODE_FYPZ("FYPZ" ,"FYPZ","费用配置",BusinessNoConstant.FYPZ),
+    CODE_Z("Z", "Z","tms异步任务记录", BusinessNoConstant.Z),
 
-    CODE_BG("BG", "BG","产品信息变更单",BusinessNoConstant.BG),
-    CODE_ZJSQ("ZJSQ", "ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
+    CODE_BG("BG" ,"BG","产品信息变更单",BusinessNoConstant.BG),
+    CODE_ZJSQ("ZJSQ" ,"ZJSQ","质检申请",BusinessNoConstant.ZJSQ),
 
-    CODE_CYFA("CYFA", "CYFA","抽样方案",BusinessNoConstant.CYFA),
-    CODE_WDGL("WDGL", "WDGL","文件管理",BusinessNoConstant.WDGL),
+    CODE_CYFA("CYFA" ,"CYFA","抽样方案",BusinessNoConstant.CYFA),
+    CODE_WDGL("WDGL" ,"WDGL","文件管理",BusinessNoConstant.WDGL),
+    CODE_WLD("WLD" ,"WLD","物流单据编号",BusinessNoConstant.WLD),
+    CODE_VJ("VJ" ,"VJ","保宏预报合同号",BusinessNoConstant.VJ),
 
     ;
 

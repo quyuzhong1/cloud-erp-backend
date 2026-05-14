@@ -1,10 +1,14 @@
 package com.erp.model.sys.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.util.Date;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author Will
@@ -12,17 +16,10 @@ import java.util.Date;
  * @description: 业务编码表
  * @date 2022/11/21 11:24
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("sys_code")
-public class SysCodeEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键id
-     */
-    @TableId(value = "id",type = IdType.ASSIGN_ID)
-    private String id;
+public class SysCodeEntity extends BaseEntity<SysCodeEntity> {
 
     /**
      * 类目
@@ -37,44 +34,12 @@ public class SysCodeEntity implements Serializable {
     private Integer num;
 
     /**
-     * 编码类型 枚举BusinessNoTypeEnum
+     * 编码类型 (枚举BusinessNoTypeEnum，1:sku,2:spu)
+     * 注：实际数据库列类型是 character varying（PostgreSQL 严禁 varchar = integer 隐式比较），
+     *     这里显式指定 jdbcType=VARCHAR，使 INSERT/UPDATE/select-by-entity 走 VARCHAR 绑定，
+     *     避免 BadSqlGrammarException: operator does not exist: character varying = integer。
      */
-    @TableField("type")
+    @TableField(value = "type")
     private String type;
 
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time",fill = FieldFill.INSERT)
-    private Date createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
-
-    /**
-     * 创建人id
-     */
-    @TableField(value = "create_user_id" , fill = FieldFill.INSERT)
-    private String createUserId;
-
-    /**
-     * 创建人名称
-     */
-    @TableField(value = "create_user_name" , fill = FieldFill.INSERT)
-    private String createUserName;
-
-    /**
-     * 更新人id
-     */
-    @TableField(value = "update_user_id" , fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
-
-    /**
-     * 更新人
-     */
-    @TableField(value = "update_user_name", fill = FieldFill.INSERT_UPDATE)
-    private String updateUserName;
 }

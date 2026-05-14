@@ -533,5 +533,10 @@ public class LogisticsSupplierDTO implements Serializable {
         private String authStatus;
 
         private List<String> supplierIds;
+
+        /**
+         * 物流平台
+         */
+        private String logisticsPlatform;
     }
 }

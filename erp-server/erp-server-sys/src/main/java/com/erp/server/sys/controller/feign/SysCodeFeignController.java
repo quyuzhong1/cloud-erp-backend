@@ -5,10 +5,13 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.server.sys.service.SysCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * @author Will
@@ -34,6 +37,15 @@ public class SysCodeFeignController extends BaseController {
     public String getSkuNo(@RequestBody SysCodeSkuDTO dto) {
         String sysCode = sysCodeService.getSkuNo(dto);
         return sysCode;
+    }
+
+    /**
+     * 一次性生成 count 个连续的 sku 编号，
+     * 替代上游"循环单条调用"导致的分布式锁竞争
+     */
+    @PostMapping("/getSkuNoBatch/{count}")
+    public List<String> getSkuNoBatch(@PathVariable("count") Integer count, @RequestBody SysCodeSkuDTO dto) {
+        return sysCodeService.getSkuNoBatch(dto, count == null ? 0 : count);
     }
 
     /**

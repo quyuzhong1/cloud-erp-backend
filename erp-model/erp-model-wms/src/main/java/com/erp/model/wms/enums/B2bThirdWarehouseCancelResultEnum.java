@@ -5,6 +5,7 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum B2bThirdWarehouseCancelResultEnum implements EnumMessage {
+    INTERCEPTING("intercepting", "拦截中"),
     INTERCEPTION_SUCCESSFUL("success", "拦截成功"),
     INTERCEPTION_FAILED("fail", "拦截失败"),
     ;

@@ -192,6 +192,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNO
 public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity> implements SoB2cService {
 
     public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
+    private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "接口返回为空";
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -3618,19 +3619,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity) {
         log.warn("第三方仓下单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
+        String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
+        String queryReferenceNo = CharSequenceUtil.isNotBlank(createOutboundReq.getReferenceNo()) ? createOutboundReq.getReferenceNo() : Objects.nonNull(thirdWarehouseDeliveryEntity) ? thirdWarehouseDeliveryEntity.getCode() : null;
+        ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundResult = null;
         //如果已存在发货单，不处理
-        if(Objects.nonNull(thirdWarehouseDeliveryEntity) || CharSequenceUtil.isNotBlank(createOutboundReq.getReferenceNo())){
+        if(CharSequenceUtil.isNotBlank(queryReferenceNo)){
             if (CharSequenceUtil.isBlank(entity.getShippingOrderNo())){
                 log.warn("订单{}已存在待处理的发货单，但是三方仓发货单为空", entity.getCode());
                 //获取三方仓已生成的发货单id
                 ThirdWarehouseQueryOutboundReq queryOutboundReq = new ThirdWarehouseQueryOutboundReq();
-                queryOutboundReq.setErpOrderCode(CharSequenceUtil.isNotBlank(createOutboundReq.getReferenceNo()) ? createOutboundReq.getReferenceNo() : thirdWarehouseDeliveryEntity.getCode());
+                queryOutboundReq.setErpOrderCode(queryReferenceNo);
                 queryOutboundReq.setThirdWarehouseProvideCode(createOutboundReq.getThirdWarehouseProvideCode());
                 queryOutboundReq.setAuthId(createOutboundReq.getAuthId());
-                ApiResult<ThirdWarehouseQueryOutboundResponse> stringApiResult = thirdWarehouseFeign.queryOutboundOrder(queryOutboundReq);
-                log.warn("查询三方仓发货单结果:{}", JSONUtil.toJsonStr(stringApiResult));
-                if (stringApiResult.isSuccess()){
-                    return stringApiResult;
+                try {
+                    queryOutboundResult = thirdWarehouseFeign.queryOutboundOrder(queryOutboundReq);
+                    log.warn("查询三方仓发货单结果:{}", JSONUtil.toJsonStr(queryOutboundResult));
+                    if (Objects.isNull(queryOutboundResult)) {
+                        throw new ServiceException("查询三方仓接口返回为空");
+                    }
+                    if (queryOutboundResult.isSuccess()){
+                        return queryOutboundResult;
+                    }
+                    if (shouldRetryCreateOutbound(queryOutboundResult)){
+                        throw new ServiceException("查询三方仓出库单异常，{}", queryOutboundResult.getMsg());
+                    }
+                } catch (Exception e) {
+                    if (isRetryableThirdWarehouseTimeoutMessage(e.getMessage())) {
+                        return retryCreateThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount, thirdWarehouseDeliveryEntity, queryOutboundResult, type, e);
+                    }
+                    throw new ServiceException("查询三方仓出库单异常，{}", e.getMessage());
                 }
             }else {
                 log.warn("订单{}已存在待处理的发货单，不再重复创建", entity.getCode());
@@ -3641,62 +3658,94 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                 log.warn("订单{}已存在待处理的发货单，使用已存在的发货单", entity.getCode());
                 createOutboundReq.setReferenceNo(thirdWarehouseDeliveryEntity.getCode());
-            }else {
+            }else if (CharSequenceUtil.isBlank(createOutboundReq.getReferenceNo())){
                 String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
                 log.warn("新增三方仓发货单成功，发货单code:{}", code);
                 createOutboundReq.setReferenceNo(code);
+            }else {
+                log.warn("订单{}使用已存在的发货单号{}创建三方仓出库单", entity.getCode(), createOutboundReq.getReferenceNo());
             }
         }catch (Exception e){
             log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
             throw new ServiceException("生成三方仓发货单异常", e.getMessage());
         }
         ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult = null;
-        String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         try {
             log.warn("调用三方仓出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
             apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
             log.warn("调用三方仓出库单结果:{}", JSONUtil.toJsonStr(apiResult));
+            if (Objects.isNull(apiResult)) {
+                throw new ServiceException("调用三方仓出库单返回为空");
+            }
             if (!apiResult.isSuccess()) {
-                if (BAD_GATEWAY.equals(apiResult.getMsg())){
-                    throw new ServiceException("调用三方仓出库单异常，状态码502");
+                if (shouldRetryCreateOutbound(apiResult)){
+                    throw new ServiceException("调用三方仓出库单异常，{}", apiResult.getMsg());
                 }
                 String message = "创建三方仓出库单异常" + apiResult.getMsg();
                 //生成异常订单信息
-                soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
+                soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 //标记三方仓发货单为删除
                 thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             }
             return apiResult;
         }catch (Exception e){
-            log.warn("第" + (retryCount + 1) + "次执行失败: " + e.getMessage());
-            if (retryCount + 1 < MAX_RETRY_COUNT){
-                //重试查询
-                try {
-                    //等待30秒后重试
-                    log.error("30秒后进行第" + (retryCount + 2) + "次重试");
-                    Thread.sleep(RETRY_DELAY_SECONDS);
-                    apiResult = createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
-                    return apiResult;
-                }catch (Exception e1){
-                    String message = e.getMessage();
-                    //生成异常订单信息
-                    soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
-                    //标记三方仓发货单为删除
-                    thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
-                    return ApiResult.error( -1, e.getMessage());
-                }
-            }else {
-                log.error("已达到最大重试次数" + MAX_RETRY_COUNT + "次，停止重试");
-                // 记录到操作日志：系统有重试，超过了最大次数
-                operateLogService.addModuleOperateLog("系统有重试，超过了最大次数，异常类型：" + SoB2cErrorTypeEnum.getName(type), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "重试失败");
-                String message = "重试创建出库单异常"+ e.getMessage();
-                //生成异常订单信息
-                soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
-                //标记三方仓发货单为删除
-                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
-                return ApiResult.error( -1, e.getMessage());
-            }
+            return retryCreateThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount, thirdWarehouseDeliveryEntity, apiResult, type, e);
         }
+    }
+
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> retryCreateThirdWarehouseOutbound(SoB2cEntity entity, String warehouseId, ThirdWarehouseCreateOutboundReq createOutboundReq, final int retryCount, ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity, ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult, String type, Exception e) {
+        log.warn("订单{}三方仓发货单号{}第{}次执行失败: {}", entity.getCode(), createOutboundReq.getReferenceNo(), retryCount + 1, e.getMessage());
+        if (retryCount + 1 < MAX_RETRY_COUNT){
+            try {
+                log.error("订单{}三方仓发货单号{}，30秒后进行第{}次重试", entity.getCode(), createOutboundReq.getReferenceNo(), retryCount + 2);
+                Thread.sleep(RETRY_DELAY_SECONDS);
+                return createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
+            }catch (Exception e1){
+                String message = e1.getMessage();
+                soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
+                thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
+                return ApiResult.error( -1, message);
+            }
+        }else {
+            log.error("订单{}三方仓发货单号{}已达到最大重试次数{}次，停止重试", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT);
+            operateLogService.addModuleOperateLog("系统有重试，超过了最大次数，异常类型：" + SoB2cErrorTypeEnum.getName(type), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "重试失败");
+            String message = "重试创建出库单异常"+ e.getMessage();
+            soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
+            thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
+            return ApiResult.error( -1, e.getMessage());
+        }
+    }
+
+    private boolean shouldRetryCreateOutbound(ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult) {
+        if (Objects.isNull(apiResult)) {
+            return false;
+        }
+        if (BAD_GATEWAY.equals(apiResult.getMsg())) {
+            return true;
+        }
+        return Objects.equals(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), apiResult.getCode())
+                && CharSequenceUtil.isNotBlank(apiResult.getMsg())
+                && isRetryableThirdWarehouseTimeoutMessage(apiResult.getMsg());
+    }
+
+    private boolean isRetryableThirdWarehouseTimeoutMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        String lowerMessage = message.toLowerCase(Locale.ROOT);
+        return lowerMessage.contains("timeout")
+                || lowerMessage.contains("timed out")
+                || lowerMessage.contains("sockettimeoutexception")
+                || (lowerMessage.contains("cannot invoke") && lowerMessage.contains("response") && lowerMessage.contains("is null"))
+                || message.contains("超时")
+                || message.contains(THIRD_WAREHOUSE_EMPTY_RESPONSE);
+    }
+
+    private String getApiResultCode(ApiResult<?> apiResult) {
+        if (Objects.isNull(apiResult) || Objects.isNull(apiResult.getCode())) {
+            return String.valueOf(ApiError.HTTP_UNKNOWN.getCode());
+        }
+        return apiResult.getCode().toString();
     }
 
     /**
@@ -6697,10 +6746,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(dto.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SO_B2C.getCode());
         revokeDTO.setUserId(userId);
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         workflowFeign.revokeProcess(revokeDTO);
         ApproveStatusEnum waitSubmit = ApproveStatusEnum.WAIT_SUBMIT;
         this.updateApproveStatus(dto.getId(), waitSubmit.getStatus(), Boolean.FALSE);
@@ -7215,7 +7265,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 亚马逊作废保留以前状态
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
-                dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -7223,7 +7272,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getDictPlatform()) &&
                     ("voided".equalsIgnoreCase(dto.getPlatformOrderStatus())) || ("partially_refunded".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
                 oldEntity.setApproveStatus(oldApproveStatus);
-                dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -7238,7 +7286,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if ("IN_CANCEL".equalsIgnoreCase(dto.getPlatformOrderStatus())
                         || ("CANCELLED".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setPayTime(oldEntity.getPayTime());
                     dto.setBillStatus(oldEntity.getBillStatus());
                     dto.setApproveStatusStr("");//取消和取消中不更新审核状态
@@ -7251,12 +7298,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         || "IN_FROZEN".equals(platformOrderStatus)
                         || "RISK_CONTROL".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
                 }
                 if ("FINISH".equals(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
@@ -7267,7 +7312,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 全托管作废保留以前状态
             if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
-                dto.setPayStatus(oldEntity.getPayStatus());
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
@@ -7277,7 +7321,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         || "Refund".equals(platformOrderStatus)
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
@@ -7290,7 +7333,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         || "COMPLETED".equalsIgnoreCase(platformOrderStatus)
                 ) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     if (!tikTokPlatformWarehouseOrder) {
                         dto.setBillStatus(oldEntity.getBillStatus());
                     }
@@ -7300,7 +7342,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 if ("CANCELLED".equalsIgnoreCase(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
-                    dto.setPayStatus(oldEntity.getPayStatus());
                     if (!tikTokPlatformWarehouseOrder) {
                         dto.setBillStatus(oldEntity.getBillStatus());
                     }
@@ -7348,6 +7389,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setInvalidStatus(true);
                 dto.setInvalidRemark(oldEntity.getInvalidRemark());
                 dto.setInvalidType(oldEntity.getInvalidType());
+            }
+            //如果旧数据是已付款，不更新付款状态
+            if(SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(oldEntity.getPayStatus())){
+                dto.setPayStatus(oldEntity.getPayStatus());
             }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
@@ -9087,12 +9132,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = listByIds(ids);
-        //订单更换发货SKU操作只能在待提交和审核不通过状态操作
-        List<SoB2cEntity> notChangeList = soB2cEntityList.stream().filter(e -> !(ApproveStatusEnum.WAIT_SUBMIT.equals(e.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(e.getApproveStatus()))).collect(Collectors.toList());
+        //订单更换发货SKU操作只能在待提交、审核不通过或已发货状态操作
+        List<SoB2cEntity> notChangeList = soB2cEntityList.stream().filter(e -> !Boolean.TRUE.equals(allowChangeDeliverySku(e))).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notChangeList)) {
             List<String> codeList = notChangeList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
             String msg = getChangeSkuView(codeList);
             throw new ServiceException(ApiError.SO_REPLACE_SKU_STATUS_INVALID, msg);
+        }
+        List<String> deliveryFailedCodes = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            try {
+                checkGeneratedDeliveryForOperation(soB2cEntity.getId(), "更换SKU");
+            } catch (Exception e) {
+                deliveryFailedCodes.add(soB2cEntity.getCode());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(deliveryFailedCodes)) {
+            throw new ServiceException(CharSequenceUtil.format("销售订单【{}】已生成B2C发货单或三方仓发货单，不允许操作更换SKU", getChangeSkuView(deliveryFailedCodes)));
         }
         List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuViewDTOS = baseMapper.listChangeDeliverySkuView(ids);
         List<String> skuIds = changeDeliverySkuViewDTOS.stream().map(SoB2cDTO.ChangeDeliverySkuViewDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -9106,6 +9162,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         });
         return changeDeliverySkuViewDTOS;
+    }
+
+    @Override
+    public Boolean allowChangeDeliverySku(SoB2cEntity entity) {
+        if (Objects.isNull(entity)) {
+            return Boolean.FALSE;
+        }
+        return ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus())
+                || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())
+                || StrUtil.equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(), entity.getBillStatus());
+    }
+
+    @Override
+    public void checkGeneratedDeliveryForOperation(String soId, String operationName) {
+        if (StrUtil.isBlank(soId)) {
+            return;
+        }
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(soId));
+        List<ThirdWarehouseDeliveryEntity> thirdWarehouseDeliveryEntities = thirdWarehouseDeliveryFeign.listBySourceId(Collections.singletonList(soId));
+        // 已取消的发货单视为无效，不阻塞后续操作
+        boolean hasActiveB2cDelivery = soB2cDeliveryEntities.stream()
+                .anyMatch(e -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()));
+        boolean hasActiveThirdDelivery = thirdWarehouseDeliveryEntities.stream()
+                .anyMatch(e -> !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(e.getStatus()));
+        if (hasActiveB2cDelivery || hasActiveThirdDelivery) {
+            throw new ServiceException(CharSequenceUtil.format("已生成B2C发货单或三方仓发货单，不允许操作{}", operationName));
+        }
     }
 
     private String getChangeSkuView(List<String> codeList) {

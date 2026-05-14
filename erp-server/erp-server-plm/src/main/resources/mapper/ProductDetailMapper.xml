@@ -1999,15 +1999,9 @@
         pd.unit_name,
         pd.status,
         pd.variant_property as variantProperty,
-        pd.warehouse_location as warehouseLocation,
-        pd.warehouse_location_large as warehouseLocationLarge,
-        pp.product_length as productLength,
-        pp.product_width as productWidth,
-        pp.product_height as productHeight,
-        pp.net_weight as netWeight
+        pd.warehouse_location as warehouseLocation
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
-        LEFT JOIN product_pack pp on pp.sku_id = pd.id and pp.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN

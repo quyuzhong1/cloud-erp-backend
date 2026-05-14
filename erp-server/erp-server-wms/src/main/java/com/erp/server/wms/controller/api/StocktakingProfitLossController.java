@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -262,7 +263,7 @@ public class StocktakingProfitLossController extends BaseController {
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit = stocktakingProfitLossService.cancelProcess(id);
+                submit = stocktakingProfitLossService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("盘盈盘亏单 撤销流程失败>>>>{}", e);
                 StocktakingProfitLossEntity entity = stocktakingProfitLossService.getById(id);

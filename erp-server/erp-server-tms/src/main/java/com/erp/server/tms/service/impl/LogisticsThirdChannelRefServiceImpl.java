@@ -471,6 +471,11 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
     }
 
     @Override
+    public String getTrackQueryModeBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId) {
+        return baseMapper.getTrackQueryModeBySalePlatform(salePlatform, channelId, logisticsSupplierId);
+    }
+
+    @Override
     public List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(List<String> trackNos) {
         if (CollUtil.isEmpty(trackNos)) {
             return Collections.emptyList();

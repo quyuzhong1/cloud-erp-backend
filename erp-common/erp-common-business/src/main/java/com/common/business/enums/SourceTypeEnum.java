@@ -62,6 +62,7 @@ public enum SourceTypeEnum {
     B2B_THIRD_DELIVERY("b2bThirdDelivery", "B2B三方发货单","b2b_third_delivery"),
     B2B_THIRD_DELIVERY_CREATE("b2bthirdWarehouseDeliveryCreate", "数大臣B2B三方发货单创建","b2b_third_delivery"),
     B2B_THIRD_DELIVERY_CANCEL("b2bthirdWarehouseDeliveryCancel", "数大臣B2B三方发货单取消","b2b_third_delivery"),
+    SO_B2B_DELIVERY_INTERCEPT("soB2bDeliveryIntercept", "B2B发货单拦截","so_b2b_delivery_intercept"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
@@ -329,7 +330,7 @@ public enum SourceTypeEnum {
 
 
     //售后申请
-    AFTER_SALE("afterSale", "售后申请","after_sale"),
+    AFTER_SALE("afterSale", "寄修申请","after_sale"),
     ;
 
     /**
