@@ -56,11 +56,7 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("source_type")
     private String sourceType;
-    /**
-    * 来源明细id
-    */
-    @TableField("source_detail_id")
-    private String sourceDetailId;
+
     /**
     * 业务单据id
     */

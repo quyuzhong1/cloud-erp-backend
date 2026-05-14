@@ -36,6 +36,20 @@ public class DeclarationGenerationService {
      */
     public List<DeclarationGenerationDTO.OutputDeclarationDTO> generateDeclarations(List<DeclarationGenerationDTO.InputDetailDTO> inputs,
                                                                                    boolean includeSkuInMergeKey) {
+        return generateDeclarations(inputs, includeSkuInMergeKey, false);
+    }
+
+    /**
+     * 按指定合并维度生成报关单算法结果。
+     *
+     * @param inputs 报关合并算法输入明细
+     * @param includeSkuInMergeKey 是否将 SKU 纳入合并维度
+     * @param mergeAcrossShipments 是否允许跨来源单据合并报关明细行
+     * @return java.util.List<com.erp.model.tms.dto.DeclarationGenerationDTO.OutputDeclarationDTO>
+     */
+    public List<DeclarationGenerationDTO.OutputDeclarationDTO> generateDeclarations(List<DeclarationGenerationDTO.InputDetailDTO> inputs,
+                                                                                   boolean includeSkuInMergeKey,
+                                                                                   boolean mergeAcrossShipments) {
         if (inputs == null || inputs.isEmpty()) {
             return Collections.emptyList();
         }
@@ -51,7 +65,7 @@ public class DeclarationGenerationService {
             List<DeclarationGenerationDTO.InputDetailDTO> countryInputs = countryEntry.getValue();
 
             // 在单一国家维度内处理
-            List<DeclarationGenerationDTO.OutputDeclarationDTO> countryDeclarations = processCountry(country, countryInputs, includeSkuInMergeKey);
+            List<DeclarationGenerationDTO.OutputDeclarationDTO> countryDeclarations = processCountry(country, countryInputs, includeSkuInMergeKey, mergeAcrossShipments);
             finalDeclarations.addAll(countryDeclarations);
         }
 
@@ -92,7 +106,8 @@ public class DeclarationGenerationService {
         IdentityHashMap<TmsDeclareBillDTO.SourceDeliveryDetailDTO, String> sourceKeyMap = buildSourceKeyMap(sourceDetails);
         List<DeclarationGenerationDTO.OutputDeclarationDTO> declarations = new ArrayList<>();
         if (Boolean.TRUE.equals(isMerge)) {
-            declarations.addAll(generateDeclarations(toInputDetails(sourceDetails, sourceKeyMap), includeSkuInMergeKey));
+            // 合并报关时允许不同来源单据按报关维度合并成同一行。
+            declarations.addAll(generateDeclarations(toInputDetails(sourceDetails, sourceKeyMap), includeSkuInMergeKey, true));
         } else {
             Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> bySource = sourceDetails.stream()
                     .collect(Collectors.groupingBy(this::resolveShipmentKey));
@@ -218,6 +233,7 @@ public class DeclarationGenerationService {
                 if (linkedSourceList.isEmpty()) {
                     continue;
                 }
+                linkedSourceList = mergeSourceDetailsByBoxSku(linkedSourceList);
 
                 TmsDeclareBillDTO.SourceDeliveryDetailDTO first = linkedSourceList.get(0);
                 String businessDesc = linkedSourceList.stream()
@@ -270,6 +286,43 @@ public class DeclarationGenerationService {
             result.add(TmsDeclareBillDTO.MergeDeclareBillDTO.builder().declareBillList(declareBillList).build());
         }
         return result;
+    }
+
+    /**
+     * 合并同一来源单据、箱号、SKU 的来源明细。
+     *
+     * @param sourceDetails 算法关联回来的来源明细
+     * @return 按来源箱SKU聚合后的来源明细
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> mergeSourceDetailsByBoxSku(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetails) {
+        if (sourceDetails == null || sourceDetails.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<String, TmsDeclareBillDTO.SourceDeliveryDetailDTO> mergedMap = new LinkedHashMap<>();
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceDetails) {
+            if (sourceDetail == null) {
+                continue;
+            }
+            String key = buildSourceBoxSkuKey(sourceDetail);
+            TmsDeclareBillDTO.SourceDeliveryDetailDTO merged = mergedMap.get(key);
+            if (merged == null) {
+                TmsDeclareBillDTO.SourceDeliveryDetailDTO copy = new TmsDeclareBillDTO.SourceDeliveryDetailDTO();
+                org.springframework.beans.BeanUtils.copyProperties(sourceDetail, copy);
+                mergedMap.put(key, copy);
+                continue;
+            }
+            int currentQty = merged.getQty() == null ? 0 : merged.getQty();
+            int appendQty = sourceDetail.getQty() == null ? 0 : sourceDetail.getQty();
+            merged.setQty(currentQty + appendQty);
+        }
+        return new ArrayList<>(mergedMap.values());
+    }
+
+    private String buildSourceBoxSkuKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail) {
+        return String.join("|",
+                StringUtils.defaultString(sourceDetail.getSourceId()),
+                StringUtils.defaultString(sourceDetail.getBoxNo()),
+                StringUtils.defaultString(sourceDetail.getSkuId()));
     }
 
     /**
@@ -336,8 +389,15 @@ public class DeclarationGenerationService {
      */
     private List<DeclarationGenerationDTO.OutputDeclarationDTO> processCountry(String country,
                                                                                List<DeclarationGenerationDTO.InputDetailDTO> countryInputs,
-                                                                               boolean includeSkuInMergeKey) {
-        // Step 3: 发货单内聚合与价格极差切割
+                                                                               boolean includeSkuInMergeKey,
+                                                                               boolean mergeAcrossShipments) {
+        if (mergeAcrossShipments) {
+            // 多来源合并时，先跨来源按合并维度聚合明细行，再按48行上限拆分报关单。
+            List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> mergedDetails = processShipment(countryInputs, includeSkuInMergeKey);
+            return buildDeclarationsByDetailLimit(country, mergedDetails);
+        }
+
+        // Step 3: 独立合并时，仅在单个发货单内聚合与价格极差切割。
         Map<String, List<DeclarationGenerationDTO.InputDetailDTO>> byShipment = countryInputs.stream()
                 .filter(item -> item.getShipmentOrderId() != null)
                 .collect(Collectors.groupingBy(DeclarationGenerationDTO.InputDetailDTO::getShipmentOrderId));
@@ -508,6 +568,28 @@ public class DeclarationGenerationService {
         }
 
         return finalDeclarations;
+    }
+
+    /**
+     * 将已跨来源合并后的明细按报关单最大行数切分。
+     *
+     * @param country 国家编码
+     * @param details 已合并报关明细行
+     * @return 报关单算法输出
+     */
+    private List<DeclarationGenerationDTO.OutputDeclarationDTO> buildDeclarationsByDetailLimit(String country,
+                                                                                               List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> details) {
+        if (details == null || details.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<DeclarationGenerationDTO.OutputDeclarationDTO> declarations = new ArrayList<>();
+        for (List<DeclarationGenerationDTO.OutputDeclarationDetailDTO> detailGroup : partitionList(details, MAX_ROWS_PER_DECLARATION)) {
+            DeclarationGenerationDTO.OutputDeclarationDTO declaration = new DeclarationGenerationDTO.OutputDeclarationDTO(country);
+            declaration.setLocked(detailGroup.size() >= MAX_ROWS_PER_DECLARATION);
+            declaration.getDetails().addAll(detailGroup);
+            declarations.add(declaration);
+        }
+        return declarations;
     }
 
     /**

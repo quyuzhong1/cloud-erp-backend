@@ -377,37 +377,37 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      */
     @Override
     public Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
-//        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getId())) {
-//            log.warn("头程发货单自动生成报关明细任务参数为空");
-//            return Boolean.FALSE;
-//        }
-//        if (!SourceTypeEnum.FIRST_MILE_DELIVERY.equals(dto.getSourceTypeEnum())) {
-//            log.warn("头程发货单自动生成报关明细任务来源类型不匹配，id={}, sourceType={}", dto.getId(), dto.getSourceTypeEnum());
-//            return Boolean.FALSE;
-//        }
+        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getId())) {
+            log.warn("头程发货单自动生成报关明细任务参数为空");
+            return Boolean.FALSE;
+        }
+        if (!SourceTypeEnum.FIRST_MILE_DELIVERY.equals(dto.getSourceTypeEnum())) {
+            log.warn("头程发货单自动生成报关明细任务来源类型不匹配，id={}, sourceType={}", dto.getId(), dto.getSourceTypeEnum());
+            return Boolean.FALSE;
+        }
         FirstMileDeliveryEntity entity = super.getById(dto.getId());
-//        if (Objects.isNull(entity)) {
-//            log.warn("头程发货单自动生成报关明细任务未找到来源单，id={}", dto.getId());
-//            return Boolean.TRUE;
-//        }
-//        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-//            log.info("头程发货单{}已作废，跳过自动生成报关明细", entity.getCode());
-//            return Boolean.TRUE;
-//        }
-//        if (BillGenerateTimingEnum.AFTER_APPROVE.equals(dto.getBillGenerateTimingEnum())
-//                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
-//            log.info("头程发货单{}非已审核状态，跳过审核后自动生成报关明细", entity.getCode());
-//            return Boolean.TRUE;
-//        }
-//        if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
-//            log.info("头程发货单{}报关状态非待生成，跳过自动生成报关明细", entity.getCode());
-//            return Boolean.TRUE;
-//        }
-//        if (Boolean.TRUE.equals(dto.getCheckCfg())
-//                && !checkFirstMileDeclareAutoGenerateCfg(dto.getBillGenerateTimingEnum())) {
-//            log.info("头程发货单{}未开启当前时机自动生成报关明细配置，跳过", entity.getCode());
-//            return Boolean.TRUE;
-//        }
+        if (Objects.isNull(entity)) {
+            log.warn("头程发货单自动生成报关明细任务未找到来源单，id={}", dto.getId());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            log.info("头程发货单{}已作废，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (BillGenerateTimingEnum.AFTER_APPROVE.equals(dto.getBillGenerateTimingEnum())
+                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            log.info("头程发货单{}非已审核状态，跳过审核后自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (!WmsDeclareStatusEnum.WAIT.equals(entity.getDeclareStatus())) {
+            log.info("头程发货单{}报关状态非待生成，跳过自动生成报关明细", entity.getCode());
+            return Boolean.TRUE;
+        }
+        if (Boolean.TRUE.equals(dto.getCheckCfg())
+                && !checkFirstMileDeclareAutoGenerateCfg(dto.getBillGenerateTimingEnum())) {
+            log.info("头程发货单{}未开启当前时机自动生成报关明细配置，跳过", entity.getCode());
+            return Boolean.TRUE;
+        }
         List<PackingTaskEntity> taskEntityList = packingTaskService.getPackingStatusByFirstMileDelivery(entity);
         boolean packed = CollectionUtils.isNotEmpty(taskEntityList)
                 && taskEntityList.stream().allMatch(taskEntity -> taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()));

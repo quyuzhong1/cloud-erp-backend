@@ -1604,12 +1604,6 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        /**
-         * 业务id（发货单id或销售出库单id）
-         */
-        @NotBlank(message = "来源类型：头程,B2B不能为空")
-        private String sourceId;
-
         private Boolean isAuto = false;
 
         /**
@@ -2333,7 +2327,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  是否合并,true是，false否
          */
-        private Boolean isMultipleMerge = false;
+        private Boolean isMultipleMerge = true;
         /**
          *  下推的主表ids
          */
@@ -2351,10 +2345,7 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         @NotBlank(message = "选择id不能为空")
         private String id;
-        /**
-         *  下推的明细ids
-         */
-        private String detailId;
+
         /**
          *  skuId
          */
@@ -2373,7 +2364,7 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          *  是否批量合并,true是，false否
          */
-        private Boolean isMultipleMerge = false;
+        private Boolean isMultipleMerge = true;
         /**
          * 需要报关信息
          */
