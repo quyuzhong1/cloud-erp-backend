@@ -38,6 +38,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.rmi.ServerException;
+import java.time.OffsetDateTime;
 import java.util.*;
 
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAException;
@@ -1014,5 +1015,113 @@ public class FbaInboundApiTest {
         }
         System.out.println("最后装箱信息结果");
         System.out.println(JSONUtil.toJsonStr(resultList));
+    }
+
+    @Test
+    public void listInboundPlans() throws ApiException, LWAException {
+        String shopId = "1738050804738166785";
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+        List<String> inboundPlanStatusList = Arrays.asList("ACTIVE", "SHIPPED");
+        Map<String, Integer> statusCountMap = new LinkedHashMap<>();
+        Map<String, InboundPlanSummary> inboundPlanSummaryMap = new LinkedHashMap<>();
+        OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
+        for (String status : inboundPlanStatusList) {
+            String nextToken = null;
+            int currentStatusCount = 0;
+            boolean reachedOlderData = false;
+            do {
+                ListInboundPlansResponse response = api.listInboundPlans(30, nextToken, status, "LAST_UPDATED_TIME", "DESC");
+                List<InboundPlanSummary> inboundPlans = response != null ? response.getInboundPlans() : null;
+                if (inboundPlans != null) {
+                    for (InboundPlanSummary inboundPlan : inboundPlans) {
+                        OffsetDateTime lastUpdatedAt = inboundPlan.getLastUpdatedAt();
+                        if (lastUpdatedAt == null || lastUpdatedAt.isBefore(sevenDaysAgo)) {
+                            reachedOlderData = true;
+                            break;
+                        }
+                        String inboundPlanId = inboundPlan.getInboundPlanId();
+                        if (StrUtil.isBlank(inboundPlanId)) {
+                            continue;
+                        }
+                        currentStatusCount++;
+                        inboundPlanSummaryMap.putIfAbsent(inboundPlanId, inboundPlan);
+                    }
+                }
+                if (reachedOlderData) {
+                    break;
+                }
+                nextToken = response != null && response.getPagination() != null ? response.getPagination().getNextToken() : null;
+            } while (StrUtil.isNotBlank(nextToken));
+            statusCountMap.put(status, currentStatusCount);
+        }
+        List<InboundPlanSummary> inboundPlanSummaryList = new ArrayList<>(inboundPlanSummaryMap.values());
+        System.out.println("入库计划总数=" + inboundPlanSummaryList.size());
+        Map<String, List<ShipmentSummary>> inboundPlanShipmentsMap = new LinkedHashMap<>();
+        Map<String, List<Shipment>> inboundPlanShipmentDetailMap = new LinkedHashMap<>();
+        Map<String, Map<String, List<InboundShipmentItem>>> inboundPlanShipmentItemsMap = new LinkedHashMap<>();
+        List<ShipmentSummary> shipmentSummaryList = new ArrayList<>();
+        for (InboundPlanSummary inboundPlanSummary : inboundPlanSummaryList) {
+            String inboundPlanId = inboundPlanSummary.getInboundPlanId();
+            if (StrUtil.isBlank(inboundPlanId)) {
+                continue;
+            }
+            try {
+                InboundPlan inboundPlanDetail = api.getInboundPlan(inboundPlanId);
+                List<ShipmentSummary> shipments = inboundPlanDetail != null && inboundPlanDetail.getShipments() != null
+                        ? inboundPlanDetail.getShipments() : Collections.emptyList();
+                List<String> marketplaceIds = inboundPlanSummary.getMarketplaceIds();
+                String marketplaceId = (marketplaceIds != null && !marketplaceIds.isEmpty())
+                        ? marketplaceIds.get(0)
+                        : AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode()).getMarketplaceId();
+                inboundPlanShipmentsMap.put(inboundPlanId, shipments);
+                shipmentSummaryList.addAll(shipments);
+
+                List<Shipment> shipmentDetailList = new ArrayList<>();
+                Map<String, List<InboundShipmentItem>> shipmentItemsMap = new LinkedHashMap<>();
+                for (ShipmentSummary shipmentSummary : shipments) {
+                    String shipmentId = shipmentSummary.getShipmentId();
+                    if (StrUtil.isBlank(shipmentId)) {
+                        continue;
+                    }
+                    try {
+                        Shipment shipmentDetail = api.getShipment(inboundPlanId, shipmentId);
+                        shipmentDetailList.add(shipmentDetail);
+                        String shipmentConfirmationId = shipmentDetail.getShipmentConfirmationId();
+                        if (StrUtil.isBlank(shipmentConfirmationId)) {
+                            System.out.println("跳过 shipment，inboundPlanId=" + inboundPlanId + "，原因=shipmentConfirmationId为空");
+                            continue;
+                        }
+                        GetShipmentItemsResponse shipmentItemsResponse = api.getShipmentItemsByShipmentId(shipmentConfirmationId, marketplaceId);
+                        List<InboundShipmentItem> itemDetailList = shipmentItemsResponse != null
+                                && shipmentItemsResponse.getPayload() != null
+                                && shipmentItemsResponse.getPayload().getItemData() != null
+                                ? new ArrayList<>(shipmentItemsResponse.getPayload().getItemData())
+                                : Collections.emptyList();
+                        shipmentItemsMap.put(shipmentId, itemDetailList);
+                    } catch (ApiException | LWAException e) {
+                        System.out.println("跳过 shipment，inboundPlanId=" + inboundPlanId + ", shipmentId=" + shipmentId + "，原因=" + e.getMessage());
+                    }
+                }
+                inboundPlanShipmentDetailMap.put(inboundPlanId, shipmentDetailList);
+                inboundPlanShipmentItemsMap.put(inboundPlanId, shipmentItemsMap);
+            } catch (ApiException | LWAException e) {
+                System.out.println("跳过 inboundPlanId=" + inboundPlanId + "，原因=" + e.getMessage());
+            }
+        }
+        System.out.println("按状态抓取数量=" + JSON.toJsonStr(statusCountMap));
+        System.out.println("最近7天更新时间阈值=" + sevenDaysAgo);
+        System.out.println("去重后计划数量=" + inboundPlanSummaryList.size());
+        System.out.println("入库计划总数=" + inboundPlanSummaryList.size());
+        System.out.println("货件总数=" + shipmentSummaryList.size());
+        System.out.println("按计划汇总的货件信息:");
+        System.out.println(JSON.toJsonStr(inboundPlanShipmentsMap));
+        System.out.println("按计划汇总的货件详情信息:");
+        System.out.println(JSON.toJsonStr(inboundPlanShipmentDetailMap));
+        System.out.println("按计划汇总的货件items信息:");
+        System.out.println(JSON.toJsonStr(inboundPlanShipmentItemsMap));
     }
 }
