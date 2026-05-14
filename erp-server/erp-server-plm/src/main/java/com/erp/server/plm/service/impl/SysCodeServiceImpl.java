@@ -75,7 +75,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         }
         //产品类目
         dto.setCategory(bestEntity.getCode());
-        dto.setType(Integer.valueOf(BusinessNoTypeEnum.SKU_NO.getCode()));
+        dto.setType(BusinessNoTypeEnum.SKU_NO.getCode());
         String sysNo = sysUserFeign.getSkuNo(dto);
         //已存在则获取下一个
         String existSKuNo = isExistSKuNo(sysNo, dto);
