@@ -2750,29 +2750,59 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 校验相同SKU是否存在不同行明细
+     * 校验相同报关明细维度是否存在不同行明细
      * @author will
      * @date 2026/5/7 14:08
-     * @param mergeDetailList
+     * @param mergeDetailList 报关明细集合
      */
     private void validateDuplicateSkuRows(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
-        Map<String, Integer> skuRowMap = new HashMap<>();
+        Map<String, Integer> declareDetailRowMap = new HashMap<>();
         for (int i = 0; i < mergeDetailList.size(); i++) {
-            String skuNo = mergeDetailList.get(i).getSkuNo();
-            if (StringUtils.isBlank(skuNo)) {
+            TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO = mergeDetailList.get(i);
+            String detailKey = buildDeclareDetailDuplicateKey(detailDTO);
+            if (StringUtils.isBlank(detailKey)) {
                 continue;
             }
-            Set<String> rowSkuSet = Arrays.stream(skuNo.split(","))
-                    .map(StringUtils::trimToEmpty)
-                    .filter(StringUtils::isNotBlank)
-                    .collect(Collectors.toSet());
-            for (String rowSku : rowSkuSet) {
-                Integer firstRow = skuRowMap.putIfAbsent(rowSku, i + 1);
-                if (Objects.nonNull(firstRow)) {
-                    throw new ServiceException(ApiError.LOGISTICS_DECLARE_DUPLICATE_SKU_ROW, rowSku, firstRow, i + 1);
-                }
+            Integer firstRow = declareDetailRowMap.putIfAbsent(detailKey, i + 1);
+            if (Objects.nonNull(firstRow)) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DUPLICATE_SKU_ROW, detailDTO.getSkuNo(), firstRow, i + 1);
             }
         }
+    }
+
+    /**
+     * 构建报关明细重复校验键。
+     *
+     * @param detailDTO 报关明细
+     * @return 报关明细维度键
+     */
+    private String buildDeclareDetailDuplicateKey(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
+        if (Objects.isNull(detailDTO)) {
+            return "";
+        }
+        return CharSequenceUtil.join("|",
+                normalizeSkuNo(detailDTO.getSkuNo()),
+                StringUtils.defaultString(detailDTO.getHsCode()),
+                StringUtils.defaultString(detailDTO.getProductNameCn()),
+                StringUtils.defaultString(detailDTO.getDeclareElement()),
+                StringUtils.defaultString(detailDTO.getUnit()),
+                StringUtils.defaultString(detailDTO.getDeclareCurrency()),
+                Objects.isNull(detailDTO.getUnitPrice()) ? "" : detailDTO.getUnitPrice().stripTrailingZeros().toPlainString(),
+                StringUtils.defaultString(detailDTO.getSourceCountry()),
+                StringUtils.defaultString(detailDTO.getToCountry()),
+                defaultSourceCargo(detailDTO.getSourceCargo()),
+                defaultExemption(detailDTO.getExemption()));
+    }
+
+    private String normalizeSkuNo(String skuNo) {
+        if (StringUtils.isBlank(skuNo)) {
+            return "";
+        }
+        return Arrays.stream(skuNo.split(","))
+                .map(StringUtils::trimToEmpty)
+                .filter(StringUtils::isNotBlank)
+                .sorted()
+                .collect(Collectors.joining(","));
     }
 
     /**
