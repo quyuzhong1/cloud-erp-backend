@@ -1,13 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -238,7 +237,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if (scanSkuInfo.getScannedQty().equals(scanSkuInfo.getSaleQty())) {
                 waitScanList.remove(scanSkuInfo);
             }
-        } else if (!entity.getIsInspection()) {
+        } else if(entity.getIsInspection()){
+            throw new ServiceException("订单已验货，无法重复验货");
+        }
             // 只有未验货的订单才能进行整体验货
             // 判断是否全部扫描完成
             if (CollectionUtils.isEmpty(viewDTO.getWaitScanSkuList())) {
@@ -285,7 +286,6 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                         entity.getCode());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
             }
-        }
 
         //数据存redis
         this.saveViewDTO(entity.getId(), viewDTO);
@@ -315,17 +315,17 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     }
 
     private void deleteViewDTO(String id) {
-        redisTemplate.delete(CharSequenceUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
+        redisTemplate.delete(CharSequenceUtil.format(RedisCacheConstants.WMS_PACKING_INSPECTION, id));
     }
 
 
     private void saveViewDTO(String id, PackingInspectionDTO.ViewDTO viewDTO) {
         String json = JSONObject.toJSONString(viewDTO);
-        redisTemplate.opsForValue().set(CharSequenceUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id), json,1, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(CharSequenceUtil.format(RedisCacheConstants.WMS_PACKING_INSPECTION, id), json,1, TimeUnit.DAYS);
     }
 
     private PackingInspectionDTO.ViewDTO getViewDTO(String id) {
-        String json = redisTemplate.opsForValue().get(CharSequenceUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
+        String json = redisTemplate.opsForValue().get(CharSequenceUtil.format(RedisCacheConstants.WMS_PACKING_INSPECTION, id));
         return JSONObject.parseObject(json,new TypeReference<PackingInspectionDTO.ViewDTO>() {}.getType());
     }
 }

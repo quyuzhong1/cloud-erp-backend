@@ -1,5 +1,6 @@
 package com.erp.server.wms.config;
 
+import com.common.business.config.TraceableThreadPoolTaskExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -18,7 +19,7 @@ public class PackAsyncConfig {
 
     @Bean("packAsyncExecutor")
     public ThreadPoolTaskExecutor  packAsyncExecutor() {
-        ThreadPoolTaskExecutor  executor = new ThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(3);
         // 设置最大线程数

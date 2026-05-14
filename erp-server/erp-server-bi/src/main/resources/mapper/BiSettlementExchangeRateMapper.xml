@@ -15,14 +15,13 @@
             bser.disabled as disabled,
             bser.approve_status as approveStatus
         from bi_settlement_exchange_rate bser
-        <where>
-            <if test="params.currencyList != null and params.currencyList.size > 0">
-                bser.source_currency_code in
-                <foreach collection="params.currencyList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
-        </where>
+        where is_deleted = false
+        <if test="params.currencyList != null and params.currencyList.size > 0">
+            and bser.source_currency_code in
+            <foreach collection="params.currencyList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         order by bser.settlement_date_begin desc
     </select>
 
@@ -34,6 +33,7 @@
             and target_currency_code = 'CNY'
             and settlement_date_begin <![CDATA[<=]]> #{date}
             and settlement_date_end >= #{date}
+            and is_deleted = false
         </where>
     </select>
 
@@ -47,6 +47,7 @@
             and approve_status = 'approve'
             and disabled = false
             and type = 'HLTX01_SYS'
+            and is_deleted = false
         </where>
     </select>
 </mapper>

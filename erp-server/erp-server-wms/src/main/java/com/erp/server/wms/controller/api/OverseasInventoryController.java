@@ -53,7 +53,7 @@ public class OverseasInventoryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "opw.warehouse_id",
+            warehouseTableField = "opw.warehouse_id,fw.id",
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )
@@ -73,7 +73,7 @@ public class OverseasInventoryController extends BaseController {
     @PostMapping("/total")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "opw.warehouse_id",
+            warehouseTableField = "opw.warehouse_id,fw.id",
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )

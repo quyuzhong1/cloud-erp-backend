@@ -29,6 +29,9 @@ public class AntuConstants {
     public static final String GET_ORDER_LIST = "getOrderList";
     public static final String GET_ORDER_BY_REF_CODE = "getOrderByRefCode";
 
+
+    public static final String GET_ORDER_BY_CODE = "getOrderByCode";
+
     public static final String GET_SPECIAL_ORDERS_LIST = "getSpecialOrdersList";
     public static final String GET_CALCULATE_FEE_BATCH = "getCalculateFeeBatch";
     //上传文件

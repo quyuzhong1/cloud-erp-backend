@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -25,7 +26,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.ContractInfoDTO;
 import com.erp.model.scm.dto.DictBasicDTO;
-import com.erp.model.scm.entity.AttachmentEntity;
+import com.erp.model.scm.entity.ScmAttachmentEntity;
 import com.erp.model.scm.entity.ContractInfoEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ContractInfoStatusEnum;
@@ -193,14 +194,14 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     }
 
     private void batchSaveAttachment(List<String> attachmentUrlList, List<String> attachmentNameList, ContractInfoEntity contractInfoEntity) {
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>();
+        List<ScmAttachmentEntity> batchAttachmentList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<ContractInfoEntity> clazz = ContractInfoEntity.class;
             TableName tableName = clazz.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity attachment = new AttachmentEntity();
+                ScmAttachmentEntity attachment = new ScmAttachmentEntity();
                 attachment.setAttachUrl(attachmentUrlList.get(i));
                 attachment.setAttachName(attachmentNameList.get(i));
                 attachment.setBusinessId(contractInfoEntity.getId());
@@ -709,7 +710,8 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         ContractInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到合同管理单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -725,6 +727,7 @@ public class ContractInfoServiceImpl extends SuperServiceImpl<ContractInfoMapper
 
         //撤销流程
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.CONTRACT_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

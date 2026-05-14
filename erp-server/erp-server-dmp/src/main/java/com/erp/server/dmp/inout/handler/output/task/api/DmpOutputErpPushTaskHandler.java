@@ -31,6 +31,7 @@ import com.erp.server.dmp.service.DmpPushWdtService;
 import com.erp.server.dmp.service.impl.DmpOutputTaskRecordMergeServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -436,7 +437,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				message = "调用" + apiClass + "的" + outputMethod + "方法报错";
 			}
 			if(!status.equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
-				responseData = "traceId=【" + MDC.get("traceId") + "】" + responseData;
+				responseData = "traceId=【" + TraceContext.traceId() + "】" + responseData;
 			}
 		}
 		dmpOutputUtils.updateStatus(id, status, responseData , message);

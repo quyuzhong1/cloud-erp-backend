@@ -390,6 +390,11 @@ public class ThirdMappingDTO implements Serializable {
          * 第三方仓库id
          */
         private String thirdWarehouseId;
+        /**
+         * 库存同步模式
+         * InventorySyncModeEnum
+         */
+        private String inventorySyncMode;
     }
 
     @Data

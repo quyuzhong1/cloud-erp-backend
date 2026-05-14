@@ -3,7 +3,7 @@ package com.erp.server.plm.rocketmq.customer;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.utils.RedisUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -47,6 +47,6 @@ public class ProductListingTimeCustomer implements RocketMQListener<Map<String, 
                 .set(ProductSaleEntity::getListingTime, LocalDate.parse(listingTime, dateTimeFormatter))
                 .eq(ProductSaleEntity::getSkuId, productIdBySku.getId())
                 .update();
-        redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, skuNo, listingTime, 30 * 24 * 3600L);
+        redisUtil.hset(RedisCacheConstants.SKU_LISTING_TIME, skuNo, listingTime, 30 * 24 * 3600L);
     }
 }

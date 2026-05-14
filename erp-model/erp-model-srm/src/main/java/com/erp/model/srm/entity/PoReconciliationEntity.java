@@ -124,6 +124,11 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 发票状态
+     */
+    @TableField("invoice_status")
+    private Boolean invoiceStatus;
 
     public static final String CODE = "code";
 
@@ -168,6 +173,8 @@ public class PoReconciliationEntity extends BaseEntity<PoReconciliationEntity> {
     public static final String PURCHASE_CONFIRM_USER_ID = "purchase_confirm_user_id";
 
     public static final String PURCHASE_CONFIRM_USER_NAME = "purchase_confirm_user_name";
+
+    public static final String INVOICE_STATUS = "invoice_status";
 
     @Override
     public Serializable pkVal() {

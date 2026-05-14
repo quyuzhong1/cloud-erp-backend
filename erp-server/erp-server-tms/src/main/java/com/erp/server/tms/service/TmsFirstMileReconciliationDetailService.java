@@ -3,6 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.common.business.service.SuperService;
@@ -11,6 +12,7 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
@@ -166,6 +168,12 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * 自动生成对账单
      */
     void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate, String transportNo);
+
+    @Transactional(rollbackFor = Exception.class)
+    boolean addTaskDetailByFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    @Transactional(rollbackFor = Exception.class)
+    void pushFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     void addOrUpdateCost(List<TmsFirstMileReconciliationDetailEntity> list);
 

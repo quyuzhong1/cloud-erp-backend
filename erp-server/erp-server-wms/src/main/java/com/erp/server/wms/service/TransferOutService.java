@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -134,9 +135,9 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     /**
      * 撤销
-     * @param ids
+     * @param dto
      */
-    void cancel(List<String> ids);
+    void cancel(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 反审核

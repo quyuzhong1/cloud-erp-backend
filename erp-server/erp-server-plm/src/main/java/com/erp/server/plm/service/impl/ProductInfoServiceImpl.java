@@ -27,7 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
@@ -474,7 +474,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(CollUtil.isNotEmpty(productDetailEntities)){
             //增加缓存清除
             List<String> productDetailIdList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList.toArray());
+            redisUtil.hdel(RedisCacheConstants.LIST_SKU_INFO,productDetailIdList.toArray());
 
             //审核通过发送金蝶
             productDetailService.sendPushTask(productDetailEntities, operate);

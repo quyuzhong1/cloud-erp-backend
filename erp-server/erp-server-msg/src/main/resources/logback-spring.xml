@@ -3,7 +3,7 @@
 <configuration debug="false" scan="true" scanPeriod="60 seconds">
 	<contextName>${APP_NAME}</contextName>
 	<!-- 获取yml中的 应用名称 -->
-	<springProperty name="APP_NAME" scope="context" source="spring.application.name" defaultValue="erp-msg"/>
+	<springProperty name="APP_NAME" scope="context" source="spring.application.name"/>
 	<!-- 获取服务器ip -->
 	<springProperty name="ServerIP" scope="context" source="spring.cloud.client.ip-address" defaultValue="0.0.0.0"/>
 	<!-- 获取端口号 -->
@@ -24,11 +24,13 @@
 					converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
 	<conversionRule conversionWord="wEx"
 					converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+	<conversionRule conversionWord="tid"
+					converterClass="org.apache.skywalking.apm.toolkit.log.logback.v1.x.LogbackPatternConverter"/>
 
 	<property name="ENCODER_PATTERN_COLOR"
-			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%clr(%X{traceId}){yellow},%clr(%X{spanId}){yellow}] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%level){blue} %clr(${PID}){magenta} %clr([%thread]){orange} %clr(%logger){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%clr(%tid){yellow}] %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%level){blue} %clr(${PID}){magenta} %clr([%thread]){orange} %clr(%logger){cyan} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 	<property name="ENCODER_PATTERN"
-			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%X{traceId},%X{spanId}] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+			  value="[${APP_NAME}:${ServerIP}:${ServerPort}] [%tid] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
 
 	<!-- 超过最大天数会清理日志 -->
 	<property name="maxHistory" value="10"/>
@@ -69,6 +71,16 @@
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
 			<pattern>${ENCODER_PATTERN}</pattern>
 			<charset>UTF-8</charset>
+		</encoder>
+	</appender>
+
+	<!-- SkyWalking gRPC 日志上报 Appender -->
+	<appender name="SW_GRPC_LOG" class="org.apache.skywalking.apm.toolkit.log.logback.v1.x.log.GRPCLogClientAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+		<encoder>
+			<pattern>[${APP_NAME}:${ServerIP}:${ServerPort}] [%tid] %d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PID} [%thread] %logger %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}</pattern>
 		</encoder>
 	</appender>
 
@@ -166,24 +178,28 @@
 		<root level="DEBUG">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_DEBUG"/>
+			<appender-ref ref="SW_GRPC_LOG" />
 		</root>
 	</springProfile>
 	<springProfile name="test">
 		<root level="INFO">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_DEBUG" />
+			<appender-ref ref="SW_GRPC_LOG" />
 		</root>
 	</springProfile>
 	<springProfile name="uat">
 		<root level="INFO">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_INFO" />
+			<appender-ref ref="SW_GRPC_LOG" />
 		</root>
 	</springProfile>
 	<springProfile name="prod">
 		<root level="WARN">
 			<appender-ref ref="CONSOLE"/>
 			<appender-ref ref="ASYNC_LOG_WARN" />
+			<appender-ref ref="SW_GRPC_LOG" />
 		</root>
 	</springProfile>
 </configuration>

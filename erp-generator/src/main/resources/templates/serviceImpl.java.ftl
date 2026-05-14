@@ -97,9 +97,9 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(${table.dtoName}.AddDTO addOrUpdateDTO) {
         ${entity} ${entity?uncap_first} = new ${entity}();
-        BeanMapperUtils.copy(addDTO, ${entity?uncap_first});
+        BeanMapperUtils.copy(addOrUpdateDTO, ${entity?uncap_first});
 
         // 数据处理
         handleData(${entity?uncap_first});
@@ -232,7 +232,7 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         try {
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_FILE_EXPORT_FAILED);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
     <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>

@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -29,6 +30,7 @@ import com.common.core.utils.*;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -606,10 +608,16 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if(mappingList.isEmpty()){
             return;
         }
+        //需要跳过的仓库id集合
+        List<String> skipWarehouseIds = mappingList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(e.getInventorySyncMode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).collect(Collectors.toList());
         //同步旺店通 审核{调入仓位做其他入库单，调出仓位做其他出库单}，反审核{调入仓位做其他出库单，调出仓位做其他入库单}
         List<CreateOtherStockoutRequest.GoodsList> outgoodsList = new ArrayList<>();
         List<CreateOtherStockinRequest.GoodsList> ingoodsList = new ArrayList<>();
         for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
+            if (CollUtil.isNotEmpty(skipWarehouseIds) && skipWarehouseIds.contains(detailEntity.getWarehouseId())){
+                log.warn("仓位移动单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), detailEntity.getWarehouseId());
+                continue;
+            }
             CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
             outGoods.setSpecNo(detailEntity.getSkuNo());
             outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
@@ -737,7 +745,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         WarehouseLocationMoveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到仓位移动主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -757,6 +766,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

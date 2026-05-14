@@ -3,6 +3,7 @@ package com.common.business.aspect;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.Idempotent;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.MD5Util;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -69,7 +70,7 @@ public class IdempotentAspect {
             token = request.getHeader("Authorization");
         }
         // 唯一标识（url +  token  + params）
-        String submitKey = "Idempotent:" + MD5Util.toMD5(url + "_" + token + ":" + params);
+        String submitKey = RedisCacheConstants.IDEM_REDISKEY + MD5Util.toMD5(url + "_" + token + ":" + params);
         boolean flag = false;
         //判断缓存中是否有此key
         if (redisUtil.hasKey(submitKey)) {

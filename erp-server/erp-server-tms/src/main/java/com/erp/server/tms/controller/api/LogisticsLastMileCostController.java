@@ -14,10 +14,12 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.PushDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
@@ -353,7 +355,9 @@ public class LogisticsLastMileCostController extends BaseController {
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
          if(CollUtil.isEmpty(dto.getIds())){
              dto.setType(DictCostAttributionEnum.LAST_MILE.getCode());
-             logisticsBillCostService.batchAsyncPushAllocation(dto);
+             TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+             BeanMapper.copy(dto,pushDTO);
+             logisticsBillCostService.batchAsyncPushAllocation(pushDTO);
              return success();
          }else {
              List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());

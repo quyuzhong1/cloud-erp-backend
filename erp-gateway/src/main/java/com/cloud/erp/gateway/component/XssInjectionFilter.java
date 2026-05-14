@@ -22,7 +22,11 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * 防xss注入
@@ -39,11 +43,26 @@ public class XssInjectionFilter implements GlobalFilter, Ordered {
     private GatewayPluginProperties gatewayPluginProperties;
     
     private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
+    private static final Set<String> XSS_SKIP_PATHS = new HashSet<>(Arrays.asList(
+            "/api/sys/sysmessage/release",
+            "/api/sys/sysmessage/update",
+            "/sys/sysmessage/release",
+            "/sys/sysmessage/update",
+            "/api/sys/sysversion/release",
+            "/api/sys/sysversion/update",
+            "/sys/sysversion/release",
+            "/sys/sysversion/update"
+    ));
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         
         ServerHttpRequest request = exchange.getRequest();
+        String requestPath = request.getPath().pathWithinApplication().value().toLowerCase(Locale.ROOT);
+        if (XSS_SKIP_PATHS.contains(requestPath)) {
+            log.debug("[XssInjectionFilter] Skip XSS injection check for request path:{}", requestPath);
+            return chain.filter(exchange);
+        }
         
         URI requestURI = request.getURI();
         

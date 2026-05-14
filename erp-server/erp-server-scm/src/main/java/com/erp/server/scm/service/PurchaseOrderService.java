@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -97,7 +98,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param entity
      * @return Boolean
      */
-    BatchResultDTO cancelProcess(PurchaseOrderEntity entity);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto, PurchaseOrderEntity entity);
 
     /**
      * 根据ids查询
@@ -542,4 +543,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     Boolean importMainFile(MultipartFile excelFile, HttpServletResponse response);
 
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> getPurchaseOrderByParams(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
+    /**
+     * 累加质检合格量
+     * @param dtoList
+     * @return
+     */
+    Boolean addQcGoodQty(List<PurchaseOrderDTO.QcQtyDTO> dtoList);
 }

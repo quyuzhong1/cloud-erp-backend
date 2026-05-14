@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -126,7 +127,7 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @param ids ids
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废

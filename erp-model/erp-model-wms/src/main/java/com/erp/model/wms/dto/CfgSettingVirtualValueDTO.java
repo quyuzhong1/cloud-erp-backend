@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -167,6 +168,25 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         private Boolean isSplit;
     }
 
+    /**
+     * 虚拟仓调拨DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtualTransferSettingDTO{
+
+        /**
+         * 调拨方向
+         */
+        private String transferDirection;
+
+        /**
+         * 条件
+         */
+        private List<VirtualTransferConditionElement> conditionElementList;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class InventoryAgeTO {
@@ -193,5 +213,49 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 结束天数
          */
         private Integer endDays;
+    }
+
+    @Data
+    public static class VirtualTransferConditionElement{
+        /**
+         * 左括号
+         */
+
+        private String leftBracket;
+
+        /**
+         * 对应字段
+         */
+        @NotBlank(message = "条件字段不能为空")
+        private String field;
+
+        /**
+         * 选项逻辑关系 大于 等于 等等
+         */
+        @NotBlank(message = "比较符号不能为空")
+        private String compare;
+
+        /**
+         * 对应的值
+         */
+        @NotEmpty(message = "值字段不能为空")
+        private List<String> valueList;
+
+        private String value;
+
+        /**
+         * 右括号
+         */
+        private String rightBracket;
+
+        /**
+         * 逻辑关系 and 或者or
+         */
+        private String logic;
+
+        /**
+         * 对应的值类型
+         */
+        private String valueType;
     }
 }

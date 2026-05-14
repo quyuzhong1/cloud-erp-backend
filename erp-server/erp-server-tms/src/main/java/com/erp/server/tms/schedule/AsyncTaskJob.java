@@ -1,31 +1,34 @@
 package com.erp.server.tms.schedule;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.entity.AsyncTaskRecordEntity;
-import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.enums.AsyncTaskRecordStatusEnum;
-import com.erp.model.tms.enums.CfgSettingEnum;
-import com.erp.model.wms.enums.ReconciliationTypeEnum;
-import com.erp.server.tms.service.AsyncTaskDetailRecordService;
-import com.erp.server.tms.service.AsyncTaskRecordService;
-import com.erp.server.tms.service.CfgSettingService;
-import com.erp.server.tms.service.FirstMileCostAllocationService;
+import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.nacos.api.utils.StringUtils;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordExecTypeEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
+import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author jack
@@ -39,30 +42,16 @@ import java.util.List;
 public class AsyncTaskJob {
 
     @Resource
-    private AsyncTaskRecordService asyncTaskRecordService;
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
 
     /**
      *
      *异步任务状态更新
      * @return
      */
-    @XxlJob("AsyncTaskJob")
-    public ReturnT<String> AsyncTaskJob() {
-        XxlJobHelper.log("====开始异步任务状态更新====");
-        String jobParam = XxlJobHelper.getJobParam();
-        XxlJobHelper.log("任务参数={}", JSONUtil.toJsonStr(jobParam));
-
-        List<AsyncTaskRecordEntity> list = asyncTaskRecordService.lambdaQuery()
-                .eq(AsyncTaskRecordEntity::getStatus, AsyncTaskRecordStatusEnum.ING.getCode())
-                .list();
-        if(CollUtil.isNotEmpty(list)){
-            for (AsyncTaskRecordEntity asyncTaskRecordEntity : list) {
-                asyncTaskRecordService.updateTaskFinally(asyncTaskRecordEntity.getId());
-            }
-        }
-
-
-        XxlJobHelper.log("====结束异步任务状态更新摊====");
+    @XxlJob("TmsAsyncTaskJob")
+    public ReturnT<String> TmsAsyncTaskJob() {
+        asyncTaskRecordService.startTask();
         return ReturnT.SUCCESS;
     }
 }

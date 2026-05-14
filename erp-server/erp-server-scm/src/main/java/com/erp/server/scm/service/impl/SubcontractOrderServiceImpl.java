@@ -7,6 +7,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,6 +18,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -35,7 +37,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -50,10 +54,12 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.sdk.third.kingdee.utils.KingdeePushModuleEnum;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractBOMService;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
@@ -158,6 +164,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private KingdeePaymentConditionService kingdeePaymentConditionService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Resource
     private PurchaseOrderMapper purchaseOrderMapper;
     @Resource
@@ -349,8 +357,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public BatchResultDTO submitEntity(SubcontractOrderEntity entity) {
        // 待提交或审核不通过并且未作废允许提交
-        SubcontractOrderEntity newEntity = this.getById(entity.getId());
-        long count = Stream.of(newEntity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        entity = this.getById(entity.getId());
+        long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
@@ -462,11 +470,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.BILL_REVERSE_APPROVAL_ALLOWED_APPROVED_ONLY);
         }
 
-        //返修委外订单不允许反审
-        if(Objects.equals(entity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
-            throw new ServiceException(ApiError.PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE);
-        }
-
         //委外变更单
         List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(Arrays.asList(id));
         //采购订单
@@ -491,8 +494,30 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         // 更新审核信息
         updateApproveStatus(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
-        //发送金蝶
-        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        //返修委外订单需要检查金蝶状态
+        if(Objects.equals(entity.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+            // 查询金蝶委外订单状态
+            if (ObjectUtils.isNotEmpty(entity.getSyncKingdeeId())) {
+                KingdeeDTO kingdeeDTO = new KingdeeDTO();
+                kingdeeDTO.setKingdeePushModuleCode(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+                kingdeeDTO.setNumber(entity.getCode());
+                kingdeeDTO.setId(entity.getSyncKingdeeId());
+                // 查询金蝶单据状态
+                JSONObject viewJson = dmpTaskFeign.getByKingdeeId(kingdeeDTO);
+
+                if (viewJson != null && viewJson.containsKey("DocumentStatus")) {
+                    String docStatus = viewJson.getStr("DocumentStatus");
+                    if (!Objects.equals(docStatus, KingdeeDocStatusEnum.CREATED.getCode())
+                            && !Objects.equals(docStatus,KingdeeDocStatusEnum.REAPPROVE.getCode())) {
+                        throw new ServiceException(ApiError.DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE);
+                    }
+                }
+            }
+        } else {
+            //发送金蝶
+            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        }
+
         // 操作日志
         String msg = format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外订单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), entity.getId(), "反审核操作");
@@ -530,7 +555,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(SubcontractOrderEntity entity) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto,SubcontractOrderEntity entity) {
         // 只有待提交的数据允许撤销
         long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
@@ -542,6 +567,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -847,6 +873,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractOrderDTO.GeneratePoDTO> addList = list.getList();
         List<SubcontractOrderDTO.GeneratePoAddDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoAddDTO.class, addList);
 
+        // 校验不同退货方式的采购退货单不允许合并下推委外订单
+        validateReturnMode(addList);
+
         //处理生成数据
         fillGeneratePoDTO(resultList);
         //查询产品信息
@@ -870,31 +899,69 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
-        //打系统标识
-        Boolean originalValue = UserContext.getIsUserSystem();
-        UserContext.setIsUserSystem(Boolean.TRUE);
-        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
-        for (String poId : poIds) {
-            PurchaseOrderEntity entity = entityMap.get(poId);
-            if (ObjectUtil.isEmpty(entity)) {
-                throw new ServiceException(ApiError.PO_NOT_FOUND);
-            }
-            //提交
-            BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
-            if (!submit.getSuccess()) {
-                throw new ServiceException(ApiError.PO_SUBMIT_FAILED);
-            }
-            //审核
-            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-            approveOneDTO.setId(poId);
-            approveOneDTO.setType(ApproveType.PASS);
-            BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
-            if (!approve.getSuccess()) {
-                throw new ServiceException(ApiError.PO_APPROVE_FAILED);
+//        //打系统标识
+//        Boolean originalValue = UserContext.getIsUserSystem();
+//        UserContext.setIsUserSystem(Boolean.TRUE);
+//        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
+//        for (String poId : poIds) {
+//            PurchaseOrderEntity entity = entityMap.get(poId);
+//            if (ObjectUtil.isEmpty(entity)) {
+//                throw new ServiceException(ApiError.PO_NOT_FOUND);
+//            }
+//            //提交
+//            BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
+//            if (!submit.getSuccess()) {
+//                throw new ServiceException(ApiError.PO_SUBMIT_FAILED);
+//            }
+//            //审核
+//            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+//            approveOneDTO.setId(poId);
+//            approveOneDTO.setType(ApproveType.PASS);
+//            BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
+//            if (!approve.getSuccess()) {
+//                throw new ServiceException(ApiError.PO_APPROVE_FAILED);
+//            }
+//        }
+//        //恢复系统标识
+//        UserContext.setIsUserSystem(originalValue);
+    }
+
+    /**
+     * @description: 校验不同退货方式的采购退货单不允许合并下推委外订单
+     * @author Will
+     * @date: 2026/4/20
+     * @param list
+     */
+    private void validateReturnMode(List<SubcontractOrderDTO.GeneratePoDTO> list) {
+        // 收集所有采购退货单ID
+        List<String> allPoReturnIds = new ArrayList<>();
+        for (SubcontractOrderDTO.GeneratePoDTO dto : list) {
+            if (StringUtils.isNotBlank(dto.getSourceId())) {
+                for (String id : dto.getSourceId().split(",")) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allPoReturnIds.add(id.trim());
+                    }
+                }
             }
         }
-        //恢复系统标识
-        UserContext.setIsUserSystem(originalValue);
+        
+        // 查询采购退货单
+        if (CollUtil.isNotEmpty(allPoReturnIds)) {
+            List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(allPoReturnIds);
+            if (CollUtil.isNotEmpty(poReturnEntityList)) {
+                // 收集所有退货方式
+                List<String> returnModes = poReturnEntityList.stream()
+                        .map(PoReturnEntity::getReturnMode)
+                        .filter(StrUtil::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                
+                // 检查是否存在不同的退货方式
+                if (returnModes.size() > 1) {
+                    throw new ServiceException(ApiError.PO_RETURN_NOT_ALLOW_PUSH_DOWN);
+                }
+            }
+        }
     }
 
     /**
@@ -925,10 +992,15 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             addDTO.setPurchaseDate(LocalDate.now());
             //委外类型
             if (generatePoAddDTO.getIsParent()) {
-
-                addDTO.setType(PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode());
+                // 委外返修类型的委外订单，成品使用"返修采购订单"类型
+                if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), generatePoAddDTO.getType())) {
+                    addDTO.setType(PurchaseOrderTypeEnum.ENUM_REPAIR.getCode());
+                } else {
+                    addDTO.setType(PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode());
+                }
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_PARENT.getCode());
             } else {
+                // 子件使用"标准采购订单"类型（不变）
                 addDTO.setType(PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode());
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_CHILD.getCode());
             }
@@ -999,17 +1071,37 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      * @param resultList
      */
     private void fillGeneratePoDTO (List<SubcontractOrderDTO.GeneratePoAddDTO> resultList) {
-        //委外订单主表信息
-        List<String> sourceIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceId).collect(Collectors.toList());
-        List<SubcontractOrderEntity> mainList = this.listByIds(sourceIds);
+        // 收集所有sourceId（支持逗号分隔的多个ID）
+        List<String> allSourceIds = new ArrayList<>();
+        for (SubcontractOrderDTO.GeneratePoDTO dto : resultList) {
+            if (StringUtils.isNotBlank(dto.getSourceId())) {
+                String[] ids = dto.getSourceId().split(",");
+                for (String id : ids) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allSourceIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        List<SubcontractOrderEntity> mainList = this.listByIds(allSourceIds);
         if (CollectionUtils.isEmpty(mainList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
         }
 
-        //委外订单明细信息
-        List<String> sourceDetailIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceDetailId).collect(Collectors.toList());
-        log.info("查询委外订单明细，detailIds = 【{}】",sourceDetailIds);
-        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
+        // 收集所有sourceDetailId（支持逗号分隔的多个ID）
+        List<String> allSourceDetailIds = new ArrayList<>();
+        for (SubcontractOrderDTO.GeneratePoDTO dto : resultList) {
+            if (StringUtils.isNotBlank(dto.getSourceDetailId())) {
+                String[] ids = dto.getSourceDetailId().split(",");
+                for (String id : ids) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allSourceDetailIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        log.info("查询委外订单明细，detailIds = 【{}】",allSourceDetailIds);
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(allSourceDetailIds);
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
         }
@@ -1022,13 +1114,32 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         for (SubcontractOrderDTO.GeneratePoAddDTO generatePoDTO :  resultList) {
-            //主表
-            SubcontractOrderEntity mainEntity = mainList.stream().filter(obj -> obj.getId().equals(generatePoDTO.getSourceId())).findFirst().orElse(null);
+            // 解析sourceId列表（支持逗号分隔）
+            List<String> sourceIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(generatePoDTO.getSourceId())) {
+                for (String id : generatePoDTO.getSourceId().split(",")) {
+                    if (StringUtils.isNotBlank(id)) {
+                        sourceIdList.add(id.trim());
+                    }
+                }
+            }
+            //主表 - 取第一个匹配的委外订单
+            SubcontractOrderEntity mainEntity = mainList.stream().filter(obj -> sourceIdList.contains(obj.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(mainEntity)) {
                 throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
             }
-            //明细
-            SubcontractOrderDetailEntity detailEntity = detailList.stream().filter(obj -> obj.getId().equals(generatePoDTO.getSourceDetailId())).findFirst().orElse(null);
+            
+            // 解析sourceDetailId列表（支持逗号分隔）
+            List<String> sourceDetailIdList = new ArrayList<>();
+            if (StringUtils.isNotBlank(generatePoDTO.getSourceDetailId())) {
+                for (String id : generatePoDTO.getSourceDetailId().split(",")) {
+                    if (StringUtils.isNotBlank(id)) {
+                        sourceDetailIdList.add(id.trim());
+                    }
+                }
+            }
+            //明细 - 取第一个匹配的委外订单明细
+            SubcontractOrderDetailEntity detailEntity = detailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
             }
@@ -1040,6 +1151,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
             //是否是父级sku
             generatePoDTO.setIsParent(StringUtils.isBlank(detailEntity.getParentId()) ? Boolean.TRUE :Boolean.FALSE );
+            //委外订单类型
+            generatePoDTO.setType(mainEntity.getType());
             //采购员
             generatePoDTO.setPurchaseUserId(mainEntity.getPurchaserId());
             //采购部门
@@ -1721,8 +1834,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPrice(List<SubcontractOrderDTO.ListPriceParamDTO> dto) {
         List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> listSubcontractOrderSkuPriceDTOS = new ArrayList<>();
-        List<String> sourceIdList = dto.stream().map(item -> item.getSourceId()).collect(Collectors.toList());
-        List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(sourceIdList);
+        // 收集所有sourceId（支持逗号分隔的多个ID）
+        List<String> allSourceIds = new ArrayList<>();
+        for (SubcontractOrderDTO.ListPriceParamDTO paramDTO : dto) {
+            if (StringUtils.isNotBlank(paramDTO.getSourceId())) {
+                String[] ids = paramDTO.getSourceId().split(",");
+                for (String id : ids) {
+                    if (StringUtils.isNotBlank(id)) {
+                        allSourceIds.add(id.trim());
+                    }
+                }
+            }
+        }
+        List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(allSourceIds);
         List<String> poReturnDetailIdList = poReturnList.stream().map(item -> item.getId()).collect(Collectors.toList());
         List<PoReturnDetailEntity> poReturnDetailList = wmsTaskFeign.listPoReturnByMainIdList(poReturnDetailIdList);
 

@@ -138,4 +138,14 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
 
     PagingVO<LogisticsSupplierDTO.PagingSelectDTO> pagingSelect(PagingDTO<LogisticsSupplierDTO.SelectDTO> dto);
+
+    List<BaseDropDownDTO.DisabledDTO> listWithAll(Boolean filterDisabled);
+
+    /**
+     * 根据物流平台获取物流商渠道树形结构
+     *
+     * @param dto LogisticsSupplierDTO.SelectDTO
+     * @return List<LogisticsSupplierDTO.ListChildTreeDTO>
+     */
+    List<LogisticsSupplierDTO.ListChildTreeDTO> getSupplierTreeByPlatform(LogisticsSupplierDTO.SelectDTO dto);
 }

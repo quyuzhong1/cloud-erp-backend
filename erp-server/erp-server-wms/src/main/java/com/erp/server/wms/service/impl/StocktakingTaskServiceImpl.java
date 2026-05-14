@@ -11,6 +11,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -25,7 +30,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
@@ -878,7 +883,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     /**
      * 撤销流程
      *
-     * @param id
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-08 18:08
@@ -886,7 +891,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         StocktakingTaskEntity taskEntity = this.getById(id);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException("未找到盘点任务单");
@@ -897,7 +903,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
-        handleCancelProcess(taskEntity, userId);
+        handleCancelProcess(dto,taskEntity, userId);
         List<StocktakingTaskEntity> stocktakingTaskEntities = listBySourceId(taskEntity.getSourceId());
         // 全部审核完成 修改盘点计划单据状态
         StocktakingStatusEnum stocktakingStatus = isAllMatchStocktakingStatus(stocktakingTaskEntities);
@@ -918,8 +924,9 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
      */
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public void handleCancelProcess(StocktakingTaskEntity taskEntity, String userId) {
+    public void handleCancelProcess(ApproveDTO.CancelProcessDTO dto,StocktakingTaskEntity taskEntity, String userId) {
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(taskEntity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_TASK.getCode());
         revokeDTO.setUserId(userId);
@@ -1064,7 +1071,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {
             // 判断如果已存在盘点任务，抛出异常
-            String existKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            String existKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             Collection<String> keys = redisUtil.keys(existKey);
             if (CollUtil.isNotEmpty(keys)) {
                 WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(item.getWarehouseId());
@@ -1072,7 +1079,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                 log.error("仓库【{}】库位【{}】 SKU【{}】【{}】库存 已存在盘点任务，不能重复创建", warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
                 throw new ServiceException(ApiError.WH_STOCKTAKING_TASK_EXIST, warehouseName, item.getWarehouseLocation(), item.getSkuNo(), item.getDictInventoryStatus());
             }
-            String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             redisUtil.set(redisKey, planCode);
         });
         // 3. 对库存记录进行分组，按照分单规则进行分组
@@ -1134,7 +1141,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         String planCode = entity.getCode();
         // 2. 对需要盘点的 组织+仓库+仓位+skuId+库存状态 进行增加锁定库存操作
         inventoryList.stream().forEach(item -> {
-            String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
+            String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, entity.getCode(), item.getOrgId(), item.getWarehouseId(), item.getWarehouseLocation(), item.getSkuId(), item.getDictInventoryStatus());
             redisUtil.set(redisKey, planCode);
         });
         // 3. 对库存记录进行分组，按照分单规则进行分组

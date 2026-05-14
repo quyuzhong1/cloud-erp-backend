@@ -1,14 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -115,6 +115,25 @@ public class QcNoticeDetailEntity extends BaseEntity<QcNoticeDetailEntity> {
     */
     @TableField("putaway_date")
     private LocalDateTime putawayDate;
+
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
+     * 采购订单明细id
+     */
+    @TableField("supplier_id")
+    private String supplierId;
+
+
+    /**
+     * 供应商id
+     */
+    @TableField("purchase_order_detail_id")
+    private String purchaseOrderDetailId;
 
 
     public static final String MAIN_ID = "main_id";

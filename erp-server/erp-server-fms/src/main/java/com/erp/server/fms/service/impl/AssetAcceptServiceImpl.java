@@ -35,8 +35,8 @@ import com.erp.model.fms.dto.excel.AssetAcceptExcelDTO;
 import com.erp.model.fms.entity.AssetAcceptDetailEntity;
 import com.erp.model.fms.entity.AssetAcceptEntity;
 import com.erp.model.fms.entity.AssetAcceptPersonEntity;
-import com.erp.model.fms.entity.AttachmentEntity;
 import com.erp.model.plm.entity.CfgMouldSettingEntity;
+import com.erp.model.fms.entity.FmsAttachmentEntity;
 import com.erp.model.fms.enums.UnitEnum;
 import com.erp.model.fms.enums.*;
 import com.erp.model.plm.entity.MoldInfoEntity;
@@ -291,14 +291,14 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         List<String> attachmentUrlList = addDTO.getAttachmentUrlList();
         //附件名
         List<String> attachmentNameList = addDTO.getAttachmentNameList();
-        List<AttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+        List<FmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
         if (CollUtil.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
             Class<AssetAcceptEntity> entityClass = AssetAcceptEntity.class;
             TableName tableName = entityClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
             String type = tableName.value();
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity attachment = new AttachmentEntity();
+                FmsAttachmentEntity attachment = new FmsAttachmentEntity();
                 attachment.setAttachUrl(attachmentUrlList.get(i));
                 attachment.setAttachName(attachmentNameList.get(i));
                 attachment.setBusinessId(assetAcceptEntity.getId());
@@ -659,10 +659,10 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 //获取到表名
                 String type = tableName.value();
 
-                List<AttachmentEntity> batchAttachmentList = new ArrayList<>();
+                List<FmsAttachmentEntity> batchAttachmentList = new ArrayList<>();
                 for (int i = 0; i < attachmentUrlList.size(); i++) {
                     if(!oldUrlList.contains(attachmentUrlList.get(i))){
-                        AttachmentEntity addAttachment = new AttachmentEntity();
+                        FmsAttachmentEntity addAttachment = new FmsAttachmentEntity();
                         addAttachment.setAttachUrl(attachmentUrlList.get(i));
                         addAttachment.setAttachName(attachmentNameList.get(i));
                         addAttachment.setBusinessId(old.getId());
@@ -965,7 +965,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_ACCEPTANCE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        revokeDTO.setSourcePlatform(dto.getSourcePlatform());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         workflowFeign.revokeProcess(revokeDTO);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
@@ -1334,7 +1334,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                             detailView.setMoldType(moldInfo.getType());
                             detailView.setMoldTypeName(moldTypeName);
                         }
-                        
+
                         // 填充资产位置名称
                         if (StringUtils.isNotBlank(detail.getAssetLocationId())) {
                             String locationName = finalAssetLocationMap.get(detail.getAssetLocationId());
@@ -1491,7 +1491,7 @@ public class AssetAcceptServiceImpl extends SuperServiceImpl<AssetAcceptMapper, 
                 data.setMoldType(moldInfo.getType());
                 data.setMoldTypeName(moldTypeName);
             }
-            
+
             // 设置验收人中文名称（从数据库中已有的 acceptUserName 字段获取）
             data.setAcceptPersonNames(data.getAcceptUserName());
 

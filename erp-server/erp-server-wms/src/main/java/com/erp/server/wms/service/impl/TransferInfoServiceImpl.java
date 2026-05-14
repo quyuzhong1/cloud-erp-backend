@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -34,7 +35,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.InventorySyncModeEnum;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -415,7 +419,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //更新审核状态
         updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        operateLogService.addModuleOperateLog("提交了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog("提交了一个直接调拨单", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -1265,7 +1269,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if(mappingList.isEmpty()){
             return;
         }
-
         //根据来源查询parentId
         String parentId = "";
         if (CharSequenceUtil.equals(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),entity.getSourceType())) {
@@ -1278,6 +1281,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         Map<String, List<TransferInfoDetailEntity>> outWarehouseCollect = transferDetailList.stream().collect(Collectors.groupingBy(item -> item.getOutWarehouseId()));
         for (Map.Entry<String, List<TransferInfoDetailEntity>> entry : outWarehouseCollect.entrySet()) {
             String warehouseId = entry.getKey();
+            ThirdMappingDTO.WarehouseMappingDTO warehouseMappingDTO = mappingList.stream().filter(e -> CharSequenceUtil.equals(e.getSysWarehouseId(), warehouseId)).findFirst().orElse(null);
+            if (Objects.nonNull(warehouseMappingDTO) && CharSequenceUtil.isNotBlank(warehouseMappingDTO.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(warehouseMappingDTO.getInventorySyncMode())){
+                log.warn("调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), warehouseId);
+                continue;//存在库存同步的配置则不再推送旺店通
+            }
             List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
             for (TransferInfoDetailEntity detailEntity : entry.getValue()) {
                 CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
@@ -1294,6 +1302,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         Map<String, List<TransferInfoDetailEntity>> inWarehouseCollect = transferDetailList.stream().collect(Collectors.groupingBy(item -> item.getInWarehouseId()));
         for (Map.Entry<String, List<TransferInfoDetailEntity>> entry : inWarehouseCollect.entrySet()) {
             String warehouseId = entry.getKey();
+            ThirdMappingDTO.WarehouseMappingDTO warehouseMappingDTO = mappingList.stream().filter(e -> CharSequenceUtil.equals(e.getSysWarehouseId(), warehouseId)).findFirst().orElse(null);
+            if (Objects.nonNull(warehouseMappingDTO) && CharSequenceUtil.isNotBlank(warehouseMappingDTO.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(warehouseMappingDTO.getInventorySyncMode())){
+                log.warn("调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), warehouseId);
+                continue;//存在库存同步的配置则不再推送旺店通
+            }
             List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
             for (TransferInfoDetailEntity detailEntity : entry.getValue()) {
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
@@ -1335,6 +1348,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         Map<String, List<TransferInfoDetailEntity>> inWarehouseCollect = transferDetailList.stream().collect(Collectors.groupingBy(item -> item.getInWarehouseId()));
         for (Map.Entry<String, List<TransferInfoDetailEntity>> entry : inWarehouseCollect.entrySet()) {
             String warehouseId = entry.getKey();
+            ThirdMappingDTO.WarehouseMappingDTO warehouseMappingDTO = mappingList.stream().filter(e -> CharSequenceUtil.equals(e.getSysWarehouseId(), warehouseId)).findFirst().orElse(null);
+            if (Objects.nonNull(warehouseMappingDTO) && CharSequenceUtil.isNotBlank(warehouseMappingDTO.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(warehouseMappingDTO.getInventorySyncMode())){
+                log.warn("调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), warehouseId);
+                continue;//存在库存同步的配置则不再推送旺店通
+            }
             List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
             for (TransferInfoDetailEntity detailEntity : entry.getValue()) {
                 CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
@@ -1351,6 +1369,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         Map<String, List<TransferInfoDetailEntity>> outWarehouseCollect = transferDetailList.stream().collect(Collectors.groupingBy(item -> item.getOutWarehouseId()));
         for (Map.Entry<String, List<TransferInfoDetailEntity>> entry : outWarehouseCollect.entrySet()) {
             String warehouseId = entry.getKey();
+            ThirdMappingDTO.WarehouseMappingDTO warehouseMappingDTO = mappingList.stream().filter(e -> CharSequenceUtil.equals(e.getSysWarehouseId(), warehouseId)).findFirst().orElse(null);
+            if (Objects.nonNull(warehouseMappingDTO) && CharSequenceUtil.isNotBlank(warehouseMappingDTO.getInventorySyncMode()) && InventorySyncModeEnum.INVENTORY.getCode().equals(warehouseMappingDTO.getInventorySyncMode())){
+                log.warn("调拨单【{}】同步旺店通时，仓库【{}】存在库存同步配置，跳过同步旺店通",entity.getCode(), warehouseId);
+                continue;//存在库存同步的配置则不再推送旺店通
+            }
             List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
             for (TransferInfoDetailEntity detailEntity : entry.getValue()) {
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
@@ -1421,7 +1444,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //审核中允许审核
@@ -1435,6 +1459,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -2071,7 +2096,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //如果是审核中，撤销
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
                 try {
-                    this.cancelProcess(Collections.singletonList(entity.getId()));
+                    this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(entity.getId())));
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
                 }
@@ -2141,7 +2166,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(unSubmitList)){
             List<String> unSubmitIds = unSubmitList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-            cancelProcess(unSubmitIds);
+            cancelProcess(new ApproveDTO.BatchCancelProcessDTO(unSubmitIds));
         }
         List<String> delIds = list.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
         // 删除

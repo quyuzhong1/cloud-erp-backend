@@ -1,85 +1,80 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
-import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
-import com.erp.model.scm.enums.AssetNoticeTabListEnum;
-import com.erp.model.scm.enums.AssetPurchaseOrderTypeEnum;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
-import com.erp.server.scm.service.AttachmentService;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.AssetNoticeExcelListener;
 import com.erp.server.scm.mapper.AssetNoticeMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.FieldValidUtil;
-import org.springframework.web.multipart.MultipartFile;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_NOTICE;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_NOTICE;
 
 /**
  * <p>
@@ -803,7 +798,8 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -820,6 +816,7 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.ASSET_NOTICE.getCode(), pairList, "撤销");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_NOTICE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -987,8 +984,10 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
 
     /**
      * 构造提交流程的变量集合
-     * 附件存放在独立的 attachment 表，需要主动查询并补充到 variablesMap，
-     * 否则飞书流程模板里映射到 attachmentUrlList/attachmentNameList 等字段时取不到值。
+     * 附件存放在独立的 attachment 表，明细存放在 asset_notice_detail 表，
+     * 都需要主动查询并补充到 variablesMap，否则飞书流程模板里映射到
+     * attachmentUrlList/attachmentNameList/明细 fieldList 等字段时取不到值，
+     * 飞书会报"明细控件(fieldList)值不是数组"或"控件值不合法或者为空"。
      */
     private Map<String, Object> getVariablesMap(AssetNoticeEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
@@ -1009,6 +1008,21 @@ public class AssetNoticeServiceImpl extends SuperServiceImpl<AssetNoticeMapper, 
         variablesMap.put("attachmentUrlList", attachmentUrlList);
         variablesMap.put("attachmentNameList", attachmentNameList);
         variablesMap.put("attachmentMap", attachmentMap);
+
+        // 主动查询明细列表并补充到 variablesMap，飞书 form 中的 fieldList 控件依赖此数据
+        // 兼容运营在 cfg_process_field_map.sys_parent_id 上配置的几种常见命名：
+        //   detailList（与 AssetAcceptServiceImpl 保持一致的惯例）
+        //   assetNoticeDetailList / assetNoticeDetailDTOList（按实体属性命名）
+        List<AssetNoticeDetailEntity> detailList = assetNoticeDetailService.list(
+                new LambdaQueryWrapper<AssetNoticeDetailEntity>()
+                        .eq(AssetNoticeDetailEntity::getMainId, entity.getId()));
+        List<Map<String, Object>> detailMapList = CollUtil.isEmpty(detailList) ? new ArrayList<>()
+                : BeanUtil.copyToList(detailList, Map.class).stream()
+                .map(m -> (Map<String, Object>) m)
+                .collect(Collectors.toList());
+        variablesMap.put("detailList", detailMapList);
+        variablesMap.put("assetNoticeDetailList", detailMapList);
+        variablesMap.put("assetNoticeDetailDTOList", detailMapList);
         return variablesMap;
     }
     private void fillOne(AssetNoticeDTO.ViewDTO data) {

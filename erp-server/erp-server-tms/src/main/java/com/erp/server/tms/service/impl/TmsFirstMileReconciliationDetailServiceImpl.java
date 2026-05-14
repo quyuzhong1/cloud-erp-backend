@@ -59,6 +59,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,6 +78,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -139,6 +144,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private ProductPackFeign productPackFeign;
     @Resource
     private InventorySkuCostService inventorySkuCostService;
+    @Resource
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
+    @Resource
+    private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
+    @Autowired
+    @Qualifier("costAllocationPool")
+    private ExecutorService costAllocationPool;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -445,6 +457,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
         }
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>(billIds.size());
+        Map<String, TmsFirstMileReconciliationDetailEntity> estimatedMap = list.stream()
+                .filter(e -> Objects.nonNull(e)
+                        && DetailReconciliationTypeEnum.ESTIMATED.getCode().equalsIgnoreCase(e.getType())
+                        && CharSequenceUtil.isNotBlank(e.getSourceId()))
+                .collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getSourceId, Function.identity(), (first, second) -> first));
         for (String billId : billIds) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.equals(billId, e.getId())).findFirst().orElse(null);
             if (Objects.isNull(logisticsBillEntity)) {
@@ -459,6 +476,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
             entity.setLogisticsBillId(billId);
             entity.setTransportNo(logisticsBillEntity.getTransportNo());
+            backfillEstimatedWeight(entity, estimatedMap.get(billId));
             TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
             if (null == actualDetailEntity) {
                 // 移除
@@ -466,10 +484,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 continue;
             }
             // 更新实际重量和体积重, 计费重
-            entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
-            entity.setWeightLogistics(actualDetailEntity.getActualWeight());
-            // 费用重取最大
-            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
+            entity.setVolumeWeightLogistics(defaultWeight(actualDetailEntity.getVolumeWeight()));
+            entity.setWeightLogistics(defaultWeight(actualDetailEntity.getActualWeight()));
+            entity.setBillingWeightLogistics(maxWeight(actualDetailEntity.getVolumeWeight(), actualDetailEntity.getActualWeight()));
             //默认kg
             entity.setWeightUnit(CharSequenceUtil.isBlank(actualDetailEntity.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.code : actualDetailEntity.getActualWeightUnit());
             // 设置实际费用明细
@@ -502,6 +519,58 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             updateBillList.add(entity);
         }
         return updateBillList;
+    }
+
+    /**
+     * 使用预估明细补齐费用记录的预估重量。
+     *
+     * @param entity 物流费用记录
+     * @param estimatedDetailEntity 预估对账明细
+     */
+    private void backfillEstimatedWeight(LogisticsBillCostEntity entity, TmsFirstMileReconciliationDetailEntity estimatedDetailEntity) {
+        if (Objects.isNull(entity) || Objects.isNull(estimatedDetailEntity)) {
+            return;
+        }
+        if (isBlankWeight(entity.getActualWeight()) && Objects.nonNull(estimatedDetailEntity.getActualWeight())) {
+            entity.setActualWeight(estimatedDetailEntity.getActualWeight());
+        }
+        if (isBlankWeight(entity.getVolumeWeight()) && Objects.nonNull(estimatedDetailEntity.getVolumeWeight())) {
+            entity.setVolumeWeight(estimatedDetailEntity.getVolumeWeight());
+        }
+        if (isBlankWeight(entity.getBillingWeight()) && Objects.nonNull(estimatedDetailEntity.getBillingWeight())) {
+            entity.setBillingWeight(estimatedDetailEntity.getBillingWeight());
+        }
+    }
+
+    /**
+     * 判断重量是否为空白值。
+     *
+     * @param value 重量
+     * @return 为空或零时返回true
+     */
+    private boolean isBlankWeight(BigDecimal value) {
+        return Objects.isNull(value) || BigDecimal.ZERO.compareTo(value) == 0;
+    }
+
+    /**
+     * 获取重量默认值。
+     *
+     * @param value 重量
+     * @return 非空重量或零
+     */
+    private BigDecimal defaultWeight(BigDecimal value) {
+        return Objects.nonNull(value) ? value : BigDecimal.ZERO;
+    }
+
+    /**
+     * 获取物流商计费重。
+     *
+     * @param volumeWeight 体积重
+     * @param actualWeight 实重
+     * @return 体积重和实重的较大值
+     */
+    private BigDecimal maxWeight(BigDecimal volumeWeight, BigDecimal actualWeight) {
+        return defaultWeight(volumeWeight).max(defaultWeight(actualWeight));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -720,17 +789,17 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return Arrays.asList(sourceListDTO, actualListDTO, diffListDTO);
     }
 
+    /**
+     * N次对账仅重置费用字段，保留预估重量和物流商重量来源。
+     *
+     * @param sourceListDTO 头程对账明细
+     */
     private void initSourceDataDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO) {
         sourceListDTO.setTotalLogisticsCost(BigDecimal.ZERO);
-        sourceListDTO.setActualWeight(BigDecimal.ZERO);
-        sourceListDTO.setVolumeWeight(BigDecimal.ZERO);
-        sourceListDTO.setBillingWeight(BigDecimal.ZERO);
         sourceListDTO.setShippingCost(BigDecimal.ZERO);
         sourceListDTO.setDeclareCost(BigDecimal.ZERO);
         sourceListDTO.setOtherCost(BigDecimal.ZERO);
         sourceListDTO.setOtherTaxCost(BigDecimal.ZERO);
-        sourceListDTO.setVolumeWeightLogistics(BigDecimal.ZERO);
-        sourceListDTO.setWeightLogistics(BigDecimal.ZERO);
     }
 
 
@@ -2778,6 +2847,167 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 //                    .collect(Collectors.toList());
 //            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),reconciliationEntity.getId());
         }
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public boolean addTaskDetailByFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        String taskId = dto.getTaskId();
+        LocalDate startDate = dto.getStartDate();
+        LocalDate endDate = dto.getEndDate();
+        String transportNo ="";
+        List<String> logisticsSupplierIds = dto.getIds();
+        if (null == startDate || null == endDate) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
+            return true;
+        }
+        // 查询周期内已签收未对账的物流单
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate,transportNo);
+        if(CollUtil.isNotEmpty(logisticsSupplierIds)){
+            detailList = detailList.stream().filter(e -> logisticsSupplierIds.contains(e.getLogisticsSupplierId())).collect(Collectors.toList());
+        }
+
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(list)) {
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"周期内已签收未对账的物流单为空");
+            return true;
+        }
+        // 根据物流商
+        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map = list
+                .stream()
+                .filter(e -> StringUtils.isNotBlank(e.getCurrency()))
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsSupplierId));
+        //记录本次任务数量
+        asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,map.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
+
+        List<TmsAsyncTaskDetailEntity> taskDetailList = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        for (Map.Entry<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : map.entrySet()) {
+            String logisticsSupplierId = entry.getKey();
+            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+            detail.setMainId(taskId);
+            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
+            detail.setBusinessId(logisticsSupplierId);
+//            detail.setBusinessCode(firstMileDeliveryEntity.getCode());
+            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+            detail.setCreateTime(now);
+            taskDetailList.add(detail);
+        }
+        asyncTaskDetailRecordService.saveBatch(taskDetailList);
+        return false;
+    }
+
+    @Override
+    public void pushFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        String taskId = dto.getTaskId();
+        LocalDate startDate = dto.getStartDate();
+        LocalDate endDate = dto.getEndDate();
+        String transportNo ="";
+
+
+        TmsAsyncTaskRecordEntity tmsAsyncTaskRecordEntity = asyncTaskRecordService.getById(taskId);
+        if(Objects.isNull(tmsAsyncTaskRecordEntity)){
+            log.error("任务记录不存在，taskId: {}", taskId);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),ApiError.LOGISTICS_PENDING_COST_NOT_FOUND.getMsg());
+            return;
+        }
+
+        List<TmsAsyncTaskDetailEntity> taskDetailList = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list();
+
+        // 查询周期内已签收未对账的物流单
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliation(startDate, endDate,transportNo);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
+
+        // 根据物流商
+        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map = list
+                .stream()
+                .filter(e -> StringUtils.isNotBlank(e.getCurrency()))
+                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsSupplierId));
+        List<String> billIds = list.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<String> supplierIds = list.stream().filter(Objects::nonNull).map(TmsFirstMileReconciliationDetailDTO.ListDTO::getLogisticsSupplierId).distinct().collect(Collectors.toList());
+        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
+        Map<String, String> supplierMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds, DetailReconciliationTypeEnum.ACTUAL.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), null);
+
+        CountDownLatch latch = new CountDownLatch(detailList.size());
+        for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
+            String taskDetailId = detail.getId();
+            String businessId = detail.getBusinessId();
+            costAllocationPool.execute(() -> {
+                try {
+                    //判断是否超时中止
+                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                    if(count >0){
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+
+                        processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
+
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                    }
+                } catch (Exception e) {
+                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
+                    // 统一处理任务失败状态更新
+                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+        try {
+            boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成
+            if(await){
+                asyncTaskRecordService.updateTaskFinally(taskId);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("任务等待中断", e);
+        }
+    }
+
+    private void processSingleTask(Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map, String businessId, LocalDate startDate, LocalDate endDate, Map<String, String> supplierMap, List<TmsFirstMileReconciliationDetailEntity> detailEntityList) {
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = map.get(businessId);
+        this.fillWaitReconciliationData(sourceDetailList);
+        TmsFirstMileReconciliationDetailDTO.ListDTO curListDTO = sourceDetailList.stream().findFirst().orElse(null);
+        String supplier = businessId;
+        // 查询对账单ID
+        TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.findByCycleAndSupplier(supplier, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), startDate, endDate);
+        if (null != reconciliationEntity) {
+            reconciliationEntity.setUpdateTime(LocalDateTime.now());
+        } else {
+            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = sourceDetailList.get(0);
+            String logisticsSupplierId = listDTO.getLogisticsSupplierId();
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCZD);
+            reconciliationEntity = new TmsFirstMileReconciliationEntity(code, startDate, endDate, logisticsSupplierId,  SupplierTypeEnum.LOGISTICS.getCode(),curListDTO.getCurrency());
+        }
+        reconciliationEntity.setLogisticsSupplierName(supplierMap.getOrDefault(reconciliationEntity.getLogisticsSupplierId(),""));
+        reconciliationEntity.setReconciliationMonth(Objects.nonNull(reconciliationEntity.getReconciliationMonth())?reconciliationEntity.getReconciliationMonth():reconciliationEntity.getEndDate().withDayOfMonth(1));
+        // 保存头程对账单
+        tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);
+
+        // 保存明细
+        TmsFirstMileReconciliationDTO.UpdateDTO updateDTO = new TmsFirstMileReconciliationDTO.UpdateDTO();
+        List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> allDetailDTOList = new LinkedList<>();
+        updateDTO.setId(reconciliationEntity.getId());
+        for (TmsFirstMileReconciliationDetailDTO.ListDTO listDTO : sourceDetailList) {
+            listDTO.setReconciliationId(reconciliationEntity.getId());
+            listDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            //当前明细对账单次数
+            int reconciliationCount = 1;
+            TmsFirstMileReconciliationDetailEntity maxDetailEntity = detailEntityList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(listDTO.getSourceId(),f.getSourceId()))
+                    .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+            if (Objects.nonNull(maxDetailEntity)){
+                reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
+            }
+            // 生成实际和差异记录
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO = this.generateAllTypeDTO(listDTO,reconciliationCount, Boolean.FALSE, SupplierTypeEnum.LOGISTICS.getCode());
+            List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailDTOList = TmsFirstMileReconciliationConverter.INSTANCE.convertDetailDTOList(saveListDTO);
+            allDetailDTOList.addAll(detailDTOList);
+        }
+        updateDTO.setDetailList(allDetailDTOList);
+        tmsFirstMileReconciliationService.update(updateDTO, Boolean.FALSE);
     }
 
     @Override

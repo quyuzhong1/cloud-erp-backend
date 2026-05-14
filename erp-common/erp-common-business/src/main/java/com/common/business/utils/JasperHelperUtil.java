@@ -2,11 +2,13 @@ package com.common.business.utils;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
 import com.common.business.dto.ReportCommonDTO.ReportDTO;
 import com.common.business.dto.ReportDataSourceDTO;
 import com.common.business.enums.FileTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
@@ -200,7 +202,16 @@ public class JasperHelperUtil {
     public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters, List<?> dataList) {
         return exportToPdfStream(is, parameters, null, MathUtil.ONE, dataList);
     }
-
+    /**
+     * 按照类型导出不同格式文件
+     *
+     * @param is         jasper文件输入流
+     * @param parameters 参数
+     */
+    public static String exportToPdfUrl(InputStream is, Map<String, Object> parameters, List<?> dataList) {
+        byte[] bytes = exportToPdfStream(is, parameters, null, MathUtil.ONE, dataList);
+        return FastDFSClientUtil.uploadFile(bytes, RandomUtil.randomNumbers(5) + ".pdf", null);
+    }
     /**
      * 按照类型导出不同格式文件
      *

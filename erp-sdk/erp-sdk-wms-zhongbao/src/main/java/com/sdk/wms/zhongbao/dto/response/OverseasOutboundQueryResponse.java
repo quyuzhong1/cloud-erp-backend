@@ -48,6 +48,18 @@ public class OverseasOutboundQueryResponse {
     public static class ResponseData {
 
         /**
+         * 当前页
+         */
+        @JSONField(name = "pageNum")
+        private String pageNum;
+
+        /**
+         * 页大小
+         */
+        @JSONField(name = "pageSize")
+        private String pageSize;
+
+        /**
          * 订单号
          */
         @JSONField(name = "totalCount")
@@ -73,6 +85,12 @@ public class OverseasOutboundQueryResponse {
     public static class DataList {
 
         /**
+         * 平台创建时间
+         */
+        @JSONField(name = "publishTime")
+        private String publishTime;
+
+        /**
          * 订单号
          */
         @JSONField(name = "orderNo")
@@ -91,6 +109,12 @@ public class OverseasOutboundQueryResponse {
         private String trackingNo;
 
         /**
+         * 出库时间
+         */
+        @JSONField(name = "outboundTime")
+        private String outboundTime;
+
+        /**
          * 状态
          * 5=>已出库：数大臣自动变更B2B三方发货单和订单已发货，并生成出库单
          * -1=>已取消：数大臣自动发起拦截，走拦截逻辑接口取消订单；如果订单已经是拦截中，则直接拦截成功，发货单变更为取消发货，订单变更为审核不通过-待配货
@@ -105,6 +129,25 @@ public class OverseasOutboundQueryResponse {
          */
         @JSONField(name = "errorReason")
         private String errorReason;
+
+        /**
+         * B2B扩展信息
+         */
+        @JSONField(name = "openB2b")
+        private OpenB2b openB2b;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class OpenB2b {
+
+        /**
+         * 收货仓代码
+         */
+        @JSONField(name = "receiveWarehouseCode")
+        private String receiveWarehouseCode;
     }
 
     /**

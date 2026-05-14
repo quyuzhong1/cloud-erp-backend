@@ -1,5 +1,6 @@
 package com.common.business.config;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -51,6 +52,7 @@ import java.util.Objects;
         "com.erp.server.srm.controller.api",
         "com.erp.server.dmp.controller.api",
         "com.erp.server.mrp.controller.api",
+        "com.erp.server.file.controller.api",
 
         "com.erp.server.scm.controller.pda",
         "com.erp.server.wms.controller.pda",
@@ -122,6 +124,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ApiResult<?> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
         log.warn("[HttpMessageNotReadableException] {}", e.getMessage());
+        log.error("[HttpMessageNotReadableException]异常信息", e);
+        log.warn("[HttpMessageNotReadableException]详细信息 {}", ExceptionUtil.stacktraceToString(e));
         return buildResult(ApiError.HTTP_BAD_REQUEST.getCode(),
                 ApiError.HTTP_BAD_REQUEST.getMsg() + ":" + e.getMessage());
     }

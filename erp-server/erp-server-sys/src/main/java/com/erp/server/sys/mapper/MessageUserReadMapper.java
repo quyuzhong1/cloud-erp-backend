@@ -16,5 +16,4 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface MessageUserReadMapper extends BaseMapper<MessageUserReadEntity> {
 
-
 }

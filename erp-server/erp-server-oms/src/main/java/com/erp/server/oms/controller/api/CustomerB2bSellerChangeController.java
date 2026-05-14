@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -158,7 +159,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
             serviceClass = CustomerB2bSellerChangeService.class,
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchCancel(dto.getIds());
+        List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchCancel(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 

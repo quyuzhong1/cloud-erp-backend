@@ -108,6 +108,8 @@ public class TestController extends BaseController {
         warnMsgInfoDTO.setTableName("so_outstock");
         warnMsgInfoDTO.setTableId("1661275939021000706");
         warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");
+        // 预警用户id
+        warnMsgInfoDTO.setUserIdList(Arrays.asList("3g7b881d", "fb1g22a2", "5e39e493"));
         msgContext.routeSendWarnMsg(warnMsgInfoDTO);
         return success();
     }

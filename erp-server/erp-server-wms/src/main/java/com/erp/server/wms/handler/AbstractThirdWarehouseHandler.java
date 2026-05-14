@@ -137,6 +137,13 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @Override
+    public ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(ThirdWarehouseQueryFbaOutboundPageReq queryOutboundReq, String authId) {
+        String businessCode = CharSequenceUtil.blankToDefault(queryOutboundReq.getStartUpdateTime(), "") + "~"
+                + CharSequenceUtil.blankToDefault(queryOutboundReq.getEndUpdateTime(), "");
+        return handleAndRemoveContext(() -> queryFbaOutboundBillPage(queryOutboundReq), authId, SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL, businessCode);
+    }
+
+    @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq, String authId) {
         return handleAndRemoveContext(() -> getCalculateFeeBatch(calculateFeeReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CALCULATE_FEE,calculateFeeReq.getCountryCode());
     }
@@ -186,6 +193,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<String> cancelFbaOutboundBill(@Valid ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq);
     protected abstract ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq);
     protected abstract ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@Valid ThirdWarehouseQueryFbaOutboundReq req);
+    protected ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(@Valid ThirdWarehouseQueryFbaOutboundPageReq req) {
+        return failure("当前平台不支持按时间分页查询B2B出库单");
+    }
 
     protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
@@ -203,11 +213,21 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             log.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getMsg(),e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
             pushOperateLog(businessType,2000,erpBusinessCode, false);
-            return ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(),e.getMessage());
+            return ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), getThirdWarehouseExceptionMessage(e, businessType));
         } finally {
             // remove thread-local
             ThirdWarehouseContext.remove();
         }
+    }
+
+    private String getThirdWarehouseExceptionMessage(Exception e, SourceTypeEnum businessType) {
+        if ((businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
+                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL)
+                && e instanceof NullPointerException
+                && CharSequenceUtil.isBlank(e.getMessage())) {
+            return "第三方仓接口返回为空";
+        }
+        return e.getMessage();
     }
 
     @FunctionalInterface
