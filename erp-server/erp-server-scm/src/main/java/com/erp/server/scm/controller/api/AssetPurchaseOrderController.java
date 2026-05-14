@@ -597,7 +597,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGenerateAssetAccept")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "scm:assetNotice:viewGenerateAssetAccept",
+            menuCode = "scm:assetPurchaseOrder:viewGenerateAssetAccept",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<List<AssetPurchaseOrderDTO.ViewGenerateAssetAcceptDTO>> viewGenerateAssetAccept(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -629,7 +629,7 @@ public class AssetPurchaseOrderController extends BaseController {
     @PostMapping("/viewGeneratePurchaseChangeOrder")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "apply_user_id,create_user_id",
-            menuCode = "scm:assetNotice:viewGeneratePurchaseChangeOrder",
+            menuCode = "scm:assetPurchaseOrder:viewGeneratePurchaseChangeOrder",
             serviceClass = AssetPurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<AssetPurchaseOrderDTO.ViewGeneratePurchaseChangeDTO> viewGeneratePurchaseChangeOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
