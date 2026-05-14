@@ -137,7 +137,7 @@ public class SysCodeServiceImpl implements SysCodeService {
         //分类组合
         String category = bestEntity.getCode() + secondEntity.getCode();
         dto.setCategory(category);
-        dto.setType(BusinessNoTypeEnum.SPU_NO.getCode());
+        dto.setType(Integer.valueOf(BusinessNoTypeEnum.SPU_NO.getCode()));
         String sysNo = sysUserFeign.getSpuNo(dto);
         isExistSpuNo(sysNo,dto);
         return sysNo;
@@ -147,10 +147,6 @@ public class SysCodeServiceImpl implements SysCodeService {
 
     @Override
     public String getBusinessNo(String businessHead, BusinessNoTypeEnum businessNoTypeEnum) {
-        SysCodeDTO dto = new SysCodeDTO();
-        dto.setCategory(businessHead);
-        dto.setType(businessNoTypeEnum.getCode());
-//        String sysNo = sysUserFeign.getBusinessNo(dto);
         String sysNo = docNoGenHelper.generateCode(businessNoTypeEnum);
         return sysNo;
     }
