@@ -180,7 +180,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             afterSalePackEntity.setSkuSpeciesQty(productMap.size());
             afterSalePackEntity.setTotalQty(detailList.stream().mapToInt(AfterSalePackDetailDTO.UpdateDTO::getPackQty).sum());
             afterSalePackEntity.setPackStatus(Boolean.TRUE);
-            afterSalePackDetailService.saveBatch(detailEntityList);
+            afterSalePackDetailService.saveOrUpdateBatch(detailEntityList);
             // 这是添加
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(afterSalePackEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
