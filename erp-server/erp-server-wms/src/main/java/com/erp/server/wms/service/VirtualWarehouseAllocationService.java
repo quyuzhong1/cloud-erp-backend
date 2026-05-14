@@ -126,10 +126,6 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
     Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
 
     /**
-     * 分货单导出
-     */
-    PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
-    /**
      * 查询库存数据
      * @author will
      * @date 2024/8/2 10:41

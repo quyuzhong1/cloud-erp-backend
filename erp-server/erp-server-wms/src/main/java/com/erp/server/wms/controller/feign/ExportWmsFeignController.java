@@ -313,8 +313,8 @@ public class ExportWmsFeignController {
             tableAlias = "vma"
     )
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
-    public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
-        return virtualWarehouseAllocationService.exportVirtualWarehouseAllocation(dto);
+    public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
+        return virtualWarehouseAllocationService.paging(dto);
     }
 
     @PostMapping("/aliexpressDelivery")
