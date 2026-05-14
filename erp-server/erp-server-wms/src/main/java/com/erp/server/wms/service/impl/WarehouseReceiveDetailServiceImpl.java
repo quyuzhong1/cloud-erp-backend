@@ -385,7 +385,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
         //查询采购订单下的质检批次合格数量汇总
         List<QcResultDTO.TotalLotQualifiedQtyDTO> totalAllowInstockQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
-        Map<String, Integer> totalAllowInstockQtyMap = totalAllowInstockQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
+        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty));
 
         //查询采购订单下的其他收货单的收货数量汇总
         List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);
@@ -398,8 +398,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<WarehouseReceiveDetailDTO.WaitQcQtyDTO> totalWaitQcQtyList = baseMapper.getTotalWaitQcQty(podIdList);
 
         for (WarehouseReceiveDetailEntity receiveDetailEntity : receiveDetailLIst) {
-            //采购订单明细下的批次质检合格数量汇总
-            Integer allowInstockQty = totalAllowInstockQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
+            //采购订单明细下的质检总数量汇总
+            Integer totalQty = totalQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
             //采购订单明细下的收货数量汇总
             Integer totalReceiveQty = totalReceiveQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
             //采购订单下的退货数量
@@ -409,7 +409,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             //采购订单明细下收货单的待质检数量汇总（不包括本单）
             Integer totalWaitQcQty = totalWaitQcQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPodId(), receiveDetailEntity.getPurchaseOrderDetailId()) && !CharSequenceUtil.equals(obj.getDetailId(), receiveDetailEntity.getId())).map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty).reduce(MathUtil.ZERO, Integer::sum);
            //待质检量=∑收货数量-质检合格量-∑待质检量 -∑退货数量,小于0时默认为0
-            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(allowInstockQty) ? MathUtil.ZERO : allowInstockQty) - totalWaitQcQty - returnQty;
+            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(totalQty) ? MathUtil.ZERO : totalQty) - totalWaitQcQty - returnQty;
             if (waitQcQty < MathUtil.ZERO) {
                 waitQcQty = MathUtil.ZERO;
             }
