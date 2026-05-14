@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -32,10 +33,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 /**
  * FBA InboundPlan 货件详情拉取 - 拉取FBA货件新流程
@@ -58,14 +61,22 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
             return Collections.emptyList();
         }
 
-        String shopId = resolveAuthShopIdByTaskChain();
+        DmpInputTaskEntity rootTask = resolveRootTaskByTaskChain();
+        String shopId = rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId());
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException("未找到店铺授权ID:taskId=" + dmpInputTaskEntity.getId());
         }
+        List<String> shipmentCodeList = parseShipmentCodeList(rootTask == null ? dmpInputTaskEntity.getExtendJson() : rootTask.getExtendJson());
+        Set<String> shipmentCodeSet = new LinkedHashSet<>(shipmentCodeList);
+
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (shopInfoDTO == null) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+
+        Map<String, JSONObject> shipmentDetailDataMap = new LinkedHashMap<>();
+        Map<String, JSONObject> allShipmentDetailDataMap = new LinkedHashMap<>();
+        Set<String> pendingShipmentCodeSet = new LinkedHashSet<>(shipmentCodeSet);
 
         AmazonRequestTypeRateLimiterEnum requestType = AmazonRequestTypeRateLimiterEnum.FBA_INBOUND_PLAN_SHIPMENT;
         String limitKey = buildRateLimitKey(shopInfoDTO, requestType);
@@ -76,7 +87,6 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         }
 
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
-        List<JSONObject> shipmentDetailData = new ArrayList<>();
         for (Map<String, Object> parentMongo : parentMongoData) {
             String inboundPlanId = parentMongo.getOrDefault("inboundPlanId", "").toString();
             if (StringUtils.isBlank(inboundPlanId)) {
@@ -89,8 +99,8 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
             for (String shipmentRawId : shipmentRawIdSet) {
                 try {
                     Shipment shipmentDetail = api.getShipment(inboundPlanId, shipmentRawId);
-                    if (shipmentDetail == null || StringUtils.isBlank(shipmentDetail.getShipmentConfirmationId())) {
-                        log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因=shipmentConfirmationId为空", inboundPlanId, shipmentRawId);
+                    if (shipmentDetail == null) {
+                        log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因=getShipment返回空", inboundPlanId, shipmentRawId);
                         continue;
                     }
                     JSONObject shipmentDetailJson = (JSONObject) JSON.toJSON(shipmentDetail);
@@ -106,11 +116,33 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                             shipmentDetailJson.put("marketplaceId", parentMarketplaceId);
                         }
                     }
-                    shipmentDetailData.add(shipmentDetailJson);
+                    String shipmentCode = resolveShipmentCode(shipmentDetailJson, "");
+                    String allStoreCode = StringUtils.isNotBlank(shipmentCode) ? shipmentCode : shipmentRawId;
+                    allShipmentDetailDataMap.putIfAbsent(allStoreCode, shipmentDetailJson);
+                    String storeCode;
+                    if (CollUtil.isNotEmpty(shipmentCodeSet)) {
+                        if (!shipmentCodeSet.contains(shipmentCode)) {
+                            continue;
+                        }
+                        storeCode = shipmentCode;
+                    } else {
+                        storeCode = StringUtils.isNotBlank(shipmentCode) ? shipmentCode : shipmentRawId;
+                    }
+                    shipmentDetailDataMap.putIfAbsent(storeCode, shipmentDetailJson);
+                    pendingShipmentCodeSet.remove(shipmentCode);
+                    if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(pendingShipmentCodeSet)) {
+                        break;
+                    }
                 } catch (ApiException e) {
                     if (e.getCode() == 429) {
                         BigDecimal timeout = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(requestType.getRateLimit()), 8, RoundingMode.DOWN));
                         redisUtil.set(limitKey, requestType.getRateLimit(), timeout.longValue());
+                        if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(shipmentDetailDataMap) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
+                            log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复且未命中输入货件号:回退返回当前全量数据,货件数={}",
+                                    shopInfoDTO.getPlatformShopCode(),
+                                    allShipmentDetailDataMap.size());
+                            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(allShipmentDetailDataMap.values()))));
+                        }
                         log.warn("【FBA入库计划货件详情拉取】platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                         disableNextStatus(dmpResponse);
                         return Collections.emptyList();
@@ -120,12 +152,66 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
                     log.warn("跳过shipment，inboundPlanId={}, shipmentId={}, 原因={}", inboundPlanId, shipmentRawId, e.getMessage());
                 }
             }
+            if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isEmpty(pendingShipmentCodeSet)) {
+                break;
+            }
         }
 
-        if (CollUtil.isEmpty(shipmentDetailData)) {
+        if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isNotEmpty(pendingShipmentCodeSet)) {
+            log.info("【FBA入库计划货件详情拉取】platformShopCode={},输入货件号均未命中getShipment结果, shipmentCodeList={}",
+                    shopInfoDTO.getPlatformShopCode(),
+                    JSON.toJSONString(pendingShipmentCodeSet));
+        }
+
+        if (CollUtil.isEmpty(shipmentDetailDataMap)) {
+            if (CollUtil.isNotEmpty(shipmentCodeSet) && CollUtil.isNotEmpty(allShipmentDetailDataMap)) {
+                log.info("【FBA入库计划货件详情拉取】platformShopCode={},未命中输入货件号:回退全部落库,货件数={}",
+                        shopInfoDTO.getPlatformShopCode(),
+                        allShipmentDetailDataMap.size());
+                return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(allShipmentDetailDataMap.values()))));
+            }
             return Collections.emptyList();
         }
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(shipmentDetailData)));
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(new ArrayList<>(shipmentDetailDataMap.values()))));
+    }
+
+    private List<String> parseShipmentCodeList(String extendJson) {
+        if (StringUtils.isBlank(extendJson)) {
+            return Collections.emptyList();
+        }
+        JSONObject extendObj;
+        try {
+            extendObj = JSONObject.parseObject(extendJson);
+        } catch (Exception ignore) {
+            return Collections.emptyList();
+        }
+        if (extendObj == null) {
+            return Collections.emptyList();
+        }
+        JSONArray shipmentCodeArray = extendObj.getJSONArray("shipmentCodeList");
+        if (CollUtil.isEmpty(shipmentCodeArray)) {
+            return Collections.emptyList();
+        }
+        return shipmentCodeArray.stream()
+                .map(String::valueOf)
+                .map(StringUtils::trimToEmpty)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private String resolveShipmentCode(JSONObject shipmentJson, String fallbackShipmentCode) {
+        String shipmentCode = StringUtils.trimToEmpty(shipmentJson.getString("shipmentConfirmationId"));
+        if (StringUtils.isBlank(shipmentCode)) {
+            shipmentCode = StringUtils.trimToEmpty(shipmentJson.getString("shipmentId"));
+        }
+        if (StringUtils.isBlank(shipmentCode)) {
+            shipmentCode = StringUtils.trimToEmpty(shipmentJson.getString("fbaShipmentId"));
+        }
+        if (StringUtils.isBlank(shipmentCode)) {
+            return fallbackShipmentCode;
+        }
+        return shipmentCode;
     }
 
     @SuppressWarnings("unchecked")
@@ -163,7 +249,7 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
         return "";
     }
 
-    private String resolveAuthShopIdByTaskChain() {
+    private DmpInputTaskEntity resolveRootTaskByTaskChain() {
         DmpInputTaskEntity currentTask = dmpInputTaskEntity;
         int guard = 0;
         while (currentTask != null && StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < 20) {
@@ -174,9 +260,9 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentInitHandler extends DmpInput
             currentTask = parentTask;
         }
         if (currentTask == null) {
-            return "";
+            return null;
         }
-        return StringUtils.defaultString(currentTask.getNextLevelId());
+        return currentTask;
     }
 
     private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {

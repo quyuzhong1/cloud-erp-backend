@@ -41,7 +41,7 @@ public class DmpAmazonFeignController implements DmpAmazonFeign {
     /**
      * 手动拉取亚马逊FBA入库计划货件
      *
-     * @author Cloud
+     * @author wtr
      * @since 2026-05-11
      */
     @PostMapping("/amazon/getInboundPlanShipment")
