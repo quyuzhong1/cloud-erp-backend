@@ -43,6 +43,12 @@ public interface PackingTaskFeign {
     PackingTaskEntity getBySourceId(@RequestParam String sourceId);
 
     /**
+     * 根据来源单号批量查询装箱任务
+     */
+    @PostMapping("/feign/packingTask/listBySourceCodes")
+    List<PackingTaskEntity> listBySourceCodes(@RequestBody List<String> sourceCodes);
+
+    /**
      * 根据发货单单号查询是否有装箱重量
      */
     @PostMapping("/feign/packingTask/checkCartonWeightBySourceCodes")

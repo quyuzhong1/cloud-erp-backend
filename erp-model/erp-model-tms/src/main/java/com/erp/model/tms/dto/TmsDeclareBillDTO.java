@@ -842,6 +842,29 @@ public class TmsDeclareBillDTO implements Serializable {
          * 不会输出到 xlsx，对原导出行为透明。</p>
          */
         private ContractInfo contractInfo;
+
+        /**
+         * 发票 sheet 信息
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染，旧的单 sheet 导出（exportDeclare）模板未引用，
+         * 不会输出到 xlsx，对原导出行为透明。</p>
+         */
+        private InvoiceInfo invoiceInfo;
+
+        /**
+         * 装箱单 sheet 信息（主表 + 合计 + 明细行）
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染，旧的单 sheet 导出（exportDeclare）模板未引用，
+         * 不会输出到 xlsx，对原导出行为透明。</p>
+         */
+        private PackingListInfo packingListInfo;
+
+        /**
+         * 装箱明细 sheet 行集合（按 sourceCode -> 箱 -> SKU 三层展开）
+         *
+         * <p>仅多 sheet 导出（exportDeclareMulti）时填充并渲染。</p>
+         */
+        private List<PackingDetailItem> packingDetailItemList;
     }
 
     /**
@@ -957,6 +980,236 @@ public class TmsDeclareBillDTO implements Serializable {
          * 金额（保留 4 位小数）
          */
         private BigDecimal totalPrice;
+    }
+
+    /**
+     * 报关单导出 - 发票 sheet 主表信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvoiceInfo {
+
+        /**
+         * 卖方
+         */
+        private String sellerName;
+
+        /**
+         * 买方
+         */
+        private String buyerName;
+
+        /**
+         * 发票编号（取合同协议号）
+         */
+        private String no;
+
+        /**
+         * 发票日期（取报关日期 declareDate）
+         */
+        private LocalDate date;
+
+        /**
+         * 合计数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 合计金额（保留 4 位小数）
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 唛头（暂无数据源，预留占位）
+         */
+        private String marks;
+    }
+
+    /**
+     * 报关单导出 - 发票 sheet 明细行
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvoiceDetailItem {
+
+        /**
+         * 标记号码（固定 N/M）
+         */
+        private String markNo;
+
+        /**
+         * 货物名称、型号规格（报关中文名）
+         */
+        private String declareChineseName;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 单位（报关单位名称）
+         */
+        private String declareUnitName;
+
+        /**
+         * 单价（保留 4 位小数）
+         */
+        private BigDecimal price;
+
+        /**
+         * 总金额（保留 4 位小数）
+         */
+        private BigDecimal totalPrice;
+    }
+
+    /**
+     * 报关单导出 - 装箱单 sheet 主表 + TOTAL 合计
+     *
+     * <p>明细行集合不放在此 DTO，由模板的命名集合占位符 {@code {packingListItem.x}} 单独渲染。</p>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingListInfo {
+
+        /**
+         * Buyers（取境外收货人 receiverName）
+         */
+        private String buyers;
+
+        /**
+         * 日期（取报关日期 declareDate）
+         */
+        private LocalDate date;
+
+        /**
+         * 发票编号（取合同协议号 code）
+         */
+        private String invoiceNo;
+
+        /**
+         * 合约号（取合同协议号 code）
+         */
+        private String contractNo;
+
+        /**
+         * 船名 Shipped by（取抵运国 countryName）
+         */
+        private String shippedBy;
+
+        /**
+         * 箱号展示文案，规则："1-N"，N = 主表 boxQty；boxQty<=1 时退化为 "1"
+         */
+        private String boxNoLabel;
+
+        /**
+         * TOTAL 合计 - 总数(件)（取主表 boxQty）
+         */
+        private Integer totalBoxQty;
+
+        /**
+         * TOTAL 合计 - 总毛重(KG)（取主表 grossWeight）
+         */
+        private BigDecimal totalGrossWeight;
+
+        /**
+         * TOTAL 合计 - 总数量（按明细 qty 之和，等同 ExportDTO.totalQty）
+         */
+        private Integer totalQty;
+
+        /**
+         * TOTAL 合计 - 总净重(KG)，按明细 N.W. 之和（{@code product_pack.net_weight × qty} 累加，4 位精度）
+         */
+        private BigDecimal totalNetWeight;
+
+        /**
+         * From（暂无明确数据源，预留占位，模板手填或后续补）
+         */
+        private String fromArea;
+
+        /**
+         * To（暂无明确数据源，预留占位）
+         */
+        private String toArea;
+
+        /**
+         * 付款条件 Terms of Payment（暂不处理，预留占位）
+         */
+        private String paymentTerms;
+
+        /**
+         * 唛头 Marks（暂无数据源，预留占位）
+         */
+        private String marks;
+
+        /**
+         * 装箱单 sheet 明细行集合
+         */
+        private List<PackingListItem> itemList;
+    }
+
+    /**
+     * 报关单导出 - 装箱单 sheet 明细行
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingListItem {
+
+        /**
+         * 货物名称及规格 Description（报关中文名）
+         */
+        private String description;
+
+        /**
+         * 总数量 Ge.Quantity（明细 qty）
+         */
+        private Integer qty;
+
+        /**
+         * 总净重(KG) N.W.(KG) = {@code product_pack.net_weight × qty}，4 位精度
+         */
+        private BigDecimal netWeight;
+    }
+
+    /**
+     * 报关单导出 - 装箱明细 sheet 行（按 sourceCode -> 箱 -> SKU 三层展开）
+     *
+     * <p>取数链：sourceCode -> packing_task -> wms_carton_spec -> wms_carton_detail，
+     * 装箱重量取 {@code wms_carton_detail.gross_weight}（即装箱 SKU 在该箱内的预计毛重）。</p>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingDetailItem {
+
+        /**
+         * 单号（业务单号 = 关联发货单/销售出库单号）
+         */
+        private String sourceCode;
+
+        /**
+         * 箱号（wms_carton.box_no，真实箱号）
+         */
+        private Integer boxNo;
+
+        /**
+         * 装箱SKU 编码
+         */
+        private String skuNo;
+
+        /**
+         * 装箱数量（wms_carton_detail.pack_qty）
+         */
+        private Integer packQty;
+
+        /**
+         * 装箱重量（wms_carton_detail.gross_weight，单位 kg）
+         */
+        private BigDecimal grossWeight;
     }
 
     /**
