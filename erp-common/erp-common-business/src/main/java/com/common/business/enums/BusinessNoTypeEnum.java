@@ -175,7 +175,7 @@ public enum BusinessNoTypeEnum {
     CODE_WLD("WLD" ,"WLD","物流单据编号",BusinessNoConstant.WLD),
     CODE_VJ("VJ" ,"VJ","保宏预报合同号",BusinessNoConstant.VJ),
 
-    CODE_BOX(125 ,"BOX","箱码管理",BusinessNoConstant.BOX),
+    CODE_BOX("BOX" ,"BOX","箱码管理",BusinessNoConstant.BOX),
     ;
 
 
