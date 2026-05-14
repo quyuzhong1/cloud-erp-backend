@@ -76,22 +76,22 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     /**
     * 报关日期
     */
-    @TableField(value = "declare_date",updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "declare_date")
     private LocalDate declareDate;
     /**
     * 报关确认日期
     */
-    @TableField(value = "declar_confirm_date", updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "declar_confirm_date")
     private LocalDate declarConfirmDate;
     /**
     * 报关确认人id
     */
-    @TableField(value = "declar_user_id", updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "declar_user_id")
     private String declarUserId;
     /**
     * 报关确认人
     */
-    @TableField(value = "declar_user_name", updateStrategy = FieldStrategy.IGNORED)
+    @TableField(value = "declar_user_name")
     private String declarUserName;
     /**
     * 报关类型
