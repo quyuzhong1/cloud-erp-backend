@@ -13,7 +13,6 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="remark" property="remark" />
-       <result column="declare_status" property="declareStatus" />
        <result column="generate_status" property="generateStatus" />
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
@@ -60,7 +59,7 @@
         dddm.version AS version,
         dddm.is_deleted AS isDeleted,
         dddm.remark AS remark,
-        dddm.declare_status AS declareStatus,
+        tdb.declare_status AS declareStatus,
         dddm.generate_status AS generateStatus,
         dddm.source_id AS sourceId,
         dddm.source_code AS sourceCode,
@@ -99,6 +98,7 @@
         SELECT
         <include refid="Base_Column_List"/>
         FROM delivery_declare_detail_mid dddm
+        left join tms_declare_bill tdb on  dddm.declare_id=tdb.id and tdb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
         AND dddm.is_deleted=FALSE

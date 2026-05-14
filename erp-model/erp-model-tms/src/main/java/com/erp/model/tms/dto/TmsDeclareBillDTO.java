@@ -883,6 +883,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 卖方地址（境内核算公司地址）
          */
         private String sellerAddress;
+        /**
+         * 卖方电话
+         */
+        private String sellerMobile;
 
         /**
          * 买方

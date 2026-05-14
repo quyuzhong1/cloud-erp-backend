@@ -640,13 +640,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         private String remark;
 
         /**
-        * 报关状态：
-        */
-        @NotBlank(message = "报关状态：不能为空")
-        @Size(max = 50,message = "报关状态：最大长度不能超过50位")
-        private String declareStatus;
-
-        /**
         * 生成状态
         */
         @Size(max = 50,message = "生成状态最大长度不能超过50位")

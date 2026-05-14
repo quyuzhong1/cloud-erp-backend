@@ -31,11 +31,11 @@ public class DeliveryDeclareDetailMidEntity extends BaseEntity<DeliveryDeclareDe
     */
     @TableField("remark")
     private String remark;
-    /**
-    * 报关状态：
-    */
-    @TableField("declare_status")
-    private String declareStatus;
+//    /**
+//    * 报关状态：
+//    */
+//    @TableField("declare_status")
+//    private String declareStatus;
     /**
     * 生成状态：wait=未生成 finish=已生成
     */

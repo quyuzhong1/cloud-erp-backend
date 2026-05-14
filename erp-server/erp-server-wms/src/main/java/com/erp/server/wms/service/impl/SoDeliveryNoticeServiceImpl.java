@@ -1237,11 +1237,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     /**
-     * 最小维度数据不再按报关要素合并，仅按发货通知单+箱号+客户SKU组装报关单预览。
+     * 按报关明细维度组装B2B报关单预览，同一明细下保留多箱来源数据。
      * @author will
      * @date 2026/5/9 15:00
-     * @param sourceDetailList
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     * @param sourceDetailList 来源箱明细
+     * @return B2B报关预览明细
      */
     private TmsDeclareBillDTO.MergeDeclareBillDTO buildB2bMinMergeDeclareBillList(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
         TmsDeclareBillDTO.MergeDeclareBillDTO billDTO = new TmsDeclareBillDTO.MergeDeclareBillDTO();
@@ -1259,11 +1259,26 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return billDTO;
     }
 
+    /**
+     * 构建B2B报关明细分组键。箱号不参与外层分组，保留在来源明细中用于后续保存中间表。
+     *
+     * @param detailDTO 来源箱明细
+     * @return 报关明细分组键
+     */
     private String buildB2bMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
         return String.join("|",
                 StringUtils.defaultString(detailDTO.getSourceId()),
-                StringUtils.defaultString(detailDTO.getBoxNo()),
-                StringUtils.defaultString(detailDTO.getSkuId()));
+                StringUtils.defaultString(detailDTO.getSkuId()),
+                StringUtils.defaultString(detailDTO.getHsCode()),
+                StringUtils.defaultString(detailDTO.getProductNameCn()),
+                StringUtils.defaultString(detailDTO.getDeclareElement()),
+                StringUtils.defaultString(detailDTO.getUnit()),
+                Objects.isNull(detailDTO.getUnitPrice()) ? "" : detailDTO.getUnitPrice().stripTrailingZeros().toPlainString(),
+                StringUtils.defaultString(detailDTO.getDeclareCurrency()),
+                StringUtils.defaultString(detailDTO.getSourceCountry()),
+                StringUtils.defaultString(detailDTO.getCountryId()),
+                StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), "深圳特区"),
+                StringUtils.defaultIfBlank(detailDTO.getExemption(), "照章征税"));
     }
 
     private TmsDeclareBillDTO.MergeDeclareBillDetailDTO buildB2bMinMergeDeclareBillDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> detailGroup) {

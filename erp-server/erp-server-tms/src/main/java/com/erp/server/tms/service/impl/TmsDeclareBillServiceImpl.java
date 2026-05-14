@@ -53,15 +53,18 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -180,6 +183,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private PackingTaskFeign packingTaskFeign;
+
+    @Resource
+    private CustomerFeign customerFeign;
 
     /**
      * 多 sheet 报关单导出模板（sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细）
@@ -1636,7 +1642,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * <p>业务规则：</p>
      * <ul>
      *   <li>卖方地址：复用 senderId 查到的核算公司 companyAddress</li>
-     *   <li>买方地址：头程按 receiverId 查 SysAccountingCompanyEntity；B2B 走销售出库 / 发货通知单关联客户（待接入）</li>
+     *   <li>买方地址：头程按 receiverId 查 SysAccountingCompanyEntity；B2B 按中间表关联的发货通知单
+     *       receive_address，为空时再取客户主数据 mail_address</li>
      *   <li>合同号 = code；合同日期 = declareDate；目的地 = countryName；付款条件 = dictTransactionMethodName</li>
      *   <li>币别取明细首行币别，多币别仅打 warn 不抛异常</li>
      *   <li>装箱单 sheet 明细净重 = product_pack.net_weight × qty（4 位精度），TOTAL 净重为明细累加</li>
@@ -1742,12 +1749,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     .collect(Collectors.toMap(WmsCartonSpecDTO.WmsCartonSpecView::getTaskId, Function.identity(), (v1, v2) -> v1));
         }
 
+        Map<String, String> b2bBuyerAddressByDeclareId = buildB2bMultiSheetBuyerAddressMap(list);
+
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
             String receiverId = billIdToReceiverIdMap.get(exportDTO.getId());
-            String buyerAddress = resolveBuyerAddress(exportDTO, receiverId, receiverCompanyMap);
+            String buyerAddress = resolveBuyerAddress(exportDTO, receiverId, receiverCompanyMap, b2bBuyerAddressByDeclareId);
             SysAccountingCompanyEntity sellerCompany = senderCompanyMap.get(exportDTO.getSenderId());
             String sellerAddress = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getCompanyAddress(), "");
-            exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress, buyerAddress));
+            String sellerMobile = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getContactMobile(), "");
+            exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress,sellerMobile, buyerAddress));
             exportDTO.setInvoiceInfo(buildInvoiceInfo(exportDTO));
 
             // 装箱单 sheet：明细按报关商品维度循环，主表 + TOTAL 合计
@@ -1771,12 +1781,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
      * 解析合同 sheet 买方地址
      *
-     * <p>头程报关单从核算公司主数据取地址；B2B 报关单从销售出库 / 发货通知单关联的客户主数据取，
-     * 当前 B2B 暂未接入新接口，分支仅打日志占位。</p>
+     * <p>头程：receiverId 对应核算公司 companyAddress。B2B：中间表 source_type=soDeliveryNotice 的 source_id
+     * 为发货通知单主键，优先取通知单 receive_address；为空时再按 customer_id 批量查客户 mail_address。</p>
      */
     private String resolveBuyerAddress(TmsDeclareBillDTO.ExportDTO exportDTO,
                                        String receiverId,
-                                       Map<String, SysAccountingCompanyEntity> receiverCompanyMap) {
+                                       Map<String, SysAccountingCompanyEntity> receiverCompanyMap,
+                                       Map<String, String> b2bBuyerAddressByDeclareId) {
         if (CharSequenceUtil.equals(exportDTO.getType(), SourceTypeEnum.FM_DECLARE_BILL.getCode())) {
             if (StringUtils.isBlank(receiverId)) {
                 return "";
@@ -1785,13 +1796,105 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return Objects.isNull(company) ? "" : Objects.toString(company.getCompanyAddress(), "");
         }
         if (CharSequenceUtil.equals(exportDTO.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode())) {
-            // TODO: [B2B多sheet导出买方地址] B2B 多 sheet 导出 - 买方地址来源为 B2B 发货通知单中的客户信息字段，
-            // 待 B2B 接入新接口时实现：根据 sourceId / sourceCode 反查 SoDeliveryNoticeEntity.customerId，
-            // 再走客户主数据 Feign 取 customerAddress。
-            log.info("B2B 报关单【{}】多 sheet 导出买方地址逻辑待实现", exportDTO.getCode());
-            return "";
+            if (StringUtils.isBlank(exportDTO.getId()) || CollUtil.isEmpty(b2bBuyerAddressByDeclareId)) {
+                return "";
+            }
+            return Objects.toString(b2bBuyerAddressByDeclareId.get(exportDTO.getId()), "");
         }
         return "";
+    }
+
+    /**
+     * B2B 多 sheet 导出：报关单 id -&gt; 买方地址（批量查中间表、发货通知单、客户主数据，避免逐条 Feign）。
+     *
+     * <p>合并报关关联多张发货通知单时，按中间表出现顺序遍历通知单，取第一条非空 receive_address；
+     * 若均为空，再按同一顺序用 customer_id 匹配客户 mail_address。</p>
+     */
+    private Map<String, String> buildB2bMultiSheetBuyerAddressMap(List<TmsDeclareBillDTO.ExportDTO> list) {
+        List<String> b2bDeclareIdList = list.stream()
+                .filter(e -> CharSequenceUtil.equals(e.getType(), SourceTypeEnum.B2B_DECLARE_BILL.getCode()))
+                .map(TmsDeclareBillDTO.ExportDTO::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(b2bDeclareIdList)) {
+            return Collections.emptyMap();
+        }
+        List<DeliveryDeclareDetailMidEntity> midList = Optional.ofNullable(deliveryDeclareDetailMidService.listByDeclareBillIdList(b2bDeclareIdList))
+                .orElse(Collections.emptyList());
+        String noticeSourceType = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        Map<String, LinkedHashSet<String>> declareIdToNoticeIdSet = new LinkedHashMap<>();
+        for (DeliveryDeclareDetailMidEntity mid : midList) {
+            if (!CharSequenceUtil.equals(noticeSourceType, mid.getSourceType()) || StringUtils.isBlank(mid.getDeclareId())
+                    || StringUtils.isBlank(mid.getSourceId())) {
+                continue;
+            }
+            declareIdToNoticeIdSet
+                    .computeIfAbsent(mid.getDeclareId(), k -> new LinkedHashSet<>())
+                    .add(mid.getSourceId());
+        }
+        if (declareIdToNoticeIdSet.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<String> allNoticeIdList = declareIdToNoticeIdSet.values().stream()
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SoDeliveryNoticeEntity> noticeById = CollectionUtils.isEmpty(allNoticeIdList)
+                ? Collections.emptyMap()
+                : Optional.ofNullable(soDeliveryNoticeFeign.listByIds(allNoticeIdList))
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(e -> StringUtils.isNotBlank(e.getId()))
+                .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity(), (v1, v2) -> v1));
+
+        Set<String> customerIdForMail = new LinkedHashSet<>();
+        for (SoDeliveryNoticeEntity notice : noticeById.values()) {
+            if (Objects.isNull(notice)) {
+                continue;
+            }
+            if (StringUtils.isBlank(notice.getReceiveAddress()) && StringUtils.isNotBlank(notice.getCustomerId())) {
+                customerIdForMail.add(notice.getCustomerId());
+            }
+        }
+        Map<String, CustomerInfoEntity> customerById = CollectionUtils.isEmpty(customerIdForMail)
+                ? Collections.emptyMap()
+                : Optional.ofNullable(customerFeign.listCustomerByIds(new ArrayList<>(customerIdForMail)))
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(e -> StringUtils.isNotBlank(e.getId()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, Function.identity(), (v1, v2) -> v1));
+
+        Map<String, String> result = new HashMap<>(declareIdToNoticeIdSet.size());
+        for (Map.Entry<String, LinkedHashSet<String>> entry : declareIdToNoticeIdSet.entrySet()) {
+            String declareId = entry.getKey();
+            String address = "";
+            for (String noticeId : entry.getValue()) {
+                SoDeliveryNoticeEntity notice = noticeById.get(noticeId);
+                if (Objects.isNull(notice)) {
+                    continue;
+                }
+                if (StringUtils.isNotBlank(notice.getReceiveAddress())) {
+                    address = notice.getReceiveAddress().trim();
+                    break;
+                }
+            }
+            if (StringUtils.isBlank(address)) {
+                for (String noticeId : entry.getValue()) {
+                    SoDeliveryNoticeEntity notice = noticeById.get(noticeId);
+                    if (Objects.isNull(notice) || StringUtils.isBlank(notice.getCustomerId())) {
+                        continue;
+                    }
+                    CustomerInfoEntity customer = customerById.get(notice.getCustomerId());
+                    if (Objects.nonNull(customer) && StringUtils.isNotBlank(customer.getMailAddress())) {
+                        address = customer.getMailAddress().trim();
+                        break;
+                    }
+                }
+            }
+            result.put(declareId, address);
+        }
+        return result;
     }
 
     /**
@@ -1806,10 +1909,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private TmsDeclareBillDTO.ContractInfo buildContractInfo(TmsDeclareBillDTO.ExportDTO exportDTO,
                                                              String sellerAddress,
+                                                             String sellerMobile,
                                                              String buyerAddress) {
         TmsDeclareBillDTO.ContractInfo contractInfo = new TmsDeclareBillDTO.ContractInfo();
         contractInfo.setSellerName(Objects.toString(exportDTO.getSenderName(), ""));
         contractInfo.setSellerAddress(sellerAddress);
+        contractInfo.setSellerMobile(sellerMobile);
         contractInfo.setBuyerName(Objects.toString(exportDTO.getReceiverName(), ""));
         contractInfo.setBuyerAddress(buyerAddress);
         contractInfo.setContractNo(Objects.toString(exportDTO.getCode(), ""));
@@ -3392,7 +3497,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                                                        String declareCode,
                                                                        String declareDetailId) {
         DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
-        midEntity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
         midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
         midEntity.setSourceType(sourceType);
         midEntity.setSourceId(StringUtils.defaultIfBlank(sourceDetail.getSourceId(), StringUtils.defaultString(fallbackSourceId)));

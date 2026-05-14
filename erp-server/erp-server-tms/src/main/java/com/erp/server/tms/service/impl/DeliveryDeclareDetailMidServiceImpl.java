@@ -34,6 +34,7 @@ import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TmsDeclareBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -259,10 +260,26 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollectionUtils.isEmpty(entityList) || entityList.size() != distinctIds.size()) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
         }
+        //必须勾选2条以上
+        if(distinctIds.size() < 2){
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_MERGE_MIN_COUNT_REQUIRED);
+        }
+
+        //仅支持待生成和待确认生成报关单
+        List<String> declareIds = entityList.stream().map(DeliveryDeclareDetailMidEntity::getDeclareId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(declareIds)){
+            List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillService.lambdaQuery().in(TmsDeclareBillEntity::getId, declareIds).list();
+            if (tmsDeclareBillEntities.stream().anyMatch(item -> !CharSequenceUtil.equals(item.getDeclareStatus(),
+                    DeclareStatusEnum.WAIT.getCode()))) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
+            }
+        }
         if (entityList.stream().anyMatch(item -> !CharSequenceUtil.equals(item.getGenerateStatus(),
                 DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode()))) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_STATUS_LIMIT);
         }
+
+        //单据分类是相同的单据【B2B和头程】
         Set<String> sourceTypeSet = entityList.stream()
                 .map(DeliveryDeclareDetailMidEntity::getSourceType)
                 .filter(CharSequenceUtil::isNotBlank)
@@ -390,9 +407,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @date 2026-04-29
      */
     private void handleData(DeliveryDeclareDetailMidEntity entity) {
-        if (CharSequenceUtil.isBlank(entity.getDeclareStatus())) {
-            entity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
-        }
         if (CharSequenceUtil.isBlank(entity.getGenerateStatus())) {
             entity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode());
         }
