@@ -516,7 +516,8 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         paramDTO.setType(MessageTypeEnum.SYS.getCode());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode()));
+        // 与 PC 端历史列表 pagingHistoryMessage（仅 PC）保持一致，不把 PDA 专属通知计入 PC 未读数
+        paramDTO.setApplication(Collections.singletonList(SysTypeEnum.PC.getCode()));
         List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
         return notReadMessageNumList.stream()
                 .filter(item -> Objects.equals(MessageTypeEnum.SYS.getCode(), item.getType()))
