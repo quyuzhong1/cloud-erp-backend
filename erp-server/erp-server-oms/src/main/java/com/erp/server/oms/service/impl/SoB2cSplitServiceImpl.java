@@ -1064,6 +1064,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setHeight(null);
             logisticsAddDTO.setWeight(null);
             logisticsAddDTO.setLogisticsChannelId("");
+            logisticsAddDTO.setTrackNo("");
+            logisticsAddDTO.setCode("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
             //财务信息
             addDTO.setShippingFee(shippingFee);
@@ -1355,9 +1357,33 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
         }
 
-        String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() ||  obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
+        // 作废 / 冻结 / 待发货 仍然一律拦截
+        String invalidCodes = sameTargetList.stream()
+                .filter(obj -> obj.getInvalidStatus()
+                        || SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(obj.getBillStatus())
+                        || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(obj.getBillStatus()))
+                .map(SoB2cEntity::getCode)
+                .collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(invalidCodes)) {
-            throw new ServiceException( CharSequenceUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
+            throw new ServiceException(CharSequenceUtil.format("{} 已作废，已冻结，待发货不允许还原拆分", invalidCodes));
+        }
+        // 已发货：放宽——只有当存在有效的 B2C 发货单 / 三方仓发货单时才拦，
+        // 平台同步过来的已发货状态但 ERP 未生成发货单的子单，仍允许取消拆分以回收数据。
+        // 这里复用 SoB2cService#checkGeneratedDeliveryForOperation，逻辑与"还原捆绑/拆分合并/更换SKU"保持一致。
+        List<String> shippedWithDeliveryCodes = new ArrayList<>();
+        for (SoB2cEntity child : sameTargetList) {
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(child.getBillStatus())) {
+                continue;
+            }
+            try {
+                soB2cService.checkGeneratedDeliveryForOperation(child.getId(), "取消拆分");
+            } catch (Exception e) {
+                shippedWithDeliveryCodes.add(child.getCode());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(shippedWithDeliveryCodes)) {
+            throw new ServiceException(CharSequenceUtil.format("{} 已发货且已生成发货单，不允许取消拆分",
+                    String.join(",", shippedWithDeliveryCodes)));
         }
 
         log.info("删除B2C销售订单数据，ids = {}", targetIdList);
