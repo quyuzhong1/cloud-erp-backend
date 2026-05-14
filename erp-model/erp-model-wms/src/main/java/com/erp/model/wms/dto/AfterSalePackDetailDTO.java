@@ -167,6 +167,26 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 单位id
+         */
+        private String unitId;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 单位名称
+         */
+        private String unitName;
+
+        /**
          * 仓位id,warehouse_location.id
          */
         private String warehouseLocationId;
@@ -195,6 +215,11 @@ public class AfterSalePackDetailDTO implements Serializable {
          * 差异数量
          */
         private Integer diffQty;
+
+        /**
+         * sku对应的箱唛列表
+         */
+        private List<AfterSalePackDTO.DetailDTO> detailDTOList;
 
     }
 

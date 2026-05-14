@@ -13,18 +13,25 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.AfterSalePackDetailMapper;
 import com.erp.server.wms.service.AfterSalePackDetailService;
+import com.erp.server.wms.service.AfterSalePackService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -37,8 +44,15 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePackDetailMapper, AfterSalePackDetailEntity> implements AfterSalePackDetailService {
+
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private AfterSalePackService afterSalePackService;
+
+    @Resource
+    private ProductDetailFeign productDetailFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -93,8 +107,24 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     @Override
     public AfterSalePackDetailDTO.ViewDTO view(String id) {
         AfterSalePackDetailEntity afterSalePackDetailEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后装箱明细单数据"));
-        AfterSalePackDetailDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDetailDTO.ViewDTO.class, afterSalePackDetailEntity);
-        return data;
+        return BeanMapperUtils.map(AfterSalePackDetailDTO.ViewDTO.class, afterSalePackDetailEntity);
+    }
+
+    @Override
+    public List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code) {
+        AfterSalePackDTO.ViewDTO afterSalePackViewDTO = afterSalePackService.viewByCode(code);
+        List<AfterSalePackDetailEntity> list = lambdaQuery()
+                .eq(AfterSalePackDetailEntity::getMainId, afterSalePackViewDTO.getId())
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException("未找到售后装箱明细数据");
+        }
+        // 取出所有不为空的skuId数据
+        List<String> skuIdList = list.stream()
+                .map(AfterSalePackDetailEntity::getSkuId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+        return Collections.emptyList();
     }
 
 }

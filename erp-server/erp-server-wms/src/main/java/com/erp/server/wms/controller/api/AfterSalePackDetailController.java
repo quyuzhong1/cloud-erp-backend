@@ -18,6 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 售后装箱明细表
@@ -103,6 +104,20 @@ public class AfterSalePackDetailController extends BaseController {
     @LogViewService
     public ApiResult<AfterSalePackDetailDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(afterSalePackDetailService.view(id));
+    }
+
+    /**
+     * 根据箱唛查询详情列表
+     *
+     * @param code String
+     * @return ApiResult<List < AfterSalePackDetailDTO.ViewDTO>>
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    @GetMapping("/listByCode")
+    @LogViewService
+    public ApiResult<List<AfterSalePackDetailDTO.ViewDTO>> listByCode(@RequestParam("code") String code) {
+        return success(afterSalePackDetailService.listByCode(code));
     }
 
 }

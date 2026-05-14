@@ -380,4 +380,34 @@ public class AfterSalePackDTO implements Serializable {
         private Integer applicationQty;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
+
+        /**
+         * 箱唛
+         */
+        private String code;
+
+        /**
+         * 实退数量
+         */
+        private Integer packQty;
+
+        /**
+         * 仓位id,warehouse_location.id
+         */
+        private String warehouseLocationId;
+
+        /**
+         * 仓位code
+         */
+        private String warehouseLocationCode;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+    }
+
 }
