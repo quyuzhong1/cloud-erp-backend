@@ -1,16 +1,24 @@
 package com.erp.server.dmp.push.service.wdt.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.push.service.CommonService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
+import com.erp.server.dmp.service.DictBasicService;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.out.*;
@@ -25,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.net.ConnectException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,6 +53,10 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
     private WangDianClientService wangDianClientService;
     @Resource
     private CommonService commonService;
+    @Resource
+    private MQProducerService mqProducerService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public void executeConsumer(CreateOtherStockoutRequest stockoutRequest) {
@@ -72,12 +85,35 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
         }
         if (response.getStatus() != 0) {
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockoutRequest, response);
+            String warnMsg = CharSequenceUtil.format("创建失败，批次号：{}，仓库编码：{}，状态码：{}，错误信息：{}",
+                    stockoutRequest.getOuterNo(), stockoutRequest.getWarehouseNo(), response.getStatus(), response.getMessage());
+            sendCreateOrApproveWarnMsg(stockoutRequest, "旺店通其他出库单创建失败", warnMsg);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单失败: {}, {}, {}", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage());
         }
         if (null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()) {
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockoutRequest, response);
+            String warnMsg = CharSequenceUtil.format("审核失败，批次号：{}，仓库编码：{}，状态码：{}，错误信息：{}",
+                    stockoutRequest.getOuterNo(), stockoutRequest.getWarehouseNo(), response.getData().getStatus(), response.getData().getMessage());
+            sendCreateOrApproveWarnMsg(stockoutRequest, "旺店通其他出库单审核失败", warnMsg);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单审核失败: {}, {}", response.getData().getStatus(), response.getData().getMessage());
         }
+    }
+
+    private void sendCreateOrApproveWarnMsg(CreateOtherStockoutRequest stockoutRequest, String title, String keyInfo) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("旺店通其他出库单同步通知");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle(title);
+        warnMsgInfo.setTableName("dmp_push_task");
+        String tableId = CharSequenceUtil.isNotBlank(stockoutRequest.getDmpSyncTaskId()) ? stockoutRequest.getDmpSyncTaskId() : stockoutRequest.getSourceId();
+        warnMsgInfo.setTableId(CharSequenceUtil.nullToEmpty(tableId));
+        warnMsgInfo.setKeyInfo(CharSequenceUtil.nullToEmpty(keyInfo));
+        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList)
+                ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList())
+                : new ArrayList<>());
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.IMPLEMENT_GROUP_NOTICE);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
     @Override
