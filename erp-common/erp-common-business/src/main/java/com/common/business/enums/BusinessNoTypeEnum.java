@@ -1,4 +1,4 @@
-﻿package com.common.business.enums;
+package com.common.business.enums;
 
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.RedisCacheConstants;
