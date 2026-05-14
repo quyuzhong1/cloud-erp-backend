@@ -171,11 +171,13 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         if (records.isEmpty()){
             return Collections.emptyList();
         }
+        //查询所有的拣货车类型，减少循环内查询
         List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
-        Map<String, String> typeMap = cartTypeList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2.getName()));
+        Map<String, String> typeMap = CollUtil.isNotEmpty(cartTypeList) ? cartTypeList.stream().collect(Collectors.toMap(BaseEntity::getId, PickingCartTypeEntity::getName)) : Collections.emptyMap();
+        //查询波次关联的拣货车类型
         List<String> waveIds = records.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<WaveListCartTypeEntity> waveCartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().in("wave_id", waveIds));
-        Map<String, List<WaveListCartTypeEntity>> cartTypeMap = waveCartTypeList.stream().collect(Collectors.groupingBy(item -> item.getWaveId()));
+        Map<String, List<WaveListCartTypeEntity>> cartTypeMap = CollUtil.isNotEmpty(waveCartTypeList) ? waveCartTypeList.stream().collect(Collectors.groupingBy(WaveListCartTypeEntity::getWaveId)) : Collections.emptyMap();
         List<WaveListDTO.ViewDTO> viewDTOList = new ArrayList<>(records.size());
         for (WaveListEntity record : records) {
             WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();

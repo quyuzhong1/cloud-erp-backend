@@ -1293,21 +1293,6 @@ public class SoOutstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
-    }
-
-    @Data
-    @NoArgsConstructor
     public static class SoRefDTO {
 
 

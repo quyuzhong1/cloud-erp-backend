@@ -888,13 +888,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Map<String, String> supplierMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(supplierIds)) {
             List<LogisticsSupplierEntity> supplierEntityList = logisticsSupplierService.listByIds(supplierIds);
-            supplierMap = supplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
+            supplierMap = CollUtil.isNotEmpty(supplierEntityList) ? supplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName)) : Collections.emptyMap();
         }
         List<String> channelIds = list.stream().map(LogisticsBillDTO.PagingVO::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         Map<String, String> trackQueryMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(channelIds)) {
             List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByIds(channelIds);
-            trackQueryMap = logisticsChannelEntityList.stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, LogisticsChannelEntity::getTrackQueryType));
+            trackQueryMap = CollUtil.isNotEmpty(logisticsChannelEntityList) ? logisticsChannelEntityList.stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, LogisticsChannelEntity::getTrackQueryType)) : Collections.emptyMap();
         }
 
         for (LogisticsBillDTO.PagingVO item : list) {

@@ -260,58 +260,57 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> skuIdList = records.stream().map(SoReturnInstockDTO.PagingView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
-        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        Map<String, String> skuMap = CollUtil.isNotEmpty(skuVOS) ? skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName)) : Collections.emptyMap();
         //获取退货单id
         List<String> sourceIds = records.stream().map(SoReturnInstockDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
         List<String> b2cSoIds = records.stream().map(SoReturnInstockDTO.PagingView::getSoId).distinct().collect(Collectors.toList());
         List<String> returnMainIds = records.stream().map(SoReturnInstockDTO.PagingView::getSoReturnId).distinct().collect(Collectors.toList());
         //退货单
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
-        Map<String, Integer> returnQtyMap = returnDetailEntityList.stream().collect(Collectors.toMap(SoReturnDetailEntity::getId, SoReturnDetailEntity::getReturnQty));
-        Map<String, String> sourceDetailMap = returnDetailEntityList.stream().collect(Collectors.toMap(SoReturnDetailEntity::getId, SoReturnDetailEntity::getSourceDetailId));
+        List<SoReturnDetailEntity> returnDetailEntityList = CollUtil.isNotEmpty(returnMainIds) ? soReturnFeign.listDetailByMainIds(returnMainIds) : Collections.emptyList();
+        Map<String, Integer> returnQtyMap = CollUtil.isNotEmpty(returnDetailEntityList) ? returnDetailEntityList.stream().collect(Collectors.toMap(SoReturnDetailEntity::getId, SoReturnDetailEntity::getReturnQty)) : Collections.emptyMap();
+        Map<String, String> sourceDetailMap = CollUtil.isNotEmpty(returnDetailEntityList) ? returnDetailEntityList.stream().collect(Collectors.toMap(SoReturnDetailEntity::getId, SoReturnDetailEntity::getSourceDetailId)) : Collections.emptyMap();
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
-        Map<String, SoDetailEntity> detailEntityMap = soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
+        List<SoDetailEntity> soDetailEntities = CollUtil.isNotEmpty(detailIds) ? soInfoFeign.listSoDetailByIds(detailIds) : Collections.emptyList();
+        Map<String, SoDetailEntity> detailEntityMap = CollUtil.isNotEmpty(soDetailEntities) ? soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity())) : Collections.emptyMap();
 
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnMainIds);
-        Map<String, Integer> receiveQtyMap2 = soReturnReceiveDetailEntities.stream()
+        Map<String, Integer> receiveQtyMap2 = CollUtil.isNotEmpty(soReturnReceiveDetailEntities) ? soReturnReceiveDetailEntities.stream()
                 .filter(detail -> CharSequenceUtil.isNotBlank(detail.getSourceDetailId())
                         && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
                 .collect(Collectors.groupingBy(
                         detail -> detail.getSourceDetailId() + "-" + detail.getSkuId(),
                         Collectors.summingInt(SoReturnReceiveDetailEntity::getReceiveQty)
-                ));
+                )) : Collections.emptyMap();
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntitiesSourceIds = soReturnReceiveDetailService.listDetailByMainIds(sourceIds);
-        Map<String, Integer> receiveQtyMap = soReturnReceiveDetailEntitiesSourceIds.stream()
+        Map<String, Integer> receiveQtyMap = CollUtil.isNotEmpty(soReturnReceiveDetailEntitiesSourceIds) ? soReturnReceiveDetailEntitiesSourceIds.stream()
                 .filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
-                .collect(Collectors.toMap(SoReturnReceiveDetailEntity::getId, SoReturnReceiveDetailEntity::getReceiveQty, Integer::sum));
+                .collect(Collectors.toMap(SoReturnReceiveDetailEntity::getId, SoReturnReceiveDetailEntity::getReceiveQty, Integer::sum)) : Collections.emptyMap();
 
         List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         soIds.addAll(b2cSoIds);
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
-        Map<String, Integer> actualQtyMap = soOutstockDetailEntities.stream()
+        Map<String, Integer> actualQtyMap = CollUtil.isNotEmpty(soOutstockDetailEntities) ? soOutstockDetailEntities.stream()
                 .filter(detail -> CharSequenceUtil.isNotBlank(detail.getSoId())
                         && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
                 .collect(Collectors.groupingBy(
                         detail -> detail.getSoId() + "-" + detail.getSkuId(),
                         Collectors.summingInt(SoOutstockDetailEntity::getActualQty)
-                ));
+                )) : Collections.emptyMap();
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        Map<String, String> platformCodeMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getPlatformCode));
+        Map<String, String> platformCodeMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getPlatformCode)) : Collections.emptyMap();
 
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
-        Map<String, Integer> soB2cDetailEntityMap = soB2cDetailEntityList.stream()
+        Map<String, Integer> soB2cDetailEntityMap = CollUtil.isNotEmpty(soB2cDetailEntityList) ? soB2cDetailEntityList.stream()
                 .collect(Collectors.groupingBy(
                         detail -> detail.getMainId() + "-" + detail.getSkuId(),
-                        Collectors.summingInt(SoB2cDetailEntity::getQty)
-                ));
+                        Collectors.summingInt(SoB2cDetailEntity::getQty))) : Collections.emptyMap();
 
         List<String> customerIds = records.stream().map(SoReturnInstockDTO.PagingView::getCustomerId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
-        Map<String, String> customerMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getName));
+        List<CustomerInfoEntity> customerInfoEntities = CollUtil.isNotEmpty(customerIds) ? customerFeign.listCustomerByIds(customerIds) :Collections.emptyList();
+        Map<String, String> customerMap = CollUtil.isNotEmpty(customerInfoEntities) ? customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getName)) : Collections.emptyMap();
 
         //查询审核流程
         List<String> ids = records.stream().map(SoReturnInstockDTO.PagingView::getId).distinct().collect(Collectors.toList());

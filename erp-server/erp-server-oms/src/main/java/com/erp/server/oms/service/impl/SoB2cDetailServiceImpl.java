@@ -1291,8 +1291,20 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<String> warehouseIdList = getDistinctFieldList(detailList, SoB2cDetailEntity::getWarehouseId);
         List<String> virtualWarehouseIdList = getDistinctFieldList(detailList, SoB2cDetailEntity::getVirtualWarehouseId);
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = getInventoryList(warehouseIdList, allSkuIds);
+        // 将 inventoryList 转换为 Map，键为 skuId + warehouseId + inventoryStatus，值为库存总数
+        Map<String, Integer> inventoryMap = inventoryList.stream()
+                .collect(Collectors.toMap(
+                        obj -> obj.getSkuId() + "-" + obj.getWarehouseId() + "-" + obj.getInventoryStatus(),
+                        InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal,
+                        Integer::sum
+                ));
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = getVirtualInventoryList(virtualWarehouseIdList, detailList,allSkuIds);
-
+        Map<String, Integer> virtualInventoryMap = virtualInventoryList.stream()
+                .collect(Collectors.toMap(
+                        obj -> obj.getSkuId() + "-" + obj.getVirtualWarehouseId() + "-" + obj.getWarehouseId(),
+                        VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty,
+                        Integer::sum // 如果有重复键，合并库存数量
+                ));
         //SKU对照表信息
         List<SkuMappingDTO.ListSkuParamDTO> listParamList = detailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSkuNo())).map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), obj.getWarehouseId(), entityList.stream().filter(e -> e.getId().equals(obj.getMainId())).findFirst().flatMap(e -> Optional.ofNullable(e.getDictPlatform())).orElse(""))).collect(Collectors.toList());
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
@@ -1320,7 +1332,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     .collect(Collectors.toList());
 
             List<SoB2cDetailDTO.ListDTO> detailDTOList = b2cDetailEntityList.stream()
-                    .map(detailEntity -> buildDetailDTO(detailEntity, skuVOMap, bomChildrenList, bomType, inventoryList, virtualInventoryList, declareProductList, ignoreInventorySkuIds, entity,virtualWarehouseNameMap,skuMappingList,listingInfoEntityList))
+                    .map(detailEntity -> buildDetailDTO(detailEntity, skuVOMap, bomChildrenList, bomType, inventoryMap, virtualInventoryMap, declareProductList, ignoreInventorySkuIds, entity,virtualWarehouseNameMap,skuMappingList,listingInfoEntityList))
                     .collect(Collectors.toList());
 
             mainDTO.setDetailList(detailDTOList);
@@ -1374,8 +1386,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     private SoB2cDetailDTO.ListDTO buildDetailDTO(SoB2cDetailEntity detailEntity, Map<String, SkuVO> skuVOMap,
                                                   List<BomChildrenSkuDTO> bomChildrenList, String bomType,
-                                                  List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
-                                                  List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,
+                                                  Map<String, Integer> inventoryMap,
+                                                  Map<String, Integer> virtualInventoryMap,
                                                   List<SoB2cDeclareProductDTO.ViewDTO> declareProductList,
                                                   List<String> ignoreInventorySkuIds, SoB2cEntity entity,
                                                   Map<String, String> virtualWarehouseNameMap,
@@ -1420,7 +1432,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(detailDTO.getSkuId()) && bomType.equals(e.getType()))
                 .collect(Collectors.toList());
         // 设置库存信息
-        setInventoryInfo(detailDTO, inventoryList, virtualInventoryList, ignoreInventorySkuIds, entity,bomChildrenSkuDTOS, virtualWarehouseNameMap);
+        setInventoryInfo(detailDTO, inventoryMap, virtualInventoryMap, ignoreInventorySkuIds, entity,bomChildrenSkuDTOS, virtualWarehouseNameMap);
         // 设置申报信息
         setDeclareInfo(detailDTO, declareProductList);
 
@@ -1460,21 +1472,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         return Boolean.FALSE;
     }
     private void setInventoryInfo(SoB2cDetailDTO.ListDTO detailDTO,
-                                  List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
-                                  List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,
+                                  Map<String, Integer> inventoryMap,
+                                  Map<String, Integer> virtualInventoryMap,
                                   List<String> ignoreInventorySkuIds, SoB2cEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, Map<String, String> virtualWarehouseNameMap) {
         // 可用库存和冻结库存
-        int useableQty = inventoryList.stream()
-                .filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
-                        && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                        && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                .mapToInt(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).sum();
+        int useableQty = inventoryMap.getOrDefault(detailDTO.getSkuId() + "-" + detailDTO.getWarehouseId() + "-" + InventoryStatusEnum.USABLE.getCode(), MathUtil.ZERO);
 
-        int freezeQty = inventoryList.stream()
-                .filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
-                        && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
-                        && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
-                .mapToInt(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).sum();
+        int freezeQty = inventoryMap.getOrDefault(detailDTO.getSkuId() + "-" + detailDTO.getWarehouseId() + "-" + InventoryStatusEnum.FROZEN.getCode(), MathUtil.ZERO);
 
         detailDTO.setUseableQty(useableQty);
         detailDTO.setFreezeQty(freezeQty);
@@ -1485,7 +1489,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                     || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus()))) {
                 //实体仓缺货
-                Boolean isOutStock = soB2cService.isOutStock(bomChildrenSkuDTOS, inventoryList, detailDTO, ignoreInventorySkuIds);
+                Boolean isOutStock = soB2cService.isOutStock(bomChildrenSkuDTOS, inventoryMap, detailDTO, ignoreInventorySkuIds);
                 detailLabelDTO.setIsOutStock(isOutStock);
             }
         }
@@ -1493,7 +1497,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         if (CharSequenceUtil.isNotBlank(detailDTO.getVirtualWarehouseId())) {
             detailDTO.setVirtualWarehouseName(virtualWarehouseNameMap.get(detailDTO.getVirtualWarehouseId()));
             //虚拟仓缺货处理
-            soB2cService.isVirtualOutStock(bomChildrenSkuDTOS, virtualInventoryList, detailLabelDTO, detailDTO);
+            soB2cService.isVirtualOutStock(bomChildrenSkuDTOS, virtualInventoryMap, detailLabelDTO, detailDTO);
             //缺货订单
             if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(entity.getBillStatus())
                     || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus()))) {

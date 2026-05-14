@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -251,15 +252,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
-        List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
-        if(CollectionUtils.isEmpty(list)){
-            return new PagingVO<>();
-        }
         //处理分页数据
-        fillPaging(list);
-        //设置分页信息
-        PagingVO pagingVO = new PagingVO<>(pageData);
-        return pagingVO;
+        fillPaging(pageData.getRecords());
+        return new PagingVO<>(pageData);
 
     }
 
@@ -267,22 +262,22 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if(CollectionUtils.isEmpty(list)){
             return;
         }
+
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
-        Map<String, List<PackageForecastDetailEntity>> forecastDetailMap = allDetailEntityList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId));
+        Map<String, List<PackageForecastDetailEntity>> forecastDetailMap = CollUtil.isNotEmpty(allDetailEntityList) ? allDetailEntityList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId)) : Collections.emptyMap();
         List<String> soIds = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        Map<String, String> b2cMap = soB2cEntityList.stream().filter(req -> SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus())).collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getCode));
+        Map<String, String> b2cMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream().filter(req -> SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus())).collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getCode)) : Collections.emptyMap();
         List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
-        Map<String, String> detailSoCodeMap = transferDeclareDetailEntityList.stream().collect(Collectors.toMap(
+        Map<String, String> detailSoCodeMap = CollUtil.isNotEmpty(transferDeclareDetailEntityList) ? transferDeclareDetailEntityList.stream().collect(Collectors.toMap(
                 TransferDeclareDetailEntity::getSoCode,
                 TransferDeclareDetailEntity::getMainId,
-                (existing, replacement) -> replacement
-        ));
+                (existing, replacement) -> replacement)) : Collections.emptyMap();
         List<String> transferIds = new ArrayList<>(detailSoCodeMap.values());
         List<TransferDeclareEntity> transferDeclareEntityList = CollectionUtils.isNotEmpty(transferIds)?FeignQuery.create(TransferDeclareEntity.class).in(TransferDeclareEntity::getId,transferIds).list():new ArrayList<>();
-        Map<String, String> declareEntityMap = transferDeclareEntityList.stream().collect(Collectors.toMap(TransferDeclareEntity::getId, TransferDeclareEntity::getCode));
+        Map<String, String> declareEntityMap = CollUtil.isNotEmpty(transferDeclareEntityList) ? transferDeclareEntityList.stream().collect(Collectors.toMap(TransferDeclareEntity::getId, TransferDeclareEntity::getCode)) : Collections.emptyMap();
         for (PackageForecastDTO.PagingViewDTO item : list) {
             List<PackageForecastDetailEntity> detailEntityList = forecastDetailMap.get(item.getId());
             List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = new ArrayList<>();

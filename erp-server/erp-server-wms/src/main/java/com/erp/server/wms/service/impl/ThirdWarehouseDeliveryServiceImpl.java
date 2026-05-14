@@ -236,22 +236,27 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //批量查询店铺信息
         List<String> shopIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getShopId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
-        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        Map<String, String> shopMap = CollUtil.isNotEmpty(shopInfoEntityList) ? shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName)) : Collections.emptyMap();
+        //批量查询仓库信息
         List<String> warehouseIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getWarehouseId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntityList = CollectionUtil.isEmpty(warehouseIds)?new ArrayList<>():warehouseService.lambdaQuery().select(WarehouseEntity::getId, WarehouseEntity::getName).in(WarehouseEntity::getId,warehouseIds).list();
-        Map<String, String> warehouseMap = warehouseEntityList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        Map<String, String> warehouseMap = CollUtil.isNotEmpty(warehouseEntityList) ? warehouseEntityList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName)) : Collections.emptyMap();
+        //批量查询订单异常信息
         List<String> soIds = list.stream().map(ThirdWarehouseDeliveryDTO.PagingViewDTO::getSoId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         SoB2cErrorDTO.MainIdsDTO mainIdsDTO = new SoB2cErrorDTO.MainIdsDTO();
         mainIdsDTO.setMainIds(soIds);
         mainIdsDTO.setType(SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
         List<SoB2cErrorEntity> soB2cErrorEntityList = CollUtil.isEmpty(soIds) ? Collections.emptyList() : soB2cFeign.getByMainIdsAndType(mainIdsDTO);
-        Map<String, String> errorMap = soB2cErrorEntityList.stream().collect(Collectors.toMap(SoB2cErrorEntity::getMainId, SoB2cErrorEntity::getMessage));
+        Map<String, String> errorMap = CollUtil.isNotEmpty(soB2cErrorEntityList) ? soB2cErrorEntityList.stream().collect(Collectors.toMap(SoB2cErrorEntity::getMainId, SoB2cErrorEntity::getMessage)) : Collections.emptyMap();
+        //批量查询订单信息
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        Map<String, SoB2cEntity> soB2cEntityMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity())) : Collections.emptyMap();
+        //批量查询物流信息
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
-        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
+        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = CollUtil.isNotEmpty(soB2cLogisticsEntities) ? soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity())) : Collections.emptyMap();
         for (ThirdWarehouseDeliveryDTO.PagingViewDTO pagingViewDTO : list) {
             pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
             pagingViewDTO.setShopName(shopMap.get(pagingViewDTO.getShopId()));

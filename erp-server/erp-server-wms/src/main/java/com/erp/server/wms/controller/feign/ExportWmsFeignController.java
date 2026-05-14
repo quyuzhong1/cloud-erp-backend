@@ -716,8 +716,8 @@ public class ExportWmsFeignController {
             tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.exportSoOutStock(dto);
+    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto, Boolean.TRUE);
         return pagingVO;
     }
 

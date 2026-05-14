@@ -20,6 +20,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -1126,10 +1127,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
-        Map<String, String> dictMap = dictList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+        Map<String, String> dictMap = CollUtil.isNotEmpty(dictList) ? dictList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName)) : Collections.emptyMap();
         List<String> ids = list.stream().map(SoMultiChannelDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
-        Map<String, List<ProcessTaskManagementEntity>> groupMap = processTaskManagementEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.equals(req.getTaskStatus())).collect(Collectors.groupingBy(ProcessTaskManagementEntity::getBusinessId));
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+        }
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
+
         // 属性赋值
         for (SoMultiChannelDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1141,8 +1147,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             //平台类型名称
             data.setDictPlatformName(dictMap.getOrDefault(data.getDictPlatform(), ""));
             data.setDeliveryPlatformName(dictMap.getOrDefault(data.getDeliveryPlatform(), ""));
-            String userName = groupMap.get(data.getId()).stream().map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.joining(","));
-            data.setApproveUserName(userName);
+            data.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(data.getId()),data.getApproveUserName()));
         }
     }
 

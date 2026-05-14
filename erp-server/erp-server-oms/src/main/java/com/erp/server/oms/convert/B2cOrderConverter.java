@@ -455,7 +455,6 @@ public interface B2cOrderConverter {
     })
     SoMultiChannelDTO.ReceiverInfo convertSoMultiChannelReceiver(SoMultiChannelEntity entity);
 
-    List<SoB2cDetailDTO.ListDTO> toDetailDTOList(List<SoB2cDetailEntity> detailList);
     @Mapping(target = "virtualWarehouseName", ignore = true)
     @Mapping(target = "virtualUsableQty", ignore = true)
     @Mapping(target = "useableQty", ignore = true)
@@ -477,4 +476,5 @@ public interface B2cOrderConverter {
     @Mapping(target = "declareLabel", ignore = true)
     @Mapping(target = "childScarceList", ignore = true)
     SoB2cDetailDTO.ListDTO toDetailDTO(SoB2cDetailEntity detail);
+    List<SoB2cDetailDTO.ListDTO> toDetailDTOList(List<SoB2cDetailEntity> detailList);
 }

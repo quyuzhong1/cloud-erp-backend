@@ -1,5 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.core.controller.BaseController;
@@ -13,6 +14,7 @@ import com.erp.server.sys.service.SysPostUserService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -39,5 +41,16 @@ public class SysPartitionFeignContriller extends BaseController {
     @WebAdvanceQuery
     public List<DictPartitionEntity> listByAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer){
         return dictPartitionService.listByAdvanceQuery(advanceQueryContainer);
+    }
+
+    /**
+     * 高级查询军区信息
+     */
+    @PostMapping("feign/partition/listByPartitionIds")
+    public List<DictPartitionEntity> listByPartitionIds(@RequestBody List<String> partitionIds){
+        if (CollUtil.isEmpty(partitionIds)) {
+            return Collections.emptyList();
+        }
+        return dictPartitionService.listByIds(partitionIds);
     }
 }

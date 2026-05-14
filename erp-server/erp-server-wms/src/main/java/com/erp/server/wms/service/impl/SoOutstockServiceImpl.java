@@ -63,11 +63,10 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
@@ -89,7 +88,6 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.SoOutstockDTO.ExportDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -1714,24 +1712,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return Objects.toString(batchNo, "") + "#" + Objects.toString(sourceId, "");
     }
 
-    @Override
-    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-        ExportDTO params = dto.getParams();
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        if(dynamicDataSourceTypeEnum == null) {
-        	dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
-        }
-        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
-		params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
-        //获取导出数据
-		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        fillPaging(page.getRecords(),true);
-        return new PagingVO<>(page);
-    }
-
     /**
      * 作废
      *
@@ -1851,7 +1831,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-22 8:56
      */
     @Override
-    public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto, Boolean isExport) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         if(dynamicDataSourceTypeEnum == null) {
@@ -1861,12 +1841,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page query = new Page(dto.getCurrPage(), dto.getPageSize() , dto.getIsSearchCount());
         IPage pageData = baseMapper.paging(query, params);
-        List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO<>(pageData);
-        }
         //处理分页数据
-        fillPaging(list,false);
+        fillPaging(pageData.getRecords(),isExport);
         return new PagingVO<>(pageData);
     }
 
@@ -1898,30 +1874,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //sku id
         List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        Map<String, SkuVO> skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, SkuVO> skuVOMap = CollUtil.isNotEmpty(skuList) ? skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())) : Collections.emptyMap();
         //部门id集合
         List<String> deptIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
         List<SysDepartmentEntity> deptList = sysUserFeign.listDeptByIds(deptIdList);
-        Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName));
+        Map<String, String> deptMap = CollUtil.isNotEmpty(deptList) ? deptList.stream().collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName)) : Collections.emptyMap();
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String, String> countryMap = CollUtil.isNotEmpty(countryList) ? countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn)) : Collections.emptyMap();
         List<SoB2cEntity> soB2cEntities= Lists.newArrayList();
         if(Objects.nonNull(isExport) && isExport){
             //查询是否有拦截单
-            List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+            List<String> soIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getSoId).distinct().collect(Collectors.toList());
             soB2cEntities = soB2cFeign.listByIds(soIds);
         }
-        Map<String, Boolean> b2cEntityMap = soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getIsIntercept));
+        Map<String, Boolean> b2cEntityMap = CollUtil.isNotEmpty(soB2cEntities) ? soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)) : Collections.emptyMap();
         //销售平台字典表数据
-        Map<String, String> salesPlatformMap = new HashMap<>();
         List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
                 .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
                 .eq(DictBasicEntity::getStatus, Boolean.TRUE)
                 .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
-        if(CollectionUtils.isNotEmpty(salesPlatformList)){
-            salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
-        }
+        Map<String, String> salesPlatformMap = CollUtil.isNotEmpty(salesPlatformList) ? salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName)) : Collections.emptyMap();
         //查询审核流程
         List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
@@ -1929,11 +1903,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
-        Map<String, String> groupNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
         //查询虚拟仓信息
         List<String> virtualWarehouseIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntities = CollectionUtils.isNotEmpty(virtualWarehouseIds)?virtualWarehouseService.listByIds(virtualWarehouseIds):new ArrayList<>();
-        Map<String, String> virtualMap = virtualWarehouseEntities.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName));
+        Map<String, String> virtualMap = CollUtil.isNotEmpty(virtualWarehouseEntities) ? virtualWarehouseEntities.stream().collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName)) : Collections.emptyMap();
         // 获取军区信息
         List<String> partitionIds = list.stream()
                 .map(SoOutstockDTO.PagingViewDTO::getPartitionId)
@@ -1969,8 +1943,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String orderType = item.getOrderType();
 
             //国家名称
-            String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            item.setCountryName(countryName);
+            item.setCountryName(countryMap.getOrDefault(item.getCountryId(), ""));
             String orderTypeName = BillTypeEnum.getName(orderType);
             item.setOrderTypeName(orderTypeName);
             Boolean invalidStatus = item.getInvalidStatus();
@@ -2018,7 +1991,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
             //最新审核人
-            item.setApproveUserName(CharSequenceUtil.blankToDefault(groupNameMap.get(item.getId()),item.getApproveUserName()));
+            item.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(item.getId()),item.getApproveUserName()));
         }
     }
 
@@ -2032,7 +2005,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-22 11:41
      */
     @Override
-    public Boolean exportExcel(SoOutstockDTO.ExportDTO dto) {
+    public Boolean exportExcel(SoOutstockDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("销售订单出库列表", EXPORT_WMS_SO_OUT_STOCK.getCode(), dto);
         return Boolean.TRUE;
     }

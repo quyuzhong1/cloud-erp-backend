@@ -181,7 +181,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             return new PagingVO<>(pageData);
         }
         //填充数据
-        fillDb(pageData.getRecords());
+        fillList(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
@@ -765,7 +765,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         }
     }
 
-    private void fillDb(List<SoB2cReturnDTO.PagingViewDTO> list) {
+    private void fillList(List<SoB2cReturnDTO.PagingViewDTO> list) {
         if(CollectionUtils.isEmpty(list)){
             return;
         }
@@ -775,24 +775,24 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_RETURN.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         if (200 != listApiResult.getCode()) {
-            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+            throw new ServiceException(ApiResult.error(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
         Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
 
         List<String> shopIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getShopId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = CollectionUtils.isNotEmpty(shopIds)?shopInfoService.listByIds(shopIds):new ArrayList<>();
-        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        Map<String, String> shopMap = CollUtil.isNotEmpty(shopInfoEntityList) ? shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName)) : Collections.emptyMap();
 
         List<String> skuIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
-        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        Map<String, String> skuMap = CollUtil.isNotEmpty(skuVOS) ? skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName)) : Collections.emptyMap();
 
         List<String> soIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getSoId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> allSoOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
-        Map<String, List<SoOutstockDetailEntity>> stockDetailMap = allSoOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId));
+        Map<String, List<SoOutstockDetailEntity>> stockDetailMap = CollUtil.isNotEmpty(allSoOutstockDetailEntityList) ? allSoOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId)) : Collections.emptyMap();
 
         List<SoReturnInstockDetailEntity> allSoReturnInstockDetailList = soReturnInstockFeign.getSoReturnInstockByReturnIds(ids);
-        Map<String, List<SoReturnInstockDetailEntity>> instockDetailMap = allSoReturnInstockDetailList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId));
+        Map<String, List<SoReturnInstockDetailEntity>> instockDetailMap = CollUtil.isNotEmpty(allSoReturnInstockDetailList) ? allSoReturnInstockDetailList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId)) : Collections.emptyMap();
 
         for (SoB2cReturnDTO.PagingViewDTO pagingViewDTO : list) {
             pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));

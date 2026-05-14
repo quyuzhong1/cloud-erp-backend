@@ -89,6 +89,17 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("weight")
     private BigDecimal weight;
     /**
+     * 重量单位
+     */
+    @TableField("weight_unit")
+    private String weightUnit;
+
+    /**
+     * 长度单位
+     */
+    @TableField("size_unit")
+    private String sizeUnit;
+    /**
      * 包装辅料skuId
      */
     @TableField("accessories_sku_id")

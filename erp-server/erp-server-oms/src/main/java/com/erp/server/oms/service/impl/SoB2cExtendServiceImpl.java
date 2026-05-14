@@ -113,7 +113,7 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
     @Override
     public SoB2cExtendEntity getByMainId(String id) {
         if (CharSequenceUtil.isNotBlank(id)){
-            return lambdaQuery().eq(SoB2cExtendEntity::getMainId,id).one();
+            return lambdaQuery().eq(SoB2cExtendEntity::getMainId,id).last("limit 1 ").one();
         }
         return null;
     }
@@ -175,5 +175,13 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
             handleData(soB2cExtendEntity, mainEntity);
             super.updateById(soB2cExtendEntity);
         }
+    }
+
+    @Override
+    public List<SoB2cExtendEntity> listByMainIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoB2cExtendEntity::getMainId, ids).list();
     }
 }

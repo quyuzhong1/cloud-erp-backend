@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -47,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -109,7 +111,7 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
             return new PagingVO<>(pageData);
         }
         //填充数据
-        fillDb(list);
+        fillList(list);
         return new PagingVO<>(pageData);
     }
 
@@ -335,16 +337,16 @@ public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, 
      *
      * @param list
      */
-    private void fillDb(List<SoB2cRefundDTO.PagingViewDTO> list) {
+    private void fillList(List<SoB2cRefundDTO.PagingViewDTO> list) {
         if(CollectionUtils.isEmpty(list)){
             return;
         }
         List<String> soIds = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> skuIds = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVoList = plmTaskFeign.listSkuProductByIds(skuIds);
-        Map<String, String> skuMap = skuVoList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        Map<String, String> skuMap = CollUtil.isNotEmpty(skuVoList) ? skuVoList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName)) : Collections.emptyMap();
         List<SoOutstockDetailEntity> allOutList = soOutstockFeign.listDetailBySoIds(soIds);
-        Map<String, Integer> activeQtyMap = allOutList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId, Collectors.mapping(SoOutstockDetailEntity::getActualQty, Collectors.reducing(MathUtil.ZERO, Integer::sum))));
+        Map<String, Integer> activeQtyMap = CollUtil.isNotEmpty(allOutList) ? allOutList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId, Collectors.mapping(SoOutstockDetailEntity::getActualQty, Collectors.reducing(MathUtil.ZERO, Integer::sum)))) : Collections.emptyMap();
         //查询审核流程
         List<String> ids = list.stream().map(SoB2cRefundDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_B2C_REFUND.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));

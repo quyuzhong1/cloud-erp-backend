@@ -218,15 +218,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(CollectionUtils.isEmpty(records)){
             return;
         }
+        //获取产品信息
         List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
-        Map<String, SkuVO> skuVOMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, SkuVO> skuVOMap = CollUtil.isNotEmpty(skuVOS) ? skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())) : Collections.emptyMap();
+        //获取店铺信息
         List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        Map<String, String> shopNameMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(shopIdList)){
-            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
-            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
-        }
+        List<ShopInfoEntity> shopList = CollUtil.isNotEmpty(shopIdList) ? FeignQuery.getByIds(ShopInfoEntity.class, shopIdList) : Collections.emptyList();
+        Map<String, String> shopNameMap = CollUtil.isNotEmpty(shopList) ? shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName)) : Collections.emptyMap();
         for (SoB2cDeliveryInterceptDTO.ListDTO record : records) {
             //取消状态名称
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
