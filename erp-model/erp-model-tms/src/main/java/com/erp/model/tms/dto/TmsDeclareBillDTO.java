@@ -1604,12 +1604,6 @@ public class TmsDeclareBillDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        /**
-         * 业务id（发货单id或销售出库单id）
-         */
-        @NotBlank(message = "来源类型：头程,B2B不能为空")
-        private String sourceId;
-
         private Boolean isAuto = false;
 
         /**
