@@ -243,7 +243,7 @@
 
     <!-- 程申报分页查询 -->
     <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$PagingVO">
-        WITH delivery_notice as (
+        WITH first_mile_delivery as (
         select
             declare_id,
             array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
@@ -279,7 +279,7 @@
             dn.destWarehouseName,
             dn.transferWarehouseName
         from  tms_declare_bill db
-        left join delivery_notice dn on db.id = dn.declare_id
+        left join first_mile_delivery dn on db.id = dn.declare_id
         where
         ${params.sqlMap.default}
         and db.is_deleted = false

@@ -174,7 +174,22 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     }
 
     /**
-     * 按报关单id恢复中间表为待生成状态。
+     * 删除中间表数据。
+     *
+     * @param declareBillIds 报关单id集合
+     * @return 是否处理成功
+     */
+    public Boolean removeByDeclareBillIds(List<String> declareBillIds) {
+        if (CollUtil.isEmpty(declareBillIds)) {
+            return Boolean.TRUE;
+        }
+        // 恢复生成状态，并解除与已删除报关单的关联。
+        return lambdaUpdate()
+                .in(DeliveryDeclareDetailMidEntity::getDeclareId, declareBillIds)
+                .remove();
+    }
+    /**
+     * 按中间表报关id恢复为待生成状态。
      *
      * @param declareBillIds 报关单id集合
      * @return 是否处理成功
@@ -184,7 +199,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         if (CollUtil.isEmpty(declareBillIds)) {
             return Boolean.TRUE;
         }
-        // 恢复生成状态，并解除与已删除报关单的关联。
+        // 编辑报关单删掉来源明细时，只恢复对应中间表行，不影响其它来源行。
         return lambdaUpdate()
                 .in(DeliveryDeclareDetailMidEntity::getDeclareId, declareBillIds)
                 .set(DeliveryDeclareDetailMidEntity::getGenerateStatus, DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode())
