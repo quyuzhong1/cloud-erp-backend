@@ -434,7 +434,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     // 校验表头唯一性和数据非空
     private void validateHeadersAndData(List<String> headList, List<JSONObject> successList) {
-        if (headList.size() != headList.stream().distinct().count()) {
+        // 先去掉空表头，再校验是否存在重复表头
+        List<String> nonEmptyHeadList = headList.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        if (nonEmptyHeadList.size() != nonEmptyHeadList.stream().distinct().count()) {
             throw new ServiceException(ApiError.FILE_EXCEL_IMPORT_HEAD_EXIST);
         }
         if (CollectionUtils.isEmpty(successList)) {
