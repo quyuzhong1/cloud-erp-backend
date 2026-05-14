@@ -3338,11 +3338,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     /**
-     * 最小维度数据不再按报关要素合并，仅按发货通知单+箱号+客户SKU组装报关单预览。
+     * 按报关明细维度组装头程报关单预览，同一明细下保留多箱来源数据。
      * @author will
      * @date 2026/5/9 15:00
-     * @param sourceDetailList
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
+     * @param sourceDetailList 来源箱明细
+     * @return 头程报关预览明细
      */
     private TmsDeclareBillDTO.MergeDeclareBillDTO buildFmMinMergeDeclareBillList(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
         TmsDeclareBillDTO.MergeDeclareBillDTO billDTO = new TmsDeclareBillDTO.MergeDeclareBillDTO();
@@ -3350,7 +3350,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return billDTO;
         }
         Map<String, List<TmsDeclareBillDTO.SourceDeliveryDetailDTO>> sourceDetailGroupMap = sourceDetailList.stream()
-                .collect(Collectors.groupingBy(this::buildB2bMinDeclareGroupKey, LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(this::buildFmMinDeclareGroupKey, LinkedHashMap::new, Collectors.toList()));
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> detailDTOList = new ArrayList<>();
         for (List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceGroup : sourceDetailGroupMap.values()) {
             TmsDeclareBillDTO.MergeDeclareBillDetailDTO mergeDeclareBillDetailDTO = buildB2bMinMergeDeclareBillDetail(sourceGroup);
@@ -3360,11 +3360,26 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         return billDTO;
     }
 
-    private String buildB2bMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+    /**
+     * 构建头程报关明细分组键。箱号不参与外层分组，保留在来源明细中用于后续保存中间表。
+     *
+     * @param detailDTO 来源箱明细
+     * @return 报关明细分组键
+     */
+    private String buildFmMinDeclareGroupKey(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
         return String.join("|",
                 StringUtils.defaultString(detailDTO.getSourceId()),
-                StringUtils.defaultString(detailDTO.getBoxNo()),
-                StringUtils.defaultString(detailDTO.getSkuId()));
+                StringUtils.defaultString(detailDTO.getSkuId()),
+                StringUtils.defaultString(detailDTO.getHsCode()),
+                StringUtils.defaultString(detailDTO.getProductNameCn()),
+                StringUtils.defaultString(detailDTO.getDeclareElement()),
+                StringUtils.defaultString(detailDTO.getUnit()),
+                Objects.isNull(detailDTO.getUnitPrice()) ? "" : detailDTO.getUnitPrice().stripTrailingZeros().toPlainString(),
+                StringUtils.defaultString(detailDTO.getDeclareCurrency()),
+                StringUtils.defaultString(detailDTO.getSourceCountry()),
+                StringUtils.defaultString(detailDTO.getCountryId()),
+                StringUtils.defaultIfBlank(detailDTO.getSourceCargo(), "深圳特区"),
+                StringUtils.defaultIfBlank(detailDTO.getExemption(), "照章征税"));
     }
 
     private TmsDeclareBillDTO.MergeDeclareBillDetailDTO buildB2bMinMergeDeclareBillDetail(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> detailGroup) {
