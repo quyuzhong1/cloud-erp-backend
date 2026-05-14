@@ -390,9 +390,6 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @date 2026-04-29
      */
     private void handleData(DeliveryDeclareDetailMidEntity entity) {
-        if (CharSequenceUtil.isBlank(entity.getDeclareStatus())) {
-            entity.setDeclareStatus(DeclareStatusEnum.WAIT.getCode());
-        }
         if (CharSequenceUtil.isBlank(entity.getGenerateStatus())) {
             entity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.WAIT.getCode());
         }
