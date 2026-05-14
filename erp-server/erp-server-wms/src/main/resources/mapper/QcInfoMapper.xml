@@ -472,7 +472,8 @@
         qp.ean as ean,
         qb.source_type AS sourceType,
         qb.source_id AS sourceId,
-        qb.source_code AS sourceCode
+        qb.source_code AS sourceCode,
+        qr.allow_instock_qty
         FROM qc_info qb
         LEFT JOIN qc_product qp ON qp.main_id=qb.id AND qp.is_deleted=FALSE
         LEFT JOIN qc_result qr ON qr.main_id=qb.id AND qr.is_deleted=FALSE
