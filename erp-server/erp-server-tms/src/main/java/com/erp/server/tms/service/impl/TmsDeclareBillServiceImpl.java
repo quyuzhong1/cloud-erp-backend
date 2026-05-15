@@ -327,6 +327,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return CollUtil.isEmpty(sourceIdList) ? "" : sourceIdList.get(0);
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(TmsDeclareBillEntity tmsDeclareBillEntity,List<TmsDeclareBillDetailEntity> detailEntityList,SourceTypeEnum sourceTypeEnum,boolean isMerged) {
 
@@ -2542,7 +2543,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Transactional(rollbackFor = Exception.class)
     public void deleteDeclareBillById (String id) {
         // 恢复报关单关联的中间表为待生成，保留来源箱明细历史数据。
-        deliveryDeclareDetailMidService.restoreWaitGenerateByDeclareBillIds(Collections.singletonList(id));
+        deliveryDeclareDetailMidService.removeByDeclareBillIds(Collections.singletonList(id));
         //删除明细数据
         detailService.deleteDetailByMainIdList(Collections.singletonList(id));
         //删除主表数据
@@ -2818,22 +2819,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 准备新增报关明细
-     * @author will
-     * @date 2026/5/7 14:08
-     * @param addDTO
-     * @param sourceTypeEnum
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDetailDTO>
-     */
-    private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> prepareAddMergeDetailList(TmsDeclareBillDTO.AddDTO addDTO,
-                                                                                       SourceTypeEnum sourceTypeEnum) {
-        if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
-            return prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
-        }
-        throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
-    }
-
-    /**
      * 准备前端提交的报关明细
      * @author will
      * @date 2026/5/7 14:08
@@ -2856,45 +2841,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return filteredList;
     }
 
-    /**
-     * 查询新增来源明细
-     * @author will
-     * @date 2026/5/7 14:08
-     * @param sourceId
-     * @param sourceTypeEnum
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.SourceDeliveryDetailDTO>
-     */
-    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listSourceDetailsForAdd(String sourceId, SourceTypeEnum sourceTypeEnum) {
-        TmsDeclareBillDTO.PushDeclareBeforeParamDTO paramDTO = new TmsDeclareBillDTO.PushDeclareBeforeParamDTO(Boolean.FALSE, Collections.singletonList(sourceId));
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList;
-        if (SourceTypeEnum.FIRST_MILE_DELIVERY == sourceTypeEnum) {
-            sourceDetailList = wmsFirstMileDeliveryFeign.listBeforePushFmDeclare(paramDTO);
-        } else if (SourceTypeEnum.SO_DELIVERY_NOTICE == sourceTypeEnum) {
-            sourceDetailList = soDeliveryNoticeFeign.listBeforePushB2bDeclare(paramDTO);
-        } else {
-            sourceDetailList = Collections.emptyList();
-        }
-        if (CollUtil.isEmpty(sourceDetailList)) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
-        }
-        sourceDetailList.forEach(item -> item.setSourceType(sourceTypeEnum.getCode()));
-        return sourceDetailList;
-    }
-
-    /**
-     * 按规则合并来源明细
-     * @author will
-     * @date 2026/5/7 14:08
-     * @param sourceDetailList
-     * @param isMerge
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDetailDTO>
-     */
-    private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeSourceDetails(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
-                                                                                Boolean isMerge) {
-        List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillList = autoMergeDeclareBillView(
-                new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE.equals(isMerge), sourceDetailList));
-        return flattenMergeDeclareBillList(mergeDeclareBillList);
-    }
 
     /**
      * 合并编辑后的报关明细

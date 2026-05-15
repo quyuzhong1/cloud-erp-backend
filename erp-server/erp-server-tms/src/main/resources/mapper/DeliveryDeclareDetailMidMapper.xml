@@ -118,6 +118,7 @@
         SELECT
         <include refid="Base_Column_List"/>
         FROM delivery_declare_detail_mid dddm
+        left join tms_declare_bill tdb on  dddm.declare_id=tdb.id and tdb.is_deleted=FALSE
         WHERE
             ${params.sqlMap.default}
         AND dddm.is_deleted=FALSE
@@ -150,6 +151,7 @@
             select
                 <include refid="Base_Column_List" />
             from delivery_declare_detail_mid dddm
+            left join tms_declare_bill tdb on  dddm.declare_id=tdb.id and tdb.is_deleted=FALSE
             where dddm.is_deleted = false and dddm.declare_id in
             <foreach collection="declareBillIdList" item="declareBillId" open="(" separator="," close=")">
                 #{declareBillId}
@@ -193,6 +195,63 @@
         </foreach>
         ORDER BY
         dddm.id DESC
+    </select>
+
+    <!-- 查询指定 BOM 历史版本的父子件，用于中间表组合品旧拆分行校验和父 SKU 反查 -->
+    <select id="listBomHistoryByIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        SELECT
+        pbh.id AS bomHistoryId,
+        pbh.bom_version AS bomVersion,
+        pbs.parent_sku_id AS parentSkuId,
+        pbs.parent_sku_no AS parentSkuNo,
+        pbs.sku_id AS skuId,
+        pbs.sku_no AS skuNo,
+        pbs.quantity AS quantity,
+        pbi.bom_version AS thisBomVersion,
+        pbi.type AS type
+        FROM product_bom_history pbh
+        INNER JOIN product_bom_sku_history pbs ON pbh.id = pbs.bom_history_id AND pbs.is_deleted = FALSE
+        LEFT JOIN product_bom_info pbi ON pbh.bom_id = pbi.id AND pbi.is_deleted = FALSE
+        WHERE pbh.is_deleted = FALSE
+        AND pbh.id IN
+        <foreach collection="bomHistoryIds" item="bomHistoryId" open="(" separator="," close=")">
+            #{bomHistoryId}
+        </foreach>
+    </select>
+
+    <!-- 查询组合品父 SKU 的全部 BOM 历史子件，用于保存时定位旧中间表拆分行清理范围 -->
+    <select id="listBomHistoryByParentSkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        SELECT
+        pbh.id AS bomHistoryId,
+        pbh.bom_version AS bomVersion,
+        pbs.parent_sku_id AS parentSkuId,
+        pbs.parent_sku_no AS parentSkuNo,
+        pbs.sku_id AS skuId,
+        pbs.sku_no AS skuNo,
+        pbs.quantity AS quantity,
+        pbi.bom_version AS thisBomVersion,
+        pbi.type AS type
+        FROM product_bom_history pbh
+        INNER JOIN product_bom_sku_history pbs ON pbh.id = pbs.bom_history_id AND pbs.is_deleted = FALSE
+        LEFT JOIN product_bom_info pbi ON pbh.bom_id = pbi.id AND pbi.is_deleted = FALSE
+        WHERE pbh.is_deleted = FALSE
+        AND pbs.parent_sku_id IN
+        <foreach collection="parentSkuIds" item="parentSkuId" open="(" separator="," close=")">
+            #{parentSkuId}
+        </foreach>
+    </select>
+
+    <!-- 来源单只有不存在待生成中间表明细时，才允许更新为已完成报关状态 -->
+    <select id="listWaitSourceIds" resultType="java.lang.String">
+        SELECT DISTINCT dddm.source_id
+        FROM delivery_declare_detail_mid dddm
+        WHERE dddm.is_deleted = FALSE
+        AND dddm.source_type = #{sourceType}
+        AND dddm.generate_status = 'wait'
+        AND dddm.source_id IN
+        <foreach collection="sourceIds" item="sourceId" open="(" separator="," close=")">
+            #{sourceId}
+        </foreach>
     </select>
 
 </mapper>
