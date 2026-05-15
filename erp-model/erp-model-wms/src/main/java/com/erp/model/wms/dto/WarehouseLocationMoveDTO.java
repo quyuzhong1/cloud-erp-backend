@@ -202,6 +202,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
         private String sourceTypeName;
 
         /**
+         * 操作类型
+         */
+        private String syncOperate;
+
+        /**
+         * 操作类型名称
+         */
+        private String syncOperateName;
+
+        /**
          * 上架仓位库存状态名称
          */
         private String inInventoryStatus;
@@ -352,6 +362,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
         private LocalDate billDate;
 
         /**
+         * 操作类型
+         */
+        private String syncOperate;
+
+        /**
+         * 操作类型名称
+         */
+        private String syncOperateName;
+
+        /**
          * 明细信息
          */
         private List<WarehouseLocationMoveDetailDTO.ViewDTO> detailList;
@@ -404,6 +424,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
         private LocalDate billDate;
 
         /**
+         * 操作类型
+         */
+        private String syncOperate;
+
+        /**
+         * 操作类型名称
+         */
+        private String syncOperateName;
+
+        /**
          * 明细信息
          */
         private List<DetailViewDTO> detailList;
@@ -440,6 +470,11 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 操作类型
+         */
+        private String syncOperate;
     }
 
     /**
@@ -758,6 +793,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 来源类型名称
          */
         private String sourceTypeName;
+
+        /**
+         * 操作类型
+         */
+        private String syncOperate;
+
+        /**
+         * 操作类型名称
+         */
+        private String syncOperateName;
     }    /**
      * PDA:分页列表
      */
@@ -896,6 +941,16 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+
+        /**
+         * 操作类型
+         */
+        private String syncOperate;
+
+        /**
+         * 操作类型名称
+         */
+        private String syncOperateName;
 
         /**
          * 实际库存
