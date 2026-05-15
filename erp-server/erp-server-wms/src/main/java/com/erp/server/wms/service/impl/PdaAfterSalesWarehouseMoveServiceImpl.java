@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.WarehouseLocationMoveSyncOperateEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.AfterSalePackService;
@@ -97,6 +98,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
         addDTO.setWarehouseId(CharSequenceUtil.trim(dto.getWarehouseId()));
         addDTO.setDetailList(CollUtil.newArrayList(detail));
         addDTO.setPcShow(false);
+        addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.AFTER_SALES_SHELVING.getCode());
 
         log.info("售后PDA货品上架 warehouseId={} source={} target={} skuNo={} qty={}",
                 addDTO.getWarehouseId(), sourceCode, targetCode, skuNo, dto.getQty());
@@ -194,6 +196,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
         addDTO.setWarehouseId(warehouseId);
         addDTO.setDetailList(detailList);
         addDTO.setPcShow(false);
+        addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.FULL_BOX_TRANSFER.getCode());
 
         log.info("售后PDA整箱移仓 warehouseId={} target={} lineCount={}", warehouseId, targetCode, detailList.size());
         return warehouseLocationMoveService.addAndApprove(addDTO);
