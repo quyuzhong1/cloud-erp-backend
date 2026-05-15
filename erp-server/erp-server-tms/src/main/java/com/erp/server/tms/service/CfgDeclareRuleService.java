@@ -17,7 +17,7 @@ public interface CfgDeclareRuleService extends SuperService<CfgDeclareRuleEntity
 
     CfgDeclareRuleDTO.SaveListDTO paging(CfgDeclareRuleDTO.ListParamDTO dto);
 
-    List<BaseDropDownDTO.Tree> dropDownList( String name);
+    List<BaseDropDownDTO.Tree> dropDownList(String type, String name);
 
     /**
      * 根据规则类型和条件参数匹配一条报关规则。
