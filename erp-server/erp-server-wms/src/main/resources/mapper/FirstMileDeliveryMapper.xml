@@ -867,7 +867,6 @@
         ) fmdd
         where
         ${params.sqlMap.default}
-        ORDER BY fmdd.sourceId DESC
     </select>
 
 
