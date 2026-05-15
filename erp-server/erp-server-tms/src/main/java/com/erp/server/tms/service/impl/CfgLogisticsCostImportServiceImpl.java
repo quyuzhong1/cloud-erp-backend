@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -104,7 +105,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
         // 验证明细列表
-        validateDetailList(dto.getDetailList());
+        validateDetailList(dto.getBusinessType(),dto.getDetailList());
 
 
         dto.setImportType(String.join(",", dto.getImportTypeList()));
@@ -131,11 +132,11 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         Map<String, CfgLogisticsCostImportFieldEntity> fieldMap = cfgLogisticsCostImportFieldEntities.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, cfgLogisticsCostImportFieldEntity -> cfgLogisticsCostImportFieldEntity,(o1,o2)->o1));
 
         //费用项
-        Map<String, TmsCfgCostEntity> cfgCostMap = new HashMap<>();
-        List<String> targetDetailFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetDetailFieldId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(targetDetailFieldIds)){
-            cfgCostMap = tmsCfgCostService.listByIds(targetDetailFieldIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
-        }
+//        Map<String, TmsCfgCostEntity> cfgCostMap = new HashMap<>();
+//        List<String> targetDetailFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetDetailFieldId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+//        if(CollUtil.isNotEmpty(targetDetailFieldIds)){
+//            cfgCostMap = tmsCfgCostService.listByIds(targetDetailFieldIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
+//        }
 
         int index  = 0;
         for (CfgLogisticsCostImportDetailDTO.UpdateDTO addDTO : detailList) {
@@ -147,11 +148,11 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 addDTO.setMainId(id);
             }
 
-            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(addDTO.getTargetDetailFieldId());
-            if(Objects.nonNull(tmsCfgCostEntity)){
-                addDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
-                addDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
-            }
+//            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(addDTO.getTargetDetailFieldId());
+//            if(Objects.nonNull(tmsCfgCostEntity)){
+//                addDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
+//                addDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+//            }
             addDTO.setIndex(index++);
         }
         //校验费用项明细
@@ -182,7 +183,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),dto.getId());
 
         // 验证明细列表
-        validateDetailList(dto.getDetailList());
+        validateDetailList(dto.getBusinessType(),dto.getDetailList());
 
         CfgLogisticsCostImportEntity old = super.getById(dto.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置"));
@@ -244,11 +245,11 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         Map<String, CfgLogisticsCostImportFieldEntity> fieldMap = cfgLogisticsCostImportFieldEntities.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, cfgLogisticsCostImportFieldEntity -> cfgLogisticsCostImportFieldEntity,(o1,o2)->o1));
 
         //费用项
-        Map<String, TmsCfgCostEntity> cfgCostMap = new HashMap<>();
-        List<String> targetDetailFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetDetailFieldId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(targetDetailFieldIds)){
-            cfgCostMap = tmsCfgCostService.listByIds(targetDetailFieldIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
-        }
+//        Map<String, TmsCfgCostEntity> cfgCostMap = new HashMap<>();
+//        List<String> targetDetailFieldIds = detailList.stream().map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetDetailFieldId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+//        if(CollUtil.isNotEmpty(targetDetailFieldIds)){
+//            cfgCostMap = tmsCfgCostService.listByIds(targetDetailFieldIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
+//        }
 
         int index  = 0;
         for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
@@ -260,11 +261,11 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 updateDTO.setMainId(id);
             }
 
-            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
-            if(Objects.nonNull(tmsCfgCostEntity)){
-                updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
-                updateDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
-            }
+//            TmsCfgCostEntity tmsCfgCostEntity = cfgCostMap.get(updateDTO.getTargetDetailFieldId());
+//            if(Objects.nonNull(tmsCfgCostEntity)){
+//                updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
+//                updateDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+//            }
             updateDTO.setIndex(index++);
         }
         //校验费用项明细
@@ -300,7 +301,34 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     /**
      * 验证明细列表数据的有效性
      */
-    private void validateDetailList(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+    private void validateDetailList(String businessType,List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+        String dictCostAttribution = "";
+        if(Objects.equals(businessType, SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode())){
+            dictCostAttribution = DictCostAttributionEnum.LAST_MILE.getCode();
+        }else if(Objects.equals(businessType, SourceTypeEnum.LOGISTICS_BILL_COST.getCode())){
+            dictCostAttribution = DictCostAttributionEnum.SELF_DELIVER.getCode();
+        }else {
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"配置单据类型");
+        }
+
+        //费用项
+        List<TmsCfgCostEntity> tmsCfgCostEntities = tmsCfgCostService.lambdaQuery()
+                .eq(TmsCfgCostEntity::getDictCostAttribution, dictCostAttribution).list();
+        if(CollUtil.isEmpty(tmsCfgCostEntities)){
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"配置单据类型下费用项");
+        }else{
+            Map<String, TmsCfgCostEntity> map = tmsCfgCostEntities.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, Function.identity(), (o1, o2) -> o1));
+            int i = 1;
+            for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
+                String targetFieldId = updateDTO.getTargetFieldId();
+                TmsCfgCostEntity tmsCfgCostEntity = map.get(targetFieldId);
+                if(Objects.isNull(tmsCfgCostEntity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"第"+i+"行费用项不存在");
+
+                updateDTO.setTargetDetailField(tmsCfgCostEntity.getDictCostCategory());
+                updateDTO.setTargetDetailFieldName(tmsCfgCostEntity.getCostName());
+            }
+        }
+
         validateAtLeastOneUniqueKey(detailList);
         validateMainItemDuplicates(detailList);
         validateCostItemFields(detailList);
