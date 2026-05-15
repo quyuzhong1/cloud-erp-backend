@@ -474,23 +474,22 @@
         qb.source_code AS sourceCode
         FROM qc_info qb
         LEFT JOIN qc_product qp ON qp.main_id=qb.id AND qp.is_deleted=FALSE
-        LEFT JOIN qc_result qr ON qr.main_id=qb.id AND qr.is_deleted=FALSE
-        WHERE qb.is_deleted=FALSE
-        and qb.invalid_status=FALSE
-        and qr.qc_type != ''
-        <if test="params.userId != null and params.userId != ''">
-            and (qc_user_id = #{params.userId} or qc_user_id = '')
-        </if>
-        <if test="params.qcStatusList != null and params.qcStatusList.size > 0">
-            and qb.qc_status in
-            <foreach collection="params.qcStatusList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
+        LEFT JOIN qc_result qi ON qi.main_id=qb.id AND qi.is_deleted=FALSE
+        WHERE ${params.sqlMap.default}
+        and qb.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         <if test="params.searchKey != null and params.searchKey != ''">
             and CONCAT(qb.code, ' ',qb.source_code, ' ',qp.sku_no, ' ',qp.ean) LIKE CONCAT('%', #{params.searchKey}::text, '%')
         </if>
         ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
         qb.create_time DESC
     </select>
 

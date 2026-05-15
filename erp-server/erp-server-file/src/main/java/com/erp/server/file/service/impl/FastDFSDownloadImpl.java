@@ -21,6 +21,7 @@ import com.erp.server.file.enums.FileTaskTypeEnum;
 import com.erp.server.file.repository.IFileTaskRepository;
 import com.erp.server.file.service.FileService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.csource.fastdfs.StorageClient1;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -36,6 +37,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -557,5 +560,76 @@ public class FastDFSDownloadImpl implements FileService {
         }
         
         return result;
+    }
+
+    @Override
+    public String uploadFileByUrl(FileDTO.UploadBase64 uploadBase64) {
+        if (uploadBase64 == null || StringUtils.isBlank(uploadBase64.getUrl())) {
+            return null;
+        }
+        HttpURLConnection conn = null;
+        InputStream inStream = null;
+        try {
+            URL url = new URL(uploadBase64.getUrl());
+            conn = (HttpURLConnection) url.openConnection();
+            // 配置连接参数
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(10000); // 增加读取超时时间，防止大文件传输中断
+            // 设置请求头
+            if (StringUtils.isNotBlank(uploadBase64.getToken())) {
+                conn.setRequestProperty("X-Auth-token", uploadBase64.getToken());
+            }
+            // 检查响应码
+            int responseCode = conn.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, "HTTP error code: " + responseCode);
+            }
+            inStream = conn.getInputStream();
+            // 直接读取字节数组，避免不必要的 Base64 编解码转换
+            byte[] bytes = readAllBytes(inStream);
+            if (bytes.length == 0) {
+                throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, "Downloaded file is empty");
+            }
+            // 确定文件名
+            String fileName = uploadBase64.getFileName();
+            if (StringUtils.isBlank(fileName)) {
+                fileName = UUID.randomUUID() + ".pdf";
+            }
+            // 上传文件
+            return this.uploadFile(bytes, fileName, null);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("通过URL上传文件失败: {}", uploadBase64.getUrl(), e);
+            throw new ServiceException(ApiError.FILE_OPERATION_FAILED, e.getMessage());
+        } finally {
+            // 关闭资源
+            if (inStream != null) {
+                try {
+                    inStream.close();
+                } catch (IOException e) {
+                    log.warn("关闭输入流失败", e);
+                }
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
+    /**
+     * 从输入流中读取所有字节
+     */
+    private byte[] readAllBytes(InputStream inputStream) throws IOException {
+        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+            int nRead;
+            byte[] data = new byte[4096];
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            buffer.flush();
+            return buffer.toByteArray();
+        }
     }
 }

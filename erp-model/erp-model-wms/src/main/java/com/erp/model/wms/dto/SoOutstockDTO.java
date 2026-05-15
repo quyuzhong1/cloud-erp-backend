@@ -2089,5 +2089,9 @@ public class SoOutstockDTO implements Serializable {
          * 实发数量
          */
         private Integer actualQty;
+        /**
+         * 客户id
+         */
+        private String customerId;
     }
 }

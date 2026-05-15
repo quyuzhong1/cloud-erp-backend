@@ -1896,6 +1896,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         Map<String, String> salesPlatformMap = CollUtil.isNotEmpty(salesPlatformList) ? salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName)) : Collections.emptyMap();
+        List<String> customerIds = list.stream()
+                .filter(item -> StringUtils.isBlank(item.getPartitionId()))
+                .map(SoOutstockDTO.PagingViewDTO::getCustomerId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> customerPartitionIdMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(customerIds)) {
+            List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
+            if (CollectionUtils.isNotEmpty(customerInfoEntities)) {
+                customerPartitionIdMap = customerInfoEntities.stream()
+                        .filter(item -> StringUtils.isNotBlank(item.getId()))
+                        .filter(item -> StringUtils.isNotBlank(item.getPartitionId()))
+                        .collect(Collectors.toMap(CustomerInfoEntity::getId,
+                                CustomerInfoEntity::getPartitionId,
+                                (a, b) -> a));
+            }
+        }
+
+        Map<String, String> finalCustomerPartitionIdMap = customerPartitionIdMap;
+        list.forEach(item -> {
+            if (StringUtils.isBlank(item.getPartitionId())) {
+                item.setPartitionId(finalCustomerPartitionIdMap.get(item.getCustomerId()));
+            }
+        });
         //查询审核流程
         List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
@@ -1994,7 +2019,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(item.getId()),item.getApproveUserName()));
         }
     }
-
 
     /**
      * 导出销售出库单

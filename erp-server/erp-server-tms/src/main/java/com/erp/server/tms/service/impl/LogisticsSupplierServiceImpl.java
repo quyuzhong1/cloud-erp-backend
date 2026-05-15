@@ -646,4 +646,27 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         logisticsSupplierEntity.setSupplierName(supplier.getName());
 
     }
+
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> getSupplierTreeByPlatform(LogisticsSupplierDTO.SelectDTO dto) {
+        if (Objects.isNull(dto) || StringUtils.isBlank(dto.getLogisticsPlatform())) {
+            throw new ServiceException("物流平台不能为空");
+        }
+        List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel = logisticsChannelService.listChannelByPlatform(dto);
+        List<String> supplierIds = CollUtil.isNotEmpty(listChannel) ? listChannel.stream().map(LogisticsSupplierDTO.ListChildTreeDTO::getMainId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()) : new ArrayList<>();
+        dto.setSupplierIds(supplierIds);
+        List<LogisticsSupplierDTO.ListChildTreeDTO> listSupplier = CollUtil.isNotEmpty(supplierIds) ? baseMapper.listSupplier(dto) : new ArrayList<>();
+        if (CollectionUtils.isEmpty(listSupplier)) {
+            return Collections.emptyList();
+        }
+        for (LogisticsSupplierDTO.ListChildTreeDTO item : listSupplier) {
+            String id = item.getId();
+            List<LogisticsSupplierDTO.ListChildTreeDTO> channelList = listChannel.stream().
+                    filter(c -> c.getMainId().equals(id)).
+                    collect(Collectors.toList());
+            item.setChildren(channelList);
+        }
+        return listSupplier;
+    }
+
 }

@@ -2298,14 +2298,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public void exportSoContractPdf(String id,HttpServletResponse response) {
+    public SysCommonDTO.AttachmentDTO exportSoContractPdf(String id) {
+        SysCommonDTO.AttachmentDTO attachmentDTO = new SysCommonDTO.AttachmentDTO();
         //销售合同订单
         SoInfoDTO.ExportPdfDTO result = listSoContractPdf(id);
         if (ObjectUtil.isEmpty(result)) {
             throw new ServiceException("未发现销售合同订单数据");
         }
-
-        List<String> base64List = new ArrayList<>();
+        attachmentDTO.setAttachName("销售合同模板"+result.getCode()+".pdf");
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
         getOneDTO.setName(FileTemplateConstant.SO_CONTRACT_PDF);
         getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
@@ -2315,17 +2315,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
         if (inputStream == null) {
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
-            return;
+            throw new ServiceException("获取模板文件失败");
         }
         Map<String, Object> map = BeanUtil.beanToMap(result);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
         map.put("detail", detail);
-        //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
-
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
-        String base = Base64.getEncoder().encodeToString(bytes);
-        base64List.add("data:application/pdf;base64," + base);
-        PdfUtil.exportBase64ForPdf(response,base64List);
+        String url = JasperHelperUtil.exportToPdfUrl(inputStream, map, Collections.singletonList(result));
+        attachmentDTO.setAttachUrl(url);
+        return attachmentDTO;
     }
 
     @Override

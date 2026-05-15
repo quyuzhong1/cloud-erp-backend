@@ -35,14 +35,14 @@ public class SysCodeDTO implements Serializable {
     /**
      * 编码类型 (枚举BusinessNoTypeEnum)
      */
-    private Integer type;
+    private String type;
 
     /**
      * 最后更新时间
      */
     private LocalDateTime updateTime;
 
-    public SysCodeDTO (String category,Integer type) {
+    public SysCodeDTO (String category,String type) {
         this.category = category;
         this.type = type;
     }

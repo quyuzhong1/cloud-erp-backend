@@ -215,6 +215,7 @@ public enum ModuleTypeEnum {
     PDA_VERSION("164","PDA系统升级"),
 
 
+    LOGISTICS_ORDER("168", "物流下单"),
 
 
 

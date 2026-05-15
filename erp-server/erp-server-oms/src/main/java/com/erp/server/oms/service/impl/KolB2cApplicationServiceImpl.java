@@ -20,6 +20,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.DictCityConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.MultiErrorExcelData;
 import com.common.core.enums.ApiError;
@@ -184,11 +185,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1, o2)->o1));
         Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
         Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+        Set<String> noDistrictCityIdSet = getNoDistrictCityIdSet(dictCityEntities);
 
         List<KolB2cApplicationAddressEntity> kolB2cApplicationAddressEntities = BeanMapper.copyList(addDTO.getAddressList(), KolB2cApplicationAddressEntity.class);
         for (KolB2cApplicationAddressEntity entity : kolB2cApplicationAddressEntities) {
             entity.setMainId(id);
-            checkAndSetAddress(entity, dictCountryMap, provinceMap, cityMap, districtMap);
+            checkAndSetAddress(entity, dictCountryMap, provinceMap, cityMap, districtMap, noDistrictCityIdSet);
         }
         kolB2cApplicationAddressService.saveBatch(kolB2cApplicationAddressEntities);
 
@@ -197,7 +199,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
 
 
     //校验并设置国家省市区
-    private static void checkAndSetAddress(KolB2cApplicationAddressEntity KolB2cApplicationAddressEntity, Map<String, String> dictCountryMap, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap) {
+    private static void checkAndSetAddress(KolB2cApplicationAddressEntity KolB2cApplicationAddressEntity, Map<String, String> dictCountryMap, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap, Set<String> noDistrictCityIdSet) {
         //国家
         String countryName = dictCountryMap.getOrDefault(KolB2cApplicationAddressEntity.getCountryId(), "");
         if(StringUtils.isNotBlank(countryName)){
@@ -231,6 +233,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 String district = districtMap.getOrDefault(KolB2cApplicationAddressEntity.getDistrictId(), "");
                 if(StringUtils.isNotBlank(district)){
                     KolB2cApplicationAddressEntity.setDistrict(district);
+                }else if (DictCityConstants.isNoDistrictId(KolB2cApplicationAddressEntity.getDistrictId())
+                        && noDistrictCityIdSet.contains(KolB2cApplicationAddressEntity.getCityId())) {
+                    // 前端占位 districtId（__no_district__:<cityId>）超出 district_id 列长，
+                    // 命中"无区/县"分支后置空，避免落库时触发 value too long
+                    KolB2cApplicationAddressEntity.setDistrictId(null);
+                    KolB2cApplicationAddressEntity.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
                 }else {
                     throw new ServiceException("区域不存在");
                 }
@@ -247,6 +255,25 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 throw new ServiceException("市不能为空");
             }
         }
+    }
+
+    private static Set<String> getNoDistrictCityIdSet(List<DictCityEntity> dictCityEntities) {
+        if (CollUtil.isEmpty(dictCityEntities)) {
+            return Collections.emptySet();
+        }
+        Set<String> districtParentIdSet = dictCityEntities.stream()
+                .filter(entity -> DictCityTypeEnum.DISTRICT.getCode().equals(entity.getType()))
+                .filter(entity -> !Boolean.TRUE.equals(entity.getDisabled()))
+                .map(DictCityEntity::getParentId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        return dictCityEntities.stream()
+                .filter(entity -> DictCityTypeEnum.CITY.getCode().equals(entity.getType()))
+                .filter(entity -> !Boolean.TRUE.equals(entity.getDisabled()))
+                .map(DictCityEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .filter(cityId -> !districtParentIdSet.contains(cityId))
+                .collect(Collectors.toSet());
     }
 
     private void handleAddData(KolB2cApplicationDTO.AddDTO addDTO) {
@@ -415,11 +442,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1, o2)->o1));
         Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
         Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+        Set<String> noDistrictCityIdSet = getNoDistrictCityIdSet(dictCityEntities);
 
         List<KolB2cApplicationAddressEntity> kolB2cApplicationAddressEntities = BeanMapper.copyList(addOrUpdateDTO.getAddressList(), KolB2cApplicationAddressEntity.class);
         for (KolB2cApplicationAddressEntity entity : kolB2cApplicationAddressEntities) {
             entity.setMainId(id);
-            checkAndSetAddress(entity, dictCountryMap, provinceMap, cityMap, districtMap);
+            checkAndSetAddress(entity, dictCountryMap, provinceMap, cityMap, districtMap, noDistrictCityIdSet);
 
         }
         List<KolB2cApplicationAddressEntity> oldKolB2cApplicationAddressEntities = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, id).list();

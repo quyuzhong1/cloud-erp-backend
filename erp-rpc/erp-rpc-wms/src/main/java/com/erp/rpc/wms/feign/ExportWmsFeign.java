@@ -55,7 +55,7 @@ public interface ExportWmsFeign {
     PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 
     @PostMapping("/feign/export/virtualWarehouseAllocation")
-    PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
+    PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/aliexpressDelivery")
     PagingVO<AliexpressDeliveryDTO.ListDTO> exportAliexpressDelivery(@RequestBody PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto);
