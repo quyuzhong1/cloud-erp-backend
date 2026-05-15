@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.controller.vo.ApiResult;
@@ -52,8 +53,6 @@ import java.util.stream.Collectors;
 @Service
 public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMapper, CfgDeclareRuleEntity> implements CfgDeclareRuleService {
 
-    private static final String SENDER = "sender";
-    private static final String RECEIVER = "receiver";
     private static final String RULE_TYPE = "ruleType";
     private static final String CONDITION_VALUE_TYPE_STRING = "String";
 
@@ -109,19 +108,31 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> dropDownList( String name) {
+    public List<BaseDropDownDTO.Tree> dropDownList(String type, String name) {
+        if (SourceTypeEnum.FM_DECLARE_BILL.getCode().equals(type)) {
+            return Collections.singletonList(buildDropDown(
+                    type,
+                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getCode(),
+                    CfgDeclareRuleSenderTypeEnum.BY_COMPANY.getName(),
+                    accountingCompanyChildList(name)));
+        }
+
+        if (SourceTypeEnum.B2B_DECLARE_BILL.getCode().equals(type)) {
             List<BaseDropDownDTO.Tree> result = new ArrayList<>(2);
             result.add(buildDropDown(
-                    "",
+                    type,
                     CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getName(),
                     accountingCompanyChildList(name)));
             result.add(buildDropDown(
-                    "",
+                    type,
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getName(),
                     Collections.emptyList()));
             return result;
+        }
+
+        throw new ServiceException("type must be sender or receiver");
     }
 
     /**
