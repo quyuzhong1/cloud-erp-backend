@@ -1714,8 +1714,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         (v1, v2) -> v1));
 
         // 装箱明细 sheet：sourceCode -> packing_task -> wms_carton_spec -> wms_carton_detail
-        List<String> allSourceCodeList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+//        List<String> allDeliveryCodeList = list.stream()
+//                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+//                .filter(StringUtils::isNotBlank)
+//                .distinct()
+//                .collect(Collectors.toList());
+
+        List<String> allBusinessCodeList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getBusinessCode)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
@@ -1723,8 +1729,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String, List<String>> sourceCodeToTaskIdsMap = Collections.emptyMap();
         // taskId -> sourceCode，反查回填
         Map<String, String> taskIdToSourceCodeMap = Collections.emptyMap();
-        if (CollUtil.isNotEmpty(allSourceCodeList)) {
-            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allSourceCodeList))
+        if (CollUtil.isNotEmpty(allBusinessCodeList)) {
+            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allBusinessCodeList))
                     .orElse(Collections.emptyList());
             sourceCodeToTaskIdsMap = packingTaskList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceCode()) && StringUtils.isNotBlank(e.getId()))
@@ -1768,14 +1774,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             // 装箱明细 sheet：按 sourceCode -> task -> carton -> SKU 三层展开
             List<WmsCartonSpecDTO.WmsCartonSpecView> currentViewList = Collections.emptyList();
-            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getSourceCode(), Collections.emptyList());
+            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getBusinessCode(), Collections.emptyList());
             if (CollUtil.isNotEmpty(currentTaskIdList) && !taskIdToCartonViewMap.isEmpty()) {
                 currentViewList = currentTaskIdList.stream()
                         .map(taskIdToCartonViewMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
-            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getSourceCode(), currentViewList, taskIdToSourceCodeMap));
+            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getBusinessCode(), currentViewList, taskIdToSourceCodeMap));
         }
     }
 
