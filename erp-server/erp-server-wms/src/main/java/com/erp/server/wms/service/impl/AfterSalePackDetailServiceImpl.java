@@ -10,6 +10,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
@@ -31,6 +32,7 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -43,6 +45,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePackDetailMapper, AfterSalePackDetailEntity> implements AfterSalePackDetailService {
+
+    private static final String OPERATION_ADD = "add";
+    private static final String OPERATION_REDUCE = "reduce";
+    private static final String OPERATION_REMOVE = "remove";
 
     @Resource
     private OperateLogService operateLogService;
@@ -62,12 +68,14 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     /**
      * 修改
      */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    @DistributeLocker(keyName = "addOrUpdateDTO.id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
+        checkUpdateParam(addOrUpdateDTO);
         AfterSalePackDetailEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱明细单"));
+        AfterSalePackDetailEntity oldLog = BeanMapperUtils.map(AfterSalePackDetailEntity.class, old);
         AfterSalePackEntity afterSalePackEntity = afterSalePackService.getById(old.getMainId());
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
@@ -77,45 +85,15 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
             throw new ServiceException("箱唛状态不等于已封箱，不可操作");
         }
         // 箱唛已被使用，不可操作
-        if (afterSalePackEntity.getIsUse()) {
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
             throw new ServiceException("箱唛已被使用，不可操作");
         }
         // 查询仓位是否可用
-        List<String> warehouseLocationCodes = Arrays.asList(addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
-                .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
-                .eq(WarehouseLocationEntity::getDisabled, false)
-                .list();
-        if (warehouseLocationCodes.size() != warehouseLocationEntityList.size()) {
-            throw new ServiceException("仓位不存在或已禁用");
-        }
-        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
-        Integer moveQty = 0;
-        // 操作类型不为空，表示移除sku操作
-        if ("remove".equals(addOrUpdateDTO.getOperation())) {
-            moveQty = old.getPackQty();
-            super.removeById(old.getId());
-        } else {
-            if (addOrUpdateDTO.getUpdateQty() == null || addOrUpdateDTO.getUpdateQty() == 0) {
-                throw new ServiceException("新增或者减少数量时，更新数量必填且不能为0");
-            }
-            moveQty = addOrUpdateDTO.getUpdateQty();
-            log.info("编辑 开始修改售后装箱明细单数据，id：【{}】", old.getId());
-            if ("add".equals(addOrUpdateDTO.getOperation())) {
-                old.setPackQty(old.getPackQty() + addOrUpdateDTO.getUpdateQty());
-            } else {
-                if (old.getPackQty() < addOrUpdateDTO.getUpdateQty()) {
-                    throw new ServiceException("减少数量不能大于已出库数量");
-                }
-                old.setPackQty(old.getPackQty() - addOrUpdateDTO.getUpdateQty());
-            }
-            boolean save = super.updateById(old);
-            if (!save) {
-                throw new ServiceException("售后装箱明细单保存失败");
-            }
-        }
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMap(addOrUpdateDTO);
+        Integer moveQty = updatePackQty(addOrUpdateDTO, old);
+        refreshPackSummary(old.getMainId());
         // 如果拆箱前已经发生了移仓，需要记录移仓流水信息
-        if (afterSalePackEntity.getIsMoveWarehouse()) {
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
             WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
             detail.setSkuId(old.getSkuId());
             detail.setSkuNo(old.getSkuNo());
@@ -134,7 +112,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         // 记录主单操作日志
         log.info("编辑 开始记录售后装箱明细单日志数据，id：【{}】", old.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getId(), "售后装箱明细单");
-        operateLogService.addModuleOperateLogByObj(old, old, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(oldLog, old, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -146,19 +124,188 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
 
     @Override
     public List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code) {
-        AfterSalePackDTO.ViewDTO afterSalePackViewDTO = afterSalePackService.viewByCode(code);
-        List<AfterSalePackDetailEntity> list = lambdaQuery()
-                .eq(AfterSalePackDetailEntity::getMainId, afterSalePackViewDTO.getId())
+        if (StrUtil.isBlank(code)) {
+            throw new ServiceException("箱唛不能为空");
+        }
+        AfterSalePackEntity afterSalePackEntity = afterSalePackService.lambdaQuery()
+                .eq(AfterSalePackEntity::getCode, code)
+                .one();
+        if (afterSalePackEntity == null) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
+        }
+        List<AfterSalePackDetailEntity> detailList = lambdaQuery()
+                .eq(AfterSalePackDetailEntity::getMainId, afterSalePackEntity.getId())
                 .list();
-        if (CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("未找到售后装箱明细数据");
         }
-        // 取出所有不为空的skuId数据
-        List<String> skuIdList = list.stream()
+        Map<String, ProductDetailEntity> productMap = getProductMap(detailList);
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMap(detailList);
+        return detailList.stream()
+                .collect(Collectors.groupingBy(this::getSkuGroupKey, LinkedHashMap::new, Collectors.toList()))
+                .values()
+                .stream()
+                .map(list -> buildSkuViewDTO(afterSalePackEntity, list, productMap, warehouseLocationMap))
+                .collect(Collectors.toList());
+    }
+
+    private void checkUpdateParam(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
+        if (addOrUpdateDTO == null || StrUtil.isBlank(addOrUpdateDTO.getId())) {
+            throw new ServiceException("售后装箱明细id不能为空");
+        }
+        String operation = addOrUpdateDTO.getOperation();
+        if (!OPERATION_ADD.equals(operation) && !OPERATION_REDUCE.equals(operation) && !OPERATION_REMOVE.equals(operation)) {
+            throw new ServiceException("操作类型错误");
+        }
+        if (!OPERATION_REMOVE.equals(operation) && (addOrUpdateDTO.getUpdateQty() == null || addOrUpdateDTO.getUpdateQty() <= 0)) {
+            throw new ServiceException("新增或者减少数量时，更新数量必填且不能为0");
+        }
+        if (StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode()) || StrUtil.isBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
+            throw new ServiceException("仓位不能为空");
+        }
+    }
+
+    private Map<String, WarehouseLocationEntity> getWarehouseLocationMap(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
+        List<String> warehouseLocationCodes = Arrays.asList(addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
+                .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
+                .eq(WarehouseLocationEntity::getDisabled, false)
+                .list();
+        if (warehouseLocationCodes.size() != warehouseLocationEntityList.size()) {
+            throw new ServiceException("仓位不存在或已禁用");
+        }
+        return warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
+    }
+
+    private Integer updatePackQty(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO, AfterSalePackDetailEntity old) {
+        Integer oldPackQty = Optional.ofNullable(old.getPackQty()).orElse(0);
+        if (OPERATION_REMOVE.equals(addOrUpdateDTO.getOperation())) {
+            if (!super.removeById(old.getId())) {
+                throw new ServiceException("售后装箱明细单删除失败");
+            }
+            return oldPackQty;
+        }
+        Integer updateQty = addOrUpdateDTO.getUpdateQty();
+        log.info("编辑 开始修改售后装箱明细单数据，id：【{}】", old.getId());
+        if (OPERATION_ADD.equals(addOrUpdateDTO.getOperation())) {
+            old.setPackQty(oldPackQty + updateQty);
+        } else {
+            if (oldPackQty < updateQty) {
+                throw new ServiceException("减少数量不能大于已出库数量");
+            }
+            old.setPackQty(oldPackQty - updateQty);
+        }
+        boolean save = super.updateById(old);
+        if (!save) {
+            throw new ServiceException("售后装箱明细单保存失败");
+        }
+        return updateQty;
+    }
+
+    private void refreshPackSummary(String mainId) {
+        List<AfterSalePackDetailEntity> detailList = lambdaQuery()
+                .eq(AfterSalePackDetailEntity::getMainId, mainId)
+                .list();
+        AfterSalePackEntity updateEntity = new AfterSalePackEntity();
+        updateEntity.setId(mainId);
+        updateEntity.setSkuSpeciesQty((int) detailList.stream()
+                .map(AfterSalePackDetailEntity::getSkuNo)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .count());
+        updateEntity.setTotalQty(detailList.stream()
+                .map(AfterSalePackDetailEntity::getPackQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum());
+        if (!afterSalePackService.updateById(updateEntity)) {
+            throw new ServiceException("售后装箱单保存失败");
+        }
+    }
+
+    private String getSkuGroupKey(AfterSalePackDetailEntity detail) {
+        if (StrUtil.isNotBlank(detail.getSkuId())) {
+            return detail.getSkuId();
+        }
+        return StrUtil.isNotBlank(detail.getSkuNo()) ? detail.getSkuNo() : detail.getId();
+    }
+
+    private AfterSalePackDetailDTO.ViewDTO buildSkuViewDTO(AfterSalePackEntity afterSalePackEntity,
+                                                           List<AfterSalePackDetailEntity> detailList,
+                                                           Map<String, ProductDetailEntity> productMap,
+                                                           Map<String, WarehouseLocationEntity> warehouseLocationMap) {
+        AfterSalePackDetailEntity first = detailList.get(0);
+        AfterSalePackDetailDTO.ViewDTO viewDTO = BeanMapperUtils.map(AfterSalePackDetailDTO.ViewDTO.class, first);
+        viewDTO.setId(StrUtil.isNotBlank(first.getSkuId()) ? first.getSkuId() : first.getId());
+        viewDTO.setPackQty(sum(detailList, AfterSalePackDetailEntity::getPackQty));
+        viewDTO.setActualQty(sum(detailList, AfterSalePackDetailEntity::getActualQty));
+        viewDTO.setDiffQty(sum(detailList, AfterSalePackDetailEntity::getDiffQty));
+        ProductDetailEntity productDetail = productMap.get(first.getSkuId());
+        if (productDetail != null) {
+            viewDTO.setProductName(productDetail.getName());
+            viewDTO.setUnitId(productDetail.getUnitId());
+            viewDTO.setUnit(productDetail.getUnitName());
+            viewDTO.setUnitName(productDetail.getUnitName());
+        }
+        viewDTO.setDetailDTOList(detailList.stream()
+                .map(detail -> buildBoxDetailDTO(afterSalePackEntity, detail, warehouseLocationMap))
+                .collect(Collectors.toList()));
+        return viewDTO;
+    }
+
+    private AfterSalePackDTO.DetailDTO buildBoxDetailDTO(AfterSalePackEntity afterSalePackEntity,
+                                                         AfterSalePackDetailEntity detail,
+                                                         Map<String, WarehouseLocationEntity> warehouseLocationMap) {
+        AfterSalePackDTO.DetailDTO detailDTO = new AfterSalePackDTO.DetailDTO();
+        detailDTO.setCode(afterSalePackEntity.getCode());
+        detailDTO.setPackQty(detail.getPackQty());
+        detailDTO.setOutWarehouseLocationId(detail.getOutWarehouseLocationId());
+        WarehouseLocationEntity outWarehouseLocation = warehouseLocationMap.get(detail.getOutWarehouseLocationId());
+        if (outWarehouseLocation != null) {
+            detailDTO.setOutWarehouseLocationCode(outWarehouseLocation.getCode());
+            detailDTO.setOutWarehouseLocationName(outWarehouseLocation.getName());
+        }
+        detailDTO.setInWarehouseLocationId(detail.getInWarehouseLocationId());
+        WarehouseLocationEntity inWarehouseLocation = warehouseLocationMap.get(detail.getInWarehouseLocationId());
+        if (inWarehouseLocation != null) {
+            detailDTO.setInWarehouseLocationCode(inWarehouseLocation.getCode());
+            detailDTO.setInWarehouseLocationName(inWarehouseLocation.getName());
+        }
+        return detailDTO;
+    }
+
+    private Map<String, ProductDetailEntity> getProductMap(List<AfterSalePackDetailEntity> detailList) {
+        List<String> skuIdList = detailList.stream()
                 .map(AfterSalePackDetailEntity::getSkuId)
                 .filter(StrUtil::isNotBlank)
+                .distinct()
                 .collect(Collectors.toList());
-        return Collections.emptyList();
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyMap();
+        }
+        List<ProductDetailEntity> productList = Optional.ofNullable(productDetailFeign.listByIds(skuIdList)).orElse(Collections.emptyList());
+        return productList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity(), (v1, v2) -> v1));
+    }
+
+    private Map<String, WarehouseLocationEntity> getWarehouseLocationMap(List<AfterSalePackDetailEntity> detailList) {
+        List<String> warehouseLocationIds = detailList.stream()
+                .flatMap(detail -> Stream.of(detail.getOutWarehouseLocationId(), detail.getInWarehouseLocationId()))
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(warehouseLocationIds)) {
+            return Collections.emptyMap();
+        }
+        return warehouseLocationService.listByIds(warehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, Function.identity(), (v1, v2) -> v1));
+    }
+
+    private Integer sum(List<AfterSalePackDetailEntity> detailList, Function<AfterSalePackDetailEntity, Integer> mapper) {
+        return detailList.stream()
+                .map(mapper)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
     }
 
 }
