@@ -20,6 +20,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -206,6 +207,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.WAIT_HANDLE.getStatus());
         thirdWarehouseDeliveryEntity.setSoCode(soMultiChannelEntity.getSoCode());
         thirdWarehouseDeliveryEntity.setSoId(soMultiChannelEntity.getSoId());
+        thirdWarehouseDeliveryEntity.setShopId(soMultiChannelEntity.getShopId());
         thirdWarehouseDeliveryEntity.setCode(soMultiChannelEntity.getDeliveryCode());
         thirdWarehouseDeliveryEntity.setDictPlatform(soMultiChannelEntity.getDictPlatform());
         thirdWarehouseDeliveryEntity.setPlatformCode(soMultiChannelEntity.getPlatformCode());
@@ -1189,8 +1191,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        Map<String, String> dictMap = CollUtil.isNotEmpty(dictList) ? dictList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName)) : Collections.emptyMap();
         List<String> ids = list.stream().map(SoMultiChannelDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
+        }
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
+
         // 属性赋值
         for (SoMultiChannelDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -1200,13 +1209,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             data.setDeliveryStatusName(data.getDeliveryStatus());
             data.setOutstockStatusName(OutstockStatusEnum.getName(data.getOutstockStatus()));
             //平台类型名称
-            String dictPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDictPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            data.setDictPlatformName(dictPlatformName);
-            String deliveryPlatformName = dictList.stream().filter(obj -> obj.getValue().equals(data.getDeliveryPlatform())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            data.setDeliveryPlatformName(deliveryPlatformName);
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(data.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            String userName = StringUtils.join(curApproveName, ",");
-            data.setApproveUserName(userName);
+            data.setDictPlatformName(dictMap.getOrDefault(data.getDictPlatform(), ""));
+            data.setDeliveryPlatformName(dictMap.getOrDefault(data.getDeliveryPlatform(), ""));
+            data.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(data.getId()),data.getApproveUserName()));
         }
     }
 

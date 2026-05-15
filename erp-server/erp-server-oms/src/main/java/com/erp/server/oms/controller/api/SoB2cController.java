@@ -80,9 +80,6 @@ public class SoB2cController extends BaseController {
     private SoB2cService soB2cService;
 
     @Resource
-    private ShopInfoService shopInfoService;
-
-    @Resource
     private SoB2cErrorService soB2cErrorService;
 
     @Resource
@@ -98,8 +95,6 @@ public class SoB2cController extends BaseController {
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
-    @Resource
-    private WorkflowFeign workflowFeign;
 
     @Resource
     private SoB2cRuleService soB2cRuleService;
@@ -153,7 +148,6 @@ public class SoB2cController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
-        dto.getParams().setIsFullyManaged(Boolean.FALSE);
         return success(soB2cService.paging(dto));
     }
     /**
