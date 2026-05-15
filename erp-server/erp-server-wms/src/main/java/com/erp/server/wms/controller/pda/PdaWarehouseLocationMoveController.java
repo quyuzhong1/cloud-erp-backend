@@ -667,4 +667,13 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     public ApiResult<WarehouseLocationMoveDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         return success(warehouseLocationMoveService.importFile(excelFile,response));
     }
+
+
+    /**
+     * 移箱明细
+     * @author liuchao
+     * @date 2024/5/15
+     *
+     */
+    
 }
