@@ -94,6 +94,12 @@ import java.util.stream.Stream;
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private static final String AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER =
             "DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler";
+    private static final Set<String> FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST = new LinkedHashSet<>(
+            Arrays.asList(
+                    BusinessTypeEnum.FBA_INBOUND_PLANS.getCode(),
+                    BusinessTypeEnum.FBA_SHIPMENT.getCode()
+            )
+    );
 
     @Resource
     private MongoService mongoService;
@@ -690,13 +696,14 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .distinct()
                 .collect(Collectors.toList());
         // 校验新中台明细配置
+        String inputBillType = resolveFbaShipmentPullBillType();
         DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getBillType, BusinessTypeEnum.FBA_SHIPMENT.getCode())
+                .eq(DmpCfgInputEntity::getBillType, inputBillType)
                 .eq(DmpCfgInputEntity::getDisabled, false)
                 .last(" LIMIT 1 ")
                 .one();
         if (null == inputEntity) {
-            ServiceException.runError("FBA查询配置不存在");
+            ServiceException.runError("FBA查询配置不存在,billType={}", inputBillType);
         }
         List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
                 .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
@@ -739,6 +746,27 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 //            }
 //        }
         return true;
+    }
+
+    /**
+     * 可通过 cfg_setting 配置 key=fba_shipment_pull_bill_type(type=new_dmp_pull_switch) 动态切换。
+     * 默认使用 fba_inbound_plans；仅允许白名单值，避免误配置。
+     */
+    private String resolveFbaShipmentPullBillType() {
+        String defaultBillType = BusinessTypeEnum.FBA_INBOUND_PLANS.getCode();
+        String configBillType = cfgSettingService.getValue(SettingEnum.FBA_SHIPMENT_PULL_BILL_TYPE);
+        if (StringUtils.isBlank(configBillType)) {
+            return defaultBillType;
+        }
+        String trimBillType = configBillType.trim();
+        if (!FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST.contains(trimBillType)) {
+            log.warn("newDmpPullShipment配置的billType不在允许范围内, key={}, value={}, fallback={}",
+                    SettingEnum.FBA_SHIPMENT_PULL_BILL_TYPE.getKey(),
+                    configBillType,
+                    defaultBillType);
+            return defaultBillType;
+        }
+        return trimBillType;
     }
 
     /**
