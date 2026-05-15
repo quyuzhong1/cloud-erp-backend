@@ -278,7 +278,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     }
 
     private JSONObject createChangeBeforePpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
-        JSONObject entry = new JSONObject();
+        JSONObject entry = new JSONObject(new LinkedHashMap<>());
         //物料编码
         JSONObject skuJson = new JSONObject();
         Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
@@ -383,7 +383,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     }
 
     private JSONObject createChangeAfterPpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
-        JSONObject entry = new JSONObject();
+        JSONObject entry = new JSONObject(new LinkedHashMap<>());
         //物料编码
         JSONObject skuJson = new JSONObject();
         Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
@@ -483,7 +483,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
 
     private JSONObject createNewPpBomEntry(JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
-        Map<String, Object> entry = new HashMap<>();
+        Map<String, Object> entry = new LinkedHashMap<>();
 
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -540,10 +540,13 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     }
 
     private void setIssueTypeAndBackFlush(Map<String, Object> entry, String issueType) {
-        entry.put("FIssueType", issueType);
         if (Objects.equals("2", issueType)) {
             entry.put("FBackFlushType", "3");
+        } else {
+            entry.remove("FBackFlushType");
         }
+        // Keep FIssueType as the last assigned field to reduce BOS defaulting overrides.
+        entry.put("FIssueType", issueType);
     }
 
     /**
