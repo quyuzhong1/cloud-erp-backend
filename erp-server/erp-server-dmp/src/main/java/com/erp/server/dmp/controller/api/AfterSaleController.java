@@ -434,7 +434,8 @@ public class AfterSaleController extends BaseController {
      */
     @PostMapping("/logisticsOrder")
     public ApiResult<List<BatchResultDTO>> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
-        List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(dto);
+        List<String> ids = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(ids, dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

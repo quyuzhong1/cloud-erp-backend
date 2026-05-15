@@ -665,7 +665,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String productId = productDetailEntity.getProductId();
         ProductInfoEntity infoEntity = productInfoService.getById(productId);
         if (ObjectUtil.isNotEmpty(infoEntity) && infoEntity.getSpecType() == 2) {
-          return getNoSpecDetailById(productId);
+            ProductNoSpecDetailAllDTO detail = getNoSpecDetailById(productId);
+            detail.setProductRefSkuList(productRefSkuService.listBySkuId(skuId));
+            return detail;
         }
 
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
