@@ -41,10 +41,15 @@ public class AfterSalePackDetailEntity extends BaseEntity<AfterSalePackDetailEnt
     @TableField("sku_no")
     private String skuNo;
     /**
-     * 仓位id,warehouse_location.id
+     * 拣货仓位id,warehouse_location.id
      */
-    @TableField("warehouse_location_id")
-    private String warehouseLocationId;
+    @TableField("out_warehouse_location_id")
+    private String outWarehouseLocationId;
+    /**
+     * 移入仓位id,warehouse_location.id
+     */
+    @TableField("in_warehouse_location_id")
+    private String inWarehouseLocationId;
     /**
      * 装箱数量
      */
@@ -68,7 +73,9 @@ public class AfterSalePackDetailEntity extends BaseEntity<AfterSalePackDetailEnt
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String WAREHOUSE_LOCATION_ID = "warehouse_location_id";
+    public static final String OUT_WAREHOUSE_LOCATION_ID = "out_warehouse_location_id";
+
+    public static final String IN_WAREHOUSE_LOCATION_ID = "in_warehouse_location_id";
 
     public static final String PACK_QTY = "pack_qty";
 

@@ -1,11 +1,10 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -18,16 +17,6 @@ import com.erp.model.wms.entity.AfterSalePackDetailEntity;
 public interface AfterSalePackDetailService extends SuperService<AfterSalePackDetailEntity> {
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    BaseResultDTO.AddDTO add(AfterSalePackDetailDTO.AddDTO dto);
-
-    /**
      * 修改
      *
      * @param dto
@@ -36,16 +25,6 @@ public interface AfterSalePackDetailService extends SuperService<AfterSalePackDe
      * @date: 2026-05-12
      */
     Boolean update(AfterSalePackDetailDTO.UpdateDTO dto);
-
-    /**
-     * 分页列表查询
-     *
-     * @param pagingParamDTO
-     * @return PagingVO<AfterSalePackDetailDTO.ListDTO>>
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    PagingVO<AfterSalePackDetailDTO.ListDTO> paging(PagingDTO<AfterSalePackDetailDTO.PagingParamDTO> pagingParamDTO);
 
     /**
      * 详情
@@ -57,4 +36,13 @@ public interface AfterSalePackDetailService extends SuperService<AfterSalePackDe
      */
     AfterSalePackDetailDTO.ViewDTO view(String id);
 
+    /**
+     * 根据箱唛查询详情列表
+     *
+     * @param code String
+     * @return ApiResult<List < AfterSalePackDetailDTO.ViewDTO>>
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code);
 }

@@ -15,8 +15,9 @@
        <result column="main_id" property="mainId" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="warehouse_location_id" property="warehouseLocationId" />
-       <result column="pack_qty" property="packQty" />
+       <result column="out_warehouse_location_id" property="outWarehouseLocationId" />
+       <result column="in_warehouse_location_id" property="inWarehouseLocationId" />
+        <result column="pack_qty" property="packQty" />
        <result column="actual_qty" property="actualQty" />
        <result column="diff_qty" property="diffQty" />
     </resultMap>
@@ -32,11 +33,14 @@
         update_time,
         version,
         is_deleted,
-        main_id, sku_id, sku_no, warehouse_location_id, pack_qty, actual_qty, diff_qty
+        main_id,
+        sku_id,
+        sku_no,
+        out_warehouse_location_id,
+        in_warehouse_location_id,
+        pack_qty,
+        actual_qty,
+        diff_qty
     </sql>
-
-    <select id="paging" resultType="com.erp.model.wms.dto.AfterSalePackDetailDTO$ListDTO">
-
-    </select>
 
 </mapper>
