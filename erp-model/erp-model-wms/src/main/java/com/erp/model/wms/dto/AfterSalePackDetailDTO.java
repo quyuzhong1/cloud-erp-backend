@@ -95,9 +95,14 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * skuId
+         * 拣货仓位id
          */
-        private String warehouseLocationId;
+        private String outWarehouseLocationId;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
 
         /**
          * 装箱数量
@@ -187,19 +192,34 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String unitName;
 
         /**
-         * 仓位id,warehouse_location.id
+         * 拣货仓位id
          */
-        private String warehouseLocationId;
+        private String outWarehouseLocationId;
 
         /**
-         * 仓位code
+         * 拣货仓位code
          */
-        private String warehouseLocationCode;
+        private String outWarehouseLocationCode;
 
         /**
-         * 仓位名称
+         * 拣货仓位名称
          */
-        private String warehouseLocationName;
+        private String outWarehouseLocationName;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
+
+        /**
+         * 移入仓位名称
+         */
+        private String inWarehouseLocationName;
 
         /**
          * 装箱数量
@@ -246,6 +266,11 @@ public class AfterSalePackDetailDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 操作类型，拆箱移除sku时，必填
+         */
+        private String operation;
+
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -265,14 +290,18 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 仓位code
+         * 拣货仓位code
          */
-        private String warehouseLocationCode;
+        private String outWarehouseLocationCode;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
 
         /**
          * 装箱数量
          */
-        @NotNull(message = "装箱数量不能为空")
         private Integer packQty;
 
         /**
@@ -284,6 +313,11 @@ public class AfterSalePackDetailDTO implements Serializable {
          * 差异数量
          */
         private Integer diffQty;
+
+        /**
+         * 更新数量
+         */
+        private Integer updateQty;
 
     }
 

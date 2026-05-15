@@ -53,10 +53,10 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
     private AfterSalePackService afterSalePackService;
 
     /**
-     * 仅当 {@link AfterSalePackDTO.ViewDTO#getUsageStatus()} 为 false 时允许整箱移仓。
+     * 仅当 {@link AfterSalePackDTO.ViewDTO#getIsUse()} 为 false 时允许整箱移仓。
      */
     private static void assertUsageStatusAllowsMove(AfterSalePackDTO.ViewDTO boxInfo) {
-        Boolean u = boxInfo.getUsageStatus();
+        Boolean u = boxInfo.getIsUse();
         if (Boolean.TRUE.equals(u)) {
             throw new ServiceException("该箱唛已被占用(usageStatus=true)，不支持整箱移仓");
         }

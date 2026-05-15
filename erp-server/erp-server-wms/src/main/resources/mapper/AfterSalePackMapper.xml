@@ -17,11 +17,13 @@
        <result column="source_code" property="sourceCode" />
        <result column="source_type" property="sourceType" />
        <result column="type" property="type" />
-       <result column="usage_status" property="usageStatus" />
+       <result column="is_use" property="isUse" />
        <result column="pack_status" property="packStatus" />
        <result column="is_difference" property="isDifference" />
+       <result column="is_move_warehouse" property="isMoveWarehouse" />
        <result column="sku_species_qty" property="skuSpeciesQty" />
        <result column="total_qty" property="totalQty" />
+       <result column="remark" property="remark" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -40,11 +42,13 @@
         source_code,
         source_type,
         type,
-        usage_status,
+        is_use,
         pack_status,
         is_difference,
+        is_move_warehouse,
         sku_species_qty,
-        total_qty
+        total_qty,
+        remark
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
@@ -62,11 +66,13 @@
         t.source_code as sourceCode,
         t.source_type as sourceType,
         t.type,
-        t.usage_status as usageStatus,
+        t.is_use as isUse,
         t.pack_status as packStatus,
         t.is_difference as isDifference,
+        t.is_move_warehouse as isMoveWarehouse,
         t.sku_species_qty as skuSpeciesQty,
         t.total_qty as totalQty,
+        t.remark,
         pt.supplier_id as supplierId,
         pt.supplier_name as supplierName
         from after_sale_pack t

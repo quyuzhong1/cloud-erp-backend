@@ -1,29 +1,25 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.AfterSalePackStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
+import com.erp.model.wms.entity.AfterSalePackEntity;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.AfterSalePackDetailMapper;
 import com.erp.server.wms.service.AfterSalePackDetailService;
 import com.erp.server.wms.service.AfterSalePackService;
 import com.erp.server.wms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,23 +50,6 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     @Resource
     private ProductDetailFeign productDetailFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(AfterSalePackDetailDTO.AddDTO addOrUpdateDTO) {
-        AfterSalePackDetailEntity afterSalePackDetailEntity = new AfterSalePackDetailEntity();
-        BeanMapperUtils.copy(addOrUpdateDTO, afterSalePackDetailEntity);
-        log.info("开始新增售后装箱明细单");
-        boolean save = super.save(afterSalePackDetailEntity);
-        if (!save) {
-            throw new ServiceException("售后装箱明细单保存失败");
-        }
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "售后装箱明细单", afterSalePackDetailEntity.getId());
-        operateLogService.addModuleOperateLog(msg, null, afterSalePackDetailEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(afterSalePackDetailEntity.getId(), afterSalePackDetailEntity.getId());
-    }
-
     /**
      * 修改
      */
@@ -80,28 +59,33 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     public Boolean update(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
         AfterSalePackDetailEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱明细单"));
-        AfterSalePackDetailEntity afterSalePackDetailEntity = BeanMapperUtils.map(AfterSalePackDetailEntity.class, addOrUpdateDTO);
-        log.info("编辑 开始修改售后装箱明细单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(afterSalePackDetailEntity);
-        if (!save) {
-            throw new ServiceException("售后装箱明细单保存失败");
+        AfterSalePackEntity afterSalePackEntity = afterSalePackService.getById(old.getMainId());
+        if (afterSalePackEntity == null) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
+        }
+        // 箱唛状态不等于已封箱，不可以操作
+        if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+            throw new ServiceException("箱唛状态不等于已封箱，不可以操作");
+        }
+        // 操作类型不为空，表示移除sku操作
+        if (StringUtils.isNotBlank(addOrUpdateDTO.getOperation())) {
+            super.removeById(old.getId());
+        } else {
+            if (addOrUpdateDTO.getUpdateQty() == null || addOrUpdateDTO.getUpdateQty() == 0) {
+                throw new ServiceException("新增或者减少数量时，更新数量必填且不能为0");
+            }
+            log.info("编辑 开始修改售后装箱明细单数据，id：【{}】", old.getId());
+            old.setPackQty(old.getPackQty() + addOrUpdateDTO.getUpdateQty());
+            boolean save = super.updateById(old);
+            if (!save) {
+                throw new ServiceException("售后装箱明细单保存失败");
+            }
         }
         // 记录主单操作日志
-        log.info("编辑 开始记录售后装箱明细单日志数据，id：【{}】", afterSalePackDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSalePackDetailEntity.getId(), "售后装箱明细单");
-        operateLogService.addModuleOperateLogByObj(old, afterSalePackDetailEntity, null, afterSalePackDetailEntity.getId(), msg);
+        log.info("编辑 开始记录售后装箱明细单日志数据，id：【{}】", old.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), "售后装箱明细单");
+        operateLogService.addModuleOperateLogByObj(old, old, null, old.getId(), msg);
         return Boolean.TRUE;
-    }
-
-    @Override
-    public PagingVO<AfterSalePackDetailDTO.ListDTO> paging(PagingDTO<AfterSalePackDetailDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<AfterSalePackDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if (CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO(pageData);
-        }
-        return new PagingVO(pageData);
     }
 
     @Override

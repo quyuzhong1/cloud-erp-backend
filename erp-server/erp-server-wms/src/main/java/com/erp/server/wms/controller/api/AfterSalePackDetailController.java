@@ -1,10 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
@@ -36,20 +33,6 @@ public class AfterSalePackDetailController extends BaseController {
     private AfterSalePackDetailService afterSalePackDetailService;
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return ApiResult<String>
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "售后装箱明细表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSalePackDetailDTO.AddDTO dto) {
-        return success(afterSalePackDetailService.add(dto));
-    }
-
-    /**
      * 修改
      *
      * @param dto
@@ -67,24 +50,6 @@ public class AfterSalePackDetailController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated AfterSalePackDetailDTO.UpdateDTO dto) {
         afterSalePackDetailService.update(dto);
         return success();
-    }
-
-    /**
-     * 列表查询
-     *
-     * @param dto
-     * @return ApiResult<PagingVO < AfterSalePackDetailDTO.ListDTO>>
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:afterSalePackDetail:paging",
-            tableAlias = ""
-    )
-    public ApiResult<PagingVO<AfterSalePackDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AfterSalePackDetailDTO.PagingParamDTO> dto) {
-        return success(afterSalePackDetailService.paging(dto));
     }
 
     /**
