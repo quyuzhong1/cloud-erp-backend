@@ -2578,23 +2578,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), "操作成功");
     }
 
-    @Override
-    public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        if(dynamicDataSourceTypeEnum == null) {
-            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
-        }
-        dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        if (CollUtil.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        // 数据处理
-        fillList(page.getRecords());
-        return new PagingVO<>(page);
-    }
-
     /**
      * 虚拟仓从冻结出库
      * @author will

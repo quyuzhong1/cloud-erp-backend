@@ -218,11 +218,10 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        String dynamicDataSource = "";
-        if(dynamicDataSourceTypeEnum != null) {
-            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
         }
-        dto.getParams().setDynamicDataSource(dynamicDataSource);
+        dto.getParams().setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         IPage<ThirdWarehouseDeliveryDTO.PagingViewDTO> pageData = baseMapper.paging(query, dto.getParams());
         List<ThirdWarehouseDeliveryDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {

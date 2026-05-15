@@ -789,22 +789,29 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
         List<String> soIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getSoId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> allSoOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
-        Map<String, List<SoOutstockDetailEntity>> stockDetailMap = CollUtil.isNotEmpty(allSoOutstockDetailEntityList) ? allSoOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId)) : Collections.emptyMap();
-
+        Map<String, List<SoOutstockDetailEntity>> stockDetailMap = CollUtil.isNotEmpty(allSoOutstockDetailEntityList)
+                ? allSoOutstockDetailEntityList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSoId))
+                : Collections.emptyMap();
         List<SoReturnInstockDetailEntity> allSoReturnInstockDetailList = soReturnInstockFeign.getSoReturnInstockByReturnIds(ids);
-        Map<String, List<SoReturnInstockDetailEntity>> instockDetailMap = CollUtil.isNotEmpty(allSoReturnInstockDetailList) ? allSoReturnInstockDetailList.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId)) : Collections.emptyMap();
-
+        Map<String, List<SoReturnInstockDetailEntity>> instockDetailMap = CollUtil.isNotEmpty(allSoReturnInstockDetailList)
+                ? allSoReturnInstockDetailList.stream()
+                .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSoReturnDetailId))
+                : Collections.emptyMap();
         for (SoB2cReturnDTO.PagingViewDTO pagingViewDTO : list) {
             pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
             pagingViewDTO.setShopName(shopMap.get(pagingViewDTO.getShopId()));
             pagingViewDTO.setTypeName(ReturnTypeEnum.getName(pagingViewDTO.getType()));
             pagingViewDTO.setStatusName(SoB2cReturnStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setProductName(skuMap.get(pagingViewDTO.getSkuId()));
-            List<SoOutstockDetailEntity> soOutstockDetailEntityList = stockDetailMap.get(pagingViewDTO.getSoId());
-            pagingViewDTO.setOutQty(soOutstockDetailEntityList.stream().filter(e -> e.getSkuId().equals(pagingViewDTO.getSkuId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum));
-
-            List<SoReturnInstockDetailEntity> allSoReturnInstockDetailEntityList = instockDetailMap.get(pagingViewDTO.getDetailId());
-            String instockCode = allSoReturnInstockDetailEntityList.stream().map(SoReturnInstockDetailEntity::getCode).distinct().collect(Collectors.joining(","));
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList =
+                    Optional.ofNullable(stockDetailMap.getOrDefault(pagingViewDTO.getSoId(), Collections.emptyList()))
+                            .orElse(Collections.emptyList())
+                            .stream()
+                            .filter(v -> v.getSkuId() != null && v.getSkuId().equals(pagingViewDTO.getSkuId()))
+                            .collect(Collectors.toList());
+            pagingViewDTO.setOutQty(soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum));
+            List<SoReturnInstockDetailEntity> instockDetailEntityList = instockDetailMap.getOrDefault(pagingViewDTO.getDetailId(), Collections.emptyList());
+            String instockCode = instockDetailEntityList.stream().map(SoReturnInstockDetailEntity::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(","));
             pagingViewDTO.setInstockCode(instockCode);
             pagingViewDTO.setCompleteOrderAmount(pagingViewDTO.getOrderAmount() + pagingViewDTO.getCurrency());
             //最新审核人
@@ -815,10 +822,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             } else {
                 pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
             }
-            List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = instockDetailMap.get(pagingViewDTO.getDetailId()).stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
-            pagingViewDTO.setInstockQty(soReturnInstockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum));
-            if(CollectionUtils.isNotEmpty(soReturnInstockDetailEntityList)){
-                pagingViewDTO.setSysInstockTime(soReturnInstockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
+            pagingViewDTO.setInstockQty(instockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId()) && v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum));
+            if(CollectionUtils.isNotEmpty(instockDetailEntityList)){
+                pagingViewDTO.setSysInstockTime(instockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
             }
             if (pagingViewDTO.getInstockQty() == 0) {
                 pagingViewDTO.setInstockStatusName("未入库");

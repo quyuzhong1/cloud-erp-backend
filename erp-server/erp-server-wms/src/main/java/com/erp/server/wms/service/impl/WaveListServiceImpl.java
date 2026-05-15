@@ -29,6 +29,7 @@ import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.server.wms.convert.WaveListConverter;
 import com.erp.server.wms.mapper.PickingDetailMapper;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
@@ -65,6 +66,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Resource
     private PickingDetailMapper pickingDetailMapper;
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -162,37 +165,38 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     public PagingVO<WaveListDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
-        List<WaveListDTO.ViewDTO> viewDTOList = fillViewList(result.getRecords());
-        return new PagingVO<>(viewDTOList, (int)result.getTotal(), (int)result.getSize(), (int)result.getCurrent());
+        IPage<WaveListDTO.ViewDTO> result = this.baseMapper.paging(page, pagingDTO.getParams());
+        fillViewList(result.getRecords());
+        return new PagingVO<>(result);
     }
 
-    private List<WaveListDTO.ViewDTO> fillViewList(List<WaveListEntity> records) {
+    private void fillViewList(List<WaveListDTO.ViewDTO> records) {
         if (records.isEmpty()){
-            return Collections.emptyList();
+            return;
         }
         //查询所有的拣货车类型，减少循环内查询
         List<PickingCartTypeEntity> cartTypeList = pickingCartTypeService.list();
         Map<String, String> typeMap = CollUtil.isNotEmpty(cartTypeList) ? cartTypeList.stream().collect(Collectors.toMap(BaseEntity::getId, PickingCartTypeEntity::getName)) : Collections.emptyMap();
         //查询波次关联的拣货车类型
-        List<String> waveIds = records.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<String> waveIds = records.stream().map(WaveListDTO.ViewDTO::getId).collect(Collectors.toList());
         List<WaveListCartTypeEntity> waveCartTypeList = waveListCartTypeMapper.selectList(new QueryWrapper<WaveListCartTypeEntity>().in("wave_id", waveIds));
         Map<String, List<WaveListCartTypeEntity>> cartTypeMap = CollUtil.isNotEmpty(waveCartTypeList) ? waveCartTypeList.stream().collect(Collectors.groupingBy(WaveListCartTypeEntity::getWaveId)) : Collections.emptyMap();
-        List<WaveListDTO.ViewDTO> viewDTOList = new ArrayList<>(records.size());
-        for (WaveListEntity record : records) {
-            WaveListDTO.ViewDTO viewDTO = new WaveListDTO.ViewDTO();
-            BeanMapper.copy(record, viewDTO);
-            viewDTO.setPickingUserName(record.getPickingUserName());
-            viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
-            viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
-            viewDTO.setPrintStatusName(PrintStatusEnum.getName(record.getPrintStatus()));
-            viewDTO.setPickingPrintStatusName(PrintStatusEnum.getName(record.getPickingPrintStatus()));
-            viewDTO.setSkuBarcodePrintStatusName(PrintStatusEnum.getName(record.getSkuBarcodePrintStatus()));
+        //仓库名称
+        List<String> warehouseIds = records.stream().map(WaveListDTO.ViewDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = CollUtil.isNotEmpty(warehouseIds) ? warehouseService.listByIds(warehouseIds) : Collections.emptyList();
+        Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(BaseEntity::getId, WarehouseEntity::getName));
+
+        for (WaveListDTO.ViewDTO viewDTO : records) {
+            viewDTO.setTypeName(PickingWaveTypeEnum.getName(viewDTO.getType()));
+            viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(viewDTO.getPickingType()));
+            viewDTO.setPrintStatusName(PrintStatusEnum.getName(viewDTO.getPrintStatus()));
+            viewDTO.setPickingPrintStatusName(PrintStatusEnum.getName(viewDTO.getPickingPrintStatus()));
+            viewDTO.setSkuBarcodePrintStatusName(PrintStatusEnum.getName(viewDTO.getSkuBarcodePrintStatus()));
             if (!viewDTO.getIsFullyManaged()){
                 viewDTO.setSkuBarcodePrintStatusName("无需打印");
             }
-            if(CharSequenceUtil.isBlank(record.getPickingCartCode())){
-                List<WaveListCartTypeEntity> entityList = cartTypeMap.get(record.getId());
+            if(CharSequenceUtil.isBlank(viewDTO.getPickingCartCode())){
+                List<WaveListCartTypeEntity> entityList = cartTypeMap.get(viewDTO.getId());
                 if(entityList != null && !entityList.isEmpty()){
                     List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
                     List<String> typeNameList = new ArrayList<>();
@@ -201,12 +205,11 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                     viewDTO.setPickingCartTypeName(cartTypeName);
                 }
             }else {
-                viewDTO.setPickingCartTypeName(typeMap.get(record.getPickingCartType()));
+                viewDTO.setPickingCartTypeName(typeMap.get(viewDTO.getPickingCartType()));
             }
-            viewDTO.setStatusName(WaveStatusEnum.getNameByCode(record.getStatus()));
-            viewDTOList.add(viewDTO);
+            viewDTO.setStatusName(WaveStatusEnum.getNameByCode(viewDTO.getStatus()));
+            viewDTO.setWarehouseName(warehouseMap.get(viewDTO.getWarehouseId()));
         }
-        return viewDTOList;
     }
 
     @Override

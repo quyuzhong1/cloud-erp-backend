@@ -4891,8 +4891,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Map<String, String> countryNameMap = CollUtil.isEmpty(countryEntityList) ? Collections.emptyMap() : countryEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
         //要求发货时间
         List<SoB2cExtendEntity> extendEntityList = soB2cExtendService.listByMainIds(ids);
-        Map<String, LocalDateTime> requiredDeliveryTimeMap = CollectionUtils.isEmpty(extendEntityList) ? Collections.emptyMap() : extendEntityList.stream().collect(Collectors.toMap(SoB2cExtendEntity::getMainId, SoB2cExtendEntity::getRequiredDeliveryTime));
-        //销售订单明细
+        Map<String, LocalDateTime> requiredDeliveryTimeMap = CollectionUtils.isEmpty(extendEntityList) ? Collections.emptyMap() : extendEntityList.stream()
+                .filter(entity -> entity.getMainId() != null && entity.getRequiredDeliveryTime() != null) // Filter out null values
+                .collect(Collectors.toMap(SoB2cExtendEntity::getMainId, SoB2cExtendEntity::getRequiredDeliveryTime, (existing, replacement) -> existing));
+        // 销售订单明细
         List<SoB2cDetailEntity> allDetailList = CollUtil.isNotEmpty(ids) ? soB2cDetailService.listByMainIds(ids) : Collections.emptyList();
         Map<String, List<SoB2cDetailEntity>> detailListMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
         Map<String, List<String>> warehouseMap = allDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId, Collectors.mapping(SoB2cDetailEntity::getWarehouseId, Collectors.toList())));
@@ -4971,7 +4973,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //渠道信息
         List<String> channelIds = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOList = CollectionUtils.isNotEmpty(channelIds) ? logisticsAuthFeign.listAuthChannelView(channelIds) : Collections.emptyList();
-        Map<String, String> logisticsPlatformMap = authChannelViewDTOList.stream().collect(Collectors.toMap(LogisticsSupplierDTO.AuthChannelViewDTO::getId, LogisticsSupplierDTO.AuthChannelViewDTO::getLogisticsPlatform));
+        Map<String, String> logisticsPlatformMap = authChannelViewDTOList.stream()
+                .collect(Collectors.toMap(
+                        LogisticsSupplierDTO.AuthChannelViewDTO::getId,
+                        LogisticsSupplierDTO.AuthChannelViewDTO::getLogisticsPlatform,
+                        (existing, replacement) -> existing // 保留现有值，忽略重复键的值
+                ));
         List<LogisticsBillDTO.LogisticsBillVo> billVos = list.stream()
                 .filter(bill -> StringUtils.isNotBlank(bill.getTrackCode()))
                 .map(bill -> {
@@ -4994,15 +5001,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
-        Map<String, String> variantPropertyMap = skuMappingList.stream().collect(Collectors.toMap(obj -> obj.getProductSkuId() + "-" + obj.getWarehouseId(), SkuMappingDTO.ListSkuDTO::getVariantProperty));
+        Map<String, String> variantPropertyMap = CollUtil.isNotEmpty(skuMappingList) ?
+                skuMappingList.stream()
+                        .filter(obj -> Objects.nonNull(obj.getProductSkuId()) && Objects.nonNull(obj.getWarehouseId())) // 过滤掉键为null的情况
+                        .collect(Collectors.toMap(
+                                obj -> obj.getProductSkuId() + "-" + obj.getWarehouseId(),
+                                obj -> Objects.toString(obj.getVariantProperty(), ""), // 将值为null替换为空字符串
+                                (existing, replacement) -> existing // 如果键重复，保留现有值
+                        ))
+                : Collections.emptyMap();
         String bomType = BomTypeEnum.COMBINATION.getType();
         List<String> platformSkuNoList = allDetailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
         List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParam(RuleTypeEnum.B2C_PLATFORM.getCode(), null, platformSkuNoList);
-        Map<String, ListingInfoEntity> listingInfoMap = listingInfoEntityList.stream()
+        Map<String, ListingInfoEntity> listingInfoMap = CollUtil.isNotEmpty(listingInfoEntityList) ? listingInfoEntityList.stream()
                 .collect(Collectors.toMap(
                         v -> v.getPlatformSkuNo() + "-" + v.getPlatformSpuNo() + "-" + v.getPlatform(),
-                        Function.identity()
-                ));
+                        Function.identity(),
+                        (existing, replacement) -> existing // Keep the first occurrence
+                )) : Collections.emptyMap();
         //中转信息
         List<String> transferLogisticsChannelIdList = list.stream().map(SoB2cDTO.ListDTO::getTransferLogisticsChannelId).distinct().collect(Collectors.toList());
         List<TransferLogisticsChannelDTO.ListSelectDTO> transferInfoList = CollUtil.isNotEmpty(transferLogisticsChannelIdList) ? transferLogisticsFeign.listByTransferChannelIds(transferLogisticsChannelIdList) : new ArrayList<>();
@@ -5241,7 +5257,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 detailDTO.setIsSelfAdd(isSelfAdd);
                 //库存SKU
-                String platformVariantProperty = variantPropertyMap.get(detailDTO.getSkuId() + "-" + detailDTO.getWarehouseId());
+                String platformVariantProperty = variantPropertyMap.getOrDefault(detailDTO.getSkuId() + "-" + detailDTO.getWarehouseId(), "");
                 String variantProperty = detailDTO.getVariantProperty();
                 if (CharSequenceUtil.isNotBlank(platformVariantProperty)) {
                     detailDTO.setVariantProperty(platformVariantProperty);
@@ -5338,7 +5354,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cDTO.FinancialInfoDTO financialInfoDTO = getFinancialInfo(dto, Boolean.FALSE);
             data.setTotalProfit(financialInfoDTO.getProfit());
             data.setProfitCurrency(data.getCurrency());
-            data.setProfitRate(new BigDecimal(financialInfoDTO.getProfitRate().replace("%", "")));
+            if (Objects.nonNull(financialInfoDTO.getProfitRate())){
+                data.setProfitRate(new BigDecimal(financialInfoDTO.getProfitRate().replace("%", "")));
+            }
             //订单发货仓
             data.setFromWarehouseId(CollUtil.isNotEmpty(warehouseIds) ? warehouseIds.stream().filter(CharSequenceUtil::isNotBlank).findFirst().orElse(CharSequenceUtil.EMPTY) : CharSequenceUtil.EMPTY);
             data.setFromWarehouseName(warehouseNameMap.getOrDefault(data.getFromWarehouseId(), ""));
@@ -7064,6 +7082,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public SoB2cDTO.FinancialInfoDTO getFinancialInfo(SoB2cDTO.FinancialParamDTO dto, Boolean isAdd) {
+        SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = dto.getSoB2cLogisticsEntity();
         //明细信息
@@ -7072,7 +7091,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cFinanceEntity soB2cFinanceEntity = dto.getSoB2cFinanceEntity();
 
         if (ObjectUtils.isEmpty(soB2cFinanceEntity) && !isAdd) {
-            throw new ServiceException(ApiError.SO_B2C_FINANCE_NOT_FOUND);
+            return financialInfoDTO;
         }
         //新增时用新对象
         if (isAdd) {
@@ -7091,7 +7110,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //转账费
         BigDecimal paypalCost = BigDecimal.ZERO;
 
-        SoB2cDTO.FinancialInfoDTO financialInfoDTO = new SoB2cDTO.FinancialInfoDTO();
         BeanMapperUtils.copy(soB2cFinanceEntity, financialInfoDTO);
 
         //商品成本,订单SKU*数量的含税成本价汇总

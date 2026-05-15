@@ -266,9 +266,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
         Map<String, List<PackageForecastDetailEntity>> forecastDetailMap = CollUtil.isNotEmpty(allDetailEntityList) ? allDetailEntityList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId)) : Collections.emptyMap();
-        List<String> soIds = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
-        Map<String, String> b2cMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream().filter(req -> SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus())).collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getCode)) : Collections.emptyMap();
         List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
         Map<String, String> detailSoCodeMap = CollUtil.isNotEmpty(transferDeclareDetailEntityList) ? transferDeclareDetailEntityList.stream().collect(Collectors.toMap(
@@ -280,73 +277,16 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         Map<String, String> declareEntityMap = CollUtil.isNotEmpty(transferDeclareEntityList) ? transferDeclareEntityList.stream().collect(Collectors.toMap(TransferDeclareEntity::getId, TransferDeclareEntity::getCode)) : Collections.emptyMap();
         for (PackageForecastDTO.PagingViewDTO item : list) {
             List<PackageForecastDetailEntity> detailEntityList = forecastDetailMap.get(item.getId());
-            List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = new ArrayList<>();
-            String soCode = "";
-
-            for (PackageForecastDetailEntity packageForecastDetailEntity : detailEntityList) {
-                PackageForecastDTO.PagingDetailViewDTO pagingDetailViewDTO = new PackageForecastDTO.PagingDetailViewDTO();
-                pagingDetailViewDTO.setDetailId(packageForecastDetailEntity.getId());
-                pagingDetailViewDTO.setSoId(packageForecastDetailEntity.getSoId());
-                pagingDetailViewDTO.setSoCode(packageForecastDetailEntity.getSoCode());
-                pagingDetailViewDTO.setLogisticsChannelId(packageForecastDetailEntity.getLogisticsChannelId());
-                pagingDetailViewDTO.setLogisticsChannelName(packageForecastDetailEntity.getLogisticsChannelName());
-                pagingDetailViewDTO.setTrackNo(packageForecastDetailEntity.getTrackNo());
-                pagingDetailViewDTO.setMinPackageTransportNo(packageForecastDetailEntity.getTransportNo());
-                pagingDetailViewDTO.setWeight(packageForecastDetailEntity.getWeight());
-                pagingDetailViewDTO.setWeightUnit(packageForecastDetailEntity.getWeightUnit());
-                pagingDetailViewDTO.setMinPackageHandoverStatus(packageForecastDetailEntity.getHandoverStatus());
-                String b2cCode = b2cMap.get(packageForecastDetailEntity.getSoId());
-                pagingDetailViewDTO.setOutstockStatusName(CharSequenceUtil.isNotEmpty(b2cCode) ? "已出库" : "未出库");
-
-                // 跟踪单号
-                String trackNo = pagingDetailViewDTO.getTrackNo();
-                String minPackageTransportNo = pagingDetailViewDTO.getMinPackageTransportNo();
-                if (CharSequenceUtil.isBlank(trackNo)) {
-                    trackNo = minPackageTransportNo;
-                }
-                String subHandoverStatus = pagingDetailViewDTO.getMinPackageHandoverStatus();
-                String subHandoverStatusName = HandoverSubStatusEnum.getByCode(subHandoverStatus);
-                pagingDetailViewDTO.setMinPackageHandoverStatusName(subHandoverStatusName);
-                pagingDetailViewDTO.setTrackNo(trackNo);
-
-                BigDecimal weight = pagingDetailViewDTO.getWeight();
-                String weightUnit = pagingDetailViewDTO.getWeightUnit();
-                String weightStr = weight + weightUnit;
-                pagingDetailViewDTO.setWeightStr(weightStr);
-
-                detailViewDTOList.add(pagingDetailViewDTO);
-
-                if (soCode.isEmpty()) {
-                    soCode = packageForecastDetailEntity.getSoCode();
-                }
+            if (CollUtil.isNotEmpty(detailEntityList)){
+                String soCode = detailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).filter(StringUtils::isNotBlank).findFirst().orElse("");
+                item.setDetailViewDTOList(PackageForecastConverter.INSTANCE.convertPagingDetailViewList(detailEntityList));
+                item.setTransferDeclareCode(declareEntityMap.getOrDefault(detailSoCodeMap.getOrDefault(soCode, ""), ""));
             }
-
-            item.setDetailViewDTOList(detailViewDTOList);
-            item.setTransferDeclareCode(declareEntityMap.getOrDefault(detailSoCodeMap.getOrDefault(soCode, ""), ""));
-
-            String uploadStatus = item.getUploadStatus();
-            String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
-            item.setUploadStatusName(uploadStatusName);
-
-            String printStatus = item.getPrintStatus();
-            String printStatusName = PackagePrintStatusEnum.getName(printStatus);
-            item.setPrintStatusName(printStatusName);
-
-            String handoverStatus = item.getHandoverStatus();
-            String handoverStatusName = HandoverStatusEnum.getByCode(handoverStatus);
-            item.setHandoverStatusName(handoverStatusName);
-
-            // 第三方交接单号
-            String handoverNo = item.getHandoverNo();
-            // 第三方组包号
-            String platformPackageNo = item.getPlatformPackageNo();
-            String platformNo = handoverNo + "/" + platformPackageNo;
-            item.setPlatformNo(platformNo);
-
-            BigDecimal totalPackageWeight = item.getTotalPackageWeight();
-            String totalPackageWeightUnit = item.getTotalPackageWeightUnit();
-            String totalPackageWeightStr = totalPackageWeight + totalPackageWeightUnit;
-            item.setTotalPackageWeightStr(totalPackageWeightStr);
+            item.setUploadStatusName(PackageUploadStatusEnum.getName(item.getUploadStatus()));
+            item.setPrintStatusName(PackagePrintStatusEnum.getName(item.getPrintStatus()));
+            item.setHandoverStatusName(HandoverStatusEnum.getByCode(item.getHandoverStatus()));
+            item.setPlatformNo(item.getHandoverNo() + "/" + item.getPlatformPackageNo());
+            item.setTotalPackageWeightStr(item.getTotalPackageWeight() + item.getTotalPackageWeightUnit());
         }
     }
 

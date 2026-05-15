@@ -413,13 +413,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     Boolean afreshOutFreezeVirtualInventory(String soId);
 
     /**
-     * 导出发货单
-     * @param dto
-     * @return
-     */
-    PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto);
-
-    /**
      * 回滚虚拟库存
      * @param deliveryEntityList
      */

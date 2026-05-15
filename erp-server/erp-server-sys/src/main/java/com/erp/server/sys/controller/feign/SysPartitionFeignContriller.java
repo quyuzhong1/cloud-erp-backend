@@ -46,7 +46,7 @@ public class SysPartitionFeignContriller extends BaseController {
     /**
      * 高级查询军区信息
      */
-    @PostMapping("feign/partition/listByPartitionIds")
+    @PostMapping("/listByPartitionIds")
     public List<DictPartitionEntity> listByPartitionIds(@RequestBody List<String> partitionIds){
         if (CollUtil.isEmpty(partitionIds)) {
             return Collections.emptyList();

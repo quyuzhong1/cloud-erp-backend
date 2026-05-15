@@ -30,8 +30,8 @@
 
     </select>
 
-    <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
-        select  distinct wl.id,
+    <select id="paging" resultType="com.erp.model.wms.dto.WaveListDTO$ViewDTO">
+        select  wl.id,
                 wl.create_time,
                 wl.update_time,
                 wl.create_user_name,
@@ -53,7 +53,6 @@
                 wl.picking_print_status,
                 wl.picking_print_time,
                 wld.warehouse_id,
-                wld.warehouse_name,
                 wl.sku_barcode_print_status,
                 wl.sku_barcode_print_time
         from wave_list wl

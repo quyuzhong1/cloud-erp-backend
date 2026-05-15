@@ -232,7 +232,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(@RequestBody PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        return soB2cDeliveryService.exportB2cDelivery(dto);
+        return soB2cDeliveryService.paging(dto);
     }
 
     @PostMapping("/packageForecast")
