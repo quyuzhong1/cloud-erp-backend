@@ -734,7 +734,7 @@ public class ExportWmsFeignController {
             tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         return soOutstockService.exportDynamicSoOutStock(dto);
     }
 

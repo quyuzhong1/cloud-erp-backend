@@ -220,7 +220,7 @@ public interface ExportWmsFeign {
     PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto);
 
     @PostMapping("/feign/export/soOutStockDynamic")
-    PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto);
+    PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/inventoryAge")
     PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);

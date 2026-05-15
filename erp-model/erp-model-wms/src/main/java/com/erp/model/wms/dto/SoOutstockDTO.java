@@ -497,6 +497,11 @@ public class SoOutstockDTO implements Serializable {
         	}
         	return dynamicDataSource;
         }
+
+        /**
+         * 自定义导出字段
+         */
+        private List<ExportField> fieldList;
     }
 
     /**

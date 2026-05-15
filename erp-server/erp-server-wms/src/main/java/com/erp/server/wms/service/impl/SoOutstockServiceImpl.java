@@ -1704,8 +1704,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-        PagingVO<SoOutstockDTO.PagingViewDTO> paging = this.paging(dto);
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+        PagingVO<SoOutstockDTO.PagingViewDTO> paging = this.paging(dto,true);
         List<SoOutstockDTO.ExportField> fieldList = dto.getParams().getFieldList();
         DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
         List<LinkedHashMap<String, Object>> data = new ArrayList<>();

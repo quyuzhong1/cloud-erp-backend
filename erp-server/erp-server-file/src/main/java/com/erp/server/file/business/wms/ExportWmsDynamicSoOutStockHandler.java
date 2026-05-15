@@ -18,20 +18,20 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOC
 
 @Component
 @Slf4j
-public class ExportWmsDynamicSoOutStockHandler extends AbstractDynamicHeadersFileEventHandler<SoOutstockDTO.ExportDTO> {
+public class ExportWmsDynamicSoOutStockHandler extends AbstractDynamicHeadersFileEventHandler<SoOutstockDTO.PagingParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
     protected DynamicExcelDTO getData(FileTask fileTask) {
-        SoOutstockDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoOutstockDTO.ExportDTO>() {
+        SoOutstockDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoOutstockDTO.PagingParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         return exportWmsFeign.exportDynamicSoOutStock(dto);
     }
 
