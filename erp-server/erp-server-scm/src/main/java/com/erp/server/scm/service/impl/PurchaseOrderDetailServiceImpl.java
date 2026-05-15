@@ -429,8 +429,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             && obj.getSupplierId().equals(supplierEntity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
-                    || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                    ||PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
+                    || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
                 if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
                         ||PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
