@@ -133,6 +133,16 @@ public class DictCountryController extends BaseController {
                 .collect(Collectors.toList());
         return success(resultList);
     }
+    /**
+     * 获取国家列表
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/listAll")
+    public ApiResult<List<DictCountryDTO.ListDTO>> listAll() {
+        return success(dictCountryService.listCountry());
+    }
 
     /**
      * 获取国家列表(带默认)
