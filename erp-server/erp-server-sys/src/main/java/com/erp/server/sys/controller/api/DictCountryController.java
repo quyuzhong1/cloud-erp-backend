@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.sys.query.DictParentBaseQueryHandler;
 import com.erp.server.sys.service.DictCountryService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -141,7 +143,8 @@ public class DictCountryController extends BaseController {
      */
     @GetMapping("/listAll")
     public ApiResult<List<DictCountryDTO.ListDTO>> listAll() {
-        return success(dictCountryService.listCountry());
+        List<DictCountryDTO.ListDTO> resultList = dictCountryService.listCountry().stream().sorted(Comparator.comparing(DictCountryDTO.ListDTO::getDisabled)).collect(Collectors.toList());
+        return success(resultList);
     }
 
     /**

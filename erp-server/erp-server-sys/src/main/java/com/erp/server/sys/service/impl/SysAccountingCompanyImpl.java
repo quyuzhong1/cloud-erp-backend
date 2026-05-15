@@ -232,7 +232,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         }
         List<SysAccountingCompanyEntity> list = this.list(queryWrapper);
         // 按创建时间顺序排，最早的排在最前面
-        list = list.stream().sorted(Comparator.comparing(SysAccountingCompanyEntity::getCreateTime)).collect(Collectors.toList());
+        list = list.stream().sorted(Comparator.comparing(SysAccountingCompanyEntity::getDisabled)).collect(Collectors.toList());
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 
