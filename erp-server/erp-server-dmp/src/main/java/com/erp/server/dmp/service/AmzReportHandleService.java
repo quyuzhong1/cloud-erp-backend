@@ -34,6 +34,14 @@ public interface AmzReportHandleService {
     Boolean pullShipment(DmpPullShipmentDTO dto);
 
     /**
+     * 手动拉取FBA入库计划货件
+     *
+     * @author Cloud
+     * @since 2026-05-11
+     */
+    Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto);
+
+    /**
      * 请求报告计划
      *
      * @Author Jim
