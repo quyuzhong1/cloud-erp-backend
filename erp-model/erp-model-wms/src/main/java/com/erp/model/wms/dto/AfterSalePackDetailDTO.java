@@ -267,8 +267,9 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String id;
 
         /**
-         * 操作类型，拆箱移除sku时，必填
+         * 操作类型，add,reduce,remove
          */
+        @NotNull(message = "操作类型不能为空")
         private String operation;
 
     }

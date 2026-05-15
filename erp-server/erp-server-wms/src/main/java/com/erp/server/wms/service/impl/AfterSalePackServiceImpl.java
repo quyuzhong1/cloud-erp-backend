@@ -151,7 +151,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 查询仓位信息
         List<String> warehouseLocationCodes = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode).distinct().collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery().in(WarehouseLocationEntity::getCode, warehouseLocationCodes).list();
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
+                .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
+                .eq(WarehouseLocationEntity::getDisabled, false)
+                .list();
         Set<String> warehouseLocationCodeSet = warehouseLocationEntityList.stream()
                 .map(WarehouseLocationEntity::getCode)
                 .filter(Objects::nonNull)
