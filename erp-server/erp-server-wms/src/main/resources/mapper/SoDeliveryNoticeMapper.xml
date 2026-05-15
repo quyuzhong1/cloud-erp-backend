@@ -511,7 +511,6 @@
         ) as sdnd
         where
         ${params.sqlMap.default}
-        ORDER BY sdnd.sourceId DESC
     </select>
 
 
