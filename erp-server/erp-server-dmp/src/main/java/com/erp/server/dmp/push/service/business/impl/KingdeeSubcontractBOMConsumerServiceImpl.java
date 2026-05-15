@@ -338,7 +338,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
         //倒冲时机
-        entry.put("FBackFlushType", (counter % 2 == 1) ? "3" : "");
+        entry.put("FBackFlushType", "3");
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
         //需求日期
@@ -440,7 +440,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
         //倒冲时机
-        entry.put("FBackFlushType", (counter % 2 == 1) ? "3" : "");
+        entry.put("FBackFlushType", "3");
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
         //需求日期
