@@ -369,23 +369,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //根据sku查询是否是组合品
         List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = null;
-        boolean isRepairSubcontractSource = Boolean.FALSE;
-        Map<String, SubcontractOrderDetailEntity> repairSubcontractDetailMap = new HashMap<>();
-        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) && StrUtil.isNotBlank(entity.getSourceId())) {
-            SubcontractOrderEntity sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
-            isRepairSubcontractSource = Objects.nonNull(sourceSubcontractOrder)
-                    && Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), sourceSubcontractOrder.getType());
-            if (isRepairSubcontractSource) {
-                List<SubcontractOrderDetailEntity> sourceDetailList = subcontractOrderDetailService.listByMainId(entity.getSourceId());
-                if (CollectionUtils.isNotEmpty(sourceDetailList)) {
-                    repairSubcontractDetailMap = sourceDetailList.stream()
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toMap(SubcontractOrderDetailEntity::getId, e -> e, (oldValue, newValue) -> oldValue));
-                }
-            }
-        }
-        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
+        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
             if (StrUtil.isBlank(entity.getSourceId())){
                 throw new ServiceException("委外订单id不能为空");
             }
@@ -431,9 +415,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
                     || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
-                if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                        ||PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
-                        && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
+                if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
                     //sku是组合品时，取委外订单含税单价
                     SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId()) && CharSequenceUtil.isBlank(e.getParentId()))
                             .findFirst().orElse(null);
@@ -461,25 +443,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
                     }
                     //成品直接返回
-                    continue;
-                } else if (isRepairSubcontractSource
-                        && PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
-                        && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
-                    //返修采购单子行：取返修委外来源明细中的含税单价
-                    String sourceDetailId = addDTO.getSourceDetailId();
-                    SubcontractOrderDetailEntity sourceDetail = StrUtil.isBlank(sourceDetailId)
-                            ? null
-                            : repairSubcontractDetailMap.get(sourceDetailId);
-                    if (Objects.isNull(sourceDetail)) {
-                        throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
-                    }
-                    BigDecimal price = Objects.nonNull(sourceDetail.getPrice()) ? sourceDetail.getPrice() : BigDecimal.ZERO;
-                    Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
-                    addDTO.setTaxPrice(price);
-                    addDTO.setTaxRate(Objects.nonNull(sourceDetail.getTaxRate()) ? sourceDetail.getTaxRate() : BigDecimal.ZERO);
-                    addDTO.setCurrency(sourceDetail.getCurrency());
-                    addDTO.setCurrencySymbol(sourceDetail.getCurrencySymbol());
-                    addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
                     continue;
                 }
                 if (Objects.nonNull(viewDTO)){
