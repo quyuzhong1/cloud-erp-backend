@@ -137,10 +137,23 @@
         order by  EXTRACT(year FROM db.declare_date), EXTRACT(month FROM db.declare_date)
     </select>
     <select id="exportDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$ExportDTO">
+        WITH delivery_notice as (
+        select
+        declare_id,
+        array_to_string(array_agg(DISTINCT business_code),',') as businessCode,
+        array_to_string(array_agg(DISTINCT source_code),',') as sourceCode,
+        array_to_string(array_agg(DISTINCT from_warehouse_name),',') as fromWarehouseName,
+        array_to_string(array_agg(DISTINCT transfer_warehouse_names),',') as transferWarehouseName,
+        array_to_string(array_agg(DISTINCT sales_org_name),',') as salesOrgName
+        from delivery_declare_detail_mid
+        where is_deleted = false
+        group by declare_id
+        )
         select
             db.id,
             db.type,
-            dddm.source_code  as   sourceCode,
+            dn.businessCode,
+            dn.sourceCode,
             db.pre_input_no as  preInputNo,
             db.dest_customs as  destCustoms,
             db.sender_id as   senderId,
@@ -168,7 +181,7 @@
             db.other_fee as             otherFee,
             db.country_name as countryName
         from tms_declare_bill db
-        inner join delivery_declare_detail_mid dddm on db.id = dddm.declare_id and dddm.is_deleted = false
+        left join delivery_notice dn on db.id = dn.declare_id
         where   ${params.sqlMap.default}
           and db.is_deleted = false
           and db.type = #{params.type}

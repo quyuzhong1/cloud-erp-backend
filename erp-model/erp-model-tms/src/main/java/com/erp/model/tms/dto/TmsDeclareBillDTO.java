@@ -661,6 +661,8 @@ public class TmsDeclareBillDTO implements Serializable {
 
         private String sourceCode;
 
+        private String businessCode;
+
         /**
          * 预录入编号
          */

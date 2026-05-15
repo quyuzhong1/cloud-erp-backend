@@ -315,7 +315,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         validatePreviewSourceConsistent(sourceType, sourceDetailList);
         List<TmsDeclareBillDTO.MergeDeclareBillDTO> previewList = tmsDeclareBillService.autoMergeDeclareBillView(
                 new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, sourceDetailList));
-        validatePreviewDeclareInfo(previewList);
+//        validatePreviewDeclareInfo(previewList);
         return previewList;
     }
 
