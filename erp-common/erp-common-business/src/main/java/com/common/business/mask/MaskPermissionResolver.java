@@ -2,6 +2,7 @@ package com.common.business.mask;
 
 import com.common.business.vo.LoginUser;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -43,4 +44,31 @@ public interface MaskPermissionResolver {
      * </ul>
      */
     Set<String> resolve(LoginUser user);
+
+    /**
+     * 失效指定 uid 集合的本地缓存（如果实现带缓存）
+     *
+     * <p>由 {@code MaskPermissionEvictListener} 在收到 Redis Pub/Sub 失效消息时调用。
+     * 无缓存的实现（如 {@code LoginUserMaskPermissionResolver}）默认 no-op。</p>
+     *
+     * <p>实现要求：</p>
+     * <ul>
+     *   <li>幂等：同样的 uid 集合多次调用，行为一致</li>
+     *   <li>容错：不允许抛异常（listener 不会做异常处理；抛出会导致后续消息处理被影响）</li>
+     *   <li>支持 {@code uids == null} 或空集合，直接返回</li>
+     * </ul>
+     */
+    default void evict(Collection<String> uids) {
+        // 默认 no-op：无缓存的实现无需失效
+    }
+
+    /**
+     * 失效全部本地缓存（如果实现带缓存）
+     *
+     * <p>用于"角色 / 菜单大改"等无法精确定位用户的写入场景。
+     * 无缓存的实现默认 no-op。</p>
+     */
+    default void evictAll() {
+        // 默认 no-op：无缓存的实现无需失效
+    }
 }

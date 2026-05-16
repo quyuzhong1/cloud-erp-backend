@@ -121,6 +121,7 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
     /**
      * 失效指定 uid 集合的缓存（由 {@code MaskPermissionEvictListener} 收到 Pub/Sub 后调用）
      */
+    @Override
     public void evict(Collection<String> uids) {
         if (uids == null || uids.isEmpty()) {
             return;
@@ -135,6 +136,7 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
     /**
      * 失效全部缓存（由 {@code MaskPermissionEvictListener} 收到 Pub/Sub ALL 类型时调用）
      */
+    @Override
     public void evictAll() {
         cache.clear();
     }
