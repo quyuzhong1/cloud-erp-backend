@@ -91,13 +91,17 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
 
         try {
             List<UserRequestPermissionsDTO> list = sysUserFeign.getRequestPermissionsList(uid);
-            Set<String> perms = list == null
-                    ? Collections.emptySet()
-                    : Collections.unmodifiableSet(list.stream()
+            Set<String> perms;
+            if (list == null || list.isEmpty()) {
+                perms = Collections.emptySet();
+            } else {
+                Set<String> raw = list.stream()
                         .filter(Objects::nonNull)
                         .map(UserRequestPermissionsDTO::getPermissionsCode)
                         .filter(s -> s != null && !s.isEmpty())
-                        .collect(Collectors.toCollection(HashSet::new)));
+                        .collect(Collectors.toCollection(HashSet::new));
+                perms = Collections.unmodifiableSet(raw);
+            }
 
             if (cache.size() > MAX_CACHE_SIZE) {
                 log.warn("FeignMaskPermissionResolver cache size={} exceeded {}, clear all",
