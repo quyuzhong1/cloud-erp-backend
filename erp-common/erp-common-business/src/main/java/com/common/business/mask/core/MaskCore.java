@@ -227,13 +227,21 @@ public class MaskCore {
     }
 
     /**
-     * 字段豁免链：权限码命中 → 直接通过；否则交给 {@link MaskPermissionEvaluator} 扩展点判断。
+     * 字段豁免链（按优先级短路）：
+     * <ol>
+     *   <li>{@code LoginUser.isSupper=true} 的超管 → 全字段一律明文（对齐项目其它模块 wms/srm 的惯例，
+     *       也对齐本框架 {@code @Mask} javadoc 承诺）</li>
+     *   <li>当前用户 permissionList 命中 {@code fd.getPermission()} → 通过</li>
+     *   <li>{@link MaskPermissionEvaluator} 扩展点任一返回 true → 通过</li>
+     * </ol>
      *
-     * <p>无 evaluator Bean 时退化为原有"仅看权限码"行为；多个 evaluator 中任一返回 true 即豁免。
-     * evaluator 抛异常被吞掉并按"未豁免"处理，不影响响应链路。</p>
+     * <p>无 evaluator Bean 时第 3 步跳过；evaluator 抛异常被吞掉并按"未豁免"处理，不影响响应链路。</p>
      */
     private boolean isFieldGranted(LoginUser user, Set<String> permissionSet,
                                    Object pojo, MaskFieldDescriptor fd) {
+        if (user != null && Boolean.TRUE.equals(user.getIsSupper())) {
+            return true;
+        }
         if (hasFieldPermission(permissionSet, fd.getPermission())) {
             return true;
         }
