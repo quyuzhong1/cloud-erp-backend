@@ -9,8 +9,8 @@ import com.erp.model.sys.entity.CfgMaskFieldEntity;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.server.sys.mapper.CfgMaskFieldMapper;
 import com.erp.server.sys.mapper.SysFieldPermissionMapper;
-import com.erp.server.sys.mapper.SysRoleMenuMapper;
 import com.erp.server.sys.service.SysFieldPermissionService;
+import com.erp.server.sys.service.SysRoleMenuService;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -18,9 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,8 +42,12 @@ public class SysFieldPermissionServiceImpl implements SysFieldPermissionService 
     @Resource
     private SysFieldPermissionMapper sysFieldPermissionMapper;
 
+    /**
+     * 注入 Service 而不是 Mapper：保持本类对 sys_role_menu 表的所有读写操作（remove + saveBatch）走同一入口，
+     * 同时复用 IService 提供的批量能力避免 N+1。
+     */
     @Resource
-    private SysRoleMenuMapper sysRoleMenuMapper;
+    private SysRoleMenuService sysRoleMenuService;
 
     @Resource
     private CfgMaskFieldMapper cfgMaskFieldMapper;
@@ -95,16 +99,16 @@ public class SysFieldPermissionServiceImpl implements SysFieldPermissionService 
             }
         }
 
-        // ③ 删除该角色在"字段权限"维度的旧关联（逻辑删除，由 BaseMapper.delete 触发 @TableLogic）
-        sysRoleMenuMapper.delete(new LambdaQueryWrapper<SysRoleMenuEntity>()
+        // ③ 删除该角色在"字段权限"维度的旧关联（逻辑删除，由 IService.remove → BaseMapper.delete 触发 @TableLogic）
+        sysRoleMenuService.remove(new LambdaQueryWrapper<SysRoleMenuEntity>()
                 .eq(SysRoleMenuEntity::getRoleId, dto.getRoleId())
                 .in(SysRoleMenuEntity::getMenuId, fieldPermMenuIds));
 
-        // ④ 写入新关联
+        // ④ 写入新关联：走 saveBatch 批量插入，单 SQL 多 VALUES，避免 N+1 网络往返
         if (!visible.isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
             LoginUser loginUser = UserContext.getNonLoginUser();
-            List<SysRoleMenuEntity> batch = new LinkedList<>();
+            List<SysRoleMenuEntity> batch = new ArrayList<>(visible.size());
             for (String menuId : visible) {
                 SysRoleMenuEntity entity = new SysRoleMenuEntity();
                 entity.setRoleId(dto.getRoleId());
@@ -117,9 +121,7 @@ public class SysFieldPermissionServiceImpl implements SysFieldPermissionService 
                 entity.setCreateUserName(loginUser.getUserName());
                 batch.add(entity);
             }
-            for (SysRoleMenuEntity entity : batch) {
-                sysRoleMenuMapper.insert(entity);
-            }
+            sysRoleMenuService.saveBatch(batch);
         }
         return Boolean.TRUE;
     }

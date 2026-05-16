@@ -25,6 +25,8 @@ import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -46,6 +48,15 @@ import lombok.extern.slf4j.Slf4j;
 public class CfgMaskFieldServiceImpl
         extends SuperServiceImpl<CfgMaskFieldMapper, CfgMaskFieldEntity>
         implements CfgMaskFieldService {
+
+    /**
+     * publish body 体积告警阈值（字节）
+     *
+     * <p>cfg_mask_field 业务字段配置量本应在百行以内（每行 ~200 字节），
+     * 序列化 body 不应超过 256KB。超过则可能配置失控（重复行 / 误填大字段），
+     * 同时 publish 给所有节点的反序列化开销也会随节点数线性放大。</p>
+     */
+    private static final int BODY_SIZE_WARN_THRESHOLD = 256 * 1024;
 
     @Resource
     private RedissonClient redissonClient;
@@ -130,11 +141,32 @@ public class CfgMaskFieldServiceImpl
         return doPublish(true);
     }
 
+    /**
+     * 触发广播：
+     * <ul>
+     *   <li>当前线程在事务内 → 注册 {@code afterCommit} 钩子，**事务提交后**再 publish，
+     *       避免事务回滚后其它节点已经 apply 的"幻读"快照；</li>
+     *   <li>当前线程不在事务内（如运维 /refresh 接口） → 立即 publish。</li>
+     * </ul>
+     * <p>任何分支异常都被吞掉只 warn 一行：DB 已成功 / 即将成功，缓存最迟重启同步。</p>
+     */
     private void publishFullCacheSafely() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        doPublish(false);
+                    } catch (Throwable e) {
+                        log.warn("CfgMaskField publish after commit failed, but db change is committed", e);
+                    }
+                }
+            });
+            return;
+        }
         try {
             doPublish(false);
         } catch (Throwable e) {
-            // 写表已成功；广播失败时各节点最迟下一次本地缓存重启时也能拿到最新数据
             log.warn("CfgMaskField publishFullCacheSafely failed, but db change is committed", e);
         }
     }
@@ -144,14 +176,20 @@ public class CfgMaskFieldServiceImpl
             CfgMaskFieldFullCacheDTO payload = listAllForCache();
             String body = JSON.toJSONString(payload);
 
+            if (body.length() > BODY_SIZE_WARN_THRESHOLD) {
+                log.warn("CfgMaskField publishFullCache body too large, size={} bytes, rows={}, "
+                                + "considering sharding or filter disabled rows",
+                        body.length(), payload.getData().size());
+            }
+
             // 关键顺序：先写 Bucket 再 publish；避免新启动节点拿到的版本旧于已广播版本
             RBucket<String> bucket = redissonClient.getBucket(RedisCacheConstants.MASK_FIELD_CFG_FULL_KEY);
             bucket.set(body);
 
             RTopic topic = redissonClient.getTopic(RedisCacheConstants.MASK_FIELD_CFG_REFRESH_CHANNEL);
             topic.publish(body);
-            log.info("CfgMaskField publishFullCache ok, size={}, version={}",
-                    payload.getData().size(), payload.getVersion());
+            log.info("CfgMaskField publishFullCache ok, rows={}, bodyBytes={}, version={}",
+                    payload.getData().size(), body.length(), payload.getVersion());
             return true;
         } catch (Throwable e) {
             log.warn("CfgMaskField publishFullCache failed", e);

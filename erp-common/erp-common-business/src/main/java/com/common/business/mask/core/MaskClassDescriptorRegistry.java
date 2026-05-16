@@ -73,25 +73,47 @@ public class MaskClassDescriptorRegistry {
 
     /**
      * 获取（或懒加载）指定类的脱敏元数据
+     *
+     * <p>用 {@link ConcurrentHashMap#computeIfAbsent} 保证对同一 {@code clazz} 的并发首次访问只 scan 一次，
+     * 避免多个线程同时启动时（典型场景：网关首批请求并发到达）对同一 POJO 类重复反射扫描浪费 CPU。</p>
+     *
+     * <p>scan 内部已避免锁住 cache 的整张表，对其他类的访问不会被阻塞。</p>
      */
     public MaskClassDescriptor of(Class<?> clazz) {
         if (clazz == null) {
             return MaskClassDescriptor.NO_MASK;
         }
-        MaskClassDescriptor cached = cache.get(clazz);
-        if (cached != null) {
-            return cached;
-        }
-        MaskClassDescriptor built = scan(clazz);
-        cache.put(clazz, built);
-        return built;
+        return cache.computeIfAbsent(clazz, this::scan);
     }
 
     /**
-     * 整体清空缓存（配置变更后由 {@link CfgMaskFieldLocalCache#apply} 触发调用）
+     * 整体清空缓存
+     *
+     * <p><b>慎用</b>：会让所有 POJO 类下次访问都重走反射扫描，业务高峰期相当于"全集群冷启动"。
+     * 仅用于运维手动 refresh 接口或单元测试。</p>
+     *
+     * <p>配置变更场景请使用 {@link #evictByClassNames(Set)} 做增量失效。</p>
      */
     public void clear() {
         cache.clear();
+    }
+
+    /**
+     * 增量失效：只清掉受影响的类
+     *
+     * <p>用于 {@code cfg_mask_field} 配置变更后通知本注册中心：
+     * 一次 add/update/delete 通常只影响 1~2 个类，没必要把全集群所有 POJO 元数据全清。</p>
+     *
+     * <p>实现：遍历当前 {@code cache.keySet()} 找到 {@code className} 命中的项移除。
+     * 时间复杂度 O(N)（N=已扫描类数），N 通常在百~千级，远低于一次反射重扫的代价。</p>
+     *
+     * @param classNames 需要失效的类全限定名集合，null/空则什么都不做
+     */
+    public void evictByClassNames(Set<String> classNames) {
+        if (classNames == null || classNames.isEmpty()) {
+            return;
+        }
+        cache.keySet().removeIf(c -> classNames.contains(c.getName()));
     }
 
     /**

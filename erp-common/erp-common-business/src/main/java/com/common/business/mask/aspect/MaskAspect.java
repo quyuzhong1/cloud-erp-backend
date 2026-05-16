@@ -40,6 +40,21 @@ import lombok.extern.slf4j.Slf4j;
 @Order(50)
 public class MaskAspect {
 
+    /**
+     * 单次脱敏耗时告警阈值（毫秒）
+     *
+     * <p>超过该阈值的请求会打印 warn 日志，便于在 ELK 里用 {@code MASK_SLOW} 关键词
+     * 一键聚合"哪个 Controller 方法的脱敏成本最高"，作为治理热点接口的依据。</p>
+     *
+     * <p>常见超阈原因：</p>
+     * <ul>
+     *   <li>单次返回行数过大（{@code List} 上千条 / 嵌套对象树过深）</li>
+     *   <li>含多个 AUTO 策略的长文本字段</li>
+     *   <li>用户 {@code permissionList} 异常膨胀（O(P) 退化）</li>
+     * </ul>
+     */
+    private static final long SLOW_MASK_WARN_MS = 200L;
+
     @Resource
     private MaskCore maskCore;
 
@@ -57,10 +72,17 @@ public class MaskAspect {
         if (maskCore.shouldSkip(scan)) {
             return result;
         }
+        long start = System.nanoTime();
         try {
             maskCore.process(result);
         } catch (Throwable e) {
             log.warn("MaskAspect process failed, return original, msg={}", e.getMessage());
+        } finally {
+            long costMs = (System.nanoTime() - start) / 1_000_000L;
+            if (costMs >= SLOW_MASK_WARN_MS) {
+                log.warn("MASK_SLOW method={}, costMs={}, threshold={}",
+                        pjp.getSignature().toShortString(), costMs, SLOW_MASK_WARN_MS);
+            }
         }
         return result;
     }

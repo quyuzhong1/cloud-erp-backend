@@ -24,6 +24,8 @@ import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -45,6 +47,19 @@ import lombok.extern.slf4j.Slf4j;
 public class CfgMaskWordServiceImpl
         extends SuperServiceImpl<CfgMaskWordMapper, CfgMaskWordEntity>
         implements CfgMaskWordService {
+
+    /**
+     * publish body 体积告警阈值（字节）
+     *
+     * <p>词典正常规模在百~千词（每词 ~30 字节），body 不应超过 1MB。超过则可能：</p>
+     * <ul>
+     *   <li>运营误把通用敏感词字典批量灌入；</li>
+     *   <li>词典持续增长未做生命周期治理。</li>
+     * </ul>
+     * <p>大 body 会让每个节点的反序列化 + 集合 diff 都变慢，且
+     * {@code SensitiveWordBs.addWord/removeWord} 需要重建 DFA 节点。</p>
+     */
+    private static final int BODY_SIZE_WARN_THRESHOLD = 1024 * 1024;
 
     @Resource
     private RedissonClient redissonClient;
@@ -121,7 +136,24 @@ public class CfgMaskWordServiceImpl
         return doPublish(true);
     }
 
+    /**
+     * 触发广播：在事务内则延迟到 {@code afterCommit}，否则立即 publish。
+     * 见 {@code CfgMaskFieldServiceImpl#publishFullCacheSafely} 的同款说明。
+     */
     private void publishFullCacheSafely() {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        doPublish(false);
+                    } catch (Throwable e) {
+                        log.warn("CfgMaskWord publish after commit failed, but db change is committed", e);
+                    }
+                }
+            });
+            return;
+        }
         try {
             doPublish(false);
         } catch (Throwable e) {
@@ -134,13 +166,19 @@ public class CfgMaskWordServiceImpl
             CfgMaskWordFullCacheDTO payload = listAllForCache();
             String body = JSON.toJSONString(payload);
 
+            if (body.length() > BODY_SIZE_WARN_THRESHOLD) {
+                log.warn("CfgMaskWord publishFullCache body too large, size={} bytes, words={}, "
+                                + "consider word lifecycle review",
+                        body.length(), payload.getData().size());
+            }
+
             RBucket<String> bucket = redissonClient.getBucket(RedisCacheConstants.MASK_WORD_CFG_FULL_KEY);
             bucket.set(body);
 
             RTopic topic = redissonClient.getTopic(RedisCacheConstants.MASK_WORD_CFG_REFRESH_CHANNEL);
             topic.publish(body);
-            log.info("CfgMaskWord publishFullCache ok, size={}, version={}",
-                    payload.getData().size(), payload.getVersion());
+            log.info("CfgMaskWord publishFullCache ok, words={}, bodyBytes={}, version={}",
+                    payload.getData().size(), body.length(), payload.getVersion());
             return true;
         } catch (Throwable e) {
             log.warn("CfgMaskWord publishFullCache failed", e);

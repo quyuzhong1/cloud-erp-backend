@@ -14,9 +14,12 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -72,8 +75,15 @@ public class CfgMaskFieldLocalCache {
     }
 
     /**
-     * 应用一次远程推送 / 持久化的全量快照；version 单调递增校验，忽略乱序/旧消息；
-     * apply 成功后整体失效类元数据缓存
+     * 应用一次远程推送 / 持久化的全量快照
+     *
+     * <p>步骤：</p>
+     * <ol>
+     *   <li>version 单调递增校验，旧消息直接忽略；</li>
+     *   <li>新数据 build 成不可变 map 切到 {@code snapshot}；</li>
+     *   <li><b>增量计算受影响的 classPath 集合</b>，只 evict 命中的类元数据，
+     *       <b>不再整体 clear</b>，避免业务高峰期一次配置改动导致全集群反射风暴。</li>
+     * </ol>
      */
     public synchronized void apply(CfgMaskFieldFullCacheDTO payload) {
         if (payload == null || payload.getVersion() <= snapshot.version) {
@@ -97,11 +107,63 @@ public class CfgMaskFieldLocalCache {
             }
             next = Collections.unmodifiableMap(tmp);
         }
-        snapshot = new Snapshot(next, payload.getVersion(), System.currentTimeMillis());
+        Snapshot prev = this.snapshot;
+        this.snapshot = new Snapshot(next, payload.getVersion(), System.currentTimeMillis());
+
         if (descriptorRegistry != null) {
-            descriptorRegistry.clear();
+            Set<String> affected = computeAffectedClasses(prev.data, next);
+            if (!affected.isEmpty()) {
+                descriptorRegistry. evictByClassNames(affected);
+            }
+            log.info("CfgMaskFieldLocalCache apply ok, size={}, version={}, evictClasses={}",
+                    next.size(), payload.getVersion(), affected.size());
+        } else {
+            log.info("CfgMaskFieldLocalCache apply ok, size={}, version={}", next.size(), payload.getVersion());
         }
-        log.info("CfgMaskFieldLocalCache apply ok, size={}, version={}", next.size(), payload.getVersion());
+    }
+
+    /**
+     * 计算"prev → next"切换需要 evict 的 classPath 集合：
+     * <ul>
+     *   <li>prev 中已删除的 (classPath#fieldName) → 该 classPath 入集合</li>
+     *   <li>next 中新增的 (classPath#fieldName) → 该 classPath 入集合</li>
+     *   <li>prev / next 都有但 strategy/regex/replacement/permission/hideWhenMasked
+     *       任一不同 → 该 classPath 入集合</li>
+     * </ul>
+     */
+    private static Set<String> computeAffectedClasses(
+            Map<String, CfgMaskFieldSnapshotEntry> prev,
+            Map<String, CfgMaskFieldSnapshotEntry> next) {
+        if ((prev == null || prev.isEmpty()) && next.isEmpty()) {
+            return Collections.emptySet();
+        }
+        Set<String> affected = new HashSet<>();
+        if (prev != null) {
+            for (Map.Entry<String, CfgMaskFieldSnapshotEntry> e : prev.entrySet()) {
+                CfgMaskFieldSnapshotEntry n = next.get(e.getKey());
+                if (n == null || !sameForCache(e.getValue(), n)) {
+                    affected.add(e.getValue().getClassPath());
+                }
+            }
+        }
+        for (Map.Entry<String, CfgMaskFieldSnapshotEntry> e : next.entrySet()) {
+            if (prev == null || !prev.containsKey(e.getKey())) {
+                affected.add(e.getValue().getClassPath());
+            }
+        }
+        return affected;
+    }
+
+    /**
+     * 仅比较影响 {@code MaskFieldDescriptor} 构造结果的字段。
+     * 注意不要比 lastSyncMillis / version 这类与缓存语义无关的字段。
+     */
+    private static boolean sameForCache(CfgMaskFieldSnapshotEntry a, CfgMaskFieldSnapshotEntry b) {
+        return a.getStrategy() == b.getStrategy()
+                && a.isHideWhenMasked() == b.isHideWhenMasked()
+                && Objects.equals(a.getRegex(), b.getRegex())
+                && Objects.equals(a.getReplacement(), b.getReplacement())
+                && Objects.equals(a.getPermission(), b.getPermission());
     }
 
     /**
