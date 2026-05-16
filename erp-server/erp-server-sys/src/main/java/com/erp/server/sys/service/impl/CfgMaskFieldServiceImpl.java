@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.mask.MaskStrategy;
 import com.common.business.mask.cache.CfgMaskFieldFullCacheDTO;
 import com.common.business.mask.cache.CfgMaskFieldSnapshotEntry;
+import com.common.business.mask.handler.RegexSafetyGuard;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
@@ -72,6 +73,7 @@ public class CfgMaskFieldServiceImpl
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(CfgMaskFieldDTO.AddDTO dto) {
         validateStrategy(dto.getStrategy());
+        validateCustomRegex(dto.getStrategy(), dto.getCustomRegex());
         CfgMaskFieldEntity exists = findAlive(dto.getClassPath(), dto.getFieldName());
         if (exists != null) {
             throw new ServiceException("已存在相同 (classPath, fieldName) 配置，请改为编辑");
@@ -95,6 +97,7 @@ public class CfgMaskFieldServiceImpl
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(CfgMaskFieldDTO.UpdateDTO dto) {
         validateStrategy(dto.getStrategy());
+        validateCustomRegex(dto.getStrategy(), dto.getCustomRegex());
         CfgMaskFieldEntity entity = this.getById(dto.getId());
         if (entity == null) {
             throw new ServiceException("配置不存在");
@@ -238,6 +241,32 @@ public class CfgMaskFieldServiceImpl
     private void validateStrategy(String strategy) {
         if (parseStrategy(strategy) == null) {
             throw new ServiceException("非法脱敏策略：" + strategy);
+        }
+    }
+
+    /**
+     * 校验自定义正则的安全性，仅 strategy=CUSTOM 时生效。
+     *
+     * <p>用 {@link RegexSafetyGuard#checkAndCompile} 同时做：</p>
+     * <ol>
+     *   <li>ReDoS 黑名单检查（嵌套量词 / 歧义分支 + 量词 / 连续贪婪）</li>
+     *   <li>正则编译可行性</li>
+     * </ol>
+     *
+     * <p>fail fast：校验失败直接抛 {@link ServiceException}，根本不让"问题正则"入库，
+     * 避免运行时把整个 Tomcat 线程池打满。</p>
+     */
+    private void validateCustomRegex(String strategy, String regex) {
+        MaskStrategy ms = parseStrategy(strategy);
+        if (ms != MaskStrategy.CUSTOM) {
+            return;
+        }
+        if (StringUtils.isBlank(regex)) {
+            throw new ServiceException("strategy=CUSTOM 时 customRegex 不能为空");
+        }
+        String reason = RegexSafetyGuard.checkAndCompile(regex);
+        if (reason != null) {
+            throw new ServiceException("正则不安全：" + reason);
         }
     }
 
