@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.constant.BusinessCommonConstants;
@@ -37,6 +38,9 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
     @Autowired
     private SysMenuService sysMenuService;
 
+    @Autowired(required = false)
+    private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
+
     /**
      * 根据菜单id 删除对应角色菜单绑定的关系
      *
@@ -53,6 +57,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         if (CollectionUtils.isNotEmpty(menuIds)) {
             wrapper.in(SysRoleMenuEntity::getMenuId, menuIds);
             baseMapper.delete(wrapper);
+            publishMaskPermEvictAll("SysRoleMenuService.removeByMenuIds");
         }
     }
 
@@ -87,19 +92,24 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         removeByRoleId(roleId);
         LocalDateTime now = LocalDateTime.now();
         LoginUser loginUser = UserContext.getNonLoginUser();
-        if (CollectionUtils.isNotEmpty(menuIds)) {
-            for (SysRoleMenuDataScopeDTO menuId : menuIds) {
-                SysRoleMenuEntity entity = new SysRoleMenuEntity();
-                entity.setMenuId(menuId.getMenuId());
-                entity.setRoleId(roleId);
-                entity.setDataScope(menuId.getDataScope());
-                // 处理公共字段
-                handleCommonField(entity, now, loginUser);
-                batchList.add(entity);
+        try {
+            if (CollectionUtils.isNotEmpty(menuIds)) {
+                for (SysRoleMenuDataScopeDTO menuId : menuIds) {
+                    SysRoleMenuEntity entity = new SysRoleMenuEntity();
+                    entity.setMenuId(menuId.getMenuId());
+                    entity.setRoleId(roleId);
+                    entity.setDataScope(menuId.getDataScope());
+                    // 处理公共字段
+                    handleCommonField(entity, now, loginUser);
+                    batchList.add(entity);
+                }
+                return this.saveBatch(batchList);
             }
-            return this.saveBatch(batchList);
+            return true;
+        } finally {
+            // role 改动影响所有持有该 role 的用户；本服务不存"role→users"反向索引，统一 ALL 清除
+            publishMaskPermEvictAll("SysRoleMenuService.batchSaveRoleMenu");
         }
-        return true;
 
     }
 
@@ -243,6 +253,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         LambdaQueryWrapper<SysRoleMenuEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(SysRoleMenuEntity::getRoleId, roleIds);
         this.remove(queryWrapper);
+        publishMaskPermEvictAll("SysRoleMenuService.removeRefByRoleIds");
     }
 
     /**
@@ -271,6 +282,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
                 addList.add(entity);
             }
             this.saveBatch(addList);
+            publishMaskPermEvictAll("SysRoleMenuService.copyRoleMenu");
         }
 
 
@@ -540,7 +552,11 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         LoginUser loginUser = UserContext.getNonLoginUser();
         // 处理公共字段
         handleCommonField(entity, now, loginUser);
-        return this.save(entity);
+        try {
+            return this.save(entity);
+        } finally {
+            publishMaskPermEvictAll("SysRoleMenuService.saveRoleMenu");
+        }
 
     }
 
@@ -551,6 +567,20 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
         entity.setCreateTime(now);
         entity.setCreateUserId(loginUser.getUid());
         entity.setCreateUserName(loginUser.getUserName());
+    }
+
+    /**
+     * 安全调用脱敏权限失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
+     */
+    private void publishMaskPermEvictAll(String source) {
+        if (maskPermissionEvictPublisher == null) {
+            return;
+        }
+        try {
+            maskPermissionEvictPublisher.publishAll(source);
+        } catch (Throwable ignore) {
+            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
+        }
     }
 
     @Override

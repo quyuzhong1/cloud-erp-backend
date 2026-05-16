@@ -1,7 +1,9 @@
 package com.common.business.mask.cache.controller;
 
+import com.common.business.mask.MaskPermissionResolver;
 import com.common.business.mask.cache.CfgMaskFieldLocalCache;
 import com.common.business.mask.core.MaskClassDescriptorRegistry;
+import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.controller.BaseController;
@@ -9,14 +11,19 @@ import com.common.core.controller.vo.ApiResult;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +43,19 @@ public class CfgMaskFieldCacheController extends BaseController {
 
     @Autowired(required = false)
     private MaskClassDescriptorRegistry descriptorRegistry;
+
+    /**
+     * 权限解析 SPI；业务侧若引入 {@code erp-rpc-sys} 会自动注入 FeignMaskPermissionResolver
+     * （它带 60s 本地缓存 + Pub/Sub 主动失效）。required=false 兼容老服务。
+     */
+    @Autowired(required = false)
+    private MaskPermissionResolver permissionResolver;
+
+    /**
+     * 权限失效广播 publisher；required=false 兼容尚未引入 Redisson 的特殊服务。
+     */
+    @Autowired(required = false)
+    private MaskPermissionEvictPublisher permissionEvictPublisher;
 
     /**
      * 返回当前节点本地缓存的全量配置快照
@@ -88,16 +108,88 @@ public class CfgMaskFieldCacheController extends BaseController {
         view.put("uid", user.getUid());
         view.put("userName", user.getUserName());
         view.put("isSupper", user.getIsSupper());
+
+        // 1. LoginUser 原始 permissionList（项目里下游服务通常是 null，因为 simpleLoginUser 故意丢弃）
         List<String> perms = user.getPermissionList();
         view.put("permissionListNull", perms == null);
         view.put("permissionListSize", perms == null ? 0 : perms.size());
+
+        // 2. MaskCore 实际使用的权限集合（经 resolver 解析，可能命中 Feign 缓存）
+        //    这是排查"权限配了但还是脱敏"问题的关键 —— 看 resolver 究竟拿到了什么
+        Set<String> resolved = Collections.emptySet();
+        if (permissionResolver != null) {
+            try {
+                resolved = permissionResolver.resolve(user);
+                if (resolved == null) {
+                    resolved = Collections.emptySet();
+                }
+            } catch (Throwable e) {
+                view.put("resolverError", e.getClass().getSimpleName() + ":" + e.getMessage());
+            }
+        }
+        view.put("resolverClass", permissionResolver == null ? null
+                : permissionResolver.getClass().getSimpleName());
+        view.put("resolvedPermissionsSize", resolved.size());
+
         if (probe != null && !probe.isEmpty()) {
             view.put("probe", probe);
-            view.put("hasProbe", perms != null && perms.contains(probe));
+            view.put("hasProbeInLoginUser", perms != null && perms.contains(probe));
+            view.put("hasProbeInResolved", resolved.contains(probe));
         }
         if (perms != null && !perms.isEmpty()) {
             view.put("permissionListSample", perms.stream().limit(50).collect(Collectors.toList()));
         }
+        if (!resolved.isEmpty()) {
+            view.put("resolvedPermissionsSample", resolved.stream().limit(50).collect(Collectors.toList()));
+        }
+        return success(view);
+    }
+
+    /**
+     * 兜底失效接口：手动 publish 权限缓存失效广播
+     *
+     * <p>使用场景：</p>
+     * <ul>
+     *   <li>运维直接 SQL 改了 sys_role_menu / sys_user_role，绕过了 service 自动 publish</li>
+     *   <li>怀疑 sys 服务那侧的 publisher 没生效，想强制刷一次</li>
+     *   <li>FeignMaskPermissionResolver 拿到了脏数据，先清空再让其重新拉</li>
+     * </ul>
+     *
+     * <h3>用法</h3>
+     * <pre>
+     * POST /maskFieldCfgCache/evictPermission?uids=u1,u2,u3        # 精确失效几个 uid
+     * POST /maskFieldCfgCache/evictPermission?all=true             # 整体清空（重操作）
+     * </pre>
+     *
+     * <p>两个参数二选一；同时传时 all=true 优先。</p>
+     */
+    @PostMapping("/evictPermission")
+    public ApiResult<Map<String, Object>> evictPermission(@RequestParam(required = false) String uids,
+                                                          @RequestParam(required = false, defaultValue = "false") Boolean all) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        if (permissionEvictPublisher == null) {
+            view.put("ok", false);
+            view.put("reason", "MaskPermissionEvictPublisher not available (RedissonClient missing?)");
+            return success(view);
+        }
+        LoginUser u = UserContext.getLoginUser();
+        String source = "manual:" + (u == null ? "anonymous" : u.getUid());
+        if (Boolean.TRUE.equals(all)) {
+            permissionEvictPublisher.publishAll(source);
+            view.put("type", "ALL");
+        } else if (uids != null && !uids.isEmpty()) {
+            Set<String> set = new LinkedHashSet<>(Arrays.asList(uids.split(",")));
+            set.removeIf(s -> s == null || s.isEmpty());
+            permissionEvictPublisher.publishUser(set, source);
+            view.put("type", "USER");
+            view.put("uidsCount", set.size());
+        } else {
+            view.put("ok", false);
+            view.put("reason", "param required: uids=u1,u2,... OR all=true");
+            return success(view);
+        }
+        view.put("ok", true);
+        view.put("source", source);
         return success(view);
     }
 }

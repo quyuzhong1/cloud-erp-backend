@@ -8,6 +8,7 @@ import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.UserSelectDto;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
 import com.common.business.service.impl.RedisService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -46,6 +47,9 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SysUserInfoService sysUserInfoService;
+
+    @Autowired(required = false)
+    private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
 
     @Autowired
     private SysRoleUserService sysRoleUserService;
@@ -566,6 +570,14 @@ public class SysUserFeignController extends BaseController {
         uids.forEach(uid ->{
             redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid);
         });
+        // 删除用户后立即广播脱敏权限缓存失效，避免被删用户的 token 在 60s TTL 窗口内仍命中 stale 缓存看明文
+        if (maskPermissionEvictPublisher != null && uids != null && !uids.isEmpty()) {
+            try {
+                maskPermissionEvictPublisher.publishUser(uids, "SysUserFeignController.deleteSrmUser");
+            } catch (Throwable ignore) {
+                // publisher 内部已经容错；这里再吞一次保证主流程不受影响
+            }
+        }
         return success();
     }
 

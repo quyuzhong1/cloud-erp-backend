@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.mask.MaskContext;
 import com.common.business.mask.MaskHandler;
 import com.common.business.mask.MaskPermissionEvaluator;
+import com.common.business.mask.MaskPermissionResolver;
 import com.common.business.mask.MaskScan;
 import com.common.business.mask.MaskStrategy;
 import com.common.business.threadlocal.UserContext;
@@ -61,6 +62,17 @@ public class MaskCore {
     private List<MaskPermissionEvaluator> permissionEvaluators;
 
     /**
+     * 权限解析 SPI。{@code erp-common-business} 默认提供 {@code LoginUserMaskPermissionResolver}
+     * （直接读 {@link LoginUser#getPermissionList()}）；业务侧引入 {@code erp-rpc-sys}
+     * 时由 {@code FeignMaskPermissionResolver} 通过 {@code @Primary} 覆盖，
+     * 自动改为 Feign 现查 + 60s 缓存 + Pub/Sub 失效。
+     *
+     * <p>required=false 是为了兼容极端场景（连默认实现都没扫描到）下回退到老逻辑。</p>
+     */
+    @Autowired(required = false)
+    private MaskPermissionResolver permissionResolver;
+
+    /**
      * MaskStrategy -> MaskHandler 调度表（启动时一次性构建）
      */
     private volatile Map<MaskStrategy, MaskHandler> dispatch;
@@ -92,10 +104,28 @@ public class MaskCore {
     }
 
     /**
-     * 把 {@link LoginUser#getPermissionList()} 转换成 {@link HashSet}，供 walk 路径 O(1) contains。
-     * user 或 permissionList 为空时返回 {@link Collections#emptySet()}。
+     * 解析当前用户的"看明文"权限码集合，供 walk 路径 O(1) contains。
+     *
+     * <p>优先链：</p>
+     * <ol>
+     *   <li>{@link #permissionResolver} != null（项目里 99% 走这条）：调 resolver
+     *       —— 若 Feign 实现命中本地 60s 缓存，开销 < 1μs；未命中则 Feign 现查 sys 一次。</li>
+     *   <li>{@code permissionResolver == null}（极端兜底）：退回 {@link LoginUser#getPermissionList()}，
+     *       维持本类历史行为，便于单测和老代码迁移。</li>
+     * </ol>
+     *
+     * <p>返回结果保证非空（Resolver 抛异常时降级为 emptySet，由 resolver 内部记录 warn）。</p>
      */
-    private static Set<String> toPermissionSet(LoginUser user) {
+    private Set<String> toPermissionSet(LoginUser user) {
+        if (permissionResolver != null) {
+            try {
+                Set<String> resolved = permissionResolver.resolve(user);
+                return resolved == null ? Collections.emptySet() : resolved;
+            } catch (Throwable e) {
+                log.warn("MaskCore permissionResolver threw, fallback to LoginUser.permissionList, msg={}",
+                        e.getMessage());
+            }
+        }
         if (user == null || user.getPermissionList() == null || user.getPermissionList().isEmpty()) {
             return Collections.emptySet();
         }
@@ -299,8 +329,13 @@ public class MaskCore {
      * <ul>
      *   <li>方法 @MaskScan(disabled=true)</li>
      *   <li>当前用户为超级管理员（{@code LoginUser.isSupper == true}）</li>
-     *   <li>方法 @MaskScan(permission) 不为空 且 当前用户拥有该权限码</li>
+     *   <li>方法 @MaskScan(permission) 不为空 且 当前用户拥有该权限码（经 {@link #permissionResolver} 解析）</li>
      * </ul>
+     *
+     * <p><b>注意</b>：第 3 条改为走 {@link #permissionResolver} 而不是直接读
+     * {@link LoginUser#getPermissionList()}。项目里下游服务的 LoginUser.permissionList
+     * 通常是 null（详见 {@link com.common.business.vo.LoginUser#simpleLoginUser}），
+     * 直接读会导致 {@code @MaskScan(permission)} 在下游永远不生效。</p>
      */
     public boolean shouldSkip(MaskScan scan) {
         if (scan != null && scan.disabled()) {
@@ -315,10 +350,11 @@ public class MaskCore {
         }
         if (scan != null) {
             String permission = scan.permission();
-            if (permission != null && !permission.isEmpty()
-                    && user.getPermissionList() != null
-                    && user.getPermissionList().contains(permission)) {
-                return true;
+            if (permission != null && !permission.isEmpty()) {
+                Set<String> perms = toPermissionSet(user);
+                if (!perms.isEmpty() && perms.contains(permission)) {
+                    return true;
+                }
             }
         }
         return false;

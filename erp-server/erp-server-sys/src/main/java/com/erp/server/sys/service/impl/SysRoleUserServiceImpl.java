@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
@@ -12,6 +13,7 @@ import com.erp.model.sys.entity.SysRoleUserEntity;
 import com.erp.server.sys.mapper.SysRoleUserMapper;
 import com.erp.server.sys.service.SysRoleUserService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -25,6 +27,9 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
 
     @Resource
     private SysRoleUserMapper sysRoleUserMapper;
+
+    @Autowired(required = false)
+    private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
 
     /**
      * 批量保存 用户 与角色的  关系
@@ -64,6 +69,7 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
                 this.saveBatch(saveList);
             }
         }
+        publishMaskPermEvict(Collections.singleton(uid), "SysRoleUserService.batchInsertRef");
     }
 
     private static void handleCommonField(SysRoleUserEntity entity, LocalDateTime now, LoginUser loginUser) {
@@ -82,9 +88,22 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
      */
     @Override
     public void removeRefByRoleId(List<String> roleIds) {
+        // 先查出受影响的 uid 集合，再删除，便于精确广播失效
+        Set<String> affectedUids = Collections.emptySet();
+        if (CollectionUtils.isNotEmpty(roleIds)) {
+            LambdaQueryWrapper<SysRoleUserEntity> q = new LambdaQueryWrapper<>();
+            q.select(SysRoleUserEntity::getUserId);
+            q.in(SysRoleUserEntity::getRoleId, roleIds);
+            List<SysRoleUserEntity> list = sysRoleUserMapper.selectList(q);
+            if (CollectionUtils.isNotEmpty(list)) {
+                affectedUids = list.stream().map(SysRoleUserEntity::getUserId)
+                        .filter(Objects::nonNull).collect(Collectors.toSet());
+            }
+        }
         LambdaQueryWrapper<SysRoleUserEntity> wrapper = new LambdaQueryWrapper();
         wrapper.in(SysRoleUserEntity::getRoleId, roleIds);
         sysRoleUserMapper.delete(wrapper);
+        publishMaskPermEvict(affectedUids, "SysRoleUserService.removeRefByRoleId");
     }
 
     @Override
@@ -156,10 +175,14 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
             handleCommonField(entity, now, loginUser);
             addList.add(entity);
         }
-        if (CollectionUtils.isNotEmpty(addList)) {
-            return this.saveBatch(addList);
+        try {
+            if (CollectionUtils.isNotEmpty(addList)) {
+                return this.saveBatch(addList);
+            }
+            return false;
+        } finally {
+            publishMaskPermEvict(userIds, "SysRoleUserService.saveBatchRoleUser");
         }
-        return false;
     }
 
     /**
@@ -187,6 +210,9 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
                 addList.add(addEntity);
             }
             this.saveBatch(addList);
+            Set<String> affectedUids = roleUserList.stream().map(SysRoleUserEntity::getUserId)
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+            publishMaskPermEvict(affectedUids, "SysRoleUserService.copyRoleUser");
         }
 
     }
@@ -226,5 +252,17 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
         sysRoleUserMapper.delete(wrapper);
     }
 
-
+    /**
+     * 安全调用脱敏权限失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
+     */
+    private void publishMaskPermEvict(Collection<String> uids, String source) {
+        if (maskPermissionEvictPublisher == null || uids == null || uids.isEmpty()) {
+            return;
+        }
+        try {
+            maskPermissionEvictPublisher.publishUser(uids, source);
+        } catch (Throwable ignore) {
+            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
+        }
+    }
 }

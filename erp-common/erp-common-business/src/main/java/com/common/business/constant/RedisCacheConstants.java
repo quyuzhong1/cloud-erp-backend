@@ -398,4 +398,15 @@ public interface RedisCacheConstants {
      * 与 MASK_FIELD 同样遵循"先写 Bucket 再 publish"的写入顺序
      */
     String MASK_WORD_CFG_FULL_KEY = "erp:mask_word_cfg:full";
+
+    /**
+     * 脱敏框架用户权限失效广播 channel
+     *
+     * <p>由 sys 服务在 {@code sys_user_role / sys_role_menu / sys_user} 写入路径 publish；
+     * 业务节点的 {@code FeignMaskPermissionResolver} 订阅后清除指定 uid 的本地权限缓存，
+     * 实现"权限收回后 100ms 内全集群失效"的安全语义。</p>
+     *
+     * <p>消息载荷见 {@code MaskPermissionEvictMessage}。</p>
+     */
+    String MASK_PERM_EVICT_CHANNEL = "erp:mask_perm:evict";
 }

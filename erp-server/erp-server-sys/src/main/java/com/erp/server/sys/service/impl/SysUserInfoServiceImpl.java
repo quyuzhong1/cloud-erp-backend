@@ -21,6 +21,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.enums.UserTypeEnum;
+import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -111,6 +112,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private RedisService redisService;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
 
     @Resource
     private MailService mailService;
@@ -632,9 +636,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
 
-        //禁用清除redis登录信息
+        //禁用清除redis登录信息 + 广播脱敏权限缓存失效（防止 stale 缓存让被禁用户继续看明文）
         if (ObjectUtil.isNotEmpty(stateDTO.getState()) && MathUtil.compareTo(stateDTO.getState(),MathUtil.ZERO) == MathUtil.ZERO) {
             stateDTO.getIds().forEach(uid -> redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid));
+            publishMaskPermEvict(stateDTO.getIds(), "SysUserInfoService.updateState.disable");
         }
 
         List<SysUserInfoEntity> list = this.listByIds(stateDTO.getIds());
@@ -664,9 +669,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         updateWrapper.in(SysUserInfoEntity::getUid, stateDTO.getIds());
         this.update(updateWrapper);
 
-        //禁用清除redis登录信息
+        //禁用清除redis登录信息 + 广播脱敏权限缓存失效（同 updateState 语义）
         if (ObjectUtil.isNotEmpty(stateDTO.getState()) && MathUtil.compareTo(stateDTO.getState(),MathUtil.ZERO) == MathUtil.ZERO) {
             stateDTO.getIds().forEach(uid -> redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + uid));
+            publishMaskPermEvict(stateDTO.getIds(), "SysUserInfoService.updateStateSrm.disable");
         }
     }
 
@@ -2042,6 +2048,20 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             }else if(type.equals("add")){
                 sysDepartmentUserService.batchSaveOrUpdate(uid,refIdList,true);
             }
+        }
+    }
+
+    /**
+     * 安全广播脱敏权限缓存失效；publisher 未注入或 Redis 异常都不影响主业务事务
+     */
+    private void publishMaskPermEvict(java.util.Collection<String> uids, String source) {
+        if (maskPermissionEvictPublisher == null || uids == null || uids.isEmpty()) {
+            return;
+        }
+        try {
+            maskPermissionEvictPublisher.publishUser(uids, source);
+        } catch (Throwable ignore) {
+            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
         }
     }
 }
