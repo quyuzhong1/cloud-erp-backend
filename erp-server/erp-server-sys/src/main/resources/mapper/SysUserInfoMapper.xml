@@ -170,9 +170,12 @@ sui.third_auth_type AS thirdAuthType
 
     <select id="getRequestPermissionsList" resultType="com.common.business.dto.UserRequestPermissionsDTO">
         SELECT MAX(COALESCE ( sm.data_scope, 0 )) AS dataScope,m.menu_code AS permissionsCode
-        FROM sys_role_menu sm INNER JOIN  sys_role_user sr ON sr.role_id = sm.role_id
-        INNER JOIN  sys_menu m ON sm.menu_id = m.menu_id and m.is_deleted = false
-        WHERE sr.user_id=#{userId} AND m.menu_code!=''
+        FROM sys_role_menu sm
+        INNER JOIN sys_role_user sr ON sr.role_id = sm.role_id AND sr.is_deleted = false
+        INNER JOIN sys_menu m       ON sm.menu_id = m.menu_id AND m.is_deleted = false
+        WHERE sr.user_id = #{userId}
+          AND sm.is_deleted = false
+          AND m.menu_code != ''
         GROUP BY m.menu_code
     </select>
 
