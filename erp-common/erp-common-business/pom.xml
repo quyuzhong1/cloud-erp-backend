@@ -255,6 +255,13 @@
     <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
     <version>3.3.1</version>
 </dependency>
+
+        <!-- 敏感词检测：MaskStrategy.AUTO 策略的底层引擎，支持手机/邮箱/URL/IP 模式检测 + 自定义词典 -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>sensitive-word</artifactId>
+            <version>0.29.5</version>
+        </dependency>
     </dependencies>
 
     <build>
