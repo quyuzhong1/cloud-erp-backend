@@ -46,6 +46,17 @@ public interface MaskPermissionResolver {
     Set<String> resolve(LoginUser user);
 
     /**
+     * 判断当前用户是否为脱敏框架意义上的超级管理员。
+     *
+     * <p>默认只认 {@link LoginUser#getIsSupper()}，保持 common-business 内的轻量实现不依赖 sys。
+     * 业务服务引入 {@code erp-rpc-sys} 后，{@code FeignMaskPermissionResolver} 会覆盖本方法，
+     * 按 sys 侧与数据权限一致的 {@code roleId=1} 口径判定。</p>
+     */
+    default boolean isSuperAdmin(LoginUser user) {
+        return user != null && Boolean.TRUE.equals(user.getIsSupper());
+    }
+
+    /**
      * 失效指定 uid 集合的本地缓存（如果实现带缓存）
      *
      * <p>由 {@code MaskPermissionEvictListener} 在收到 Redis Pub/Sub 失效消息时调用。

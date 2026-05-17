@@ -31,7 +31,8 @@ import java.lang.annotation.Target;
  * <ul>
  *   <li>字段级 {@link #permission()} 不为空 → 用字段级</li>
  *   <li>否则继承方法级 {@link MaskScan#permission()}</li>
- *   <li>都为空 → 仅超管（{@code LoginUser.isSupper}）看明文</li>
+ *   <li>都为空 → 仅超管看明文。common-business 默认认 {@code LoginUser.isSupper}，
+ *       业务服务引入 erp-rpc-sys 后对齐数据权限的 {@code roleId=1} 口径</li>
  * </ul>
  *
  * @author cloud-erp
@@ -61,7 +62,7 @@ public @interface Mask {
     /**
      * 看明文所需权限码。
      * <ul>
-     *   <li>非空且当前 {@code LoginUser.permissionList} 包含该码 → 不脱敏</li>
+     *   <li>非空且当前用户经 {@link MaskPermissionResolver} 解析出的权限集合包含该码 → 不脱敏</li>
      *   <li>空字符串 → 继承方法级 {@link MaskScan#permission()}</li>
      * </ul>
      */

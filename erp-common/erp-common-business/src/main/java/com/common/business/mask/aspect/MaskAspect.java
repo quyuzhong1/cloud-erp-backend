@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>跳过条件（任一命中即跳过）：</p>
  * <ul>
  *   <li>方法 {@code @MaskScan(disabled=true)}</li>
- *   <li>当前用户为超级管理员（{@code LoginUser.isSupper == true}）</li>
+ *   <li>当前用户为超级管理员。业务服务引入 erp-rpc-sys 后对齐数据权限的 {@code roleId=1} 口径</li>
  *   <li>方法 {@code @MaskScan(permission)} 不为空且当前用户拥有该权限码</li>
  * </ul>
  *

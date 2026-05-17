@@ -19,12 +19,10 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,25 +33,27 @@ import lombok.extern.slf4j.Slf4j;
  * <p>项目网关用 {@link LoginUser#simpleLoginUser(LoginUser)} 把用户信息压缩进 HTTP Header
  * 转发到下游服务，<b>故意丢弃了 {@code permissionList}</b> 以避免撑爆 Header。
  * 业务服务下游 {@code user.getPermissionList()} 永远是 {@code null}，
- * 必须靠 {@code SysUserFeign.getRequestPermissionsList(uid)} 现查。</p>
+ * 必须靠 {@code SysUserFeign.getRequestPermissionsList(uid)} 现查字段明文权限码；
+ * 同时为对齐数据权限的超管语义，额外用 {@code SysUserFeign.getRoleIdList(uid)}
+ * 判断 {@code roleId=1}。</p>
  *
  * <h3>缓存设计</h3>
  * <table>
  *   <tr><th>维度</th><th>策略</th></tr>
- *   <tr><td>缓存粒度</td><td>uid → Set&lt;String&gt;</td></tr>
+ *   <tr><td>缓存粒度</td><td>uid → PermissionSnapshot（权限码 Set + 是否 roleId=1 超管）</td></tr>
  *   <tr><td>缓存位置</td><td>本地 Caffeine cache（每 Pod 独立）</td></tr>
  *   <tr><td>TTL</td><td>5 分钟兜底；超过 TTL 自动重新拉</td></tr>
  *   <tr><td>主动失效</td><td>订阅 {@link com.common.business.constant.RedisCacheConstants#MASK_PERM_EVICT_CHANNEL}，
  *     由 sys 在权限写入路径广播；详见 {@code MaskPermissionEvictListener}</td></tr>
  *   <tr><td>缓存上限</td><td>{@link #MAX_CACHE_SIZE}，由 Caffeine 按访问热度淘汰冷门 entry</td></tr>
- *   <tr><td>Feign 失败降级</td><td>未命中/过期后加载失败返回空集合，且不缓存失败结果（保守：脱敏）</td></tr>
+ *   <tr><td>Feign 失败降级</td><td>权限码加载失败返回空集合且不缓存失败结果；roleId 加载失败只按非超管处理（保守：脱敏）</td></tr>
  * </table>
  *
  * <h3>性能账</h3>
  * <pre>
  * 假设：500 QPS / Pod，活跃 200 用户，5 分钟 TTL
- * 实际 Feign 调用 = 200 次 / 300s = 0.67 次/秒/Pod
- * 全集群 10 Pod = 6.7 次/秒 sys Feign 调用，可接受
+ * 实际 Feign 调用 ≈ 200 用户 × 2 次 / 300s = 1.33 次/秒/Pod
+ * 全集群 10 Pod ≈ 13.3 次/秒 sys Feign 调用，可接受
  * </pre>
  *
  * <h3>线程安全</h3>
@@ -78,7 +78,7 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
      */
     static final int MAX_CACHE_SIZE = 10_000;
 
-    private final Cache<String, Set<String>> cache = Caffeine.newBuilder()
+    private final Cache<String, PermissionSnapshot> cache = Caffeine.newBuilder()
             .expireAfterWrite(TTL_MS, TimeUnit.MILLISECONDS)
             .maximumSize(MAX_CACHE_SIZE)
             .recordStats()
@@ -89,29 +89,55 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
 
     @Override
     public Set<String> resolve(LoginUser user) {
+        return snapshot(user).permissions;
+    }
+
+    @Override
+    public boolean isSuperAdmin(LoginUser user) {
         if (user == null || user.getUid() == null || user.getUid().isEmpty()) {
-            return Collections.emptySet();
+            return false;
+        }
+        if (Boolean.TRUE.equals(user.getIsSupper())) {
+            return true;
+        }
+        return snapshot(user).superAdmin;
+    }
+
+    private PermissionSnapshot snapshot(LoginUser user) {
+        if (user == null || user.getUid() == null || user.getUid().isEmpty()) {
+            return PermissionSnapshot.EMPTY;
         }
         String uid = user.getUid();
         try {
-            return cache.get(uid, this::loadPermissions);
+            return cache.get(uid, this::loadSnapshot);
         } catch (Exception e) {
             log.warn("FeignMaskPermissionResolver feign failed and no cached value uid={}, msg={}", uid, e.getMessage());
-            return Collections.emptySet();
+            return PermissionSnapshot.EMPTY;
         }
     }
 
-    private Set<String> loadPermissions(String uid) {
+    private PermissionSnapshot loadSnapshot(String uid) {
         List<UserRequestPermissionsDTO> list = sysUserFeign.getRequestPermissionsList(uid);
-        if (list == null || list.isEmpty()) {
-            return Collections.emptySet();
+        Set<String> permissions = Collections.emptySet();
+        if (list != null && !list.isEmpty()) {
+            Set<String> raw = new HashSet<>();
+            for (UserRequestPermissionsDTO item : list) {
+                if (item == null || item.getPermissionsCode() == null || item.getPermissionsCode().isEmpty()) {
+                    continue;
+                }
+                raw.add(item.getPermissionsCode());
+            }
+            permissions = raw.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(raw);
         }
-        Set<String> raw = list.stream()
-                .filter(Objects::nonNull)
-                .map(UserRequestPermissionsDTO::getPermissionsCode)
-                .filter(s -> s != null && !s.isEmpty())
-                .collect(Collectors.toCollection(HashSet::new));
-        return Collections.unmodifiableSet(raw);
+        boolean superAdmin = false;
+        try {
+            List<String> roleIdList = sysUserFeign.getRoleIdList(uid);
+            superAdmin = roleIdList != null && roleIdList.contains("1");
+        } catch (Throwable e) {
+            log.warn("FeignMaskPermissionResolver getRoleIdList failed, treat as not super admin, uid={}, msg={}",
+                    uid, e.getMessage());
+        }
+        return new PermissionSnapshot(permissions, superAdmin);
     }
 
     /**
@@ -157,18 +183,31 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
         view.put("stats", statsView);
 
         Map<String, Object> entries = new LinkedHashMap<>();
-        Optional<Policy.Expiration<String, Set<String>>> expiration = cache.policy().expireAfterWrite();
-        for (Map.Entry<String, Set<String>> e : cache.asMap().entrySet()) {
+        Optional<Policy.Expiration<String, PermissionSnapshot>> expiration = cache.policy().expireAfterWrite();
+        for (Map.Entry<String, PermissionSnapshot> e : cache.asMap().entrySet()) {
             Map<String, Object> item = new LinkedHashMap<>();
             OptionalLong ageMs = expiration.isPresent()
                     ? expiration.get().ageOf(e.getKey(), TimeUnit.MILLISECONDS)
                     : OptionalLong.empty();
-            item.put("permsCount", e.getValue().size());
+            item.put("permsCount", e.getValue().permissions.size());
+            item.put("superAdmin", e.getValue().superAdmin);
             item.put("ageMs", ageMs.isPresent() ? ageMs.getAsLong() : null);
             item.put("expiredByTtl", ageMs.isPresent() && ageMs.getAsLong() >= TTL_MS);
             entries.put(e.getKey(), item);
         }
         view.put("entries", entries);
         return view;
+    }
+
+    private static class PermissionSnapshot {
+        private static final PermissionSnapshot EMPTY = new PermissionSnapshot(Collections.emptySet(), false);
+
+        private final Set<String> permissions;
+        private final boolean superAdmin;
+
+        private PermissionSnapshot(Set<String> permissions, boolean superAdmin) {
+            this.permissions = permissions == null ? Collections.emptySet() : permissions;
+            this.superAdmin = superAdmin;
+        }
     }
 }

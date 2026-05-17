@@ -89,7 +89,8 @@ public class CfgMaskFieldCacheController extends BaseController {
      * <ul>
      *   <li>loginUserNull：true 表示当前线程根本没拿到 LoginUser（网关 / Filter / RPC 链路问题）</li>
      *   <li>isUserSystem：true 表示走的 system 兜底用户，无 permissionList / isSupper</li>
-     *   <li>isSupper：超管标志</li>
+     *   <li>isSupper：LoginUser 原始超管标志</li>
+     *   <li>isSuperAdminResolved：脱敏框架实际使用的超管判定；业务服务引入 erp-rpc-sys 后对齐 roleId=1</li>
      *   <li>permissionListSize：权限码总数</li>
      *   <li>hasProbe：传入 probe 参数时，回报该权限码是否命中</li>
      *   <li>permissionListSample：前 50 条权限码预览（仅用于人工核对）</li>
@@ -130,6 +131,13 @@ public class CfgMaskFieldCacheController extends BaseController {
         view.put("resolverClass", permissionResolver == null ? null
                 : permissionResolver.getClass().getSimpleName());
         view.put("resolvedPermissionsSize", resolved.size());
+        if (permissionResolver != null) {
+            try {
+                view.put("isSuperAdminResolved", permissionResolver.isSuperAdmin(user));
+            } catch (Throwable e) {
+                view.put("isSuperAdminResolvedError", e.getClass().getSimpleName() + ":" + e.getMessage());
+            }
+        }
 
         if (probe != null && !probe.isEmpty()) {
             view.put("probe", probe);

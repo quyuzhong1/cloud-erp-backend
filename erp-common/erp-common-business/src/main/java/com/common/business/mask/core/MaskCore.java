@@ -259,8 +259,9 @@ public class MaskCore {
     /**
      * 字段豁免链（按优先级短路）：
      * <ol>
-     *   <li>{@code LoginUser.isSupper=true} 的超管 → 全字段一律明文（对齐项目其它模块 wms/srm 的惯例，
-     *       也对齐本框架 {@code @Mask} javadoc 承诺）</li>
+     *   <li>超管 → 全字段一律明文。common-business 默认认 {@code LoginUser.isSupper=true}，
+     *       业务服务引入 erp-rpc-sys 后由 {@code FeignMaskPermissionResolver} 对齐数据权限的
+     *       {@code roleId=1} 口径</li>
      *   <li>当前用户 permissionList 命中 {@code fd.getPermission()} → 通过</li>
      *   <li>{@link MaskPermissionEvaluator} 扩展点任一返回 true → 通过</li>
      * </ol>
@@ -269,7 +270,7 @@ public class MaskCore {
      */
     private boolean isFieldGranted(LoginUser user, Set<String> permissionSet,
                                    Object pojo, MaskFieldDescriptor fd) {
-        if (user != null && Boolean.TRUE.equals(user.getIsSupper())) {
+        if (isSuperAdmin(user)) {
             return true;
         }
         if (hasFieldPermission(permissionSet, fd.getPermission())) {
@@ -328,7 +329,8 @@ public class MaskCore {
      * <p>跳过条件（任一命中即跳过）：</p>
      * <ul>
      *   <li>方法 @MaskScan(disabled=true)</li>
-     *   <li>当前用户为超级管理员（{@code LoginUser.isSupper == true}）</li>
+     *   <li>当前用户为超级管理员。common-business 默认认 {@code LoginUser.isSupper == true}，
+     *       业务服务引入 erp-rpc-sys 后对齐数据权限的 {@code roleId=1} 口径</li>
      *   <li>方法 @MaskScan(permission) 不为空 且 当前用户拥有该权限码（经 {@link #permissionResolver} 解析）</li>
      * </ul>
      *
@@ -345,7 +347,7 @@ public class MaskCore {
         if (user == null) {
             return false;
         }
-        if (Boolean.TRUE.equals(user.getIsSupper())) {
+        if (isSuperAdmin(user)) {
             return true;
         }
         if (scan != null) {
@@ -358,6 +360,21 @@ public class MaskCore {
             }
         }
         return false;
+    }
+
+    private boolean isSuperAdmin(LoginUser user) {
+        if (user == null) {
+            return false;
+        }
+        if (permissionResolver != null) {
+            try {
+                return permissionResolver.isSuperAdmin(user);
+            } catch (Throwable e) {
+                log.warn("MaskCore permissionResolver.isSuperAdmin threw, fallback to LoginUser.isSupper, msg={}",
+                        e.getMessage());
+            }
+        }
+        return Boolean.TRUE.equals(user.getIsSupper());
     }
 
     /**
