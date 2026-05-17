@@ -1,5 +1,9 @@
 package com.erp.rpc.sys.feign.dataperm;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Policy;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.erp.model.sys.dto.DataPermissionContextDTO;
 import com.erp.rpc.sys.feign.DataPermissionFeign;
 
@@ -9,12 +13,14 @@ import org.springframework.stereotype.Component;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 数据权限上下文解析器：Feign 现查 + 本地 60s TTL 缓存
+ * 数据权限上下文解析器：Feign 现查 + 本地 5 分钟 TTL 缓存
  *
  * <h3>背景</h3>
  * <p>历史 {@code DataPermissionAspect} 每个 {@code @DataPermission} 注解的接口都打 5 次 sys Feign
@@ -24,16 +30,16 @@ import lombok.extern.slf4j.Slf4j;
  * <h3>本类设计</h3>
  * <ul>
  *   <li>替换为 1 次聚合 Feign（{@link DataPermissionFeign#getDataPermissionContext}）</li>
- *   <li>本地 {@link ConcurrentHashMap}：uid → {@link DataPermissionContextDTO} + 缓存时间戳</li>
- *   <li>TTL {@link #TTL_MS}（60 秒），过期重新拉</li>
- *   <li>缓存条目上限 {@link #MAX_CACHE_SIZE}，超限整体清空（活跃用户场景下足够，避免内存膨胀）</li>
- *   <li><b>Feign 失败降级</b>：有历史缓存就返回旧值（warn 日志记录陈旧时长）；没有就返回 {@code empty()}
+ *   <li>本地 Caffeine cache：uid → {@link DataPermissionContextDTO}</li>
+ *   <li>TTL {@link #TTL_MS}（5 分钟），过期重新拉</li>
+ *   <li>缓存条目上限 {@link #MAX_CACHE_SIZE}，由 Caffeine 按访问热度淘汰，避免手写 clear-all 抖动</li>
+ *   <li><b>Feign 失败降级</b>：未命中/过期后加载失败返回 {@code empty()}，不把失败结果写入 cache
  *       —— 保守策略，业务上看到"没权限"而不是 500</li>
  * </ul>
  *
  * <h3>线程安全</h3>
- * <p>{@link ConcurrentHashMap} + {@link DataPermissionContextDTO} 内部 List 字段在 sys 侧组装后视为不可变。
- * 同 uid 在 TTL 失效瞬间并发请求会发起多次 Feign（罕见，可接受）。</p>
+ * <p>Caffeine cache 线程安全；{@link DataPermissionContextDTO} 内部 List 字段在 sys 侧组装后视为不可变。
+ * 同 uid 在 TTL 失效瞬间通过 {@code cache.get(key, mappingFunction)} 合并加载，避免并发 miss 重复打 sys。</p>
  *
  * <h3>失效</h3>
  * <ul>
@@ -41,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
  *       sys_department_user / sys_user_shop / sys_user_warehouse / sys_user）写入路径
  *       publish 失效广播；业务节点 {@code DataPermissionContextEvictListener} 订阅后调
  *       {@link #evict} / {@link #evictAll}。</li>
- *   <li><b>TTL 兜底（60s）</b>：失效消息丢失（Redis 抖动 / listener 启动时漏订阅）也会自动收敛。</li>
+ *   <li><b>TTL 兜底（5 分钟）</b>：失效消息丢失（Redis 抖动 / listener 启动时漏订阅）也会自动收敛。</li>
  *   <li><b>诊断手工触发</b>：{@code POST /dataPermCache/evict?uids=u1,u2 } 或 {@code ?all=true }。</li>
  * </ul>
  *
@@ -52,7 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FeignDataPermissionContextResolver {
 
     /**
-     * 缓存条目存活时长（毫秒）。60s*5 与 mask 权限 cache 一致，便于联调和心智统一。
+     * 缓存条目存活时长（毫秒）。当前为 5 分钟，与 mask 权限 cache 一致，便于联调和心智统一。
      */
     static final long TTL_MS = 60_000L*5;
 
@@ -84,7 +90,11 @@ public class FeignDataPermissionContextResolver {
      */
     static final int DEP_USER_LARGE_WARN = 500;
 
-    private final ConcurrentHashMap<String, Entry> cache = new ConcurrentHashMap<>(256);
+    private final Cache<String, DataPermissionContextDTO> cache = Caffeine.newBuilder()
+            .expireAfterWrite(TTL_MS, TimeUnit.MILLISECONDS)
+            .maximumSize(MAX_CACHE_SIZE)
+            .recordStats()
+            .build();
 
     @Autowired
     private DataPermissionFeign dataPermissionFeign;
@@ -95,7 +105,7 @@ public class FeignDataPermissionContextResolver {
      * <ul>
      *   <li>命中且未过期 → 直接返回缓存（< 1μs）</li>
      *   <li>未命中 / 过期 → 调聚合 Feign 一次，写 cache</li>
-     *   <li>Feign 异常 → 有 stale 值就返回 stale；无则返回 {@link DataPermissionContextDTO#empty()}</li>
+     *   <li>Feign 异常 → 返回 {@link DataPermissionContextDTO#empty()}，且不缓存失败结果</li>
      * </ul>
      *
      * <p>返回值<b>保证非 null</b>，业务方无需判空。</p>
@@ -104,41 +114,27 @@ public class FeignDataPermissionContextResolver {
         if (userId == null || userId.isEmpty()) {
             return DataPermissionContextDTO.empty();
         }
-        long now = System.currentTimeMillis();
-        Entry hit = cache.get(userId);
-        if (hit != null && now - hit.ts < TTL_MS) {
-            return hit.ctx;
-        }
-
         try {
-            DataPermissionContextDTO ctx = dataPermissionFeign.getDataPermissionContext(userId);
-            if (ctx == null) {
-                ctx = DataPermissionContextDTO.empty();
-            }
-
-            int depSize = ctx.getDepUserList() == null ? 0 : ctx.getDepUserList().size();
-            if (depSize >= DEP_USER_LARGE_WARN) {
-                log.warn("FeignDataPermissionContextResolver large depUserList cached, uid={}, depSize={}, "
-                        + "cacheSize={}", userId, depSize, cache.size());
-            }
-
-            if (cache.size() > MAX_CACHE_SIZE) {
-                log.warn("FeignDataPermissionContextResolver cache size={} exceeded {}, clear all",
-                        cache.size(), MAX_CACHE_SIZE);
-                cache.clear();
-            }
-            cache.put(userId, new Entry(ctx, now));
-            return ctx;
+            return cache.get(userId, this::loadContext);
         } catch (Exception e) {
-            if (hit != null) {
-                log.warn("FeignDataPermissionContextResolver feign failed, fallback to stale cache uid={}, "
-                        + "staleAgeMs={}, msg={}", userId, now - hit.ts, e.getMessage());
-                return hit.ctx;
-            }
-            log.warn("FeignDataPermissionContextResolver feign failed and no stale cache uid={}, msg={}",
+            log.warn("FeignDataPermissionContextResolver feign failed and no cached value uid={}, msg={}",
                     userId, e.getMessage());
             return DataPermissionContextDTO.empty();
         }
+    }
+
+    private DataPermissionContextDTO loadContext(String userId) {
+        DataPermissionContextDTO ctx = dataPermissionFeign.getDataPermissionContext(userId);
+        if (ctx == null) {
+            ctx = DataPermissionContextDTO.empty();
+        }
+
+        int depSize = ctx.getDepUserList() == null ? 0 : ctx.getDepUserList().size();
+        if (depSize >= DEP_USER_LARGE_WARN) {
+            log.warn("FeignDataPermissionContextResolver large depUserList cached, uid={}, depSize={}, "
+                    + "cacheSize={}", userId, depSize, cache.estimatedSize());
+        }
+        return ctx;
     }
 
     /**
@@ -151,7 +147,7 @@ public class FeignDataPermissionContextResolver {
         }
         for (String uid : userIds) {
             if (uid != null) {
-                cache.remove(uid);
+                cache.invalidate(uid);
             }
         }
     }
@@ -161,7 +157,7 @@ public class FeignDataPermissionContextResolver {
      * （角色/菜单大改场景），也供 {@code /dataPermCache/evict?all=true} 诊断接口手动触发。
      */
     public void evictAll() {
-        cache.clear();
+        cache.invalidateAll();
     }
 
     /**
@@ -169,17 +165,30 @@ public class FeignDataPermissionContextResolver {
      */
     public Map<String, Object> snapshotView() {
         Map<String, Object> view = new LinkedHashMap<>();
-        view.put("size", cache.size());
+        view.put("size", cache.estimatedSize());
         view.put("ttlMs", TTL_MS);
         view.put("maxCacheSize", MAX_CACHE_SIZE);
         view.put("depUserLargeWarn", DEP_USER_LARGE_WARN);
+        CacheStats stats = cache.stats();
+        Map<String, Object> statsView = new LinkedHashMap<>();
+        statsView.put("requestCount", stats.requestCount());
+        statsView.put("hitCount", stats.hitCount());
+        statsView.put("missCount", stats.missCount());
+        statsView.put("hitRate", stats.hitRate());
+        statsView.put("evictionCount", stats.evictionCount());
+        statsView.put("loadSuccessCount", stats.loadSuccessCount());
+        statsView.put("loadFailureCount", stats.loadFailureCount());
+        view.put("stats", statsView);
         Map<String, Object> entries = new LinkedHashMap<>();
-        long now = System.currentTimeMillis();
-        for (Map.Entry<String, Entry> e : cache.entrySet()) {
-            DataPermissionContextDTO ctx = e.getValue().ctx;
+        Optional<Policy.Expiration<String, DataPermissionContextDTO>> expiration = cache.policy().expireAfterWrite();
+        for (Map.Entry<String, DataPermissionContextDTO> e : cache.asMap().entrySet()) {
+            DataPermissionContextDTO ctx = e.getValue();
             Map<String, Object> item = new LinkedHashMap<>();
-            item.put("ageMs", now - e.getValue().ts);
-            item.put("expiredByTtl", now - e.getValue().ts >= TTL_MS);
+            OptionalLong ageMs = expiration.isPresent()
+                    ? expiration.get().ageOf(e.getKey(), TimeUnit.MILLISECONDS)
+                    : OptionalLong.empty();
+            item.put("ageMs", ageMs.isPresent() ? ageMs.getAsLong() : null);
+            item.put("expiredByTtl", ageMs.isPresent() && ageMs.getAsLong() >= TTL_MS);
             item.put("permSize", ctx.getPermissionsList() == null ? 0 : ctx.getPermissionsList().size());
             item.put("roleIdSize", ctx.getRoleIdList() == null ? 0 : ctx.getRoleIdList().size());
             item.put("depUserSize", ctx.getDepUserList() == null ? 0 : ctx.getDepUserList().size());
@@ -189,15 +198,5 @@ public class FeignDataPermissionContextResolver {
         }
         view.put("entries", entries);
         return view;
-    }
-
-    private static final class Entry {
-        final DataPermissionContextDTO ctx;
-        final long ts;
-
-        Entry(DataPermissionContextDTO ctx, long ts) {
-            this.ctx = ctx;
-            this.ts = ts;
-        }
     }
 }

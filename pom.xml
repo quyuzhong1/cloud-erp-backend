@@ -45,6 +45,7 @@
         <hutool.version>5.8.16</hutool.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <postgresql.version>42.5.4</postgresql.version>
+        <caffeine.version>2.9.3</caffeine.version>
     </properties>
 
     <!--公共依赖组件-->
@@ -238,6 +239,11 @@
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson</artifactId>
                 <version>${redisson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
 
             <!--引入mapstruct-->

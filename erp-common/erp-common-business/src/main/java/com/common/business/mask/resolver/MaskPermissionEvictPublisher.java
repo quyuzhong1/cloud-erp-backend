@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  * </ul>
  *
  * <p>本 publisher 是<b>非阻塞、容错</b>的：Redis 不可用时只记 warn，不影响主业务事务。
- * 失效消息丢失由业务节点本地 60s TTL 兜底，最终一致。</p>
+ * 失效消息丢失由业务节点本地 TTL 兜底，最终一致。</p>
  *
  * <p><b>调用时机</b>：建议放在事务提交后（如 {@code TransactionSynchronizationManager#registerSynchronization}），
  * 避免事务回滚后发出无效失效，但为了实现简单，目前调用方可以直接在写完后调，

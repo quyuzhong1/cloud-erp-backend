@@ -21,7 +21,7 @@ import java.util.Set;
  *   <li><b>默认</b>：{@code LoginUserMaskPermissionResolver} —— 直接读 {@code user.getPermissionList()}，
  *       仅适用于"上游已填好 permissionList"的场景（如单测、网关侧自身、特殊定制 Filter）。</li>
  *   <li><b>推荐</b>：业务侧引入 {@code erp-rpc-sys} 时自动启用 {@code FeignMaskPermissionResolver}，
- *       通过 {@code SysUserFeign} 现查 + 60s 本地缓存 + Redis Pub/Sub 主动失效，
+ *       通过 {@code SysUserFeign} 现查 + Caffeine 本地缓存 + Redis Pub/Sub 主动失效，
  *       既保证下游能拿到权限，又避免每请求 1 次 Feign 把 sys 打爆。</li>
  * </ul>
  *

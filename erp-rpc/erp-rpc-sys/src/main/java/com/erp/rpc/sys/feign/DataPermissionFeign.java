@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * 数据权限聚合 Feign：一次 RPC 拿到 {@link DataPermissionContextDTO} 所需的全部 5 类数据
  *
  * <p>用于替代 {@code DataPermissionAspect} 历史上每请求散打 5 次 sys Feign 的实现，
- * 配合业务侧 60s 本地 TTL 缓存（{@code FeignDataPermissionContextResolver}），
+ * 配合业务侧 Caffeine 本地 TTL 缓存（{@code FeignDataPermissionContextResolver}），
  * 把对 sys 的 QPS 降到原来 1% 以内。</p>
  *
  * <p>独立成新 Feign（不塞进 {@link SysUserFeign} / {@link AuthDataFeign}）的原因：</p>

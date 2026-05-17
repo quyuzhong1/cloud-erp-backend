@@ -65,7 +65,7 @@ public class MaskCore {
      * 权限解析 SPI。{@code erp-common-business} 默认提供 {@code LoginUserMaskPermissionResolver}
      * （直接读 {@link LoginUser#getPermissionList()}）；业务侧引入 {@code erp-rpc-sys}
      * 时由 {@code FeignMaskPermissionResolver} 通过 {@code @Primary} 覆盖，
-     * 自动改为 Feign 现查 + 60s 缓存 + Pub/Sub 失效。
+     * 自动改为 Feign 现查 + Caffeine 本地缓存 + Pub/Sub 失效。
      *
      * <p>required=false 是为了兼容极端场景（连默认实现都没扫描到）下回退到老逻辑。</p>
      */
@@ -109,7 +109,7 @@ public class MaskCore {
      * <p>优先链：</p>
      * <ol>
      *   <li>{@link #permissionResolver} != null（项目里 99% 走这条）：调 resolver
-     *       —— 若 Feign 实现命中本地 60s 缓存，开销 < 1μs；未命中则 Feign 现查 sys 一次。</li>
+     *       —— 若 Feign 实现命中本地缓存，开销 < 1μs；未命中则 Feign 现查 sys 一次。</li>
      *   <li>{@code permissionResolver == null}（极端兜底）：退回 {@link LoginUser#getPermissionList()}，
      *       维持本类历史行为，便于单测和老代码迁移。</li>
      * </ol>

@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
  * <ul>
  *   <li><b>只管脱敏规则</b>：cfg_mask_field / cfg_mask_word。</li>
  *   <li>权限失效（sys_user_role / sys_role_menu / sys_user_info）<b>不在此 mapper 责任范围</b>，
- *       由 service 层 publisher + Redis Pub/Sub 即时机制 + FeignMaskPermissionResolver 60s TTL 三层兜底。</li>
+ *       由 service 层 publisher + Redis Pub/Sub 即时机制 + FeignMaskPermissionResolver 本地 TTL 三层兜底。</li>
  * </ul>
  *
  * <p>SQL 实现见 {@code src/main/resources/mapper/MaskCfgSyncMapper.xml}。</p>

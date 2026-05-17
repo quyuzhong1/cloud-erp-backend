@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  *   <li><b>注入 SPI 接口而非具体实现</b>：避免耦合到 {@code FeignMaskPermissionResolver}
  *       这样的具体实现。listener 只关心"收到 evict 消息要让 resolver 清缓存"，
- *       具体清的是本地 ConcurrentHashMap / Redis / Caffeine / 还是 no-op，对 listener 透明。</li>
+ *       具体清的是本地 Caffeine / Redis / no-op，对 listener 透明。</li>
  *   <li><b>默认实现无害</b>：业务侧未引入 erp-rpc-sys 时，注入的是
  *       {@code LoginUserMaskPermissionResolver}，{@link MaskPermissionResolver#evict} 默认
  *       no-op，listener 收到广播也不会出错。</li>

@@ -46,7 +46,7 @@ public class CfgMaskFieldCacheController extends BaseController {
 
     /**
      * 权限解析 SPI；业务侧若引入 {@code erp-rpc-sys} 会自动注入 FeignMaskPermissionResolver
-     * （它带 60s 本地缓存 + Pub/Sub 主动失效）。required=false 兼容老服务。
+     * （它带 Caffeine 本地缓存 + Pub/Sub 主动失效）。required=false 兼容老服务。
      */
     @Autowired(required = false)
     private MaskPermissionResolver permissionResolver;
@@ -152,7 +152,7 @@ public class CfgMaskFieldCacheController extends BaseController {
      * <ul>
      *   <li>运维直接 SQL 改了 sys_role_menu / sys_user_role，绕过了 service 自动 publish</li>
      *   <li>怀疑 sys 服务那侧的 publisher 没生效，想强制刷一次</li>
-     *   <li>FeignMaskPermissionResolver 拿到了脏数据，先清空再让其重新拉</li>
+     *   <li>FeignMaskPermissionResolver 拿到了脏数据，先失效再让其重新拉</li>
      * </ul>
      *
      * <h3>用法</h3>

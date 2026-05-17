@@ -27,9 +27,9 @@ import lombok.extern.slf4j.Slf4j;
  *   <li><b>沿用 mask 的同构 Pub/Sub 模式</b>：与 {@code MaskPermissionEvictListener} 完全同构，
  *       基于 Redisson {@link RTopic}，{@code @PostConstruct} 注册、{@code @PreDestroy} 解注册。</li>
  *   <li><b>{@code required=false} 的 RedissonClient</b>：极端环境（无 Redis 的本地单测 / 离线工具）下
- *       不强制要求 Redis，listener 安静禁用，60s TTL 仍然兜底。</li>
+ *       不强制要求 Redis，listener 安静禁用，本地 TTL 仍然兜底。</li>
  *   <li><b>sys 进程本身也会订阅</b>：sys 也引 erp-rpc-sys，所以 sys 进程也会装配本 listener；
- *       但 sys 进程不通过 aspect 走 resolver，cache 始终空，listener 收到消息只是 {@code cache.clear()}
+ *       但 sys 进程不通过 aspect 走 resolver，cache 始终空，listener 收到消息只是 {@code cache.invalidateAll()}
  *       no-op，不会引发 loopback 风暴（publisher 只在写路径触发，不在 listener 里触发）。</li>
  * </ul>
  *
