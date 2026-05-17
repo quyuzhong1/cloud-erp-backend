@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
-import com.common.business.dataperm.DataPermissionContextEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.constant.BusinessCommonConstants;
@@ -41,9 +40,6 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     @Autowired(required = false)
     private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
-
-    @Autowired(required = false)
-    private DataPermissionContextEvictPublisher dataPermissionContextEvictPublisher;
 
     /**
      * 根据菜单id 删除对应角色菜单绑定的关系
@@ -575,25 +571,15 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
 
     /**
      * 安全调用脱敏权限失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
-     *
-     * <p>{@code sys_role_menu} 改动同时会让"用户的菜单权限码集合"和"数据权限上下文里 permissionsList"
-     * 失效，因此 mask 与 dataPerm 两个 publisher 都打 publishAll。两者独立 channel，
-     * 任一 publisher 故障互不影响。</p>
      */
     private void publishMaskPermEvictAll(String source) {
-        if (maskPermissionEvictPublisher != null) {
-            try {
-                maskPermissionEvictPublisher.publishAll(source);
-            } catch (Throwable ignore) {
-                // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
-            }
+        if (maskPermissionEvictPublisher == null) {
+            return;
         }
-        if (dataPermissionContextEvictPublisher != null) {
-            try {
-                dataPermissionContextEvictPublisher.publishAll(source);
-            } catch (Throwable ignore) {
-                // 同上，dataPerm 失效广播失败不阻塞主业务事务
-            }
+        try {
+            maskPermissionEvictPublisher.publishAll(source);
+        } catch (Throwable ignore) {
+            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
         }
     }
 

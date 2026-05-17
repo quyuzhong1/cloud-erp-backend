@@ -6,7 +6,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dataperm.DataPermissionContextEvictPublisher;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -22,6 +21,7 @@ import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserShopEntity;
+import com.erp.model.sys.entity.AuthUserWarehouseEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.AuthUserConvert;
@@ -30,7 +30,6 @@ import com.erp.server.sys.service.AuthUserShopService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,9 +46,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper, AuthUserShopEntity> implements AuthUserShopService {
-
-    @Autowired(required = false)
-    private DataPermissionContextEvictPublisher dataPermissionContextEvictPublisher;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -73,7 +69,6 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
 //        operateLogService.addModuleOperateLog(msg, null, authUserShopEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        publishDataPermEvictUser(authUserShopEntity.getUserId(), "AuthUserShopService.add");
         return new BaseResultDTO.AddDTO(authUserShopEntity.getId(), authUserShopEntity.getId());
     }
 
@@ -101,15 +96,6 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), authUserShopEntity.getId(), "用户-店铺权限");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLogByObj(old, authUserShopEntity, null, authUserShopEntity.getId(), msg);
-        // 修改前后任一 userId 变化都失效；这里把 old 与新值都广播一次，保险起见
-        Set<String> affectedUids = new HashSet<>();
-        if (old.getUserId() != null) {
-            affectedUids.add(old.getUserId());
-        }
-        if (authUserShopEntity.getUserId() != null) {
-            affectedUids.add(authUserShopEntity.getUserId());
-        }
-        publishDataPermEvict(affectedUids, "AuthUserShopService.update");
         return Boolean.TRUE;
     }
 
@@ -255,7 +241,6 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 this.saveBatch(addList);
             }
         }
-        publishDataPermEvictUser(uid, "AuthUserShopService.batchSaveOrUpdate");
     }
 
     @Override
@@ -286,7 +271,6 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         if (CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
         }
-        publishDataPermEvictUser(userId, "AuthUserShopService.addUserShopAuth");
     }
 
     @Override
@@ -310,29 +294,5 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         }
         List<String> shopIdList = authShopList.stream().map(SysUserDTO.ShopDTO::getShopId).distinct().collect(Collectors.toList());
         return omsShopList.stream().filter(obj -> shopIdList.contains(obj.getId())).map(obj -> new AuthUserShopDTO.ShopAuthListDTO(obj.getDictPlatform(), obj.getId(), obj.getName())).collect(Collectors.toList());
-    }
-
-    /**
-     * 单 uid 便捷重载
-     */
-    private void publishDataPermEvictUser(String uid, String source) {
-        if (uid == null || uid.isEmpty()) {
-            return;
-        }
-        publishDataPermEvict(Collections.singleton(uid), source);
-    }
-
-    /**
-     * 安全调用数据权限上下文失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
-     */
-    private void publishDataPermEvict(Collection<String> uids, String source) {
-        if (dataPermissionContextEvictPublisher == null || uids == null || uids.isEmpty()) {
-            return;
-        }
-        try {
-            dataPermissionContextEvictPublisher.publishUser(uids, source);
-        } catch (Throwable ignore) {
-            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
-        }
     }
 }

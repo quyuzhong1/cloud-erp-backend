@@ -15,9 +15,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.SqlUtils;
 import com.common.core.utils.StrUtils;
-import com.erp.model.sys.dto.DataPermissionContextDTO;
 import com.erp.model.sys.dto.SysUserDTO;
-import com.erp.rpc.sys.feign.dataperm.FeignDataPermissionContextResolver;
+import com.erp.rpc.sys.feign.AuthDataFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.JoinPoint;
@@ -54,14 +54,10 @@ public class DataPermissionAspect {
      */
     public static final Integer DATA_SCOPE_SELF = 1;
 
-    /**
-     * 数据权限上下文解析器：一次聚合 Feign + 60s 本地 TTL 缓存，替代历史 5 次散打 Feign。
-     *
-     * <p>性能：单接口对 sys 的 Feign 调用由 <b>5 次</b> 降为 <b>≤1 次</b>，
-     * 命中本地 cache 时 <b>0 次</b>。500 QPS × 10 Pod 场景下 sys QPS 降至原来 1% 以内。</p>
-     */
     @Resource
-    private FeignDataPermissionContextResolver dataPermissionContextResolver;
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Resource
     private ApplicationContext applicationContext;
@@ -114,16 +110,10 @@ public class DataPermissionAspect {
      * @param controllerDataScope 自定义注解参数
      */
     public void dataScopeFilter(JoinPoint joinPoint, LoginUser user, DataPermission controllerDataScope) {
-        // 一次聚合 Feign 拿全 5 类数据（命中本地 60s cache 时 0 Feign），替代历史 5 次散打 Feign
-        DataPermissionContextDTO ctx = dataPermissionContextResolver.resolve(user.getUid());
-        List<UserRequestPermissionsDTO> requestPermissionsList = ctx.getPermissionsList();
-        List<String> roleIdList = ctx.getRoleIdList();
-        List<String> userList = ctx.getDepUserList();
-        List<SysUserDTO.ShopDTO> shopUserList = ctx.getShopUserList();
-        List<SysUserDTO.WarehouseDTO> warehouseUserList = ctx.getWarehouseUserList();
-
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(user.getUid());
         UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
-        if (roleIdList != null && roleIdList.contains("1")) {
+        List<String> roleIdList = sysUserFeign.getRoleIdList(user.getUid());
+        if (roleIdList.contains("1")) {
             userRequestPermissions.setPermissionsCode(controllerDataScope.menuCode());
             userRequestPermissions.setDataScope(DATA_SCOPE_ALL);
         } else {
@@ -133,6 +123,11 @@ public class DataPermissionAspect {
                     .findFirst()
                     .orElseThrow(() -> new ServiceException(ApiError.HTTP_FORBIDDEN));
         }
+        List<String> userList = sysUserFeign.getDepUserList(user.getUid());
+        //店铺权限
+        List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(user.getUid());
+        //仓库权限
+        List<SysUserDTO.WarehouseDTO> warehouseUserList = authDataFeign.getWarehouseUserList(user.getUid());
 
         switch (controllerDataScope.operationType()) {
             case LIST:

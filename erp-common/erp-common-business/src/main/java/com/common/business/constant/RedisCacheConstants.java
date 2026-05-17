@@ -409,23 +409,4 @@ public interface RedisCacheConstants {
      * <p>消息载荷见 {@code MaskPermissionEvictMessage}。</p>
      */
     String MASK_PERM_EVICT_CHANNEL = "erp:mask_perm:evict";
-
-    /**
-     * 数据权限上下文失效广播 channel
-     *
-     * <p>由 sys 服务在 {@code sys_role_menu / sys_role_user / sys_user / sys_department_user /
-     * sys_user_shop / sys_user_warehouse / sys_role} 写入路径 publish；业务节点的
-     * {@code FeignDataPermissionContextResolver} 订阅后清除对应 uid 的本地数据权限上下文缓存，
-     * 把"权限收回后多 60s 才生效"压缩到"100ms 内全集群失效"。</p>
-     *
-     * <p>独立于 {@link #MASK_PERM_EVICT_CHANNEL}：</p>
-     * <ul>
-     *   <li>两者失效语义不同：mask 只关心 permissionsCode 集合，dataPerm 还关心 dep/shop/warehouse</li>
-     *   <li>失效粒度也可能不同（mask publishAll 时 dataPerm 也许只是 publishUser）</li>
-     *   <li>独立 channel 便于将来按需调整 publisher 频率 / listener 行为，互不干扰</li>
-     * </ul>
-     *
-     * <p>消息载荷见 {@code DataPermissionContextEvictMessage}。</p>
-     */
-    String DATA_PERM_CTX_EVICT_CHANNEL = "erp:data_perm_ctx:evict";
 }

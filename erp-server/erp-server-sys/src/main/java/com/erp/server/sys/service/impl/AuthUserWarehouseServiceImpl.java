@@ -5,10 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dataperm.DataPermissionContextEvictPublisher;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
+import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.AuthUserWarehouseMapper;
@@ -18,7 +18,6 @@ import com.common.business.threadlocal.UserContext;
 //import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -43,9 +42,6 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
 //    @Autowired
 //    private OperateLogService operateLogService;
 
-    @Autowired(required = false)
-    private DataPermissionContextEvictPublisher dataPermissionContextEvictPublisher;
-
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -68,7 +64,6 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
 //        operateLogService.addModuleOperateLog(msg, null, authUserWarehouseEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
 
-        publishDataPermEvictUser(authUserWarehouseEntity.getUserId(), "AuthUserWarehouseService.add");
         return new BaseResultDTO.AddDTO(authUserWarehouseEntity.getId(), authUserWarehouseEntity.getId());
     }
 
@@ -96,14 +91,6 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), authUserWarehouseEntity.getId(), "用户-仓库权限");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLogByObj(old, authUserWarehouseEntity, null, authUserWarehouseEntity.getId(), msg);
-        Set<String> affectedUids = new HashSet<>();
-        if (old.getUserId() != null) {
-            affectedUids.add(old.getUserId());
-        }
-        if (authUserWarehouseEntity.getUserId() != null) {
-            affectedUids.add(authUserWarehouseEntity.getUserId());
-        }
-        publishDataPermEvict(affectedUids, "AuthUserWarehouseService.update");
         return Boolean.TRUE;
     }
 
@@ -198,7 +185,6 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                 this.saveBatch(addList);
             }
         }
-        publishDataPermEvictUser(uid, "AuthUserWarehouseService.batchSaveOrUpdate");
     }
 
     @Override
@@ -237,7 +223,6 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         if (CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
         }
-        publishDataPermEvictUser(userId, "AuthUserWarehouseService.addUserWarehouseAuth");
     }
 
 
@@ -246,29 +231,5 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
     */
     private void handleData(AuthUserWarehouseEntity authUserWarehouseEntity) {
     // TODO 验证数据 & 数据赋值
-    }
-
-    /**
-     * 单 uid 便捷重载
-     */
-    private void publishDataPermEvictUser(String uid, String source) {
-        if (uid == null || uid.isEmpty()) {
-            return;
-        }
-        publishDataPermEvict(Collections.singleton(uid), source);
-    }
-
-    /**
-     * 安全调用数据权限上下文失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
-     */
-    private void publishDataPermEvict(Collection<String> uids, String source) {
-        if (dataPermissionContextEvictPublisher == null || uids == null || uids.isEmpty()) {
-            return;
-        }
-        try {
-            dataPermissionContextEvictPublisher.publishUser(uids, source);
-        } catch (Throwable ignore) {
-            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
-        }
     }
 }

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.mask.resolver.MaskPermissionEvictPublisher;
-import com.common.business.dataperm.DataPermissionContextEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
@@ -31,9 +30,6 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
 
     @Autowired(required = false)
     private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
-
-    @Autowired(required = false)
-    private DataPermissionContextEvictPublisher dataPermissionContextEvictPublisher;
 
     /**
      * 批量保存 用户 与角色的  关系
@@ -258,29 +254,15 @@ public class SysRoleUserServiceImpl extends ServiceImpl<SysRoleUserMapper, SysRo
 
     /**
      * 安全调用脱敏权限失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
-     *
-     * <p>{@code sys_role_user} 改动同时影响"用户的权限码集合"（mask 关心）和"数据权限上下文里
-     * roleIdList / permissionsList / dep+shop+warehouse 也是按 roleId 推导"（dataPerm 关心），
-     * 所以 mask 与 dataPerm 两个 publisher 都打 publishUser。两者独立 channel，
-     * 任一 publisher 故障互不影响。</p>
      */
     private void publishMaskPermEvict(Collection<String> uids, String source) {
-        if (uids == null || uids.isEmpty()) {
+        if (maskPermissionEvictPublisher == null || uids == null || uids.isEmpty()) {
             return;
         }
-        if (maskPermissionEvictPublisher != null) {
-            try {
-                maskPermissionEvictPublisher.publishUser(uids, source);
-            } catch (Throwable ignore) {
-                // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
-            }
-        }
-        if (dataPermissionContextEvictPublisher != null) {
-            try {
-                dataPermissionContextEvictPublisher.publishUser(uids, source);
-            } catch (Throwable ignore) {
-                // 同上，dataPerm 失效广播失败不阻塞主业务事务
-            }
+        try {
+            maskPermissionEvictPublisher.publishUser(uids, source);
+        } catch (Throwable ignore) {
+            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
         }
     }
 }
