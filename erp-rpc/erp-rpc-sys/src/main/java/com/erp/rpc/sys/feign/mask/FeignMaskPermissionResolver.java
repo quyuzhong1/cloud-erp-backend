@@ -64,7 +64,7 @@ public class FeignMaskPermissionResolver implements MaskPermissionResolver {
     /**
      * 缓存条目存活时长（毫秒），与 Redis Pub/Sub 主动失效互为兜底
      */
-    static final long TTL_MS = 60_000L*5;
+    static final long TTL_MS = 60_000L;
 
     /**
      * 单 Pod 缓存条目上限。超过则整体清空，避免大用户量 + 长 TTL 内存膨胀。

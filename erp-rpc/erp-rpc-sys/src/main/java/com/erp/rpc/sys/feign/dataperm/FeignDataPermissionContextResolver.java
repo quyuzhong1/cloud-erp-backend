@@ -52,9 +52,9 @@ import lombok.extern.slf4j.Slf4j;
 public class FeignDataPermissionContextResolver {
 
     /**
-     * 缓存条目存活时长（毫秒）。60s*5 与 mask 权限 cache 一致，便于联调和心智统一。
+     * 缓存条目存活时长（毫秒）。60s 与 mask 权限 cache 一致，便于联调和心智统一。
      */
-    static final long TTL_MS = 60_000L*5;
+    static final long TTL_MS = 60_000L;
 
     /**
      * 单 Pod 缓存条目上限。
