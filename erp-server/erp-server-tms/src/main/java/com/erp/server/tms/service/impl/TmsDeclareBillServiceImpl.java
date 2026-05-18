@@ -780,16 +780,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return BatchResultDTO.fail(id, id, "报关单不存在");
         }
         try {
-            TmsDeclareBillEntity declareBillEntity = getDeclareBillByIdAndType(id, sourceTypeEnum);
+            Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "报关单"));
+            if (!sourceTypeEnum.getCode().equals(entity.getType())) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+            }
             DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
             if (Objects.isNull(targetStatus)) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_INVALID);
             }
-            if (DeclareStatusEnum.WAIT.getCode().equals(declareBillEntity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
+            if (DeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
                 fillDeclareConfirmUser(dto);
             }
-            confirmDeclareStatusSingle(declareBillEntity, dto, targetStatus, sourceTypeEnum);
-            return BatchResultDTO.success(declareBillEntity.getId(), declareBillEntity.getCode(), "报关状态更新成功");
+            confirmDeclareStatusSingle(entity, dto, targetStatus, sourceTypeEnum);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "报关状态更新成功");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             log.error("报关状态更新失败，id:{}", id, e);
@@ -829,14 +832,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN, DeclareStatusEnum.getName(currentStatus), targetStatus.getName());
     }
 
-    private TmsDeclareBillEntity getDeclareBillByIdAndType(String id, SourceTypeEnum sourceTypeEnum) {
-        TmsDeclareBillEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "报关单"));
-        if (!sourceTypeEnum.getCode().equals(entity.getType())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
-        }
-        return entity;
-    }
     private void validateDeclareConfirm(TmsDeclareBillEntity entity) {
         if (StringUtils.isBlank(entity.getDeclareType())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, "报关类型");
@@ -871,11 +866,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if (StringUtils.isBlank(dto.getDeclarUserId())) {
             dto.setDeclarUserId(loginUser.getUid());
-        }
-        if (StringUtils.isBlank(dto.getDeclarUserName()) && dto.getDeclarUserId().equals(loginUser.getUid())) {
             dto.setDeclarUserName(loginUser.getUserName());
-        }
-        if (StringUtils.isBlank(dto.getDeclarUserName())) {
+        }else {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclarUserId());
             if (Objects.nonNull(userDTO)) {
                 dto.setDeclarUserName(userDTO.getUserName());
