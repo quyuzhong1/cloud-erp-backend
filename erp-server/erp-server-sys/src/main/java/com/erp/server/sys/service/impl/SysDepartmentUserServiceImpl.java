@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dataperm.DataPermissionContextEvictPublisher;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -45,9 +44,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Autowired
     private SysUserInfoService sysUserInfoService;
 
-    @Autowired(required = false)
-    private DataPermissionContextEvictPublisher dataPermissionContextEvictPublisher;
-
     @Override
     public PagingVO findDepartmentUser(PagingDTO<DepartmentSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -69,21 +65,12 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     public void removeByDepartmentIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
+        LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            wrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
+            baseMapper.delete(wrapper);
         }
-        // 先查影响 uid，再删，便于精确广播 dataPerm 失效
-        LambdaQueryWrapper<SysDepartmentUserEntity> selectWrapper = new LambdaQueryWrapper<>();
-        selectWrapper.select(SysDepartmentUserEntity::getUserId);
-        selectWrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
-        Set<String> affectedUids = this.list(selectWrapper).stream()
-                .map(SysDepartmentUserEntity::getUserId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
-        baseMapper.delete(wrapper);
-        publishDataPermEvict(affectedUids, "SysDepartmentUserService.removeByDepartmentIds");
+
     }
 
     /**
@@ -162,22 +149,10 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             entity.setCreateUserName(userName);
             addList.add(entity);
         }
-        try {
-            if (CollectionUtils.isNotEmpty(addList)) {
-                return this.saveBatch(addList);
-            }
-            return false;
-        } finally {
-            // 影响：原绑定 (existUserIdList) + 新绑定 (userIds) 的并集
-            Set<String> affectedUids = new java.util.HashSet<>();
-            if (CollectionUtils.isNotEmpty(existUserIdList)) {
-                affectedUids.addAll(existUserIdList);
-            }
-            if (CollectionUtils.isNotEmpty(userIds)) {
-                affectedUids.addAll(userIds);
-            }
-            publishDataPermEvict(affectedUids, "SysDepartmentUserService.saveBatchDepartmentUser");
+        if (CollectionUtils.isNotEmpty(addList)) {
+            return this.saveBatch(addList);
         }
+        return false;
     }
 
     @Override
@@ -317,7 +292,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
                 this.saveBatch(addList);
             }
         }
-        publishDataPermEvict(Collections.singleton(uid), "SysDepartmentUserService.batchSaveOrUpdate");
     }
 
     @Override
@@ -331,7 +305,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             return;
         }
         lambdaUpdate().in(SysDepartmentUserEntity::getUserId, uids).remove();
-        publishDataPermEvict(uids, "SysDepartmentUserService.deleteByUserIds");
     }
 
     private void deleteUidDepartmentRef(String uid) {
@@ -346,21 +319,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
             wrapper.eq(SysDepartmentUserEntity::getDepartmentId, departmentId);
             baseMapper.delete(wrapper);
-            publishDataPermEvict(userIds, "SysDepartmentUserService.removeDepartmentUser");
-        }
-    }
-
-    /**
-     * 安全调用数据权限上下文失效广播；publisher 未注入或 Redis 异常都不影响主业务事务
-     */
-    private void publishDataPermEvict(Collection<String> uids, String source) {
-        if (dataPermissionContextEvictPublisher == null || uids == null || uids.isEmpty()) {
-            return;
-        }
-        try {
-            dataPermissionContextEvictPublisher.publishUser(uids, source);
-        } catch (Throwable ignore) {
-            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
         }
     }
 }

@@ -116,9 +116,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private MaskPermissionEvictPublisher maskPermissionEvictPublisher;
 
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private com.common.business.dataperm.DataPermissionContextEvictPublisher dataPermissionContextEvictPublisher;
-
     @Resource
     private MailService mailService;
 
@@ -2055,32 +2052,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     /**
-     * 安全广播脱敏权限缓存 + 数据权限上下文缓存失效；任一 publisher 未注入或 Redis 异常都不影响主业务事务。
-     *
-     * <p>用户被禁用 / 角色字段重置等改动同时影响：
-     * <ul>
-     *   <li>mask 关心的"该用户的权限码集合"</li>
-     *   <li>dataPerm 关心的"该用户的角色 / 部门 / 店铺 / 仓库"</li>
-     * </ul>
-     * 两个 publisher 都打 publishUser；独立 channel，互不影响。</p>
+     * 安全广播脱敏权限缓存失效；publisher 未注入或 Redis 异常都不影响主业务事务
      */
     private void publishMaskPermEvict(java.util.Collection<String> uids, String source) {
-        if (uids == null || uids.isEmpty()) {
+        if (maskPermissionEvictPublisher == null || uids == null || uids.isEmpty()) {
             return;
         }
-        if (maskPermissionEvictPublisher != null) {
-            try {
-                maskPermissionEvictPublisher.publishUser(uids, source);
-            } catch (Throwable ignore) {
-                // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
-            }
-        }
-        if (dataPermissionContextEvictPublisher != null) {
-            try {
-                dataPermissionContextEvictPublisher.publishUser(uids, source);
-            } catch (Throwable ignore) {
-                // 同上，dataPerm 失效广播失败不阻塞主业务事务
-            }
+        try {
+            maskPermissionEvictPublisher.publishUser(uids, source);
+        } catch (Throwable ignore) {
+            // publisher 内部已经容错，这里再吞一次保证 service 主流程不受影响
         }
     }
 }
