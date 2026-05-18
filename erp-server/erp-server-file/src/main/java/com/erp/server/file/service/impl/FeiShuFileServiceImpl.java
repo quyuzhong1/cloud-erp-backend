@@ -328,6 +328,10 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
      * @throws Exception
      */
     private static GetNodeSpaceResp getNode(String fileToken, Client client) throws Exception {
+        //OWMXwxyg3iYx7Fkh7cec9ZFLngf?sheet=0mwGFe 截取？之前的内容
+        if (fileToken.contains("?")) {
+            fileToken = fileToken.split("\\?")[0];
+        }
         // 创建请求对象
         GetNodeSpaceReq req = GetNodeSpaceReq.newBuilder()
                 .token(fileToken)
