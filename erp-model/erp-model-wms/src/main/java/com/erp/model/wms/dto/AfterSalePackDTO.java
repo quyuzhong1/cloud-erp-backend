@@ -189,6 +189,16 @@ public class AfterSalePackDTO implements Serializable {
          * 关联供应商
          */
         private String supplierName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
     }
 
     /**
