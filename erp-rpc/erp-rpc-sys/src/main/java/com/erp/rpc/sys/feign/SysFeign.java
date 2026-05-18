@@ -29,6 +29,11 @@ public interface SysFeign {
      */
     @GetMapping("/feign/company/list")
     ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyList(@RequestParam(value = "name", required = false) String name);
+    /**
+     * 公司列表
+     */
+    @GetMapping("/feign/company/listAll")
+    ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyListAll(@RequestParam(value = "name", required = false) String name);
 
     /**
      * 国家字典列表

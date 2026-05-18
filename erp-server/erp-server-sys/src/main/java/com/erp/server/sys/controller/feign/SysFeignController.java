@@ -52,6 +52,14 @@ public class SysFeignController extends BaseController {
         List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.getList(name);
         return success(list);
     }
+    /**
+     * 公司列表(全部)
+     */
+    @GetMapping("/company/listAll")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyListAll(@RequestParam(value = "name", required = false) String name) {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.listAll(name);
+        return success(list);
+    }
 
     /**
      * 国家字典列表
