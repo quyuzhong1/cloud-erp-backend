@@ -38,7 +38,7 @@
         from third_warehouse_delivery twd
         inner join third_warehouse_delivery_detail twdd on twd.id = twdd.main_id and twdd.is_deleted = false
         where twd.is_deleted = false
-        and twd.status = 'waitHandle'
+        and twd.status in ( 'waitHandle','intercepting')
         and twdd.warehouse_id in
         <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
             #{item}
