@@ -94,7 +94,7 @@ public class ProductInfoDTO {
     /**
      * 研发团队id
      */
-    @NotBlank(message = "研发团队不能为空")
+    @NotBlank(message = "研发团队不能为空", groups = PlmProductInfoWarrantyRequired.class)
     private String rdtTeamId;
 
     /**
