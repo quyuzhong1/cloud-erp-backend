@@ -3583,13 +3583,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         return batchAddMergeDetail(type, list, null, Boolean.FALSE);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list, Boolean idempotent) {
-        return batchAddMergeDetail(type, list, null, Boolean.TRUE.equals(idempotent));
-    }
-
     /**
      * 批量保存合并报关明细。
      *
