@@ -25,6 +25,7 @@ import com.erp.server.wms.mapper.AfterSalePackDetailMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,13 +76,12 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         checkUpdateParam(addOrUpdateDTO);
         AfterSalePackDetailEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱明细单"));
-        AfterSalePackDetailEntity oldLog = BeanMapperUtils.map(AfterSalePackDetailEntity.class, old);
         AfterSalePackEntity afterSalePackEntity = afterSalePackService.getById(old.getMainId());
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
         }
         // 已经发生了移仓，拆箱时移入仓位不能为空
-        if (afterSalePackEntity.getIsMoveWarehouse() && StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode())) {
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse()) && StrUtil.isBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
             throw new ServiceException("移入仓位不能为空");
         }
         // 箱唛状态不等于已封箱，不可操作
@@ -97,26 +97,11 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         Integer moveQty = updatePackQty(addOrUpdateDTO, old);
         refreshPackSummary(old.getMainId());
         // 如果拆箱前已经发生了移仓，需要记录移仓流水信息
-        if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
-            WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
-            detail.setSkuId(old.getSkuId());
-            detail.setSkuNo(old.getSkuNo());
-            detail.setOutWarehouseLocation(addOrUpdateDTO.getOutWarehouseLocationCode());
-            detail.setInWarehouseLocation(addOrUpdateDTO.getInWarehouseLocationCode());
-            detail.setQty(moveQty);
-            WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
-            addDTO.setWarehouseId(CharSequenceUtil.trim(warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()).getWarehouseId()));
-            addDTO.setDetailList(CollUtil.newArrayList(detail));
-            addDTO.setPcShow(false);
-            addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.UNBOX_TRANSFER.getCode());
-            log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
-                    addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
-            warehouseLocationMoveService.addAndApprove(addDTO);
-        }
+        addWarehouseLocationMove(addOrUpdateDTO, old, afterSalePackEntity, warehouseLocationMap, moveQty);
         // 记录主单操作日志
         log.info("编辑 开始记录售后装箱明细单日志数据，id：【{}】", old.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getId(), "售后装箱明细单");
-        operateLogService.addModuleOperateLogByObj(oldLog, old, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), msg);
+        String msg = buildUnboxOperateLog(addOrUpdateDTO, afterSalePackEntity, moveQty);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "拆箱");
         return Boolean.TRUE;
     }
 
@@ -167,18 +152,88 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode())) {
             throw new ServiceException("拣货仓位不能为空");
         }
+        // 如果拣货仓位和移入仓位都不为空，两个仓位不能相同
+        if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode()) && addOrUpdateDTO.getOutWarehouseLocationCode().equals(addOrUpdateDTO.getInWarehouseLocationCode())) {
+            throw new ServiceException("拣货仓位和移入仓位不能相同");
+        }
     }
 
     private Map<String, WarehouseLocationEntity> getWarehouseLocationMap(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
-        List<String> warehouseLocationCodes = Arrays.asList(addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode());
+        List<String> warehouseLocationCodes = new ArrayList<>();
+        warehouseLocationCodes.add(addOrUpdateDTO.getOutWarehouseLocationCode());
+        if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
+            warehouseLocationCodes.add(addOrUpdateDTO.getInWarehouseLocationCode());
+        }
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
                 .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
                 .list();
-        if (warehouseLocationCodes.size() != warehouseLocationEntityList.size()) {
-            throw new ServiceException("仓位不存在或已禁用");
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
+        if (warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()) == null) {
+            throw new ServiceException("拣货仓位不存在或已禁用");
         }
-        return warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
+        if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode()) && warehouseLocationMap.get(addOrUpdateDTO.getInWarehouseLocationCode()) == null) {
+            throw new ServiceException("移入仓位不存在或已禁用");
+        }
+        return warehouseLocationMap;
+    }
+
+    private void addWarehouseLocationMove(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO,
+                                          AfterSalePackDetailEntity old,
+                                          AfterSalePackEntity afterSalePackEntity,
+                                          Map<String, WarehouseLocationEntity> warehouseLocationMap,
+                                          Integer moveQty) {
+        if (!Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
+            return;
+        }
+        WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
+        detail.setSkuId(old.getSkuId());
+        detail.setSkuNo(old.getSkuNo());
+        detail.setOutWarehouseLocation(addOrUpdateDTO.getOutWarehouseLocationCode());
+        detail.setInWarehouseLocation(addOrUpdateDTO.getInWarehouseLocationCode());
+        detail.setQty(moveQty);
+
+        WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
+        addDTO.setWarehouseId(CharSequenceUtil.trim(warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()).getWarehouseId()));
+        addDTO.setDetailList(CollUtil.newArrayList(detail));
+        addDTO.setPcShow(false);
+        addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.UNBOX_TRANSFER.getCode());
+        log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
+                addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
+        warehouseLocationMoveService.addAndApprove(addDTO);
+    }
+
+    private String buildUnboxOperateLog(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO,
+                                        AfterSalePackEntity afterSalePackEntity,
+                                        Integer qty) {
+        String userName = UserContext.getDefaultLoginUser().getUserName();
+        String operationName = getOperationName(addOrUpdateDTO.getOperation());
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
+            return StrUtil.format("用户【{}】执行[{}]拆箱行为：从[移出仓位：{}]移仓至[移入仓位{}]数量为[{}]，并再次封箱",
+                    userName, operationName, addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), qty);
+        }
+        return StrUtil.format("用户【{}】执行[{}]拆箱行为：从[拣货仓位：{}]{}数量为[{}]，并再次封箱",
+                userName, operationName, addOrUpdateDTO.getOutWarehouseLocationCode(), getQuantityAction(addOrUpdateDTO.getOperation()), qty);
+    }
+
+    private String getOperationName(String operation) {
+        if (OPERATION_ADD.equals(operation)) {
+            return "增加数量";
+        }
+        if (OPERATION_REDUCE.equals(operation)) {
+            return "减少数量";
+        }
+        return "移除sku";
+    }
+
+    private String getQuantityAction(String operation) {
+        if (OPERATION_ADD.equals(operation)) {
+            return "增加";
+        }
+        if (OPERATION_REDUCE.equals(operation)) {
+            return "减少";
+        }
+        return "移除";
     }
 
     private Integer updatePackQty(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO, AfterSalePackDetailEntity old) {

@@ -315,7 +315,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 记录主单操作日志
         log.info("编辑 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
         operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -351,7 +351,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 记录主单操作日志
         log.info("确定提审 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
-        String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
+        String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
         operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -378,7 +378,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 记录主单操作日志
         log.info("复核驳回 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
-        String msg = StrUtil.format("用户【{}】复核驳回单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode(), "售后装箱单");
+        String msg = StrUtil.format("用户【{}】复核驳回单号为【{}】的【{}】单据，驳回原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode(), "售后装箱单", addOrUpdateDTO.getRejectDescription());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "复核驳回");
         return Boolean.TRUE;
     }
@@ -414,7 +414,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 记录主单操作日志
         log.info("确定并封箱 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
-        String msg = StrUtil.format("用户【{}】确定并封箱单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
+        String msg = StrUtil.format("用户【{}】确定并封箱单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
         operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
         return Boolean.TRUE;
     }
