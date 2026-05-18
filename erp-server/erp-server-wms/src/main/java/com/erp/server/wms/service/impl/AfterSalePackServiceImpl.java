@@ -47,6 +47,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -59,6 +60,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapper, AfterSalePackEntity> implements AfterSalePackService {
+
+    private static final String AFTER_SALE_PACK_LOCK_KEY = "AFTER_SALE_PACK";
 
     @Resource
     private OperateLogService operateLogService;
@@ -178,15 +181,15 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (v1, v2) -> v1));
         // 查询售后装箱明细信息
         List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery().eq(AfterSalePackDetailEntity::getMainId, afterSalePackEntity.getId()).list();
-        Map<String, AfterSalePackDetailEntity> map = afterSalePackDetailEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item, (v1, v2) -> v1));
+        Map<String, AfterSalePackDetailEntity> existingDetailMap = afterSalePackDetailEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item, (v1, v2) -> v1));
         Map<String, AfterSalePackDetailEntity> oldDetailMap = afterSalePackDetailEntityList.stream()
                 .map(item -> BeanMapperUtils.map(AfterSalePackDetailEntity.class, item))
                 .collect(Collectors.toMap(BaseEntity::getId, item -> item, (v1, v2) -> v1));
-        List<String> ids = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Set<String> retainDetailIds = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
         List<String> deleteDetailList = afterSalePackDetailEntityList.stream()
                 .map(AfterSalePackDetailEntity::getId)
                 .filter(Objects::nonNull)
-                .filter(id -> !ids.contains(id))
+                .filter(id -> !retainDetailIds.contains(id))
                 .distinct()
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteDetailList) && !afterSalePackDetailService.removeByIds(deleteDetailList)) {
@@ -200,7 +203,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             ProductDetailEntity productDetailEntity = productMap.get(dto.getSkuNo());
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(dto.getOutWarehouseLocationCode());
             if (StringUtils.isNotBlank(dto.getId())) {
-                AfterSalePackDetailEntity detailEntity = map.get(dto.getId());
+                AfterSalePackDetailEntity detailEntity = existingDetailMap.get(dto.getId());
                 if (ObjectUtil.isNull(detailEntity)) {
                     throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱明细");
                 }
@@ -220,14 +223,15 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 addList.add(afterSalePackDetailEntity);
             }
         }
-        afterSalePackEntity.setSkuSpeciesQty(productMap.size());
-        afterSalePackEntity.setTotalQty(detailList.stream().mapToInt(AfterSalePackDetailDTO.UpdateDTO::getPackQty).sum());
+        fillPackSummary(detailList, afterSalePackEntity);
         if (!afterSalePackDetailService.saveOrUpdateBatch(detailEntityList)) {
             throw new ServiceException("售后装箱明细保存失败");
         }
         // 这是添加
-        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(afterSalePackEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(afterSalePackEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
+        }
         // 修改的
         for (AfterSalePackDetailEntity update : updateList) {
             AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
@@ -235,6 +239,19 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", "");
             }
         }
+    }
+
+    private void fillPackSummary(List<AfterSalePackDetailDTO.UpdateDTO> detailList, AfterSalePackEntity afterSalePackEntity) {
+        afterSalePackEntity.setSkuSpeciesQty((int) detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .count());
+        afterSalePackEntity.setTotalQty(detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getPackQty)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum());
     }
 
     private void checkDetailList(List<AfterSalePackDetailDTO.UpdateDTO> detailList) {
@@ -266,7 +283,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     /**
      * 修改
      */
-    @DistributeLocker(keyName = "addOrUpdateDTO.id")
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
@@ -303,7 +320,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         return Boolean.TRUE;
     }
 
-    @DistributeLocker(keyName = "addOrUpdateDTO.id")
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean submit(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
@@ -339,7 +356,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         return Boolean.TRUE;
     }
 
-    @DistributeLocker(keyName = "addOrUpdateDTO.id")
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean reject(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
@@ -366,7 +383,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         return Boolean.TRUE;
     }
 
-    @DistributeLocker(keyName = "addOrUpdateDTO.id")
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "addOrUpdateDTO.id")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean confirm(AfterSalePackDTO.UpdateDTO addOrUpdateDTO) {
@@ -452,24 +469,22 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .eq(AfterSalePackDetailEntity::getMainId, id)
                 .list();
         if (CollectionUtils.isNotEmpty(afterSalePackDetailEntityList)) {
-            // 查询拣货仓位信息
-            List<String> outWarehouseLocationIds = afterSalePackDetailEntityList.stream().map(AfterSalePackDetailEntity::getOutWarehouseLocationId).distinct().collect(Collectors.toList());
-            List<WarehouseLocationEntity> outWarehouseLocationEntityList = warehouseLocationService.listByIds(outWarehouseLocationIds);
-            Map<String, WarehouseLocationEntity> outWarehouseLocationMap = outWarehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item));
-            // 查询移入仓位信息
-            List<String> inWarehouseLocationIds = afterSalePackDetailEntityList.stream().map(AfterSalePackDetailEntity::getInWarehouseLocationId).distinct().collect(Collectors.toList());
-            List<WarehouseLocationEntity> inWarehouseLocationEntityList = warehouseLocationService.listByIds(inWarehouseLocationIds);
-            Map<String, WarehouseLocationEntity> inWarehouseLocationMap = inWarehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item));
+            List<String> warehouseLocationIds = afterSalePackDetailEntityList.stream()
+                    .flatMap(detail -> Stream.of(detail.getOutWarehouseLocationId(), detail.getInWarehouseLocationId()))
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMapByIds(warehouseLocationIds);
             List<AfterSalePackDetailDTO.ViewDTO> viewDTOList = new ArrayList<>();
             for (AfterSalePackDetailEntity afterSalePackDetailEntity : afterSalePackDetailEntityList) {
                 AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
                 BeanMapperUtils.copy(afterSalePackDetailEntity, viewDTO);
-                WarehouseLocationEntity outWarehouseLocationEntity = outWarehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
+                WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
                 if (ObjectUtil.isNotEmpty(outWarehouseLocationEntity)) {
                     viewDTO.setOutWarehouseLocationCode(outWarehouseLocationEntity.getCode());
                     viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
                 }
-                WarehouseLocationEntity inWarehouseLocationEntity = inWarehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
+                WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
                 if (ObjectUtil.isNotEmpty(inWarehouseLocationEntity)) {
                     viewDTO.setInWarehouseLocationCode(inWarehouseLocationEntity.getCode());
                     viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
@@ -479,6 +494,14 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             data.setDetailViewDTOList(viewDTOList);
         }
         return data;
+    }
+
+    private Map<String, WarehouseLocationEntity> getWarehouseLocationMapByIds(List<String> warehouseLocationIds) {
+        if (CollectionUtils.isEmpty(warehouseLocationIds)) {
+            return Collections.emptyMap();
+        }
+        return warehouseLocationService.listByIds(warehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
     }
 
     /**
@@ -499,7 +522,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     @Override
-    @DistributeLocker(keyName = "dto.ids")
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "dto.ids")
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> delete(BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();

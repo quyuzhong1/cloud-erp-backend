@@ -80,6 +80,10 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
         }
+        // 已经发生了移仓，拆箱时移入仓位不能为空
+        if (afterSalePackEntity.getIsMoveWarehouse() && StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode())) {
+            throw new ServiceException("移入仓位不能为空");
+        }
         // 箱唛状态不等于已封箱，不可操作
         if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
             throw new ServiceException("箱唛状态不等于已封箱，不可操作");
@@ -160,8 +164,8 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (!OPERATION_REMOVE.equals(operation) && (addOrUpdateDTO.getUpdateQty() == null || addOrUpdateDTO.getUpdateQty() <= 0)) {
             throw new ServiceException("新增或者减少数量时，更新数量必填且不能为0");
         }
-        if (StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode()) || StrUtil.isBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
-            throw new ServiceException("仓位不能为空");
+        if (StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode())) {
+            throw new ServiceException("拣货仓位不能为空");
         }
     }
 
