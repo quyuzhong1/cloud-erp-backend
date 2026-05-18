@@ -907,6 +907,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         thirdWarehouseDeliveryEntity.setPlatformCode(platformCode);
         thirdWarehouseDeliveryEntity.setThirdWarehousePlatform(dto.getPlatform());
         thirdWarehouseDeliveryEntity.setShippingMethod(dto.getShippingMethod());
+        thirdWarehouseDeliveryEntity.setTrackNo(dto.getTrackNo());
         thirdWarehouseDeliveryEntity.setStatus(dto.getOrderStatus());
         thirdWarehouseDeliveryEntity.setDetailEntityList(thirdWarehouseDeliveryDetailEntities);
         return thirdWarehouseDeliveryService.add(thirdWarehouseDeliveryEntity,true);
@@ -962,9 +963,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
             if(!SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus().equals(thirdWarehouseDeliveryEntity.getStatus())){
                 thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.SHIPPED.getStatus());
                 operateLogService.addModuleOperateLog("状态变更已发货", ModuleTypeEnum.THIRD_WAREHOUSE_DELIVERY.getCode(),thirdWarehouseDeliveryEntity.getId(), "状态变更");
-
-                thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
             }
+            thirdWarehouseDeliveryEntity.setTrackNo(CharSequenceUtil.blankToDefault(dto.getTrackNo(), thirdWarehouseDeliveryEntity.getTrackNo()));
+            thirdWarehouseDeliveryService.updateById(thirdWarehouseDeliveryEntity);
         }
     }
 

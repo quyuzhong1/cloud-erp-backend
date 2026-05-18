@@ -63,6 +63,12 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     private String shippingMethod;
 
     /**
+     * 跟踪号
+     */
+    @TableField("track_no")
+    private String trackNo;
+
+    /**
      * 状态
      */
     @TableField("status")
@@ -84,6 +90,8 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     public static final String PLATFORM_CODE = "platform_code";
 
     public static final String THIRD_WAREHOUSE_PLATFORM = "third_warehouse_platform";
+
+    public static final String TRACK_NO = "track_no";
 
     @Override
     public Serializable pkVal() {

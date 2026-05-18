@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -25,4 +26,8 @@ public interface ThirdWarehouseDeliveryMapper extends BaseMapper<ThirdWarehouseD
     IPage<ThirdWarehouseDeliveryDTO.PagingViewDTO> paging(Page query, @Param("params") ThirdWarehouseDeliveryDTO.PagingParamDTO params);
 
     List<ThirdWarehouseDeliveryDTO.TabListDTO> listCount();
+
+    int updateTrackNoByCreateTime(@Param("startTime") LocalDateTime startTime,
+                                  @Param("endTime") LocalDateTime endTime,
+                                  @Param("sourceType") String sourceType);
 }
