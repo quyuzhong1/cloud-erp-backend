@@ -73,7 +73,7 @@
         sri.approve_status as approveStatus,
         count(*) as count
         FROM so_return_instock sri
-        WHERE sri.is_deleted = FALSE and and sri.invalid_status = FALSE
+        WHERE sri.is_deleted = FALSE
         <if test="params.invalidStatus != null ">
             and sri.invalid_status = #{params.invalidStatus}
         </if>
