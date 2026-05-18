@@ -68,7 +68,7 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
      * 临时脱敏：操作日志变更明细中需隐藏的字段名，新增时仅在此列表追加字段名。
      */
     private static final List<String> SENSITIVE_OPERATE_LOG_FIELD_NAMES = Collections.unmodifiableList(
-            Arrays.asList("实际不含税成本"));
+            Arrays.asList("实际不含税成本","实际含税成本"));
 
     private static final List<OperateLogContentMaskRule> SENSITIVE_OPERATE_LOG_CONTENT_MASK_RULES =
             SENSITIVE_OPERATE_LOG_FIELD_NAMES.stream()
