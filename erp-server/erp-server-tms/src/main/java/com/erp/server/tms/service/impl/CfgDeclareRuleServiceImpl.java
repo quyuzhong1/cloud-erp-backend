@@ -685,7 +685,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     private List<BaseDropDownDTO.ChildTree> accountingCompanyChildList(String name) {
-        com.common.core.controller.vo.ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList(name);
+        ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyListAll(name);
         if (companyResult == null || !companyResult.isSuccess()) {
             throw new ServiceException("load accounting company list failed");
         }
