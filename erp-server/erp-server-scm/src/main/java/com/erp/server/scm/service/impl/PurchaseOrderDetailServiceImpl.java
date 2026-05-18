@@ -420,7 +420,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
                         && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
                     //sku是组合品时，取委外订单含税单价
-                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId()) && CharSequenceUtil.isBlank(e.getParentId()))
+                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream()
+                            .filter(e -> Objects.nonNull(e)
+                                    && StrUtil.isNotBlank(e.getSkuId())
+                                    && Objects.equals(e.getSkuId(), addDTO.getSkuId())
+                                    && Objects.equals(e.getId(), addDTO.getSourceDetailId())
+                                    && CharSequenceUtil.isBlank(e.getParentId()))
                             .findFirst().orElse(null);
                     if (Objects.isNull(subcontractOrderDetailEntity)){
                         throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
