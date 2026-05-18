@@ -24,16 +24,6 @@
         <if test="(params.productName != null and params.productName != '') or (params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default.contains('pd.'))">
         LEFT JOIN product_detail pd ON pd.id = awls.sku_id AND pd.is_deleted = false
         </if>
-        <if test="(params.ean != null and params.ean != '') or (params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default.contains('ppu.'))">
-        LEFT JOIN (
-            SELECT DISTINCT ON (ppu_inner.sku_id)
-                ppu_inner.sku_id,
-                ppu_inner.ean
-            FROM product_purchase ppu_inner
-            WHERE ppu_inner.is_deleted = false
-            ORDER BY ppu_inner.sku_id, ppu_inner.update_time DESC NULLS LAST, ppu_inner.id DESC
-        ) ppu ON ppu.sku_id = awls.sku_id
-        </if>
         WHERE awls.is_deleted = false
         <if test="params.ids != null and params.ids.size > 0">
             AND awls.id IN
@@ -49,9 +39,6 @@
         </if>
         <if test="params.productName != null and params.productName != ''">
             AND pd.name ILIKE CONCAT('%', #{params.productName}::text, '%')
-        </if>
-        <if test="params.ean != null and params.ean != ''">
-            AND ppu.ean = #{params.ean}::text
         </if>
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}

@@ -45,13 +45,42 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
     /**
      * 修改
      *
-     * @param dto
-     * @return
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return Boolean
      * @author lei.nie
      * @date: 2026-05-12
      */
     Boolean update(AfterSalePackDTO.UpdateDTO dto);
 
+    /**
+     * 确定提审
+     *
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return Boolean
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    Boolean submit(AfterSalePackDTO.UpdateDTO dto);
+
+    /**
+     * 复核驳回
+     *
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return Boolean
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    Boolean reject(AfterSalePackDTO.UpdateDTO dto);
+
+    /**
+     * 确认并封箱
+     *
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return ApiResult
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    Boolean confirm(AfterSalePackDTO.UpdateDTO dto);
 
     /**
      * 分页列表查询
@@ -72,7 +101,6 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      * @date: 2026-05-12
      */
     AfterSalePackDTO.ViewDTO view(String id);
-
 
     /**
      * 导出Excel
@@ -104,4 +132,5 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      * @date: 2026-05-12
      */
     AfterSalePackDTO.ViewDTO viewByCode(String code);
+
 }

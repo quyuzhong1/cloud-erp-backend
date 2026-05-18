@@ -46,6 +46,7 @@ import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.MarehouseMoveSourceTypeEnum;
+import com.erp.model.wms.enums.WarehouseLocationMoveSyncOperateEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -149,6 +150,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         BeanMapperUtils.copy(addDTO, warehouseLocationMoveEntity);
         // 数据处理
         handleData(warehouseLocationMoveEntity);
+        fillAddSyncOperate(warehouseLocationMoveEntity);
 
         log.info("开始新增仓位移动主单");
         // 生成单号
@@ -192,6 +194,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveEntity.getBillDate())) {
             warehouseLocationMoveEntity.setBillDate(LocalDate.now());
         }
+        fillAddSyncOperate(warehouseLocationMoveEntity);
         log.info("开始新增仓位移动主单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CWYD);
@@ -998,6 +1001,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         WarehouseLocationMoveDTO.PcViewDTO pcViewDTO = new WarehouseLocationMoveDTO.PcViewDTO();
         BeanMapperUtils.copy(viewDTO, pcViewDTO);
         pcViewDTO.setApproveStatusName(ApproveStatusEnum.getName(pcViewDTO.getApproveStatus()));
+        pcViewDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.defaultCode(pcViewDTO.getSyncOperate()));
+        pcViewDTO.setSyncOperateName(WarehouseLocationMoveSyncOperateEnum.getNameByCode(pcViewDTO.getSyncOperate()));
         stopWatch.start("获取明细");
         List<WarehouseLocationMoveDTO.DetailViewDTO> detailViewDTOs = baseMapper.getDetail(id);
         stopWatch.stop();
@@ -1025,6 +1030,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             detailViewDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getInWarehouseLocation()).getName());
             detailViewDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, detailViewDTO.getWarehouseId(), detailViewDTO.getOutWarehouseLocation()).getName());
+            detailViewDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.defaultCode(detailViewDTO.getSyncOperate()));
+            detailViewDTO.setSyncOperateName(WarehouseLocationMoveSyncOperateEnum.getNameByCode(detailViewDTO.getSyncOperate()));
             detailViewDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(detailViewDTO.getInInventoryStatus()));
             detailViewDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(detailViewDTO.getOutInventoryStatus()));
             //设置库存
@@ -1072,6 +1079,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.defaultCode(data.getSyncOperate()));
+        data.setSyncOperateName(WarehouseLocationMoveSyncOperateEnum.getNameByCode(data.getSyncOperate()));
     }
 
     /**
@@ -1194,6 +1203,19 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
     }
 
+    private void fillAddSyncOperate(WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
+        if (CharSequenceUtil.isNotBlank(warehouseLocationMoveEntity.getSyncOperate())) {
+            return;
+        }
+        //拣货单新增/减少时候 操作类型会设置成【拣货移位】
+        if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(warehouseLocationMoveEntity.getSourceType())
+                || SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(warehouseLocationMoveEntity.getSourceType())) {
+            warehouseLocationMoveEntity.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.PICKING_TRANSFER.getCode());
+            return;
+        }
+        warehouseLocationMoveEntity.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.SELF_BUILT_TRANSFER.getCode());
+    }
+
     @Override
     public Boolean invalid(List<String> ids, String remark) {
         List<WarehouseLocationMoveEntity> infoEntityList = this.listByIds(ids);
@@ -1248,6 +1270,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             } else if (CharSequenceUtil.equals(pdaPcListDTO.getSourceType(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
                 pdaPcListDTO.setSourceTypeName(MarehouseMoveSourceTypeEnum.B2B_PICKING.getName());
             }
+            pdaPcListDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.defaultCode(pdaPcListDTO.getSyncOperate()));
+            pdaPcListDTO.setSyncOperateName(WarehouseLocationMoveSyncOperateEnum.getNameByCode(pdaPcListDTO.getSyncOperate()));
             pdaPcListDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(pdaPcListDTO.getOutInventoryStatus()));
             pdaPcListDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(pdaPcListDTO.getInInventoryStatus()));
         }

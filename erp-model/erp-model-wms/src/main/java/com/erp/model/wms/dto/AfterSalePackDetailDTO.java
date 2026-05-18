@@ -95,9 +95,14 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * skuId
+         * 拣货仓位id
          */
-        private String warehouseLocationId;
+        private String outWarehouseLocationId;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
 
         /**
          * 装箱数量
@@ -167,19 +172,54 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 仓位id,warehouse_location.id
+         * 产品名称
          */
-        private String warehouseLocationId;
+        private String productName;
 
         /**
-         * 仓位code
+         * 单位id
          */
-        private String warehouseLocationCode;
+        private String unitId;
 
         /**
-         * 仓位名称
+         * 单位
          */
-        private String warehouseLocationName;
+        private String unit;
+
+        /**
+         * 单位名称
+         */
+        private String unitName;
+
+        /**
+         * 拣货仓位id
+         */
+        private String outWarehouseLocationId;
+
+        /**
+         * 拣货仓位code
+         */
+        private String outWarehouseLocationCode;
+
+        /**
+         * 拣货仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
+
+        /**
+         * 移入仓位名称
+         */
+        private String inWarehouseLocationName;
 
         /**
          * 装箱数量
@@ -195,6 +235,11 @@ public class AfterSalePackDetailDTO implements Serializable {
          * 差异数量
          */
         private Integer diffQty;
+
+        /**
+         * sku对应的箱唛列表
+         */
+        private List<AfterSalePackDTO.DetailDTO> detailDTOList;
 
     }
 
@@ -221,6 +266,12 @@ public class AfterSalePackDetailDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 操作类型，add,reduce,remove
+         */
+        @NotNull(message = "操作类型不能为空")
+        private String operation;
+
     }
 
     @EqualsAndHashCode(callSuper = true)
@@ -240,14 +291,18 @@ public class AfterSalePackDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 仓位code
+         * 拣货仓位code
          */
-        private String warehouseLocationCode;
+        private String outWarehouseLocationCode;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
 
         /**
          * 装箱数量
          */
-        @NotNull(message = "装箱数量不能为空")
         private Integer packQty;
 
         /**
@@ -259,6 +314,11 @@ public class AfterSalePackDetailDTO implements Serializable {
          * 差异数量
          */
         private Integer diffQty;
+
+        /**
+         * 更新数量
+         */
+        private Integer updateQty;
 
     }
 

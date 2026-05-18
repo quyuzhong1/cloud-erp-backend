@@ -111,19 +111,19 @@ public class AfterSalePackDTO implements Serializable {
         private String typeName;
 
         /**
-         * 单据使用状态 false 未使用 true 已使用
+         * 是否被单据使用 false 未使用 true 已使用
          */
-        private Boolean usageStatus;
+        private Boolean isUse;
 
         /**
-         * 单据使用状态 false 未使用 true 已使用
+         * 是否被单据使用 false 未使用 true 已使用
          */
-        private String usageStatusName;
+        private String isUseName;
 
         /**
-         * 装箱状态 false 未装箱 true 已装箱
+         * 箱唛状态
          */
-        private Boolean packStatus;
+        private String packStatus;
 
         /**
          * 装箱状态 false 未装箱 true 已装箱
@@ -141,6 +141,16 @@ public class AfterSalePackDTO implements Serializable {
         private String isDifferenceName;
 
         /**
+         * 是否移仓 false 否 true 是
+         */
+        private Boolean isMoveWarehouse;
+
+        /**
+         * 是否移仓 false 否 true 是
+         */
+        private String isMoveWarehouseName;
+
+        /**
          * sku种类数
          */
         private Integer skuSpeciesQty;
@@ -149,6 +159,16 @@ public class AfterSalePackDTO implements Serializable {
          * 总数量
          */
         private Integer totalQty;
+
+        /**
+         * 驳回原因
+         */
+        private String rejectDescription;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
         /**
          * 创建时间
@@ -169,6 +189,16 @@ public class AfterSalePackDTO implements Serializable {
          * 关联供应商
          */
         private String supplierName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
     }
 
     /**
@@ -227,19 +257,44 @@ public class AfterSalePackDTO implements Serializable {
         private String typeName;
 
         /**
-         * 单据使用状态 false 未使用 true 已使用
+         * 是否被单据使用 false 未使用 true 已使用
          */
-        private Boolean usageStatus;
+        private Boolean isUse;
+
+        /**
+         * 是否被单据使用 false 未使用 true 已使用
+         */
+        private String isUseName;
+
+        /**
+         * 箱唛状态
+         */
+        private String packStatus;
 
         /**
          * 装箱状态 false 未装箱 true 已装箱
          */
-        private Boolean packStatus;
+        private String packStatusName;
 
         /**
          * 是否存在差异 false 否 true 是
          */
         private Boolean isDifference;
+
+        /**
+         * 是否存在差异 false 否 true 是
+         */
+        private String isDifferenceName;
+
+        /**
+         * 是否移仓 false 否 true 是
+         */
+        private Boolean isMoveWarehouse;
+
+        /**
+         * 是否移仓 false 否 true 是
+         */
+        private String isMoveWarehouseName;
 
         /**
          * sku种类数
@@ -250,6 +305,16 @@ public class AfterSalePackDTO implements Serializable {
          * 总数量
          */
         private Integer totalQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 驳回原因
+         */
+        private String rejectDescription;
 
         /**
          * 关联供应商id
@@ -309,43 +374,15 @@ public class AfterSalePackDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
 
         /**
-         * 来源id
-         */
-        @Size(max = 19, message = "来源id最大长度不能超过19位")
-        private String sourceId;
-
-        /**
-         * 来源单号
-         */
-        @Size(max = 32, message = "来源单号最大长度不能超过32位")
-        private String sourceCode;
-
-        /**
-         * 来源单据类型
-         */
-        @Size(max = 32, message = "来源单据类型最大长度不能超过32位")
-        private String sourceType;
-
-        /**
          * 箱唛类型
          */
         @Size(max = 32, message = "箱唛类型最大长度不能超过32位")
         private String type;
 
         /**
-         * 单据使用状态 false 未使用 true 已使用
+         * 箱唛状态
          */
-        private Boolean usageStatus;
-
-        /**
-         * 装箱状态 false 未装箱 true 已装箱
-         */
-        private Boolean packStatus;
-
-        /**
-         * 是否存在差异 false 否 true 是
-         */
-        private Boolean isDifference;
+        private String packStatus;
 
         /**
          * sku种类数
@@ -356,6 +393,16 @@ public class AfterSalePackDTO implements Serializable {
          * 总数量
          */
         private Integer totalQty;
+
+        /**
+         * 驳回原因
+         */
+        private String rejectDescription;
+
+        /**
+         * 备注
+         */
+        private String remark;
 
     }
 
@@ -378,6 +425,51 @@ public class AfterSalePackDTO implements Serializable {
          */
         @NotNull(message = "申请数量不能为空")
         private Integer applicationQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
+
+        /**
+         * 箱唛
+         */
+        private String code;
+
+        /**
+         * 实退数量
+         */
+        private Integer packQty;
+
+        /**
+         * 拣货仓位id
+         */
+        private String outWarehouseLocationId;
+
+        /**
+         * 拣货仓位code
+         */
+        private String outWarehouseLocationCode;
+
+        /**
+         * 拣货仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 移入仓位id
+         */
+        private String inWarehouseLocationId;
+
+        /**
+         * 移入仓位code
+         */
+        private String inWarehouseLocationCode;
+
+        /**
+         * 移入仓位名称
+         */
+        private String inWarehouseLocationName;
     }
 
 }

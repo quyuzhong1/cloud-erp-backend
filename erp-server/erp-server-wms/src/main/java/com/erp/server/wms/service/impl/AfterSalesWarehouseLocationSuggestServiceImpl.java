@@ -22,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.excel.AfterSalesWarehouseLocationSuggestExcelDto;
@@ -364,16 +363,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         Map<String, ProductDetailEntity> skuDetailMap = skuDetailEntities.stream()
                 .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (k1, k2) -> k1));
 
-        // EAN 码信息
-        Map<String, String> skuAndEnaMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(skuDetailEntities)) {
-            List<String> skuIdList = skuDetailEntities.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
-            List<ProductPurchaseEntity> productPurchaseEntities = plmTaskFeign.listProductPurchaseBySkuId(skuIdList);
-            skuAndEnaMap = productPurchaseEntities.stream()
-                    .filter(i -> StrUtil.isNotBlank(i.getEan()))
-                    .collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, ProductPurchaseEntity::getEan, (k1, k2) -> k1));
-        }
-
         // 仓库名称 Map
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         Map<String, String> warehouseIdNameMap = warehouseList.stream()
@@ -399,7 +388,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             // 匹配 SKU 信息
             ProductDetailEntity skuDetail = skuDetailMap.get(entity.getSkuNo());
             if (skuDetail != null) {
-                dto.setEanNo(skuAndEnaMap.get(skuDetail.getId()));
                 dto.setProductName(skuDetail.getName());
             }
 

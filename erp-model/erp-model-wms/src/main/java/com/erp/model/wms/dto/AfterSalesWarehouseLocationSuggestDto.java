@@ -62,11 +62,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String productName;
 
         /**
-         * EAN 码（模糊，对应 product_purchase.ean，与列表展示口径一致）
-         */
-        private String ean;
-
-        /**
          * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;
@@ -222,8 +217,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String id;
 
         private String skuNo;
-
-        private String eanNo;
 
         /**
          * 产品名称

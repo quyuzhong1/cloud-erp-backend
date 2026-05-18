@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.api;
+package com.erp.server.wms.controller.pda;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -18,16 +18,16 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 售后装箱明细表
+ * PDA售后装箱明细表
  *
  * @author lei.nie
- * @since 2026-05-12
+ * @since 2026-05-15
  */
 @Slf4j
 @RestController
-@LogSystemModule("售后装箱明细表")
-@RequestMapping("/afterSalePackDetail")
-public class AfterSalePackDetailController extends BaseController {
+@LogSystemModule("PDA售后装箱明细表")
+@RequestMapping("/pda/afterSalePackDetail")
+public class PdaAfterSalePackDetailController extends BaseController {
 
     @Resource
     private AfterSalePackDetailService afterSalePackDetailService;
@@ -35,10 +35,10 @@ public class AfterSalePackDetailController extends BaseController {
     /**
      * 修改
      *
-     * @param dto
+     * @param dto AfterSalePackDetailDTO.UpdateDTO
      * @return ApiResult
      * @author lei.nie
-     * @date: 2026-05-12
+     * @date: 2026-05-15
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "售后装箱明细表修改")
@@ -58,7 +58,7 @@ public class AfterSalePackDetailController extends BaseController {
      * @param id
      * @return ApiResult<AfterSalePackDetailDTO.ViewDTO>>
      * @author lei.nie
-     * @date: 2026-05-12
+     * @date: 2026-05-15
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -77,7 +77,7 @@ public class AfterSalePackDetailController extends BaseController {
      * @param code String
      * @return ApiResult<List < AfterSalePackDetailDTO.ViewDTO>>
      * @author lei.nie
-     * @date: 2026-05-12
+     * @date: 2026-05-15
      */
     @GetMapping("/listByCode")
     @LogViewService
@@ -86,3 +86,4 @@ public class AfterSalePackDetailController extends BaseController {
     }
 
 }
+

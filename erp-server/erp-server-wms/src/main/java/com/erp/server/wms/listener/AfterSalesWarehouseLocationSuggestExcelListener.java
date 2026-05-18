@@ -59,7 +59,6 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
     private static final List<String> REQUIRED_IMPORT_HEADER_TITLES = Collections.unmodifiableList(Arrays.asList(
             "sku编码",
             "产品名称",
-            "EAN码",
             "所属仓库",
             "所属库区名称",
             "推荐仓位编码",
@@ -93,13 +92,6 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         }
         if (dto.getSkuNo().length() > 255) {
             return "SKU编码过长";
-        }
-        return null;
-    }
-
-    private static String firstEanFormatError(AfterSalesWarehouseLocationSuggestExcelDto dto) {
-        if (dto.getEanCode() != null && dto.getEanCode().length() > 255) {
-            return "EAN码过长";
         }
         return null;
     }
@@ -212,7 +204,6 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         AfterSalesWarehouseLocationSuggestExcelDto dto = new AfterSalesWarehouseLocationSuggestExcelDto();
         dto.setSkuNo(cellByHeader(data, "sku编码"));
         dto.setProductName(cellByHeader(data, "产品名称"));
-        dto.setEanCode(cellByHeader(data, "EAN码"));
         dto.setWarehouseName(cellByHeader(data, "所属仓库"));
         dto.setWarehouseAreaName(cellByHeader(data, "所属库区名称"));
         dto.setWarehouseLocationCode(cellByHeader(data, "推荐仓位编码"));
@@ -242,7 +233,6 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
      */
     private void verifyFieldFormat(AfterSalesWarehouseLocationSuggestExcelDto dto, EnumMap<ImportErrorBlock, String> blockErrors) {
         putFirstBlockError(blockErrors, ImportErrorBlock.SKU, firstSkuFormatError(dto));
-        putFirstBlockError(blockErrors, ImportErrorBlock.EAN, firstEanFormatError(dto));
         putFirstBlockError(blockErrors, ImportErrorBlock.PRODUCT_NAME, firstProductNameFormatError(dto));
         putFirstBlockError(blockErrors, ImportErrorBlock.WAREHOUSE_CHAIN, firstWarehouseChainFormatError(dto));
         putFirstBlockError(blockErrors, ImportErrorBlock.SORT, firstSortFormatError(dto));
@@ -369,11 +359,10 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
     /**
      * 导入行校验异常块：同一异常块内只保留一条说明；多块并存时按此枚举顺序（与模板列业务层级一致）输出后再
      * {@link FieldValidUtil#getMsgSort(List)} 编号拼接。
-     * <p>顺序：1.SKU编码 2.EAN码 3.产品名称 4.仓库/库区/仓位 5.优先级 6.状态 7.重复行。</p>
+     * <p>顺序：1.SKU编码 2.产品名称 3.仓库/库区/仓位 4.优先级 5.状态 6.重复行。</p>
      */
     private enum ImportErrorBlock {
         SKU,
-        EAN,
         PRODUCT_NAME,
         WAREHOUSE_CHAIN,
         SORT,

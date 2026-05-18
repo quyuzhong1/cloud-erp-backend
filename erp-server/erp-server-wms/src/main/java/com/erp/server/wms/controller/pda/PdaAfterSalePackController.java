@@ -1,9 +1,8 @@
-package com.erp.server.wms.controller.api;
+package com.erp.server.wms.controller.pda;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -26,16 +25,16 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 售后装箱表
+ * PDA售后装箱表
  *
  * @author lei.nie
  * @since 2026-05-12
  */
 @Slf4j
 @RestController
-@LogSystemModule("售后装箱表")
-@RequestMapping("/afterSalePack")
-public class AfterSalePackController extends BaseController {
+@LogSystemModule("PDA售后装箱表")
+@RequestMapping("/pda/afterSalePack")
+public class PdaAfterSalePackController extends BaseController {
 
     @Resource
     private AfterSalePackService afterSalePackService;
@@ -52,20 +51,6 @@ public class AfterSalePackController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "申请箱唛")
     public ApiResult<List<String>> boxCodeApplication(@RequestBody @Validated AfterSalePackDTO.BoxCodeApplicationDTO dto) {
         return success(afterSalePackService.boxCodeApplication(dto));
-    }
-
-    /**
-     * 新增
-     *
-     * @param dto AfterSalePackDTO.AddDTO
-     * @return ApiResult<String>
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "售后装箱表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSalePackDTO.AddDTO dto) {
-        return success(afterSalePackService.add(dto));
     }
 
     /**
