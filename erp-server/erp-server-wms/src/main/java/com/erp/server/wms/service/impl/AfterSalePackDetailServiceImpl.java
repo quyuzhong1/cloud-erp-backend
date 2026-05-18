@@ -66,6 +66,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private PdaAfterSalesWarehouseMoveService pdaAfterSalesWarehouseMoveService;
+
     /**
      * 修改
      */
@@ -121,6 +124,18 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
                 .one();
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
+        }
+        // 箱唛已经被使用，不可操作
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
+            throw new ServiceException("箱唛已被其它单据使用，不可重复使用");
+        }
+        // 箱唛状态不等于已封箱，不可操作
+        if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+            throw new ServiceException("箱唛状态不等于已封箱，不可使用");
+        }
+        // 箱唛未发生移仓，不可使用
+        if (Boolean.FALSE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
+            throw new ServiceException("未识别箱唛移仓记录，不可使用");
         }
         List<AfterSalePackDetailEntity> detailList = lambdaQuery()
                 .eq(AfterSalePackDetailEntity::getMainId, afterSalePackEntity.getId())
@@ -192,7 +207,6 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         detail.setOutWarehouseLocation(addOrUpdateDTO.getOutWarehouseLocationCode());
         detail.setInWarehouseLocation(addOrUpdateDTO.getInWarehouseLocationCode());
         detail.setQty(moveQty);
-
         WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
         addDTO.setWarehouseId(CharSequenceUtil.trim(warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()).getWarehouseId()));
         addDTO.setDetailList(CollUtil.newArrayList(detail));
@@ -200,7 +214,30 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.UNBOX_TRANSFER.getCode());
         log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
                 addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
-        warehouseLocationMoveService.addAndApprove(addDTO);
+        String moveId = warehouseLocationMoveService.addAndApprove(addDTO);
+        pdaAfterSalesWarehouseMoveService.saveBoxTransferDetails(moveId,
+                addOrUpdateDTO.getInWarehouseLocationCode(),
+                CollUtil.newArrayList(buildMoveSourceBoxInfo(addOrUpdateDTO, old, afterSalePackEntity, moveQty)),
+                Collections.emptyMap());
+    }
+
+    private AfterSalePackDTO.ViewDTO buildMoveSourceBoxInfo(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO,
+                                                            AfterSalePackDetailEntity old,
+                                                            AfterSalePackEntity afterSalePackEntity,
+                                                            Integer moveQty) {
+        AfterSalePackDetailDTO.ViewDTO detail = new AfterSalePackDetailDTO.ViewDTO();
+        detail.setId(old.getId());
+        detail.setMainId(old.getMainId());
+        detail.setSkuId(old.getSkuId());
+        detail.setSkuNo(old.getSkuNo());
+        detail.setOutWarehouseLocationCode(addOrUpdateDTO.getOutWarehouseLocationCode());
+        detail.setInWarehouseLocationCode(addOrUpdateDTO.getInWarehouseLocationCode());
+        detail.setPackQty(moveQty);
+        AfterSalePackDTO.ViewDTO boxInfo = new AfterSalePackDTO.ViewDTO();
+        boxInfo.setId(afterSalePackEntity.getId());
+        boxInfo.setCode(afterSalePackEntity.getCode());
+        boxInfo.setDetailViewDTOList(CollUtil.newArrayList(detail));
+        return boxInfo;
     }
 
     private String buildUnboxOperateLog(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO,

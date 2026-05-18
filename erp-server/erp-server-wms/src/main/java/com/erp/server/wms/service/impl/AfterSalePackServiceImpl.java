@@ -86,6 +86,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     public List<String> boxCodeApplication(AfterSalePackDTO.BoxCodeApplicationDTO dto) {
         if (dto.getApplicationQty() == null || dto.getApplicationQty() <= 0) {
             throw new ServiceException("申请数量需大于0");
+        } else if (dto.getApplicationQty() > 100) {
+            throw new ServiceException("申请数量不能大于100");
         }
         List<AfterSalePackEntity> afterSalePackEntityList = new ArrayList<>();
         List<String> result = new ArrayList<>();
@@ -372,6 +374,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         log.info("复核驳回 开始修改售后装箱单数据，单号：【{}】", afterSalePackEntity.getCode());
         afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.REVIEW_REJECT.getCode());
         afterSalePackEntity.setRejectDescription(addOrUpdateDTO.getRejectDescription());
+        afterSalePackEntity.setRemark(addOrUpdateDTO.getRejectDescription());
         boolean save = super.updateById(afterSalePackEntity);
         if (!save) {
             throw new ServiceException("售后装箱单复核驳回失败");
