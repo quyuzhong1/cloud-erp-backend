@@ -894,9 +894,15 @@
             fmd.id as sourceId,
             fmd.code as sourceCode,
             'firstMileDelivery' as sourceType,
-            fmd.source_id as businessId,
-            fmd.source_code as businessCode,
-            cd.sku_id as skuId,
+        CASE
+        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
+        owi.ID ELSE fba.id
+        END AS businessId,
+        CASE
+        WHEN fmd.demand_type = 'demandOverseasWarehouse' THEN
+        owi.code ELSE fba.fba_shipment_code
+        END AS businessCode,
+        cd.sku_id as skuId,
             cd.sku_no as skuNo,
             fmd.country_id as countryId,
             fmd.country_name as countryName,
@@ -919,6 +925,14 @@
             and ptd.sku_id = cd.sku_id
             and (COALESCE(ptd.fn_sku, '') = '' or cd.fn_sku = COALESCE(ptd.fn_sku, ''))
         )
+        left join overseas_warehouse_inbound owi on owi.source_id = fmd.id and owi.instock_status != 'canceled'  and owi.is_deleted = false
+        left join (
+        select
+        DISTINCT fmdd.main_id, fmdd.fba_shipment_code ,fs.id
+        from first_mile_delivery_detail fmdd
+        INNER JOIN fba_shipment fs on fmdd.fba_shipment_code = fs.code and fs.is_deleted = false
+        where fmdd.is_deleted= false and fmdd.fba_shipment_code != ''
+        ) as fba on fba.main_id = fmd.id
         where fmd.is_deleted = false and fmd.declare_status = 'wait' and fmd.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
