@@ -60,7 +60,7 @@ public class CfgMaskWordController extends BaseController {
     }
 
     /**
-     * 强制刷新各节点本地缓存：按当前表数据重建 FullCache 写入 Bucket 并 publish
+     * 强制刷新 Redis 缓存：按当前表数据重建 FullCache 写入 Redis
      */
     @PostMapping("/refresh")
     @LogAction(value = LogActionEnum.UPDATE, desc = "刷新脱敏词典缓存")

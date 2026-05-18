@@ -375,27 +375,14 @@ public interface RedisCacheConstants {
     String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
 
     /**
-     * 字段脱敏配置（cfg_mask_field）全量刷新广播 channel
-     * sys 服务在表数据变更后 publish；各业务节点订阅后原子替换本地全量快照
-     */
-    String MASK_FIELD_CFG_REFRESH_CHANNEL = "erp:mask_field_cfg:refresh";
-
-    /**
-     * 字段脱敏配置（cfg_mask_field）全量持久化 key
-     * sys 服务每次广播前先写入此 Bucket（持久化全量 + version），业务节点启动时 @PostConstruct
-     * 直接读取避免冷启动空窗（"先写 Bucket 再 publish"的写入顺序保证收到广播节点的版本不旧于已广播版本）
+     * 字段脱敏配置（cfg_mask_field）Redis 全量缓存 key
+     * 业务节点按 cache-aside 读取；sys 写表后做延迟双删。
      */
     String MASK_FIELD_CFG_FULL_KEY = "erp:mask_field_cfg:full";
 
     /**
-     * 脱敏词典（cfg_mask_word）全量刷新广播 channel
-     * sys 服务在表数据变更后 publish；各业务节点订阅后调 SensitiveWordBs 增量更新（addWord/removeWord）
-     */
-    String MASK_WORD_CFG_REFRESH_CHANNEL = "erp:mask_word_cfg:refresh";
-
-    /**
-     * 脱敏词典（cfg_mask_word）全量持久化 key
-     * 与 MASK_FIELD 同样遵循"先写 Bucket 再 publish"的写入顺序
+     * 脱敏词典（cfg_mask_word）Redis 全量缓存 key
+     * 业务节点按 cache-aside 读取；sys 写表后做延迟双删。
      */
     String MASK_WORD_CFG_FULL_KEY = "erp:mask_word_cfg:full";
 

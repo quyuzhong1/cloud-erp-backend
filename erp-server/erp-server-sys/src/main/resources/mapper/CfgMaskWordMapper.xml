@@ -15,7 +15,8 @@
         <result column="word_type" property="wordType"/>
         <result column="category" property="category"/>
         <result column="word" property="word"/>
-        <result column="enabled" property="enabled"/>
+        <result column="disabled" property="disabled"/>
+        <result column="sort" property="sort"/>
         <result column="remark" property="remark"/>
     </resultMap>
 
@@ -24,7 +25,8 @@
         <result column="word_type" property="wordType"/>
         <result column="category" property="category"/>
         <result column="word" property="word"/>
-        <result column="enabled" property="enabled"/>
+        <result column="disabled" property="disabled"/>
+        <result column="sort" property="sort"/>
         <result column="remark" property="remark"/>
         <result column="version" property="version"/>
         <result column="create_time" property="createTime"/>
@@ -34,14 +36,14 @@
     </resultMap>
 
     <sql id="BaseColumns">
-        id, word_type, category, word, enabled, remark,
+        id, word_type, category, word, disabled, sort, remark,
         version, create_time, create_user_id, create_user_name,
         update_time, update_user_id, update_user_name, is_deleted
     </sql>
 
     <select id="paging" resultMap="ListMap">
         SELECT
-        id, word_type, category, word, enabled, remark,
+        id, word_type, category, word, disabled, sort, remark,
         version, create_time, create_user_name, update_time, update_user_name
         FROM cfg_mask_word
         WHERE is_deleted = false
@@ -55,18 +57,19 @@
             <if test="params.word != null and params.word != ''">
                 AND word LIKE CONCAT('%', #{params.word}, '%')
             </if>
-            <if test="params.enabled != null">
-                AND enabled = #{params.enabled}
+            <if test="params.disabled != null">
+                AND disabled = #{params.disabled}
             </if>
         </if>
-        ORDER BY update_time DESC
+        ORDER BY sort ASC, update_time DESC
     </select>
 
     <select id="listAllAlive" resultMap="BaseResultMap">
         SELECT
         <include refid="BaseColumns"/>
         FROM cfg_mask_word
-        WHERE is_deleted = false AND enabled = true
+        WHERE is_deleted = false AND COALESCE(disabled, false) = false
+        ORDER BY sort ASC, update_time DESC, id ASC
     </select>
 
 </mapper>

@@ -39,7 +39,9 @@ public class CfgMaskWordDTO implements Serializable {
         @NotBlank(message = "词内容不能为空")
         private String word;
 
-        private Boolean enabled = Boolean.TRUE;
+        private Boolean disabled = Boolean.FALSE;
+
+        private Integer sort = 0;
 
         private String remark;
     }
@@ -65,7 +67,7 @@ public class CfgMaskWordDTO implements Serializable {
         private Integer wordType;
         private String category;
         private String word;
-        private Boolean enabled;
+        private Boolean disabled;
     }
 
     @Data
@@ -77,7 +79,8 @@ public class CfgMaskWordDTO implements Serializable {
         private Integer wordType;
         private String category;
         private String word;
-        private Boolean enabled;
+        private Boolean disabled;
+        private Integer sort;
         private String remark;
         private Integer version;
         private LocalDateTime createTime;

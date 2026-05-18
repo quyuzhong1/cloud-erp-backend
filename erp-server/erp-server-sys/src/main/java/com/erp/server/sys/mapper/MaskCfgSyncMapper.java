@@ -26,8 +26,8 @@ public interface MaskCfgSyncMapper {
      * 整表算 cfg_mask_field 的 hash
      *
      * <p>只覆盖<b>影响脱敏行为</b>的列：class_path / field_name / strategy / custom_regex /
-     * custom_replace / permission_code / hide_when_masked / enabled。
-     * remark 等无关字段改动不会触发 publishFullCache。</p>
+     * custom_replace / permission_code / hide_when_masked / disabled / sort。
+     * remark 等无关字段改动不会触发 Redis 缓存刷新。</p>
      *
      * <p>空表返回空字符串而不是 null，便于上层用 {@code Objects.equals} 比对。</p>
      */
@@ -36,7 +36,7 @@ public interface MaskCfgSyncMapper {
     /**
      * 整表算 cfg_mask_word 的 hash
      *
-     * <p>只覆盖<b>影响脱敏行为</b>的列：word_type / word / enabled。
+     * <p>只覆盖<b>影响脱敏行为</b>的列：word_type / word / disabled / sort。
      * category / remark 等业务标记不参与，避免运营调标签时误刷词典。</p>
      */
     String scanCfgMaskWordHash();

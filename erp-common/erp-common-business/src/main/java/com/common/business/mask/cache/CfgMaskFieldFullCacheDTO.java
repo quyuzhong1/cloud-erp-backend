@@ -6,17 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 全量配置推送载荷
+ * 字段脱敏配置 Redis 全量载荷
  *
  * <p>同时作为：</p>
  * <ol>
- *   <li>sys 服务通过 Redis Pub/Sub 广播给各业务节点的载荷</li>
- *   <li>业务节点冷启动 / 兜底从 Redis Bucket 读取的全量数据</li>
- *   <li>业务节点冷启动通过 Feign 拉取 sys {@code listAll} 的返回类型</li>
+ *   <li>Redis Bucket 中的全量缓存值</li>
+ *   <li>业务节点 Redis miss 时通过 Feign 拉取 sys {@code listAll} 的返回类型</li>
  * </ol>
  *
- * <p>与 {@link com.common.business.dto.DorisQuerySettingFullCacheDTO} 一致：
- * 携带 {@code version}，订阅端按版本号单调递增校验丢弃乱序消息。</p>
+ * <p>携带 {@code version}，业务节点据此判断类元数据缓存是否需要失效。</p>
  *
  * @author cloud-erp
  */
@@ -24,13 +22,12 @@ import java.util.List;
 public class CfgMaskFieldFullCacheDTO {
 
     /**
-     * 全量数据版本号（sys 端发布瞬间的 {@link System#currentTimeMillis()}），
-     * 订阅端通过该字段忽略乱序 / 旧版本消息
+     * 全量数据版本号（sys 端生成瞬间的 {@link System#currentTimeMillis()}）
      */
     private long version;
 
     /**
-     * 全量配置条目（仅启用且未删除）
+     * 全量配置条目（未禁用且未删除）
      */
     private List<CfgMaskFieldSnapshotEntry> data = new ArrayList<>();
 }

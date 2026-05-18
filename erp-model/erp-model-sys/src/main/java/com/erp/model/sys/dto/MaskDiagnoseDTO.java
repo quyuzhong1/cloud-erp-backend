@@ -124,6 +124,7 @@ public class MaskDiagnoseDTO implements Serializable {
         private boolean keepEmpty;
         private boolean recursive;
         private boolean hideWhenMasked;
+        private int sort;
         /** 是否仅作为递归容器（无显式策略） */
         private boolean container;
     }

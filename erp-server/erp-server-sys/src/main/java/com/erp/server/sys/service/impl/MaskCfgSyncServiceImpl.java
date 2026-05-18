@@ -21,11 +21,11 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <h3>设计要点</h3>
  * <ul>
- *   <li><b>首次扫描不触发 publish</b>：服务启动后第一次跑只填充快照，避免冷启动时"误认为全表都变了"
- *       触发一次无意义的全量广播。{@link #firstRun} 处理。</li>
- *   <li><b>每张表独立 publish + 独立容错</b>：一张表 publish 失败不影响另一张表；
+ *   <li><b>首次扫描不刷新 Redis</b>：服务启动后第一次跑只填充快照，避免冷启动时"误认为全表都变了"
+ *       触发一次无意义的 Redis 回填。{@link #firstRun} 处理。</li>
+ *   <li><b>每张表独立刷新 + 独立容错</b>：一张表刷新失败不影响另一张表；
  *       下一次扫描如果还是不一致，会继续重试。</li>
- *   <li><b>整体替换快照在 publish 后做</b>：避免 publish 失败但快照已经更新，导致下次扫描
+ *   <li><b>整体替换快照在刷新 Redis 后做</b>：避免刷新失败但快照已经更新，导致下次扫描
  *       误以为已经同步过而不再补发。</li>
  *   <li><b>task 内部全部捕获异常</b>：单次扫描失败下次自动恢复，不抛给 XXL-JOB 避免告警噪音。</li>
  * </ul>
@@ -51,7 +51,7 @@ public class MaskCfgSyncServiceImpl implements MaskCfgSyncService {
     /** cfg_mask_word 上次扫描后的整表 hash */
     private volatile String cfgMaskWordHashSnapshot = "";
 
-    /** 首次运行标志。冷启动只填充快照不发广播。 */
+    /** 首次运行标志。冷启动只填充快照不刷新 Redis。 */
     private volatile boolean firstRun = true;
 
     /** 最近一次同步的统计（诊断用） */
@@ -130,32 +130,32 @@ public class MaskCfgSyncServiceImpl implements MaskCfgSyncService {
     }
 
     /**
-     * 调 cfg_mask_field 全量广播，失败只 warn，不抛
+     * 调 cfg_mask_field 全量 Redis 回填，失败只 warn，不抛
      */
     private void safelyPublishCfgMaskField() {
         if (cfgMaskFieldService == null) {
-            log.warn("CfgMaskFieldService not available, skip publish");
+            log.warn("CfgMaskFieldService not available, skip redis refresh");
             return;
         }
         try {
             cfgMaskFieldService.publishFullCache();
         } catch (Throwable e) {
-            log.warn("publish cfg_mask_field failed, next run will retry on diff", e);
+            log.warn("refresh cfg_mask_field redis cache failed, next run will retry on diff", e);
         }
     }
 
     /**
-     * 调 cfg_mask_word 全量广播，失败只 warn，不抛
+     * 调 cfg_mask_word 全量 Redis 回填，失败只 warn，不抛
      */
     private void safelyPublishCfgMaskWord() {
         if (cfgMaskWordService == null) {
-            log.warn("CfgMaskWordService not available, skip publish");
+            log.warn("CfgMaskWordService not available, skip redis refresh");
             return;
         }
         try {
             cfgMaskWordService.publishFullCache();
         } catch (Throwable e) {
-            log.warn("publish cfg_mask_word failed, next run will retry on diff", e);
+            log.warn("refresh cfg_mask_word redis cache failed, next run will retry on diff", e);
         }
     }
 

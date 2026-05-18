@@ -25,7 +25,7 @@ public class CfgMaskFieldFeignController extends BaseController {
     private CfgMaskFieldService cfgMaskFieldService;
 
     /**
-     * 拉取全量启用的字段脱敏配置
+     * 拉取全量未禁用的字段脱敏配置
      */
     @GetMapping("/listAll")
     public ApiResult<CfgMaskFieldFullCacheDTO> listAll() {
@@ -33,7 +33,7 @@ public class CfgMaskFieldFeignController extends BaseController {
     }
 
     /**
-     * 触发广播
+     * 刷新 Redis 缓存
      */
     @PostMapping("/refresh")
     public ApiResult<Boolean> refresh() {

@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 词典全量推送载荷
+ * 脱敏词典 Redis 全量载荷
  *
- * <p>同时作为：sys 广播载荷 / Redis Bucket 持久化载荷 / Feign 兜底返回类型，
- * 与 {@link CfgMaskFieldFullCacheDTO} 一致携带 {@code version}，订阅端按版本号单调递增校验丢弃乱序消息。</p>
+ * <p>同时作为：Redis Bucket 缓存值 / Redis miss 时 Feign 回源返回类型。
+ * 与 {@link CfgMaskFieldFullCacheDTO} 一致携带 {@code version}，业务节点据此同步 SensitiveWordBs 引擎。</p>
  *
  * @author cloud-erp
  */
@@ -17,12 +17,12 @@ import java.util.List;
 public class CfgMaskWordFullCacheDTO {
 
     /**
-     * 全量数据版本号（{@link System#currentTimeMillis()}），订阅端忽略乱序 / 旧版本消息
+     * 全量数据版本号（{@link System#currentTimeMillis()}）
      */
     private long version;
 
     /**
-     * 全量词典条目（仅启用且未删除）
+     * 全量词典条目（未禁用且未删除）
      */
     private List<CfgMaskWordSnapshotEntry> data = new ArrayList<>();
 }

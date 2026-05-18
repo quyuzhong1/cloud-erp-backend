@@ -3,9 +3,11 @@ package com.common.business.mask.handler;
 import com.common.business.mask.MaskContext;
 import com.common.business.mask.MaskHandler;
 import com.common.business.mask.MaskStrategy;
+import com.common.business.mask.cache.CfgMaskWordLocalCache;
 import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.regex.Matcher;
@@ -81,6 +83,9 @@ public class AutoPiiMaskHandler implements MaskHandler {
 
     private final ObjectProvider<SensitiveWordBs> sensitiveWordBsProvider;
 
+    @Autowired(required = false)
+    private CfgMaskWordLocalCache wordLocalCache;
+
     public AutoPiiMaskHandler(ObjectProvider<SensitiveWordBs> sensitiveWordBsProvider) {
         this.sensitiveWordBsProvider = sensitiveWordBsProvider;
     }
@@ -136,6 +141,9 @@ public class AutoPiiMaskHandler implements MaskHandler {
 
         // 1) sensitive-word：手机/邮箱/URL/IPv4 + 业务自定义黑名单
         //    短路条件：既无数字（手机/IP 必须）也无 '@'（邮箱必须）→ 仅 URL 可能命中，让 DFA 跑一次
+        if (wordLocalCache != null) {
+            wordLocalCache.refreshEngineIfNeeded();
+        }
         SensitiveWordBs bs = sensitiveWordBsProvider.getIfAvailable();
         if (bs != null) {
             try {

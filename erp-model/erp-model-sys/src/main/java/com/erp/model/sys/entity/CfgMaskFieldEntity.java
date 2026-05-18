@@ -11,7 +11,7 @@ import lombok.experimental.Accessors;
 /**
  * 字段脱敏配置表
  *
- * <p>(class_path, field_name) 唯一索引，配置变更通过 Redis Pub/Sub 广播给各业务节点。
+ * <p>配置变更后删除 Redis 全量缓存，业务节点按 cache-aside 回源最新规则。
  * 同一字段的"运维配置"覆盖"@Mask 注解"，运维侧无需改代码即可启停脱敏。</p>
  *
  * @author cloud-erp
@@ -74,10 +74,16 @@ public class CfgMaskFieldEntity extends BaseEntity<CfgMaskFieldEntity> {
     private Boolean hideWhenMasked;
 
     /**
-     * 是否启用（false 即视为该配置不存在，注解仍会生效）
+     * 是否禁用（true 即视为该配置不存在，注解仍会生效）
      */
-    @TableField("enabled")
-    private Boolean enabled;
+    @TableField("disabled")
+    private Boolean disabled;
+
+    /**
+     * 多条规则命中同一字段时的执行顺序，越小越先执行
+     */
+    @TableField("sort")
+    private Integer sort;
 
     /**
      * 备注
@@ -90,5 +96,6 @@ public class CfgMaskFieldEntity extends BaseEntity<CfgMaskFieldEntity> {
     public static final String STRATEGY = "strategy";
     public static final String PERMISSION_CODE = "permission_code";
     public static final String HIDE_WHEN_MASKED = "hide_when_masked";
-    public static final String ENABLED = "enabled";
+    public static final String DISABLED = "disabled";
+    public static final String SORT = "sort";
 }

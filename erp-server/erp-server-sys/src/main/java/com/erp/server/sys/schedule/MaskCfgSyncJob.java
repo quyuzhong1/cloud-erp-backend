@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 脱敏规则配置定时对账任务
  *
- * <p>定位：{@code CfgMaskFieldService} / {@code CfgMaskWordService} "service 层写完即广播"机制
+ * <p>定位：{@code CfgMaskFieldService} / {@code CfgMaskWordService} "service 层写完即延迟双删"机制
  * 的<b>兜底层</b>，覆盖"运维直接 SQL 改库 / 迁移脚本 / 跨服务直接写表"等绕过 service 的写入路径。</p>
  *
  * <h3>XXL-JOB 推荐配置</h3>
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <tr><td>Cron</td><td>{@code 0/30 * * * * ?}</td>
  *       <td>每 30 秒一次。脱敏规则变更频率很低（运维手工配），30s 延迟够用</td></tr>
  *   <tr><td>路由策略</td><td><b>FIRST</b></td>
- *       <td>避免多 Pod 重复扫表浪费 DB；内存快照每节点独立，单节点跑足够（publishFullCache 本身全集群广播）</td></tr>
+ *       <td>避免多 Pod 重复扫表浪费 DB；单节点回填 Redis 足够</td></tr>
  *   <tr><td>阻塞处理策略</td><td>DISCARD_LATER</td>
  *       <td>上一次没跑完就跳过本次，避免快照状态错乱</td></tr>
  *   <tr><td>失败重试</td><td>0</td>

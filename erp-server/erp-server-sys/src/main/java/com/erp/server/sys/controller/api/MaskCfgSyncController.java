@@ -37,7 +37,7 @@ public class MaskCfgSyncController extends BaseController {
     }
 
     /**
-     * 手动触发一次同步。生产慎用——会瞬时扫表 + 必要时全集群广播配置刷新。
+     * 手动触发一次同步。生产慎用——会瞬时扫表 + 必要时刷新 Redis 配置缓存。
      *
      * <p>典型场景：刚改完脱敏规则想立刻验证；运维改完库想强制对账。</p>
      */
@@ -47,7 +47,7 @@ public class MaskCfgSyncController extends BaseController {
     }
 
     /**
-     * 重置内存快照。下一次扫描会触发 firstRun 分支，只填充快照不发广播。
+     * 重置内存快照。下一次扫描会触发 firstRun 分支，只填充快照不刷新 Redis。
      *
      * <p>典型场景：怀疑快照状态错乱（如 publish 失败后又恢复），重置后做"全量对账"。</p>
      */

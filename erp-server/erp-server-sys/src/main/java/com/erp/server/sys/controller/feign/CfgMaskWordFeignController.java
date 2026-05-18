@@ -25,7 +25,7 @@ public class CfgMaskWordFeignController extends BaseController {
     private CfgMaskWordService cfgMaskWordService;
 
     /**
-     * 拉取全量启用的脱敏词典
+     * 拉取全量未禁用的脱敏词典
      */
     @GetMapping("/listAll")
     public ApiResult<CfgMaskWordFullCacheDTO> listAll() {
@@ -33,7 +33,7 @@ public class CfgMaskWordFeignController extends BaseController {
     }
 
     /**
-     * 触发广播
+     * 刷新 Redis 缓存
      */
     @PostMapping("/refresh")
     public ApiResult<Boolean> refresh() {

@@ -153,6 +153,7 @@ public class MaskDiagnoseServiceImpl implements MaskDiagnoseService {
         v.setRecursive(fd.isRecursive());
         v.setHideWhenMasked(fd.isHideWhenMasked());
         v.setContainer(fd.isContainer());
+        v.setSort(fd.getSort());
         return v;
     }
 

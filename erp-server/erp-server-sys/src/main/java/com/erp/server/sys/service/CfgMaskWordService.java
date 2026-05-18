@@ -21,27 +21,27 @@ public interface CfgMaskWordService extends SuperService<CfgMaskWordEntity> {
     PagingVO<CfgMaskWordDTO.ListDTO> paging(PagingDTO<CfgMaskWordDTO.SearchParamDTO> dto);
 
     /**
-     * 新增；提交后自动触发广播
+     * 新增；提交后自动延迟双删 Redis 缓存
      */
     Boolean add(CfgMaskWordDTO.AddDTO dto);
 
     /**
-     * 修改；提交后自动触发广播
+     * 修改；提交后自动延迟双删 Redis 缓存
      */
     Boolean update(CfgMaskWordDTO.UpdateDTO dto);
 
     /**
-     * 批量删除（逻辑删除）；提交后自动触发广播
+     * 批量删除（逻辑删除）；提交后自动延迟双删 Redis 缓存
      */
     Boolean delete(BaseIdsDTO.IdsDTO dto);
 
     /**
-     * 拉取全量启用词典（Feign 暴露给业务节点冷启动兜底）
+     * 拉取全量未禁用词典（Feign 暴露给业务节点 Redis miss 兜底）
      */
     CfgMaskWordFullCacheDTO listAllForCache();
 
     /**
-     * 强制刷新：按当前表数据重建 FullCache，写入 Redis Bucket 并 publish
+     * 强制刷新：按当前表数据重建 FullCache 并写入 Redis
      */
     Boolean publishFullCache();
 }

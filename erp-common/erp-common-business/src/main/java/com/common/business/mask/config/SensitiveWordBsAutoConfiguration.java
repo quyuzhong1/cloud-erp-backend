@@ -21,11 +21,11 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>不加载 sensitive-word 内置 6w+ 通用敏感词字典：业务字段名/正常文本极易撞词，且与本框架职责无关；</li>
  *   <li>开启模式检测：手机号（11 位数字，{@code numCheckLen=11}）+ 邮箱 + URL + IPv4，
  *       这是 PII 自动识别的主力来源；</li>
- *   <li>业务自定义词典通过 {@link CfgMaskWordLocalCache#replay()} 在引擎就绪后增量灌入。</li>
+ *   <li>业务自定义词典通过 {@link CfgMaskWordLocalCache#replay()} 从 Redis 缓存灌入。</li>
  * </ul>
  *
  * <p>{@link SensitiveWordBs} 是线程安全的（参考 sensitive-word 文档），全局单例。
- * 后续运维变更通过 {@code addWord/removeWord} 增量更新，不重建对象。</p>
+ * 后续运维变更由 Redis cache-aside 版本检查触发 {@code addWord/removeWord} 增量更新，不重建对象。</p>
  *
  * @author cloud-erp
  */
@@ -54,8 +54,7 @@ public class SensitiveWordBsAutoConfiguration {
     }
 
     /**
-     * Bean 装配完成后回调，把本地缓存里已经预先 apply 过的词典全量重放给引擎。
-     * 用于覆盖"缓存先于引擎完成 init"的场景（@PostConstruct 顺序无保证时的兜底）。
+     * Bean 装配完成后回调，把 Redis 缓存里的词典全量重放给引擎。
      */
     @PostConstruct
     public void replayCache() {

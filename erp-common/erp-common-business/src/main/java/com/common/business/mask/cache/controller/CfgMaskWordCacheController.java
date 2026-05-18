@@ -12,7 +12,7 @@ import javax.annotation.Resource;
 import java.util.Map;
 
 /**
- * 脱敏词典本地缓存查询接口（运维侧排查用）
+ * 脱敏词典 Redis 缓存查询接口（运维侧排查用）
  *
  * @author cloud-erp
  */
@@ -24,13 +24,13 @@ public class CfgMaskWordCacheController extends BaseController {
     private CfgMaskWordLocalCache localCache;
 
     /**
-     * 返回当前节点本地缓存的全量词典快照
+     * 返回 Redis 词典缓存和当前 SensitiveWordBs 引擎镜像
      *
      * <p>响应字段：</p>
      * <ul>
-     *   <li>version：快照版本号（System.currentTimeMillis），0 表示未被填充过</li>
-     *   <li>denySize / allowSize：当前快照内黑/白名单条数</li>
-     *   <li>lastSyncMillis：本节点最近一次成功 apply 的时间戳，0 表示未 apply 过</li>
+     *   <li>redisVersion：Redis 缓存版本号</li>
+     *   <li>denySize / allowSize：当前引擎镜像内黑/白名单条数</li>
+     *   <li>lastSyncMillis：本节点最近一次同步引擎的时间戳，0 表示未同步过</li>
      *   <li>denyWords / allowWords：明细</li>
      * </ul>
      */

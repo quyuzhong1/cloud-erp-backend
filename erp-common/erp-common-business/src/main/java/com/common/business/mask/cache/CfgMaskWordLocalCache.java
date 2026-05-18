@@ -8,12 +8,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,21 +25,11 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 词典本地全量快照
+ * 脱敏词典 Redis cache-aside 访问器。
  *
- * <p>架构与 {@link CfgMaskFieldLocalCache} 一致：</p>
- * <ul>
- *   <li>启动时从 Redis Bucket {@link RedisCacheConstants#MASK_WORD_CFG_FULL_KEY} 同步一次冷启动数据；</li>
- *   <li>运行期订阅 {@link RedisCacheConstants#MASK_WORD_CFG_REFRESH_CHANNEL}（详见
- *       {@link com.common.business.mask.listener.CfgMaskWordRefreshListener}）；</li>
- *   <li>{@link #apply(CfgMaskWordFullCacheDTO)} 通过 {@code version} 单调递增校验自动忽略乱序消息；</li>
- *   <li>每次成功 apply 后做"差量计算"，把变化部分增量灌入 {@link SensitiveWordBs}，
- *       避免每次刷新都重建整棵 DFA。</li>
- * </ul>
- *
- * <p>{@link SensitiveWordBs} 通过 {@link ObjectProvider} 懒注入：缓存先于引擎初始化时不报错，
- * 引擎 Bean 就绪后由 {@link com.common.business.mask.config.SensitiveWordBsAutoConfiguration} 在
- * {@code @PostConstruct} 阶段重新触发 {@link #replay()} 一次。</p>
+ * <p>cfg_mask_word 的权威缓存放在 Redis。业务节点只保留一份 SensitiveWordBs 引擎镜像，
+ * 每次版本变化时按差量同步到引擎；Redis miss 时通过 {@link CfgMaskWordCacheLoader}
+ * 回源 sys 并回填 Redis。</p>
  *
  * @author cloud-erp
  */
@@ -45,103 +37,74 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class CfgMaskWordLocalCache {
 
+    private static final long VERSION_CHECK_INTERVAL_MS = 1000L;
+
     @Resource
     private RedissonClient redissonClient;
 
-    /**
-     * 用 ObjectProvider 防止 SensitiveWordBs 还没装配时（启动早期）报循环依赖。
-     * 真实使用时按需取一次。
-     */
-    @Resource
+    @Autowired
     private ObjectProvider<SensitiveWordBs> sensitiveWordBsProvider;
 
-    /**
-     * 当前生效的全量快照（不可变 Set + 版本号 + 最近一次同步时间）。
-     */
+    @Autowired
+    private ObjectProvider<CfgMaskWordCacheLoader> loaderProvider;
+
+    /** SensitiveWordBs 当前已同步的词典镜像，用于 diff 删除旧词。 */
     private volatile Snapshot snapshot = Snapshot.EMPTY;
 
+    private volatile long lastCheckMillis;
+
     /**
-     * 应用一次全量推送 / 持久化的词典；version 单调递增校验，忽略乱序/旧消息。
-     * apply 成功后按差量增量更新 {@link SensitiveWordBs}。
+     * AutoPiiMaskHandler 热路径调用：最多每秒检查一次 Redis 缓存版本。
      */
-    public synchronized void apply(CfgMaskWordFullCacheDTO payload) {
-        if (payload == null || payload.getVersion() <= snapshot.version) {
+    public void refreshEngineIfNeeded() {
+        long now = System.currentTimeMillis();
+        if (now - lastCheckMillis < VERSION_CHECK_INTERVAL_MS) {
             return;
         }
-        Set<String> nextDeny = new HashSet<>();
-        Set<String> nextAllow = new HashSet<>();
-        List<CfgMaskWordSnapshotEntry> data = payload.getData();
-        if (data != null) {
-            for (CfgMaskWordSnapshotEntry e : data) {
-                if (e == null || StringUtils.isBlank(e.getWord()) || e.getWordType() == null) {
-                    continue;
-                }
-                int type = e.getWordType();
-                if (type == CfgMaskWordSnapshotEntry.WORD_TYPE_DENY) {
-                    nextDeny.add(e.getWord());
-                } else if (type == CfgMaskWordSnapshotEntry.WORD_TYPE_ALLOW) {
-                    nextAllow.add(e.getWord());
-                }
+        synchronized (this) {
+            now = System.currentTimeMillis();
+            if (now - lastCheckMillis < VERSION_CHECK_INTERVAL_MS) {
+                return;
             }
+            lastCheckMillis = now;
+            applyIfChanged(loadPayload());
         }
-        Snapshot prev = this.snapshot;
-        Snapshot next = new Snapshot(
-                Collections.unmodifiableSet(nextDeny),
-                Collections.unmodifiableSet(nextAllow),
-                payload.getVersion(),
-                System.currentTimeMillis()
-        );
-        this.snapshot = next;
-
-        applyDiffToEngine(prev, next);
-        log.info("CfgMaskWordLocalCache apply ok, denySize={}, allowSize={}, version={}",
-                next.deny.size(), next.allow.size(), payload.getVersion());
     }
 
     /**
-     * 引擎完成构造后，把当前快照里的全量词重放给引擎。
-     * 用于"缓存先 apply、引擎后初始化"场景；幂等。
+     * 引擎完成构造后，把 Redis 中当前词典重放给引擎。
      */
     public synchronized void replay() {
-        Snapshot s = this.snapshot;
-        if (s == Snapshot.EMPTY) {
+        CfgMaskWordFullCacheDTO payload = loadPayload();
+        if (payload != null && payload.getVersion() != snapshot.version) {
+            applyIfChanged(payload);
             return;
         }
-        SensitiveWordBs bs = sensitiveWordBsProvider.getIfAvailable();
-        if (bs == null) {
-            return;
-        }
-        try {
-            if (!s.deny.isEmpty()) {
-                bs.addWord(new ArrayList<>(s.deny));
-            }
-            if (!s.allow.isEmpty()) {
-                bs.addWordAllow(new ArrayList<>(s.allow));
-            }
-            log.info("CfgMaskWordLocalCache replay ok, denySize={}, allowSize={}",
-                    s.deny.size(), s.allow.size());
-        } catch (Throwable e) {
-            log.warn("CfgMaskWordLocalCache replay to SensitiveWordBs failed", e);
-        }
+        replaySnapshotToEngine(snapshot);
     }
 
-    /** 当前黑名单视图（不可变）。 */
+    /** 当前黑名单镜像（不可变）。 */
     public Set<String> denyWords() {
         return snapshot.deny;
     }
 
-    /** 当前白名单视图（不可变）。 */
+    /** 当前白名单镜像（不可变）。 */
     public Set<String> allowWords() {
         return snapshot.allow;
     }
 
     /**
-     * 当前快照运维视图：version / size / lastSyncMillis / data
+     * 运维视图：展示 Redis 缓存和当前引擎镜像状态。
      */
     public Map<String, Object> snapshotView() {
-        Snapshot s = this.snapshot;
+        CfgMaskWordFullCacheDTO payload = loadPayload();
         Map<String, Object> view = new LinkedHashMap<>();
-        view.put("version", s.version);
+        view.put("cacheMode", "redis-cache-aside");
+        view.put("redisKey", RedisCacheConstants.MASK_WORD_CFG_FULL_KEY);
+        view.put("redisVersion", payload == null ? 0L : payload.getVersion());
+        view.put("redisSize", payload == null || payload.getData() == null ? 0 : payload.getData().size());
+        Snapshot s = this.snapshot;
+        view.put("engineVersion", s.version);
         view.put("denySize", s.deny.size());
         view.put("allowSize", s.allow.size());
         view.put("lastSyncMillis", s.lastSyncMillis);
@@ -153,31 +116,89 @@ public class CfgMaskWordLocalCache {
     @PostConstruct
     public void init() {
         try {
-            RBucket<String> bucket = redissonClient.getBucket(RedisCacheConstants.MASK_WORD_CFG_FULL_KEY);
-            String body = bucket.get();
-            if (body == null || body.isEmpty()) {
-                log.info("CfgMaskWordLocalCache init: redis bucket empty, wait for next broadcast");
-                return;
-            }
-            CfgMaskWordFullCacheDTO payload = JSON.parseObject(body, CfgMaskWordFullCacheDTO.class);
-            apply(payload);
+            replay();
         } catch (Throwable e) {
-            log.warn("CfgMaskWordLocalCache init load from redis bucket failed, wait for next broadcast", e);
+            log.warn("CfgMaskWord redis cache init failed, engine starts without custom dict", e);
         }
     }
 
-    /**
-     * 差量更新到 SensitiveWordBs：
-     * <ul>
-     *   <li>需要新增的：next 有但 prev 没有；</li>
-     *   <li>需要删除的：prev 有但 next 没有；</li>
-     * </ul>
-     * 失败时仅打日志：本地 snapshot 已切换，重启 / 下次 replay 会重新对齐。
-     */
+    private void applyIfChanged(CfgMaskWordFullCacheDTO payload) {
+        if (payload == null || payload.getVersion() == snapshot.version) {
+            return;
+        }
+        Snapshot next = toSnapshot(payload);
+        Snapshot prev = this.snapshot;
+        this.snapshot = next;
+        applyDiffToEngine(prev, next);
+        log.info("CfgMaskWord redis cache synced to engine, denySize={}, allowSize={}, version={}",
+                next.deny.size(), next.allow.size(), next.version);
+    }
+
+    private CfgMaskWordFullCacheDTO loadPayload() {
+        RBucket<String> bucket = redissonClient.getBucket(RedisCacheConstants.MASK_WORD_CFG_FULL_KEY);
+        String body = null;
+        try {
+            body = bucket.get();
+        } catch (Throwable e) {
+            log.warn("CfgMaskWord redis get failed, fallback to loader, msg={}", e.getMessage());
+        }
+        if (body != null && !body.isEmpty()) {
+            try {
+                return JSON.parseObject(body, CfgMaskWordFullCacheDTO.class);
+            } catch (Throwable e) {
+                log.warn("CfgMaskWord redis payload parse failed, fallback to loader, msg={}", e.getMessage());
+            }
+        }
+        CfgMaskWordFullCacheDTO loaded = loadFromSys();
+        if (loaded != null) {
+            try {
+                bucket.set(JSON.toJSONString(loaded));
+            } catch (Throwable e) {
+                log.warn("CfgMaskWord redis set after loader failed, msg={}", e.getMessage());
+            }
+        }
+        return loaded;
+    }
+
+    private CfgMaskWordFullCacheDTO loadFromSys() {
+        CfgMaskWordCacheLoader loader = loaderProvider.getIfAvailable();
+        if (loader == null) {
+            return null;
+        }
+        CfgMaskWordFullCacheDTO loaded = loader.load();
+        return loaded == null ? null : loaded;
+    }
+
+    private static Snapshot toSnapshot(CfgMaskWordFullCacheDTO payload) {
+        Set<String> deny = new HashSet<>();
+        Set<String> allow = new HashSet<>();
+        List<CfgMaskWordSnapshotEntry> data = payload.getData();
+        if (data != null && !data.isEmpty()) {
+            List<CfgMaskWordSnapshotEntry> ordered = new ArrayList<>(data);
+            ordered.sort(Comparator
+                    .comparingInt((CfgMaskWordSnapshotEntry e) -> e.getSort() == null ? 0 : e.getSort())
+                    .thenComparing(e -> e.getWord() == null ? "" : e.getWord()));
+            for (CfgMaskWordSnapshotEntry e : ordered) {
+                if (e == null || StringUtils.isBlank(e.getWord()) || e.getWordType() == null) {
+                    continue;
+                }
+                if (e.getWordType() == CfgMaskWordSnapshotEntry.WORD_TYPE_DENY) {
+                    deny.add(e.getWord());
+                } else if (e.getWordType() == CfgMaskWordSnapshotEntry.WORD_TYPE_ALLOW) {
+                    allow.add(e.getWord());
+                }
+            }
+        }
+        return new Snapshot(
+                deny.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(deny),
+                allow.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(allow),
+                payload.getVersion(),
+                System.currentTimeMillis());
+    }
+
     private void applyDiffToEngine(Snapshot prev, Snapshot next) {
         SensitiveWordBs bs = sensitiveWordBsProvider.getIfAvailable();
         if (bs == null) {
-            // 引擎还没装配；等引擎 Bean 启动后由 SensitiveWordBsAutoConfiguration 调 replay() 全量重放
             return;
         }
         try {
@@ -199,17 +220,39 @@ public class CfgMaskWordLocalCache {
                 bs.removeWordAllow(allowToRemove);
             }
         } catch (Throwable e) {
-            log.warn("CfgMaskWordLocalCache applyDiffToEngine failed, snapshot still updated", e);
+            log.warn("CfgMaskWord sync diff to SensitiveWordBs failed", e);
+        }
+    }
+
+    private void replaySnapshotToEngine(Snapshot s) {
+        if (s == null || s == Snapshot.EMPTY) {
+            return;
+        }
+        SensitiveWordBs bs = sensitiveWordBsProvider.getIfAvailable();
+        if (bs == null) {
+            return;
+        }
+        try {
+            if (!s.deny.isEmpty()) {
+                bs.addWord(new ArrayList<>(s.deny));
+            }
+            if (!s.allow.isEmpty()) {
+                bs.addWordAllow(new ArrayList<>(s.allow));
+            }
+            log.info("CfgMaskWord replay to engine ok, denySize={}, allowSize={}, version={}",
+                    s.deny.size(), s.allow.size(), s.version);
+        } catch (Throwable e) {
+            log.warn("CfgMaskWord replay to SensitiveWordBs failed", e);
         }
     }
 
     private static List<String> diff(Set<String> minuend, Set<String> subtrahend) {
-        if (minuend.isEmpty()) {
+        if (minuend == null || minuend.isEmpty()) {
             return Collections.emptyList();
         }
         List<String> result = new ArrayList<>();
         for (String s : minuend) {
-            if (!subtrahend.contains(s)) {
+            if (subtrahend == null || !subtrahend.contains(s)) {
                 result.add(s);
             }
         }
@@ -226,8 +269,8 @@ public class CfgMaskWordLocalCache {
         private final long lastSyncMillis;
 
         private Snapshot(Set<String> deny, Set<String> allow, long version, long lastSyncMillis) {
-            this.deny = deny;
-            this.allow = allow;
+            this.deny = deny == null ? Collections.emptySet() : deny;
+            this.allow = allow == null ? Collections.emptySet() : allow;
             this.version = version;
             this.lastSyncMillis = lastSyncMillis;
         }

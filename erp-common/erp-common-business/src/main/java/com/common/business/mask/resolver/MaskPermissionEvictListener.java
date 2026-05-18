@@ -30,8 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <li><b>默认实现无害</b>：业务侧未引入 erp-rpc-sys 时，注入的是
  *       {@code LoginUserMaskPermissionResolver}，{@link MaskPermissionResolver#evict} 默认
  *       no-op，listener 收到广播也不会出错。</li>
- *   <li><b>沿用项目 Pub/Sub 模式</b>：与 {@code CfgMaskFieldRefreshListener /
- *       DorisQuerySettingRefreshListener} 完全同构，基于 Redisson {@link RTopic}，
+ *   <li><b>沿用项目 Pub/Sub 模式</b>：与 {@code DorisQuerySettingRefreshListener} 同构，基于 Redisson {@link RTopic}，
  *       {@code @PostConstruct} 注册、{@code @PreDestroy} 解注册。</li>
  *   <li><b>{@code required=false} 的 RedissonClient</b>：极端环境（如无 Redis 的本地
  *       单元测试 / 离线工具进程）下不强制要求 Redis，listener 安静禁用。</li>

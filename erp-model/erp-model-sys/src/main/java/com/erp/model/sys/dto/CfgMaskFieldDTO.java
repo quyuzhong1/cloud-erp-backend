@@ -43,7 +43,8 @@ public class CfgMaskFieldDTO implements Serializable {
          * "不可见"语义开关：true=脱敏后置 null（隐藏），false=按 strategy 脱敏展示
          */
         private Boolean hideWhenMasked = Boolean.FALSE;
-        private Boolean enabled = Boolean.TRUE;
+        private Boolean disabled = Boolean.FALSE;
+        private Integer sort = 0;
         private String remark;
     }
 
@@ -69,7 +70,7 @@ public class CfgMaskFieldDTO implements Serializable {
         private String strategy;
         private String permissionCode;
         private Boolean hideWhenMasked;
-        private Boolean enabled;
+        private Boolean disabled;
     }
 
     @Data
@@ -85,7 +86,8 @@ public class CfgMaskFieldDTO implements Serializable {
         private String customReplace;
         private String permissionCode;
         private Boolean hideWhenMasked;
-        private Boolean enabled;
+        private Boolean disabled;
+        private Integer sort;
         private String remark;
         private Integer version;
         private LocalDateTime createTime;

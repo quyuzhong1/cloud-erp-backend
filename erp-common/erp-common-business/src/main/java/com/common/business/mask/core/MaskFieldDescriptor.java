@@ -27,6 +27,11 @@ public final class MaskFieldDescriptor {
     private final boolean hideWhenMasked;
 
     /**
+     * 多条配置规则作用在同一字段时的执行顺序，越小越先执行。
+     */
+    private final int sort;
+
+    /**
      * 是否是"嵌套对象 / 集合 / Map" —— 需要继续向下递归
      * （即使该字段没有 @Mask，但其类型可能内部包含被 @Mask 的字段）
      */
@@ -35,6 +40,13 @@ public final class MaskFieldDescriptor {
     public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
                                String permission, boolean recursive, boolean keepEmpty,
                                boolean hideWhenMasked, boolean container) {
+        this(field, strategy, regex, replacement, permission, recursive, keepEmpty,
+                hideWhenMasked, container, 0);
+    }
+
+    public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
+                               String permission, boolean recursive, boolean keepEmpty,
+                               boolean hideWhenMasked, boolean container, int sort) {
         this.field = field;
         this.strategy = strategy;
         this.regex = regex == null ? "" : regex;
@@ -44,6 +56,7 @@ public final class MaskFieldDescriptor {
         this.keepEmpty = keepEmpty;
         this.hideWhenMasked = hideWhenMasked;
         this.container = container;
+        this.sort = sort;
     }
 
     public Field getField() {
@@ -80,6 +93,10 @@ public final class MaskFieldDescriptor {
 
     public boolean isContainer() {
         return container;
+    }
+
+    public int getSort() {
+        return sort;
     }
 
     /**

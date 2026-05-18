@@ -5,8 +5,8 @@
     <!--
       cfg_mask_field 整表 hash
       只覆盖影响脱敏行为的列：class_path / field_name / strategy / custom_regex /
-      custom_replace / permission_code / hide_when_masked / enabled
-      remark 等无关字段改动不会触发 publishFullCache
+      custom_replace / permission_code / hide_when_masked / disabled / sort
+      remark 等无关字段改动不会触发 Redis 缓存刷新
       空表时 string_agg 返回 null，外面套 coalesce 兜底为空字符串
     -->
     <select id="scanCfgMaskFieldHash" resultType="java.lang.String">
@@ -19,7 +19,8 @@
                    || '|' || coalesce(custom_replace, '')
                    || '|' || coalesce(permission_code, '')
                    || '|' || coalesce(hide_when_masked::text, '')
-                   || '|' || coalesce(enabled::text, ''),
+                   || '|' || coalesce(disabled::text, '')
+                   || '|' || coalesce(sort::text, ''),
                ',' ORDER BY id::text)), '') AS fp
         FROM cfg_mask_field
         WHERE is_deleted = false
@@ -27,7 +28,7 @@
 
     <!--
       cfg_mask_word 整表 hash
-      只覆盖影响脱敏行为的列：word_type / word / enabled
+      只覆盖影响脱敏行为的列：word_type / word / disabled / sort
       category / remark 等业务标记不参与
     -->
     <select id="scanCfgMaskWordHash" resultType="java.lang.String">
@@ -35,7 +36,8 @@
                    id::text
                    || '|' || coalesce(word_type::text, '')
                    || '|' || coalesce(word, '')
-                   || '|' || coalesce(enabled::text, ''),
+                   || '|' || coalesce(disabled::text, '')
+                   || '|' || coalesce(sort::text, ''),
                ',' ORDER BY id::text)), '') AS fp
         FROM cfg_mask_word
         WHERE is_deleted = false

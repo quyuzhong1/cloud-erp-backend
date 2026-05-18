@@ -20,7 +20,6 @@ import com.erp.server.sys.service.CfgMaskWordService;
 
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RBucket;
-import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 脱敏词典 服务实现
  *
- * <p>所有写操作（add / update / delete）在事务提交后调用 {@link #publishFullCache()}
- * 触发"先写 Bucket 再 publish"的全量广播流程，与 {@code CfgMaskFieldServiceImpl} 完全对齐。</p>
+ * <p>所有写操作（add / update / delete）在事务提交后对 Redis 全量缓存做延迟双删；
+ * 业务节点下次 AUTO 脱敏时 Redis miss 后回源 sys 并回填缓存。</p>
  *
  * @author cloud-erp
  */
@@ -49,7 +48,7 @@ public class CfgMaskWordServiceImpl
         implements CfgMaskWordService {
 
     /**
-     * publish body 体积告警阈值（字节）
+     * Redis 全量缓存 body 体积告警阈值（字节）
      *
      * <p>词典正常规模在百~千词（每词 ~30 字节），body 不应超过 1MB。超过则可能：</p>
      * <ul>
@@ -63,6 +62,9 @@ public class CfgMaskWordServiceImpl
 
     @Resource
     private RedissonClient redissonClient;
+
+    @Resource
+    private MaskCfgRedisCacheEvictor maskCfgRedisCacheEvictor;
 
     @Override
     public PagingVO<CfgMaskWordDTO.ListDTO> paging(PagingDTO<CfgMaskWordDTO.SearchParamDTO> dto) {
@@ -81,12 +83,15 @@ public class CfgMaskWordServiceImpl
         }
         CfgMaskWordEntity entity = new CfgMaskWordEntity();
         BeanUtil.copyProperties(dto, entity);
-        if (entity.getEnabled() == null) {
-            entity.setEnabled(Boolean.TRUE);
+        if (entity.getDisabled() == null) {
+            entity.setDisabled(Boolean.FALSE);
+        }
+        if (entity.getSort() == null) {
+            entity.setSort(0);
         }
         boolean ok = this.save(entity);
         if (ok) {
-            publishFullCacheSafely();
+            evictCacheSafely("add");
         }
         return ok;
     }
@@ -108,9 +113,15 @@ public class CfgMaskWordServiceImpl
             }
         }
         BeanUtil.copyProperties(dto, entity, "id");
+        if (entity.getDisabled() == null) {
+            entity.setDisabled(Boolean.FALSE);
+        }
+        if (entity.getSort() == null) {
+            entity.setSort(0);
+        }
         boolean ok = this.updateById(entity);
         if (ok) {
-            publishFullCacheSafely();
+            evictCacheSafely("update");
         }
         return ok;
     }
@@ -120,7 +131,7 @@ public class CfgMaskWordServiceImpl
     public Boolean delete(BaseIdsDTO.IdsDTO dto) {
         boolean ok = this.removeByIds(dto.getIds());
         if (ok) {
-            publishFullCacheSafely();
+            evictCacheSafely("delete");
         }
         return ok;
     }
@@ -137,27 +148,28 @@ public class CfgMaskWordServiceImpl
     }
 
     /**
-     * 触发广播：在事务内则延迟到 {@code afterCommit}，否则立即 publish。
-     * 见 {@code CfgMaskFieldServiceImpl#publishFullCacheSafely} 的同款说明。
+     * 触发延迟双删：在事务内则延迟到 {@code afterCommit}，否则立即删除。
      */
-    private void publishFullCacheSafely() {
+    private void evictCacheSafely(String source) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     try {
-                        doPublish(false);
+                        maskCfgRedisCacheEvictor.doubleDelete(
+                                RedisCacheConstants.MASK_WORD_CFG_FULL_KEY, "cfg_mask_word:" + source);
                     } catch (Throwable e) {
-                        log.warn("CfgMaskWord publish after commit failed, but db change is committed", e);
+                        log.warn("CfgMaskWord redis cache evict after commit failed, but db change is committed", e);
                     }
                 }
             });
             return;
         }
         try {
-            doPublish(false);
+            maskCfgRedisCacheEvictor.doubleDelete(
+                    RedisCacheConstants.MASK_WORD_CFG_FULL_KEY, "cfg_mask_word:" + source);
         } catch (Throwable e) {
-            log.warn("CfgMaskWord publishFullCacheSafely failed, but db change is committed", e);
+            log.warn("CfgMaskWord redis cache evict failed, but db change is committed", e);
         }
     }
 
@@ -167,7 +179,7 @@ public class CfgMaskWordServiceImpl
             String body = JSON.toJSONString(payload);
 
             if (body.length() > BODY_SIZE_WARN_THRESHOLD) {
-                log.warn("CfgMaskWord publishFullCache body too large, size={} bytes, words={}, "
+                log.warn("CfgMaskWord redis cache body too large, size={} bytes, words={}, "
                                 + "consider word lifecycle review",
                         body.length(), payload.getData().size());
             }
@@ -175,15 +187,13 @@ public class CfgMaskWordServiceImpl
             RBucket<String> bucket = redissonClient.getBucket(RedisCacheConstants.MASK_WORD_CFG_FULL_KEY);
             bucket.set(body);
 
-            RTopic topic = redissonClient.getTopic(RedisCacheConstants.MASK_WORD_CFG_REFRESH_CHANNEL);
-            topic.publish(body);
-            log.info("CfgMaskWord publishFullCache ok, words={}, bodyBytes={}, version={}",
+            log.info("CfgMaskWord rebuild redis cache ok, words={}, bodyBytes={}, version={}",
                     payload.getData().size(), body.length(), payload.getVersion());
             return true;
         } catch (Throwable e) {
-            log.warn("CfgMaskWord publishFullCache failed", e);
+            log.warn("CfgMaskWord rebuild redis cache failed", e);
             if (throwOnError) {
-                throw new ServiceException("广播脱敏词典失败：" + e.getMessage());
+                throw new ServiceException("刷新脱敏词典 Redis 缓存失败：" + e.getMessage());
             }
             return false;
         }
@@ -212,7 +222,8 @@ public class CfgMaskWordServiceImpl
                 && entity.getWordType() != CfgMaskWordSnapshotEntry.WORD_TYPE_ALLOW) {
             return null;
         }
-        return new CfgMaskWordSnapshotEntry(entity.getWordType(), entity.getWord());
+        return new CfgMaskWordSnapshotEntry(entity.getWordType(), entity.getWord(),
+                entity.getSort() == null ? 0 : entity.getSort());
     }
 
     private void validateWordType(Integer wordType) {

@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 /**
  * 脱敏词典 Feign 契约
  *
- * <p>提供给业务节点冷启动兜底拉取（在 Redis Bucket 不可用 / 内容缺失时使用）。
- * 正常运行期，业务节点优先靠 Redis Pub/Sub 推送 + Bucket 持久化。</p>
+ * <p>提供给业务节点 Redis cache-aside 回源使用（在 Redis Bucket 内容缺失时使用）。</p>
  *
  * @author cloud-erp
  */
@@ -20,13 +19,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 public interface CfgMaskWordFeign {
 
     /**
-     * 拉取全量启用词典（不含已删除/已禁用）
+     * 拉取全量未禁用词典（不含已删除/已禁用）
      */
     @GetMapping("/feign/cfgMaskWord/listAll")
     ApiResult<CfgMaskWordFullCacheDTO> listAll();
 
     /**
-     * 触发一次广播：按当前表数据重新生成 FullCache 写入 Bucket 并 publish
+     * 按当前表数据重新生成 FullCache 写入 Redis
      */
     @PostMapping("/feign/cfgMaskWord/refresh")
     ApiResult<Boolean> refresh();

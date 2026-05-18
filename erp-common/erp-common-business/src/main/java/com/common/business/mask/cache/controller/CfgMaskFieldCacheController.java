@@ -27,10 +27,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 字段脱敏配置本地缓存查询接口
+ * 字段脱敏配置 Redis 缓存查询接口
  *
  * <p>放在 {@code erp-common-business} 下，所有依赖该 common 模块的业务服务自动暴露此接口。
- * 用途：排查"某个 Pod 本地缓存是否被正确填充 / 版本号是否陈旧 / 类元数据缓存命中数"。</p>
+ * 用途：排查"Redis 全量缓存是否被正确填充 / 版本号是否陈旧 / 类元数据缓存命中数"。</p>
  *
  * @author cloud-erp
  */
@@ -58,14 +58,13 @@ public class CfgMaskFieldCacheController extends BaseController {
     private MaskPermissionEvictPublisher permissionEvictPublisher;
 
     /**
-     * 返回当前节点本地缓存的全量配置快照
+     * 返回 Redis 全量配置缓存快照
      *
      * <p>响应字段：</p>
      * <ul>
      *   <li>version：快照版本号（System.currentTimeMillis），0 表示未被填充过</li>
      *   <li>size：当前快照内 (className#fieldName) 配置条数</li>
-     *   <li>lastSyncMillis：本节点最近一次成功 apply 的时间戳，0 表示未 apply 过</li>
-     *   <li>data：(className#fieldName) -&gt; CfgMaskFieldSnapshotEntry 明细</li>
+     *   <li>data：Redis 中的 CfgMaskFieldSnapshotEntry 明细</li>
      *   <li>descriptorCacheSize：类元数据已缓存的类数量</li>
      * </ul>
      */

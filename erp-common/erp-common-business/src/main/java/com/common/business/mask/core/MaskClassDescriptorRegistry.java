@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 类元数据注册中心：懒加载 + 永久缓存
+ * 类元数据注册中心：懒加载 + 缓存
  *
  * <p>关键性能优化：</p>
  * <ul>
@@ -66,7 +67,7 @@ public class MaskClassDescriptorRegistry {
     private final ConcurrentHashMap<Class<?>, MaskClassDescriptor> cache = new ConcurrentHashMap<>(256);
 
     /**
-     * 配置表本地快照（可空：未启用配置或 sys 服务暂不可用时也能正常运行）
+     * 配置表 Redis cache-aside 访问器（可空：未配置或 sys 服务暂不可用时也能正常运行）
      */
     @Autowired(required = false)
     private CfgMaskFieldLocalCache configCache;
@@ -82,6 +83,9 @@ public class MaskClassDescriptorRegistry {
     public MaskClassDescriptor of(Class<?> clazz) {
         if (clazz == null) {
             return MaskClassDescriptor.NO_MASK;
+        }
+        if (configCache != null && configCache.refreshIfNeeded()) {
+            clear();
         }
         return cache.computeIfAbsent(clazz, this::scan);
     }
@@ -137,61 +141,49 @@ public class MaskClassDescriptorRegistry {
             if (Modifier.isStatic(mod) || Modifier.isFinal(mod) || Modifier.isTransient(mod)) {
                 continue;
             }
-            MaskFieldDescriptor desc = buildFieldDescriptor(clazz, field);
-            if (desc != null) {
+            List<MaskFieldDescriptor> descList = buildFieldDescriptors(clazz, field);
+            if (!descList.isEmpty()) {
                 field.setAccessible(true);
-                descriptors.add(desc);
+                descriptors.addAll(descList);
             }
         }
         return descriptors.isEmpty() ? MaskClassDescriptor.NO_MASK : new MaskClassDescriptor(descriptors);
     }
 
-    private MaskFieldDescriptor buildFieldDescriptor(Class<?> ownerClass, Field field) {
+    private List<MaskFieldDescriptor> buildFieldDescriptors(Class<?> ownerClass, Field field) {
         Mask anno = field.getAnnotation(Mask.class);
-        CfgMaskFieldSnapshotEntry config = configCache != null
-                ? configCache.get(ownerClass.getName(), field.getName())
-                : null;
+        List<CfgMaskFieldSnapshotEntry> configs = configCache != null
+                ? configCache.getRules(ownerClass.getName(), field.getName())
+                : Collections.emptyList();
         boolean hasAnno = anno != null;
-        boolean hasConfig = config != null;
+        boolean hasConfig = configs != null && !configs.isEmpty();
 
         if (!hasAnno && !hasConfig) {
             // 无显式脱敏配置：判断是不是嵌套容器（需要继续向下递归）
             if (isContainerType(field)) {
-                return new MaskFieldDescriptor(field, MaskStrategy.AUTO_FROM_CONFIG, "", "***", "",
-                        true, true, false, true);
+                return Collections.singletonList(new MaskFieldDescriptor(field, MaskStrategy.AUTO_FROM_CONFIG, "", "***", "",
+                        true, true, false, true));
             }
-            return null;
-        }
-
-        // 配置表覆盖注解
-        MaskStrategy strategy;
-        String regex;
-        String replacement;
-        String permission;
-        boolean recursive;
-        boolean keepEmpty;
-        boolean hideWhenMasked;
-        if (hasConfig) {
-            strategy = config.getStrategy();
-            regex = config.getRegex();
-            replacement = config.getReplacement();
-            permission = config.getPermission();
-            recursive = hasAnno ? anno.recursive() : true;
-            keepEmpty = hasAnno ? anno.keepEmpty() : true;
-            hideWhenMasked = config.isHideWhenMasked();
-        } else {
-            strategy = anno.strategy();
-            regex = anno.regex();
-            replacement = anno.replacement();
-            permission = anno.permission();
-            recursive = anno.recursive();
-            keepEmpty = anno.keepEmpty();
-            hideWhenMasked = anno.hideWhenMasked();
+            return Collections.emptyList();
         }
 
         boolean container = isContainerType(field);
-        return new MaskFieldDescriptor(field, strategy, regex, replacement, permission,
-                recursive, keepEmpty, hideWhenMasked, container);
+        if (hasConfig) {
+            List<MaskFieldDescriptor> result = new ArrayList<>(configs.size());
+            for (CfgMaskFieldSnapshotEntry config : configs) {
+                result.add(new MaskFieldDescriptor(field, config.getStrategy(), config.getRegex(),
+                        config.getReplacement(), config.getPermission(),
+                        hasAnno ? anno.recursive() : true,
+                        hasAnno ? anno.keepEmpty() : true,
+                        config.isHideWhenMasked(), container,
+                        config.getSort() == null ? 0 : config.getSort()));
+            }
+            return result;
+        }
+
+        return Collections.singletonList(new MaskFieldDescriptor(field, anno.strategy(), anno.regex(),
+                anno.replacement(), anno.permission(), anno.recursive(), anno.keepEmpty(),
+                anno.hideWhenMasked(), container));
     }
 
     /**

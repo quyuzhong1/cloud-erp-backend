@@ -18,8 +18,8 @@ import lombok.experimental.Accessors;
  *   <li>{@code word_type=1} 白名单：豁免（用于"长得像 PII 但其实不是"的特殊串）。</li>
  * </ul>
  *
- * <p>(word_type, word) 唯一索引；变更通过 Redis Pub/Sub 广播给各业务节点，
- * 节点收到通知后调 {@code SensitiveWordBs.removeWord/addWord} 增量刷新引擎。</p>
+ * <p>(word_type, word) 唯一索引；变更后删除 Redis 全量缓存，业务节点按 cache-aside
+ * 回源最新词典并同步 {@code SensitiveWordBs} 引擎。</p>
  *
  * @author cloud-erp
  */
@@ -57,10 +57,16 @@ public class CfgMaskWordEntity extends BaseEntity<CfgMaskWordEntity> {
     private String word;
 
     /**
-     * 是否启用：false 时不灌入引擎
+     * 是否禁用：true 时不灌入引擎
      */
-    @TableField("enabled")
-    private Boolean enabled;
+    @TableField("disabled")
+    private Boolean disabled;
+
+    /**
+     * 词典灌入顺序，越小越先处理
+     */
+    @TableField("sort")
+    private Integer sort;
 
     /**
      * 备注
@@ -71,5 +77,6 @@ public class CfgMaskWordEntity extends BaseEntity<CfgMaskWordEntity> {
     public static final String WORD_TYPE = "word_type";
     public static final String CATEGORY = "category";
     public static final String WORD = "word";
-    public static final String ENABLED = "enabled";
+    public static final String DISABLED = "disabled";
+    public static final String SORT = "sort";
 }
