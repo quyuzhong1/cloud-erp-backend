@@ -3824,11 +3824,53 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_NOT_FOUND_FOR_SOURCE);
         }
         declareBillEntity.setSenderId(cfgDeclareRule.getSenderId());
-        declareBillEntity.setReceiverId(cfgDeclareRule.getReceiverId());
         declareBillEntity.setSenderName(cfgDeclareRule.getSenderName());
-        declareBillEntity.setReceiverName(cfgDeclareRule.getReceiverName());
         declareBillEntity.setSenderType(cfgDeclareRule.getSenderType());
+
+        fillBatchDeclareReceiver(type, headerParamDTO.getSourceDeliveryDetailList(), cfgDeclareRule, declareBillEntity);
+    }
+
+    private void fillBatchDeclareReceiver(String type,
+                                          List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList,
+                                          CfgDeclareRuleEntity cfgDeclareRule,
+                                          TmsDeclareBillEntity declareBillEntity) {
+        declareBillEntity.setReceiverId(cfgDeclareRule.getReceiverId());
+        declareBillEntity.setReceiverName(cfgDeclareRule.getReceiverName());
         declareBillEntity.setReceiverType(cfgDeclareRule.getReceiverType());
+
+        if (!CharSequenceUtil.equals(type, SourceTypeEnum.B2B_DECLARE_BILL.getCode())
+                || !CharSequenceUtil.equals(cfgDeclareRule.getReceiverType(), CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode())
+                || CollUtil.isEmpty(sourceDetailList)) {
+            return;
+        }
+
+        List<String> sourceIdList = sourceDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return;
+        }
+
+        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeFeign.listByIds(sourceIdList);
+        if (CollUtil.isEmpty(noticeList)) {
+            return;
+        }
+        Map<String, SoDeliveryNoticeEntity> noticeMap = noticeList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StringUtils.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, Function.identity(), (a, b) -> a));
+
+        for (String sourceId : sourceIdList) {
+            SoDeliveryNoticeEntity notice = noticeMap.get(sourceId);
+            if (Objects.isNull(notice) || StringUtils.isBlank(notice.getCustomerId())) {
+                continue;
+            }
+            declareBillEntity.setReceiverId(notice.getCustomerId());
+            declareBillEntity.setReceiverName(notice.getCustomerName());
+            return;
+        }
     }
 
     /**

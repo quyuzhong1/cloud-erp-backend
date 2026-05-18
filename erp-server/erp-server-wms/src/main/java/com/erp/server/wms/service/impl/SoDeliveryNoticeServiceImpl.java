@@ -1028,7 +1028,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (ObjectUtil.isEmpty(deliveryNoticeEntity)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货通知单");
         }
-        if (CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
+        if (!CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
             throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE);
         }
         deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
@@ -1336,7 +1336,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
-        //TODO 待加审核流程
+        //已生成报关不支持反审核
+        if (CharSequenceUtil.equals(entity.getDeclareStatus(), WmsDeclareStatusEnum.FINISH.getCode())) {
+            throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE);
+        }
 
         //下推出库单不能反审核
         List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getId()));
