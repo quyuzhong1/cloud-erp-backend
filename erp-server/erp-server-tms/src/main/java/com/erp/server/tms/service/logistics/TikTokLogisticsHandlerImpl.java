@@ -79,16 +79,22 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         Map<String, String> authMap = chanelQueryVO.getAuthMap();
         List<LogisticsSaleChannelEntity> resuletList = new ArrayList<>();
-        List<ShippingProvidersBean> providersBeanList = tikTokShipperService.sendTikTokLogisticsChannel(authMap.get("shopId"));
-        for (ShippingProvidersBean providerDTO : providersBeanList) {
-            LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity()
-                    .setCode(providerDTO.getId())
-                    .setPlatformChannelId(providerDTO.getId())
-                    .setCnName(providerDTO.getName())
-                    .setLogisticsPlatform(LogisticsPlatformEnum.TIK_TOK.getCode());
-            resuletList.add(logisticsSaleChannelEntity);
+        try {
+            List<ShippingProvidersBean> providersBeanList = tikTokShipperService.sendTikTokLogisticsChannel(authMap.get("shopId"));
+            for (ShippingProvidersBean providerDTO : providersBeanList) {
+                LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity()
+                        .setCode(providerDTO.getId())
+                        .setPlatformChannelId(providerDTO.getId())
+                        .setCnName(providerDTO.getName())
+                        .setLogisticsPlatform(LogisticsPlatformEnum.TIK_TOK.getCode());
+                resuletList.add(logisticsSaleChannelEntity);
+            }
+            return success(resuletList);
+        }catch (Exception e){
+            log.error("TikTok获取店铺信息异常，shopId: {}", authMap.get("shopId"), e);
+            throw new ServiceException("TikTok获取店铺信息异常："+e.getMessage());
         }
-        return success(resuletList);
+
     }
 
     @Override
