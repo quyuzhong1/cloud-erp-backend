@@ -133,4 +133,23 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      */
     AfterSalePackDTO.ViewDTO viewByCode(String code);
 
+    /**
+     * 根据code批量查询详情
+     *
+     * @param codes 箱唛号列表
+     * @return List<AfterSalePackDTO.ViewDTO>
+     */
+    List<AfterSalePackDTO.ViewDTO> viewByCodes(List<String> codes);
+
+    /**
+     * 将指定装箱单批量标记为已移仓（is_move_warehouse = true）。
+     * <p>
+     * 方法内部会<b>重新从库查询</b>最新的 is_move_warehouse 状态，若发现已有箱唛被标记为已移仓
+     * （说明存在并发/重复提交），直接抛出异常终止整个事务，防止重复生成移仓单。
+     * 确认均未移仓后，使用条件更新（WHERE is_move_warehouse = false）保证原子性。
+     *
+     * @param ids after_sale_pack 主键列表
+     */
+    void markBoxesAsMoved(List<String> ids);
+
 }

@@ -560,4 +560,126 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         return this.view(afterSalePackEntity.getId());
     }
 
+    @Override
+    public List<AfterSalePackDTO.ViewDTO> viewByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)) {
+            return Collections.emptyList();
+        }
+        List<String> distinctCodes = codes.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctCodes)) {
+            return Collections.emptyList();
+        }
+        List<AfterSalePackEntity> afterSalePackEntityList = this.lambdaQuery()
+                .in(AfterSalePackEntity::getCode, distinctCodes)
+                .list();
+        Map<String, AfterSalePackEntity> entityMap = afterSalePackEntityList.stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getCode, item -> item, (v1, v2) -> v1));
+        List<String> notExistCodes = distinctCodes.stream()
+                .filter(code -> !entityMap.containsKey(code))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistCodes)) {
+            throw new ServiceException("未找到售后装箱单数据：" + String.join(",", notExistCodes));
+        }
+        List<AfterSalePackEntity> orderedEntityList = distinctCodes.stream()
+                .map(entityMap::get)
+                .collect(Collectors.toList());
+
+        List<String> mainIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> afterSalePackDetailEntityList = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, mainIds)
+                .list();
+
+        List<String> outWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getOutWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> outWarehouseLocationMap = CollectionUtils.isEmpty(outWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(outWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        List<String> inWarehouseLocationIds = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getInWarehouseLocationId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, WarehouseLocationEntity> inWarehouseLocationMap = CollectionUtils.isEmpty(inWarehouseLocationIds)
+                ? Collections.emptyMap()
+                : warehouseLocationService.listByIds(inWarehouseLocationIds).stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item, (v1, v2) -> v1));
+
+        Map<String, List<AfterSalePackDetailDTO.ViewDTO>> detailMap = new HashMap<>(16);
+        for (AfterSalePackDetailEntity afterSalePackDetailEntity : afterSalePackDetailEntityList) {
+            AfterSalePackDetailDTO.ViewDTO viewDTO = new AfterSalePackDetailDTO.ViewDTO();
+            BeanMapperUtils.copy(afterSalePackDetailEntity, viewDTO);
+            WarehouseLocationEntity outWarehouseLocationEntity = outWarehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(outWarehouseLocationEntity)) {
+                viewDTO.setOutWarehouseLocationCode(outWarehouseLocationEntity.getCode());
+                viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
+            }
+            WarehouseLocationEntity inWarehouseLocationEntity = inWarehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
+            if (ObjectUtil.isNotEmpty(inWarehouseLocationEntity)) {
+                viewDTO.setInWarehouseLocationCode(inWarehouseLocationEntity.getCode());
+                viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
+            }
+            detailMap.computeIfAbsent(afterSalePackDetailEntity.getMainId(), key -> new ArrayList<>()).add(viewDTO);
+        }
+
+        List<String> sourceIds = orderedEntityList.stream()
+                .map(AfterSalePackEntity::getSourceId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, PoReturnEntity> poReturnMap = CollectionUtils.isEmpty(sourceIds)
+                ? Collections.emptyMap()
+                : poReturnService.listByIds(sourceIds).stream()
+                .collect(Collectors.toMap(PoReturnEntity::getId, item -> item, (v1, v2) -> v1));
+
+        List<AfterSalePackDTO.ViewDTO> resultList = new ArrayList<>();
+        for (AfterSalePackEntity afterSalePackEntity : orderedEntityList) {
+            AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
+            data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+            PoReturnEntity poReturnEntity = poReturnMap.get(data.getSourceId());
+            if (ObjectUtil.isNotEmpty(poReturnEntity)) {
+                data.setSupplierId(poReturnEntity.getSupplierId());
+                data.setSupplierName(poReturnEntity.getSupplierName());
+            }
+            data.setDetailViewDTOList(detailMap.get(data.getId()));
+            resultList.add(data);
+        }
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markBoxesAsMoved(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        // 重新从库查询最新状态，防止前序步骤查询到落库之间存在并发窗口（卡顿/重复提交）
+        List<AfterSalePackEntity> latestList = this.listByIds(ids);
+        List<String> alreadyMovedCodes = latestList.stream()
+                .filter(e -> Boolean.TRUE.equals(e.getIsMoveWarehouse()))
+                .map(e -> StringUtils.isNotBlank(e.getCode()) ? e.getCode() : e.getId())
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(alreadyMovedCodes)) {
+            throw new ServiceException("以下箱唛已完成移仓，请勿重复提交：" + String.join(",", alreadyMovedCodes));
+        }
+        // 条件更新：WHERE is_move_warehouse = false，即使并发请求同时通过了上方校验，
+        // 数据库层面只有一个事务能成功更新，另一个因条件不满足而更新0行
+        this.lambdaUpdate()
+                .in(AfterSalePackEntity::getId, ids)
+                .eq(AfterSalePackEntity::getIsMoveWarehouse, false)
+                .set(AfterSalePackEntity::getIsMoveWarehouse, true)
+                .update();
+    }
+
 }

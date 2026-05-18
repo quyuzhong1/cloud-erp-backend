@@ -15,9 +15,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
+import com.erp.server.wms.service.AfterSalesFullBoxTransferDetailService;
 import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
@@ -55,6 +57,9 @@ public class PdaWarehouseLocationMoveController extends BaseController {
 
     @Resource
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
+
+    @Resource
+    private AfterSalesFullBoxTransferDetailService afterSalesFullBoxTransferDetailService;
 
     /**
     * 新增
@@ -670,10 +675,18 @@ public class PdaWarehouseLocationMoveController extends BaseController {
 
 
     /**
-     * 移箱明细
-     * @author liuchao
-     * @date 2024/5/15
+     * 整箱移仓箱唛明细查询
+     * <p>
+     * 传入仓位移动主单 ID（main_id），返回该次整箱移仓操作中所有箱唛维度的明细行，
+     * 以【箱唛 + SKU + 移出仓位 + 移入仓位】维度展示，用于移箱明细弹窗。
      *
+     * @param mainId 仓位移动主单 ID（warehouse_location_move.id）
+     * @author liuchao
+     * @date 2026-05-18
      */
-    
+    @GetMapping("/listBoxMoveDetail")
+    public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.BoxMoveDetailListDto>> listBoxMoveDetail(
+            @RequestParam("mainId") String mainId) {
+        return success(afterSalesFullBoxTransferDetailService.listBoxMoveDetail(mainId));
+    }
 }
