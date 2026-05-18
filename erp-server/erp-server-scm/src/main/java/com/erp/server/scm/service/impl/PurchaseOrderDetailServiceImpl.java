@@ -369,7 +369,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //根据sku查询是否是组合品
         List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = null;
-        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
+        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
+                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
             if (StrUtil.isBlank(entity.getSourceId())){
                 throw new ServiceException("委外订单id不能为空");
             }
@@ -413,9 +414,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             && obj.getSupplierId().equals(supplierEntity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
-                    || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
+                    || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
+                    || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
-                if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
+                if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
+                        && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
                     //sku是组合品时，取委外订单含税单价
                     SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId()) && CharSequenceUtil.isBlank(e.getParentId()))
                             .findFirst().orElse(null);
