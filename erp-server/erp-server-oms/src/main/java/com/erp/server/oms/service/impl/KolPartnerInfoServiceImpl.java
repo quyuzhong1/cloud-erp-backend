@@ -1297,6 +1297,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Override
     public List<AddressParseDTO.BatchParseResultDTO> batchAddressParse(List<AddressParseDTO.BatchParseRequestDTO> dtoList) {
         List<AddressParseDTO.BatchParseResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        List<String> specialCityList = Arrays.asList("北京", "上海", "重庆", "天津");
         dtoList.forEach(dto -> {
             AddressParseDTO.ParseRequestDTO requestDTO = new AddressParseDTO.ParseRequestDTO();
             requestDTO.setFullAddress(dto.getFullAddress());
@@ -1304,7 +1305,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             AddressParseDTO.BatchParseResultDTO batchParseResultDTO = new AddressParseDTO.BatchParseResultDTO();
             BeanMapperUtils.copy(resultDTO, batchParseResultDTO);
             batchParseResultDTO.setId(dto.getId());
-            batchParseResultDTO.setProvince(resultDTO.getProvince() + "省");
+            if (specialCityList.contains(resultDTO.getProvince())) {
+                batchParseResultDTO.setProvince(resultDTO.getProvince() + "市");
+            } else {
+                batchParseResultDTO.setProvince(resultDTO.getProvince() + "省");
+            }
             batchParseResultDTO.setCity(resultDTO.getCity() + "市");
             batchParseResultDTO.setDetailAddress(resultDTO.getDistrict() + resultDTO.getDetailAddress());
             resultDTOS.add(batchParseResultDTO);
