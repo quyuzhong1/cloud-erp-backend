@@ -16,7 +16,7 @@ public class PlatformOutboundConsumerServiceTest {
     private KingdeeB2CSoOutstockConsumer service;
 
     @Resource
-    private PlatformOutboundConsumerService platformOutboundConsumerService;
+    private PlatformOutboundConsumerService<?> platformOutboundConsumerService;
 
     @Test
     public void handleTest() {

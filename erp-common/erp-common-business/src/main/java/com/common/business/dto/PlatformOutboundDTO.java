@@ -6,8 +6,10 @@ import com.common.business.enums.WarehousePlatformTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  *  平台入库单DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
@@ -75,4 +77,16 @@ public class PlatformOutboundDTO extends UniqueDto {
      *承运商
      */
     private String carrierName;
+
+    private List<Detail> detailList;
+
+    @Data
+    @ToString
+    @EqualsAndHashCode
+    public static class Detail {
+
+        private String platformSkuNo;
+
+        private Integer qty;
+    }
 }
