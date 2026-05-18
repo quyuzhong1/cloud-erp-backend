@@ -780,16 +780,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return BatchResultDTO.fail(id, id, "报关单不存在");
         }
         try {
-            TmsDeclareBillEntity declareBillEntity = getDeclareBillByIdAndType(id, sourceTypeEnum);
+            Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "报关单"));
+            if (!sourceTypeEnum.getCode().equals(entity.getType())) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
+            }
             DeclareStatusEnum targetStatus = DeclareStatusEnum.getEnum(dto.getDeclareStatus());
             if (Objects.isNull(targetStatus)) {
                 throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_INVALID);
             }
-            if (DeclareStatusEnum.WAIT.getCode().equals(declareBillEntity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
+            if (DeclareStatusEnum.WAIT.getCode().equals(entity.getDeclareStatus()) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
                 fillDeclareConfirmUser(dto);
             }
-            confirmDeclareStatusSingle(declareBillEntity, dto, targetStatus, sourceTypeEnum);
-            return BatchResultDTO.success(declareBillEntity.getId(), declareBillEntity.getCode(), "报关状态更新成功");
+            confirmDeclareStatusSingle(entity, dto, targetStatus, sourceTypeEnum);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "报关状态更新成功");
         } catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             log.error("报关状态更新失败，id:{}", id, e);
@@ -829,14 +832,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_UPDATE_FORBIDDEN, DeclareStatusEnum.getName(currentStatus), targetStatus.getName());
     }
 
-    private TmsDeclareBillEntity getDeclareBillByIdAndType(String id, SourceTypeEnum sourceTypeEnum) {
-        TmsDeclareBillEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "报关单"));
-        if (!sourceTypeEnum.getCode().equals(entity.getType())) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_BILL_TYPE_MISMATCH);
-        }
-        return entity;
-    }
     private void validateDeclareConfirm(TmsDeclareBillEntity entity) {
         if (StringUtils.isBlank(entity.getDeclareType())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_DETAIL_REQUIRED, "报关类型");
@@ -871,11 +866,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         if (StringUtils.isBlank(dto.getDeclarUserId())) {
             dto.setDeclarUserId(loginUser.getUid());
-        }
-        if (StringUtils.isBlank(dto.getDeclarUserName()) && dto.getDeclarUserId().equals(loginUser.getUid())) {
             dto.setDeclarUserName(loginUser.getUserName());
-        }
-        if (StringUtils.isBlank(dto.getDeclarUserName())) {
+        }else {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclarUserId());
             if (Objects.nonNull(userDTO)) {
                 dto.setDeclarUserName(userDTO.getUserName());
@@ -1714,8 +1706,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                         (v1, v2) -> v1));
 
         // 装箱明细 sheet：sourceCode -> packing_task -> wms_carton_spec -> wms_carton_detail
-        List<String> allSourceCodeList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+//        List<String> allDeliveryCodeList = list.stream()
+//                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+//                .filter(StringUtils::isNotBlank)
+//                .distinct()
+//                .collect(Collectors.toList());
+
+        List<String> allBusinessCodeList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getBusinessCode)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
@@ -1723,8 +1721,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String, List<String>> sourceCodeToTaskIdsMap = Collections.emptyMap();
         // taskId -> sourceCode，反查回填
         Map<String, String> taskIdToSourceCodeMap = Collections.emptyMap();
-        if (CollUtil.isNotEmpty(allSourceCodeList)) {
-            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allSourceCodeList))
+        if (CollUtil.isNotEmpty(allBusinessCodeList)) {
+            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allBusinessCodeList))
                     .orElse(Collections.emptyList());
             sourceCodeToTaskIdsMap = packingTaskList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceCode()) && StringUtils.isNotBlank(e.getId()))
@@ -1768,14 +1766,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             // 装箱明细 sheet：按 sourceCode -> task -> carton -> SKU 三层展开
             List<WmsCartonSpecDTO.WmsCartonSpecView> currentViewList = Collections.emptyList();
-            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getSourceCode(), Collections.emptyList());
+            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getBusinessCode(), Collections.emptyList());
             if (CollUtil.isNotEmpty(currentTaskIdList) && !taskIdToCartonViewMap.isEmpty()) {
                 currentViewList = currentTaskIdList.stream()
                         .map(taskIdToCartonViewMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
-            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getSourceCode(), currentViewList, taskIdToSourceCodeMap));
+            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getBusinessCode(), currentViewList, taskIdToSourceCodeMap));
         }
     }
 
