@@ -14,13 +14,15 @@ import java.nio.file.Paths;
 @Slf4j
 public final class ExportTempFilesHandler {
 
+    public static final String EXPORT_TMP_PREFIX = "exportTmp_";
+
     private ExportTempFilesHandler() {
     }
 
     public static Path createTempPath(String exportFilePath, String suffix, String fileName) throws IOException {
         Path dir = resolveWorkDir(exportFilePath);
         Files.createDirectories(dir);
-        String name = "exportTmp_".concat(fileName).concat(suffix);
+        String name = EXPORT_TMP_PREFIX.concat(fileName).concat(suffix);
         return dir.resolve(name);
     }
 
