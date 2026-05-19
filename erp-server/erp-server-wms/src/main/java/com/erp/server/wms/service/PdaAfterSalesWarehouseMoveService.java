@@ -1,6 +1,11 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 售后 PDA：货品上架、整箱移仓（仓位移动已审核 + 库存流水）
@@ -12,7 +17,7 @@ public interface PdaAfterSalesWarehouseMoveService {
      *
      * @return 仓位移动主单 id
      */
-    String submitGoodsShelving(AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto);
+    String submitGoodsInfo(AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto);
 
     /**
      * 整箱移仓提交：多行明细（箱+SKU+源仓位+数量）→ 同一仓库内目标仓位；
@@ -20,5 +25,7 @@ public interface PdaAfterSalesWarehouseMoveService {
      *
      * @return 仓位移动主单 id
      */
-    String submitFullBoxTransfer(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto);
+    String submitFullBoxInfo(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto);
+
+    void saveMoveCartonDetails(String moveId, String targetCode, List<AfterSalePackDTO.ViewDTO> boxInfoList, Map<String, SkuVO> skuByNo);
 }
