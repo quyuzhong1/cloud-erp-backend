@@ -29,8 +29,6 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     PagingVO findDepartmentUser(PagingDTO<DepartmentSearchDTO> dto);
 
 
-    void removeByDepartmentIds(List<String> ids);
-
     void setLead(UpdateUserStateDTO dto);
 
     List<SysDepartmentUserNumberDTO> findUserNumber();
@@ -120,4 +118,6 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return  void
      */
     void deleteByUserIds(List<String> uids);
+
+    boolean deleteByIds(List<String> ids);
 }
