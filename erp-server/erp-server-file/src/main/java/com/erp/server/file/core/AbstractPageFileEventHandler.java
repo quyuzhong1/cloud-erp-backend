@@ -199,23 +199,39 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
+    private static final class ExpandedTemplate {
+        private final byte[] templateBytes;
+        private final List<Integer> dataSheetIndexes;
+
+        private ExpandedTemplate(byte[] templateBytes, List<Integer> dataSheetIndexes) {
+            this.templateBytes = templateBytes;
+            this.dataSheetIndexes = dataSheetIndexes;
+        }
+    }
+
     /**
      * 将模板中 {@link #templateSourceSheetIndex()} 指向的 sheet 再复制 {@code dataSheetCount - 1} 份，
      * 得到共 {@code dataSheetCount} 张同结构数据 sheet，供 EasyExcel 按 sheet 分批 fill。
+     * <p>
+     * 注意：POI cloneSheet 会把克隆 sheet 追加到 workbook 末尾，数据 sheet 不一定是 0、1、2 连续下标。
+     * 因此这里同时返回真实物理 sheet 下标，后续 fill 必须按该映射写入。
      */
-    private byte[] expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
-        if (dataSheetCount <= 1) {
-            return templateBytes;
-        }
+    private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
         int source = templateSourceSheetIndex();
+        if (dataSheetCount <= 1) {
+            return new ExpandedTemplate(templateBytes, Collections.singletonList(source));
+        }
         try (ByteArrayInputStream bin = new ByteArrayInputStream(templateBytes);
                 XSSFWorkbook wb = new XSSFWorkbook(bin);
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            List<Integer> dataSheetIndexes = new ArrayList<>(dataSheetCount);
+            dataSheetIndexes.add(source);
             for (int i = 1; i < dataSheetCount; i++) {
                 wb.cloneSheet(source);
+                dataSheetIndexes.add(wb.getNumberOfSheets() - 1);
             }
             wb.write(out);
-            return out.toByteArray();
+            return new ExpandedTemplate(out.toByteArray(), dataSheetIndexes);
         }
     }
 
@@ -283,6 +299,22 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int sheetNo;
         long rowsInSheet;
         WriteSheet writeSheet;
+        List<Integer> dataSheetIndexes;
+    }
+
+    private WriteSheet buildCurrentDataSheet(OffsetSheetCursor c) {
+        if (c.sheetNo >= c.dataSheetIndexes.size()) {
+            throw new BusinessException("导出数据超过当前模板可承载的 sheet 数，请缩小筛选范围导出。");
+        }
+        return EasyExcel.writerSheet(c.dataSheetIndexes.get(c.sheetNo)).build();
+    }
+
+    /**
+     * 模板列表分批填充。须用 {@link ExcelWriter#fill}，<strong>不可</strong>用 {@code ExcelWriterSheetBuilder#doFill}：
+     * 3.3.x 的 {@code doFill} 在每次填充后会 {@code finish()} 关闭 Writer，后续分页只会写出第一页。
+     */
+    private void fillOnSheet(ExcelWriter excelWriter, WriteSheet writeSheet, List<T> fillList, FillConfig fillConfig) {
+        excelWriter.fill(fillList, fillConfig, writeSheet);
     }
 
     /**
@@ -296,7 +328,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             int roomConfigured = maxPerConfigured - (int) c.rowsInSheet;
             if (roomConfigured <= 0) {
                 c.sheetNo++;
-                c.writeSheet = EasyExcel.writerSheet(c.sheetNo).build();
+                c.writeSheet = buildCurrentDataSheet(c);
                 c.rowsInSheet = 0;
                 roomConfigured = maxPerConfigured;
             }
@@ -309,7 +341,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             List<T> slice = batch.subList(idx, idx + take);
             List<T> fillList = (take == batch.size() && idx == 0) ? batch : new ArrayList<>(slice);
             try {
-                excelWriter.fill(fillList, fillConfig, c.writeSheet);
+                fillOnSheet(excelWriter, c.writeSheet, fillList, fillConfig);
             } catch (Throwable fillEx) {
                 logEasyExcelFillContext(exportPhase, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
                         c.rowsInSheet, fillList, rawPageForLog);
@@ -325,23 +357,24 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
 
     private int writeKeysetBatches(File outFile, P params) throws IOException {
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
-        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         Long lastId = null;
         int preparedSheets = keysetPreparedSheetCount();
         byte[] rawTemplate = readClasspathTemplateBytes(getExcelPath());
         // 预先克隆好多张数据 sheet，避免在写入过程中再 clone 导致的性能问题（尤其是当模板复杂时）。若数据量超出预估则直接报错，避免无限克隆。
-        byte[] expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, preparedSheets);
+        ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, preparedSheets);
         rawTemplate = null;
 
         int total = 0;
         OffsetSheetCursor cursor = new OffsetSheetCursor();
         cursor.sheetNo = 0;
         cursor.rowsInSheet = 0;
+        cursor.dataSheetIndexes = expandedTemplate.dataSheetIndexes;
         WriteHandler[] handlers = getWriteHandler().toArray(new WriteHandler[0]);
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
-            ExcelWriter excelWriter = excelPrintUtils.openTemplateListWriter(fos, expandedTemplate, handlers);
+            ExcelWriter excelWriter = excelPrintUtils.openTemplateListWriter(fos, expandedTemplate.templateBytes, handlers);
             try {
-                cursor.writeSheet = EasyExcel.writerSheet(cursor.sheetNo).build();
+                cursor.writeSheet = buildCurrentDataSheet(cursor);
                 while (true) {
                     KeysetPagingVO<T> vo = fetchKeyset(params, lastId, getPageSize());
                     List<T> rawList = vo.getList();
@@ -409,7 +442,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     private int writeOffsetBatches(File outFile, P params) throws IOException {
-        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         PagingDTO<P> dto = new PagingDTO<>();
         dto.setPageSize(getPageSize());
         dto.setCurrPage(getFirstPage());
@@ -419,20 +452,20 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
         byte[] rawTemplate = readClasspathTemplateBytes(getExcelPath());
-        byte[] expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, dataSheets);
+        ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, dataSheets);
         rawTemplate = null;
 
         int totalRows = 0;
         OffsetSheetCursor cursor = new OffsetSheetCursor();
         cursor.sheetNo = 0;
         cursor.rowsInSheet = 0;
+        cursor.dataSheetIndexes = expandedTemplate.dataSheetIndexes;
         WriteHandler[] handlers = getWriteHandler().toArray(new WriteHandler[0]);
 
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
-            ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expandedTemplate, handlers);
+            ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expandedTemplate.templateBytes, handlers);
             try {
-                cursor.writeSheet = EasyExcel.writerSheet(cursor.sheetNo).build();
-
+                cursor.writeSheet = buildCurrentDataSheet(cursor);
                 PagingVO<T> pageData = firstData;
                 while (true) {
                     int pageListSize = CollectionUtils.isEmpty(pageData.getList()) ? 0 : pageData.getList().size();

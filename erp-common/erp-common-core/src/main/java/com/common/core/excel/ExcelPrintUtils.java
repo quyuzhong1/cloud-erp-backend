@@ -1378,7 +1378,7 @@ public class ExcelPrintUtils {
             excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
 
             WriteSheet writeSheet = EasyExcel.writerSheet().build();
-            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+            FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
             try {
                 excelWriter.fill(list, fillConfig, writeSheet);
 
