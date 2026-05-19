@@ -10,7 +10,7 @@ import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import com.erp.model.wms.entity.AfterSalesFullBoxTransferDetailEntity;
+import com.erp.model.wms.entity.WmsMoveSrcDetailEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
@@ -18,7 +18,7 @@ import com.erp.model.wms.enums.WarehouseLocationMoveSyncOperateEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.AfterSalePackService;
-import com.erp.server.wms.service.AfterSalesFullBoxTransferDetailService;
+import com.erp.server.wms.service.WmsMoveSrcDetailService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.PdaAfterSalesWarehouseMoveService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
@@ -54,7 +54,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
     @Resource
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
     @Resource
-    private AfterSalesFullBoxTransferDetailService afterSalesFullBoxTransferDetailService;
+    private WmsMoveSrcDetailService wmsMoveSrcDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
@@ -297,7 +297,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
         // addAndApprove 返回的 moveId 用于关联主单（main_id）；
         // 再查一次刚落库的 warehouse_location_move_detail，用 SKU+移出仓位+移入仓位 匹配出 detail_id，
         // 这样每一条来源明细行就与汇总明细行建立了父子关系，满足事后拆箱查看的需求。
-        saveBoxTransferDetails(moveId, targetCode, boxInfoList, skuByNo);
+        saveMoveSrcDetails(moveId, targetCode, boxInfoList, skuByNo);
 
         // ── 第七步：标记箱唛为已移仓（is_move_warehouse = true）────────────────
         // 内部会重新从库查询最新状态（防止卡顿/重复提交的并发窗口），
@@ -312,14 +312,14 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
     }
 
     /**
-     * 在整箱移仓主单落库后，将箱唛维度的原始明细保存到 wms_box_move_detail。
+     * 在整箱移仓主单落库后，将箱唛维度的原始明细保存到 wms_move_src_detail。
      *
      * @param moveId      刚创建的仓位移动主单 ID（对应 main_id 字段）
      * @param targetCode  移入仓位编码（本批次唯一目标仓位）
      * @param boxInfoList 已通过 usageStatus 校验的装箱单列表（包含装箱明细）
      * @param skuByNo     从 PLM 查询得到的 SKU 信息，key 为 skuNo
      */
-    private void saveBoxTransferDetails(String moveId, String targetCode,
+    private void saveMoveSrcDetails(String moveId, String targetCode,
                                         List<AfterSalePackDTO.ViewDTO> boxInfoList,
                                         Map<String, SkuVO> skuByNo) {
         // 查询刚保存的移仓子表明细，以"skuNo|移出仓位|移入仓位"为 key 建立快速查找表，
@@ -334,7 +334,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
                 )
         );
 
-        List<AfterSalesFullBoxTransferDetailEntity> boxDetailList = new ArrayList<>();
+        List<WmsMoveSrcDetailEntity> moveSrcDetailList = new ArrayList<>();
         for (AfterSalePackDTO.ViewDTO boxInfo : boxInfoList) {
             // source_code 存箱唛号，source_id 存装箱单主键；
             // 字段设计为通用来源，后续若接入其他来源类型可直接复用
@@ -353,7 +353,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
                 String skuId = skuVO != null ? skuVO.getSkuId()
                         : CharSequenceUtil.trimToEmpty(detail.getSkuId());
 
-                AfterSalesFullBoxTransferDetailEntity entity = new AfterSalesFullBoxTransferDetailEntity();
+                WmsMoveSrcDetailEntity entity = new WmsMoveSrcDetailEntity();
                 entity.setMainId(moveId);
                 entity.setDetailId(detailId);
                 entity.setSourceCode(sourceCode);
@@ -363,14 +363,14 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
                 entity.setOutWarehouseLocation(sourceLoc);
                 entity.setInWarehouseLocation(targetCode);
                 entity.setQty(detail.getPackQty());
-                boxDetailList.add(entity);
+                moveSrcDetailList.add(entity);
             }
         }
 
-        if (CollUtil.isNotEmpty(boxDetailList)) {
-            boolean saved = afterSalesFullBoxTransferDetailService.saveBatch(boxDetailList);
+        if (CollUtil.isNotEmpty(moveSrcDetailList)) {
+            boolean saved = wmsMoveSrcDetailService.saveBatch(moveSrcDetailList);
             if (!saved) {
-                throw new ServiceException("整箱移仓箱唛明细保存失败");
+                throw new ServiceException("仓位移动来源明细保存失败");
             }
         }
     }

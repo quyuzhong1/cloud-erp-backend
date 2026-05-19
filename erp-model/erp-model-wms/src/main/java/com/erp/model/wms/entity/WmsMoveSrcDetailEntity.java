@@ -24,7 +24,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("wms_move_src_detail")
-public class AfterSalesFullBoxTransferDetailEntity extends BaseEntity<AfterSalesFullBoxTransferDetailEntity> {
+public class WmsMoveSrcDetailEntity extends BaseEntity<WmsMoveSrcDetailEntity> {
 
     /**
      * 仓位移动主单 ID（warehouse_location_move.id）
