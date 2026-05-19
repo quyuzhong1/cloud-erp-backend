@@ -681,6 +681,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public void getOrderByCodeJob() {
         List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
+        XxlJobHelper.log("====查询待同步中转状态的订单信息，data.size={}====", JSONUtil.toJsonStr(detailEntities.size()));
         if (CollUtil.isEmpty(detailEntities)){
             return;
         }
@@ -702,12 +703,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             if (ObjectUtil.isEmpty(transferDeclareEntity)) {
                 continue;
             }
+            XxlJobHelper.log("====查询订单最新状态，订单号={}====", detailEntity.getSoCode());
             TransferLogisticsAuthEntity authEntity = authEntityMap.get(transferDeclareEntity.getTransferLogisticsSupplierId());
             if (ObjectUtil.isEmpty(authEntity)) {
                 continue;
             }
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
             ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getSoCode(), authEntity.getId());
+            XxlJobHelper.log("====查询订单最新状态，订单号={}，结果={}====", detailEntity.getSoCode(), JSONUtil.toJsonStr(result));
             if (result.getCode() == 200 && Objects.nonNull(result.getData()) ) {
                 TransferLogisticsStatusEnum orderStatusEnum = result.getData().getOrderStatusEnum();
                 if(Objects.nonNull(orderStatusEnum) && !detailEntity.getTransferStatus().equals(orderStatusEnum.getCode())){
