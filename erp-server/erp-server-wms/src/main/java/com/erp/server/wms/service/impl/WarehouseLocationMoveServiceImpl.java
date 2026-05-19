@@ -1157,12 +1157,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (CharSequenceUtil.isNotBlank(warehouseLocationMoveEntity.getOperateType())) {
             return;
         }
-        //拣货单新增/减少时候 操作类型会设置成【拣货移位】
-        if (SourceTypeEnum.PICKING_LISTS_ADD.getCode().equals(warehouseLocationMoveEntity.getSourceType())
-                || SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode().equals(warehouseLocationMoveEntity.getSourceType())) {
-            warehouseLocationMoveEntity.setOperateType(WarehouseLocationMoveOperateTypeEnum.PICKING_TRANSFER.getCode());
-            return;
-        }
         warehouseLocationMoveEntity.setOperateType(WarehouseLocationMoveOperateTypeEnum.SELF_BUILT_TRANSFER.getCode());
     }
 

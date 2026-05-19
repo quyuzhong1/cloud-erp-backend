@@ -512,6 +512,11 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 单据时间
          */
         private LocalDate billDate;
+
+        /**
+         * 操作类型
+         */
+        private String operateType;
     }
 
     /**
