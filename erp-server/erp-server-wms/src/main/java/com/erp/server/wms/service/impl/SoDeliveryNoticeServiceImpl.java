@@ -1027,7 +1027,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货通知单");
         }
         if (!CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
-            throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE);
+            throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE,deliveryNoticeEntity.getCode());
         }
         deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
         super.updateById(deliveryNoticeEntity);
