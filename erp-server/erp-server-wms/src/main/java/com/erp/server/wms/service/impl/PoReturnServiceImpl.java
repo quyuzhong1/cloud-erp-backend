@@ -111,6 +111,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_RE
 @RefreshScope
 public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoReturnEntity> implements PoReturnService {
 
+    private static final String RETURN_DETAIL_TYPE_SKU = "sku";
+    private static final String RETURN_DETAIL_TYPE_PACK = "pack";
+
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
@@ -292,7 +295,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PoReturnEntity add(PurchaseReturnOrderDTO.AddDTO dto) {
+        checkReturnDetailType(dto);
         fillAfterSalePackReturnQty(dto);
+        checkSkuReturnQtyForAdd(dto);
         FindUserDTO userDTO = new FindUserDTO();
 
         //获取用户信息
@@ -424,7 +429,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        checkReturnDetailType(dto);
         fillAfterSalePackReturnQty(dto);
+        checkSkuReturnQtyForUpdate(dto);
 
         PoReturnEntity oldEntity = this.getById(dto.getId());
         //获取用户信息
@@ -603,6 +610,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Collections.singletonList(poReturnEntity.getReturnWarehouseId()));
         Map<String, List<AfterSalePackDTO.DetailDTO>> afterSalePackDetailMap = getAfterSalePackDetailMap(id);
+        viewDTO.setReturnDetailType(afterSalePackDetailMap.isEmpty() ? RETURN_DETAIL_TYPE_SKU : RETURN_DETAIL_TYPE_PACK);
 
         for (PoReturnDetailEntity poReturnDetailEntity : detail) {
             Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1758,6 +1766,94 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             return;
         }
         syncAfterSalePack(boxDetailList, poReturnEntity);
+    }
+
+    private void checkReturnDetailType(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return;
+        }
+        checkReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto), hasSkuDetailsForAdd(dto));
+    }
+
+    private void checkReturnDetailType(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())) {
+            return;
+        }
+        checkReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto), hasSkuDetailsForUpdate(dto));
+    }
+
+    private void checkReturnDetailType(String returnDetailType, boolean hasPackDetail, boolean hasSkuDetail) {
+        String detailType = CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU);
+        if (!CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_SKU) && !CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_PACK)) {
+            throw new ServiceException("退货明细类型错误");
+        }
+        if (hasPackDetail && hasSkuDetail) {
+            throw new ServiceException("同一个采购退货单不能同时存在单个SKU退货和整箱退货");
+        }
+        if (CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_PACK) && !hasPackDetail) {
+            throw new ServiceException("整箱退货必须包含箱唛明细");
+        }
+        if (CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_SKU) && hasPackDetail) {
+            throw new ServiceException("单个SKU退货不能包含箱唛明细");
+        }
+    }
+
+    private void checkSkuReturnQtyForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
+                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), RETURN_DETAIL_TYPE_PACK)) {
+            return;
+        }
+        List<String> skuNos = dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> Optional.ofNullable(detail.getReturnQty()).orElse(MathUtil.ZERO) <= MathUtil.ZERO)
+                .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            throw new ServiceException("单个SKU退货实退数量必须大于0，SKU：" + String.join(",", skuNos));
+        }
+    }
+
+    private void checkSkuReturnQtyForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
+                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), RETURN_DETAIL_TYPE_PACK)) {
+            return;
+        }
+        List<String> skuNos = dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> Optional.ofNullable(detail.getReturnQty()).orElse(MathUtil.ZERO) <= MathUtil.ZERO)
+                .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuNos)) {
+            throw new ServiceException("单个SKU退货实退数量必须大于0，SKU：" + String.join(",", skuNos));
+        }
+    }
+
+    private String resolveReturnDetailType(String returnDetailType, boolean hasPackDetail) {
+        return CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU);
+    }
+
+    private boolean hasAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isNotEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    private boolean hasAfterSalePackDetailsForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isNotEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    private boolean hasSkuDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isEmpty(detail.getAfterSalePackDetailList()));
+    }
+
+    private boolean hasSkuDetailsForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        return dto.getPurchasePriceDetailList().stream()
+                .filter(Objects::nonNull)
+                .anyMatch(detail -> CollectionUtils.isEmpty(detail.getAfterSalePackDetailList()));
     }
 
     /**
