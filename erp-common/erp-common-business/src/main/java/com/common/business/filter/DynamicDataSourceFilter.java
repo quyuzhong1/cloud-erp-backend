@@ -22,12 +22,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
-import com.common.business.cache.DorisQuerySettingLocalCache;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
-import com.common.business.utils.ApplicationContextUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,12 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DynamicDataSourceFilter implements Filter {
 
-	/**
-	 * DorisQuerySettingLocalCache 单次缓存的引用，避免每次请求查 ApplicationContext
-	 * 该 Bean 通过 @ConditionalOnProperty(spring.datasource.dynamic.enabled=true) 注册，
-	 * 与本 filter 进入分支的守卫条件一致
-	 */
-	private static volatile DorisQuerySettingLocalCache LOCAL_CACHE_REF;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
@@ -82,22 +74,7 @@ public class DynamicDataSourceFilter implements Filter {
     }
     
     private DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
-        DorisQuerySettingLocalCache localCache = resolveLocalCache();
-        return localCache == null ? null : localCache.get(requestURI);
-    }
-
-    private DorisQuerySettingLocalCache resolveLocalCache() {
-        DorisQuerySettingLocalCache cache = LOCAL_CACHE_REF;
-        if(cache != null) {
-            return cache;
-        }
-        try {
-            cache = ApplicationContextUtils.getBean(DorisQuerySettingLocalCache.class);
-            LOCAL_CACHE_REF = cache;
-        } catch (Throwable e) {
-            log.warn("DorisQuerySettingLocalCache bean not available, dynamic datasource will fallback to no-route");
-        }
-        return cache;
+        return null;
     }
 
     private DynamicDataSourceTypeEnum getDynamicDataSourceType(DorisQuerySettingDTO dorisQuerySettingDTO , ServletRequest requestWrapper) {
