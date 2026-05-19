@@ -163,6 +163,12 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 				return Collections.emptyList();
 			}
 
+			if (Objects.equals(apiResult.getCode(), 404)) {
+				log.info("【美客多本土站-shipments SLA】shipmentId={} 未找到SLA信息，按空数据处理。userId={}, url={}, responseMap={}",
+						shippingId, userId, url + path, JSONUtil.toJsonStr(apiResult));
+				continue;
+			}
+
 			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 				log.error("调用url={},入参params={}, 美客多shipments/'shippingId'/sla数据失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
