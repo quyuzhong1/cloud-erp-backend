@@ -5,8 +5,6 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
-import com.alibaba.fastjson.JSON;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -610,17 +608,42 @@ public class MercadoLocalSdkClientService {
      * @return
      */
     public MercadoShopInfoDTO getShopInfoByShopId(String shopId) {
-        return JSON.parseObject("{\r\n" + 
-        		"  \"@type\": \"com.sdk.oms.mercadolocal.dto.MercadoShopInfoDTO\",\r\n" + 
-        		"  \"accessToken\": \"APP_USR-8670168511142898-051900-2308255a8f7791d96682746bd465b371-3201476997\",\r\n" + 
-        		"  \"baseUrl\": \"https://api.mercadolibre.com\",\r\n" + 
-        		"  \"clientId\": \"8670168511142898\",\r\n" + 
-        		"  \"clientSecret\": \"jQrx5dj7hoqw7ULFDJwff9kFk8TW4zuc\",\r\n" + 
-        		"  \"id\": \"2027210047133908994\",\r\n" + 
-        		"  \"name\": \"\",\r\n" + 
-        		"  \"siteId\": \"MLB\",\r\n" + 
-        		"  \"userId\": 3201476997\r\n" + 
-        		"}" , MercadoShopInfoDTO.class);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), shopId);
+        // 缓存获取
+        Object tokenObj = redisUtil.get(tokenKey);
+        if (null != tokenObj) {
+            if (tokenObj instanceof MercadoShopInfoDTO) {
+                return (MercadoShopInfoDTO) tokenObj;
+            }
+        } else {
+            ShopAuthEntity shopAuthEntity = shopInfoFeign.getShopAuthByShopId(shopId);
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+            CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+            AppClientEnum appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
+            findDTO.setBusinessType(appClientEnum.getBusinessType());
+            findDTO.setDictPlatform(appClientEnum.getPlatform());
+            findDTO.setPlatformType(appClientEnum.getPlatformType());
+            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+            if (Objects.isNull(cfgAppClient)) {
+                return null;
+            }
+            MercadoShopInfoDTO result = new MercadoShopInfoDTO();
+            result.setBaseUrl(cfgAppClient.getUrl());
+            result.setClientId(cfgAppClient.getClientId());
+            result.setClientSecret(cfgAppClient.getClientSecret());
+
+            Map<String, Object> extendData = shopInfoEntity.getExtendData();
+            Object userId = extendData.get("userId");
+            result.setUserId(ObjectUtil.isEmpty(userId) ? null : Long.valueOf(userId.toString()));
+            result.setSiteId(shopInfoEntity.getBusinessModel());
+            if (Objects.nonNull(shopAuthEntity)) {
+                result.setAccessToken(shopAuthEntity.getAccessToken());
+                redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
+            }
+
+            return result;
+        }
+        return null;
 
     }
 
