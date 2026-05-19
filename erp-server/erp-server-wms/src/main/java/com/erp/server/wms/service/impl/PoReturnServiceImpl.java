@@ -1757,19 +1757,19 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CollectionUtils.isEmpty(boxDetailList)) {
             return;
         }
-        syncAfterSalePack(boxDetailList, Collections.emptyList(), poReturnEntity);
+        syncAfterSalePack(boxDetailList, poReturnEntity);
     }
 
     /**
-     * 修改采购退货单后，释放被移除的箱明细，并同步仍保留的箱内实退差异。
+     * 修改采购退货单后，仅同步本次传入的箱内实退差异。
+     * 单行移除、SKU移除需要由前端传回对应箱明细且实际数量为0；整箱移除不传回，不做箱码处理。
      */
     private void syncAfterSalePackForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, PoReturnEntity poReturnEntity) {
         List<AfterSalePackDTO.DetailDTO> newBoxDetailList = getAfterSalePackDetailsForUpdate(dto);
-        List<AfterSalePackEntity> oldBoxList = listUsedAfterSalePack(poReturnEntity.getId());
-        if (CollectionUtils.isEmpty(newBoxDetailList) && CollectionUtils.isEmpty(oldBoxList)) {
+        if (CollectionUtils.isEmpty(newBoxDetailList)) {
             return;
         }
-        syncAfterSalePack(newBoxDetailList, oldBoxList, poReturnEntity);
+        syncAfterSalePack(newBoxDetailList, poReturnEntity);
     }
 
     private List<AfterSalePackDTO.DetailDTO> getAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
@@ -1837,27 +1837,21 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     private void syncAfterSalePack(List<AfterSalePackDTO.DetailDTO> newBoxDetailList,
-                                   List<AfterSalePackEntity> oldBoxList,
                                    PoReturnEntity poReturnEntity) {
         Map<String, List<AfterSalePackDTO.DetailDTO>> detailMap = groupAfterSalePackDetail(newBoxDetailList);
         List<String> newPackIds = new ArrayList<>(detailMap.keySet());
-        List<String> oldPackIds = oldBoxList.stream().map(AfterSalePackEntity::getId).collect(Collectors.toList());
-        List<String> allPackIds = Stream.concat(newPackIds.stream(), oldPackIds.stream())
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(allPackIds)) {
+        if (CollectionUtils.isEmpty(newPackIds)) {
             return;
         }
 
-        List<AfterSalePackEntity> packList = afterSalePackService.listByIds(allPackIds);
-        if (packList.size() != allPackIds.size()) {
+        List<AfterSalePackEntity> packList = afterSalePackService.listByIds(newPackIds);
+        if (packList.size() != newPackIds.size()) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
         }
         Map<String, AfterSalePackEntity> packMap = packList.stream()
                 .collect(Collectors.toMap(AfterSalePackEntity::getId, Function.identity(), (v1, v2) -> v1));
         List<AfterSalePackDetailEntity> dbDetailList = afterSalePackDetailService.lambdaQuery()
-                .in(AfterSalePackDetailEntity::getMainId, allPackIds)
+                .in(AfterSalePackDetailEntity::getMainId, newPackIds)
                 .list();
         Map<String, AfterSalePackDetailEntity> dbDetailMap = dbDetailList.stream()
                 .collect(Collectors.toMap(AfterSalePackDetailEntity::getId, Function.identity(), (v1, v2) -> v1));
@@ -1865,7 +1859,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         validateAfterSalePack(newPackIds, packMap, poReturnEntity);
 
         List<AfterSalePackDetailEntity> updateDetailList = new ArrayList<>();
-        for (String packId : allPackIds) {
+        for (String packId : newPackIds) {
             List<AfterSalePackDTO.DetailDTO> detailList = detailMap.getOrDefault(packId, Collections.emptyList());
             updateDetailList.addAll(buildAfterSalePackDetailUpdates(packId, detailList, dbDetailList, dbDetailMap));
         }
@@ -1873,7 +1867,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException("售后装箱明细保存失败");
         }
 
-        List<AfterSalePackEntity> updatePackList = allPackIds.stream()
+        List<AfterSalePackEntity> updatePackList = newPackIds.stream()
                 .map(packMap::get)
                 .filter(Objects::nonNull)
                 .map(pack -> buildAfterSalePackUpdate(pack, detailMap.get(pack.getId()), dbDetailList, poReturnEntity))
@@ -1922,10 +1916,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                                                                             List<AfterSalePackDetailEntity> dbDetailList,
                                                                             Map<String, AfterSalePackDetailEntity> dbDetailMap) {
         if (CollectionUtils.isEmpty(detailList)) {
-            return dbDetailList.stream()
-                    .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), packId))
-                    .map(detail -> buildAfterSalePackDetailUpdate(detail, MathUtil.ZERO))
-                    .collect(Collectors.toList());
+            return Collections.emptyList();
         }
         Map<String, Integer> actualQtyMap = detailList.stream()
                 .filter(detail -> CharSequenceUtil.isNotBlank(detail.getId()))
@@ -1944,11 +1935,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException("售后装箱明细实际数量不能小于0");
             }
         }
-        for (AfterSalePackDetailEntity dbDetail : dbDetailList) {
-            if (!CharSequenceUtil.equals(dbDetail.getMainId(), packId)) {
-                continue;
-            }
-            updateList.add(buildAfterSalePackDetailUpdate(dbDetail, actualQtyMap.getOrDefault(dbDetail.getId(), MathUtil.ZERO)));
+        for (String detailId : actualQtyMap.keySet()) {
+            AfterSalePackDetailEntity dbDetail = dbDetailMap.get(detailId);
+            updateList.add(buildAfterSalePackDetailUpdate(dbDetail, actualQtyMap.get(detailId)));
         }
         return updateList;
     }
@@ -1979,15 +1968,26 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             Map<String, Integer> actualQtyMap = detailList.stream()
                     .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getId,
                             Collectors.summingInt(this::getAfterSalePackActualQty)));
-            updateEntity.setIsDifference(dbDetailList.stream()
-                    .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), oldPack.getId()))
-                    .anyMatch(detail -> !Objects.equals(Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO),
-                            actualQtyMap.getOrDefault(detail.getId(), MathUtil.ZERO))));
+            updateEntity.setIsDifference(isAfterSalePackDifference(oldPack.getId(), actualQtyMap, dbDetailList));
             updateEntity.setSourceId(poReturnEntity.getId());
             updateEntity.setSourceCode(poReturnEntity.getCode());
             updateEntity.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
         }
         return updateEntity;
+    }
+
+    private Boolean isAfterSalePackDifference(String packId,
+                                              Map<String, Integer> actualQtyMap,
+                                              List<AfterSalePackDetailEntity> dbDetailList) {
+        return dbDetailList.stream()
+                .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), packId))
+                .anyMatch(detail -> {
+                    Integer packQty = Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO);
+                    Integer actualQty = actualQtyMap.containsKey(detail.getId())
+                            ? actualQtyMap.get(detail.getId())
+                            : Optional.ofNullable(detail.getActualQty()).orElse(packQty);
+                    return !Objects.equals(packQty, actualQty);
+                });
     }
 
     private Map<String, List<AfterSalePackDTO.DetailDTO>> getAfterSalePackDetailMap(String poReturnId) {
