@@ -335,18 +335,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                 .checkCfg(Boolean.TRUE)
                 .build();
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
-                    } catch (Exception e) {
-                        log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
-                    }
-                }
-            });
-            return;
+        try {
+            sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+        } catch (Exception e) {
+            log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
         }
     }
 

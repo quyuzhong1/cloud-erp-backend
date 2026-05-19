@@ -1362,7 +1362,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
                 .map(DeliveryDeclareDetailMidDTO.ListDTO::getTransferWarehouseIds)
                 .collect(Collectors.toList()));
         for (DeliveryDeclareDetailMidDTO.ListDTO data : list) {
-            data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
+            if(StringUtils.isNotBlank(data.getDeclareStatus())){
+                data.setDeclareStatusName(DeclareStatusEnum.getName(data.getDeclareStatus()));
+            }else {
+                data.setDeclareStatus("not");
+                data.setDeclareStatusName("待生成");
+            }
             data.setGenerateStatusName(DeliveryDeclareDetailMidGenerateStatusEnum.getName(data.getGenerateStatus()));
             if (CharSequenceUtil.isBlank(data.getTransferWarehouseNames())) {
                 data.setTransferWarehouseNames(buildTransferWarehouseNames(data.getTransferWarehouseIds(), transferWarehouseNameMap));
