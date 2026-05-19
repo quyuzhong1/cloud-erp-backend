@@ -46,6 +46,10 @@ import java.util.stream.Collectors;
 public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
     @Resource
     private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+    @Resource
+    private MercadoLocalRateLimitHelper rateLimitHelper;
+
+    private static final String BIZ_TYPE = MercadoLocalRateLimitHelper.BIZ_ORDER_SEARCH;
 
 
     @Override
@@ -63,18 +67,26 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
+        String userId = String.valueOf(shopInfoDTO.getUserId());
 
+        // 入口检查限流退避标记。命中则 fail-fast 抛异常，避免在退避期内继续打 API 加剧限流。
+        // 注意：本 handler 实现的是 DmpInputApiInitHandler 接口，没有 dmpResponse，无法走"软退"路径，
+        // 只能依赖任务调度器在 errorCount 未到上限时按 nextExecTime 自然重试。
+        if (rateLimitHelper.isLimited(userId, BIZ_TYPE)) {
+            throw new ServiceException(StrUtil.format(
+                    "美客多本土站-订单查询：店铺userId={} 处于限流退避中，本次跳过等待退避结束后重试", userId));
+        }
 
         String url = MercadoConstant.URL;
         String path = dmpInputApiInitRequest.getApiType();
 
         //每次最多获取50条
-        Integer pageSize = 50;
+        int pageSize = 50;
         //当前页数
-        Integer pageNo = 0;
+        int pageNo = 0;
 
         Boolean nexflag = true;
-        
+
         String platformOrderCreateTime = "";
         String taskExtendJson = dmpInputApiInitRequest.getTaskExtendJson();
         if(StringUtils.isNotBlank(taskExtendJson)) {
@@ -86,7 +98,7 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         while (nexflag) {
             int offset = pageSize * pageNo;
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append(url);
             sb.append(path);
             sb.append("?seller=");
@@ -115,50 +127,39 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
-            //拉取数据
-            ApiResult apiResult = new ApiResult();
-            Object data = null;
-            long sleepTime = 1000;
-            int count = 0;
-            while(ObjectUtil.isEmpty(data)) {
-                apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-                if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-                    if(count == 10) {
-                        nexflag = false;
-                        throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
-                    }
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                    	Thread.currentThread().interrupt();
-                    }
-                    sleepTime = sleepTime + 1000;
-                    count = count + 1;
-                }else if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)){
-                    log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
-                    throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                            sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
-                }
-                data = apiResult.getData();
+            // 单次请求，去掉内嵌 sleep+retry 死循环：429/503/timeout 都走限流退避
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(),
+                    JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+
+            // 限流 / 网关临时不可用 / Read timed out → 写退避标记后 fail-fast，
+            // 已经成功拉到的前面分页数据本次会被一并丢弃，下次调度从 offset=0 重新拉以保证数据完整。
+            if (rateLimitHelper.isRateLimitedCode(apiResult.getCode())
+                    || (apiResult.getMsg() != null && apiResult.getMsg().equalsIgnoreCase("Read timed out"))) {
+                rateLimitHelper.markLimited(userId, BIZ_TYPE, MercadoLocalRateLimitHelper.DEFAULT_BACKOFF_SECONDS);
+                log.warn("【美客多本土站-订单查询】触发限流/超时，写入退避标记。userId={}, code={}, msg={}, url={}",
+                        userId, apiResult.getCode(), apiResult.getMsg(), sb.toString());
+                throw new ServiceException(StrUtil.format(
+                        "美客多本土站-订单查询触发限流/超时，已写入退避标记，等待重试。userId={}, code={}",
+                        userId, apiResult.getCode()));
             }
+
             if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-                nexflag = false;
                 log.error("调用url={},入参params={}, 美客多marketplace/orders/search数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
+            if (ObjectUtil.isEmpty(apiResult.getData())) {
+                break;
+            }
             ObjectMapper objectMapper = new ObjectMapper();
-            OrderDataDTO orderDTO = null;
+            OrderDataDTO orderDTO;
             try {
                 orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDataDTO.class);
             } catch (JsonProcessingException e) {
-                nexflag = false;
-                log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData());
+                log.error("美客多orders/search接口数据解析错误，数据={}", apiResult.getData(), e);
                 throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-            //解析数据
-//            OrderDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             if (CollectionUtils.isEmpty(orderDTO.getResults())) {
                 nexflag = false;
                 break;
@@ -175,21 +176,17 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
 
     private String dateToStr(LocalDateTime dateTime) {
 
-        // 转换为UTC时区的OffsetDateTime
         OffsetDateTime utcTime = dateTime
                 .atZone(ZoneId.systemDefault())
                 .toOffsetDateTime()
                 .withOffsetSameInstant(ZoneOffset.UTC);
 
-        // 自定义格式化
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
         String formatted = utcTime.format(formatter);
 
-        // 字符串替换
-        String target = formatted.replace("+00:00", "-00");
-        return target;
+        return formatted.replace("+00:00", "-00");
     }
-    
+
     private List<DmpInputTaskInitDTO> dealOrderIdQuery(DmpInputApiInitRequest dmpInputApiInitRequest) {
     	String extendJson = dmpInputApiInitRequest.getTaskExtendJson();
     	if(StringUtils.isBlank(extendJson)) {
@@ -207,21 +204,21 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             .map(Object::toString)
             .collect(Collectors.toList());
      	parseObject.remove(DmpInputConstant.ORDER_ID_LIST);
-     	
+
      	String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
         MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(nextLevelId);
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
-     	
+
         //入参
         HashMap<String, Object> params = new HashMap<>(2);
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
         headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
-        
+
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
         for(String orderId : orderIdList) {
         	StringBuffer sb = new StringBuffer();
@@ -240,10 +237,10 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             	log.warn("{}未查询到数据，返回报文：{}" , orderId , jsonStr);
             }
         }
-        
+
      	return dmpInputTaskInitDTOList;
     }
-    
+
     public static void main(String[] args) {
     	String orderId = "2000012005512202";
     	Map<String, String> headerMap = new HashMap<>(1);
