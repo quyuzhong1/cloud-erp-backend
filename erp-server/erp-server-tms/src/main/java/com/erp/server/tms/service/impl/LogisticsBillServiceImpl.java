@@ -1260,6 +1260,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         if (Objects.isNull(soB2cLogisticsEntity)) {
             throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
         }
+        if (Boolean.TRUE.equals(dto.getIsFromMq())
+                && CharSequenceUtil.isNotBlank(dto.getTransportNo())
+                && !CharSequenceUtil.equals(dto.getTransportNo(), soB2cLogisticsEntity.getCode())) {
+            log.warn("忽略过期异步面单消息,订单:{},消息运单号:{},当前运单号:{}",
+                    soB2cEntity.getCode(), dto.getTransportNo(), soB2cLogisticsEntity.getCode());
+            return null;
+        }
 //        if (Objects.nonNull(soB2cLabelEntity) && CharSequenceUtil.isNotBlank(soB2cLabelEntity.getLogisticsLabelUrl())) {
 //            return buildWaybillDTO(soB2cLabelEntity, soB2cLogisticsEntity);
 //        }

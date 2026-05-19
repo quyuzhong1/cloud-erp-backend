@@ -9,4 +9,5 @@ public class SqlConstants {
     }
 
     public static final String LIMIT_1 = "LIMIT 1";
+    public static final String LIMIT_50 = "LIMIT 50";
 }

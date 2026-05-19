@@ -322,7 +322,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 							}
 						});
 						waitEntity.put(BaseEntity.CREATE_TIME, findEntity.get(BaseEntity.CREATE_TIME));
-						deleteDmpIdList.add(dmpId);
+//						deleteDmpIdList.add(dmpId);
 						BaseEntity waitBeanEntity = DmpHandlerUtils.toBeanIgnoreError(waitEntity, dmpEntityClass);
 						updateDmpInputDmpEntityList.add(waitBeanEntity);
 						if(!findEntity.get(DATA_ENCRYPT).toString().equals(waitEntity.get(DATA_ENCRYPT).toString())) {
