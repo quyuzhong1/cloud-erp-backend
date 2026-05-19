@@ -10,11 +10,11 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 
 /**
- * 仓位移动来源明细表
+ * 仓位移动箱唛明细表
  * <p>
- * 以【来源编号 + SKU + 移出仓位 + 移入仓位】为维度，记录仓位移动操作的原始来源明细。
- * 是 {@code warehouse_location_move_detail} 按来源单据拆分后的子表，
- * 主要用于事后查看每次移仓操作中各来源单据的明细数据。
+ * 以【箱唛 + SKU + 移出仓位 + 移入仓位】为维度，记录仓位移动操作的箱唛维度明细。
+ * 是 {@code warehouse_location_move_detail} 按箱唛拆分后的子表，
+ * 主要用于事后查看每次移仓操作中各箱唛的明细数据。
  * </p>
  *
  * @author liuchao
@@ -23,8 +23,8 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("wms_move_src_detail")
-public class WmsMoveSrcDetailEntity extends BaseEntity<WmsMoveSrcDetailEntity> {
+@TableName("wms_move_carton_detail")
+public class WmsMoveCartonDetailEntity extends BaseEntity<WmsMoveCartonDetailEntity> {
 
     /**
      * 仓位移动主单 ID（warehouse_location_move.id）
@@ -42,16 +42,22 @@ public class WmsMoveSrcDetailEntity extends BaseEntity<WmsMoveSrcDetailEntity> {
     private String detailId;
 
     /**
-     * 来源单据编号（如箱唛号、其他来源单号等）
+     * 箱唛号
      */
-    @TableField("source_code")
-    private String sourceCode;
+    @TableField("carton_code")
+    private String cartonCode;
 
     /**
-     * 来源单据主键（如装箱单 ID、其他来源单 ID 等）
+     * 装箱单主键（after_sale_pack.id）
      */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("carton_id")
+    private String cartonId;
+
+    /**
+     * 装箱明细主键（after_sale_pack_detail.id）
+     */
+    @TableField("carton_detail_id")
+    private String cartonDetailId;
 
     /**
      * SKU 主键

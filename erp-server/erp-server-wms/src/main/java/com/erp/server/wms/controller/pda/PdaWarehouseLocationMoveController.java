@@ -19,7 +19,7 @@ import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
-import com.erp.server.wms.service.WmsMoveSrcDetailService;
+import com.erp.server.wms.service.WmsMoveCartonDetailService;
 import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
@@ -59,7 +59,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
 
     @Resource
-    private WmsMoveSrcDetailService wmsMoveSrcDetailService;
+    private WmsMoveCartonDetailService wmsMoveCartonDetailService;
 
     /**
     * 新增
@@ -684,9 +684,9 @@ public class PdaWarehouseLocationMoveController extends BaseController {
      * @author liuchao
      * @date 2026-05-18
      */
-    @GetMapping("/listBoxMoveDetail")
+    @GetMapping("/listCartonMoveDetail")
     public ApiResult<List<AfterSalesWarehouseLocationSuggestDto.BoxMoveDetailListDto>> listBoxMoveDetail(
             @RequestParam("mainId") String mainId) {
-        return success(wmsMoveSrcDetailService.listBoxMoveDetail(mainId));
+        return success(wmsMoveCartonDetailService.listBoxMoveDetail(mainId));
     }
 }

@@ -215,7 +215,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
                 addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
         String moveId = warehouseLocationMoveService.addAndApprove(addDTO);
-        pdaAfterSalesWarehouseMoveService.saveBoxTransferDetails(moveId,
+        pdaAfterSalesWarehouseMoveService.saveMoveCartonDetails(moveId,
                 addOrUpdateDTO.getInWarehouseLocationCode(),
                 CollUtil.newArrayList(buildMoveSourceBoxInfo(addOrUpdateDTO, old, afterSalePackEntity, moveQty)),
                 Collections.emptyMap());

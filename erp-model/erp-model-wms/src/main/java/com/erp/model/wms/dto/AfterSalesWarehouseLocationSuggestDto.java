@@ -470,7 +470,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     }
 
     /**
-     * 移仓来源明细列表 VO（对应 wms_move_src_detail 表，用于移箱明细弹窗展示）
+     * 移仓箱唛明细列表 VO（对应 wms_move_carton_detail 表，用于移箱明细弹窗展示）
      */
     @Data
     @NoArgsConstructor
@@ -482,11 +482,14 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /** 汇总明细 ID（detail_id） */
         private String detailId;
 
-        /** 来源单据编号（如箱唛号、其他来源单号等） */
-        private String sourceCode;
+        /** 箱唛号 */
+        private String cartonCode;
 
-        /** 来源单据主键（如装箱单 ID、其他来源单 ID 等） */
-        private String sourceId;
+        /** 装箱单主键（after_sale_pack.id） */
+        private String cartonId;
+
+        /** 装箱明细主键（after_sale_pack_detail.id） */
+        private String cartonDetailId;
 
         /** SKU 主键 */
         private String skuId;

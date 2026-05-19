@@ -3,29 +3,29 @@ package com.erp.server.wms.service.impl;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
-import com.erp.model.wms.entity.WmsMoveSrcDetailEntity;
-import com.erp.server.wms.mapper.WmsMoveSrcDetailMapper;
-import com.erp.server.wms.service.WmsMoveSrcDetailService;
+import com.erp.model.wms.entity.WmsMoveCartonDetailEntity;
+import com.erp.server.wms.mapper.WmsMoveCartonDetailMapper;
+import com.erp.server.wms.service.WmsMoveCartonDetailService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
- * 仓位移动来源明细表 服务实现
+ * 仓位移动箱唛明细表 服务实现
  *
  * @author liuchao
  * @since 2026-05-18
  */
 @Service
-public class WmsMoveSrcDetailServiceImpl
-        extends SuperServiceImpl<WmsMoveSrcDetailMapper, WmsMoveSrcDetailEntity>
-        implements WmsMoveSrcDetailService {
+public class WmsMoveCartonDetailServiceImpl
+        extends SuperServiceImpl<WmsMoveCartonDetailMapper, WmsMoveCartonDetailEntity>
+        implements WmsMoveCartonDetailService {
 
     @Override
     public List<AfterSalesWarehouseLocationSuggestDto.BoxMoveDetailListDto> listBoxMoveDetail(String mainId) {
-        List<WmsMoveSrcDetailEntity> entityList = lambdaQuery()
-                .eq(WmsMoveSrcDetailEntity::getMainId, mainId)
-                .orderByAsc(WmsMoveSrcDetailEntity::getSkuNo)
+        List<WmsMoveCartonDetailEntity> entityList = lambdaQuery()
+                .eq(WmsMoveCartonDetailEntity::getMainId, mainId)
+                .orderByAsc(WmsMoveCartonDetailEntity::getSkuNo)
                 .list();
         return BeanMapperUtils.copyList(AfterSalesWarehouseLocationSuggestDto.BoxMoveDetailListDto.class, entityList);
     }
