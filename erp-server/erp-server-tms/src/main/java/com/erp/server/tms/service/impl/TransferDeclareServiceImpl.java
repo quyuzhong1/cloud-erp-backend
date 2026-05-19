@@ -681,25 +681,39 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public void getOrderByCodeJob() {
         List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
-        List<String> ids = detailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        XxlJobHelper.log("====查询待同步中转状态的订单信息，data.size={}====", JSONUtil.toJsonStr(detailEntities.size()));
+        if (CollUtil.isEmpty(detailEntities)){
+            return;
+        }
+        List<String> ids = detailEntities.stream().map(TransferDeclareDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
-        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(req -> req.getTransferLogisticsSupplierId()).distinct().collect(Collectors.toList());
-
+        if (CollUtil.isEmpty(transferDeclareEntities)){
+            return;
+        }
+        Map<String, TransferDeclareEntity> entityMap = transferDeclareEntities.stream().collect(Collectors.toMap(TransferDeclareEntity::getId, Function.identity()));
+        List<String> transferLogisticsSupplierIds = transferDeclareEntities.stream().map(TransferDeclareEntity::getTransferLogisticsSupplierId).distinct().collect(Collectors.toList());
         //查询授权信息
         List<TransferLogisticsAuthEntity> transferLogisticsAuthEntities = transferLogisticsAuthService.listByMainIds(transferLogisticsSupplierIds);
+        if (CollUtil.isEmpty(transferLogisticsAuthEntities)){
+            return;
+        }
+        Map<String, TransferLogisticsAuthEntity> authEntityMap = transferLogisticsAuthEntities.stream().collect(Collectors.toMap(TransferLogisticsAuthEntity::getMainId, Function.identity(), (existing, replacement) -> existing));
         for (TransferDeclareDetailEntity detailEntity : detailEntities) {
-            TransferDeclareEntity transferDeclareEntity = transferDeclareEntities.stream().filter(req -> detailEntity.getMainId().equals(req.getId())).findFirst().orElse(null);
+            TransferDeclareEntity transferDeclareEntity = entityMap.get(detailEntity.getMainId());
             if (ObjectUtil.isEmpty(transferDeclareEntity)) {
                 continue;
             }
-            TransferLogisticsAuthEntity authEntity = transferLogisticsAuthEntities.stream().filter(req -> transferDeclareEntity.getTransferLogisticsSupplierId().equals(req.getMainId())).findFirst().orElse(null);
+            XxlJobHelper.log("====查询订单最新状态，订单号={}====", detailEntity.getSoCode());
+            TransferLogisticsAuthEntity authEntity = authEntityMap.get(transferDeclareEntity.getTransferLogisticsSupplierId());
             if (ObjectUtil.isEmpty(authEntity)) {
                 continue;
             }
             TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
             ApiResult<TransferLogisticsOrderDTO> result = service.getOrderByCode(detailEntity.getSoCode(), authEntity.getId());
-            if (result.getCode() == 200) {
-                if(Objects.nonNull(result.getData()) && Objects.nonNull(result.getData().getOrderStatusEnum())){
+            XxlJobHelper.log("====查询订单最新状态，订单号={}，结果={}====", detailEntity.getSoCode(), JSONUtil.toJsonStr(result));
+            if (result.getCode() == 200 && Objects.nonNull(result.getData()) ) {
+                TransferLogisticsStatusEnum orderStatusEnum = result.getData().getOrderStatusEnum();
+                if(Objects.nonNull(orderStatusEnum) && !detailEntity.getTransferStatus().equals(orderStatusEnum.getCode())){
                     transferDeclareDetailService.updateTransferStatus(detailEntity.getId(), result.getData().getOrderStatusEnum().getCode());
                 }
             }
