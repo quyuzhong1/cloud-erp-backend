@@ -429,6 +429,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 if (Boolean.TRUE.equals(resultDTO.getStatus())) {
                     e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
                     e.setTrackNo(resultDTO.getTrackNo());
+                    e.setExceptionReason("");
                     // 操作日志
                     String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
@@ -989,6 +990,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     private void handleOrderResult(BaseResult baseResult, LogisticsOrderEntity entity) {
         if (baseResult.isSuccess()) {
             entity.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
+            entity.setExceptionReason("");
             OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
             List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
             if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
