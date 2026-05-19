@@ -62,14 +62,14 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String productName;
 
         /**
-         * EAN 码（模糊，对应 product_purchase.ean，与列表展示口径一致）
-         */
-        private String ean;
-
-        /**
          * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * 勾选导出：主键列表（与列表接口一致，放在 params 内）
+         */
+        private List<String> ids;
 
         /**
          * sqlMap 默认key default
@@ -218,8 +218,6 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
 
         private String skuNo;
 
-        private String eanNo;
-
         /**
          * 产品名称
          */
@@ -291,12 +289,11 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     }
 
     /**
-     * 导出
+     * 导出查询参数（与列表 {@link SearchParamDTO} 一致，可配合 {@link com.common.business.dto.base.PagingDTO} 的 params 使用）
      */
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class ExportParamDTO extends AfterSalesWarehouseLocationSuggestDto.SearchParamDTO {
-        private List<String> ids;
     }
 
     /**
@@ -339,7 +336,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     @NoArgsConstructor
     public static class PdaGoodsShelvingSubmitDto {
 
-        @NotBlank(message = "仓库id不能为空")
+//        @NotBlank(message = "仓库id不能为空")
         @Size(max = 19, message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 
@@ -399,7 +396,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
     @NoArgsConstructor
     public static class PdaFullBoxTransferSubmitDto {
 
-        @NotBlank(message = "仓库id不能为空")
+//        @NotBlank(message = "仓库id不能为空")
         @Size(max = 19, message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 

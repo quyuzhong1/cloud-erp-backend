@@ -89,6 +89,66 @@ public class AfterSalePackController extends BaseController {
     }
 
     /**
+     * 确定提审
+     *
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return ApiResult
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    @PostMapping("/submit")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "售后装箱表确定提审")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:submit",
+            serviceClass = AfterSalePackService.class,
+            keyIdName = "id")
+    public ApiResult<?> submit(@RequestBody @Validated AfterSalePackDTO.UpdateDTO dto) {
+        afterSalePackService.submit(dto);
+        return success();
+    }
+
+    /**
+     * 复核驳回
+     *
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return ApiResult
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    @PostMapping("/reject")
+    @LogAction(value = LogActionEnum.REJECT, desc = "售后装箱表复核驳回")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:reject",
+            serviceClass = AfterSalePackService.class,
+            keyIdName = "id")
+    public ApiResult<?> reject(@RequestBody @Validated AfterSalePackDTO.UpdateDTO dto) {
+        afterSalePackService.reject(dto);
+        return success();
+    }
+
+    /**
+     * 确认并封箱
+     *
+     * @param dto AfterSalePackDTO.UpdateDTO
+     * @return ApiResult
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    @PostMapping("/confirm")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "售后装箱表确认并封箱")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:confirm",
+            serviceClass = AfterSalePackService.class,
+            keyIdName = "id")
+    public ApiResult<?> confirm(@RequestBody @Validated AfterSalePackDTO.UpdateDTO dto) {
+        afterSalePackService.confirm(dto);
+        return success();
+    }
+
+    /**
      * 列表查询
      *
      * @param dto AfterSalePackDTO.PagingParamDTO

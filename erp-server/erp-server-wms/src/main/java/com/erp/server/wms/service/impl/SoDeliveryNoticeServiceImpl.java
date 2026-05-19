@@ -1028,7 +1028,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (ObjectUtil.isEmpty(deliveryNoticeEntity)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"发货通知单");
         }
-        if (CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
+        if (!CharSequenceUtil.equals(deliveryNoticeEntity.getDeclareStatus(), WmsDeclareStatusEnum.WAIT.getCode())) {
             throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE);
         }
         deliveryNoticeEntity.setDeclareStatus(WmsDeclareStatusEnum.NONE.getCode());
@@ -1074,9 +1074,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<String> currencyList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getDeclareCurrency).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<DictCurrencyEntity> currencyEntityList = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, currencyList).list();
 
-        //查询单位名称
-        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
-
         //查询原产国名称
         List<String> sourceCountryIdList = list.stream().map(TmsDeclareBillDTO.NotGenerateDetailDTO::getSourceCountry).distinct().collect(Collectors.toList());
         List<DictCountryEntity> sourceCountryList = sysDictFeign.listCountryByIds(sourceCountryIdList);
@@ -1086,11 +1083,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             DictCurrencyEntity currencyEntity = currencyEntityList.stream().filter(v -> v.getId().equals(dto.getDeclareCurrency())).findFirst().orElse(null);
             if (Objects.nonNull(currencyEntity)) {
                 dto.setDeclareCurrencyName(currencyEntity.getName());
-            }
-            //报关单位名称
-            BasicDictEntity unitEntity = declareUnitList.stream().filter(v -> v.getValue().equals(dto.getDeclareUnit())).findFirst().orElse(null);
-            if (Objects.nonNull(unitEntity)) {
-                dto.setDeclareUnitName(unitEntity.getName());
             }
             //国家名称
             DictCountryEntity countryEntity = sourceCountryList.stream().filter(v -> v.getId().equals(dto.getSourceCountry())).findFirst().orElse(null);
@@ -1344,7 +1336,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
         }
-        //TODO 待加审核流程
+        //已生成报关不支持反审核
+        if (CharSequenceUtil.equals(entity.getDeclareStatus(), WmsDeclareStatusEnum.FINISH.getCode())) {
+            throw new ServiceException(ApiError.BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE);
+        }
 
         //下推出库单不能反审核
         List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getId()));

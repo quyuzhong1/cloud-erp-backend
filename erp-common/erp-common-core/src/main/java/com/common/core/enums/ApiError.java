@@ -1353,6 +1353,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
     SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
+    BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE(94109,"单据已生成申报信息，不支持反审核"),
 
     /**
      * 销售订单错误信息 11000-11500
@@ -1859,6 +1860,10 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_REPLACE_WAIT_STATUS_REQUIRED(13696,"报关单【{0}】非待确认状态，无法合并替换"),
     LOGISTICS_DECLARE_BOX_SINGLE_BILL_REQUIRED(13697,"同一业务单同一箱号必须在同一个报关单：第{0}票、第{1}票"),
     LOGISTICS_DECLARE_B2B_SPLIT_VIEW_FORBIDDEN(13698,"非B2B报关单，无法查看拆分明细"),
+    LOGISTICS_DECLARE_COMBO_CHILD_NOT_FULL_SELECTED(13699,"来源单【{0}】箱号【{1}】组合品【{2}】未勾选完整，缺失子SKU：{3}"),
+    LOGISTICS_DECLARE_BOM_HISTORY_NOT_FOUND(13700,"来源单【{0}】箱号【{1}】子SKU【{2}】未找到BOM历史，bomHistoryId：{3}"),
+    LOGISTICS_DECLARE_LATEST_PRODUCT_LOGISTIC_NOT_FOUND(13701,"未找到最新PLM产品物流资料，商品编码：{0}"),
+    LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS(13701,"关联单号【{0}】已生成报关单，不能修改装箱信息"),
 
 
     /**

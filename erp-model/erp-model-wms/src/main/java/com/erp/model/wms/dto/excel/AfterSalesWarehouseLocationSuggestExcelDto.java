@@ -31,17 +31,10 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
     private String productName;
 
     /**
-     * 所属库区
-     */
-    @ColumnWidth(30)
-    @ExcelProperty(value = "EAN码", index = 2)
-    private String eanCode;
-
-    /**
      * 所属仓库名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "所属仓库名称", index = 3)
+    @ExcelProperty(value = "所属仓库", index = 2)
     private String warehouseName;
     @ExcelIgnore
     private String warehouseId;
@@ -50,7 +43,7 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
      * 所属库区
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "所属库区名称", index = 4)
+    @ExcelProperty(value = "所属库区名称", index = 3)
     private String warehouseAreaName;
     @ExcelIgnore
     private String warehouseAreaCode;
@@ -61,7 +54,7 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
      * 推荐仓位名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "推荐仓位编码", index = 5)
+    @ExcelProperty(value = "推荐仓位编码", index = 4)
     private String warehouseLocationCode;
     @ExcelIgnore
     private String warehouseLocationId;
@@ -70,14 +63,14 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
      * 优先级
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "优先级", index = 6)
+    @ExcelProperty(value = "优先级", index = 5)
     private String sort;
 
     /**
      * 启用状态（启用/禁用）
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "状态", index = 7)
+    @ExcelProperty(value = "状态", index = 6)
     private String status;
     @ExcelIgnore
     private Boolean disabled;
@@ -85,6 +78,6 @@ public class AfterSalesWarehouseLocationSuggestExcelDto {
     /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误信息", index = 8)
+    @ExcelProperty(value = "错误信息", index = 7)
     private String errorMsg;
 }

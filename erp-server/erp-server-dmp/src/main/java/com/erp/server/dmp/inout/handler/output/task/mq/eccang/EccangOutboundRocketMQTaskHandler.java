@@ -10,6 +10,7 @@ import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
+import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
 import com.sdk.wms.antu.enums.AntuEnums;
 import io.seata.common.util.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -83,8 +84,27 @@ public class EccangOutboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 		platformOutboundDTO.setOrderStatus(erpOrderStatus);
     	platformOutboundDTO.setThirdOrderStatus(AntuEnums.OrderStatusEnum.getName(orderStatus));
     	platformOutboundDTO.setTrackNo(dmpThirdOutboundEntity.getTrackingNo());
+    	platformOutboundDTO.setDetailList(this.convertDetailList(dmpThirdOutboundEntity.getDetailListJson()));
     	
         return platformOutboundDTO;
+    }
+
+    private List<PlatformOutboundDTO.Detail> convertDetailList(String detailListJson) {
+		if(StringUtils.isBlank(detailListJson)) {
+			return Collections.emptyList();
+		}
+		List<AntuCreateOutboundReq.Item> itemList = JSON.parseArray(detailListJson, AntuCreateOutboundReq.Item.class);
+		if(CollUtil.isEmpty(itemList)) {
+			return Collections.emptyList();
+		}
+		List<PlatformOutboundDTO.Detail> detailList = new ArrayList<>();
+		for(AntuCreateOutboundReq.Item item : itemList) {
+			PlatformOutboundDTO.Detail detail = new PlatformOutboundDTO.Detail();
+			detail.setPlatformSkuNo(item.getProductSku());
+			detail.setQty(item.getQuantity());
+			detailList.add(detail);
+		}
+		return detailList;
     }
 
     @Override

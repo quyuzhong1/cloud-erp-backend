@@ -428,70 +428,76 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     obj.getSkuId().equals(addDTO.getSkuId())
                             && obj.getSupplierId().equals(supplierEntity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
+            /**
+             * 委外采购：
+             * 父行：上游委外订单价格
+             * 子行：价目表
+             * 返修采购：
+             * 父行：上游委外订单价格
+             * 子行：上游委外订单价格
+             */
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
                     || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                    ||PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
-                //委外成品时，取委外订单中的含税单价
-                if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                        ||PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
-                        && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
-                    //sku是组合品时，取委外订单含税单价
-                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId()) && CharSequenceUtil.isBlank(e.getParentId()))
-                            .findFirst().orElse(null);
-                    if (Objects.isNull(subcontractOrderDetailEntity)){
-                        throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
-                    }else {
-                        SubcontractOrderEntity subcontractOrder = subcontractOrderService.getById(subcontractOrderDetailEntity.getMainId());
-                        if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
-                            BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getRepairPrice()) ? subcontractOrderDetailEntity.getRepairPrice():BigDecimal.ZERO;
-                            Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getRepairQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
-                            addDTO.setTaxPrice(subcontractOrderDetailEntity.getRepairPrice());
-                            addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
-                            addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
-                            addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
-                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
-                        } else {
-                            BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getPrice()) ? subcontractOrderDetailEntity.getPrice():BigDecimal.ZERO;
-                            Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
-                            addDTO.setTaxPrice(subcontractOrderDetailEntity.getPrice());
-                            addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
-                            addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
-                            addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
-                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
-                        }
-
-                    }
-                    //成品直接返回
-                    continue;
-                } else if (isRepairSubcontractSource
-                        && PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
-                        && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
-                    //返修采购单子行：取返修委外来源明细中的含税单价
-                    String sourceDetailId = addDTO.getSourceDetailId();
-                    SubcontractOrderDetailEntity sourceDetail = StrUtil.isBlank(sourceDetailId)
-                            ? null
-                            : repairSubcontractDetailMap.get(sourceDetailId);
-                    if (Objects.isNull(sourceDetail)) {
+                    || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())) {
+                if (SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())) {
+                    if (CollectionUtils.isEmpty(subcontractOrderDetailEntityList)) {
                         throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
                     }
-                    BigDecimal price = Objects.nonNull(sourceDetail.getPrice()) ? sourceDetail.getPrice() : BigDecimal.ZERO;
-                    Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
+                    SubcontractOrderDetailEntity detail = subcontractOrderDetailEntityList.stream()
+                            .filter(e -> Objects.nonNull(e)
+                                    && StrUtil.isNotBlank(e.getSkuId())
+                                    && Objects.equals(e.getSkuId(), addDTO.getSkuId())
+                                    && CharSequenceUtil.isBlank(e.getParentId()))
+                            .findFirst().orElse(null);
+                    if (Objects.isNull(detail)){
+                        throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
+                    }
+                    SubcontractOrderEntity subcontractOrder = subcontractOrderService.getById(detail.getMainId());
+                    boolean isRepairType = Objects.nonNull(subcontractOrder)
+                            && Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode());
+                    BigDecimal price = isRepairType
+                            ? (Objects.nonNull(detail.getRepairPrice()) ? detail.getRepairPrice() : BigDecimal.ZERO)
+                            : (Objects.nonNull(detail.getPrice()) ? detail.getPrice() : BigDecimal.ZERO);
+                    Integer qty = isRepairType
+                            ? (Objects.nonNull(detail.getRepairQty()) ? detail.getRepairQty() : MathUtil.ZERO)
+                            : (Objects.nonNull(detail.getQty()) ? detail.getQty() : MathUtil.ZERO);
                     addDTO.setTaxPrice(price);
-                    addDTO.setTaxRate(Objects.nonNull(sourceDetail.getTaxRate()) ? sourceDetail.getTaxRate() : BigDecimal.ZERO);
-                    addDTO.setCurrency(sourceDetail.getCurrency());
-                    addDTO.setCurrencySymbol(sourceDetail.getCurrencySymbol());
+                    addDTO.setTaxRate(detail.getTaxRate());
+                    addDTO.setCurrency(detail.getCurrency());
+                    addDTO.setCurrencySymbol(detail.getCurrencySymbol());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
                     continue;
-                }
-                if (Objects.nonNull(viewDTO)){
-                    addDTO.setCurrency(viewDTO.getCurrency());
-                    addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    addDTO.setTaxPrice(viewDTO.getTaxPrice());
-                    addDTO.setTaxRate(viewDTO.getTaxRate());
-                    addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
-                } else {
-                    String purchasePriceError = CharSequenceUtil.format(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND.getMsg(), addDTO.getSkuNo(), addDTO.getPurchaseQty());
-                    errorList.add(purchasePriceError);
+                } else if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
+                        && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
+                    if (isRepairSubcontractSource) {
+                        //返修采购单子行：取返修委外来源明细中的含税单价
+                        String sourceDetailId = addDTO.getSourceDetailId();
+                        SubcontractOrderDetailEntity sourceDetail = StrUtil.isBlank(sourceDetailId)
+                                ? null
+                                : repairSubcontractDetailMap.get(sourceDetailId);
+                        if (Objects.isNull(sourceDetail)) {
+                            throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
+                        }
+                        BigDecimal price = Objects.nonNull(sourceDetail.getPrice()) ? sourceDetail.getPrice() : BigDecimal.ZERO;
+                        Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
+                        addDTO.setTaxPrice(price);
+                        addDTO.setTaxRate(Objects.nonNull(sourceDetail.getTaxRate()) ? sourceDetail.getTaxRate() : BigDecimal.ZERO);
+                        addDTO.setCurrency(sourceDetail.getCurrency());
+                        addDTO.setCurrencySymbol(sourceDetail.getCurrencySymbol());
+                        addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        continue;
+                    } else {
+                        if (Objects.nonNull(viewDTO)){
+                            addDTO.setCurrency(viewDTO.getCurrency());
+                            addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                            addDTO.setTaxPrice(viewDTO.getTaxPrice());
+                            addDTO.setTaxRate(viewDTO.getTaxRate());
+                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
+                        } else {
+                            String purchasePriceError = CharSequenceUtil.format(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND.getMsg(), addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                            errorList.add(purchasePriceError);
+                        }
+                    }
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
                 if(!addDTO.getIsRevalueTaxRate()){

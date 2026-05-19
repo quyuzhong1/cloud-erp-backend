@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -37,17 +38,7 @@ public interface SoReturnNoticeMapper extends BaseMapper<SoReturnNoticeEntity> {
      * @param pagingParam pagingParam
      * @return java.lang.Integer
      **/
-    Integer listCount(@Param("params") SoReturnNoticeDTO.PagingParam pagingParam);
-
-    /**
-     * 导出查询
-     * @Author Luo_WG
-     * @Date 2023/5/16 10:39
-     * @param dto
-     * @return java.util.List<com.erp.model.wms.dto.SoReturnNoticeDTO.PagingView>
-     **/
-    List<SoReturnNoticeDTO.PagingView> soReturnNoticeExportExcel(@Param("params") SoReturnNoticeDTO.PagingParam dto);
-    Page<SoReturnNoticeDTO.PagingView> soReturnNoticeExportExcel(@Param("page") Page<SoReturnNoticeDTO.PagingView> page, @Param("params") SoReturnNoticeDTO.PagingParam dto);
+    List<ApproveStatusQtyDTO> listCount(@Param("params") SoReturnNoticeDTO.PagingParam pagingParam);
 
     /**
      * 下推退货签收单-列表查询

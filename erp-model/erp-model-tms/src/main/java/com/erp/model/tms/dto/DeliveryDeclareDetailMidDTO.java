@@ -406,15 +406,6 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
          */
         private String currency;
 
-        /**
-         * 国家编码
-         */
-        private String countryId;
-
-        /**
-         * 国家名称
-         */
-        private String countryName;
     }
 
     /**

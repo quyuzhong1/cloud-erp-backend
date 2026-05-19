@@ -123,6 +123,19 @@ public class SysAccountingCompanyController extends BaseController {
         return success(list);
 
     }
+    /**
+     * 获取组织列表
+     *
+     * @param name 公司名称（模糊查询，非必填）
+     * @return
+     * @author yl
+     * @date 2023-03-21 17:3
+     */
+    @GetMapping("/listAll")
+    public ApiResult<List<SysAccountingCompanyDTO.ListDTO>> listAll(@RequestParam(value = "name", required = false) String name) {
+        List<SysAccountingCompanyDTO.ListDTO> list = sysAccountingCompanyService.listAll(name);
+        return success(list);
+    }
 
 
     /**

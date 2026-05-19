@@ -18,6 +18,9 @@
        <result column="dict_platform" property="dictPlatform" />
        <result column="platform_code" property="platformCode" />
        <result column="third_warehouse_platform" property="thirdWarehousePlatform" />
+       <result column="shipping_method" property="shippingMethod" />
+       <result column="track_no" property="trackNo" />
+       <result column="status" property="status" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -31,7 +34,7 @@
         update_user_id,
         version,
         is_deleted,
-        code, so_code, so_id, dict_platform, platform_code, third_warehouse_platform
+        code, so_code, so_id, dict_platform, platform_code, third_warehouse_platform, shipping_method, track_no, status
     </sql>
     <select id="paging" resultType="com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO$PagingViewDTO">
         select
@@ -40,32 +43,18 @@
             twd.so_id as soId,
             twd.code,
             twd.dict_platform as platform,
-            sb.shop_id as shopId,
+            twd.shop_id as shopId,
             twd.so_code as soCode,
             twd.platform_code as platformOrderCode,
-            sb.shipping_order_no as thirdCode,
             twd.status,
-            sbl.code as transportNo,
-            sbl.track_no as trackNo,
-            sbl.logistics_channel_id as channelId,
-            sbl.logistics_channel_name as channelName,
+            twd.track_no as trackNo,
             twdd.sku_no as skuNo,
             twdd.platform_sku_no as platformSkuNo,
             twdd.delivery_qty as qty,
             twdd.warehouse_id as warehouseId,
-            twd.create_time as createTime,
-            sb.so_outstock_date as outstockDate,
-            sb.sign_order_error as signOrderError
+            twd.create_time as createTime
         from third_warehouse_delivery twd
         inner join third_warehouse_delivery_detail twdd on twd.id = twdd.main_id and twdd.is_deleted = false
-        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-            inner join erp_oms.so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
-            inner join erp_oms.so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
-        </if>
-        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-            inner join so_b2c sb on twd.so_id = sb.id and sb.is_deleted = false
-            inner join so_b2c_logistics sbl on sbl.main_id = sb.id and sbl.is_deleted = false
-        </if>
         where  ${params.sqlMap.default}
             and twd.is_deleted = false
         order by twd.create_time desc
@@ -78,5 +67,20 @@
         group by status
     </select>
 
+    <update id="updateTrackNoByCreateTime">
+        update third_warehouse_delivery twd
+        set track_no = so.track_no,
+            update_time = now(),
+            version = twd.version + 1
+        from so_outstock so
+        where twd.id = so.source_id
+          and so.source_type = #{sourceType}
+          and twd.is_deleted = false
+          and so.is_deleted = false
+          and coalesce(twd.track_no, '') = ''
+          and coalesce(so.track_no, '') != ''
+          and twd.create_time &gt;= #{startTime}
+          and twd.create_time &lt; #{endTime}
+    </update>
 
 </mapper>

@@ -24,6 +24,7 @@ import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -235,7 +236,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(@RequestBody PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        return soB2cDeliveryService.exportB2cDelivery(dto);
+        return soB2cDeliveryService.paging(dto);
     }
 
     @PostMapping("/packageForecast")
@@ -316,8 +317,8 @@ public class ExportWmsFeignController {
             tableAlias = "vma"
     )
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
-    public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
-        return virtualWarehouseAllocationService.exportVirtualWarehouseAllocation(dto);
+    public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
+        return virtualWarehouseAllocationService.paging(dto);
     }
 
     @PostMapping("/aliexpressDelivery")
@@ -719,8 +720,8 @@ public class ExportWmsFeignController {
             tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.exportSoOutStock(dto);
+    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto, Boolean.TRUE);
         return pagingVO;
     }
 
@@ -733,7 +734,7 @@ public class ExportWmsFeignController {
             tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
-    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         return soOutstockService.exportDynamicSoOutStock(dto);
     }
 
@@ -746,7 +747,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnInstockQueryHandler.class)
     public PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(@RequestBody PagingDTO<SoReturnInstockDTO.PagingParam> dto) {
-        return soReturnInstockService.exportSoReturnInStock(dto);
+        return soReturnInstockService.paging(dto);
     }
 
     @PostMapping("/soReturnNotice")
@@ -758,7 +759,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnNoticeQueryHandler.class)
     public PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(@RequestBody PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
-       return soReturnNoticeService.exportSoReturnNotice(dto);
+       return soReturnNoticeService.paging(dto);
     }
 
     @PostMapping("/soReturnReceive")
@@ -770,7 +771,7 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoReturnReceiveQueryHandler.class)
     public PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(@RequestBody PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
-        return soReturnReceiveService.exportSoReturnReceive(dto);
+        return soReturnReceiveService.paging(dto);
     }
 
     @PostMapping("/stocktakingProfitLoss")
@@ -1157,7 +1158,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/exportThirdWarehouseDelivery")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ThirdWarehouseDeliveryQueryHandler.class)
     public PagingVO<ThirdWarehouseDeliveryDTO.PagingViewDTO> exportThirdWarehouseDelivery(@RequestBody PagingDTO<ThirdWarehouseDeliveryDTO.PagingParamDTO> dto) {
         return thirdWarehouseDeliveryService.paging(dto);
     }
@@ -1350,7 +1351,9 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/exportAfterSalesWarehouseLocationSuggest")
     @WebAdvanceQuery(handler = AfterSalesWarehouseLocationSuggestQueryHandler.class)
-    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> dto) {
-        return afterSalesWarehouseLocationSuggestService.paging(dto);
+    public PagingVO<AfterSalesWarehouseLocationSuggestDto.ListDTO> exportAfterSalesWarehouseLocationSuggest(@RequestBody @Validated PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> dto) {
+        PagingDTO<AfterSalesWarehouseLocationSuggestDto.SearchParamDTO> wrap = new PagingDTO<>();
+        BeanUtils.copyProperties(dto, wrap);
+        return afterSalesWarehouseLocationSuggestService.paging(wrap);
     }
 }

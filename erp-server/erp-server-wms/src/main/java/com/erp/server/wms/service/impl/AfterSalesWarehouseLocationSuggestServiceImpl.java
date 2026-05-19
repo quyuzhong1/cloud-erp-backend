@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -21,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.excel.AfterSalesWarehouseLocationSuggestExcelDto;
@@ -33,9 +33,9 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.listener.AfterSalesWarehouseLocationSuggestExcelListener;
 import com.erp.server.wms.mapper.AfterSalesWarehouseLocationSuggestMapper;
+import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -170,9 +170,46 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         return BatchResultDTO.success(entity.getId(), null, "删除成功");
     }
 
+    /**
+     * 兼容前端勾选导出：仅传 inList 且未带 field 时，按主表主键解析为 awls.id。
+     */
+    private static void normalizeExportAdvanceQuery(AfterSalesWarehouseLocationSuggestDto.SearchParamDTO params) {
+        if (params == null || CollUtil.isEmpty(params.getAdvanceQueryDTOList())) {
+            return;
+        }
+        for (AdvanceQueryDTO q : params.getAdvanceQueryDTOList()) {
+            if (q == null || StrUtil.isNotBlank(q.getField())) {
+                continue;
+            }
+            if (!"inList".equals(q.getCompare())) {
+                continue;
+            }
+            Object val = q.getValue();
+            if (!(val instanceof Collection) || CollUtil.isEmpty((Collection<?>) val)) {
+                continue;
+            }
+            Object first = ((Collection<?>) val).iterator().next();
+            if (first != null && looksLikeSnowflakeId(first.toString())) {
+                q.setField("awls.id");
+            }
+        }
+    }
+
+    private static boolean looksLikeSnowflakeId(String s) {
+        return s != null && s.matches("\\d{15,22}");
+    }
+
     @Override
-    public void exportExcel(AfterSalesWarehouseLocationSuggestDto.ExportParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), dto);
+    public void exportExcel(PagingDTO<AfterSalesWarehouseLocationSuggestDto.ExportParamDTO> pagingDTO) {
+        if (pagingDTO == null) {
+            throw new ServiceException("导出参数不能为空");
+        }
+        if (pagingDTO.getParams() == null) {
+            pagingDTO.setParams(new AfterSalesWarehouseLocationSuggestDto.ExportParamDTO());
+        }
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
+        normalizeExportAdvanceQuery(pagingDTO.getParams());
+        downloadTaskFeign.saveDownloadTask("售后仓位推荐数据导出", EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES.getCode(), pagingDTO);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -326,16 +363,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         Map<String, ProductDetailEntity> skuDetailMap = skuDetailEntities.stream()
                 .collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (k1, k2) -> k1));
 
-        // EAN 码信息
-        Map<String, String> skuAndEnaMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(skuDetailEntities)) {
-            List<String> skuIdList = skuDetailEntities.stream().map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
-            List<ProductPurchaseEntity> productPurchaseEntities = plmTaskFeign.listProductPurchaseBySkuId(skuIdList);
-            skuAndEnaMap = productPurchaseEntities.stream()
-                    .filter(i -> StrUtil.isNotBlank(i.getEan()))
-                    .collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, ProductPurchaseEntity::getEan, (k1, k2) -> k1));
-        }
-
         // 仓库名称 Map
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
         Map<String, String> warehouseIdNameMap = warehouseList.stream()
@@ -361,7 +388,6 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
             // 匹配 SKU 信息
             ProductDetailEntity skuDetail = skuDetailMap.get(entity.getSkuNo());
             if (skuDetail != null) {
-                dto.setEanNo(skuAndEnaMap.get(skuDetail.getId()));
                 dto.setProductName(skuDetail.getName());
             }
 

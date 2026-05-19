@@ -52,20 +52,25 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
     @TableField("type")
     private String type;
     /**
-     * 单据使用状态 false 未使用 true 已使用
+     * 是否被单据使用 false 未使用 true 已使用
      */
-    @TableField("usage_status")
-    private Boolean usageStatus;
+    @TableField("is_use")
+    private Boolean isUse;
     /**
-     * 装箱状态 false 未装箱 true 已装箱
+     * 箱唛状态
      */
     @TableField("pack_status")
-    private Boolean packStatus;
+    private String packStatus;
     /**
      * 是否存在差异 false 否 true 是
      */
     @TableField("is_difference")
     private Boolean isDifference;
+    /**
+     * 是否移仓 false 否 true 是
+     */
+    @TableField("is_move_warehouse")
+    private Boolean isMoveWarehouse;
     /**
      * sku种类数
      */
@@ -76,6 +81,16 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
      */
     @TableField("total_qty")
     private Integer totalQty;
+    /**
+     * 驳回原因
+     */
+    @TableField("reject_description")
+    private String rejectDescription;
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String CODE = "code";
@@ -88,15 +103,21 @@ public class AfterSalePackEntity extends BaseEntity<AfterSalePackEntity> {
 
     public static final String TYPE = "type";
 
-    public static final String USAGE_STATUS = "usage_status";
+    public static final String IS_USE = "is_use";
 
     public static final String PACK_STATUS = "pack_status";
 
     public static final String IS_DIFFERENCE = "is_difference";
 
+    public static final String IS_MOVE_WAREHOUSE = "is_move_warehouse";
+
     public static final String SKU_SPECIES_QTY = "sku_species_qty";
 
     public static final String TOTAL_QTY = "total_qty";
+
+    public static final String REJECT_DESCRIPTION = "reject_description";
+
+    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

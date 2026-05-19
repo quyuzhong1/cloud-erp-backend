@@ -3,6 +3,10 @@ package com.common.business.dto;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -102,5 +106,17 @@ public class PlatformOutboundDTO extends UniqueDto {
         private Integer actualQty;
         //批次号
         private String batchCode;
+    }
+
+    private List<Detail> detailList;
+
+    @Data
+    @ToString
+    @EqualsAndHashCode
+    public static class Detail {
+
+        private String platformSkuNo;
+
+        private Integer qty;
     }
 }

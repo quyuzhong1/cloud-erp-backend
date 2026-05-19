@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -505,8 +506,8 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         String waybillNo = "SF1040275268927";
         try {
             BaseResponse baseResponse = expressShipperService.validateWaybillNo(authMap, waybillNo);
-            BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
-            if (StringUtils.isNotEmpty(baseResponse.getApiErrorMsg()) || !baseResult.isSuccess()) {
+            JSONObject jsonObject = JSONUtil.parseObj(baseResponse.getApiResultData());
+            if (StringUtils.isNotEmpty(baseResponse.getApiErrorMsg()) || !jsonObject.getBool("success", Boolean.FALSE)) {
                 //授权失败
                 return failure("授权失败" + baseResponse.getApiErrorMsg());
             } else {

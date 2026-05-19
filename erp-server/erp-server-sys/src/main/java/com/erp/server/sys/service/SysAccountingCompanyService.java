@@ -102,4 +102,6 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
     SysAccountingCompanyEntity getCompanyByName(String companyName);
 
     SysAccountingCompanyEntity getCompanyByKindgeeId(String kindgeeId);
+
+    List<SysAccountingCompanyDTO.ListDTO> listAll(String name);
 }

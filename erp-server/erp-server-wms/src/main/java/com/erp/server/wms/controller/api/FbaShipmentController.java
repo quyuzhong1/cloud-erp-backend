@@ -165,6 +165,24 @@ public class FbaShipmentController extends BaseController {
     }
 
     /**
+     * 手动拉取入库计划货件信息
+     * @param dto 请求参数
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @PostMapping("/pullInboundPlanShipment")
+    @LogAction(value = LogActionEnum.INSERT, desc = "拉取入库计划货件")
+    public ApiResult pullInboundPlanShipment(@RequestBody @Validated FbaShipmentDTO.PullShipmentDTO dto) {
+        Boolean flag;
+        try {
+            UserContext.setIsUserSystem(true);
+            flag = fbaShipmentService.pullInboundPlanShipment(dto);
+        } finally {
+            UserContext.clearIsUserSystem();
+        }
+        return flag ? success() : failure();
+    }
+
+    /**
      * 查询发货记录
      * @Author Luo_WG
      * @Date 2023/10/30 17:38

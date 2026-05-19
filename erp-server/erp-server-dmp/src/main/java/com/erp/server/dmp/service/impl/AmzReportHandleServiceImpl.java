@@ -92,6 +92,14 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class AmzReportHandleServiceImpl implements AmzReportHandleService {
+    private static final String AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER =
+            "DmpInputAmzFbaInboundPlansFbaShipmentApiInitHandler";
+    private static final Set<String> FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST = new LinkedHashSet<>(
+            Arrays.asList(
+                    BusinessTypeEnum.FBA_INBOUND_PLANS.getCode(),
+                    BusinessTypeEnum.FBA_SHIPMENT.getCode()
+            )
+    );
 
     @Resource
     private MongoService mongoService;
@@ -128,6 +136,8 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     @Resource
     private DmpCfgInputService dmpCfgInputService;
     @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
+    @Resource
     private DmpCfgInputDetailService dmpCfgInputDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
@@ -138,8 +148,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private ExecutorService dmpInputExecutorPool;
     @Resource
     private DmpInputTaskFactory dmpInputTaskFactory;
-    @Resource
-    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
 
     @Override
@@ -171,6 +179,17 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             // 执行历史逻辑
             return oldDmpPullShipment(dto, shopInfoDTO, shopId);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pullInboundPlanShipment(DmpPullShipmentDTO dto) {
+        String shopId = dto.getShopId();
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        return newDmpPullInboundPlanShipment(dto, shopInfoDTO);
     }
 
     /**
@@ -677,13 +696,14 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .distinct()
                 .collect(Collectors.toList());
         // 校验新中台明细配置
+        String inputBillType = resolveFbaShipmentPullBillType();
         DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
-                .eq(DmpCfgInputEntity::getBillType, BusinessTypeEnum.FBA_SHIPMENT.getCode())
+                .eq(DmpCfgInputEntity::getBillType, inputBillType)
                 .eq(DmpCfgInputEntity::getDisabled, false)
                 .last(" LIMIT 1 ")
                 .one();
         if (null == inputEntity) {
-            ServiceException.runError("FBA查询配置不存在");
+            ServiceException.runError("FBA查询配置不存在,billType={}", inputBillType);
         }
         List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
                 .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
@@ -702,26 +722,12 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         }
 
         // 创建新中台hotfix任务
- //        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-//        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
-//        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
-//        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
-//        dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-//        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-
-        DmpInoutDTO.CreateInputDTO createInputDTO = new DmpInoutDTO.CreateInputDTO();
-        createInputDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
-        createInputDTO.setBillType("fba_shipment");
-        createInputDTO.setNextLevelId(dto.getShopId());
-        createInputDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-        Map<String, Object> detailExtendJson = new LinkedHashMap<>();
-        detailExtendJson.put("shopId", dto.getShopId());
-        detailExtendJson.put("shipmentCodeList", dto.getShipmentCodeList());
-        JSONObject extendJsonObj = JSON.parseObject(inputEntity.getExtendJson());
-        String retryCount = extendJsonObj.getString("retryCount");
-        detailExtendJson.put("retryCount", retryCount);
-        createInputDTO.setDetailExtendJson(JSONUtil.toJsonStr(detailExtendJson));
-        dmpInoutTaskFeign.doInputTask(Collections.singletonList(createInputDTO));
+         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
+        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
+        dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         // 创建任务
 //        DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputHotfixCreateRequest);
 //        // 执行任务
@@ -739,6 +745,70 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
 //                });
 //            }
 //        }
+        return true;
+    }
+
+    /**
+     * 可通过 cfg_setting 配置 key=fba_shipment_pull_bill_type(type=new_dmp_pull_switch) 动态切换。
+     * 默认使用 fba_inbound_plans；仅允许白名单值，避免误配置。
+     */
+    private String resolveFbaShipmentPullBillType() {
+        String defaultBillType = BusinessTypeEnum.FBA_INBOUND_PLANS.getCode();
+        String configBillType = cfgSettingService.getValue(SettingEnum.FBA_SHIPMENT_PULL_BILL_TYPE);
+        if (StringUtils.isBlank(configBillType)) {
+            return defaultBillType;
+        }
+        String trimBillType = configBillType.trim();
+        if (!FBA_SHIPMENT_PULL_BILL_TYPE_ALLOW_LIST.contains(trimBillType)) {
+            log.warn("newDmpPullShipment配置的billType不在允许范围内, key={}, value={}, fallback={}",
+                    SettingEnum.FBA_SHIPMENT_PULL_BILL_TYPE.getKey(),
+                    configBillType,
+                    defaultBillType);
+            return defaultBillType;
+        }
+        return trimBillType;
+    }
+
+    /**
+     * 新中台手动拉取: 亚马逊FBA入库计划货件
+     */
+    private boolean newDmpPullInboundPlanShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+        List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
+                .stream()
+                .map(AmazonShopInfoDTO.ShopNameDTO::getShopId)
+                .distinct()
+                .collect(Collectors.toList());
+        DmpCfgInputConvertEntity initConvertEntity = dmpCfgInputConvertService.lambdaQuery()
+                .eq(DmpCfgInputConvertEntity::getInputStatus, "init")
+                .eq(DmpCfgInputConvertEntity::getConvertClass, AMZ_FBA_INBOUND_PLAN_SHIPMENT_INIT_HANDLER)
+                .eq(DmpCfgInputConvertEntity::getDisabled, false)
+                .last(" LIMIT 1 ")
+                .one();
+        if (null == initConvertEntity) {
+            ServiceException.runError("FBA入库计划货件查询配置不存在");
+        }
+        DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getId, initConvertEntity.getMainId())
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .last(" LIMIT 1 ")
+                .one();
+        if (null == inputEntity) {
+            ServiceException.runError("FBA入库计划货件查询配置不存在");
+        }
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
+                .in(DmpCfgInputDetailEntity::getNextLevelId, sameAccountShopIds)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            ServiceException.runError("FBA入库计划货件查询配置明细不存在");
+        }
+        List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
+        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
+        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
     }
 }

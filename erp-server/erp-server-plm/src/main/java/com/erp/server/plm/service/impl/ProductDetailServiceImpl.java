@@ -665,7 +665,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         String productId = productDetailEntity.getProductId();
         ProductInfoEntity infoEntity = productInfoService.getById(productId);
         if (ObjectUtil.isNotEmpty(infoEntity) && infoEntity.getSpecType() == 2) {
-          return getNoSpecDetailById(productId);
+            ProductNoSpecDetailAllDTO detail = getNoSpecDetailById(productId);
+            detail.setProductRefSkuList(productRefSkuService.listBySkuId(skuId));
+            return detail;
         }
 
         ProductNoSpecDetailAllDTO productNoSpecDetailAllDTO = new ProductNoSpecDetailAllDTO();
@@ -1205,6 +1207,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         return detailEntity.getId();
+    }
+
+    private BasicDictEntity getBasicDictByNameOrValue(List<BasicDictEntity> basicDictList, BasicDictTypeEnum typeEnum, String dictText) {
+        if (CollectionUtils.isEmpty(basicDictList) || ObjectUtils.isEmpty(typeEnum) || StringUtils.isBlank(dictText)) {
+            return null;
+        }
+        String text = dictText.trim();
+        return basicDictList.stream()
+                .filter(b -> typeEnum.getCode().equals(b.getType())
+                        && (text.equals(StringUtils.trim(b.getValue())) || text.equals(StringUtils.trim(b.getName()))))
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -5588,9 +5602,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
                 //产品质保期
                 BasicDictEntity warrantyPeriod = null;
-                if(StringUtils.isNotBlank(dto.getGrade())){
-                    warrantyPeriod = basicDictList.stream().filter(b -> BasicDictTypeEnum.WARRANTY_PERIOD.getCode().equals(b.getType()) && b.getValue().
-                            equals(dto.getWarrantyPeriod())).findFirst().orElse(null);
+                if(StringUtils.isNotBlank(dto.getWarrantyPeriod())){
+                    warrantyPeriod = getBasicDictByNameOrValue(basicDictList, BasicDictTypeEnum.WARRANTY_PERIOD, dto.getWarrantyPeriod());
                     if (ObjectUtils.isEmpty(warrantyPeriod)) {
                         errorMsgList.add("产品质保期在系统中未找到");
                     }else {
@@ -6501,11 +6514,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtils.isEmpty(productProperty)) {
                 errorMsgList.add("产品属性在系统中未找到");
             }
-            BasicDictEntity warrantyPeriod = basicDictList.stream().filter(b -> BasicDictTypeEnum.WARRANTY_PERIOD.getCode().equals(b.getType()) && b.getValue().
-                    equals(dto.getWarrantyPeriod())).findFirst().orElse(null);
+            BasicDictEntity warrantyPeriod = getBasicDictByNameOrValue(basicDictList, BasicDictTypeEnum.WARRANTY_PERIOD, dto.getWarrantyPeriod());
 
             if (ObjectUtils.isEmpty(warrantyPeriod)) {
                 errorMsgList.add("产品质保期在系统中未找到");
+            } else {
+                productInfoDTO.setWarrantyPeriod(warrantyPeriod.getValue());
             }
             //产品等级
             BasicDictEntity productGrade = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_GRADE.getCode().equals(b.getType()) && b.getValue().

@@ -39,6 +39,17 @@ public class DmpAmazonFeignController implements DmpAmazonFeign {
     }
 
     /**
+     * 手动拉取亚马逊FBA入库计划货件
+     *
+     * @author wtr
+     * @since 2026-05-11
+     */
+    @PostMapping("/amazon/getInboundPlanShipment")
+    public Boolean pullInboundPlanShipment(@RequestBody @Valid DmpPullShipmentDTO dto){
+        return amzReportHandleService.pullInboundPlanShipment(dto);
+    }
+
+    /**
      * 缓存和获取亚马逊授权相关信息
      *
      * @Author Jim

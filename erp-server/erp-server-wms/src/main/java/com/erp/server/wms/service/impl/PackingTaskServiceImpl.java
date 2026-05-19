@@ -246,6 +246,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if(ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())){
                 throw new ServiceException(ApiError.LOGISTICS_PACKING_REF_ORDER_APPROVED_FORBIDDEN, soDeliveryNoticeEntity.getCode());
             }
+            //已生成报关单不支持更新装箱
+            if (WmsDeclareStatusEnum.FINISH.getCode().equals(soDeliveryNoticeEntity.getDeclareStatus())) {
+                throw new ServiceException(ApiError.LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS, soDeliveryNoticeEntity.getCode());
+            }
+
         }else {
             FirstMileDeliveryEntity firstMileDeliveryEntity = this.getFirstMileDeliveryByTask(taskEntity);
             if(Objects.nonNull(firstMileDeliveryEntity)){
@@ -259,6 +264,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(firstMileDeliveryEntity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
                 if (ObjectUtil.isNotEmpty(overseasWarehouseInbound) && !OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode().equals(overseasWarehouseInbound.getInstockStatus())) {
                     throw new ServiceException(ApiError.WH_INBOUND_EXIST_NOT_REPEAT, overseasWarehouseInbound.getCode());
+                }
+                //已生成报关单不支持更新装箱
+                if (WmsDeclareStatusEnum.FINISH.getCode().equals(firstMileDeliveryEntity.getDeclareStatus())) {
+                    throw new ServiceException(ApiError.LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS, firstMileDeliveryEntity.getCode());
                 }
             }
         }
@@ -2077,9 +2086,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (Objects.isNull(firstMileDeliveryEntity)){
             return;
         }
-//        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
-//            throw new ServiceException("已生成发货单，不允许修改装箱数据和删除");
-//        }
+        //已生成报关单不支持更新装箱
+        if (WmsDeclareStatusEnum.FINISH.getCode().equals(firstMileDeliveryEntity.getDeclareStatus())) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS, firstMileDeliveryEntity.getCode());
+        }
         if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
                 && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(packingTask.getWeightingStatus())
                 && PackingTaskStatusEnum.PACKED.getCode().equals(packingTask.getPackingStatus()))) {
@@ -2108,6 +2118,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         if (ApproveStatusEnum.APPROVE.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())) {
             throw new ServiceException(ApiError.LOGISTICS_PACKING_ASSOCIATED_ORDER_APPROVED_EDIT_DELETE_FORBIDDEN);
+        }
+        //已生成报关单不支持更新装箱
+        if (WmsDeclareStatusEnum.FINISH.getCode().equals(soDeliveryNoticeEntity.getDeclareStatus())) {
+            throw new ServiceException(ApiError.LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS, soDeliveryNoticeEntity.getCode());
         }
     }
 

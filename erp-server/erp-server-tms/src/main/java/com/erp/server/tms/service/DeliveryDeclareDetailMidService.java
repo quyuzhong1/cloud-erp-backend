@@ -5,10 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.DeliveryDeclareDetailMidDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.entity.TmsDeclareBillEntity;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -67,6 +65,17 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
     */
     DeliveryDeclareDetailMidDTO.ViewDTO view(String id);
 
+    /**
+     * 合并前预览
+     *
+     * @param ids 报关明细中间表id集合
+     * @return 合并前预览列表
+     * @throws com.common.core.exception.ServiceException 校验失败时抛出
+     * @author jack
+     * @date 2026-04-29
+     */
+    List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> mergePreview(List<String> ids);
+
 
     /**
      * 合并后预览
@@ -121,8 +130,15 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      * @param declareBillIds 报关单id集合
      * @return java.lang.Boolean
      */
+    Boolean removeByDeclareBillIds(List<String> declareBillIds);
+    /**
+     * 按报关单表id恢复为待生成状态
+     * @author will
+     * @date 2026/5/13 16:19
+     * @param declareBillIds 中间表报关id集合
+     * @return java.lang.Boolean
+     */
     Boolean restoreWaitGenerateByDeclareBillIds(List<String> declareBillIds);
-
     /**
      * 按中间表id恢复为待生成状态
      * @author will

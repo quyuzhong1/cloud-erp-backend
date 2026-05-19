@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -48,97 +49,196 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
     @Getter
     private List<AfterSalesWarehouseLocationSuggestExcelDto> errorList = new ArrayList<>();
 
-    private PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
-    private WarehouseLocationService warehouseLocationService = SpringUtil.getBean(WarehouseLocationService.class);
-    private WarehouseService warehouseService = SpringUtil.getBean(WarehouseService.class);
+    /** 启用数据中按名称未匹配到库区 */
+    private static final String MSG_WAREHOUSE_AREA_NOT_FOUND = "未能找到仓库库区，请确定库区是否正确";
+    /** 启用数据中库区下按编码未匹配到仓位 */
+    private static final String MSG_WAREHOUSE_LOCATION_NOT_FOUND = "未能找到仓库仓位，请确定仓位是否正确";
+    /**
+     * 与 {@link AfterSalesWarehouseLocationSuggestExcelDto} 中 {@code @ExcelProperty} 的标题一致，缺任一列即拒绝导入。
+     */
+    private static final List<String> REQUIRED_IMPORT_HEADER_TITLES = Collections.unmodifiableList(Arrays.asList(
+            "sku编码",
+            "产品名称",
+            "所属仓库",
+            "所属库区名称",
+            "推荐仓位编码",
+            "优先级",
+            "状态"
+    ));
+    private final PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
+    private final WarehouseLocationService warehouseLocationService = SpringUtil.getBean(WarehouseLocationService.class);
+    private final WarehouseService warehouseService = SpringUtil.getBean(WarehouseService.class);
+    /**
+     * 解析行临时序号（同一引用一行一条，不修改 Excel DTO 类本身）
+     */
+    private final IdentityHashMap<AfterSalesWarehouseLocationSuggestExcelDto, Long> importRowTempIdMap = new IdentityHashMap<>();
+    /**
+     * 每行各异常块累积（格式 + 重复 + 业务），解析阶段写入格式；收尾阶段合并重复与业务后再统一生成 errorMsg。
+     */
+    private final IdentityHashMap<AfterSalesWarehouseLocationSuggestExcelDto, EnumMap<ImportErrorBlock, String>> rowAccumulatedErrors = new IdentityHashMap<>();
+    /**
+     * 表头标题（去空白后）→ 列下标，在 {@link #invokeHeadMap} 中构建并校验必填列齐全。
+     */
+    private Map<String, Integer> headerTitleToColumnIndex = Collections.emptyMap();
+    private long importRowTempIdSeq = 1L;
 
+    private static String normalizeHeaderTitle(CharSequence raw) {
+        return raw == null ? "" : CharSequenceUtil.trim(raw);
+    }
+
+    private static String firstSkuFormatError(AfterSalesWarehouseLocationSuggestExcelDto dto) {
+        if (CharSequenceUtil.isBlank(dto.getSkuNo())) {
+            return "SKU编码不能为空";
+        }
+        if (dto.getSkuNo().length() > 255) {
+            return "SKU编码过长";
+        }
+        return null;
+    }
+
+    private static String firstProductNameFormatError(AfterSalesWarehouseLocationSuggestExcelDto dto) {
+        if (CharSequenceUtil.isNotBlank(dto.getProductName()) && dto.getProductName().length() > 255) {
+            return "产品名称过长";
+        }
+        return null;
+    }
+
+    private static String firstWarehouseChainFormatError(AfterSalesWarehouseLocationSuggestExcelDto dto) {
+        if (CharSequenceUtil.isBlank(dto.getWarehouseName())) {
+            return "仓库名称不能为空";
+        }
+        if (dto.getWarehouseName().length() > 255) {
+            return "仓库名称过长";
+        }
+        if (CharSequenceUtil.isBlank(dto.getWarehouseAreaName())) {
+            return "库区名称不能为空";
+        }
+        if (dto.getWarehouseAreaName().length() > 19) {
+            return "库区名称过长";
+        }
+        if (CharSequenceUtil.isBlank(dto.getWarehouseLocationCode())) {
+            return "推荐仓位编码不能为空";
+        }
+        if (dto.getWarehouseLocationCode().length() > 32) {
+            return "推荐仓位编码过长";
+        }
+        return null;
+    }
+
+    private static String firstSortFormatError(AfterSalesWarehouseLocationSuggestExcelDto dto) {
+        if (CharSequenceUtil.isBlank(dto.getSort())) {
+            return "优先级不能为空";
+        }
+        if (!StrUtils.isInteger(dto.getSort())) {
+            return "优先级请填写数字";
+        }
+        if (Integer.parseInt(dto.getSort()) > 9) {
+            return "优先级的值不能大于9";
+        }
+        return null;
+    }
+
+    private static String firstStatusFormatError(AfterSalesWarehouseLocationSuggestExcelDto dto) {
+        Set<String> allowed = new HashSet<>();
+        allowed.add("启用");
+        allowed.add("禁用");
+        if (!allowed.contains(dto.getStatus())) {
+            return "无法识别状态选择，仅可填“启用/禁用”";
+        }
+        return null;
+    }
+
+    private static void putFirstBlockError(EnumMap<ImportErrorBlock, String> blockErrors, ImportErrorBlock block, String msg) {
+        if (CharSequenceUtil.isNotBlank(msg)) {
+            blockErrors.putIfAbsent(block, msg);
+        }
+    }
+
+    private static List<String> blockErrorsToSortedList(EnumMap<ImportErrorBlock, String> errors) {
+        List<String> out = new ArrayList<>();
+        for (ImportErrorBlock b : ImportErrorBlock.values()) {
+            String m = errors.get(b);
+            if (CharSequenceUtil.isNotBlank(m)) {
+                out.add(m);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 解析阶段为该行分配的临时序号（与 DTO 引用绑定，未写入 Excel DTO 实体字段）。
+     */
+    public Long getImportTempRowId(AfterSalesWarehouseLocationSuggestExcelDto row) {
+        return importRowTempIdMap.get(row);
+    }
+
+    @Override
+    public void invokeHeadMap(Map<Integer, String> headMap, AnalysisContext context) {
+        Map<String, Integer> titleToIndex = new LinkedHashMap<>();
+        if (headMap != null) {
+            headMap.forEach((colIndex, rawTitle) -> {
+                String title = normalizeHeaderTitle(rawTitle);
+                if (CharSequenceUtil.isBlank(title)) {
+                    return;
+                }
+                titleToIndex.putIfAbsent(title, colIndex);
+            });
+        }
+        List<String> missing = new ArrayList<>();
+        for (String required : REQUIRED_IMPORT_HEADER_TITLES) {
+            if (!titleToIndex.containsKey(required)) {
+                missing.add(required);
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw new ServiceException("导入模板表头不完整，缺少列：{}", String.join("、", missing));
+        }
+        this.headerTitleToColumnIndex = titleToIndex;
+    }
 
     @Override
     public void invoke(LinkedHashMap<Integer, String> data, AnalysisContext context) {
-//        Integer rowIndex = context.readRowHolder().getRowIndex();
-        AfterSalesWarehouseLocationSuggestExcelDto dto = new AfterSalesWarehouseLocationSuggestExcelDto();
-        dto.setSkuNo(data.get(0));
-        dto.setProductName(data.get(1));
-        dto.setEanCode(data.get(2));
-        dto.setWarehouseName(data.get(3));
-        dto.setWarehouseAreaName(data.get(4));
-        dto.setWarehouseLocationCode(data.get(5));
-        dto.setSort(data.get(6));
-        dto.setStatus(data.get(7));
-        verifyField(dto);
-        if (CharSequenceUtil.isNotBlank(dto.getErrorMsg())) {
-            errorList.add(dto);
+        if (headerTitleToColumnIndex == null || headerTitleToColumnIndex.isEmpty()) {
+            throw new ServiceException("导入文件未识别到有效表头，请下载最新导入模板");
         }
+        AfterSalesWarehouseLocationSuggestExcelDto dto = new AfterSalesWarehouseLocationSuggestExcelDto();
+        dto.setSkuNo(cellByHeader(data, "sku编码"));
+        dto.setProductName(cellByHeader(data, "产品名称"));
+        dto.setWarehouseName(cellByHeader(data, "所属仓库"));
+        dto.setWarehouseAreaName(cellByHeader(data, "所属库区名称"));
+        dto.setWarehouseLocationCode(cellByHeader(data, "推荐仓位编码"));
+        dto.setSort(cellByHeader(data, "优先级"));
+        dto.setStatus(cellByHeader(data, "状态"));
+        importRowTempIdMap.put(dto, importRowTempIdSeq++);
+
+        EnumMap<ImportErrorBlock, String> rowErr = new EnumMap<>(ImportErrorBlock.class);
+        verifyFieldFormat(dto, rowErr);
+        rowAccumulatedErrors.put(dto, rowErr);
         allList.add(dto);
     }
 
-    private void verifyField(AfterSalesWarehouseLocationSuggestExcelDto dto) {
-        //sku编码校验
-        if (CharSequenceUtil.isBlank(dto.getSkuNo())) {
-            dto.setErrorMsg("SKU编码不能为空，");
-            return;
+    /**
+     * 按表头标题取单元格字符串（首尾空白已去掉），列下标由表头行解析得到。
+     */
+    private String cellByHeader(LinkedHashMap<Integer, String> row, String headerTitle) {
+        Integer col = headerTitleToColumnIndex.get(headerTitle);
+        if (col == null) {
+            return null;
         }
-        if (dto.getSkuNo().length() > 255) {
-            dto.setErrorMsg("SKU编码过长");
-            return;
-        }
-        //仓库名称校验
-        if (CharSequenceUtil.isBlank(dto.getWarehouseName())) {
-            dto.setErrorMsg("仓库名称不能为空，");
-            return;
-        }
-        if (dto.getWarehouseName().length() > 255) {
-            dto.setErrorMsg("仓库名称过长");
-            return;
-        }
-        //EAN码校验
-        if (dto.getEanCode() != null && dto.getEanCode().length() > 255) {
-            dto.setErrorMsg("EAN码过长");
-            return;
-        }
-        //库区名称校验
-        if (CharSequenceUtil.isBlank(dto.getWarehouseAreaName())) {
-            dto.setErrorMsg("库区名称不能为空");
-            return;
-        }
-        if (dto.getWarehouseAreaName().length() > 19) {
-            dto.setErrorMsg("库区名称过长");
-            return;
-        }
-        //推荐仓位校验
-        if (CharSequenceUtil.isBlank(dto.getWarehouseLocationCode())) {
-            dto.setErrorMsg("推荐仓位编码不能为空");
-            return;
-        }
-        if (dto.getWarehouseLocationCode().length() > 32) {
-            dto.setErrorMsg("推荐仓位编码过长");
-            return;
-        }
-        //优先级校验
-        if (CharSequenceUtil.isBlank(dto.getSort())) {
-            dto.setErrorMsg("优先级不能为空");
-            return;
-        }
-        if (!StrUtils.isInteger(dto.getSort())) {
-            dto.setErrorMsg("优先级请填写数字");
-            return;
-        }
-        if (Integer.parseInt(dto.getSort()) > 9) {
-            dto.setErrorMsg("优先级的值不能大于9");
-            return;
-        }
-        //状态校验
-        if (dto.getStatus().length() > 10) {
-            dto.setErrorMsg("状态过长");
-            return;
-        }
-        Set<String> strings = new HashSet<>();
-        strings.add("启用");
-        strings.add("禁用");
-        if (!strings.contains(dto.getStatus())) {
-            dto.setErrorMsg("无法识别状态选择，仅可填“启用/禁用”");
-            return;
-        } else {
+        return CharSequenceUtil.trim(row.get(col));
+    }
+
+    /**
+     * 字段格式校验：按 {@link ImportErrorBlock} 聚合，同一异常块内只保留一条说明（块内递进顺序取首条）。
+     */
+    private void verifyFieldFormat(AfterSalesWarehouseLocationSuggestExcelDto dto, EnumMap<ImportErrorBlock, String> blockErrors) {
+        putFirstBlockError(blockErrors, ImportErrorBlock.SKU, firstSkuFormatError(dto));
+        putFirstBlockError(blockErrors, ImportErrorBlock.PRODUCT_NAME, firstProductNameFormatError(dto));
+        putFirstBlockError(blockErrors, ImportErrorBlock.WAREHOUSE_CHAIN, firstWarehouseChainFormatError(dto));
+        putFirstBlockError(blockErrors, ImportErrorBlock.SORT, firstSortFormatError(dto));
+        putFirstBlockError(blockErrors, ImportErrorBlock.STATUS, firstStatusFormatError(dto));
+
+        if (!blockErrors.containsKey(ImportErrorBlock.STATUS) && CharSequenceUtil.isNotBlank(dto.getStatus())) {
             switch (dto.getStatus()) {
                 case "启用":
                     dto.setDisabled(Boolean.FALSE);
@@ -146,9 +246,10 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
                 case "禁用":
                     dto.setDisabled(Boolean.TRUE);
                     break;
+                default:
+                    break;
             }
         }
-
     }
 
     /**
@@ -161,31 +262,20 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         if (CollectionUtils.isEmpty(allList)) {
             return;
         }
-        // 生成业务唯一 Key 的函数
         Function<AfterSalesWarehouseLocationSuggestExcelDto, String> businessKeyFunc =
                 dto -> dto.getSkuNo() + "|" + dto.getWarehouseName() + "|" + dto.getWarehouseAreaName() + "|" + dto.getWarehouseLocationCode();
 
-        // 统计每个 Key 出现的次数
         Map<String, Long> countMap = allList.stream().collect(Collectors.groupingBy(businessKeyFunc, Collectors.counting()));
 
-        // 标记重复项
         allList.forEach(dto -> {
-            // 只有原本没有错误的信息才参与重复校验
-            if (CharSequenceUtil.isBlank(dto.getErrorMsg())) {
-                if (countMap.get(businessKeyFunc.apply(dto)) > 1) {
-                    dto.setErrorMsg("存在重复项");
-                    // 因为是 doAfterAllAnalysed，发现重复直接加进 errorList
-                    errorList.add(dto);
-                }
+            if (countMap.get(businessKeyFunc.apply(dto)) > 1) {
+                rowAccumulatedErrors.get(dto).put(ImportErrorBlock.DUPLICATE, "sku+仓位在导入表中重复了，请调整");
             }
         });
-        //获取解析正常数据的skuNo
-        List<String> skuNoList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(AfterSalesWarehouseLocationSuggestExcelDto::getSkuNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        //获取解析正常的数据的仓库名称
-        List<String> warehouseNameList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(AfterSalesWarehouseLocationSuggestExcelDto::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        //提前查询出所有相关的sku信息
+
+        List<String> skuNoList = allList.stream().map(AfterSalesWarehouseLocationSuggestExcelDto::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> warehouseNameList = allList.stream().map(AfterSalesWarehouseLocationSuggestExcelDto::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuVOS = CollUtil.isNotEmpty(skuNoList) ? plmTaskFeign.listBySkuNos(skuNoList) : Collections.emptyList();
-        //提前查询出所有的相关的仓库信息
         List<WarehouseDTO.ListDTO> warehouseVOS = CollUtil.isNotEmpty(warehouseNameList) ? warehouseService.listByNames(warehouseNameList) : Collections.emptyList();
 
         Map<String, WarehouseDTO.ListDTO> warehouseNameAndIdMap = warehouseVOS.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, item -> item));
@@ -195,91 +285,88 @@ public class AfterSalesWarehouseLocationSuggestExcelListener extends AnalysisEve
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(warehouseIdList);
 
         Map<String, List<WarehouseLocationEntity>> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.groupingBy(WarehouseLocationEntity::getWarehouseId));
-        //
-        for (AfterSalesWarehouseLocationSuggestExcelDto excelDTO : allList) {
-            if (CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())) {
-                continue;
-            }
-            List<String> errorMsgList = new ArrayList<>();
-            //校验sku/ena码是否指向已存在的商品信息
-            ProductDetailEntity productDetail = skuVOS.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
 
+        for (AfterSalesWarehouseLocationSuggestExcelDto excelDTO : allList) {
+            EnumMap<ImportErrorBlock, String> merged = rowAccumulatedErrors.get(excelDTO);
+
+            ProductDetailEntity productDetail = skuVOS.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
             if (Objects.isNull(productDetail)) {
-                errorMsgList.add("无法识别sku，请确定sku编码是否正确");
+                merged.putIfAbsent(ImportErrorBlock.SKU, "无法识别sku，请确定sku编码是否正确");
             } else {
                 excelDTO.setSkuId(productDetail.getId());
-//                excelDTO.setProductName(productDetail.getName());
-            }
-
-            //校验仓库/库区/仓位名称是否指向已存在的仓库信息
-            WarehouseDTO.ListDTO warehouseDto = warehouseNameAndIdMap.get(excelDTO.getWarehouseName());
-
-            if (warehouseDto == null || warehouseDto.getDisabled()) {
-                errorMsgList.add("未能找到仓库，请确定仓库是否正确/已启用");
-            } else {
-                //仓库存在,校验库区存在
-                String warehouseId = warehouseDto.getId();
-                excelDTO.setWarehouseId(warehouseId);
-
-                List<WarehouseLocationEntity> locationEntities = warehouseLocationMap.get(warehouseId);
-                Map<String, WarehouseLocationEntity> locationEntityMap = locationEntities.stream().collect(Collectors.toMap(WarehouseLocationEntity::getId, item -> item));
-                locationEntities = locationEntities.stream().filter(i -> !i.getDisabled()).collect(Collectors.toList());
-
-                if (CollUtil.isEmpty(locationEntities)) {
-                    errorMsgList.add("未能找到仓库库区，请确定库区是否正确");
-                } else {
-                    //库区存在,检验这个库区下有没有启用的仓位
-                    Map<String, List<WarehouseLocationEntity>> convertToMap = convertToMap(locationEntities);
-                    String warehouseAreaName = excelDTO.getWarehouseAreaName();
-                    List<WarehouseLocationEntity> locationList = convertToMap.get(warehouseAreaName) == null ? new ArrayList<>() : convertToMap.get(warehouseAreaName);
-
-                    locationList = locationList.stream()
-                            .filter(i -> i != null && !i.getDisabled())
-                            .collect(Collectors.toList());
-
-                    if (CollUtil.isEmpty(locationList)) {
-                        errorMsgList.add("未能找到仓库仓位，请确定仓位编码是否正确");
-                    } else {
-                        List<WarehouseLocationEntity> enableLocationList = locationList.stream().filter(i -> Objects.equals(i.getCode(), excelDTO.getWarehouseLocationCode())).filter(i -> !i.getDisabled()).collect(Collectors.toList());
-                        if (CollUtil.isEmpty(enableLocationList)) {
-                            errorMsgList.add("该仓位不存在");
-                        } else if (enableLocationList.size() > 1) {
-                            errorMsgList.add("该库区下有多个仓位编码相同的仓位");
-                        } else {
-                            excelDTO.setWarehouseAreaId(enableLocationList.get(0).getParentId());
-                            WarehouseLocationEntity warehouseAreaEntity = locationEntityMap.get(excelDTO.getWarehouseAreaId());
-                            excelDTO.setWarehouseAreaCode(warehouseAreaEntity.getCode());
-                            excelDTO.setWarehouseLocationId(enableLocationList.get(0).getId());
-                            excelDTO.setWarehouseLocationCode(enableLocationList.get(0).getCode());
-                        }
+                if (CharSequenceUtil.isNotBlank(excelDTO.getProductName())) {
+                    String importName = excelDTO.getProductName().trim();
+                    String dbName = productDetail.getName() == null ? "" : productDetail.getName().trim();
+                    if (!importName.equals(dbName)) {
+                        merged.putIfAbsent(ImportErrorBlock.PRODUCT_NAME, "产品名称与SKU对应品名不一致");
                     }
                 }
             }
-            if (!errorMsgList.isEmpty()) {
-                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(excelDTO);
-                continue;
+
+            WarehouseDTO.ListDTO warehouseDto = warehouseNameAndIdMap.get(excelDTO.getWarehouseName());
+            if (warehouseDto == null || Boolean.TRUE.equals(warehouseDto.getDisabled())) {
+                merged.putIfAbsent(ImportErrorBlock.WAREHOUSE_CHAIN, "未能找到仓库，请确定仓库是否正确/已启用");
+            } else {
+                String warehouseId = warehouseDto.getId();
+                excelDTO.setWarehouseId(warehouseId);
+
+                List<WarehouseLocationEntity> rawList = Optional.ofNullable(warehouseLocationMap.get(warehouseId)).orElse(Collections.emptyList());
+                List<WarehouseLocationEntity> enabledList = rawList.stream()
+                        .filter(e -> !Boolean.TRUE.equals(e.getDisabled()))
+                        .collect(Collectors.toList());
+
+                String areaType = WarehouseLocationTypeEnum.AREA.getCode();
+                String locationType = WarehouseLocationTypeEnum.LOCATION.getCode();
+
+                WarehouseLocationEntity matchedArea = enabledList.stream()
+                        .filter(e -> areaType.equals(e.getType()) && Objects.equals(e.getName(), excelDTO.getWarehouseAreaName()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (matchedArea == null) {
+                    merged.putIfAbsent(ImportErrorBlock.WAREHOUSE_CHAIN, MSG_WAREHOUSE_AREA_NOT_FOUND);
+                } else {
+                    List<WarehouseLocationEntity> locationsUnderArea = enabledList.stream()
+                            .filter(e -> locationType.equals(e.getType()) && Objects.equals(matchedArea.getId(), e.getParentId()))
+                            .collect(Collectors.toList());
+
+                    List<WarehouseLocationEntity> matchedLocations = locationsUnderArea.stream()
+                            .filter(l -> Objects.equals(l.getCode(), excelDTO.getWarehouseLocationCode()))
+                            .collect(Collectors.toList());
+
+                    if (CollUtil.isEmpty(matchedLocations)) {
+                        merged.putIfAbsent(ImportErrorBlock.WAREHOUSE_CHAIN, MSG_WAREHOUSE_LOCATION_NOT_FOUND);
+                    } else if (matchedLocations.size() > 1) {
+                        merged.putIfAbsent(ImportErrorBlock.WAREHOUSE_CHAIN, "该库区下有多个仓位编码相同的仓位");
+                    } else {
+                        WarehouseLocationEntity loc = matchedLocations.get(0);
+                        excelDTO.setWarehouseAreaId(matchedArea.getId());
+                        excelDTO.setWarehouseAreaCode(matchedArea.getCode());
+                        excelDTO.setWarehouseLocationId(loc.getId());
+                        excelDTO.setWarehouseLocationCode(loc.getCode());
+                    }
+                }
             }
-            successList.add(excelDTO);
+            if (!merged.isEmpty()) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(blockErrorsToSortedList(merged)));
+                errorList.add(excelDTO);
+            } else {
+                successList.add(excelDTO);
+            }
         }
     }
 
     /**
-     * 将 WarehouseLocation 集合转换成库区信息为key，仓位信息为value 的map集合
-     *
-     * @param allList WarehouseLocation集合
-     * @return Map<String, List<WarehouseLocationEntity>> key:库区名称 value:库区下的仓位信息
+     * 导入行校验异常块：同一异常块内只保留一条说明；多块并存时按此枚举顺序（与模板列业务层级一致）输出后再
+     * {@link FieldValidUtil#getMsgSort(List)} 编号拼接。
+     * <p>顺序：1.SKU编码 2.产品名称 3.仓库/库区/仓位 4.优先级 5.状态 6.重复行。</p>
      */
-    public Map<String, List<WarehouseLocationEntity>> convertToMap(List<WarehouseLocationEntity> allList) {
-        // 1. 过滤并提取所有父项（Area），转为 Map<id, WarehouseLocationEntity>
-        Map<String, WarehouseLocationEntity> areaMap = allList.stream().filter(e -> WarehouseLocationTypeEnum.AREA.getCode().equals(e.getType())).collect(Collectors.toMap(WarehouseLocationEntity::getId, e -> e, (k1, k2) -> k1));
-
-        // 2. 过滤并提取所有子项（Location），按 parentId 进行分组 Map<parentId, List<Location>>
-        Map<String, List<WarehouseLocationEntity>> locationGroupedByParentId = allList.stream().filter(e -> WarehouseLocationTypeEnum.LOCATION.getCode().equals(e.getType())).collect(Collectors.groupingBy(WarehouseLocationEntity::getParentId));
-
-        // 3. 将结果转化为 Map<父项名称, 子项列表>
-        return areaMap.entrySet().stream().collect(Collectors.toMap(entry -> entry.getValue().getName(), // Key: 父项名称
-                entry -> locationGroupedByParentId.getOrDefault(entry.getKey(), new ArrayList<>()) // Value: 子项列表
-        ));
+    private enum ImportErrorBlock {
+        SKU,
+        PRODUCT_NAME,
+        WAREHOUSE_CHAIN,
+        SORT,
+        STATUS,
+        DUPLICATE
     }
 }

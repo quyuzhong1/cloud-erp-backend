@@ -60,6 +60,7 @@ public enum SettingEnum {
 
     NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
     NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PULL_SWITCH, "新中台拉取开关"),
+    FBA_SHIPMENT_PULL_BILL_TYPE("fba_shipment_pull_bill_type", SettingEnum.NEW_DMP_PULL_SWITCH, "newDmp pullShipment使用的billType配置"),
 
     //支持推送仓位的金蝶仓库
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),

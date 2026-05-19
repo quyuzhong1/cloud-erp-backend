@@ -661,6 +661,8 @@ public class TmsDeclareBillDTO implements Serializable {
 
         private String sourceCode;
 
+        private String businessCode;
+
         /**
          * 预录入编号
          */
@@ -2153,10 +2155,6 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String declareUnit;
 
-        /**
-         * 报关单位名称
-         */
-        private String declareUnitName;
         /**
          * 单价
          */

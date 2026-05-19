@@ -74,6 +74,7 @@ public enum SourceTypeEnum {
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
+    FBA_INBOUND_PLANS("fbaInboundPlans", "FBA入库货件列表","fba_inbound_plans"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
     FIRST_MILE_DELIVERY_TRANSFER_TO_THIRD("firstMileDeliveryTransferToThird", "头程发货单-中转（三方仓发三方仓）", "first_mile_delivery"),
@@ -260,8 +261,8 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓编辑入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
     THIRD_WAREHOUSE_APPROVE_INBOUND_BILL("thirdWarehouseApproveInboundBill", "第三方仓审核入库单","dmp_push_task"),
-    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
-    THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL("thirdWarehouseCreateFbaOutboundBill", "B2B第三方仓创建出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("B2CThirdWarehouseCreateOutboundBill", "B2C第三方仓创建出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL("B2BThirdWarehouseCreateOutboundBill", "B2B第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
     THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL("thirdWarehouseQueryOutboundBill", "第三方仓查询出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
