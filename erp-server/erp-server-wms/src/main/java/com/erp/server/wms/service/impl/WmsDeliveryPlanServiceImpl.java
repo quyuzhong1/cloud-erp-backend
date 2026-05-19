@@ -254,7 +254,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("odp.to_warehouse_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'fbt' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
+        return CharSequenceUtil.format("{} and (((odp.type = 'fba' or odp.type = 'fbs' or odp.type = 'fbt' or odp.type = 'awd') {}) or (odp.type = 'thirdWarehouse' {}) or (odp.type = 'AliExpress' {}))", permissionSql, shopPermissionSql, warehousePermissionSql,shopPermissionSql);
     }
 
     @Override
@@ -691,6 +691,11 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getDeliveryPlanType())){
                 viewDTO.setType(RequisitionApplicationTypeEnum.FBA.getCode());
                 viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBA.getName());
+                viewDTO.setChannelId(viewDTO.getShopId());
+                viewDTO.setChannelName(viewDTO.getShopName());
+            }else if(DeliveryPlanTypeEnum.FBS.getCode().equals(viewDTO.getDeliveryPlanType())){
+                viewDTO.setType(RequisitionApplicationTypeEnum.FBS.getCode());
+                viewDTO.setTypeName(RequisitionApplicationTypeEnum.FBS.getName());
                 viewDTO.setChannelId(viewDTO.getShopId());
                 viewDTO.setChannelName(viewDTO.getShopName());
             }else if(DeliveryPlanTypeEnum.FBT.getCode().equals(viewDTO.getDeliveryPlanType())){
@@ -1324,7 +1329,8 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         if (CharSequenceUtil.isNotBlank(fromWarehouseName)){
             wmsDeliveryPlanEntity.setFromWarehouseName(fromWarehouseName);
         }
-        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.FBT.getCode().equals(wmsDeliveryPlanEntity.getType())
+        if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType()) || DeliveryPlanTypeEnum.FBS.getCode().equals(wmsDeliveryPlanEntity.getType())
+                || DeliveryPlanTypeEnum.FBT.getCode().equals(wmsDeliveryPlanEntity.getType())
                 || DeliveryPlanTypeEnum.AWD.getCode().equals(wmsDeliveryPlanEntity.getType())
                 || DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(wmsDeliveryPlanEntity.getType())){
             if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){

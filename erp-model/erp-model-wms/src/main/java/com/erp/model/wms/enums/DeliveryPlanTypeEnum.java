@@ -9,6 +9,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum DeliveryPlanTypeEnum implements EnumMessage {
     FBA("fba","FBA发货计划"),
+    FBS("fbs","FBS发货计划"),
     FBT("fbt","FBT发货计划"),
     AWD("awd","AWD发货计划"),
     THIRD_WAREHOUSE("thirdWarehouse","第三方仓发货计划"),

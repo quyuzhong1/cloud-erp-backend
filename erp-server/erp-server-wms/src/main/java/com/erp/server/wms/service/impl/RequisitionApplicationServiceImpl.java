@@ -1276,6 +1276,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             viewDTO.setCountry(wmsDeliveryPlanEntity.getCountry());
 
             if (RequisitionApplicationTypeEnum.FBA.getCode().equals(viewDTO.getType()) ||
+                    RequisitionApplicationTypeEnum.FBS.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.FBT.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.AWD.getCode().equals(viewDTO.getType()) ||
                     RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(viewDTO.getType())) {
@@ -2073,6 +2074,8 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             //备货类型
             if(RequisitionApplicationTypeEnum.FBA.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode());
+            }else if (RequisitionApplicationTypeEnum.FBS.getCode().equals(view.getType())){
+                addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBS_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(view.getType())){
                 addDTO.setDemandType(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode());
             }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(view.getType())){
@@ -2609,6 +2612,7 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
             }
             String channelName = "";
             if((RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())
+                    || RequisitionApplicationTypeEnum.FBS.getCode().equals(requisitionApplicationEntity.getType())
                     || RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())
                     || RequisitionApplicationTypeEnum.AWD.getCode().equals(requisitionApplicationEntity.getType()))
                     || RequisitionApplicationTypeEnum.ALIEXPRESS.getCode().equals(requisitionApplicationEntity.getType())){
