@@ -265,6 +265,44 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         return viewDTO;
     }
 
+    @Override
+    public List<DeliveryDeclareDetailMidDTO.MergePreviewDTO> mergePreview(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED);
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctIds)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_REQUIRED);
+        }
+        List<DeliveryDeclareDetailMidEntity> entityList = super.listByIds(distinctIds);
+        if (CollectionUtils.isEmpty(entityList) || entityList.size() != distinctIds.size()) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_NOT_FOUND);
+        }
+        if (distinctIds.size() < 2) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_MERGE_MIN_COUNT_REQUIRED);
+        }
+        validateMergePreviewStatus(entityList);
+
+        Set<String> sourceTypeSet = entityList.stream()
+                .map(DeliveryDeclareDetailMidEntity::getSourceType)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (sourceTypeSet.size() != 1) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_MID_PREVIEW_SOURCE_TYPE_CONFLICT);
+        }
+
+        Map<String, DeliveryDeclareDetailMidEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(DeliveryDeclareDetailMidEntity::getId, item -> item, (oldValue, newValue) -> oldValue));
+        return distinctIds.stream()
+                .map(entityMap::get)
+                .filter(Objects::nonNull)
+                .map(item -> BeanMapperUtils.map(DeliveryDeclareDetailMidDTO.MergePreviewDTO.class, item))
+                .collect(Collectors.toList());
+    }
+
     /**
      * 合并后预览
      *
