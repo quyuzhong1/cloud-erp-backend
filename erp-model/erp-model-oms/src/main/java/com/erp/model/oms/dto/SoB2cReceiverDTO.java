@@ -190,6 +190,7 @@ public class SoB2cReceiverDTO implements Serializable {
         /**
          * 门牌号
          */
+        @Size(max = 50,message = "门牌号不能超过50字符")
         private String houseNumber;
 
     }
