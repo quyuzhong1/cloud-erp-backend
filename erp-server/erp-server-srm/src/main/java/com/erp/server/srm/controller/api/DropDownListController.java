@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.srm.dto.DictBasicDTO;
+import com.erp.model.srm.entity.DictBasicEntity;
 import com.erp.server.srm.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +37,7 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/dict/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
+        List<DictBasicEntity> list = dictBasicService.getByKey(key);
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
                 .collect(Collectors.toList());

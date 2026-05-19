@@ -311,8 +311,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             	}
             }
             //收款条件
-            List<DictBasicDTO.ViewDTO> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
-            DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            List<DictBasicEntity> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
+            DictBasicEntity viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicEntity());
             resultMap.put("collectionTerms", viewDTO.getRemark());
 
             //获取币别信息

@@ -1,22 +1,12 @@
 package com.erp.server.plm.service.impl;
 
-import static cn.hutool.core.text.CharSequenceUtil.isNotBlank;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
@@ -27,17 +17,20 @@ import com.erp.server.plm.mapper.BasicDictMapper;
 import com.erp.server.plm.service.BasicDictService;
 import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.text.CharSequenceUtil.isNotBlank;
-import cn.hutool.core.collection.CollUtil;
 
 /**
  * <p>
@@ -49,8 +42,13 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDictEntity> implements BasicDictService {
-
+    @Resource
+    private RedisService redisService;
 	@Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.PLM_DICT_BASIC_BY_TYPE,
+            key = "#jsonObject.getString('type')"
+    )
 	public boolean saveJsonObject(JSONObject jsonObject) {
 		BasicDictEntity entity = JSON.parseObject(jsonObject.toJSONString(), BasicDictEntity.class);
 		LocalDateTime now = LocalDateTime.now();
@@ -68,6 +66,10 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
 	}
 
 	@Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.PLM_DICT_BASIC_BY_TYPE,
+            key = "#jsonObjects[0].getString('type')"
+    )
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
 		List<BasicDictEntity> entityList = new ArrayList<>();
 		for(JSONObject jsonObject : jsonObjects) {
@@ -92,6 +94,10 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
      * @date 2022-09-16 11:38
      */
     @Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.PLM_DICT_BASIC_BY_TYPE,
+            key = "#dtos[0].type"
+    )
     public Boolean saveOrUpdateDict(List<BasicDictDTO> dtos) {
         List<BasicDictEntity> saveList = BeanMapper.copyList(dtos, BasicDictEntity.class);
         return this.saveOrUpdateBatch(saveList);
@@ -107,6 +113,7 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
      * @date 2022-09-16 14:27
      */
     @Override
+    @Cacheable(cacheNames = RedisCacheConstants.PLM_DICT_BASIC_BY_TYPE, key = "#type")
     public List<BasicDictEntity> listByType(String type) {
         LambdaQueryWrapper<BasicDictEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BasicDictEntity::getType, type);
@@ -119,12 +126,35 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
         if (CollUtil.isEmpty(typeList)){
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(BasicDictEntity::getType,typeList).list();
-    }
-
-    @Override
-    public Map<String, String> mapByType(String type) {
-        return  this.list(new LambdaQueryWrapper<BasicDictEntity>().eq(BasicDictEntity::getType, type).orderByDesc(BasicDictEntity::getOrderIndex)).stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (v1, v2) -> v1));
+        List<String> types = typeList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<BasicDictEntity> result = new ArrayList<>();
+        List<String> missTypes = new ArrayList<>();
+        for (String type : types) {
+            String redisKey = String.format("cache:%s:dict:type::%s", "plm", type);
+            List<BasicDictEntity> cacheList = redisService.getCacheObject(redisKey);
+            if (cacheList != null) {
+                result.addAll(cacheList);
+            } else {
+                missTypes.add(type);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missTypes)) {
+            List<BasicDictEntity> dbList = this.lambdaQuery()
+                    .in(BasicDictEntity::getType, missTypes)
+                    .list();
+            Map<String, List<BasicDictEntity>> dbMap = dbList.stream()
+                    .collect(Collectors.groupingBy(BasicDictEntity::getType));
+            for (String type : missTypes) {
+                List<BasicDictEntity> list = dbMap.getOrDefault(type, new ArrayList<>());
+                String redisKey = String.format("cache:%s:dict:type::%s", "plm", type);
+                redisService.setCacheObject(redisKey, list, 8L, TimeUnit.HOURS);
+                result.addAll(list);
+            }
+        }
+        return result;
     }
 
     @Override

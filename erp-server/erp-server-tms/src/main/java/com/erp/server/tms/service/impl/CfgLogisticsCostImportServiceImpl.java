@@ -427,8 +427,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private void fillOne(CfgLogisticsCostImportDTO.ViewDTO data) {
         if (Objects.nonNull(data)) {
             //费用配置-配置单据
-            List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-            DictBasicDTO.ViewDTO viewDTO = dictBasicEntities.stream().filter(e -> e.getCode().equals(data.getBusinessType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            List<com.erp.model.tms.entity.DictBasicEntity> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
+            com.erp.model.tms.entity.DictBasicEntity viewDTO = dictBasicEntities.stream().filter(e -> e.getCode().equals(data.getBusinessType())).findFirst().orElse(new com.erp.model.tms.entity.DictBasicEntity());
             // 属性赋值
             data.setBusinessTypeName(viewDTO.getName());
 
@@ -477,8 +477,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
 
        //费用配置-配置单据
-       List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-       Map<String, String> map = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getCode, DictBasicDTO.ViewDTO::getName, (o1, o2) -> o1));
+       List<com.erp.model.tms.entity.DictBasicEntity> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
+       Map<String, String> map = dictBasicEntities.stream().collect(Collectors.toMap(com.erp.model.tms.entity.DictBasicEntity::getCode, com.erp.model.tms.entity.DictBasicEntity::getName, (o1, o2) -> o1));
        //物流商
        List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
        Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode, BaseDropDownDTO.DisabledDTO::getValue, (o1, o2) -> o1));
@@ -554,8 +554,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Transactional(rollbackFor = Exception.class)
     public void importCfgLogisticsCost(BaseDTO.ImportDTO dto) {
         //费用配置-配置单据
-        List<DictBasicDTO.ViewDTO> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-        Map<String, String> dictBasicMap = dictBasicEntities.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getCode, (o1, o2) -> o1));
+        List<com.erp.model.tms.entity.DictBasicEntity> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
+        Map<String, String> dictBasicMap = dictBasicEntities.stream().collect(Collectors.toMap(com.erp.model.tms.entity.DictBasicEntity::getName, com.erp.model.tms.entity.DictBasicEntity::getCode, (o1, o2) -> o1));
         //物流商
         List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
         Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (o1, o2) -> o1));

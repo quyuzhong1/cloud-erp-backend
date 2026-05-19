@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SkuMappingExtendEntity;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.model.wms.enums.WarehouseDeliveryTypeEnum;
@@ -151,7 +152,7 @@ public class SkuMappingExtendDTO implements Serializable {
         private Integer sortNum;
 
 
-        public ListDTO(SkuMappingExtendEntity entity, DictBasicDTO.ViewDTO viewDTO) {
+        public ListDTO(SkuMappingExtendEntity entity, DictBasicEntity viewDTO) {
             WarehouseManageTypeEnum manageTypeEnum = WarehouseManageTypeEnum.getByCode(viewDTO.getValue());
             WarehouseDeliveryTypeEnum deliveryType = WarehouseDeliveryTypeEnum.getByCode(null == entity ? viewDTO.getRemark() : entity.getDeliveryType());
             if (null == manageTypeEnum){
