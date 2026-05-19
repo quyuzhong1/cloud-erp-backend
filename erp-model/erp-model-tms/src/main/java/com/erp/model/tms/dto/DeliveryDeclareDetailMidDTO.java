@@ -237,6 +237,15 @@ public class DeliveryDeclareDetailMidDTO implements Serializable {
         * 最新出口申报单价
         */
         private BigDecimal latestUnitPrice;
+        /**
+         * 最新币种
+         */
+        private String latestCurrency;
+
+        /**
+         * 最新币种符号
+         */
+        private String latestCurrencySymbol;
 
         /**
         * 数量
