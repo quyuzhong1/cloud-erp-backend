@@ -616,8 +616,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         List<AssetNoticeEntity> assetNoticeEntityList = assetNoticeService.list(queryWrapper);
 
         //结算方式
-        List<DictBasicDTO> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getId,(o1,o2)->o1));
+        List<DictBasicEntity> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getId,(o1,o2)->o1));
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
         Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(KingdeePaymentConditionEntity::getCode, KingdeePaymentConditionEntity::getName,(o1,o2)->o1));
@@ -981,8 +981,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         assetPurchaseOrderSupplierEntity.setPaymentConditionName(paymentConditionMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPaymentCondition(),""));
 
         //结算方式
-        List<DictBasicDTO> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
+        List<DictBasicEntity> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName));
         assetPurchaseOrderSupplierEntity.setPayMethodName(settleDictMap.getOrDefault(assetPurchaseOrderSupplierEntity.getPayMethodId(),""));
 
         //收款银行,银行账号
@@ -1351,8 +1351,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         contractDTO.setCreateUserName(purchaseOrderEntity.getCreateUserName());
 
         //摘要
-        List<DictBasicDTO> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getId, DictBasicDTO::getName));
+        List<DictBasicEntity> settleDictList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName));
         contractDTO.setSettleMethod(settleDictMap.get("supplierPayMode"));
 
         //供应商
@@ -1517,7 +1517,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         }
 
         //结算方式
-        List<DictBasicDTO> payMethodList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
+        List<DictBasicEntity> payMethodList = dictBasicService.getByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
         if (!payMethodList.isEmpty()) {
             exportPdfDTO.setPayMethodName(payMethodList.get(0).getName());
         }

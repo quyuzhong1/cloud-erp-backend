@@ -38,7 +38,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -49,6 +48,7 @@ import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -494,20 +494,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         String statusGroupType = DictBasicEnum.LOGISTIC_TRACK_STATUS_GROUP.getType();
         String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
 
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(statusGroupType);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(statusGroupType);
 
-        List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
-        Map<String, List<DictBasicDTO.ViewDTO>> statusMap = trackStatusList.stream().collect(Collectors.groupingBy(DictBasicDTO.ViewDTO::getRemark));
+        List<DictBasicEntity> trackStatusList = dictBasicService.getByKey(statusType);
+        Map<String, List<DictBasicEntity>> statusMap = trackStatusList.stream().collect(Collectors.groupingBy(DictBasicEntity::getRemark));
 
         List<LogisticsBillDTO.TabListDTO> resultList = new ArrayList<>(dictList.size());
         String allFlag = TmsConstant.ALL;
-        for (DictBasicDTO.ViewDTO item : dictList) {
+        for (DictBasicEntity item : dictList) {
             String group = item.getCode();
             List<String> statusList;
             if (group.equals(allFlag)) {
                 statusList = Collections.emptyList();
             } else {
-                statusList = statusMap.getOrDefault(group, Collections.emptyList()).stream().map(DictBasicDTO.ViewDTO::getCode).distinct().collect(Collectors.toList());
+                statusList = statusMap.getOrDefault(group, Collections.emptyList()).stream().map(DictBasicEntity::getCode).distinct().collect(Collectors.toList());
             }
             LogisticsBillDTO.TabListDTO tab = new LogisticsBillDTO.TabListDTO();
             String tabFlag = item.getCode();
@@ -881,8 +881,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LocalDateTime now = LocalDateTime.now();
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
         //销售平台字典表数据
-        List<DictBasicDTO.ViewDTO> salesPlatformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        Map<String, String> salesPlatformMap = CollUtil.isEmpty(salesPlatformList) ? new HashMap<>() : salesPlatformList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getCode, DictBasicDTO.ViewDTO::getName));
+        List<DictBasicEntity> salesPlatformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        Map<String, String> salesPlatformMap = CollUtil.isEmpty(salesPlatformList) ? new HashMap<>() : salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getCode, DictBasicEntity::getName));
         //供应商
         List<String> supplierIds = list.stream().map(LogisticsBillDTO.PagingVO::getLogisticsSupplierId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         Map<String, String> supplierMap = new HashMap<>();

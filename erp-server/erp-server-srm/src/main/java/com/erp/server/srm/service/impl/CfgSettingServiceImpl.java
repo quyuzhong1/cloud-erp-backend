@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.*;
 import com.erp.model.srm.entity.CfgSettingEntity;
+import com.erp.model.srm.entity.DictBasicEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DictBasicEnum;
 import com.erp.model.srm.vo.ConfigVO;
@@ -120,7 +121,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     public List<ConfigVO> getConfig() {
         List<ConfigVO> configVOList = new ArrayList<>();
         String supplierId = userService.getSupplierId();
-        List<DictBasicDTO.ViewDTO> dicts = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
+        List<DictBasicEntity> dicts = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         List<CfgSettingEntity> cfgSettingEntities = getListBySupplierId(supplierId);
         if (CollectionUtils.isEmpty(cfgSettingEntities)) return configVOList;
         Map<String, CfgSettingEntity> collect = cfgSettingEntities.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, Function.identity()));
@@ -176,7 +177,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     @Override
     public CfgSettingDTO.ViewDTO view() {
         CfgSettingDTO.ViewDTO viewDTO = new CfgSettingDTO.ViewDTO();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.CFG_SETTING.getType());
         if (CollectionUtils.isEmpty(dictList)) {
             return viewDTO;
         }

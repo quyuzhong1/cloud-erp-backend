@@ -373,4 +373,20 @@ public interface RedisCacheConstants {
      * 直接读取避免冷启动空窗（与周期广播互补，遵循"先写 Bucket 再 publish"的写入顺序）
      */
     String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
+
+    // dict_basic 缓存 —— 按服务+type 维度存储
+    // 格式: cache:{serviceCode}:dict:type:{type}
+    String SYS_DICT_BASIC_BY_TYPE = "cache:sys:dict:type";
+    String DMP_DICT_BASIC_BY_TYPE = "cache:dmp:dict:type";
+    String MRP_DICT_BASIC_BY_TYPE = "cache:mrp:dict:type";
+    String FMS_DICT_BASIC_BY_TYPE = "cache:mrp:dict:type";
+    String OMS_DICT_BASIC_BY_TYPE = "cache:oms:dict:type";
+    String SCM_DICT_BASIC_BY_TYPE = "cache:scm:dict:type";
+    String TMS_DICT_BASIC_BY_TYPE = "cache:tms:dict:type";
+    String WMS_DICT_BASIC_BY_TYPE = "cache:wms:dict:type";
+    String PLM_DICT_BASIC_BY_TYPE = "cache:plm:dict:type";
+    String SRM_DICT_BASIC_BY_TYPE = "cache:srm:dict:type";
+    String WORKFLOW_DICT_BASIC_BY_TYPE = "cache:workflow:dict:type";
+    //区域管理
+    String SYS_DICT_GLOBAL_AREA_ID = "cache:sys:globalArea:id";
 }

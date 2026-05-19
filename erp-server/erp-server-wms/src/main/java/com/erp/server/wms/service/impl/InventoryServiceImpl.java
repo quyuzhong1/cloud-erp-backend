@@ -1061,9 +1061,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         //查询配置过滤对应组织仓库
         if(params.isFilterOrgFlag()){
-            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            List<DictBasicEntity> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
             if(CollectionUtils.isNotEmpty(listDTOList)){
-                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                DictBasicEntity orgDTOList = listDTOList.get(0);
                 String orgArr = orgDTOList.getValue();
                 paramDTO.setOrgIds(Arrays.asList(orgArr.split(",")));
             }
@@ -1365,9 +1365,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         //查询配置过滤对应组织仓库
         if(params.isFilterOrgFlag()){
-            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            List<DictBasicEntity> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
             if(CollectionUtils.isNotEmpty(listDTOList)){
-                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                DictBasicEntity orgDTOList = listDTOList.get(0);
                 String orgArr = orgDTOList.getValue();
                 paramDTO.setOrgIds(Arrays.asList(orgArr.split(",")));
             }

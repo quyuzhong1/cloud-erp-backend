@@ -8,6 +8,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.dto.DmpSkuCostDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSkuCostService;
@@ -74,13 +75,13 @@ public class CleanJob {
                 supplierIds = Arrays.asList(supplierIds1.split(","));
             }
         }else {
-            List<DictBasicDTO.ViewDTO> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
+            List<DictBasicEntity> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
             if (CollUtil.isNotEmpty(skuCostPurchaseOrderIds)){
-                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             }
-            List<DictBasicDTO.ViewDTO> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
+            List<DictBasicEntity> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
             if (CollUtil.isNotEmpty(skuCostSupplierIds)){
-                supplierIds = skuCostSupplierIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                supplierIds = skuCostSupplierIds.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             }
         }
         List<LocalDate> localDateList = Arrays.asList(startDate, endDate);
@@ -125,13 +126,13 @@ public class CleanJob {
                 supplierIds = Arrays.asList(supplierIds1.split(","));
             }
         }else {
-            List<DictBasicDTO.ViewDTO> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
+            List<DictBasicEntity> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
             if (CollUtil.isNotEmpty(skuCostPurchaseOrderIds)){
-                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             }
-            List<DictBasicDTO.ViewDTO> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
+            List<DictBasicEntity> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
             if (CollUtil.isNotEmpty(skuCostSupplierIds)){
-                supplierIds = skuCostSupplierIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                supplierIds = skuCostSupplierIds.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             }
         }
         dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList,purchaseOrderIds,supplierIds);

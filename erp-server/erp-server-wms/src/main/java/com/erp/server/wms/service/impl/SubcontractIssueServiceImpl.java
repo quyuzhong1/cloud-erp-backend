@@ -39,10 +39,7 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
-import com.erp.model.wms.entity.PoInstockEntity;
-import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
-import com.erp.model.wms.entity.SubcontractIssueEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -642,8 +639,8 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
         //发料类型
-        List<DictBasicDTO.ListDTO> issueTypeList = dictBasicService.getByKey(DictBasicEnum.ISSUE_TYPE.getKey());
-        String typeName = issueTypeList.stream().filter(obj -> obj.getValue().equals(data.getType())).map(DictBasicDTO.ListDTO::getName)
+        List<DictBasicEntity> issueTypeList = dictBasicService.getByKey(DictBasicEnum.ISSUE_TYPE.getKey());
+        String typeName = issueTypeList.stream().filter(obj -> obj.getValue().equals(data.getType())).map(DictBasicEntity::getName)
                 .findFirst().orElse("");
         data.setTypeName(typeName);
 
@@ -748,7 +745,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
 
         //发料类型
-        List<DictBasicDTO.ListDTO> issueTypeList = dictBasicService.getByKey(DictBasicEnum.ISSUE_TYPE.getKey());
+        List<DictBasicEntity> issueTypeList = dictBasicService.getByKey(DictBasicEnum.ISSUE_TYPE.getKey());
 
         // 属性赋值
         for(SubcontractIssueDTO.ListDTO data : list) {

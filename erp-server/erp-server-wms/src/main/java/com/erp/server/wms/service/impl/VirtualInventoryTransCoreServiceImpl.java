@@ -569,7 +569,7 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
             return resultList;
         }
         //是否拆分bom
-        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey(DictBasicEnum.VIRTUAL_SPLIT_BOM.getKey());
+        List<DictBasicEntity> list = dictBasicService.getByKey(DictBasicEnum.VIRTUAL_SPLIT_BOM.getKey());
         if (CollUtil.isEmpty(list) || !Boolean.valueOf(list.get(0).getValue())) {
             return resultList;
         }
