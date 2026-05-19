@@ -543,6 +543,12 @@ public class QcNoticeDTO implements Serializable {
         private Integer majorRejectQty;
 
         /**
+         * 处理措施
+         */
+        @NotBlank(message = "处理措施不能为空")
+        private String handleModeDict;
+
+        /**
          *良品数量
          */
         @NotNull(message = "良品数量不能为空")
