@@ -432,14 +432,44 @@ public class AfterSalePackDTO implements Serializable {
     public static class DetailDTO {
 
         /**
+         * 售后装箱明细id
+         */
+        private String id;
+
+        /**
+         * 售后装箱id
+         */
+        private String mainId;
+
+        /**
          * 箱唛
          */
         private String code;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
          * 实退数量
          */
         private Integer packQty;
+
+        /**
+         * 实际数量
+         */
+        private Integer actualQty;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
 
         /**
          * 拣货仓位id

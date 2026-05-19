@@ -1,6 +1,7 @@
 package com.common.business.enums;
 
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 public enum AfterSalePackTypeEnum {
@@ -19,6 +20,9 @@ public enum AfterSalePackTypeEnum {
     }
 
     public static String getByName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
         for (AfterSalePackTypeEnum item : AfterSalePackTypeEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();

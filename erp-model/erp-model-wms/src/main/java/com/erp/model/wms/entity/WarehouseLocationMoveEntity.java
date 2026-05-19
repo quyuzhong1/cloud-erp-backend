@@ -109,8 +109,8 @@ public class WarehouseLocationMoveEntity extends BaseEntity<WarehouseLocationMov
     /**
      * 操作类型
      */
-    @TableField("sync_operate")
-    private String syncOperate;
+    @TableField("operate_type")
+    private String operateType;
 
     
 
