@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -135,10 +136,17 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
     @Override
     public List<TransferDeclareDetailEntity> listWaitSyncTransferStatus() {
-        return lambdaQuery().eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
-                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.DELETED.getCode())
-                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.OUTSTOCK.getCode())
-                .ne(TransferDeclareDetailEntity::getTransferStatus, TransferLogisticsStatusEnum.SIGNED.getCode()).list();
+        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusYears(1);
+        return lambdaQuery()
+                .eq(TransferDeclareDetailEntity::getOrderUploadStatus, TransferDeclareUploadStatusEnum.UPLOAD_SUCCESS.getCode())
+                .notIn(TransferDeclareDetailEntity::getTransferStatus,
+                        Arrays.asList(TransferLogisticsStatusEnum.DELETED.getCode(),
+                                TransferLogisticsStatusEnum.OUTSTOCK.getCode(),
+                                TransferLogisticsStatusEnum.SIGNED.getCode()))
+                .gt(TransferDeclareDetailEntity::getCreateTime, sixMonthsAgo)
+                .orderByDesc(TransferDeclareDetailEntity::getCreateTime)
+                .last(SqlConstants.LIMIT_50)
+                .list();
     }
 
     @Override

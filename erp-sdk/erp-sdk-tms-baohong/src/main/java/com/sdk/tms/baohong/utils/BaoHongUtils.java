@@ -30,6 +30,9 @@ import java.util.Map;
  * @date 2024年01月20日 18:06
  */
 public class BaoHongUtils {
+    private static final ServiceForOrder_Service ORDER_SERVICE = new ServiceForOrder_Service();
+    private static final ServiceForAsn_Service ASN_SERVICE = new ServiceForAsn_Service();
+    private static final ServiceForProduct_Service PRODUCT_SERVICE = new ServiceForProduct_Service();
 
     private static final String PRINT_URL = "http://exwms.globex.cn/default/print-order-api/print-order";
 
@@ -70,18 +73,15 @@ public class BaoHongUtils {
     }
 
     public static ServiceForOrder getOrderService(){
-        ServiceForOrder_Service service = new ServiceForOrder_Service();
-        return service.getServiceForOrderSOAP();
+        return ORDER_SERVICE.getServiceForOrderSOAP();
     }
 
     public static ServiceForProduct getProductService(){
-        ServiceForProduct_Service service = new ServiceForProduct_Service();
-        return service.getServiceForProductSOAP();
+        return PRODUCT_SERVICE.getServiceForProductSOAP();
     }
 
     public static ServiceForAsn getAsnService(){
-        ServiceForAsn_Service service = new ServiceForAsn_Service();
-        return service.getServiceForAsnSOAP();
+        return ASN_SERVICE.getServiceForAsnSOAP();
     }
 
     public static <T> BaoHongResponse<T> buildBaseResponse(String ask, String message,T data){
