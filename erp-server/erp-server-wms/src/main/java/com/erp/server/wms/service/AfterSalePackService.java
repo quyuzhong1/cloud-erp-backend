@@ -9,7 +9,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.entity.AfterSalePackEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -101,17 +100,6 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      * @date: 2026-05-12
      */
     AfterSalePackDTO.ViewDTO view(String id);
-
-    /**
-     * 导出Excel
-     *
-     * @param dto
-     * @param response
-     * @return
-     * @author lei.nie
-     * @date: 2026-05-12
-     */
-    void exportList(AfterSalePackDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
      * 删除

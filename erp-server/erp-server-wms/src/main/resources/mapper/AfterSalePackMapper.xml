@@ -95,8 +95,4 @@
         t.update_time DESC
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
-
-    </select>
-
 </mapper>

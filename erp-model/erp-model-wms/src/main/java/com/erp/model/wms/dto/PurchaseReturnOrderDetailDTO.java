@@ -8,6 +8,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 收货明细DTO
@@ -105,6 +106,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 采购订单仓位
          */
         private String purchaseWarehouseLocation;
+
+        /**
+         * 整箱退货明细
+         */
+        private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
 
     /**
@@ -192,6 +198,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 整箱退货明细
+         */
+        private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
 
     /**
@@ -324,6 +335,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 一级供应商名称
          */
         private String mainSupplierName;
+
+        /**
+         * 整箱退货明细
+         */
+        private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
 
 }

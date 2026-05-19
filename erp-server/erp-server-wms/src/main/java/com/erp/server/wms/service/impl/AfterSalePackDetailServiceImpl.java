@@ -353,8 +353,14 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
                                                          AfterSalePackDetailEntity detail,
                                                          Map<String, WarehouseLocationEntity> warehouseLocationMap) {
         AfterSalePackDTO.DetailDTO detailDTO = new AfterSalePackDTO.DetailDTO();
+        detailDTO.setId(detail.getId());
+        detailDTO.setMainId(detail.getMainId());
         detailDTO.setCode(afterSalePackEntity.getCode());
+        detailDTO.setSkuId(detail.getSkuId());
+        detailDTO.setSkuNo(detail.getSkuNo());
         detailDTO.setPackQty(detail.getPackQty());
+        detailDTO.setActualQty(detail.getActualQty());
+        detailDTO.setDiffQty(detail.getDiffQty());
         detailDTO.setOutWarehouseLocationId(detail.getOutWarehouseLocationId());
         WarehouseLocationEntity outWarehouseLocation = warehouseLocationMap.get(detail.getOutWarehouseLocationId());
         if (outWarehouseLocation != null) {
