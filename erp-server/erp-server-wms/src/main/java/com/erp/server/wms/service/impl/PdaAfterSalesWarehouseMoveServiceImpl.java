@@ -13,6 +13,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.entity.WmsMoveCartonDetailEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -23,6 +24,7 @@ import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.PdaAfterSalesWarehouseMoveService;
 import com.erp.server.wms.service.WarehouseLocationMoveDetailService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
+import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,8 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
     @Resource
     private WarehouseService warehouseService;
     @Resource
+    private WarehouseLocationService warehouseLocationService;
+    @Resource
     private InventoryService inventoryService;
     @Resource
     private AfterSalePackService afterSalePackService;
@@ -84,6 +88,12 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
 
         String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
         String sourceCode = CharSequenceUtil.trimToEmpty(dto.getSourceWarehouseLocationCode());
+        String warehouseId = CharSequenceUtil.trim(dto.getWarehouseId());
+
+        WarehouseLocationEntity targetLocation = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, targetCode);
+        if (targetLocation == null || Boolean.TRUE.equals(targetLocation.getDisabled())) {
+            throw new ServiceException(CharSequenceUtil.format("目标仓位【{}】无效/禁用", targetCode));
+        }
 
         String skuNo = CharSequenceUtil.trim(dto.getSkuNo());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(CollUtil.newArrayList(skuNo));
@@ -106,7 +116,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
         detail.setQty(dto.getQty());
 
         WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
-        addDTO.setWarehouseId(CharSequenceUtil.trim(dto.getWarehouseId()));
+        addDTO.setWarehouseId(warehouseId);
         addDTO.setDetailList(CollUtil.newArrayList(detail));
         addDTO.setPcShow(false);
         addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.AFTER_SALES_SHELVING.getCode());

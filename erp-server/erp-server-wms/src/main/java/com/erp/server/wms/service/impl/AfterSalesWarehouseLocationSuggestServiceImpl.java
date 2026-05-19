@@ -434,6 +434,9 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         }
         List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> dtoList = new ArrayList<>(entityList.size());
         for (AfterSalesWarehouseLocationSuggestEntity entity : entityList) {
+            if (Boolean.TRUE.equals(entity.getDisabled())) {
+                continue;
+            }
             AfterSalesWarehouseLocationSuggestDto.PdaListDto dto = new AfterSalesWarehouseLocationSuggestDto.PdaListDto();
             BeanMapperUtils.copy(entity, dto);
             dtoList.add(dto);
