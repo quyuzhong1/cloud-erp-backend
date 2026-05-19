@@ -57,7 +57,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,8 +68,6 @@ import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -105,10 +102,6 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
 
     @Resource
     private LogisticsChannelService logisticsChannelService;
-
-    @Resource
-    @Qualifier("tmsLogisticsOrderPool")
-    private ExecutorService tmsLogisticsOrderPool;
 
     @Resource
     private ExpressShipperService expressShipperService;
@@ -252,6 +245,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 .contactInfoList(contactInfoList)
                 .payMethod(1)
                 .expressTypeId(Integer.valueOf(channelAuth.channel.getCode()))
+                .monthlyCard(channelAuth.authMap.get("monthlyCard"))
                 .parcelQty(1)
                 .isReturnRoutelabel(1)
                 .build();
@@ -389,75 +383,70 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     .payMethod(1)
                     // 快件产品类别
                     .expressTypeId(Integer.valueOf(channelAuth.channel.getCode()))
+                    .monthlyCard(channelAuth.authMap.get("monthlyCard"))
                     .parcelQty(1)
                     // 是否返回路由标签： 默认1， 1：返回路由标签， 0：不返回；除部分特殊用户外，其余用户都默认返回
                     .isReturnRoutelabel(1)
                     .build();
             orderRequestList.add(orderRequest);
         }
-        // 为列表中的每个请求创建一个异步任务
-        List<CompletableFuture<BaseResult>> futures = orderRequestList.stream()
-                .map(orderRequest -> CompletableFuture.supplyAsync(() -> {
-                    // 这里是调用外部接口的具体逻辑
-                    try {
-                        return expressShipperService.createOrder(channelAuth.authMap, orderRequest);
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
-                    }
-                }, tmsLogisticsOrderPool).exceptionally(ex -> {
-                    // 处理单个任务的异常，防止一个失败导致整体失败
-                    System.err.println("处理订单失败: " + orderRequest.getOrderId() + ", 原因: " + ex.getMessage());
-                    return null; // 失败时返回 null 或一个默认对象
-                })).collect(Collectors.toList());
-        // 等待所有异步任务完成
-        CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-        // 在所有任务完成后，收集并返回结果
-        List<BaseResult> baseResultList = allFutures.thenApply(v -> futures.stream()
-                .map(CompletableFuture::join) // 获取每个任务的结果
-                .filter(Objects::nonNull)     // 过滤掉处理失败的 null 结果
-                .collect(Collectors.toList())
-        ).join(); // 阻塞等待所有任务完成并获取最终结果列表
+        // 同步调用外部接口，单个订单失败不影响后续订单处理
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         Map<String, String> map = entityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getSourceCode, LogisticsOrderEntity::getAfterSaleId));
-        for (BaseResult baseResult : baseResultList) {
-            AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
-            // 转换实体
-            if (baseResult.isSuccess()) {
-                OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
-                resultDTO.setAfterSaleId(map.get(StringUtils.substringBefore(orderResponse.getOrderId(), "_")));
-                resultDTO.setStatus(true);
-                List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
-                if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
-                    WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
-                    if (Objects.nonNull(waybillNoInfo)) {
-                        resultDTO.setTrackNo(waybillNoInfo.getWaybillNo());
+        for (OrderRequest orderRequest : orderRequestList) {
+            try {
+                BaseResult baseResult = expressShipperService.createOrder(channelAuth.authMap, orderRequest);
+                if (Objects.nonNull(baseResult)) {
+                    AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
+                    // 转换实体
+                    if (baseResult.isSuccess()) {
+                        OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
+                        resultDTO.setAfterSaleId(map.get(StringUtils.substringBefore(orderResponse.getOrderId(), "_")));
+                        resultDTO.setStatus(true);
+                        List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
+                        if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
+                            WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
+                            if (Objects.nonNull(waybillNoInfo)) {
+                                resultDTO.setTrackNo(waybillNoInfo.getWaybillNo());
+                            }
+                        }
+                    } else {
+                        resultDTO.setErrorMsg(baseResult.getErrorMsg());
+                        resultDTO.setStatus(false);
+                        resultDTO.setAfterSaleId(map.get(StringUtils.substringBefore(orderRequest.getOrderId(), "_")));
                     }
+                    resultDTOList.add(resultDTO);
                 }
-            } else {
-                resultDTO.setErrorMsg(baseResult.getErrorMsg());
-                resultDTO.setStatus(false);
+            } catch (Exception ex) {
+                System.err.println("处理订单失败: " + orderRequest.getOrderId() + ", 原因: " + ex.getMessage());
             }
-            resultDTOList.add(resultDTO);
         }
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, Function.identity(), (v1, v2) -> v1));
         List<LogisticsOrderDTO.LogisticsLabelDTO> successLabelList = new ArrayList<>();
         entityList.forEach(e -> {
-            if (resultDTOMap.get(e.getAfterSaleId()) != null) {
-                e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
-                e.setTrackNo(resultDTOMap.get(e.getAfterSaleId()).getTrackNo());
-                // 操作日志
-                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
-                // 下单成功发送异步请求保存面单
-                // 设置redis
-                String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
-                redisUtil.set(labelRedisKey, true, 86400);
-                LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
-                successLabelList.add(labelDTO);
+            AfterSaleDTO.LogisticsOrderResultDTO resultDTO = resultDTOMap.get(e.getAfterSaleId());
+            if (resultDTO != null) {
+                if (Boolean.TRUE.equals(resultDTO.getStatus())) {
+                    e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
+                    e.setTrackNo(resultDTO.getTrackNo());
+                    // 操作日志
+                    String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
+                    // 下单成功发送异步请求保存面单
+                    // 设置redis
+                    String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
+                    redisUtil.set(labelRedisKey, true, 86400);
+                    LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
+                    successLabelList.add(labelDTO);
+                } else {
+                    e.setStatus(LogisticsStatusEnum.FAILED.getCode());
+                    e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
+                    e.setExceptionReason(resultDTO.getErrorMsg());
+                }
             } else {
                 e.setStatus(LogisticsStatusEnum.FAILED.getCode());
                 e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
-                e.setExceptionReason(resultDTOMap.get(e.getAfterSaleId()).getErrorMsg());
+                e.setExceptionReason("单据不存在");
             }
         });
         if (CollUtil.isNotEmpty(successLabelList)) {

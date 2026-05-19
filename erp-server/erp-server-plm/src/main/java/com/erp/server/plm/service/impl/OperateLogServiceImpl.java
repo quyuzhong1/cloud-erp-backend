@@ -64,6 +64,17 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
 
     private static final String PACKAGEPATH = "com.erp.model.plm.enums";
 
+    /**
+     * 临时脱敏：操作日志变更明细中需隐藏的字段名，新增时仅在此列表追加字段名。
+     */
+    private static final List<String> SENSITIVE_OPERATE_LOG_FIELD_NAMES = Collections.unmodifiableList(
+            Arrays.asList("实际不含税成本","实际含税成本"));
+
+    private static final List<OperateLogContentMaskRule> SENSITIVE_OPERATE_LOG_CONTENT_MASK_RULES =
+            SENSITIVE_OPERATE_LOG_FIELD_NAMES.stream()
+                    .map(OperateLogContentMaskRule::new)
+                    .collect(Collectors.toList());
+
     @Override
     public Boolean addSysLogByUpdate(Object oldObj, Object newObj, String classPath, String businessId, String pid, String msg) {
 
@@ -245,7 +256,42 @@ public class OperateLogServiceImpl extends ServiceImpl<OperateLogMapper, Operate
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         OperateLogSelectDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params, IsConstant.YES);
+        if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
+            for (Object record : pageData.getRecords()) {
+                OperateLogShowDTO showDTO = (OperateLogShowDTO) record;
+                if (showDTO != null && StringUtils.isNotBlank(showDTO.getContent())) {
+                    showDTO.setContent(maskSensitiveOperateLogContent(showDTO.getContent()));
+                }
+            }
+        }
         return new PagingVO(pageData);
+    }
+
+    private static String maskSensitiveOperateLogContent(String content) {
+        String masked = content;
+        for (OperateLogContentMaskRule rule : SENSITIVE_OPERATE_LOG_CONTENT_MASK_RULES) {
+            if (!masked.contains(rule.fieldName)) {
+                continue;
+            }
+            masked = rule.pattern.matcher(masked).replaceAll(rule.replacement);
+        }
+        return masked;
+    }
+
+    /**
+     * 操作日志 content 脱敏规则：由字段名生成「编辑了[字段]由***变更为***」模式。
+     */
+    private static final class OperateLogContentMaskRule {
+        private final String fieldName;
+        private final Pattern pattern;
+        private final String replacement;
+
+        private OperateLogContentMaskRule(String fieldName) {
+            this.fieldName = fieldName;
+            this.pattern = Pattern.compile(
+                    "编辑了\\[" + Pattern.quote(fieldName) + "\\](?:由\\[[^\\]]*\\]变更为\\[[^\\]]*\\]|由空值变更为\\[[^\\]]*\\])");
+            this.replacement = "编辑了[" + fieldName + "]由***变更为***";
+        }
     }
 
     @Override

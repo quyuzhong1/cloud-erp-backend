@@ -154,7 +154,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 //收寄双方信息
                 .contactInfoList(contactInfoList)
                 //顺丰月结卡号 月结支付时传值，现结不需传值；沙箱联调可使用测试月结卡号7551234567（非正式，无须绑定，仅支持联调使用）
-                .monthlyCard(logisticsOrderVO.getMonthlyCard())
+                .monthlyCard(logisticsOrderVO.getAuthMap().get("monthlyCard"))
                 .payMethod(1)
                 //快件产品类别
                 .expressTypeId(Integer.valueOf(logisticsOrderVO.getLogisticsSaleChannel().getCode()))
