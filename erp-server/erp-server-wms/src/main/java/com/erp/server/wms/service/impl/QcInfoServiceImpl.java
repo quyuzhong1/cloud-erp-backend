@@ -680,9 +680,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         QcNoticeDetailEntity qcNoticeDetail = qcNoticeDetailService.getById(sourceDetailId);
         if (Objects.nonNull(qcNoticeDetail)) {
+            Integer safeTotalQty = totalQty == null ? 0 : totalQty;
+            Integer safeQcQty = qcQty == null ? 0 : qcQty;
             LambdaUpdateChainWrapper<QcNoticeDetailEntity> updateWrapper = qcNoticeDetailService.lambdaUpdate()
-                    .set(QcNoticeDetailEntity::getQcQty, totalQty)
-                    .set(QcNoticeDetailEntity::getQcDiffQty, qcNoticeDetail.getQcNoticeQty() - totalQty)
+                    .set(QcNoticeDetailEntity::getQcQty, safeQcQty)
+                    .set(QcNoticeDetailEntity::getQcDiffQty, safeTotalQty - safeQcQty)
                     .set(QcNoticeDetailEntity::getQcGoodQty, goodQty)
                     .set(QcNoticeDetailEntity::getQcBadQty, badQty)
                     .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.FINISH.getCode())
