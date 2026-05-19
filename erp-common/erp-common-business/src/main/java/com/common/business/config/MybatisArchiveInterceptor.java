@@ -42,7 +42,8 @@ public class MybatisArchiveInterceptor implements Interceptor{
 			"operate_log",
 			"sys_event_tracking",
 			"sys_log_record",
-			"sys_user_info"
+			"sys_user_info",
+			"message_user_read"
 			);
 	
 	private static final List<String> DORIS_WHITE_TABLE_LIST = Arrays.asList(
