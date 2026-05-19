@@ -1207,10 +1207,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //回写修改装载质检通知单
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
-            qcNoticeDetailEntity.setQcQty(qcResultView.getQcQty());
+            Integer fullTotalQty = qcResultView.getTotalQty() == null ? 0 : qcResultView.getTotalQty();
+            Integer fullQcQty = qcResultView.getQcQty() == null ? 0 : qcResultView.getQcQty();
+            qcNoticeDetailEntity.setQcQty(fullQcQty);
             qcNoticeDetailEntity.setQcGoodQty(qcResultView.getQcGoodQty());
             qcNoticeDetailEntity.setQcBadQty(qcResultView.getQcBadQty());
-            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcNoticeQty() - qcResultView.getQcQty());
+            qcNoticeDetailEntity.setQcDiffQty(fullTotalQty - fullQcQty);
             qcNoticeDetailEntity.setQcUserId(qcInfoView.getQcUserId());
             qcNoticeDetailEntity.setQcUserName(userInfoMap.getOrDefault(qcInfoView.getQcUserId(),""));
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
@@ -1231,7 +1233,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcResult.setQcQty(qcResultView.getQcQty());
                 qcResult.setQcResult(qcResultView.getQcResult());
                 qcResult.setLotQualifiedQty(qcResultView.getLotQualifiedQty());
-
+                qcResult.setHandleModeDict(qcResultView.getHandleModeDict());
                 if (Objects.nonNull(qcResultView.getQcBadQty()) && qcResultView.getQcBadQty() >= 0
                         && Objects.nonNull(qcResultView.getQcGoodQty()) && qcResultView.getQcGoodQty() >= 0) {
 
@@ -1560,10 +1562,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             // 回写修改装载质检通知单
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
-            qcNoticeDetailEntity.setQcQty(qcInfoView.getQcQty());
+            QcResultEntity matchedQcResult = qcResultMap.get(qcInfoView.getQcBillId());
+            Integer noticeQcQty = qcInfoView.getQcQty() == null ? 0 : qcInfoView.getQcQty();
+            Integer noticeTotalQty = matchedQcResult != null && matchedQcResult.getTotalQty() != null
+                    ? matchedQcResult.getTotalQty()
+                    : (qcInfoView.getQcNoticeQty() == null ? 0 : qcInfoView.getQcNoticeQty());
+            qcNoticeDetailEntity.setQcQty(noticeQcQty);
             qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
             qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
-            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
+            qcNoticeDetailEntity.setQcDiffQty(noticeTotalQty - noticeQcQty);
             qcNoticeDetailEntity.setQcUserId(qcInfoView.getQcUserId());
             qcNoticeDetailEntity.setQcUserName(userInfoMap.getOrDefault(qcInfoView.getQcUserId(),""));
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
@@ -1605,6 +1612,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
                     qcResult.setQcBadRate(qcBadRate);
+                    qcResult.setHandleModeDict(qcInfoView.getHandleModeDict());
                 } else {
                     throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
                 }
