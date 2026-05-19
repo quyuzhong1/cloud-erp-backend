@@ -204,12 +204,12 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String syncOperate;
+        private String operateType;
 
         /**
          * 操作类型名称
          */
-        private String syncOperateName;
+        private String operateTypeName;
 
         /**
          * 上架仓位库存状态名称
@@ -364,12 +364,12 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String syncOperate;
+        private String operateType;
 
         /**
          * 操作类型名称
          */
-        private String syncOperateName;
+        private String operateTypeName;
 
         /**
          * 明细信息
@@ -426,12 +426,12 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String syncOperate;
+        private String operateType;
 
         /**
          * 操作类型名称
          */
-        private String syncOperateName;
+        private String operateTypeName;
 
         /**
          * 明细信息
@@ -474,7 +474,7 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String syncOperate;
+        private String operateType;
     }
 
     /**
@@ -797,12 +797,12 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String syncOperate;
+        private String operateType;
 
         /**
          * 操作类型名称
          */
-        private String syncOperateName;
+        private String operateTypeName;
     }    /**
      * PDA:分页列表
      */
@@ -945,12 +945,12 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 操作类型
          */
-        private String syncOperate;
+        private String operateType;
 
         /**
          * 操作类型名称
          */
-        private String syncOperateName;
+        private String operateTypeName;
 
         /**
          * 实际库存

@@ -383,7 +383,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          */
         @NotBlank(message = "箱唛号不能为空")
         @Size(max = 64, message = "箱唛号最大长度不能超过64位")
-        private String boxLabelCode;
+        private String cartonCode;
     }
 
     /**

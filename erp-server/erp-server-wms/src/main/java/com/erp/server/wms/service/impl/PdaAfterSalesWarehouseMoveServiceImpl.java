@@ -14,7 +14,7 @@ import com.erp.model.wms.entity.WmsMoveCartonDetailEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
-import com.erp.model.wms.enums.WarehouseLocationMoveSyncOperateEnum;
+import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.AfterSalePackService;
@@ -79,7 +79,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String submitGoodsShelving(AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
+    public String submitGoodsInfo(AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
         validateQty(dto.getQty());
 
         String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
@@ -109,7 +109,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
         addDTO.setWarehouseId(CharSequenceUtil.trim(dto.getWarehouseId()));
         addDTO.setDetailList(CollUtil.newArrayList(detail));
         addDTO.setPcShow(false);
-        addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.AFTER_SALES_SHELVING.getCode());
+        addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.AFTER_SALES_SHELVING.getCode());
 
         log.info("售后PDA货品上架 warehouseId={} source={} target={} skuNo={} qty={}",
                 addDTO.getWarehouseId(), sourceCode, targetCode, skuNo, dto.getQty());
@@ -118,7 +118,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String submitFullBoxTransfer(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
+    public String submitFullBoxInfo(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
         String warehouseId = CharSequenceUtil.trim(dto.getWarehouseId());
         String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
         WarehouseEntity warehouse = warehouseService.getById(warehouseId);
@@ -129,7 +129,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
 
         // ── 第一步：校验前端传入的箱唛行去重 ──────────────────────────────────
         // submittedBoxMap：以 mainId 为 key 去重，收集每个箱子的唯一标识
-        // mainIdByCode   ：以 boxLabelCode(箱唛号) 为 key 检测跨行重复箱唛
+        // mainIdByCode   ：以 cartonCode(箱唛号) 为 key 检测跨行重复箱唛
         // submittedDetailKeys：以 mainId+skuNo+移出仓位 为 key 检测同箱内重复明细行
         LinkedHashMap<String, SubmittedBox> submittedBoxMap = new LinkedHashMap<>();
         Map<String, String> mainIdByCode = new HashMap<>(16);
@@ -288,7 +288,7 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
         addDTO.setWarehouseId(warehouseId);
         addDTO.setDetailList(detailList);
         addDTO.setPcShow(false);
-        addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.FULL_BOX_TRANSFER.getCode());
+        addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.FULL_BOX_TRANSFER.getCode());
 
         log.info("售后PDA整箱移仓 warehouseId={} target={} lineCount={}", warehouseId, targetCode, detailList.size());
         String moveId = warehouseLocationMoveService.addAndApprove(addDTO);

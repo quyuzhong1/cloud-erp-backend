@@ -19,7 +19,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
 import com.erp.model.wms.entity.AfterSalePackEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.enums.WarehouseLocationMoveSyncOperateEnum;
+import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.AfterSalePackDetailMapper;
 import com.erp.server.wms.service.*;
@@ -211,7 +211,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         addDTO.setWarehouseId(CharSequenceUtil.trim(warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()).getWarehouseId()));
         addDTO.setDetailList(CollUtil.newArrayList(detail));
         addDTO.setPcShow(false);
-        addDTO.setSyncOperate(WarehouseLocationMoveSyncOperateEnum.UNBOX_TRANSFER.getCode());
+        addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.UNBOX_TRANSFER.getCode());
         log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
                 addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
         String moveId = warehouseLocationMoveService.addAndApprove(addDTO);
