@@ -71,6 +71,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_ORDER;
@@ -333,7 +334,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         List<String> sourceCodeList = entityList.stream().map(LogisticsOrderEntity::getSourceCode).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
         log.info("批量新增物流下单开始，来源单号：{}", StringUtils.join(sourceCodeList, ","));
         List<LogisticsOrderEntity> logisticsOrderEntityList = this.baseMapper.selectList(new QueryWrapper<LogisticsOrderEntity>().lambda().in(LogisticsOrderEntity::getSourceCode, sourceCodeList));
-        Map<String, LogisticsOrderEntity> logisticsOrderEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getSourceCode, w -> w));
+        Map<String, LogisticsOrderEntity> logisticsOrderEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getSourceCode, Function.identity(), (v1, v2) -> v1));
         // 筛选出所有不为空的寄修申请id
         List<String> afterSaleIdList = entityList.stream().map(LogisticsOrderEntity::getAfterSaleId).filter(ObjectUtil::isNotEmpty).collect(Collectors.toList());
         BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
@@ -345,7 +346,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         }
         List<AfterSaleDTO.ViewDTO> viewDTOList = apiResult.getData();
         // 根据id和code分组
-        Map<String, AfterSaleDTO.ViewDTO> viewDTOMap = viewDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.ViewDTO::getId, w -> w));
+        Map<String, AfterSaleDTO.ViewDTO> viewDTOMap = viewDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.ViewDTO::getId, Function.identity(), (v1, v2) -> v1));
         // 调用顺丰物流下单接口
         String channelId = entityList.get(0).getLogisticsChannelId();
         ChannelAuthInfo channelAuth = getChannelAuthInfo(channelId);
@@ -438,7 +439,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
             }
             resultDTOList.add(resultDTO);
         }
-        Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, w -> w));
+        Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, Function.identity(), (v1, v2) -> v1));
         List<LogisticsOrderDTO.LogisticsLabelDTO> successLabelList = new ArrayList<>();
         entityList.forEach(e -> {
             if (resultDTOMap.get(e.getAfterSaleId()) != null) {
@@ -673,7 +674,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         if (CollectionUtils.isNotEmpty(notPrintCodes)) {
             throw new ServiceException(ApiError.SO_LOGISTICS_WAYBILL_NOT_OBTAINED, CharSequenceUtil.join(",", notPrintCodes));
         }
-        Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
+        Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, Function.identity(), (v1, v2) -> v1));
         Map<String, String> notPrintReasonMap = null;
         for (LogisticsOrderDTO.LogisticsLabelPreviewListDTO labelPreviewListDTO : labelPreviewListDTOS) {
             TmsAttachmentEntity att = attachmentMap.get(labelPreviewListDTO.getId());
@@ -752,7 +753,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         List<TmsAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<TmsAttachmentEntity>().lambda()
                 .in(TmsAttachmentEntity::getBusinessId, dtoList.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getId).collect(Collectors.toList()))
                 .eq(TmsAttachmentEntity::getType, "logistics_label"));
-        Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, v -> v));
+        Map<String, TmsAttachmentEntity> attachmentMap = attachmentList.stream().collect(Collectors.toMap(TmsAttachmentEntity::getBusinessId, Function.identity(), (v1, v2) -> v1));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : dtoList) {
             BatchResultDTO resultDTO = new BatchResultDTO();
@@ -843,7 +844,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
         log.info("批量获取物流面单开始：{}", JSON.toJSONString(logisticsLabelDTOS));
         List<LogisticsOrderEntity> logisticsOrderEntityList = this.listByIds(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList()));
-        Map<String, LogisticsOrderEntity> idEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getId, w -> w));
+        Map<String, LogisticsOrderEntity> idEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getId, Function.identity(), (v1, v2) -> v1));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();

@@ -2267,10 +2267,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //下单成功发送异步请求保存面单
             if (CharSequenceUtil.isNotBlank(trackNo)) {
                 //设置redis
-                String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, id, trackNo);
-                redisUtil.set(labelRedisKey, true, 86400);
-                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = getPlatformWaybill(soB2cLogisticsEntity.getLogisticsChannelId(), entity, transportNo, pushPlatformCode);
-                mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+                String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL,id,trackNo);
+                redisUtil.set(labelRedisKey,true,86400);
+                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = getPlatformWaybill(soB2cLogisticsEntity.getLogisticsChannelId(), entity, transportNo,pushPlatformCode);
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+                    }
+                });
             }
 
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
@@ -10188,9 +10193,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cRefCategoryDTO.CategoryNamesDTO> categoryNamesList = soB2cRefCategoryService.listCategoryNamesBySoIds(soIds);
         Map<String, String> categoryNamesMap = categoryNamesList.stream().collect(Collectors.toMap(SoB2cRefCategoryDTO.CategoryNamesDTO::getSoB2cId, SoB2cRefCategoryDTO.CategoryNamesDTO::getCategoryNames));
 
+
+        //查询发货单号（so_b2c_delivery 、 third_warehouse_delivery）
+        Map<String, String> deliveryCodeMap = soB2cDeliveryFeign.getDeliveryCodeBySourceId(ids);
+
         List<String> codeList = new ArrayList<>();
         List<String> codeAndParentSkuIdList = new ArrayList<>();
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
+
+            exportDTO.setDeliveryCode(deliveryCodeMap.getOrDefault(exportDTO.getId(),""));
             exportDTO.setInvalidTypeName(SoB2cInvalidTypeEnum.getName(exportDTO.getInvalidType()));
             //B2C销售订单分类
             exportDTO.setCategoryNames(categoryNamesMap.getOrDefault(exportDTO.getId(), ""));
