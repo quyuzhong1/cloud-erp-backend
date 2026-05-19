@@ -101,6 +101,23 @@ public class DeliveryDeclareDetailMidController extends BaseController {
     }
 
     /**
+     * 合并前预览
+     *
+     * @param dto 报关明细中间表id集合
+     * @return ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>>
+     * @author jack
+     * @date 2026-04-29
+     */
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:deliveryDeclareDetailMid:batchAddMergeDetail",
+            serviceClass = DeliveryDeclareDetailMidService.class,
+            keyIdName = "ids")
+    public ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>> mergePreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        return success(deliveryDeclareDetailMidService.mergePreview(dto.getIds()));
+    }
+
+    /**
      * 合并后预览
      *
      * @param dto 报关明细中间表id集合
@@ -108,6 +125,11 @@ public class DeliveryDeclareDetailMidController extends BaseController {
      * @author jack
      * @date 2026-05-06
      */
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:deliveryDeclareDetailMid:batchAddMergeDetail",
+            serviceClass = DeliveryDeclareDetailMidService.class,
+            keyIdName = "ids")
     @PostMapping("/mergeAfterPreview")
     public ApiResult<List<TmsDeclareBillDTO.MergeDeclareBillDTO>> mergeAfterPreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
         return success(deliveryDeclareDetailMidService.mergeAfterPreview(dto.getIds()));
