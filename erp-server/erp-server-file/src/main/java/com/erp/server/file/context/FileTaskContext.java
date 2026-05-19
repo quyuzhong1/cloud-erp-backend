@@ -209,7 +209,11 @@ public class FileTaskContext {
                 log.error("文件任务[{}]处理失败", fileTask.getId(), e);
                 // 更新任务状态为失败
                 fileTask.setStatus(FileTaskStatusEnum.FAIL.name());
-                String remark = String.format("文件任务[%s]失败: %s", fileTask.getId(), e.getMessage());
+                String failDetail = e.getMessage();
+                if (failDetail == null || failDetail.isEmpty()) {
+                    failDetail = e.getClass().getSimpleName();
+                }
+                String remark = String.format("文件任务[%s]失败: %s", fileTask.getId(), failDetail);
                 fileTask.setRemark(remark.length() > 490 ? remark.substring(0, 490) : remark);
                 fileTaskRepository.updateById(fileTask);
             } finally {
@@ -284,7 +288,11 @@ public class FileTaskContext {
                 log.error("文件任务[{}]处理失败", fileTask.getId(), e);
                 // 更新任务状态为失败
                 importResultDTO.setStatus(FileTaskStatusEnum.FAIL.name());
-                String remark = String.format("文件任务[%s]失败: %s", fileTask.getId(), e.getMessage());
+                String failDetail = e.getMessage();
+                if (failDetail == null || failDetail.isEmpty()) {
+                    failDetail = e.getClass().getSimpleName();
+                }
+                String remark = String.format("文件任务[%s]失败: %s", fileTask.getId(), failDetail);
                 importResultDTO.setRemark(remark.length() > 490 ? remark.substring(0, 490) : remark);
                 fileTaskRepository.updateTask(importResultDTO);
             } finally {

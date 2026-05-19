@@ -1,15 +1,16 @@
 package com.erp.server.file.core;
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.business.dto.DynamicExcelDTO;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.exception.BusinessException;
+import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,29 +44,23 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         sb.append(name);
         sb.append(".xlsx");
         List<String> sheetName = getSheetName();
+        String sheet = CollectionUtils.isEmpty(sheetName) ? name : sheetName.get(0);
+        Path tempPath = null;
         try {
-            byte[] bytes = new ExcelPrintUtils().exportDynamicHeadersExcel(CollectionUtils.isEmpty(sheetName) ? name : sheetName.get(0), header, data);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
-            fileTask.setFileUrl(s);
+            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx",fileTask.getUniqueWithFileName());
+            new ExcelPrintUtils().exportDynamicHeadersExcelToFile(tempPath.toFile(), sheet, header, data);
+            String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), sb.toString(), null);
+            fileTask.setFileUrl(url);
         } catch (Exception e) {
             log.error("上传文件失败{}", e.getMessage(), e);
             throw new BusinessException(e.getMessage());
+        } finally {
+            ExportTempFilesHandler.deleteQuietly(tempPath);
         }
     }
 
-    /**
-     * 获取数据
-     *
-     * @param fileTask 入参
-     */
     protected abstract DynamicExcelDTO getData(FileTask fileTask);
 
-    /**
-     * 顺序获取需要下载的数据
-     *
-     * @param p 参数
-     * @return T
-     */
     @SuppressWarnings("unchecked")
     public DynamicExcelDTO listSeqData(P p) {
         DynamicExcelDTO excelDTO = new DynamicExcelDTO();
@@ -93,17 +89,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return excelDTO;
     }
 
-    /**
-     * 分批获取数据
-     *
-     * @param dto 分页参数
-     * @return T 对应需下载的数据
-     */
     protected abstract PagingVO<DynamicExcelDTO> getPageData(PagingDTO<P> dto);
 
-    /**
-     * 分页大小，可重写
-     */
     protected int getPageSize() {
         return 1000;
     }

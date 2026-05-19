@@ -77,4 +77,15 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
                 .in(FileTask::getId, taskIdList)
                 .update();
     }
+
+    @Override
+    public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, List<String> excludeIds) {
+        return lambdaQuery()
+                .lt(FileTask::getCreateTime, expireTime)
+                .isNotNull(FileTask::getFileUrl)
+                .ne(FileTask::getFileUrl, "")
+                .notIn(CollUtil.isNotEmpty(excludeIds), FileTask::getId, excludeIds)
+                .last("limit " + limit)
+                .list();
+    }
 }

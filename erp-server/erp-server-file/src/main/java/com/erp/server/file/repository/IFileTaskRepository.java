@@ -43,4 +43,14 @@ public interface IFileTaskRepository extends IService<FileTask> {
      * @return void
      */
     void updateTaskStatus(List<String> taskIdList);
+
+    /**
+     * 查询待清理的文件任务
+     *
+     * @param expireTime 过期时间
+     * @param limit 查询条数
+     * @param excludeIds 本轮已失败需跳过的任务ID
+     * @return List<FileTask>
+     */
+    List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, List<String> excludeIds);
 }
