@@ -127,6 +127,11 @@ public class PurchaseReturnOrderDTO {
         private String sourceId;
 
         /**
+         * 退货明细类型 sku 单个SKU退货，pack 整箱退货
+         */
+        private String returnDetailType;
+
+        /**
          * 报价明细
          */
         @Valid
@@ -215,6 +220,11 @@ public class PurchaseReturnOrderDTO {
          * 采购用户id
          */
         private String purchaseUserId;
+
+        /**
+         * 退货明细类型 sku 单个SKU退货，pack 整箱退货
+         */
+        private String returnDetailType;
 
         /**
          * 签收单明细
@@ -416,6 +426,11 @@ public class PurchaseReturnOrderDTO {
          * 退货仓库名称
          */
         private String returnWarehouseName;
+
+        /**
+         * 退货明细类型 sku 单个SKU退货，pack 整箱退货
+         */
+        private String returnDetailType;
 
         /**
          * 采购用户id

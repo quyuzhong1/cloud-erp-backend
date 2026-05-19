@@ -21,7 +21,7 @@
        <result column="approve_user_id" property="approveUserId" />
        <result column="approve_user_name" property="approveUserName" />
        <result column="approve_time" property="approveTime" />
-       <result column="sync_operate" property="syncOperate" />
+       <result column="operate_type" property="operateType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,7 +35,7 @@
         update_time,
         version,
         is_deleted,
-        code, approve_status, warehouse_id, warehouse_name, inventory_org_id, inventory_org_name, approve_user_id, approve_user_name, approve_time, sync_operate
+        code, approve_status, warehouse_id, warehouse_name, inventory_org_id, inventory_org_name, approve_user_id, approve_user_name, approve_time, operate_type
     </sql>
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.WarehouseLocationMoveDTO$PdaListDTO">
@@ -128,7 +128,7 @@
         wlmd.in_warehouse_location,
         wlmd.out_inventory_status,
         wlmd.in_inventory_status,
-        wlmi.sync_operate as syncOperate,
+        wlmi.operate_type as operateType,
         wlmd.qty
         FROM warehouse_location_move_detail wlmd
         INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
@@ -150,7 +150,7 @@
         wlmi.create_time,
         wlmi.approve_time,
         wlmi.warehouse_id,
-        wlmi.sync_operate as syncOperate
+        wlmi.operate_type as operateType
         FROM warehouse_location_move wlmi
         WHERE wlmi.is_deleted = FALSE
         <if test="id != null and id != ''">
@@ -183,7 +183,7 @@
         wlmd.qty as qty,
         wlmi.source_id as sourceId,
         wlmi.source_code as sourceCode,
-        wlmi.sync_operate as syncOperate,
+        wlmi.operate_type as operateType,
         pl.source_type as sourceType,
         wlmd.out_inventory_status as outInventoryStatus,
         wlmd.in_inventory_status as inInventoryStatus

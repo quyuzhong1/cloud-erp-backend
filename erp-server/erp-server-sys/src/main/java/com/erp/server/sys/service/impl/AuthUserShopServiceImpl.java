@@ -2,39 +2,36 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.SqlUtils;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserShopEntity;
-import com.erp.model.sys.entity.AuthUserWarehouseEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
-import com.erp.server.sys.convert.AuthUserConvert;
 import com.erp.server.sys.mapper.AuthUserShopMapper;
 import com.erp.server.sys.service.AuthUserShopService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 /**
  * <p>
  * 用户-店铺权限 服务实现类
@@ -46,97 +43,42 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper, AuthUserShopEntity> implements AuthUserShopService {
-
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(AuthUserShopDTO.AddDTO addDTO) {
-        AuthUserShopEntity authUserShopEntity = new AuthUserShopEntity();
-        BeanMapperUtils.copy(addDTO, authUserShopEntity);
-
-        // 数据处理
-        handleData(authUserShopEntity);
-
-        log.info("开始新增用户-店铺权限");
-        boolean save = super.save(authUserShopEntity);
-        if(!save) {
-            throw new ServiceException("用户-店铺权限保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "用户-店铺权限" , authUserShopEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLog(msg, null, authUserShopEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(authUserShopEntity.getId(), authUserShopEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(AuthUserShopDTO.UpdateDTO addOrUpdateDTO) {
-        AuthUserShopEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-店铺权限"));
-        AuthUserShopEntity authUserShopEntity =  BeanMapperUtils.map(AuthUserShopEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(authUserShopEntity);
-        log.info("编辑 开始修改用户-店铺权限数据，id：【{}】", old.getId());
-        boolean save = super.updateById(authUserShopEntity);
-        if(!save) {
-            throw new ServiceException("用户-店铺权限保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录用户-店铺权限日志数据，id：【{}】", authUserShopEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), authUserShopEntity.getId(), "用户-店铺权限");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, authUserShopEntity, null, authUserShopEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(AuthUserShopEntity authUserShopEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
-
+    @Lazy
+    @Resource
+    private AuthUserShopService service;
+    @Resource
+    private RedisService redisService;
 
     @Override
+    @Cacheable(value = "cache:sys:shopAuth:getShopUserList", key = "#userId")
     public List<SysUserDTO.ShopDTO> getShopUserList(String userId) {
-        if (CharSequenceUtil.isBlank(userId)){
+        if (CharSequenceUtil.isBlank(userId)) {
             return Collections.emptyList();
         }
-        return baseMapper.getShopUserList(userId,null);
+        return baseMapper.getShopUserList(userId, null);
     }
 
     @Override
-    public String getShopPermissionSql(String shopTableField , String dynamicDataSource) {
-        if (CharSequenceUtil.isBlank(shopTableField)){
+    public String getShopPermissionSql(String shopTableField, String dynamicDataSource) {
+        if (CharSequenceUtil.isBlank(shopTableField)) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         LoginUser defaultLoginUser = UserContext.getDefaultLoginUser();
-        if ("0".equals(defaultLoginUser.getUid())){
+        if ("0".equals(defaultLoginUser.getUid())) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
-        List<SysUserDTO.ShopDTO> shopUserList = this.getShopUserList(defaultLoginUser.getUid());
-        if (CollUtil.isEmpty(shopUserList)){
+        List<SysUserDTO.ShopDTO> shopUserList = service.getShopUserList(defaultLoginUser.getUid());
+        if (CollUtil.isEmpty(shopUserList)) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
-        if ("all".equals(authType)){
+        if ("all".equals(authType)) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         StringBuilder sqlString = new StringBuilder();
         //店铺
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
-        if ("part".equals(authType)){
+        if ("part".equals(authType)) {
             List<String> shopIdList = shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).distinct().collect(Collectors.toList());
             SqlUtils.appendBlankOrInPermissionSql(sqlString, shopTableFieldList, shopIdList);
         }
@@ -144,30 +86,37 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
     }
 
     @Override
-    public void initShopDataOmsToSys() {
-        List<ShopSysUserAuthEntity> list = FeignQuery.list(ShopSysUserAuthEntity.class);
-        if (CollUtil.isEmpty(list)){
-            return;
-        }
-        List<AuthUserShopEntity> shopEntityList = AuthUserConvert.INSTANCE.OmsShopAuthToSysShopAuth(list);
-        List<List<AuthUserShopEntity>> partition = ListUtil.partition(shopEntityList, MathUtil.NUMBER_100);
-        partition.forEach(authUserShopEntities -> authUserShopEntities.forEach(e->{
-            AuthUserShopEntity one = this.lambdaQuery().eq(AuthUserShopEntity::getAuthType, e.getAuthType()).eq(AuthUserShopEntity::getShopId, e.getShopId()).eq(AuthUserShopEntity::getUserId, e.getUserId()).last("limit 1").one();
-            if (Objects.isNull(one)){
-                this.save(e);
-            }else {
-                e.setId(one.getId());
-                this.updateById(e);
-            }
-        }));
-    }
-
-    @Override
     public List<SysUserDTO.ShopDTO> listShopIdByUserIds(List<String> userIdList) {
-        if (CollUtil.isEmpty(userIdList)){
+        if (CollectionUtils.isEmpty(userIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.getShopUserList(null,userIdList);
+        List<String> userIds = userIdList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysUserDTO.ShopDTO> result = new ArrayList<>();
+        List<String> missUserIds = new ArrayList<>();
+        for (String userId : userIds) {
+            String redisKey = String.format("cache:sys:shopAuth:getShopUserList::%s", userId);
+            List<SysUserDTO.ShopDTO> cacheList = redisService.getCacheObject(redisKey);
+            if (cacheList != null) {
+                result.addAll(cacheList);
+            } else {
+                missUserIds.add(userId);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missUserIds)) {
+            List<SysUserDTO.ShopDTO> dbList = baseMapper.getShopUserList(null, missUserIds);
+            Map<String, List<SysUserDTO.ShopDTO>> dbMap = dbList.stream()
+                    .collect(Collectors.groupingBy(SysUserDTO.ShopDTO::getUserId));
+            for (String userId : missUserIds) {
+                List<SysUserDTO.ShopDTO> list = dbMap.getOrDefault(userId, new ArrayList<>());
+                String redisKey = String.format("cache:sys:shopAuth:getShopUserList::%s", userId);
+                redisService.setCacheObject(redisKey, list, 8L, TimeUnit.HOURS);
+                result.addAll(list);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -187,14 +136,15 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "cache:sys:shopAuth:getShopUserList", key = "#uid")
     public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType, boolean ifAdd) {
-        if (CharSequenceUtil.isBlank(uid)){
+        if (CharSequenceUtil.isBlank(uid)) {
             return;
         }
         List<AuthUserShopEntity> oldList = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, uid).list();
-        if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(shopAuthType)){
+        if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(shopAuthType)) {
             AuthUserShopEntity auth = oldList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
-            if (Objects.isNull(auth)){
+            if (Objects.isNull(auth)) {
                 //清空历史
                 this.lambdaUpdate().eq(AuthUserShopEntity::getUserId, uid).remove();
                 //新增全部授权
@@ -203,12 +153,12 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 entity.setUserId(uid);
                 this.save(entity);
             }
-        }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(shopAuthType)){
-            if (CollUtil.isNotEmpty(oldList)){
-                if(!ifAdd){
+        } else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(shopAuthType)) {
+            if (CollUtil.isNotEmpty(oldList)) {
+                if (!ifAdd) {
                     List<String> deleteIdList = oldList.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
                             .map(AuthUserShopEntity::getId).collect(Collectors.toList());
-                    if (CollUtil.isNotEmpty(deleteIdList)){
+                    if (CollUtil.isNotEmpty(deleteIdList)) {
                         this.removeByIds(deleteIdList);
                     }
                 }
@@ -221,15 +171,15 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
             }
             //添加新增权限
             List<AuthUserShopEntity> addList = new ArrayList<>();
-            if (CollUtil.isNotEmpty(shopIdList)){
-                shopIdList.forEach(shopId ->{
+            if (CollUtil.isNotEmpty(shopIdList)) {
+                shopIdList.forEach(shopId -> {
                     AuthUserShopEntity entity = new AuthUserShopEntity();
                     entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                     entity.setUserId(uid);
                     entity.setShopId(shopId);
                     addList.add(entity);
                 });
-            }else {
+            } else {
                 AuthUserShopEntity entity = new AuthUserShopEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setUserId(uid);
@@ -237,7 +187,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 addList.add(entity);
             }
 
-            if (CollUtil.isNotEmpty(addList)){
+            if (CollUtil.isNotEmpty(addList)) {
                 this.saveBatch(addList);
             }
         }
@@ -246,29 +196,29 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addUserShopAuth(AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO) {
-        if (Objects.isNull(addUserShopAuthDTO) || CharSequenceUtil.isBlank(addUserShopAuthDTO.getUserId()) || CollUtil.isEmpty(addUserShopAuthDTO.getShopIdList())){
+        if (Objects.isNull(addUserShopAuthDTO) || CharSequenceUtil.isBlank(addUserShopAuthDTO.getUserId()) || CollUtil.isEmpty(addUserShopAuthDTO.getShopIdList())) {
             return;
         }
         String userId = addUserShopAuthDTO.getUserId();
         List<String> shopIdList = addUserShopAuthDTO.getShopIdList();
         List<AuthUserShopEntity> list = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, userId).list();
-        if (CollUtil.isNotEmpty(list)){
+        if (CollUtil.isNotEmpty(list)) {
             //是否全部店铺权限
             boolean allShop = list.stream().allMatch(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()));
-            if (allShop){
+            if (allShop) {
                 //全部权限就不用添加用户权限了
                 return;
             }
         }
         List<AuthUserShopEntity> addList = new ArrayList<>();
-        shopIdList.forEach(shopId ->{
+        shopIdList.forEach(shopId -> {
             AuthUserShopEntity entity = new AuthUserShopEntity();
             entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
             entity.setUserId(userId);
             entity.setShopId(shopId);
             addList.add(entity);
         });
-        if (CollUtil.isNotEmpty(addList)){
+        if (CollUtil.isNotEmpty(addList)) {
             this.saveBatch(addList);
         }
     }

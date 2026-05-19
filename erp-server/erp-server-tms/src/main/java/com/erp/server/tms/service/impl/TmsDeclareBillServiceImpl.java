@@ -506,7 +506,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isEmpty(list)){
             return;
         }
-        List<DictBasicDTO.ViewDTO> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
+        List<DictBasicEntity> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
         List<String> sourceCodes = list.stream()
                 .map(TmsDeclareBillDTO.PagingVO::getSourceCode)
                 .filter(StringUtils::isNotBlank)
@@ -549,7 +549,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         list.forEach(v->{
             v.setDeclareStatusName(EnumMessage.getNameByCode(com.erp.model.tms.enums.DeclareStatusEnum.class,v.getDeclareStatus()));
-            DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            DictBasicEntity declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicEntity());
             v.setDeclareTypeName(declareType.getName());
         });
     }
@@ -2365,7 +2365,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // 批量更新数据库
         updateWrapper.eq("id", dto.getId());
         boolean updateFlag = this.update(updateWrapper);
-                
+
         if (!updateFlag) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_BATCH_UPDATE_FAILED);
         }
@@ -2415,9 +2415,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
      * 设置更新 wrapper 的字段
      */
-    private void setUpdateWrapperField(UpdateWrapper<TmsDeclareBillEntity> updateWrapper, 
-                                       TmsDeclareBillBatchFieldEnum fieldEnum, 
-                                       Object fieldValue, 
+    private void setUpdateWrapperField(UpdateWrapper<TmsDeclareBillEntity> updateWrapper,
+                                       TmsDeclareBillBatchFieldEnum fieldEnum,
+                                       Object fieldValue,
                                        String name) {
         String fieldName = fieldEnum.getCode();
         switch (fieldEnum) {
