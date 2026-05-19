@@ -1705,6 +1705,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if (afterSaleEntity != null) {
                 LogisticsOrderEntity logisticsOrderEntity = new LogisticsOrderEntity();
                 BeanMapperUtils.copy(orderInfoDTO, logisticsOrderEntity);
+                logisticsOrderEntity.setId(null);
                 logisticsOrderEntity.setAfterSaleId(orderInfoDTO.getId());
                 logisticsOrderEntity.setLogisticsPlatform(dto.getLogisticsPlatform());
                 logisticsOrderEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
