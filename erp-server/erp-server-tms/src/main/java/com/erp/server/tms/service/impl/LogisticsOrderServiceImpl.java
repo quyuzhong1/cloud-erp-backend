@@ -413,7 +413,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                     } else {
                         resultDTO.setErrorMsg(baseResult.getErrorMsg());
                         resultDTO.setStatus(false);
-                        resultDTO.setAfterSaleId(StringUtils.substringBefore(orderRequest.getOrderId(), "_"));
+                        resultDTO.setAfterSaleId(map.get(StringUtils.substringBefore(orderRequest.getOrderId(), "_")));
                     }
                     resultDTOList.add(resultDTO);
                 }
@@ -424,22 +424,29 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
         Map<String, AfterSaleDTO.LogisticsOrderResultDTO> resultDTOMap = resultDTOList.stream().collect(Collectors.toMap(AfterSaleDTO.LogisticsOrderResultDTO::getAfterSaleId, Function.identity(), (v1, v2) -> v1));
         List<LogisticsOrderDTO.LogisticsLabelDTO> successLabelList = new ArrayList<>();
         entityList.forEach(e -> {
-            if (resultDTOMap.get(e.getAfterSaleId()) != null) {
-                e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
-                e.setTrackNo(resultDTOMap.get(e.getAfterSaleId()).getTrackNo());
-                // 操作日志
-                String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
-                // 下单成功发送异步请求保存面单
-                // 设置redis
-                String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
-                redisUtil.set(labelRedisKey, true, 86400);
-                LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
-                successLabelList.add(labelDTO);
+            AfterSaleDTO.LogisticsOrderResultDTO resultDTO = resultDTOMap.get(e.getAfterSaleId());
+            if (resultDTO != null) {
+                if (Boolean.TRUE.equals(resultDTO.getStatus())) {
+                    e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
+                    e.setTrackNo(resultDTO.getTrackNo());
+                    // 操作日志
+                    String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
+                    // 下单成功发送异步请求保存面单
+                    // 设置redis
+                    String labelRedisKey = StrUtil.format(RedisCacheConstants.TMS_LOGISTIC_LABEL, e.getId(), e.getTrackNo());
+                    redisUtil.set(labelRedisKey, true, 86400);
+                    LogisticsOrderDTO.LogisticsLabelDTO labelDTO = getLogisticsOrderLabel(e);
+                    successLabelList.add(labelDTO);
+                } else {
+                    e.setStatus(LogisticsStatusEnum.FAILED.getCode());
+                    e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
+                    e.setExceptionReason(resultDTO.getErrorMsg());
+                }
             } else {
                 e.setStatus(LogisticsStatusEnum.FAILED.getCode());
                 e.setExceptionType(ExceptionTypeEnum.ORDER_EXCEPTION.getCode());
-                e.setExceptionReason(resultDTOMap.get(e.getAfterSaleId()).getErrorMsg());
+                e.setExceptionReason("单据不存在");
             }
         });
         if (CollUtil.isNotEmpty(successLabelList)) {
