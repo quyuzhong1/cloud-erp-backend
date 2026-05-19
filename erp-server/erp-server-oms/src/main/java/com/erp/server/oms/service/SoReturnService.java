@@ -183,7 +183,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @Date 2023/5/11 11:20
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
      **/
-    List<SoReturnEntity> listSoReturnByApproveStatus();
+    PagingVO<SoReturnEntity> listSoReturnByApproveStatus(PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto);
 
     /**
      * 根据退货单id查询退货单信息

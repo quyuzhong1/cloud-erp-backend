@@ -373,10 +373,9 @@ public class SoReturnController extends BaseController {
      * @Date 2023/4/13 18:59
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @GetMapping(value = "/listSoReturnByApproveStatus")
-    public ApiResult<List<SoReturnEntity>> listSoReturnByApproveStatus() {
-        List<SoReturnEntity> entityList = soReturnService.listSoReturnByApproveStatus();
-        return success(entityList);
+    @PostMapping(value = "/listSoReturnByApproveStatus")
+    public ApiResult<PagingVO<SoReturnEntity>> listSoReturnByApproveStatus(@RequestBody @Validated PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
+        return success(soReturnService.listSoReturnByApproveStatus(dto));
     }
 
     /**
