@@ -528,7 +528,7 @@ public class NfeInvoiceService {
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity, invoiceSettingDetail);
         CreateInvoiceDTO.ClienteDTO clienteDTO = new CreateInvoiceDTO.ClienteDTO();
         clienteDTO.setName(nfeClienteDTO.getName());
-        String cpfCnpj = nfeClienteDTO.getCpfCnpj();
+        String cpfCnpj = cleanTaxNo(nfeClienteDTO.getCpfCnpj());
         if (CharSequenceUtil.isNotBlank(cpfCnpj)) {
             if (cpfCnpj.length() <= 11) clienteDTO.setCpf(cpfCnpj);
             else clienteDTO.setCnpj(cpfCnpj);
@@ -546,6 +546,10 @@ public class NfeInvoiceService {
         clienteDTO.setTelefone(nfeClienteDTO.getMobile());
         clienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return clienteDTO;
+    }
+
+    private String cleanTaxNo(String taxNo) {
+        return CharSequenceUtil.isBlank(taxNo) ? CharSequenceUtil.EMPTY : taxNo.replaceAll("[^0-9]", "");
     }
     
     /**
@@ -892,6 +896,7 @@ public class NfeInvoiceService {
         }
         fillReceiverFallbackClientInfo(nfeClienteDTO, receiverEntity);
         nfeClienteDTO = enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO);
+        nfeClienteDTO.setCpfCnpj(cleanTaxNo(nfeClienteDTO.getCpfCnpj()));
         fillProvinceInfo(nfeClienteDTO);
         nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
@@ -1125,7 +1130,7 @@ public class NfeInvoiceService {
             nfeClienteDTO.setName(CharSequenceUtil.isNotBlank(receiverEntity.getReceiverName()) ? receiverEntity.getReceiverName() : receiverEntity.getName());
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getCpfCnpj()) && CharSequenceUtil.isNotBlank(receiverEntity.getReceiverTaxNo())) {
-            nfeClienteDTO.setCpfCnpj(removeSignAndSpace(receiverEntity.getReceiverTaxNo()));
+            nfeClienteDTO.setCpfCnpj(cleanTaxNo(receiverEntity.getReceiverTaxNo()));
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getIeRg()) && CharSequenceUtil.isNotBlank(receiverEntity.getIeNo())) {
             nfeClienteDTO.setIeRg(receiverEntity.getIeNo());
@@ -1172,7 +1177,7 @@ public class NfeInvoiceService {
             nfeClienteDTO.setName(CharSequenceUtil.isNotBlank(orderDetail.getBuyerUsername()) ? orderDetail.getBuyerUsername() : ObjUtil.isEmpty(recipientAddress) ? CharSequenceUtil.EMPTY : recipientAddress.getName());
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getCpfCnpj()) && CharSequenceUtil.isNotBlank(orderDetail.getBuyerCpfId())) {
-            nfeClienteDTO.setCpfCnpj(removeSignAndSpace(orderDetail.getBuyerCpfId()));
+            nfeClienteDTO.setCpfCnpj(cleanTaxNo(orderDetail.getBuyerCpfId()));
         }
         if (ObjUtil.isNotEmpty(recipientAddress)) {
             if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())) {
