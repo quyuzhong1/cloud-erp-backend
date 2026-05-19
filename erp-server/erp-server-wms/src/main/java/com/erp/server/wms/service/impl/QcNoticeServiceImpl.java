@@ -1231,7 +1231,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcResult.setQcQty(qcResultView.getQcQty());
                 qcResult.setQcResult(qcResultView.getQcResult());
                 qcResult.setLotQualifiedQty(qcResultView.getLotQualifiedQty());
-
+                qcResult.setHandleModeDict(qcResultView.getHandleModeDict());
                 if (Objects.nonNull(qcResultView.getQcBadQty()) && qcResultView.getQcBadQty() >= 0
                         && Objects.nonNull(qcResultView.getQcGoodQty()) && qcResultView.getQcGoodQty() >= 0) {
 
@@ -1247,6 +1247,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
                             : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
+                    qcResult.setAllowInstockQty(qcResultView.getAllowInstockQty());
                     qcResult.setQcGoodQty(goodQty);
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
@@ -1599,10 +1600,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
                             : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
+                    qcResult.setAllowInstockQty(qcInfoView.getAllowInstockQty());
                     qcResult.setQcGoodQty(goodQty);
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
                     qcResult.setQcBadRate(qcBadRate);
+                    qcResult.setHandleModeDict(qcInfoView.getHandleModeDict());
                 } else {
                     throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
                 }
