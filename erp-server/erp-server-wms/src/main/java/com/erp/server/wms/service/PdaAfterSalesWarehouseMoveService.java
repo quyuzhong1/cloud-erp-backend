@@ -27,5 +27,5 @@ public interface PdaAfterSalesWarehouseMoveService {
      */
     String submitFullBoxTransfer(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto);
 
-    void saveBoxTransferDetails(String moveId, String targetCode, List<AfterSalePackDTO.ViewDTO> boxInfoList, Map<String, SkuVO> skuByNo);
+    void saveMoveSrcDetails(String moveId, String targetCode, List<AfterSalePackDTO.ViewDTO> boxInfoList, Map<String, SkuVO> skuByNo);
 }

@@ -319,9 +319,10 @@ public class PdaAfterSalesWarehouseMoveServiceImpl implements PdaAfterSalesWareh
      * @param boxInfoList 已通过 usageStatus 校验的装箱单列表（包含装箱明细）
      * @param skuByNo     从 PLM 查询得到的 SKU 信息，key 为 skuNo
      */
+    @Override
     public void saveMoveSrcDetails(String moveId, String targetCode,
-                                        List<AfterSalePackDTO.ViewDTO> boxInfoList,
-                                        Map<String, SkuVO> skuByNo) {
+                                   List<AfterSalePackDTO.ViewDTO> boxInfoList,
+                                   Map<String, SkuVO> skuByNo) {
         // 查询刚保存的移仓子表明细，以"skuNo|移出仓位|移入仓位"为 key 建立快速查找表，
         // 用于将箱唛明细行关联到对应的汇总明细行（detail_id）
         List<WarehouseLocationMoveDetailEntity> savedDetails =
