@@ -14,6 +14,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.mapper.BaseDataMapper;
 
@@ -78,15 +79,19 @@ public class LocalCache implements CommandLineRunner{
 	}
 
 	public void initCache(boolean isCreateTask) {
-		this.initDorisQueryCfgSetting();
+		if(BusinessCommonConstants.isDynamicEnabled()) {
+			this.initDorisQueryCfgSetting();
+		}
 		if(isCreateTask) {
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-				String formatDateTime = DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
-				List<Map<String , Object>> cfgSettingEntityFreshList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL + " and update_time >= '" + formatDateTime + "' ");
-				if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
-					this.initDorisQueryCfgSetting();
-				}
-			}, 1, freshCacheTime, TimeUnit.SECONDS);
+			if(BusinessCommonConstants.isDynamicEnabled()) {
+				Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+					String formatDateTime = DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
+					List<Map<String , Object>> cfgSettingEntityFreshList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL + " and update_time >= '" + formatDateTime + "' ");
+					if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
+						this.initDorisQueryCfgSetting();
+					}
+				}, 1, freshCacheTime, TimeUnit.SECONDS);
+			}
 		}
 	}
 }
