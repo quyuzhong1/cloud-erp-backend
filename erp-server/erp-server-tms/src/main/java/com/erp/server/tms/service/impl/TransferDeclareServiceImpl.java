@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.ListUtil;
 import com.common.business.annotation.Idempotent;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -685,6 +686,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (CollUtil.isEmpty(detailEntities)){
             return;
         }
+        //拆分list
+        List<List<TransferDeclareDetailEntity>> partition = ListUtil.partition(detailEntities, 100);
+        partition.forEach(this::processTransferStatus);
+    }
+
+    private void processTransferStatus(List<TransferDeclareDetailEntity> detailEntities) {
         List<String> ids = detailEntities.stream().map(TransferDeclareDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<TransferDeclareEntity> transferDeclareEntities = this.listByIds(ids);
         if (CollUtil.isEmpty(transferDeclareEntities)){
