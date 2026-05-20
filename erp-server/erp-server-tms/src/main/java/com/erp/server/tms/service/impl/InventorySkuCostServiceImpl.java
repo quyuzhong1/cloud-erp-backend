@@ -31,6 +31,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -131,8 +132,46 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
             List<InventorySkuCostDetailEntity> detailEntityList = InventorySkuCostConverter.INSTANCE.addToDetail(addDTO.getDetailList());
             inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
+            syncStdCostFromSkuCost(inventorySkuCostEntity, detailEntityList);
         }
         return new BaseResultDTO.AddDTO(inventorySkuCostEntity.getId(), inventorySkuCostEntity.getCode());
+    }
+
+    private void syncStdCostFromSkuCost(InventorySkuCostEntity mainEntity, List<InventorySkuCostDetailEntity> detailEntityList) {
+        if (CollUtil.isEmpty(detailEntityList)) {
+            return;
+        }
+        try {
+            SkuStdCostDTO.SkuCostSyncDTO syncDTO = new SkuStdCostDTO.SkuCostSyncDTO();
+            syncDTO.setSkuCostId(mainEntity.getId());
+            syncDTO.setSkuCostCode(mainEntity.getCode());
+            syncDTO.setCompanyId(mainEntity.getCompanyId());
+            syncDTO.setCompanyName(mainEntity.getCompanyName());
+            syncDTO.setCurrency(mainEntity.getCurrency());
+            syncDTO.setAllocatedMonth(mainEntity.getAllocatedMonth());
+            syncDTO.setAccountingMonth(mainEntity.getAccountingMonth());
+            syncDTO.setDetailList(detailEntityList.stream().map(this::buildSkuCostSyncDetail).collect(Collectors.toList()));
+            List<BatchResultDTO> syncResultList = plmTaskFeign.syncStdCostFromSkuCost(syncDTO);
+            if (CollUtil.isNotEmpty(syncResultList)) {
+                syncResultList.stream()
+                        .filter(result -> !Boolean.TRUE.equals(result.getSuccess()))
+                        .forEach(result -> log.warn("SKU成本自动同步标准成本失败，skuCostId={}, skuNo={}, reason={}",
+                                mainEntity.getId(), result.getCode(), result.getMsg()));
+            }
+        } catch (Exception e) {
+            log.error("SKU成本新增后自动同步标准成本异常，skuCostId={}, code={}", mainEntity.getId(), mainEntity.getCode(), e);
+        }
+    }
+
+    private SkuStdCostDTO.SkuCostSyncDetailDTO buildSkuCostSyncDetail(InventorySkuCostDetailEntity detailEntity) {
+        SkuStdCostDTO.SkuCostSyncDetailDTO detailDTO = new SkuStdCostDTO.SkuCostSyncDetailDTO();
+        detailDTO.setSkuId(detailEntity.getSkuId());
+        detailDTO.setSkuNo(detailEntity.getSkuNo());
+        detailDTO.setProductName(detailEntity.getProductName());
+        detailDTO.setWarehouseId(detailEntity.getWarehouseId());
+        detailDTO.setWarehouseName(detailEntity.getWarehouseName());
+        detailDTO.setProductCost(detailEntity.getProductCost());
+        return detailDTO;
     }
 
 
@@ -390,6 +429,56 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             viewDTO.setDetailList(viewDTOList);
         }
         return viewDTO;
+    }
+
+    @Override
+    public InventorySkuCostDTO.AddDTO copyView(String id) {
+        InventorySkuCostEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("SKU成本记录不存在");
+        }
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
+            throw new ServiceException("仅支持复制已审核的SKU成本单");
+        }
+
+        InventorySkuCostDTO.AddDTO copyDTO = new InventorySkuCostDTO.AddDTO();
+        copyDTO.setRemark(entity.getRemark());
+        copyDTO.setAllocatedMonth(entity.getAllocatedMonth());
+        copyDTO.setAccountingMonth(entity.getAccountingMonth());
+        copyDTO.setCurrency(entity.getCurrency());
+        copyDTO.setCurrencySymbol(entity.getCurrencySymbol());
+        copyDTO.setExchangeRate(entity.getExchangeRate());
+        copyDTO.setCompanyId(null);
+        copyDTO.setCompanyName(null);
+        copyDTO.setStatus(null);
+
+        List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(id));
+        if (CollUtil.isNotEmpty(detailEntityList)) {
+            List<InventorySkuCostDetailDTO.AddDTO> detailList = detailEntityList.stream()
+                    .map(this::buildCopyDetail)
+                    .collect(Collectors.toList());
+            copyDTO.setDetailList(detailList);
+        }
+        return copyDTO;
+    }
+
+    private InventorySkuCostDetailDTO.AddDTO buildCopyDetail(InventorySkuCostDetailEntity detailEntity) {
+        InventorySkuCostDetailDTO.AddDTO detailDTO = new InventorySkuCostDetailDTO.AddDTO();
+        detailDTO.setRemark(detailEntity.getRemark());
+        detailDTO.setSkuId(detailEntity.getSkuId());
+        detailDTO.setSkuNo(detailEntity.getSkuNo());
+        detailDTO.setProductName(detailEntity.getProductName());
+        detailDTO.setUnit(detailEntity.getUnit());
+        detailDTO.setProductCost(formatAmount(detailEntity.getProductCost()));
+        detailDTO.setWarehouseId(detailEntity.getWarehouseId());
+        detailDTO.setWarehouseName(detailEntity.getWarehouseName());
+        detailDTO.setFirstMileShippingCost(detailEntity.getFirstMileShippingCost());
+        detailDTO.setClearanceCustomsTax(detailEntity.getClearanceCustomsTax());
+        return detailDTO;
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        return Objects.isNull(amount) ? null : amount.stripTrailingZeros().toPlainString();
     }
 
     @Override

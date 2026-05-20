@@ -3,7 +3,6 @@ package com.erp.server.tms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.server.tms.query.InventorySkuCostQueryHandler;
@@ -26,7 +25,6 @@ import com.erp.server.tms.service.InventorySkuCostService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -339,6 +337,24 @@ public class InventorySkuCostController extends BaseController {
     )
     public ApiResult<InventorySkuCostDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         InventorySkuCostDTO.ViewDTO result = inventorySkuCostService.view(dto.getId());
+        return success(result);
+    }
+
+    /**
+     * 复制新增草稿
+     *
+     * @return
+     */
+    @PostMapping("/copyView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:inventorySkuCost:copyView",
+            serviceClass = InventorySkuCostService.class,
+            keyIdName = "id"
+    )
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "SKU成本复制新增id={id}")
+    public ApiResult<InventorySkuCostDTO.AddDTO> copyView(@RequestBody @Validated BaseIdDTO dto) {
+        InventorySkuCostDTO.AddDTO result = inventorySkuCostService.copyView(dto.getId());
         return success(result);
     }
 
