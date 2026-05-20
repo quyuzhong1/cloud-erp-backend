@@ -66,9 +66,6 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
-    @Resource
-    private PdaAfterSalesWarehouseMoveService pdaAfterSalesWarehouseMoveService;
-
     /**
      * 修改
      */
@@ -215,7 +212,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
                 addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
         String moveId = warehouseLocationMoveService.addAndApprove(addDTO);
-        pdaAfterSalesWarehouseMoveService.saveMoveCartonDetails(moveId,
+        warehouseLocationMoveService.saveMoveCartonDetails(moveId,
                 addOrUpdateDTO.getInWarehouseLocationCode(),
                 CollUtil.newArrayList(buildMoveSourceBoxInfo(addOrUpdateDTO, old, afterSalePackEntity, moveQty)),
                 Collections.emptyMap());

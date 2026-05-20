@@ -6,6 +6,10 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.AfterSalePackDTO;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
@@ -13,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -262,4 +267,30 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
     PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto);
     
     void wdtAutoAdd(WarehouseLocationMoveDTO.PcAddDTO pcAddDTO);
+
+    /**
+     * 售后 PDA 货品上架：单 SKU 从源仓位移动到目标仓位，并生成已审核仓位移动单。
+     *
+     * @param dto PDA 货品上架提交参数
+     * @return 仓位移动主单 id
+     */
+    String submitGoodsInfo(AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto);
+
+    /**
+     * 售后 PDA 整箱移仓：按箱唛明细汇总生成仓位移动单，并记录箱唛维度来源明细。
+     *
+     * @param dto PDA 整箱移仓提交参数
+     * @return 仓位移动主单 id
+     */
+    String submitFullBoxInfo(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto);
+
+    /**
+     * 保存仓位移动箱唛明细，用于整箱移仓和拆箱移位后追溯箱唛来源。
+     *
+     * @param moveId      仓位移动主单 id
+     * @param targetCode  移入仓位编码
+     * @param boxInfoList 装箱单及明细
+     * @param skuByNo     SKU 信息，key 为 skuNo
+     */
+    void saveMoveCartonDetails(String moveId, String targetCode, List<AfterSalePackDTO.ViewDTO> boxInfoList, Map<String, SkuVO> skuByNo);
 }
