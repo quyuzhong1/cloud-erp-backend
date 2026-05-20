@@ -12,7 +12,7 @@ import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.server.wms.service.AfterSalePackService;
 import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
-import com.erp.server.wms.service.PdaAfterSalesWarehouseMoveService;
+import com.erp.server.wms.service.WarehouseLocationMoveService;
 import com.erp.server.wms.service.WarehouseService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,7 +41,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
     private WarehouseService warehouseService;
 
     @Resource
-    private PdaAfterSalesWarehouseMoveService pdaAfterSalesWarehouseMoveService;
+    private WarehouseLocationMoveService warehouseLocationMoveService;
 
     @Resource
     private AfterSalePackService afterSalePackService;
@@ -71,7 +71,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
         dto.setWarehouseId(dtos.get(0).getId());
         //当前只有一个仓位 【空仓位】 默认code为空
         dto.setSourceWarehouseLocationCode("");
-        return ApiResult.success(pdaAfterSalesWarehouseMoveService.submitGoodsInfo(dto));
+        return ApiResult.success(warehouseLocationMoveService.submitGoodsInfo(dto));
     }
 
     /**
@@ -88,7 +88,7 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
             throw new ServiceException("请确保存在仓库名称的默认值【东莞售后仓库】的仓库数量为1");
         }
         dto.setWarehouseId(dtos.get(0).getId());
-        return ApiResult.success(pdaAfterSalesWarehouseMoveService.submitFullBoxInfo(dto));
+        return ApiResult.success(warehouseLocationMoveService.submitFullBoxInfo(dto));
     }
 
     /**

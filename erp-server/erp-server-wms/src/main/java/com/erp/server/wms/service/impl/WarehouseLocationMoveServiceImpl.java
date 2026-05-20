@@ -33,6 +33,9 @@ import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.AfterSalePackDTO;
+import com.erp.model.wms.dto.AfterSalePackDetailDTO;
+import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO.PcAddDTO;
@@ -40,9 +43,12 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
+import com.erp.model.wms.entity.WmsMoveCartonDetailEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.MarehouseMoveSourceTypeEnum;
 import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
@@ -141,6 +147,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+    private static final int QTY_MAX = 999999999;
+    @Resource
+    private AfterSalePackService afterSalePackService;
+    @Resource
+    private WmsMoveCartonDetailService wmsMoveCartonDetailService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1282,4 +1293,367 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 		approveOneDTO.setComment("旺店通同步销售出库单库存不足自动仓位移动");
     	this.pcApprove(approveOneDTO);
 	}
+
+    /**
+     * 仅当箱唛未被占用时允许整箱移仓。
+     */
+    private static void assertUsageStatusAllowsMove(AfterSalePackDTO.ViewDTO boxInfo) {
+        Boolean u = boxInfo.getIsUse();
+        if (Boolean.TRUE.equals(u)) {
+            throw new ServiceException("该箱唛已被占用(usageStatus=true)，不支持整箱移仓");
+        }
+        if (!Boolean.FALSE.equals(u)) {
+            throw new ServiceException(CharSequenceUtil.format("箱唛占用状态非法(usageStatus={})，仅允许为 false 时整箱移仓", u));
+        }
+    }
+
+    /**
+     * 售后 PDA 货品上架：单 SKU 从源仓位移动到目标仓位，并生成已审核仓位移动单。
+     *
+     * @param dto PDA 货品上架提交参数
+     * @return 仓位移动主单 id
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String submitGoodsInfo(AfterSalesWarehouseLocationSuggestDto.PdaGoodsShelvingSubmitDto dto) {
+        validateQty(dto.getQty());
+
+        String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
+        String sourceCode = CharSequenceUtil.trimToEmpty(dto.getSourceWarehouseLocationCode());
+        String warehouseId = CharSequenceUtil.trim(dto.getWarehouseId());
+
+        WarehouseLocationEntity targetLocation = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, targetCode);
+        if (targetLocation == null || Boolean.TRUE.equals(targetLocation.getDisabled())) {
+            throw new ServiceException(CharSequenceUtil.format("目标仓位【{}】无效/禁用", targetCode));
+        }
+
+        String skuNo = CharSequenceUtil.trim(dto.getSkuNo());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(CollUtil.newArrayList(skuNo));
+        if (CollUtil.isEmpty(skuVOList)) {
+            throw new ServiceException("未查询到 SKU 信息，请检查 sku 编码");
+        }
+        SkuVO skuVO = skuVOList.stream()
+                .filter(vo -> CharSequenceUtil.isNotBlank(vo.getSkuNo()) && skuNo.equals(CharSequenceUtil.trim(vo.getSkuNo())))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(CharSequenceUtil.format("未找到 SKU【{}】", skuNo)));
+        if (CharSequenceUtil.isNotBlank(dto.getSkuId()) && !CharSequenceUtil.equals(dto.getSkuId(), skuVO.getSkuId())) {
+            throw new ServiceException(CharSequenceUtil.format("SKU【{}】与 skuId 不匹配", skuNo));
+        }
+
+        WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
+        detail.setSkuId(skuVO.getSkuId());
+        detail.setSkuNo(skuNo);
+        detail.setOutWarehouseLocation(sourceCode);
+        detail.setInWarehouseLocation(targetCode);
+        detail.setQty(dto.getQty());
+
+        WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
+        addDTO.setWarehouseId(warehouseId);
+        addDTO.setDetailList(CollUtil.newArrayList(detail));
+        addDTO.setPcShow(false);
+        addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.AFTER_SALES_SHELVING.getCode());
+
+        log.info("售后PDA货品上架 warehouseId={} source={} target={} skuNo={} qty={}",
+                addDTO.getWarehouseId(), sourceCode, targetCode, skuNo, dto.getQty());
+        return this.addAndApprove(addDTO);
+    }
+
+    /**
+     * 售后 PDA 整箱移仓：按箱唛明细汇总生成仓位移动单，并记录箱唛维度来源明细。
+     *
+     * @param dto PDA 整箱移仓提交参数
+     * @return 仓位移动主单 id
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String submitFullBoxInfo(AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitDto dto) {
+        String warehouseId = CharSequenceUtil.trim(dto.getWarehouseId());
+        String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
+        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+        if (warehouse == null) {
+            throw new ServiceException("仓库不存在");
+        }
+        WarehouseLocationEntity targetLocation = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, targetCode);
+        if (targetLocation == null || Boolean.TRUE.equals(targetLocation.getDisabled())) {
+            throw new ServiceException(CharSequenceUtil.format("目标仓位【{}】无效/禁用", targetCode));
+        }
+        String orgId = warehouse.getOrgId();
+
+        // 先校验前端提交的箱唛行，避免重复箱唛或同箱同 SKU 明细重复提交。
+        LinkedHashMap<String, SubmittedBox> submittedBoxMap = new LinkedHashMap<>();
+        Map<String, String> mainIdByCode = new HashMap<>(16);
+        Set<String> submittedDetailKeys = new LinkedHashSet<>();
+        for (AfterSalesWarehouseLocationSuggestDto.PdaFullBoxTransferSubmitLineDto line : dto.getLines()) {
+            String mainId = CharSequenceUtil.trim(line.getMainId());
+            String code = CharSequenceUtil.trim(line.getCode());
+            SubmittedBox submittedBox = submittedBoxMap.get(mainId);
+            if (submittedBox == null) {
+                submittedBoxMap.put(mainId, new SubmittedBox(mainId, code));
+            } else if (CharSequenceUtil.isNotBlank(code) && CharSequenceUtil.isNotBlank(submittedBox.code)
+                    && !CharSequenceUtil.equals(submittedBox.code, code)) {
+                throw new ServiceException(CharSequenceUtil.format("装箱主键【{}】对应多个箱唛号，请检查提交数据", mainId));
+            }
+            if (CharSequenceUtil.isNotBlank(code)) {
+                String oldMainId = mainIdByCode.putIfAbsent(code, mainId);
+                if (CharSequenceUtil.isNotBlank(oldMainId) && !CharSequenceUtil.equals(oldMainId, mainId)) {
+                    throw new ServiceException(CharSequenceUtil.format("箱唛号【{}】重复，请勿重复提交", code));
+                }
+            }
+            String detailKey = mainId + "|" + CharSequenceUtil.trim(line.getSkuNo()) + "|"
+                    + CharSequenceUtil.trim(line.getOutWarehouseLocationCode());
+            if (!submittedDetailKeys.add(detailKey)) {
+                throw new ServiceException("箱唛明细重复，请勿重复提交同一箱唛");
+            }
+        }
+
+        // 重新查询箱唛，防止前端绕过箱唛占用状态和移仓状态校验。
+        List<AfterSalePackDTO.ViewDTO> boxInfoList = new ArrayList<>();
+        List<SubmittedBox> submittedBoxes = new ArrayList<>(submittedBoxMap.values());
+        List<String> boxCodes = submittedBoxes.stream()
+                .map(submittedBox -> submittedBox.code)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, AfterSalePackDTO.ViewDTO> boxInfoByCode = CollUtil.isEmpty(boxCodes)
+                ? Collections.emptyMap()
+                : afterSalePackService.viewByCodes(boxCodes).stream()
+                .collect(Collectors.toMap(boxInfo -> CharSequenceUtil.trim(boxInfo.getCode()), boxInfo -> boxInfo, (a, b) -> a));
+        for (SubmittedBox submittedBox : submittedBoxes) {
+            AfterSalePackDTO.ViewDTO boxInfo = CharSequenceUtil.isNotBlank(submittedBox.code)
+                    ? boxInfoByCode.get(submittedBox.code)
+                    : afterSalePackService.view(submittedBox.mainId);
+            if (boxInfo == null) {
+                throw new ServiceException(CharSequenceUtil.format("箱唛号【{}】不存在", submittedBox.code));
+            }
+            String mainId = submittedBox.mainId;
+            if (!CharSequenceUtil.equals(mainId, CharSequenceUtil.trimToEmpty(boxInfo.getId()))) {
+                throw new ServiceException(CharSequenceUtil.format("装箱主键与查询结果不一致：提交【{}】查询【{}】", mainId, boxInfo.getId()));
+            }
+            if (CharSequenceUtil.isNotBlank(submittedBox.code) && !CharSequenceUtil.equals(submittedBox.code, CharSequenceUtil.trim(boxInfo.getCode()))) {
+                throw new ServiceException(CharSequenceUtil.format("箱唛号与查询结果不一致：提交【{}】查询【{}】", submittedBox.code, boxInfo.getCode()));
+            }
+            assertUsageStatusAllowsMove(boxInfo);
+            if (Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())) {
+                String label = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()), boxInfo.getId());
+                throw new ServiceException(CharSequenceUtil.format("箱唛【{}】已完成移仓，不支持重复移仓", label));
+            }
+            boxInfoList.add(boxInfo);
+        }
+
+        // 按 SKU + 移出仓位 + 移入仓位 汇总箱唛明细，生成仓位移动明细行。
+        LinkedHashMap<String, FullBoxTransferAggregate> aggregateMap = new LinkedHashMap<>();
+        for (AfterSalePackDTO.ViewDTO boxInfo : boxInfoList) {
+            if (CollUtil.isEmpty(boxInfo.getDetailViewDTOList())) {
+                throw new ServiceException(CharSequenceUtil.format("箱唛【{}】无装箱明细", CharSequenceUtil.blankToDefault(boxInfo.getCode(), boxInfo.getId())));
+            }
+            String boxDisplay = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()), CharSequenceUtil.trim(boxInfo.getId()));
+            for (AfterSalePackDetailDTO.ViewDTO detail : boxInfo.getDetailViewDTOList()) {
+                validateQty(detail.getPackQty());
+                String skuNo = CharSequenceUtil.trim(detail.getSkuNo());
+                String sourceLoc = CharSequenceUtil.trim(detail.getOutWarehouseLocationCode());
+                if (CharSequenceUtil.isBlank(skuNo)) {
+                    throw new ServiceException(CharSequenceUtil.format("箱唛【{}】存在空 SKU 明细", boxDisplay));
+                }
+                if (CharSequenceUtil.isBlank(sourceLoc)) {
+                    throw new ServiceException(CharSequenceUtil.format("箱唛【{}】SKU【{}】源仓位为空", boxDisplay, skuNo));
+                }
+                String aggregateKey = skuNo + "|" + sourceLoc + "|" + targetCode;
+                FullBoxTransferAggregate aggregate = aggregateMap.computeIfAbsent(aggregateKey,
+                        key -> new FullBoxTransferAggregate(skuNo, sourceLoc, targetCode));
+                aggregate.addQty(detail.getPackQty());
+                aggregate.addBoxDisplay(boxDisplay);
+                String detailSkuId = CharSequenceUtil.trim(detail.getSkuId());
+                if (CharSequenceUtil.isNotBlank(detailSkuId)) {
+                    if (CharSequenceUtil.isBlank(aggregate.skuId)) {
+                        aggregate.skuId = detailSkuId;
+                    } else if (!CharSequenceUtil.equals(aggregate.skuId, detailSkuId)) {
+                        throw new ServiceException(CharSequenceUtil.format("SKU【{}】在箱唛明细中的 skuId 不一致", skuNo));
+                    }
+                }
+            }
+        }
+
+        List<String> skuNos = aggregateMap.values().stream()
+                .map(aggregate -> aggregate.skuNo)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        Map<String, SkuVO> skuByNo = new HashMap<>(16);
+        if (CollUtil.isNotEmpty(skuVOList)) {
+            skuByNo.putAll(skuVOList.stream()
+                    .filter(vo -> CharSequenceUtil.isNotBlank(vo.getSkuNo()))
+                    .collect(Collectors.toMap(vo -> CharSequenceUtil.trim(vo.getSkuNo()), vo -> vo, (a, b) -> a)));
+        }
+
+        List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
+        for (FullBoxTransferAggregate aggregate : aggregateMap.values()) {
+            validateQty(aggregate.qty);
+            String skuNo = aggregate.skuNo;
+            SkuVO skuVO = skuByNo.get(skuNo);
+            if (skuVO == null) {
+                throw new ServiceException(CharSequenceUtil.format("未找到 SKU【{}】", skuNo));
+            }
+            if (CharSequenceUtil.isNotBlank(aggregate.skuId) && !CharSequenceUtil.equals(aggregate.skuId, skuVO.getSkuId())) {
+                throw new ServiceException(CharSequenceUtil.format("SKU【{}】与 skuId 不匹配", skuNo));
+            }
+            assertUsableQtyAtLocation(warehouseId, orgId, skuVO.getSkuId(), aggregate.sourceLoc, aggregate.qty, skuNo);
+
+            String remark = CharSequenceUtil.format("整箱移仓{}", aggregate.boxDisplay());
+            if (CharSequenceUtil.isNotBlank(dto.getRemark())) {
+                remark = remark + " " + CharSequenceUtil.trim(dto.getRemark());
+            }
+
+            WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
+            detail.setSkuId(skuVO.getSkuId());
+            detail.setSkuNo(skuNo);
+            detail.setOutWarehouseLocation(aggregate.sourceLoc);
+            detail.setInWarehouseLocation(aggregate.targetLoc);
+            detail.setQty(aggregate.qty);
+            detail.setRemark(remark);
+            detailList.add(detail);
+        }
+
+        WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
+        addDTO.setWarehouseId(warehouseId);
+        addDTO.setDetailList(detailList);
+        addDTO.setPcShow(false);
+        addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.FULL_BOX_TRANSFER.getCode());
+
+        log.info("售后PDA整箱移仓 warehouseId={} target={} lineCount={}", warehouseId, targetCode, detailList.size());
+        String moveId = this.addAndApprove(addDTO);
+        saveMoveCartonDetails(moveId, targetCode, boxInfoList, skuByNo);
+
+        List<String> boxIds = boxInfoList.stream()
+                .map(b -> CharSequenceUtil.trimToEmpty(b.getId()))
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toList());
+        afterSalePackService.markBoxesAsMoved(boxIds);
+
+        return moveId;
+    }
+
+    /**
+     * 保存仓位移动箱唛明细，用于整箱移仓和拆箱移位后追溯箱唛来源。
+     *
+     * @param moveId      仓位移动主单 id
+     * @param targetCode  移入仓位编码
+     * @param boxInfoList 装箱单及明细
+     * @param skuByNo     SKU 信息，key 为 skuNo
+     */
+    @Override
+    public void saveMoveCartonDetails(String moveId, String targetCode,
+                                      List<AfterSalePackDTO.ViewDTO> boxInfoList,
+                                      Map<String, SkuVO> skuByNo) {
+        List<WarehouseLocationMoveDetailEntity> savedDetails =
+                warehouseLocationMoveDetailService.listByMainIds(Collections.singletonList(moveId));
+        Map<String, String> detailIdByKey = savedDetails.stream().collect(
+                Collectors.toMap(
+                        d -> d.getSkuNo() + "|" + d.getOutWarehouseLocation() + "|" + d.getInWarehouseLocation(),
+                        WarehouseLocationMoveDetailEntity::getId,
+                        (a, b) -> a
+                )
+        );
+
+        List<WmsMoveCartonDetailEntity> moveCartonDetailList = new ArrayList<>();
+        for (AfterSalePackDTO.ViewDTO boxInfo : boxInfoList) {
+            String cartonCode = CharSequenceUtil.trimToEmpty(boxInfo.getCode());
+            String cartonId = CharSequenceUtil.trimToEmpty(boxInfo.getId());
+            if (CollUtil.isEmpty(boxInfo.getDetailViewDTOList())) {
+                continue;
+            }
+            for (AfterSalePackDetailDTO.ViewDTO detail : boxInfo.getDetailViewDTOList()) {
+                String skuNo = CharSequenceUtil.trimToEmpty(detail.getSkuNo());
+                String sourceLoc = CharSequenceUtil.trimToEmpty(detail.getOutWarehouseLocationCode());
+                String detailId = detailIdByKey.get(skuNo + "|" + sourceLoc + "|" + targetCode);
+                SkuVO skuVO = skuByNo.get(skuNo);
+                String skuId = skuVO != null ? skuVO.getSkuId()
+                        : CharSequenceUtil.trimToEmpty(detail.getSkuId());
+
+                WmsMoveCartonDetailEntity entity = new WmsMoveCartonDetailEntity();
+                entity.setMainId(moveId);
+                entity.setDetailId(detailId);
+                entity.setCartonCode(cartonCode);
+                entity.setCartonId(cartonId);
+                entity.setCartonDetailId(CharSequenceUtil.trimToEmpty(detail.getId()));
+                entity.setSkuId(skuId);
+                entity.setSkuNo(skuNo);
+                entity.setOutWarehouseLocation(sourceLoc);
+                entity.setInWarehouseLocation(targetCode);
+                entity.setQty(detail.getPackQty());
+                moveCartonDetailList.add(entity);
+            }
+        }
+
+        if (CollUtil.isNotEmpty(moveCartonDetailList)) {
+            boolean saved = wmsMoveCartonDetailService.saveBatch(moveCartonDetailList);
+            if (!saved) {
+                throw new ServiceException("仓位移动箱唛明细保存失败");
+            }
+        }
+    }
+
+    private void validateQty(Integer qty) {
+        if (!StrUtils.isDigit(String.valueOf(qty)) || Objects.isNull(qty)) {
+            throw new ServiceException("移动数量只能是数字");
+        }
+        if (qty <= 0) {
+            throw new ServiceException("移动数量不允许为0");
+        }
+        if (qty > QTY_MAX) {
+            throw new ServiceException(CharSequenceUtil.format("移动数量最大值为{}", QTY_MAX));
+        }
+    }
+
+    /**
+     * 校验指定仓位的 SKU 可用库存是否满足本次移仓需求数量。
+     */
+    private void assertUsableQtyAtLocation(String warehouseId, String orgId, String skuId, String location, int needQty, String skuNo) {
+        InventoryEntity inv = inventoryService.findInventory(orgId, warehouseId, skuId, location, InventoryStatusEnum.USABLE.getCode());
+        if (inv == null || inv.getQty() == null || inv.getQty() < needQty) {
+            throw new ServiceException(CharSequenceUtil.format("【{}】sku移出仓位库存不足，不支持整箱移仓", skuNo));
+        }
+    }
+
+    /**
+     * 前端提交的箱唛主键和箱唛号。
+     */
+    private static class SubmittedBox {
+        private final String mainId;
+        private final String code;
+
+        private SubmittedBox(String mainId, String code) {
+            this.mainId = mainId;
+            this.code = code;
+        }
+    }
+
+    /**
+     * 以 SKU + 移出仓位 + 移入仓位 为维度的整箱移仓数量聚合器。
+     */
+    private static class FullBoxTransferAggregate {
+        private final String skuNo;
+        private final String sourceLoc;
+        private final String targetLoc;
+        private final LinkedHashSet<String> boxDisplays = new LinkedHashSet<>();
+        private String skuId;
+        private int qty;
+
+        private FullBoxTransferAggregate(String skuNo, String sourceLoc, String targetLoc) {
+            this.skuNo = skuNo;
+            this.sourceLoc = sourceLoc;
+            this.targetLoc = targetLoc;
+        }
+
+        private void addQty(Integer addQty) {
+            this.qty += addQty;
+        }
+
+        private void addBoxDisplay(String boxDisplay) {
+            this.boxDisplays.add(boxDisplay);
+        }
+
+        private String boxDisplay() {
+            return String.join(",", boxDisplays);
+        }
+    }
 }

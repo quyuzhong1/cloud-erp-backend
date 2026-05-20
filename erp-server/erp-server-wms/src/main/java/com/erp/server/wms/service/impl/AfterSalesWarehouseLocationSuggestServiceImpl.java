@@ -98,6 +98,14 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         boolean isSave = StrUtil.isBlank(entity.getId());
         AfterSalesWarehouseLocationSuggestEntity oldEntity = null;
 
+        WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(entity.getWarehouseId(), entity.getWarehouseLocationCode());
+        if (location == null) {
+            throw new ServiceException(StrUtil.format("推荐仓位【{}】不存在", entity.getWarehouseLocationCode()));
+        }
+        if (Boolean.TRUE.equals(location.getDisabled()) && !Boolean.TRUE.equals(entity.getDisabled())) {
+            throw new ServiceException(StrUtil.format("推荐仓位【{}】已禁用，不允许启用推荐", entity.getWarehouseLocationCode()));
+        }
+
         // 2. 查出当前业务组合（SKU+仓库+仓位）在数据库中的记录，用于冲突判定
         LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> conflictWrapper = Wrappers.lambdaQuery(AfterSalesWarehouseLocationSuggestEntity.class)
                 .eq(AfterSalesWarehouseLocationSuggestEntity::getSkuNo, entity.getSkuNo())
@@ -417,6 +425,7 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
 
     @Override
     public List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> getSuggestWarehouseLocationList(AfterSalesWarehouseLocationSuggestDto.PdaSearchDto searchDto) {
+        //唯一索引：skuNo_warehouseId_warehouseLocationCode
         LambdaQueryWrapper<AfterSalesWarehouseLocationSuggestEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(
                         AfterSalesWarehouseLocationSuggestEntity::getWarehouseLocationCode,
@@ -432,9 +441,25 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
         if (CollUtil.isEmpty(entityList)) {
             return Collections.emptyList();
         }
+        // 推荐配置启用不代表仓位本身可用；PDA 只返回 warehouse_location 中未禁用的实际仓位。
+        List<String> locationCodeList = entityList.stream()
+                .map(AfterSalesWarehouseLocationSuggestEntity::getWarehouseLocationCode)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Set<String> enabledLocationCodeSet = warehouseLocationService.listByWarehouseIdsAndCodeList(
+                        Collections.singletonList(searchDto.getWarehouseId()), locationCodeList)
+                .stream()
+                .filter(location -> WarehouseLocationTypeEnum.LOCATION.getCode().equals(location.getType()))
+                .filter(location -> !Boolean.TRUE.equals(location.getDisabled()))
+                .map(WarehouseLocationEntity::getCode)
+                .collect(Collectors.toSet());
         List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> dtoList = new ArrayList<>(entityList.size());
         for (AfterSalesWarehouseLocationSuggestEntity entity : entityList) {
             if (Boolean.TRUE.equals(entity.getDisabled())) {
+                continue;
+            }
+            if (!enabledLocationCodeSet.contains(entity.getWarehouseLocationCode())) {
                 continue;
             }
             AfterSalesWarehouseLocationSuggestDto.PdaListDto dto = new AfterSalesWarehouseLocationSuggestDto.PdaListDto();
