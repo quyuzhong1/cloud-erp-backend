@@ -643,9 +643,12 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void markBoxesAsMoved(List<String> ids) {
+    public void markBoxesAsMoved(List<String> ids, String targetWarehouseLocationId) {
         if (CollUtil.isEmpty(ids)) {
             return;
+        }
+        if (StringUtils.isBlank(targetWarehouseLocationId)) {
+            throw new ServiceException("移入仓位不能为空");
         }
         // 重新从库查询最新状态，防止前序步骤查询到落库之间存在并发窗口（卡顿/重复提交）
         List<AfterSalePackEntity> latestList = this.listByIds(ids);
@@ -662,6 +665,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .in(AfterSalePackEntity::getId, ids)
                 .eq(AfterSalePackEntity::getIsMoveWarehouse, false)
                 .set(AfterSalePackEntity::getIsMoveWarehouse, true)
+                .update();
+        afterSalePackDetailService.lambdaUpdate()
+                .in(AfterSalePackDetailEntity::getMainId, ids)
+                .set(AfterSalePackDetailEntity::getInWarehouseLocationId, targetWarehouseLocationId)
                 .update();
     }
 
