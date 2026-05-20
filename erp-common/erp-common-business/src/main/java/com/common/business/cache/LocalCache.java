@@ -44,7 +44,7 @@ public class LocalCache implements CommandLineRunner{
 	private synchronized void initDorisQueryCfgSetting() {
 		try {
 			List<Map<String , Object>> dorisQueryCfgSettingEntityList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL);
-			dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityList.stream().filter(c -> Boolean.valueOf(c.get("is_deleted").toString())).collect(Collectors.toMap(c -> {
+			dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityList.stream().filter(c -> !Boolean.valueOf(c.get("is_deleted").toString())).collect(Collectors.toMap(c -> {
 				String value = c.get("value").toString();
 				if(!value.startsWith("/")) {
 					value = "/" + value;
