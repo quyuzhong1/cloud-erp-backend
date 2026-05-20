@@ -967,7 +967,7 @@ public class NfeInvoiceService {
         }
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
-            nfeClienteDTO.setBairro(receiverEntity.getFirstAddress() );
+            nfeClienteDTO.setBairro(getBairroFallback(receiverEntity));
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())){
             nfeClienteDTO.setMobile(receiverEntity.getReceiverTelNumber());
@@ -977,9 +977,6 @@ public class NfeInvoiceService {
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua()) && CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())) {
             nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
-        }
-        if (isShopeeBrazilOrder(soB2cEntity) && CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())) {
-            nfeClienteDTO.setBairro(receiverEntity.getDistrictName());
         }
         nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
@@ -1145,7 +1142,7 @@ public class NfeInvoiceService {
             nfeClienteDTO.setState(receiverEntity.getProvinceName());
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())) {
-            nfeClienteDTO.setBairro(CharSequenceUtil.isNotBlank(receiverEntity.getDistrictName()) ? receiverEntity.getDistrictName() : receiverEntity.getFirstAddress());
+            nfeClienteDTO.setBairro(getBairroFallback(receiverEntity));
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())) {
             if (CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())) {
@@ -1183,8 +1180,10 @@ public class NfeInvoiceService {
             if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())) {
                 nfeClienteDTO.setRua(recipientAddress.getFullAddress());
             }
-            if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())) {
+            if (CharSequenceUtil.isNotBlank(recipientAddress.getDistrict())) {
                 nfeClienteDTO.setBairro(recipientAddress.getDistrict());
+            } else if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())) {
+                nfeClienteDTO.setBairro(recipientAddress.getFullAddress());
             }
             if (CharSequenceUtil.isBlank(nfeClienteDTO.getCityId())) {
                 nfeClienteDTO.setCityId(recipientAddress.getCity());
@@ -1206,6 +1205,13 @@ public class NfeInvoiceService {
             nfeClienteDTO.setNumero("S/N");
         }
         return nfeClienteDTO;
+    }
+
+    private String getBairroFallback(SoB2cReceiverEntity receiverEntity) {
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return CharSequenceUtil.isNotBlank(receiverEntity.getDistrictName()) ? receiverEntity.getDistrictName() : receiverEntity.getFirstAddress();
     }
 
     private void fillProvinceInfo(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO) {
