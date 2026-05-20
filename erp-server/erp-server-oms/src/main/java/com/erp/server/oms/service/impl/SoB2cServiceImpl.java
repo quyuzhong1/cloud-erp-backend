@@ -732,6 +732,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteB2cSoJob() {
+        List<SoB2cEntity> soB2cList = this.lambdaQuery()
+                .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
+                .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .eq(SoB2cEntity::getPayStatus,SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) //待付款
+                .eq(SoB2cEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus()) //未作废
+                .eq(SoB2cEntity::getBillStatus,SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) //待配货
+                .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        //非货到付款
+        List<String> soB2cIdList = soB2cList.stream()
+                .filter(entity -> !Boolean.TRUE.equals(soB2cCoreService.listPayMethodSetting(entity)))
+                .map(SoB2cEntity::getId)
+                .collect(Collectors.toList());
+
+        if (CollUtil.isNotEmpty(soB2cIdList)) {
+            soB2cDetailService.removeByIds(soB2cIdList);
+
+            this.removeByIds(soB2cIdList);
+
+            log.info("成功删除{}条b2c销售订单，ID为: [{}]", soB2cIdList.size(),
+                    soB2cIdList.stream().limit(10).collect(Collectors.joining(", ")));
+        }
+    }
+    @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
         LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
