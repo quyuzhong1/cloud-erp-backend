@@ -56,12 +56,12 @@ public class TmsDeclareBillFeignController {
      * 删除tms发货明细
      * @author will
      * @date 2026/4/24 14:55
-     * @param sourceIds
+     * @param dto 删除参数
      * @return java.lang.Boolean
      */
     @PostMapping("/deleteDeliveryDeclareDetailMid")
-    public Boolean deleteDeliveryDeclareDetailMid(@RequestBody List<String> sourceIds){
-        return deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(sourceIds);
+    public Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto){
+        return deliveryDeclareDetailMidService.deleteDeliveryDeclareDetailMid(dto.getSourceIds());
     }
 
     /**

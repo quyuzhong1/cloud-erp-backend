@@ -2647,4 +2647,32 @@ public class TmsDeclareBillDTO implements Serializable {
             return baseCode + "_" + sequence;
         }
     }
+
+    /**
+     * 自动生成报关明细中间表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoGenerateMidDataDTO {
+        /**
+         * 来源明细列表
+         */
+        @NotEmpty(message = "来源明细列表不能为空")
+        private List<SourceDeliveryDetailDTO> sourceDetailList;
+    }
+
+    /**
+     * 删除报关明细中间表DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeleteDeliveryDeclareDetailMidDTO {
+        /**
+         * 来源id集合
+         */
+        @NotEmpty(message = "来源id集合不能为空")
+        private List<String> sourceIds;
+    }
 }
