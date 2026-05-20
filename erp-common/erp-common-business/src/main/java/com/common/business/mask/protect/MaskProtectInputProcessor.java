@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -239,6 +240,9 @@ public class MaskProtectInputProcessor {
                 throw new MaskProtectException();
             }
             if (protectMode == MaskProtectMode.SET_NULL) {
+                if (field.getType().isPrimitive() || hasNotNullConstraint(field)) {
+                    throw new MaskProtectException();
+                }
                 plans.add(new FieldRestorePlan(pojo, field, null, entry, "", false));
                 return;
             }
@@ -346,6 +350,22 @@ public class MaskProtectInputProcessor {
         }
         int mod = field.getModifiers();
         return Modifier.isStatic(mod) || Modifier.isFinal(mod) || Modifier.isTransient(mod);
+    }
+
+    private boolean hasNotNullConstraint(Field field) {
+        if (field == null) {
+            return false;
+        }
+        for (Annotation annotation : field.getAnnotations()) {
+            if (annotation == null || annotation.annotationType() == null) {
+                continue;
+            }
+            String name = annotation.annotationType().getSimpleName();
+            if ("NotNull".equals(name) || "NotBlank".equals(name) || "NotEmpty".equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static class FieldRestorePlan {

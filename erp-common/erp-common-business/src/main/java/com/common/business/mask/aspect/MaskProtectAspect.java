@@ -8,9 +8,11 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Resource;
@@ -34,6 +36,9 @@ public class MaskProtectAspect {
 
     @Autowired(required = false)
     private PlatformTransactionManager transactionManager;
+
+    @Value("${mask.protect.transaction-timeout-seconds:8}")
+    private Integer transactionTimeoutSeconds;
 
     @Pointcut("execution(public * com.erp.server.*.controller.api.*.*(..))")
     public void controllerApi() {
@@ -67,13 +72,23 @@ public class MaskProtectAspect {
     }
 
     private TransactionTemplate resolveTransactionTemplate() {
-        if (transactionTemplate != null) {
-            return transactionTemplate;
+        PlatformTransactionManager manager = transactionManager;
+        if (manager == null && transactionTemplate != null) {
+            manager = transactionTemplate.getTransactionManager();
         }
-        if (transactionManager == null) {
+        if (manager == null) {
             return null;
         }
-        return new TransactionTemplate(transactionManager);
+        TransactionTemplate template = transactionTemplate == null
+                ? new TransactionTemplate(manager)
+                : new TransactionTemplate(manager, transactionTemplate);
+        int timeout = transactionTimeoutSeconds == null ? 8 : transactionTimeoutSeconds;
+        if (timeout > 0) {
+            template.setTimeout(timeout);
+        } else {
+            template.setTimeout(TransactionDefinition.TIMEOUT_DEFAULT);
+        }
+        return template;
     }
 
     private static class MaskProtectProceedException extends RuntimeException {

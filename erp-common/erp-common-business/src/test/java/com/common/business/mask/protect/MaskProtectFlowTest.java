@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -123,6 +124,14 @@ public class MaskProtectFlowTest {
         processor(null, entry).process(new Object[]{dto});
 
         assertNull(dto.amount);
+    }
+
+    @Test(expected = MaskProtectException.class)
+    public void setNullModeShouldRejectNotBlankField() {
+        CfgMaskFieldSnapshotEntry entry = entry(RequiredUpdateDTO.class, "amount", "id");
+        entry.setProtectMode(MaskProtectMode.SET_NULL);
+
+        processor(null, entry).process(new Object[]{new RequiredUpdateDTO("1", "200.00")});
     }
 
     @Test(expected = MaskProtectException.class)
@@ -355,6 +364,17 @@ public class MaskProtectFlowTest {
         public BigDecimal amount;
 
         public BigDecimalUpdateDTO(String id, BigDecimal amount) {
+            this.id = id;
+            this.amount = amount;
+        }
+    }
+
+    public static class RequiredUpdateDTO {
+        public String id;
+        @NotBlank
+        public String amount;
+
+        public RequiredUpdateDTO(String id, String amount) {
             this.id = id;
             this.amount = amount;
         }
