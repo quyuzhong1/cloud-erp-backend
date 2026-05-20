@@ -26,6 +26,7 @@ import com.common.business.cache.LocalCache;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.DmpFeishuUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -36,9 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Intercepts({@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})})
 public class MybatisArchiveInterceptor implements Interceptor{
-	
-	@Autowired
-	private LocalCache localCache;
 	
     public Object intercept(Invocation invocation) throws Throwable {
     	if(BusinessCommonConstants.isArchive()) {
@@ -65,7 +63,7 @@ public class MybatisArchiveInterceptor implements Interceptor{
 			if(StringUtils.isBlank(extractTableName)) {
 				throw new ServiceException("提取非select语句表名失败，原始sql语句为：" + oldSql);
 			}
-			if(localCache.getArchiveWhiteTableList().stream().noneMatch(extractTableName::equalsIgnoreCase)) {
+			if(ApplicationContextUtils.getBean(LocalCache.class).getArchiveWhiteTableList().stream().noneMatch(extractTableName::equalsIgnoreCase)) {
 				String errorInfo = TraceContext.traceId() + "归档系统，"+ dsKey +"数据源执行增删改sql为：" + oldSql;
 				log.error(errorInfo);
 				DmpFeishuUtils.sendFeiShuMsg(errorInfo);
