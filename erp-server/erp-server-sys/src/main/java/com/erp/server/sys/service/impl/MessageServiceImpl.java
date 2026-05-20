@@ -1,31 +1,52 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.core.utils.MathUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.MessageDTO;
+import com.erp.model.sys.dto.SysVersionDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
+import com.erp.model.sys.entity.PdaVersionEntity;
 import com.erp.model.sys.enums.MessageTypeEnum;
+import com.erp.model.sys.enums.NoticeTimeTypeEnum;
+import com.erp.model.sys.enums.ReleaseTypeEnum;
 import com.erp.model.sys.enums.SysTypeEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.server.sys.mapper.MessageMapper;
+import com.erp.server.sys.service.MessageDispatchTaskService;
 import com.erp.server.sys.service.MessageService;
 import com.erp.server.sys.service.MessageUserReadService;
+import com.erp.server.sys.service.OperateLogService;
+import com.erp.server.sys.service.support.NoticeSupport;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -46,77 +67,88 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     @Resource
     private RedisService redisService;
 
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    @Lazy
+    private com.erp.server.sys.service.PdaVersionService pdaVersionService;
+
+    @Resource
+    private MessageDispatchTaskService messageDispatchTaskService;
+
     @Override
     public List<MessageDTO.NotReadMessageNum> listNotReadMessageNum() {
-        List<MessageDTO.NotReadMessageNum> notReadMessageNumList = new ArrayList<>();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        String uid = userInfo.getUid();
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
-        List<MessageEntity> list = baseMapper.list(paramDTO);
-        //获取已读的消息通知
-        List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(uid);
-        for (MessageTypeEnum typeEnum : MessageTypeEnum.values()) {
-            List<MessageEntity> messageEntityList = list.stream().filter(req -> req.getType().equals(typeEnum.getCode())).collect(Collectors.toList());
-            List<String> messageIds = messageEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-            List<MessageUserReadEntity> readEntities = messageUserReadEntities.stream().filter(req -> messageIds.contains(req.getMessageId())).collect(Collectors.toList());
-            MessageDTO.NotReadMessageNum notReadMessageNum = new MessageDTO.NotReadMessageNum();
-            notReadMessageNum.setType(typeEnum.getCode());
-            notReadMessageNum.setTypeName(typeEnum.getName());
-            notReadMessageNum.setTypeRemark(typeEnum.getRemark());
-            notReadMessageNum.setCount(messageEntityList.size() - readEntities.size());
-            if (CollectionUtils.isNotEmpty(messageEntityList)) {
-                notReadMessageNum.setLatestTime(messageEntityList.get(MathUtil.ZERO).getCreateTime());
-            }
-            notReadMessageNumList.add(notReadMessageNum);
-        }
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
+        List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
+        notReadMessageNumList.forEach(n -> {
+        	MessageTypeEnum messageTypeEnum = MessageTypeEnum.getMessageTypeEnum(n.getType());
+        	if(messageTypeEnum != null) {
+        		n.setTypeName(messageTypeEnum.getName());
+        		n.setTypeRemark(messageTypeEnum.getRemark());
+        	}
+        });
         return notReadMessageNumList;
     }
 
     @Override
-    public List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type) {
+    public List<MessageDTO.NotReadMessageNumDetail> listNotReadMessageDetail(String type , Integer pageNo , Integer pageSize) {
         List<MessageDTO.NotReadMessageNumDetail> notReadMessageNumDetailList = new ArrayList<>();
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //获取已读的消息通知
-        List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
-        List<String> messageIds = messageUserReadEntities.stream().map(req -> req.getMessageId()).collect(Collectors.toList());
         //获取所有消息通知
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setType(type);
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode(), "ALL"));
+        if(pageNo == null) {
+        	pageNo = 1;
+        }
+        if(pageSize == null) {
+        	pageSize = 1000;
+        }
+        paramDTO.setPageSize(pageSize);
+        paramDTO.setOffSet((pageNo - 1) * pageSize);
         List<MessageEntity> list = baseMapper.list(paramDTO);
         for (MessageEntity messageEntity : list) {
             MessageDTO.NotReadMessageNumDetail notReadMessageNumDetail = new MessageDTO.NotReadMessageNumDetail();
             notReadMessageNumDetail.setId(messageEntity.getId());
             notReadMessageNumDetail.setDataJson(messageEntity.getDataJson());
             notReadMessageNumDetail.setCreateTime(messageEntity.getCreateTime());
-            if (!messageIds.contains(messageEntity.getId())) {
-                notReadMessageNumDetail.setIsRead(Boolean.FALSE);
-            } else {
-                notReadMessageNumDetail.setIsRead(Boolean.TRUE);
-            }
+            notReadMessageNumDetail.setIsRead(messageEntity.getIsRead());
             notReadMessageNumDetailList.add(notReadMessageNumDetail);
         }
-        readMessage(messageUserReadEntities, list);
+        newReadMessage(type);
         notReadMessageNumDetailList.sort(Comparator.comparing(MessageDTO.NotReadMessageNumDetail::getCreateTime));
         return notReadMessageNumDetailList;
     }
 
     @Override
     public Boolean readAll() {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //获取已读的消息通知
-        List<MessageUserReadEntity> messageUserReadEntities = messageUserReadService.listByUserId(userInfo.getUid());
-        //获取所有消息通知
+        newReadMessage(null);
+        return Boolean.TRUE;
+    }
+    
+    private void newReadMessage(String type) {
+    	LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
-        List<MessageEntity> list = baseMapper.list(paramDTO);
-        readMessage(messageUserReadEntities, list);
-        return Boolean.TRUE;
+        paramDTO.setType(type);
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
+        List<MessageEntity> unreadMessages = baseMapper.listByNotReadMessage(paramDTO);
+        if (CollectionUtils.isNotEmpty(unreadMessages)) {
+            messageUserReadService.markReadByMessageIds(unreadMessages.stream()
+                    .map(MessageEntity::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList()), userInfo.getUid());
+        }
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
     }
 
     @Override
@@ -151,15 +183,18 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     public MessageDTO.IsMessageDTO isMessage() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
+        MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
+        MessageDTO.NoticeDTO latestNotice = baseMapper.getLatestUnreadNotice(uid);
+        isMessageDTO.setHasNewNotice(Objects.nonNull(latestNotice));
+        isMessageDTO.setLatestNotice(latestNotice);
+
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
 
         List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
 
         List<String> typeList = messageEntities.stream().map(req -> MessageTypeEnum.getName(req.getType())).distinct().collect(Collectors.toList());
-
-        MessageDTO.IsMessageDTO isMessageDTO = new MessageDTO.IsMessageDTO();
 
         if (CollectionUtils.isNotEmpty(messageEntities)) {
             Integer cacheObject = redisService.getCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(uid));
@@ -175,15 +210,374 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
     }
 
     @Override
+    public MessageDTO.NoticeDTO getLatestUnreadNotice(String userId, String application) {
+        if (StringUtils.isBlank(userId) || StringUtils.isBlank(application)) {
+            return null;
+        }
+        return baseMapper.getLatestUnreadNoticeByApplication(userId, application);
+    }
+
+    @Override
+    public MessageDTO.NoticeDTO getLatestUnreadUpgradeNotice(String userId, String application) {
+        if (StringUtils.isBlank(userId) || StringUtils.isBlank(application)) {
+            return null;
+        }
+        return baseMapper.getLatestUnreadUpgradeNoticeByApplication(userId, application);
+    }
+
+    @Override
     public Boolean closeMessageNotice() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
         paramDTO.setUserId(userInfo.getUid());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.ALL.getCode()));
+        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), "ALL"));
 
         List<MessageEntity> messageEntities = baseMapper.listByNotReadMessage(paramDTO);
         redisService.setCacheObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()), messageEntities.size(), RedisCacheConstants.EXPIRATION, TimeUnit.DAYS);
         return Boolean.TRUE;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResultDTO.AddDTO add(MessageDTO.AddDTO addDTO) {
+        MessageEntity messageEntity = new MessageEntity();
+        BeanMapperUtils.copy(addDTO, messageEntity);
+        //这两个字段要注意,当初设计的时候就是这样对应的
+        messageEntity.setType(MessageTypeEnum.SYS.getCode());
+        messageEntity.setApplication(addDTO.getType());
+        // 数据处理
+        handleData(messageEntity);
+
+        log.info("开始新增系统通知");
+        boolean save = super.save(messageEntity);
+        if(!save) {
+            throw new ServiceException("系统通知保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统通知" , messageEntity.getNoticeTitle());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(), "新增操作");
+
+        if (NoticeSupport.isRealtimeSystemNotice(messageEntity)) {
+            String taskId = messageDispatchTaskService.createTask(messageEntity);
+            LocalDateTime executeTime = NoticeSupport.resolveExecuteTime(messageEntity);
+            runAfterCommit(() -> messageDispatchTaskService.queueTask(taskId, executeTime));
+        } else {
+            createMessageUserReadRecords(messageEntity.getId());
+        }
+        
+        return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean update(MessageDTO.UpdateDTO addOrUpdateDTO) {
+        MessageEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "系统通知"));
+        MessageEntity messageEntity = BeanMapperUtils.map(MessageEntity.class, addOrUpdateDTO);
+        //这两个字段要注意,当初设计的时候就是这样对应的
+        messageEntity.setType(addOrUpdateDTO.getReleaseType());
+        messageEntity.setApplication(addOrUpdateDTO.getType());
+        // 数据处理
+        handleData(messageEntity);
+        if (Objects.equals(NoticeTimeTypeEnum.NOW.getCode(),messageEntity.getNoticeTimeType())) {
+            throw new ServiceException(ApiError.COMMON_NOW_TYPE_NOT_ALLOW_UPDATE);
+        }
+        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        boolean save = super.updateById(messageEntity);
+        if(!save) {
+            throw new ServiceException("保存失败");
+        }
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录日志数据，id：【{}】", messageEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(),  "系统通知");
+        operateLogService.addModuleOperateLogByObj(old, messageEntity, ModuleTypeEnum.MESSAGE.getCode(), messageEntity.getId(),"", msg);
+
+        if (NoticeSupport.isRealtimeSystemNotice(messageEntity)) {
+            String taskId = messageDispatchTaskService.refreshTask(messageEntity);
+            LocalDateTime executeTime = NoticeSupport.resolveExecuteTime(messageEntity);
+            runAfterCommit(() -> messageDispatchTaskService.queueTask(taskId, executeTime));
+        } else {
+            messageDispatchTaskService.removeByMessageId(messageEntity.getId());
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public MessageDTO.ViewDTO view(String id) {
+        MessageEntity messageEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到数据"));
+        MessageDTO.ViewDTO data = BeanMapperUtils.map(MessageDTO.ViewDTO.class, messageEntity);
+        //这两个字段要注意,当初设计的时候就是这样对应的
+        data.setType(messageEntity.getApplication());
+        data.setReleaseType(messageEntity.getType());
+        // 数据填充处理
+        fillOne(data);
+        return data;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        MessageEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+
+        log.info("删除 开始删除数据，id：【{}】", id);
+        super.removeById(id);
+
+        messageUserReadService.removeByMessageId(id);
+        messageDispatchTaskService.removeByMessageId(id);
+
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "", "系统公告");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.MESSAGE.getCode(), entity.getId(), "删除");
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public BatchResultDTO deleteVersion(String id) {
+        MessageEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
+
+        log.info("删除 开始删除数据，id：【{}】", id);
+        super.removeById(id);
+
+        messageUserReadService.removeByMessageId(id);
+
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "", "版本更新");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SYS_VERSION.getCode(), entity.getId(), "删除");
+        return BatchResultDTO.success(entity.getId(), "", OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO addSysVersion(SysVersionDTO.AddDTO addDTO) {
+        MessageEntity messageEntity = new MessageEntity();
+        BeanMapperUtils.copy(addDTO, messageEntity);
+        messageEntity.setType(MessageTypeEnum.SYS_VERSION.getCode());
+        messageEntity.setApplication(SysTypeEnum.PC.getCode());
+        // 数据处理
+        handleData(messageEntity);
+
+        log.info("开始新增系统通知");
+        boolean save = super.save(messageEntity);
+        if(!save) {
+            throw new ServiceException("系统通知保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】标题为【{}】", UserContext.getDefaultLoginUser().getUserName(), "版本更新" , messageEntity.getNoticeTitle());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SYS_VERSION.getCode(), messageEntity.getId(), "新增操作");
+        
+        // 为所有用户创建未读记录
+        createMessageUserReadRecords(messageEntity.getId());
+        
+        return new BaseResultDTO.AddDTO(messageEntity.getId(), "");
+    }
+
+    @Override
+    public PagingVO<SysVersionDTO.ListDTO> pagingSysVersion(PagingDTO<SysVersionDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SysVersionDTO.ListDTO> pageData = this.baseMapper.pagingSysVersion(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<MessageDTO.ListHistoryMessageDTO> pagingHistoryMessage(PagingDTO<MessageDTO.HistoryMessagePagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<MessageDTO.ListHistoryMessageDTO> pageData = this.baseMapper.pagingHistoryMessage(query, dto.getParams(), userInfo.getUid());
+        
+        // 填充类型名称
+        if (pageData.getRecords() != null && !pageData.getRecords().isEmpty()) {
+            pageData.getRecords().forEach(item -> {
+                item.setTypeName(MessageTypeEnum.getName(item.getType()));
+            });
+        }
+        
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public boolean readHistoryMessage(MessageDTO.ReadHistoryMessageDTO dto) {
+        return readMessage(dto);
+    }
+
+    @Override
+    public boolean readMessage(MessageDTO.ReadHistoryMessageDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        messageUserReadService.readByMessageId(dto.getId(), userInfo.getUid());
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
+        return true;
+    }
+
+    @Override
+    public PagingVO<SysVersionDTO.ListHistoryVersionDTO> pagingHistoryVersion(PagingDTO<SysVersionDTO.HistoryVersionPagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<SysVersionDTO.ListHistoryVersionDTO> pageData = this.baseMapper.pagingHistoryVersion(query, dto.getParams(), userInfo.getUid());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public boolean readHistoryVersion(SysVersionDTO.ReadHistoryVersionDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        messageUserReadService.readByMessageId(dto.getId(), userInfo.getUid());
+        redisService.deleteObject(RedisKeyUtil.getCloseMessageNoticeKey(userInfo.getUid()));
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SysVersionDTO.LatestVersionDTO getLatestVersion() {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        String userId = userInfo.getUid();
+        SysVersionDTO.LatestVersionDTO latestVersion = this.baseMapper.getLatestVersion(userId);
+        if (latestVersion != null) {
+            messageUserReadService.readByMessageId(latestVersion.getId(), userId);
+        }
+        return latestVersion;
+    }
+
+    private void handleData(MessageEntity messageEntity) {
+        if (Objects.nonNull(messageEntity.getNoticeTime())
+                && messageEntity.getNoticeTime().isBefore(LocalDateTime.now())) {
+            throw new ServiceException(ApiError.COMMON_NOTICE_TIME_AFTER_NOW);
+        }
+    }
+
+    public void fillOne(MessageDTO.ViewDTO data){
+        data.setTypeName(MessageTypeEnum.getName(data.getType()));
+        data.setReleaseTypeName(ReleaseTypeEnum.getName(data.getReleaseType()));
+        data.setNoticeTimeTypeName(NoticeTimeTypeEnum.getName(data.getType()));
+    }
+
+    public void fillList(List<SysVersionDTO.ListDTO> records){
+
+    }
+
+    /**
+     * 为所有用户创建消息未读记录
+     * @param messageId 消息ID
+     */
+    private void createMessageUserReadRecords(String messageId) {
+        try {
+            // 获取所有用户
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            if (CollectionUtils.isEmpty(userList)) {
+                return;
+            }
+
+            // 为每个用户创建未读记录
+            List<MessageUserReadEntity> messageUserReadEntities = new ArrayList<>();
+            for (FindUserDTO user : userList) {
+                MessageUserReadEntity messageUserReadEntity = new MessageUserReadEntity();
+                messageUserReadEntity.setMessageId(messageId);
+                messageUserReadEntity.setUserId(user.getUserId());
+                messageUserReadEntity.setIsRead(Boolean.FALSE);
+                messageUserReadEntities.add(messageUserReadEntity);
+            }
+
+            // 批量保存
+            if (CollectionUtils.isNotEmpty(messageUserReadEntities)) {
+                messageUserReadService.saveBatch(messageUserReadEntities);
+            }
+        } catch (Exception e) {
+            log.error("创建消息未读记录失败", e);
+        }
+    }
+
+    private void runAfterCommit(Runnable runnable) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                log.error("Execute after-commit action failed immediately", e);
+            }
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    runnable.run();
+                } catch (Exception e) {
+                    log.error("Execute after-commit action failed", e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public int getSysMessageUnreadCount() {
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        // 与 PC 端历史列表 pagingHistoryMessage 保持一致，角标不按 notice_time/expire_time 过滤
+        return baseMapper.getPcSysMessageUnreadCount(userId);
+    }
+
+    @Override
+    public int getSysVersionUnreadCount() {
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        return messageUserReadService.lambdaQuery()
+                .eq(MessageUserReadEntity::getUserId, userId)
+                .eq(MessageUserReadEntity::getIsRead, Boolean.FALSE)
+                .inSql(MessageUserReadEntity::getMessageId,
+                        "SELECT id FROM message " +
+                                "WHERE is_deleted = FALSE " +
+                                "AND (type = 'sysVersion' OR application = 'sysVersion') " +
+                                "AND (notice_time IS NULL OR notice_time <= NOW()) " +
+                                "AND (expire_time IS NULL OR expire_time >= NOW())")
+                .count()
+                .intValue();
+    }
+
+    @Override
+    public List<BatchResultDTO> batchDelete(List<String> ids, String releaseType) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+
+        if (ReleaseTypeEnum.PDA_SYSTEM.getCode().equals(releaseType)) {
+            List<MessageEntity> list = this.lambdaQuery().in(MessageEntity::getId, ids).list();
+            Map<String, MessageEntity> idEntityMap = list.stream().collect(Collectors.toMap(MessageEntity::getId, w -> w));
+            for (String id : ids) {
+                BatchResultDTO deleteResult;
+                try {
+                    deleteResult = this.delete(id);
+                } catch (Exception e) {
+                    log.error("删除失败", e);
+                    MessageEntity entity = idEntityMap.get(id);
+                    if (entity == null) {
+                        deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
+                        resultDTOS.add(deleteResult);
+                        continue;
+                    }
+                    deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+                }
+                resultDTOS.add(deleteResult);
+            }
+        } else if (ReleaseTypeEnum.PDA_UPGRADE.getCode().equals(releaseType)) {
+            List<PdaVersionEntity> list = pdaVersionService.lambdaQuery().in(PdaVersionEntity::getId, ids).list();
+            Map<String, PdaVersionEntity> idEntityMap = list.stream().collect(Collectors.toMap(PdaVersionEntity::getId, w -> w));
+            for (String id : ids) {
+                BatchResultDTO deleteResult;
+                try {
+                    deleteResult = pdaVersionService.delete(id);
+                } catch (Exception e) {
+                    log.error("删除失败", e);
+                    PdaVersionEntity entity = idEntityMap.get(id);
+                    if (entity == null) {
+                        deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");
+                        resultDTOS.add(deleteResult);
+                        continue;
+                    }
+                    deleteResult = BatchResultDTO.fail(entity.getId(), "", e.getMessage());
+                }
+                resultDTOS.add(deleteResult);
+            }
+        }
+
+        return resultDTOS;
+    }
 }

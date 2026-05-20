@@ -230,6 +230,17 @@ public class DmpInoutController extends BaseController {
     }
 
     /**
+     * 重建 Doris 路由配置内存缓存并广播给所有业务节点
+     * 当运维通过 SQL 直接修改 cfg_setting(type=doris_query_cfg) 后调用此接口可秒级生效，
+     * 无需等待 5 秒 update_time 轮询
+     */
+    @PostMapping("refreshDorisCfg")
+    public ApiResult<?> refreshDorisCfg() {
+        dmpHandlerCache.rebuildAndPublishDorisQueryCfg();
+        return success();
+    }
+
+    /**
      * 查询同步
      *
      * @param dto
@@ -385,7 +396,7 @@ public class DmpInoutController extends BaseController {
 					}
 					values = map.values();
 					if(CollUtil.isNotEmpty(values)) {
-						List<String> warehouseNames = Arrays.asList("东莞塘厦仓" , "奥莱仓");
+						List<String> warehouseNames = values.stream().filter(v -> StringUtils.isNotBlank(v.getWarehouse())).map(WdtInsufficientInventoryDTO::getWarehouse).distinct().collect(Collectors.toList());
 						for(String warehouseName : warehouseNames) {
 							List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
 							if(CollUtil.isNotEmpty(invertoryList)) {

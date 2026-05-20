@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -13,7 +14,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -38,16 +38,17 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.CancelResponseVO;
@@ -167,13 +168,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private RedisUtil redisUtil;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+    @Resource
+    private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
+    public LogisticsBillEntity add(LogisticsBillDTO.AddDTO addDTO) {
         //发货单+物流单是否已存在 存在则不再新增
-        List<LogisticsBillEntity> list = this.lambdaQuery().eq(CharSequenceUtil.isNotBlank(addDTO.getOutstockId()),LogisticsBillEntity::getOutstockId, addDTO.getOutstockId()).eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
+        List<LogisticsBillEntity> list = this.lambdaQuery().eq(CharSequenceUtil.isNotBlank(addDTO.getOutstockId()),LogisticsBillEntity::getOutstockId, addDTO.getOutstockId())
+                .eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
         if (CollUtil.isNotEmpty(list)){
-            return Boolean.TRUE;
+            return new LogisticsBillEntity();
         }
         LogisticsBillEntity logisticsBillEntity = new LogisticsBillEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillEntity);
@@ -184,11 +193,26 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             throw new ServiceException("物流单保存失败");
         }
 
-        logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
+        //查询渠道配置(针对尾程物流单)
+        String trackQueryMode = logisticsThirdChannelRefService.getTrackQueryModeBySalePlatform(logisticsBillEntity.getSalesPlatform(), logisticsBillEntity.getChannelId(), logisticsBillEntity.getLogisticsSupplierId());
+        boolean hasTrackQueryConfig = CharSequenceUtil.isNotBlank(trackQueryMode);
+        if (!hasTrackQueryConfig) {
+            trackQueryMode = TrackPlatformTypeEnum.TRACK123.getCode();
+        }
+        String finalTrackQueryMode = trackQueryMode;
+        List<LogisticsBillDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+        detailList.forEach(l -> l.setTrackQueryMode(finalTrackQueryMode));
+        if(!hasTrackQueryConfig){
+            detailList.forEach(l -> {
+                l.setTrackStatus(LogisticTrackStatusEnum.NOT_QUERY.getCode());
+                l.setTrackEnable(false);
+            });
+        }
+        logisticsBillDetailService.add(logisticsBillEntity, detailList,true);
 
         //同步速递云运单
         pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
-        return save;
+        return logisticsBillEntity;
     }
 
 
@@ -220,6 +244,57 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public List<LogisticsBillEntity> listBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(LogisticsBillEntity::getSourceId, sourceIds).list();
     }
+
+    @Override
+    public Boolean batchImportAdd(List<LogisticsBillEntity> addDTOList) {
+        if (CollUtil.isEmpty(addDTOList)) {
+            return Boolean.TRUE;
+        }
+        List<LogisticsBillEntity> logisticsBillList = BeanUtil.copyToList(addDTOList, LogisticsBillEntity.class);
+        // 数据处理
+        batchHandleData(logisticsBillList);
+        boolean save = super.saveBatch(logisticsBillList);
+        if (!save) {
+            throw new ServiceException("物流单保存失败");
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 新增修改处理数据
+     */
+    private void batchHandleData(List<LogisticsBillEntity> logisticsBillList ) {
+        //查询分摊设置
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+
+        for (LogisticsBillEntity logisticsBillEntity : logisticsBillList) {
+            //费用分摊配置查询
+            logisticsBillEntity.setIsAllocateCostRequired(Boolean.FALSE);
+            if (ObjectUtil.isNotEmpty(cfgSetting) && ObjectUtil.isNotEmpty(cfgSetting.getDataJson())) {
+                CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
+                if (CollUtil.isNotEmpty(allocationSettingDTO.getPackageBillTypeList())) {
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.OTHER.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2C.getCode())
+                            && (CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) || CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.B2C.getCode()))) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2B.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                    if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.AFTER_SALE.getCode())
+                            && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.AFTER_SALE.getCode())) {
+                        logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                    }
+                }
+            }
+        }
+    }
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -256,13 +331,55 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         if(CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
-            List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
-            logisticsBillEntity.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
+
+            if (CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.FIRST_MILE.getCode())) {
+                List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
+                if (CollUtil.isNotEmpty(businessDTOList)) {
+                    FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.get(0);
+                    logisticsBillEntity.setBusinessCode(businessDTO.getBusinessCode());
+                    logisticsBillEntity.setSoDeliveryId(businessDTO.getId());
+                    logisticsBillEntity.setSoDeliveryCode(businessDTO.getCode());
+                }
+            } else  {
+                //发货单id为空则查询销售出库单取发货单
+                if (CharSequenceUtil.isBlank(logisticsBillEntity.getSoDeliveryId())) {
+                    SoOutstockEntity soOutstockEntity = FeignQuery.getById(SoOutstockEntity.class, logisticsBillEntity.getOutstockId());
+                    if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+                        logisticsBillEntity.setSoDeliveryCode(soOutstockEntity.getSourceCode());
+                        logisticsBillEntity.setSoDeliveryId(soOutstockEntity.getSourceId());
+                    }
+                }
+            }
         }
         if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getChannelId()) && CharSequenceUtil.isBlank(logisticsBillEntity.getChannelName())){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
             if(Objects.nonNull(channelEntity)){
                 logisticsBillEntity.setChannelName(channelEntity.getName());
+            }
+        }
+
+        //费用分摊配置查询
+        logisticsBillEntity.setIsAllocateCostRequired(Boolean.FALSE);
+        CfgSettingEntity cfgSetting = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+        if (ObjectUtil.isNotEmpty(cfgSetting) && ObjectUtil.isNotEmpty(cfgSetting.getDataJson())) {
+            CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = JSONUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
+            if (CollUtil.isNotEmpty(allocationSettingDTO.getPackageBillTypeList())) {
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.OTHER.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.OTHER.getCode())) {
+                    logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2C.getCode())
+                        && (CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) || CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), OrderTypeEnum.B2C.getCode()))) {
+                    logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.B2B.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.SO_INFO.getCode())) {
+                    logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                }
+                if (allocationSettingDTO.getPackageBillTypeList().contains(CostAllocationBillTypeEnum.AFTER_SALE.getCode())
+                        && CharSequenceUtil.equals(logisticsBillEntity.getSourceType(), SourceTypeEnum.AFTER_SALE.getCode())) {
+                    logisticsBillEntity.setIsAllocateCostRequired(Boolean.TRUE);
+                }
             }
         }
     }
@@ -943,7 +1060,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : CurrencyEnum.CNY.getCurrencyCode());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setChannelId(logisticsBillEntity.getChannelId());
-
+        addDTO.setSalesDeptId(logisticsBillEntity.getSalesDeptId());
         for (LogisticsBillDetailEntity detailEntity : list) {
             addDTO.setLogisticsBillDetailId(detailEntity.getId());
             addDTO.setTrackNo(detailEntity.getTrackNo());
@@ -1071,38 +1188,35 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 创建任务列表
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                try {
-                    SoB2cDTO.WaybillDTO waybillDTO = processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
-                            soB2cDetailEntityList,logisticsPrintTypeEntities,logisticsChannelEntities);
-                    if (waybillDTO != null) {
-                        waybillDTOList.add(waybillDTO);
-                    }
-                } catch (Exception e) {
-                    log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
-                    errorList.add(codeMap.get(dto.getB2cSoId()));
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
-                    addError.setMainId(dto.getB2cSoId());
-                    addError.setMessage(e.getMessage());
-                    addError.setParamJson(JSONUtil.toJsonStr(dto));
-                    soB2cFeign.addSoB2cError(addError);
-                }
-            }, tmsLogisticsLabelPool);
+            CompletableFuture<Void> future = CompletableFuture
+                    .runAsync(() -> {
+                        SoB2cDTO.WaybillDTO waybillDTO =
+                                processSingleWaybill(dto, soB2cEntities, logisticsEntityList,
+                                        soB2cDetailEntityList, logisticsPrintTypeEntities, logisticsChannelEntities);
+                        if (waybillDTO != null) {
+                            waybillDTOList.add(waybillDTO);
+                        }
+                    }, tmsLogisticsLabelPool)
+                    .exceptionally(e -> {
+                        log.error("处理面单获取失败，订单ID: {}", dto.getB2cSoId(), e);
+                        errorList.add(codeMap.get(dto.getB2cSoId()));
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                        addError.setMainId(dto.getB2cSoId());
+                        addError.setMessage(e.getMessage());
+                        addError.setParamJson(JSONUtil.toJsonStr(dto));
+                        soB2cFeign.addSoB2cError(addError);
+                        return null;
+                    });
             futures.add(future);
         }
         // 等待所有任务完成
         try {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .get(60, TimeUnit.SECONDS); // 设置超时时间
+                    .get(300, TimeUnit.SECONDS); // 设置超时时间
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             log.error("多线程获取面单超时或异常", e);
             throw new RuntimeException("获取面单失败", e);
-        }
-        // 记录错误信息
-        if (!errorList.isEmpty()) {
-            log.warn("以下订单面单获取失败: {}", errorList);
-            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
         }
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
@@ -1114,6 +1228,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             }
         }
         soB2cFeign.saveSoB2cLabel(dtoList);
+        // 记录错误信息
+        if (!errorList.isEmpty()) {
+            log.warn("以下订单面单获取失败: {}", errorList);
+            throw new ServiceException("获取面单失败: 【{}】", String.join(",", errorList));
+        }
         return waybillDTOList;
     }
 
@@ -1140,6 +1259,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 设置物流跟踪信息
         if (Objects.isNull(soB2cLogisticsEntity)) {
             throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
+        }
+        if (Boolean.TRUE.equals(dto.getIsFromMq())
+                && CharSequenceUtil.isNotBlank(dto.getTransportNo())
+                && !CharSequenceUtil.equals(dto.getTransportNo(), soB2cLogisticsEntity.getCode())) {
+            log.warn("忽略过期异步面单消息,订单:{},消息运单号:{},当前运单号:{}",
+                    soB2cEntity.getCode(), dto.getTransportNo(), soB2cLogisticsEntity.getCode());
+            return null;
         }
 //        if (Objects.nonNull(soB2cLabelEntity) && CharSequenceUtil.isNotBlank(soB2cLabelEntity.getLogisticsLabelUrl())) {
 //            return buildWaybillDTO(soB2cLabelEntity, soB2cLogisticsEntity);
@@ -1196,11 +1322,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         //校验是否请求成功
         if (!labelList.isSuccess()) {
-            throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED, labelList.getMsg());
+            log.warn("获取物流面单失败,{}", JSONUtil.toJsonStr(labelList));
+            throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED,b2cSoId, labelList.getMsg());
         }
         for (LogisticsPrintLabelResponse datum : labelList.getData()) {
             if ("500".equals(datum.getCode())) {
-                throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED, datum.getMessage());
+                throw new ServiceException(ApiError.LOGISTICS_PRINT_WAYBILL_FAILED,b2cSoId, datum.getMessage());
             }
         }
         //获取标签信息
@@ -1252,6 +1379,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 JSONObject jsonObject = JSON.parseObject(soB2cEntity.getLabelJson());
                 String shipmentId = String.valueOf(jsonObject.getLong("shipmentId"));
                 getLabelVO.setDeliveryNo(shipmentId);
+            }
+        }else if (logisticsPlatform.equals(LogisticsPlatformEnum.WILDBERRIES.getCode())){
+            if (Objects.nonNull(soB2cEntity)){
+                getLabelVO.setDeliveryNo(soB2cEntity.getPlatformCode());
             }
         }
 
@@ -1601,5 +1732,61 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             });
             logisticsTrackService.saveOrUpdateBatch(addTrackList);
         }
+    }
+
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData( List<String> platformCodeList, List<String> soCodeList, List<String> soDeliveryCodeList, List<String> trackNoList) {
+        return baseMapper.listLogisticsBillVoByData(platformCodeList,soCodeList,soDeliveryCodeList,trackNoList);
+    }
+
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillByUniqueKey(Map<String, List<Object>> paramMap) {
+        if (CollUtil.isEmpty(paramMap)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listLogisticsBillByUniqueKey(paramMap);
+    }
+
+    @Override
+    public BatchResultDTO updateIsAllocateRequired(String id, Boolean isAllocateRequired, String notAllocateRemark) {
+        LogisticsBillEntity logisticsBill = logisticsBillService.getById(id);
+        if (ObjectUtil.isEmpty(logisticsBill)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"物流单");
+        }
+        if (logisticsBill.getIsAllocateCostRequired().equals(isAllocateRequired)) {
+            return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"状态无变化，无需更新");
+        }
+        if (!isAllocateRequired && StringUtils.isBlank(notAllocateRemark)) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"不分摊时，需填写不分摊备注");
+        }
+        //查询物流费用
+        List<LogisticsBillCostEntity> billCostList = logisticsBillCostService.getByLogisticsBillIds(Collections.singletonList(id));
+        if (CollUtil.isNotEmpty(billCostList)) {
+            List<String> costIdList = billCostList.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+            List<SmallBagCostAllocationMainEntity> smallBagCostList = smallBagCostAllocationMainService.listByCostIdList(costIdList);
+            if (CollUtil.isNotEmpty(smallBagCostList)) {
+                return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"已存在小包费用分摊，无法修改是否分摊状态");
+            }
+        }
+
+        logisticsBill.setIsAllocateCostRequired(isAllocateRequired);
+        if (isAllocateRequired) {
+            logisticsBill.setNotAllocateCostRemark("");
+        } else {
+            logisticsBill.setNotAllocateCostRemark(notAllocateRemark);
+        }
+
+        boolean update = logisticsBillService.updateById(logisticsBill);
+        if (!update) {
+            return BatchResultDTO.fail(id,logisticsBill.getCounterNo(),"状态更新失败");
+        }
+        String msg = "";
+        if (isAllocateRequired) {
+            msg = CharSequenceUtil.format("是否分摊状态变更为是");
+        } else {
+            msg = CharSequenceUtil.format("是否分摊状态变更为否,不分摊备注：{},", notAllocateRemark);
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), logisticsBill.getId(), "分摊设置");
+        return BatchResultDTO.success(id,logisticsBill.getCounterNo(),"更新成功");
     }
 }

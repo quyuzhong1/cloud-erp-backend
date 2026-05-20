@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("feign/skuMapping")
@@ -56,6 +57,14 @@ public class SkuMappingFeignController extends BaseController {
     @PostMapping("/listByPlatformSkuNoAndPlatform")
     public List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO) {
         return skuMappingService.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+    }
+
+    /**
+     * 更改库存sku 对照
+     */
+    @PostMapping("/updateWarehouseSku")
+    public String updateWarehouseSku(@RequestBody SkuMappingDTO.UpdateWarehouseSkuDTO dto) {
+        return skuMappingService.updateWarehouseSku(dto);
     }
 
 
@@ -103,5 +112,16 @@ public class SkuMappingFeignController extends BaseController {
     @PostMapping("/listSkuBySkuNos")
     public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
         return skuMappingService.listSkuBySkuNos(skuParamDTO);
+    }
+
+    @PostMapping("/mapListingByPlatformSkuNo")
+    public Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO){
+        return skuMappingService.mapListingByPlatformSkuNo(paramDTO.getPlatformSkuList(), paramDTO.getPlatformSpuList(), paramDTO.getDictPlatform(), paramDTO.getShopId(), null, null);
+    }
+
+    @PostMapping("/listByWarehouseAndPlatformSku")
+    public List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@RequestParam("warehouseId") String warehouseId,
+                                                                              @RequestBody List<String> platformSkuNoList) {
+        return skuMappingService.listByWarehouseAndPlatformSku(warehouseId, platformSkuNoList);
     }
 }

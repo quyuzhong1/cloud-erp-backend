@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.utils.GatewayLocaleUtils;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.SignTypeEnum;
 import com.erp.model.sys.enums.LogicTypeEnum;
@@ -154,7 +155,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 String token = headers.getFirst("Authorization");
                 if (StringUtils.isBlank(token)) {
                     log.warn("开启单点登录但未提供JWT Token");
-                    return unauthorizedResponse(exchange, "未提供JWT Token", ApiError.HTTP_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, "未提供JWT Token", ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
 
                 // 移除Bearer前缀
@@ -165,7 +166,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 loginUser = tokenService.getLoginUser(token);
                 if (loginUser == null) {
                     log.warn("JWT Token无效或已过期");
-                    return unauthorizedResponse(exchange, "JWT Token无效", ApiError.HTTP_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, "JWT Token无效", ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
 
                 // 从JWT Token中获取用户ID
@@ -178,7 +179,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
             }
 
             // 6. 从Redis获取对称密钥
-            String redisKey = String.format("sign:session:%s:%s:%s", appId, userId, signSessionId);
+            String redisKey = String.format(RedisCacheConstants.SSO_SIGN_SESSION+"%s:%s:%s", appId, userId, signSessionId);
             String symmetricKey = null;
             
             try {
@@ -222,7 +223,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                 boolean isValidSignature = verifySignature(request, signature, timestampStr, symmetricKey, "");
                 if (!isValidSignature) {
                     log.warn("签名验证失败");
-                    return unauthorizedResponse(exchange, "签名验证失败", ApiError.HTTP_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, "签名验证失败", ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
                 log.info("签名验证成功，URI: {}", uri);
                 return addHeadersAndContinue(exchange, chain, appId, finalUserId, signSessionId, finalLoginUser, finalSsoEnabled);
@@ -244,7 +245,7 @@ public class SignatureVerificationFilter implements GlobalFilter {
                     boolean isValidSignature = verifySignature(request, signature, timestampStr, finalSymmetricKey, body);
                     if (!isValidSignature) {
                         log.warn("签名验证失败");
-                        return unauthorizedResponse(exchange, "签名验证失败", ApiError.HTTP_FORBIDDEN.getCode());
+                        return unauthorizedResponse(exchange, "签名验证失败", ApiError.HTTP_UNAUTHORIZED.getCode());
                     }
                     
                     log.info("签名验证成功，URI: {}", uri);

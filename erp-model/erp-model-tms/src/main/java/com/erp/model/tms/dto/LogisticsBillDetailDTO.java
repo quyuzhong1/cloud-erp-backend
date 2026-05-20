@@ -59,6 +59,10 @@ public class LogisticsBillDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
+        /**
+         * 查询方式
+         */
+        private String trackQueryMode;
 
     }
 
@@ -110,6 +114,10 @@ public class LogisticsBillDetailDTO implements Serializable {
         * 运单号
         */
         private String trackNo;
+        /**
+         *  是否需要进行物流轨迹查询
+         */
+        private Boolean trackEnable;
 
 
     }

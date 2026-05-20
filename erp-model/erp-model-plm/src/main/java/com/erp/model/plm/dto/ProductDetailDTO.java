@@ -83,9 +83,14 @@ public class ProductDetailDTO implements Serializable {
     private String updateUserId;
 
     /**
-     * sku图片
+     * sku图片（逗号分隔的URL字符串，保持向后兼容）
      */
     private String imagesUrl;
+    
+    /**
+     * 产品图片信息列表（包含URL和名称）
+     */
+    private List<ImageInfo> imageInfoList;
 
     /**
      * 单位名称
@@ -444,6 +449,11 @@ public class ProductDetailDTO implements Serializable {
          *产品属性id
          */
         private String propertyId;
+        
+        /**
+         * sku名称
+         */
+        private String skuName;
     }
     @Data
     @NoArgsConstructor
@@ -590,6 +600,24 @@ public class ProductDetailDTO implements Serializable {
 
         //ProductDetailImprotTypeEnum
         private String taskId;
+    }
+    
+    /**
+     * 图片信息（名称+URL）
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImageInfo {
+        /**
+         * 图片名称（新增图片时传入，旧图片可为空）
+         */
+        private String imageName;
+        
+        /**
+         * 图片URL
+         */
+        private String imageUrl;
     }
 
 }

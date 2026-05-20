@@ -27,6 +27,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.KolSampleCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -34,7 +35,6 @@ import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
-import com.erp.model.tms.enums.CostAllocationEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -42,6 +42,7 @@ import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.listener.KolSampleCostExcelListener;
 import com.erp.server.oms.mapper.KolSampleCostMapper;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.KolSampleCostService;
 import com.erp.server.oms.service.OperateLogService;
 import com.google.common.collect.Lists;
@@ -58,6 +59,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,6 +77,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapper, KolSampleCostEntity> implements KolSampleCostService {
+    private static final int IMPORT_ALLOCATION_SCALE = 6;
+
     @Autowired
     private OperateLogService operateLogService;
 
@@ -89,6 +93,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Resource
     private FileFeign fileFeign;
+
+    @Autowired
+    private CustomerInfoService customerInfoService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
@@ -220,6 +227,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     private void updateKolSampleCostByDate(LocalDateTime startTime,LocalDateTime endTIme) {
         //查询月份内存在的寄样费用
         List<KolSampleCostEntity> oldList = this.baseMapper.listByTime(startTime,endTIme);
+        Map<String, KolSampleCostEntity> oldOutstockDetailCostMap = CollUtil.isEmpty(oldList)
+                ? new HashMap<>()
+                : oldList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSoOutstockDetailId()))
+                .collect(Collectors.toMap(KolSampleCostEntity::getSoOutstockDetailId, e -> e, (v1, v2) -> v1));
 
         //军区信息
         List<DictPartitionEntity> partitionList = FeignQuery.list(DictPartitionEntity.class);
@@ -232,83 +244,61 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             deleteOldKolSampleCost(oldList);
             return;
         }
-        List<String> soDetailIdList = soOutstockDTOList.stream().map(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId).distinct().collect(Collectors.toList());
-
         List<KolSampleCostEntity> thisMonthList = new ArrayList<>();
-        List<List<String>> partition = Lists.partition(soDetailIdList, 5000);
-        for(List<String> partitionIdLIst : partition) {
-            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostBySoDetailIdList(partitionIdLIst);
-            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
-                continue;
-            }
-            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
-                List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList = soOutstockDTOList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoDetailId(), sampleCostEntity.getSoDetailId())).collect(Collectors.toList());
-                if (CollUtil.isEmpty(kolSoOutstockDTOList)) {
-                    continue;
-                }
-                for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : kolSoOutstockDTOList) {
-                    KolSampleCostEntity  costEntity = new KolSampleCostEntity();
-                    BeanMapperUtils.copy(kolSoOutstockDTO, costEntity);
+        List<SoOutstockDTO.KolSoOutstockDTO> regularSoOutstockDTOList = soOutstockDTOList.stream()
+                .filter(obj -> !isWdtKolSoOutstock(obj))
+                .collect(Collectors.toList());
+        List<SoOutstockDTO.KolSoOutstockDTO> wdtKolSoOutstockDTOList = soOutstockDTOList.stream()
+                .filter(this::isWdtKolSoOutstock)
+                .collect(Collectors.toList());
 
-                    KolSampleCostEntity oldEntity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSoOutstockDTO.getSoOutstockDetailId())).findFirst().orElse(null);
-                    if (ObjUtil.isNotEmpty(oldEntity)) {
-                        costEntity.setId(oldEntity.getId());
-                    }
-                    costEntity.setType(sampleCostEntity.getType());
-                    costEntity.setSourceCode(sampleCostEntity.getSourceCode());
-                    costEntity.setSourceId(sampleCostEntity.getSourceId());
-                    costEntity.setSourceType(sampleCostEntity.getSourceType());
-                    costEntity.setPartitionId(sampleCostEntity.getPartitionId());
-                    costEntity.setPartitionName(partitionMap.get(sampleCostEntity.getPartitionId()));
-                    costEntity.setPartnerId(sampleCostEntity.getPartnerId());
-                    costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
-                    costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
-                    costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
-                    costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
-                    costEntity.setQty(kolSoOutstockDTO.getActualQty());
-                    costEntity.setSoOutstockDate(kolSoOutstockDTO.getSoOutstockDate());
-                    thisMonthList.add(costEntity);
-                }
-            }
-        }
+        // 客户档案军区兜底：销售订单/收件人取不到军区时，按出库单客户取
+        Map<String, String> customerPartitionIdMap = buildCustomerPartitionIdMap(soOutstockDTOList);
+
+        appendRegularKolSampleCost(thisMonthList, regularSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap);
+        appendWdtKolSampleCost(thisMonthList, wdtKolSoOutstockDTOList, oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap);
+
         if (CollUtil.isEmpty(thisMonthList)) {
             return;
         }
         List<String> skuIdList = thisMonthList.stream().map(KolSampleCostEntity::getSkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = thisMonthList.stream().map(KolSampleCostEntity::getWarehouseId).distinct().collect(Collectors.toList());
         List<String> soOrgIdList = thisMonthList.stream().map(KolSampleCostEntity::getSoOrgId).distinct().collect(Collectors.toList());
-        //SKU成本
-        InventorySkuCostDTO.SkuCostParamDTO paramDTO = new InventorySkuCostDTO.SkuCostParamDTO();
-        paramDTO.setSkuIdList(skuIdList);
-        paramDTO.setOrgIdList(soOrgIdList);
-        paramDTO.setWarehouseIdList(warehouseIdList);
-        paramDTO.setStartAccountingMonth(startTime);
-        paramDTO.setEndAccountingMonth(endTIme);
-        List<InventorySkuCostDTO.InvSkuCostDTO> invSkuCostDTOS = tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO);
+        // SKU成本
+        List<InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostDTOS = listInventorySkuCost(skuIdList, warehouseIdList, soOrgIdList, startTime, endTIme);
+        Map<String, InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, true);
+        List<KolSampleCostEntity> needFallbackCostList = thisMonthList.stream()
+                .filter(entity -> !exactInvSkuCostMap.containsKey(buildInventorySkuCostKey(entity.getSoOrgId(), entity.getSkuId(), entity.getWarehouseId())))
+                .collect(Collectors.toList());
+        Map<String, InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(needFallbackCostList)) {
+            List<String> fallbackSkuIdList = needFallbackCostList.stream().map(KolSampleCostEntity::getSkuId).distinct().collect(Collectors.toList());
+            List<String> fallbackWarehouseIdList = needFallbackCostList.stream().map(KolSampleCostEntity::getWarehouseId).distinct().collect(Collectors.toList());
+            List<InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostDTOS = listInventorySkuCost(fallbackSkuIdList, fallbackWarehouseIdList, null, startTime, endTIme);
+            fallbackInvSkuCostMap = buildInventorySkuCostMap(fallbackInvSkuCostDTOS, false);
+        }
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
         bagCostParamDTO.setSkuIdList(skuIdList);
         List<String> soOutstockDetailIdList = thisMonthList.stream().map(KolSampleCostEntity::getSoOutstockDetailId).distinct().collect(Collectors.toList());
         bagCostParamDTO.setSoOutstockDetailIdList(soOutstockDetailIdList);
-        List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO);
+        List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO), CollUtil.newArrayList());
 
         for ( KolSampleCostEntity kolSampleCostEntity : thisMonthList) {
             kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             kolSampleCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-            //设置SKU成本
-            InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = invSkuCostDTOS.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), kolSampleCostEntity.getSkuId())
-                    && CharSequenceUtil.equals(obj.getOrgId(), kolSampleCostEntity.getSoOrgId())
-                    && CharSequenceUtil.equals(obj.getWarehouseId(), kolSampleCostEntity.getWarehouseId()))
-                    .findFirst().orElse(null);
+            // 优先按 销售组织+SKU+仓库 匹配，未命中再按 SKU+仓库 降级匹配，均取最近创建的SKU成本
+            InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
+            if (ObjUtil.isEmpty(invSkuCostDTO)) {
+                invSkuCostDTO = fallbackInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
+            }
             if (ObjUtil.isNotEmpty(invSkuCostDTO)) {
-                kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(invSkuCostDTO.getProductCost(),invSkuCostDTO.getExchangeRate()));
-                kolSampleCostEntity.setFirstMileShippingCost(MathUtil.multiplyWithFour(invSkuCostDTO.getFirstMileShippingCost(),invSkuCostDTO.getExchangeRate()));
-                kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(invSkuCostDTO.getClearanceCustomsTax(),invSkuCostDTO.getExchangeRate()));
+                applyInventorySkuCost(kolSampleCostEntity, invSkuCostDTO);
             }
             //设置小包费用
-            smallBagCostDTOS.stream().filter(obj ->CharSequenceUtil.equals(obj.getFeeAllocationType(), CostAllocationEnum.COST_ALLOCATION.getCode()) &&  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
+            smallBagCostDTOS.stream().filter(obj ->  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
                     .forEach(obj -> {
-                        BigDecimal cost = MathUtil.multiplyWithFour(obj.getAllocatedAmount(), obj.getAllocatedAmountExchange());
+                        BigDecimal cost =  obj.getAllocatedAmountExchange();
 
                         if (CharSequenceUtil.equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode(),obj.getFeeType())) {
                            kolSampleCostEntity.setShippingCost(cost);
@@ -332,6 +322,243 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         super.saveOrUpdateBatch(thisMonthList);
 
+    }
+
+    private List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(List<String> skuIdList,
+                                                                         List<String> warehouseIdList,
+                                                                         List<String> orgIdList,
+                                                                         LocalDateTime startTime,
+                                                                         LocalDateTime endTIme) {
+        if (CollUtil.isEmpty(skuIdList) || CollUtil.isEmpty(warehouseIdList)) {
+            return CollUtil.newArrayList();
+        }
+        InventorySkuCostDTO.SkuCostParamDTO paramDTO = new InventorySkuCostDTO.SkuCostParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setOrgIdList(orgIdList);
+        paramDTO.setStartAccountingMonth(startTime);
+        paramDTO.setEndAccountingMonth(endTIme);
+        return ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO), CollUtil.newArrayList());
+    }
+
+    private Map<String, InventorySkuCostDTO.InvSkuCostDTO> buildInventorySkuCostMap(List<InventorySkuCostDTO.InvSkuCostDTO> invSkuCostDTOS,
+                                                                                     boolean withOrg) {
+        Map<String, InventorySkuCostDTO.InvSkuCostDTO> costMap = new HashMap<>();
+        if (CollUtil.isEmpty(invSkuCostDTOS)) {
+            return costMap;
+        }
+        for (InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO : invSkuCostDTOS) {
+            String key = withOrg
+                    ? buildInventorySkuCostKey(invSkuCostDTO.getOrgId(), invSkuCostDTO.getSkuId(), invSkuCostDTO.getWarehouseId())
+                    : buildInventorySkuCostKey(invSkuCostDTO.getSkuId(), invSkuCostDTO.getWarehouseId());
+            costMap.merge(key, invSkuCostDTO, this::pickLatestInventorySkuCost);
+        }
+        return costMap;
+    }
+
+    private InventorySkuCostDTO.InvSkuCostDTO pickLatestInventorySkuCost(InventorySkuCostDTO.InvSkuCostDTO oldValue,
+                                                                         InventorySkuCostDTO.InvSkuCostDTO newValue) {
+        if (ObjUtil.isEmpty(oldValue)) {
+            return newValue;
+        }
+        if (ObjUtil.isEmpty(newValue)) {
+            return oldValue;
+        }
+        LocalDateTime oldCreateTime = oldValue.getCreateTime();
+        LocalDateTime newCreateTime = newValue.getCreateTime();
+        if (Objects.isNull(oldCreateTime)) {
+            return Objects.isNull(newCreateTime) ? oldValue : newValue;
+        }
+        if (Objects.isNull(newCreateTime)) {
+            return oldValue;
+        }
+        return newCreateTime.isAfter(oldCreateTime) ? newValue : oldValue;
+    }
+
+    private String buildInventorySkuCostKey(String orgId, String skuId, String warehouseId) {
+        return StrUtil.format("{}#{}#{}", orgId, skuId, warehouseId);
+    }
+
+    private String buildInventorySkuCostKey(String skuId, String warehouseId) {
+        return StrUtil.format("{}#{}", skuId, warehouseId);
+    }
+
+    private void applyInventorySkuCost(KolSampleCostEntity kolSampleCostEntity, InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO) {
+        BigDecimal qty = MathUtil.valueOf(kolSampleCostEntity.getQty());
+        BigDecimal exchangeRate = ObjUtil.defaultIfNull(invSkuCostDTO.getExchangeRate(), BigDecimal.ONE);
+        kolSampleCostEntity.setExchangeRate(exchangeRate);
+        BigDecimal productCost = MathUtil.multiplyWithFour(ObjUtil.defaultIfNull(invSkuCostDTO.getProductCost(), BigDecimal.ZERO), exchangeRate);
+        BigDecimal firstMileShippingCost = MathUtil.multiplyWithFour(ObjUtil.defaultIfNull(invSkuCostDTO.getFirstMileShippingCost(), BigDecimal.ZERO), exchangeRate);
+        BigDecimal clearanceCustomsTax = MathUtil.multiplyWithFour(ObjUtil.defaultIfNull(invSkuCostDTO.getClearanceCustomsTax(), BigDecimal.ZERO), exchangeRate);
+        kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(productCost, qty));
+        kolSampleCostEntity.setFirstMileShippingCost(MathUtil.multiplyWithFour(firstMileShippingCost, qty));
+        kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(clearanceCustomsTax, qty));
+    }
+
+    private Map<String, String> buildCustomerPartitionIdMap(List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList) {
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            return new HashMap<>();
+        }
+        List<String> customerIds = soOutstockDTOList.stream()
+                .map(SoOutstockDTO.KolSoOutstockDTO::getCustomerId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(customerIds)) {
+            return new HashMap<>();
+        }
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.listByIds(customerIds);
+        if (CollUtil.isEmpty(customerInfoEntities)) {
+            return new HashMap<>();
+        }
+        return customerInfoEntities.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getPartitionId()))
+                .collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPartitionId, (a, b) -> a));
+    }
+
+    private void appendRegularKolSampleCost(List<KolSampleCostEntity> thisMonthList,
+                                            List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList,
+                                            Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
+                                            Map<String, String> partitionMap,
+                                            Map<String, String> customerPartitionIdMap) {
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            return;
+        }
+        Map<String, List<SoOutstockDTO.KolSoOutstockDTO>> soOutstockMap = soOutstockDTOList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getSoDetailId()))
+                .collect(Collectors.groupingBy(SoOutstockDTO.KolSoOutstockDTO::getSoDetailId));
+        List<String> soDetailIdList = new ArrayList<>(soOutstockMap.keySet());
+        if (CollUtil.isEmpty(soDetailIdList)) {
+            return;
+        }
+        List<List<String>> partitionList = Lists.partition(soDetailIdList, 5000);
+        for (List<String> partitionIdList : partitionList) {
+            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostBySoDetailIdList(partitionIdList);
+            if (CollUtil.isEmpty(kolSampleCostEntityList)) {
+                continue;
+            }
+            for (KolSampleCostEntity sampleCostEntity : kolSampleCostEntityList) {
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(sampleCostEntity.getSoDetailId()), sampleCostEntity, oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap, false);
+            }
+        }
+    }
+
+    private void appendWdtKolSampleCost(List<KolSampleCostEntity> thisMonthList,
+                                        List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList,
+                                        Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
+                                        Map<String, String> partitionMap,
+                                        Map<String, String> customerPartitionIdMap) {
+        if (CollUtil.isEmpty(soOutstockDTOList)) {
+            return;
+        }
+        List<SoOutstockDTO.KolSoOutstockDTO> validSoOutstockDTOList = soOutstockDTOList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getPlatformCode()) && CharSequenceUtil.isNotBlank(obj.getSkuNo()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(validSoOutstockDTOList)) {
+            return;
+        }
+        Map<String, List<SoOutstockDTO.KolSoOutstockDTO>> soOutstockMap = validSoOutstockDTOList.stream()
+                .collect(Collectors.groupingBy(this::buildWdtKolMatchKey));
+        List<String> platformCodeList = validSoOutstockDTOList.stream()
+                .map(SoOutstockDTO.KolSoOutstockDTO::getPlatformCode)
+                .distinct()
+                .collect(Collectors.toList());
+        List<List<String>> partitionList = Lists.partition(platformCodeList, 5000);
+        for (List<String> partitionIdList : partitionList) {
+            Set<String> platformCodeSet = new HashSet<>(partitionIdList);
+            List<SoOutstockDTO.KolSoOutstockDTO> partitionSoOutstockDTOList = validSoOutstockDTOList.stream()
+                    .filter(obj -> platformCodeSet.contains(obj.getPlatformCode()))
+                    .collect(Collectors.toList());
+            List<KolSampleCostEntity> kolSampleCostEntityList = baseMapper.listKolSampleCostByWdtPlatformCodeList(partitionIdList);
+            Map<String, KolSampleCostEntity> hitMap = CollUtil.isEmpty(kolSampleCostEntityList)
+                    ? new HashMap<>()
+                    : kolSampleCostEntityList.stream()
+                    .filter(obj -> CharSequenceUtil.isNotBlank(obj.getSourceCode()) && CharSequenceUtil.isNotBlank(obj.getSkuNo()))
+                    .collect(Collectors.toMap(this::buildWdtKolMatchKey, obj -> obj, (v1, v2) -> v1));
+            for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : partitionSoOutstockDTOList) {
+                String matchKey = buildWdtKolMatchKey(kolSoOutstockDTO);
+                if (hitMap.containsKey(matchKey)) {
+                    continue;
+                }
+                log.warn("KOL寄样费用统计跳过WDT出库，未命中寄样申请明细，platformCode:{}, skuNo:{}, soOutstockCode:{}, soOutstockDetailId:{}",
+                        kolSoOutstockDTO.getPlatformCode(), kolSoOutstockDTO.getSkuNo(), kolSoOutstockDTO.getSoOutstockCode(), kolSoOutstockDTO.getSoOutstockDetailId());
+            }
+            for (Map.Entry<String, KolSampleCostEntity> entry : hitMap.entrySet()) {
+                appendKolSampleCost(thisMonthList, soOutstockMap.get(entry.getKey()), entry.getValue(), oldOutstockDetailCostMap, partitionMap, customerPartitionIdMap, true);
+            }
+        }
+    }
+
+    private void appendKolSampleCost(List<KolSampleCostEntity> thisMonthList,
+                                     List<SoOutstockDTO.KolSoOutstockDTO> kolSoOutstockDTOList,
+                                     KolSampleCostEntity sampleCostEntity,
+                                     Map<String, KolSampleCostEntity> oldOutstockDetailCostMap,
+                                     Map<String, String> partitionMap,
+                                     Map<String, String> customerPartitionIdMap,
+                                     boolean useWdtSourceCodeAsSoCode) {
+        if (CollUtil.isEmpty(kolSoOutstockDTOList) || ObjUtil.isEmpty(sampleCostEntity)) {
+            return;
+        }
+        for (SoOutstockDTO.KolSoOutstockDTO kolSoOutstockDTO : kolSoOutstockDTOList) {
+            KolSampleCostEntity costEntity = new KolSampleCostEntity();
+            BeanMapperUtils.copy(kolSoOutstockDTO, costEntity);
+            fillHistoryCost(costEntity, oldOutstockDetailCostMap.get(kolSoOutstockDTO.getSoOutstockDetailId()));
+            costEntity.setType(sampleCostEntity.getType());
+            costEntity.setSourceCode(sampleCostEntity.getSourceCode());
+            costEntity.setSourceId(sampleCostEntity.getSourceId());
+            costEntity.setSourceType(sampleCostEntity.getSourceType());
+            costEntity.setSourceDetailId(sampleCostEntity.getSourceDetailId());
+            // 优先按 销售订单/收件人 取军区，未取到则按出库单客户档案兜底
+            String partitionId = sampleCostEntity.getPartitionId();
+            if (CharSequenceUtil.isBlank(partitionId)) {
+                partitionId = customerPartitionIdMap.get(kolSoOutstockDTO.getCustomerId());
+            }
+            costEntity.setPartitionId(partitionId);
+            costEntity.setPartitionName(partitionMap.get(partitionId));
+            costEntity.setPartnerId(sampleCostEntity.getPartnerId());
+            costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
+            costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
+            if (useWdtSourceCodeAsSoCode) {
+                costEntity.setSoCode(kolSoOutstockDTO.getSourceCode());
+            }
+            costEntity.setSoOrgId(kolSoOutstockDTO.getSalesOrgId());
+            costEntity.setSoOrgName(kolSoOutstockDTO.getSalesOrgName());
+            costEntity.setQty(kolSoOutstockDTO.getActualQty());
+            costEntity.setSoOutstockDate(kolSoOutstockDTO.getSoOutstockDate());
+            thisMonthList.add(costEntity);
+        }
+    }
+
+    private void fillHistoryCost(KolSampleCostEntity costEntity, KolSampleCostEntity oldEntity) {
+        if (ObjUtil.isEmpty(oldEntity)) {
+            return;
+        }
+        costEntity.setId(oldEntity.getId());
+        // 更新费用时如果拿不到新的SKU成本/尾程分摊，保持历史费用不变
+        costEntity.setProductCost(ObjUtil.defaultIfNull(oldEntity.getProductCost(), BigDecimal.ZERO));
+        costEntity.setFirstMileShippingCost(ObjUtil.defaultIfNull(oldEntity.getFirstMileShippingCost(), BigDecimal.ZERO));
+        costEntity.setClearanceCustomsTax(ObjUtil.defaultIfNull(oldEntity.getClearanceCustomsTax(), BigDecimal.ZERO));
+        costEntity.setShippingCost(ObjUtil.defaultIfNull(oldEntity.getShippingCost(), BigDecimal.ZERO));
+        costEntity.setCustomsTax(ObjUtil.defaultIfNull(oldEntity.getCustomsTax(), BigDecimal.ZERO));
+        costEntity.setOtherCost(ObjUtil.defaultIfNull(oldEntity.getOtherCost(), BigDecimal.ZERO));
+        costEntity.setTotalCost(ObjUtil.defaultIfNull(oldEntity.getTotalCost(), BigDecimal.ZERO));
+        costEntity.setExchangeRate(oldEntity.getExchangeRate());
+        costEntity.setCurrency(CharSequenceUtil.blankToDefault(oldEntity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode()));
+        costEntity.setCurrencySymbol(CharSequenceUtil.blankToDefault(oldEntity.getCurrencySymbol(), CurrencyEnum.CNY.getCurrencySymbol()));
+    }
+
+    private boolean isWdtKolSoOutstock(SoOutstockDTO.KolSoOutstockDTO dto) {
+        return CharSequenceUtil.isNotBlank(dto.getPlatformCode()) && StrUtil.startWithIgnoreCase(dto.getPlatformCode(), "KOL");
+    }
+
+    private String buildWdtKolMatchKey(SoOutstockDTO.KolSoOutstockDTO dto) {
+        return StrUtil.format("{}#{}", dto.getPlatformCode(), dto.getSkuNo());
+    }
+
+    private String buildWdtKolMatchKey(KolSampleCostEntity entity) {
+        String matchSourceCode = CharSequenceUtil.blankToDefault(entity.getMatchSourceCode(), entity.getSourceCode());
+        return StrUtil.format("{}#{}", matchSourceCode, entity.getSkuNo());
     }
 
     /**
@@ -363,35 +590,71 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         List<String> soCodeList = successList.stream().map(KolSampleCostImportExcelDTO::getSoCode).distinct().collect(Collectors.toList());
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
-
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
-                long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
+                if (!CharSequenceUtil.equals(importExcelDTO.getFeeType(), "物流费")
+                        && !CharSequenceUtil.equals(importExcelDTO.getFeeType(), "订单费用")) {
+                    importExcelDTO.setErrorMsg("费用项仅支持【物流费】或【订单费用】");
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
+           /*     long count = successList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).count();
                 if (count > 1) {
                     importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】在导入数据中存在重复");
                     errorList.add(importExcelDTO);
                     continue;
-                }
-                List<KolSampleCostEntity> costList = kolSampleCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode())).collect(Collectors.toList());
+                }*/
+                List<KolSampleCostEntity> costList = kolSampleCostList.stream()
+                        .filter(obj -> CharSequenceUtil.equals(obj.getSoCode(), importExcelDTO.getSoCode()))
+                        .sorted(Comparator.comparing(KolSampleCostEntity::getSoOutstockDetailId, Comparator.nullsLast(String::compareTo))
+                                .thenComparing(KolSampleCostEntity::getId, Comparator.nullsLast(String::compareTo)))
+                        .collect(Collectors.toList());
                 if (CollUtil.isEmpty(costList)) {
                     importExcelDTO.setErrorMsg("未找到对应的销售订单号：" + importExcelDTO.getSoCode());
                     errorList.add(importExcelDTO);
                     continue;
                 }
-                 //计算总数量
-                Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(Integer.SIZE, Integer::sum);
-                for (KolSampleCostEntity entity : costList) {
-                    BigDecimal cost = MathUtil.divide(MathUtil.valueOf(entity.getQty()), MathUtil.valueOf(totalQty))
-                            .multiply(MathUtil.valueOf(importExcelDTO.getAmountStr()))
-                            .multiply(MathUtil.valueOf(importExcelDTO.getExchangeRateStr()));
-                    if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
-                        //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-                        entity.setShippingCost(cost);
-                    }
-                    if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-                        //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率
-                        entity.setOtherCost(cost);
-                    }
+            //计算总数量
+            Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (totalQty == null || totalQty <= 0) {
+                importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】对应实发数量总和必须大于0");
+                errorList.add(importExcelDTO);
+                continue;
+            }
+            BigDecimal importAmount = MathUtil.valueOf(importExcelDTO.getAmountStr());
+            BigDecimal exchangeRate = MathUtil.valueOf(importExcelDTO.getExchangeRateStr());
+            BigDecimal importLocalAmount = importAmount.multiply(exchangeRate).setScale(IMPORT_ALLOCATION_SCALE, RoundingMode.HALF_UP);
+            BigDecimal totalQtyDecimal = MathUtil.valueOf(totalQty);
+            BigDecimal allocatedAmount = BigDecimal.ZERO;
+            for (int index = 0; index < costList.size(); index++) {
+                KolSampleCostEntity entity = costList.get(index);
+                BigDecimal cost;
+                if (index == costList.size() - 1) {
+                    // 最后一行吸收尾差，保证同销售单本次导入增量合计严格等于导入金额*汇率
+                    cost = importLocalAmount.subtract(allocatedAmount);
+                } else {
+                    cost = MathUtil.valueOf(entity.getQty())
+                            .multiply(importLocalAmount)
+                            .divide(totalQtyDecimal, IMPORT_ALLOCATION_SCALE, RoundingMode.HALF_UP);
+                    allocatedAmount = allocatedAmount.add(cost);
                 }
+                BigDecimal historyShippingCost = ObjUtil.defaultIfNull(entity.getShippingCost(), BigDecimal.ZERO);
+                BigDecimal historyOtherCost = ObjUtil.defaultIfNull(entity.getOtherCost(), BigDecimal.ZERO);
+                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
+                    //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史SKU“尾程-运费”
+                    entity.setShippingCost(historyShippingCost.add(cost));
+                }
+                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
+                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-其他费用”
+                    entity.setOtherCost(historyOtherCost.add(cost));
+                }
+                BigDecimal totalCost = entity.getProductCost()
+                        .add(entity.getFirstMileShippingCost())
+                        .add(entity.getClearanceCustomsTax())
+                        .add(entity.getShippingCost())
+                        .add(entity.getCustomsTax())
+                        .add(entity.getOtherCost());
+                entity.setTotalCost(totalCost);
+            }
                 super.updateBatchById(costList);
 
                 //操作日志

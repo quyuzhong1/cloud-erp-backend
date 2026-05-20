@@ -40,6 +40,7 @@
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
         sb2c.shop_id as shopId,
+--         sb2c.shop_name as shopName,
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
         sb2c.bill_status as billStatus,
@@ -388,7 +389,7 @@
         from so_b2c sb2c
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
-        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+--         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
         left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false and sbd.status != 'cancelDelivery'
@@ -413,24 +414,19 @@
     </select>
 
     <!-- 列表数量查询 -->
-    <select id="listCount" resultType="java.lang.Integer">
+    <select id="listCount" resultType="com.erp.model.oms.dto.SoB2cDTO$ListCountDto">
         select
-        count(*)
+        sb2c.bill_status,sb2c.invalid_status,sb2c.is_frozen,sb2c.approve_status,sb2c.pay_status,sb2c.sign_order_error,count(*) count
         from so_b2c sb2c
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
-            <!--替换logistics inner JOIN-->
-            AND EXISTS ( SELECT 1 FROM so_b2c_logistics sb2cl WHERE sb2cl.main_id = sb2c.id AND sb2cl.is_deleted = false )
-            <!--替换receiver JOIN-->
-            AND EXISTS ( SELECT 1 FROM so_b2c_receiver sb2cr WHERE sb2cr.main_id = sb2c.id AND sb2cr.is_deleted = false )
-            <!--替换shop_info JOIN-->
-            AND EXISTS ( SELECT 1 FROM shop_info si WHERE si.id = sb2c.shop_id AND si.is_deleted = false )
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
         </where>
+        group by sb2c.bill_status,sb2c.invalid_status,sb2c.is_frozen,sb2c.approve_status,sb2c.pay_status,sb2c.sign_order_error
     </select>
 
     <!-- 合并列表查询 -->
@@ -1197,7 +1193,7 @@
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where is_deleted = false and id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
@@ -1240,7 +1236,7 @@
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where is_deleted = false and id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
@@ -1474,7 +1470,7 @@ SELECT DISTINCT so.* FROM so_b2c so
         from so_b2c sb2c
         inner join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+--         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false and sbd.status != 'cancelDelivery'
         where
         ${params.sqlMap.default}

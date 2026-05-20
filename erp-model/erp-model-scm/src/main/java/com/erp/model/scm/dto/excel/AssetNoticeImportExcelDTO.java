@@ -43,6 +43,20 @@ public class AssetNoticeImportExcelDTO  implements Serializable {
     private String applyDeptName;
 
     /**
+     * 采购开发
+     */
+    @ExcelProperty("*采购开发")
+    @FieldValid(fieldName = "purchaseDevUserName", isNotBlank = true)
+    private String purchaseDevUserName;
+
+    /**
+     * 采购跟单
+     */
+    @ExcelProperty("*采购跟单")
+    @FieldValid(fieldName = "purchaseFollowUserName", isNotBlank = true)
+    private String purchaseFollowUserName;
+
+    /**
      * 模具编码
      */
     @ExcelProperty("*模具编码")
@@ -77,6 +91,13 @@ public class AssetNoticeImportExcelDTO  implements Serializable {
     @ExcelProperty("*采购组织")
     @FieldValid(fieldName = "purchaseOrgName",isNotBlank = true)
     private String  purchaseOrgName;
+
+    /**
+     * 供应商名称
+     */
+    @ExcelProperty("*供应商名称")
+    @FieldValid(fieldName = "supplierName")
+    private String supplierName;
 
     /**
      * 备注

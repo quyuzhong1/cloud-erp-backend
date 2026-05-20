@@ -5,7 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
@@ -158,7 +158,7 @@ public class SoOutstockFeignController {
      */
     @PostMapping("/generateB2cSoOutstockByPlatformData")
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
-        String redissonKey = CharSequenceUtil.format("{}:{}", RedisKeyConstant.SO_STOCK_KEY, platformDeliveryDetailDTO.getThirdCode());
+        String redissonKey = CharSequenceUtil.format("{}:{}", RedisCacheConstants.SO_STOCK_KEY, platformDeliveryDetailDTO.getThirdCode());
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO, redissonKey);
     }
 

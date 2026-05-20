@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -935,14 +936,15 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-25 11:02
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.SO_CHANGE_NOT_FOUND);
@@ -956,6 +958,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -1169,6 +1172,12 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     private Map<String,Object> getVariablesMap(SoChangeEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        // 供"表单内联系人"策略使用，补充销售员字段
+        SoInfoEntity soInfo = soInfoService.getById(entity.getSoId());
+        if (Objects.nonNull(soInfo)) {
+            variablesMap.put("sellerId", StringUtils.defaultString(soInfo.getSellerId()));
+            variablesMap.put("sellerName", StringUtils.defaultString(soInfo.getSellerName()));
+        }
         List<SoChangeDetailEntity> detailList = soChangeDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
         if(CollUtil.isEmpty(detailList)){
             throw new ServiceException(ApiError.SO_CHANGE_DETAIL_NOT_FOUND);

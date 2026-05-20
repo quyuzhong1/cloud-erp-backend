@@ -54,13 +54,25 @@ public class ExportWmsInventoryHandler extends AbstractPageFileEventHandler<Inve
         InventoryDTO.ExportSearchParamDTO param = threadLocal.get();
         String excelPath = "";
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
-            excelPath = "excel/wms/inventory.xlsx";
+            if(param.getIncludeSupplier()){
+                excelPath = "excel/wms/inventoryIncludeSupplier.xlsx";
+            }else{
+                excelPath = "excel/wms/inventory.xlsx";
+            }
         }
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
-            excelPath = "excel/wms/inventory_area.xlsx";
+            if(param.getIncludeSupplier()){
+                excelPath = "excel/wms/inventory_area_include_supplier.xlsx";
+            }else{
+                excelPath = "excel/wms/inventory_area.xlsx";
+            }
         }
         if (param.getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            excelPath = "excel/wms/inventory_location.xlsx";
+            if(param.getIncludeSupplier()){
+                excelPath = "excel/wms/inventory_location_include_supplier.xlsx";
+            }else{
+                excelPath = "excel/wms/inventory_location.xlsx";
+            }
         }
         threadLocal.remove();
         return excelPath;

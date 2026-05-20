@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.enums.ClientTypeEnum;
 import com.erp.model.wms.entity.SampleTransferInfoEntity;
 import com.common.business.service.SuperService;
@@ -132,10 +133,10 @@ public interface SampleTransferInfoService extends SuperService<SampleTransferIn
     * 撤销
     * @author wuhaotian
     * @date: 2025-10-28
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
@@ -202,5 +203,23 @@ public interface SampleTransferInfoService extends SuperService<SampleTransferIn
     * @param response
     */
     void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * APP端标签页列表
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param dto
+     * @return List<SampleTransferInfoDTO.TabListDTO>
+     */
+    List<SampleTransferInfoDTO.TabListDTO> tabListApp(PermissionsDTO dto);
+
+    /**
+     * APP端分页列表查询
+     * @author wuhaotian
+     * @date: 2025-10-28
+     * @param pagingParamDTO
+     * @return PagingVO<SampleTransferInfoDTO.ListDTO>
+     */
+    PagingVO<SampleTransferInfoDTO.ListDTO> pagingApp(PagingDTO<SampleTransferInfoDTO.PagingParamDTO> pagingParamDTO);
 
 }

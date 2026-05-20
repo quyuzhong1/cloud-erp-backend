@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -95,4 +96,11 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
 
 
     void checkAndUpdateCountry(String mainId, String country);
+
+    /**
+     * 根据主表id查询买家信息
+     * @param id
+     * @return
+     */
+    LogisticsBillDTO.ReceiverDTO listReceiverByMainId(String id);
 }

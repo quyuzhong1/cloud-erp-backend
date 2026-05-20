@@ -168,6 +168,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("platform_sub_so_code")
     private String platformSubSoCode;
 
+    /**
+     * amount分摊来源:cost_avg=采购平均成本, cost_fin=财务导入成本, retail_std=标准零售价,空=无分摊
+     */
+    @TableField("price_allocation_source")
+    private String priceAllocationSource = "";
+
     @TableField(exist = false)
     private String approveStatus;
 
@@ -182,6 +188,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
      */
     @TableField(exist = false)
     private String trackNo;
+
+    /**
+     * 分摊来源金额
+     */
+    @TableField(exist = false)
+    private BigDecimal allocationAmount;
 
     public static final String MAIN_ID = "main_id";
 

@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -347,7 +348,7 @@ public class SubcontractOrderController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(subcontractOrderService.cancelProcess(entity));
+                resultDTOS.add(subcontractOrderService.cancelProcess(new ApproveDTO.CancelProcessDTO(id),entity));
             }catch (Exception e){
                 log.error("委外订单撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -507,6 +508,28 @@ public class SubcontractOrderController extends BaseController {
     @GetMapping("/list")
     public ApiResult<List<SubcontractOrderDTO.ListSelectDTO>> list() {
         List<SubcontractOrderDTO.ListSelectDTO> list = subcontractOrderService.listSubcontractOrder();
+        return success(list);
+    }
+
+    /**
+     * 委外订单获取价格
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listSubcontractOrderSkuPrice")
+    public ApiResult<List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO>> listSubcontractOrderSkuPrice(@RequestBody @Validated List<SubcontractOrderDTO.ListPriceParamDTO> dto) {
+        List<SubcontractOrderDTO.ListSubcontractOrderSkuPriceDTO> list = subcontractOrderService.listSubcontractOrderSkuPrice(dto);
+        return success(list);
+    }
+
+    /**
+     * 获取供应商税率
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listRateBySupplier")
+    public ApiResult<List<SubcontractOrderDTO.ListRateDTO>> listRateBySupplier(@RequestBody @Validated List<SubcontractOrderDTO.ListRateParamDTO> dto) {
+        List<SubcontractOrderDTO.ListRateDTO> list = subcontractOrderService.listRateBySupplier(dto);
         return success(list);
     }
 

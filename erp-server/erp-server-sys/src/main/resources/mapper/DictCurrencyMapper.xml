@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.DictCurrencyMapper">
+    <select id="getList" resultType="com.erp.model.sys.dto.CurrencyDTO$ViewDTO">
+        select
+            dc.id, dc.name, dc.symbol,dc.kingdee_code as kingdeeCode,dc.currency_num as currencyNum,dc.disabled
+        from dict_currency dc
+        where dc.is_deleted = false
+        order by dc."index" asc
+    </select>
+    <select id="pagingSelect" resultType="com.erp.model.sys.dto.CurrencyDTO$ViewDTO">
+        select id,name,symbol,kingdeeCode,currencyNum,disabled
+        from
+        (
+            select
+            dc.id, dc.name, dc.symbol,dc.kingdee_code as kingdeeCode,dc.currency_num as currencyNum,dc.disabled
+            from dict_currency dc
+            where
+            dc.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and (dc.name ilike concat('%', #{params.searchKeyword}::text ,'%')
+                or dc.id ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            </if>
+            order by dc.index asc
+        ) currency
+    </select>
+</mapper>

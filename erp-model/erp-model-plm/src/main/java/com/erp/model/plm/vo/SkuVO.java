@@ -200,6 +200,10 @@ public class SkuVO implements Serializable {
      * 成本价格来源
      */
     private String costSource;
+    /**
+     * 成本价格来源
+     */
+    private String priceAllocationSource;
     //材料成本
     private BigDecimal productCost;
     //头程运费
@@ -361,7 +365,7 @@ public class SkuVO implements Serializable {
         private String otherName;
         /**
          * 汇总标识
-         * - 属性包含：带电池，带电池（内置不可拆卸），带电池（内置可拆卸），带电池（纯电），显示电标识
+         * - 属性包含：带电池，带电池（内置不可拆卸），带电池（内置可拆卸），带电池（纯电），锂金属电池（纽扣电池，干电池），锂离子电池（可充电式），锂聚合物电池（充电式），显示电标识
          * - 属性包含：带磁，显示磁标识
          * - 属性包含：液体，显示液标识
          * - 属性包含：木，显示木标识

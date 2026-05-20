@@ -1,6 +1,5 @@
 package com.erp.server.sys.controller.api;
 
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,12 +12,17 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.server.sys.service.SysDepartmentService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -41,9 +45,20 @@ public class SysDepartmentController extends BaseController {
     /**
      * 分页列表
      */
+    @PostMapping("/treeByParams")
+    public ApiResult tree(@RequestBody @Validated SysDepartmentDTO.TreeParamsDTO dto) {
+        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree(dto);
+        return success(treeVO);
+    }
+
+    /**
+     * 分页列表
+     */
     @RequestMapping("/tree")
     public ApiResult tree() {
-        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree();
+        SysDepartmentDTO.TreeParamsDTO dto = new SysDepartmentDTO.TreeParamsDTO();
+        dto.setDisabled(null);
+        List<DepartmentDTO> treeVO=sysDepartmentService.findDepartmentTree(dto);
         return success(treeVO);
     }
 
@@ -102,8 +117,21 @@ public class SysDepartmentController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除部门信息")
     @RequestMapping("/delete")
     public ApiResult delete(@RequestBody List<String> ids) {
-        List<BatchResultDTO> resultDTOList = sysDepartmentService.removeByIdList(ids);
-        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        Map<String, SysDepartmentEntity> entityMap = sysDepartmentService.mapByIds(ids);
+        for (String id : ids) {
+            SysDepartmentEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"部门不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(sysDepartmentService.remove(id));
+            }catch (Exception e){
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -111,11 +139,14 @@ public class SysDepartmentController extends BaseController {
      * @return
      */
     @GetMapping("/drop/down")
-    ApiResult<List<SysDeptDropDownVO>> listDeptDropDown(){
+    public ApiResult<List<SysDeptDropDownVO>> listDeptDropDown(@RequestParam(value = "deptName",required = false) String deptName){
         List<SysDepartmentEntity> entities = sysDepartmentService.listDept();
+        if(StringUtils.isNotBlank(deptName)){
+            entities = entities.stream().filter(v->v.getName().contains(deptName)).collect(Collectors.toList());
+        }
         List<SysDeptDropDownVO> resultList = entities.stream()
                 .map(x ->
-                        new SysDeptDropDownVO(x.getId(), x.getName())
+                        new SysDeptDropDownVO(x.getId(), x.getName(),x.getDisabled())
                 )
                 .collect(Collectors.toList());
         return success(resultList);
@@ -131,6 +162,21 @@ public class SysDepartmentController extends BaseController {
     public ApiResult<Void> importDepatKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
         sysDepartmentService.importDeptKingdee(file);
         return success();
+    }
+
+
+
+    /**
+     * 更新启禁用
+     * @Auther jack
+     * @Date 2026-01-07
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateDisabled")
+    public ApiResult<?> updateDisabled(@RequestBody @Validated SysDepartmentDTO.UpdateDisabledDTO dto) {
+        sysDepartmentService.updateDisabled(dto);
+        return  success();
     }
 
 }

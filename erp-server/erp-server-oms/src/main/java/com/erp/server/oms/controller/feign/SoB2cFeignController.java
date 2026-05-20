@@ -454,6 +454,11 @@ public class SoB2cFeignController extends BaseController {
         return soB2cService.updateWarehouseByShopId(id, shopId);
     }
 
+    @PostMapping("updateTikTokOrderWarehouse")
+    public Boolean updateTikTokOrderWarehouse(@RequestParam("soId") String soId) {
+        return soB2cService.updateTikTokOrderWarehouse(soId);
+    }
+
     /**
      * 查询合并来源关系
      *
@@ -598,17 +603,6 @@ public class SoB2cFeignController extends BaseController {
     Boolean updateShippingOrderNoBySoId(@RequestBody TransferDeclareDTO.ShippingOrderDTO shippingOrderDTO){
         return soB2cService.updateShippingOrderNoBySoId(shippingOrderDTO);
     }
-    /**
-     * 根据销售订单拆分sku
-     * 拆分逻辑为 物流产品 为拆分 sku为组合时进行拆分
-     *
-     * @param soIds
-     * @return
-     */
-    @PostMapping("/getTransferDeclareProductBySoIds")
-    public List<SplitSkuDTO> getTransferDeclareProductBySoIds(@RequestBody List<String> soIds) {
-        return soB2cService.getTransferDeclareProductBySoIds(soIds);
-    }
 
     /**
      * 修改速卖通订单仓库
@@ -656,7 +650,7 @@ public class SoB2cFeignController extends BaseController {
      */
     @GetMapping("/updateLogisticsBySoId")
     public void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo) {
-        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo);
+        soB2cLogisticsService.updateLogisticsBySoId(soId, trackNo, Boolean.TRUE);
     }
 
     /**
@@ -672,6 +666,25 @@ public class SoB2cFeignController extends BaseController {
                                                @RequestParam("sourceType") String sourceType
     ){
         return soB2cService.getByPlatformCodeList(platformCodeList, dictPlatform, shopId, sourceType);
+    }
+
+    /**
+     * 根据平台单号和平台查询B2C销售订单
+     *
+     * @date 2024-03-07
+     * @author Jim
+     */
+    @GetMapping("/getSoB2cByPlatformCode")
+    public List<SoB2cEntity> getSoB2cByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return soB2cService.getByPlatformCode(platformCode);
+    }
+
+    /**
+     * 根据第三方仓发货订单id查询B2C销售订单
+     */
+    @GetMapping("/getByShippingOrderNo")
+    public List<SoB2cEntity> getByShippingOrderNo(@RequestParam("shippingOrderNo") String shippingOrderNo){
+        return soB2cService.getByShippingOrderNo(shippingOrderNo);
     }
 
     /**
@@ -947,6 +960,15 @@ public class SoB2cFeignController extends BaseController {
        return soB2cCoreService.handleSoOutStock(soId);
     }
 
+
+    /**
+     * 添加日志备注
+     */
+    @PostMapping("/updateRemarkAndLog")
+    public void updateRemarkAndLog(@RequestBody SoB2cDTO.RemarkDTO remarkDTO) {
+        soB2cCoreService.updateRemarkAndLog(remarkDTO);
+    }
+
     /**
      * 销售订单审核
      * @Author Luo_WG
@@ -995,5 +1017,10 @@ public class SoB2cFeignController extends BaseController {
             return true;
         }
         return soB2cDetailService.updateBatchById(soB2cDetailEntityList);
+    }
+
+    @PostMapping("/updateB2cByPlatformOutbound")
+    public void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO){
+        soB2cService.updateB2cByPlatformOutbound(b2cByPlatformOutboundDTO);
     }
 }

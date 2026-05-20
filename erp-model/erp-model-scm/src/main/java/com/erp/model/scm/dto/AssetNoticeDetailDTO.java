@@ -90,6 +90,21 @@ public class AssetNoticeDetailDTO implements Serializable {
         private String purchaseOrgName;
 
         /**
+        * 供应商id
+        */
+        private String supplierId;
+
+        /**
+        * 供应商名称
+        */
+        private String supplierName;
+
+        /**
+        * 项目名称（展示字段，从模具档案获取）
+        */
+        private String projectName;
+
+        /**
         * 备注
         */
         private String remark;
@@ -230,6 +245,17 @@ public class AssetNoticeDetailDTO implements Serializable {
         private String purchaseOrgId;
 
         /**
+        * 供应商id
+        */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+        * 供应商名称
+        */
+        private String supplierName;
+
+        /**
         * 备注
         */
         @Size(max = 255,message = "备注最大长度不能超过200位")
@@ -286,6 +312,26 @@ public class AssetNoticeDetailDTO implements Serializable {
         private String applyDeptName;
 
         /**
+         * 采购开发用户id
+         */
+        private String purchaseDevUserId;
+
+        /**
+         * 采购开发用户名称
+         */
+        private String purchaseDevUserName;
+
+        /**
+         * 采购跟单用户id
+         */
+        private String purchaseFollowUserId;
+
+        /**
+         * 采购跟单用户名称
+         */
+        private String purchaseFollowUserName;
+
+        /**
          * 明细
          */
         private List<MoldDetailImportDTO> moldDetailImportDTOList;
@@ -334,6 +380,16 @@ public class AssetNoticeDetailDTO implements Serializable {
          * 采购组织
          */
         private String  purchaseOrgName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
 
         /**
          * 备注

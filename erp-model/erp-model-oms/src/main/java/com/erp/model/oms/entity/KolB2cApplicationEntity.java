@@ -64,6 +64,31 @@ public class KolB2cApplicationEntity extends BaseEntity<KolB2cApplicationEntity>
     @TableField("approve_user_name")
     private String approveUserName;
     /**
+    * 单据状态
+    */
+    @TableField("bill_status")
+    private String billStatus;
+    /**
+    * 取消失败原因
+    */
+    @TableField("cancel_fail_reason")
+    private String cancelFailReason;
+    /**
+    * 取消时间
+    */
+    @TableField("cancel_time")
+    private LocalDateTime cancelTime;
+    /**
+    * 取消人ID
+    */
+    @TableField("cancel_user_id")
+    private String cancelUserId;
+    /**
+    * 取消人姓名
+    */
+    @TableField("cancel_user_name")
+    private String cancelUserName;
+    /**
     * 申请单号
     */
     @TableField("code")
@@ -163,6 +188,16 @@ public class KolB2cApplicationEntity extends BaseEntity<KolB2cApplicationEntity>
     public static final String APPROVE_USER_ID = "approve_user_id";
 
     public static final String APPROVE_USER_NAME = "approve_user_name";
+
+    public static final String BILL_STATUS = "bill_status";
+
+    public static final String CANCEL_FAIL_REASON = "cancel_fail_reason";
+
+    public static final String CANCEL_TIME = "cancel_time";
+
+    public static final String CANCEL_USER_ID = "cancel_user_id";
+
+    public static final String CANCEL_USER_NAME = "cancel_user_name";
 
     public static final String CODE = "code";
 

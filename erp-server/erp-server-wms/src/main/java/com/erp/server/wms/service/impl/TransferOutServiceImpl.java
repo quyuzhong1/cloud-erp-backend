@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -553,7 +554,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void cancel(List<String> ids) {
+    public void cancel(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         // 只有审核中的数据允许撤销
@@ -567,6 +569,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_OUT.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -951,6 +954,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 member.setProductName(skuVO.getSkuName());
                 member.setVariantProperty(skuVO.getVariantProperty());
                 member.setUnitName(skuVO.getUnitName());
+                member.setSpecification(skuVO.getSpuNo());
             }
             //根据组织、仓库、仓位、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());
@@ -958,6 +962,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), data.getOutWarehouseId())
                     && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(member.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
             member.setOutWarehouseLocationName(outWarehouseLocationName);
+            member.setOutWarehouseName(data.getOutWarehouseName());
         });
         data.setDetailList(viewDetailList);
     }

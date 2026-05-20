@@ -95,6 +95,12 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     @TableField("push_type")
     private String pushType;
 
+    /**
+     * 销售平台（主表维度）
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+
 
     public static final String REMARK = "remark";
 
@@ -123,6 +129,8 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     public static final String THIRD_CHANNEL_NAME = "third_channel_name";
 
     public static final String PUSH_TYPE = "push_type";
+
+    public static final String DICT_PLATFORM = "dict_platform";
 
     @Override
     public Serializable pkVal() {

@@ -1,9 +1,15 @@
 package com.erp.model.wms.dto.third;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.dto.ReceiverDTO;
+import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -29,9 +35,19 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      */
     private String thirdWarehouseCode;
     /**
+     * 取B2B三方发货单的发货仓库映射的众包仓库代码
+     */
+    private String mappingWarehouseCode;
+    /**
      * 收货国家，取发货通知的客户的收货国家二字码
      */
     private String receiverCountryCode;
+
+    /**
+     * 客户名称
+     */
+    private String customerName;
+
     /**
      * 派送方式，取发货通知下推时选择的派送方式
      * EXPRESS:渠道订单
@@ -46,6 +62,9 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      */
     private String channelCode;
 
+    private Boolean isInsurance = false;
+
+    private Boolean isSignature = false;
     /**
      * 平台发货号，默认N/A
      */
@@ -60,6 +79,21 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
      * 文件URL地址(仅支持jpg、png、gif、zip、pdf的文件)
      */
     private String fileUrl;
+
+    /**
+     * 文件base64
+     */
+    private String fileBase64;
+
+    private String fileName;
+    /**
+     * 三方仓的文件type
+     */
+    private String fileType;
+    /**
+     * 三方仓的文件ID
+     */
+    private String fileId;
 
     /**
      * 是否为FBA地址 1：是 0：否
@@ -153,6 +187,16 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
         private String warehousePlatformSku;
 
         /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
          * 单箱数量
          */
         private Integer perBoxQty;
@@ -165,24 +209,52 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          */
         private String boxSpecNo;
     }
-    /**
-     * 指令信息
-     */
-    /**
-     * 仓库操作类型
-     * WarehouseOperationTypeEnum
-     * 操作指令类型，取发货通知仓库操作类型
-     * NO_OPEN_RELABLE：不开箱换SKU标
-     * OPEN_RELABLE：开箱换SKU标
-     * PASTE_LABEL：贴板标
-     * PASTE_PACKAGE：贴箱唛
-     * OTHER：其他
-     */
-    private String warehouseOperationType;
-    /**
-     * 仓库操作描述
-     * 指令描述，例如需开箱换标，请填写：开箱换标，更换标签为：xx
-     * 取发货通知仓库操作描述
-     */
-    private String operationDesc;
+
+    private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WarehouseOperationTypeDTO {
+        /**
+         * 指令信息
+         */
+        /**
+         * 仓库操作类型
+         * WarehouseOperationTypeEnum
+         * 操作指令类型，取发货通知仓库操作类型
+         * NO_OPEN_RELABLE：不开箱换SKU标
+         * OPEN_RELABLE：开箱换SKU标
+         * PASTE_LABEL：贴板标
+         * PASTE_PACKAGE：贴箱唛
+         * OTHER：其他
+         */
+        /**
+         * zhongbao：
+         * ThirdWarehouseOperationDescriptionEnum
+         */
+        private String warehouseOperationType;
+        /**
+         * 仓库操作描述
+         * 指令描述，例如需开箱换标，请填写：开箱换标，更换标签为：xx
+         * 取发货通知仓库操作描述
+         */
+        private String operationDesc;
+
+        public static List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> convert(String warehouseOperationType, String operationDesc){
+            if(StringUtils.isBlank(warehouseOperationType)){
+                return new ArrayList<>();
+            }
+            List<String> splitWarehouseOperationType =  Arrays.asList(warehouseOperationType.split(","));
+            List<String> splitOperationDesc =  Arrays.asList(operationDesc.split(","));
+            List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> list = new ArrayList<>();
+            for (int i = 0; i < splitWarehouseOperationType.size(); i++) {
+                String type = splitWarehouseOperationType.get(i);
+                String desc = splitOperationDesc.size()<= i ? "" : splitOperationDesc.get(i);
+                list.add(new ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO(type,desc));
+            }
+            return list;
+        }
+    }
 }

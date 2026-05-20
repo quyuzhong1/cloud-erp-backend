@@ -23,6 +23,7 @@
        <result column="role_type" property="roleType" />
        <result column="specific_person" property="specificPerson" />
        <result column="notice_method" property="noticeMethod" />
+       <result column="apply_scope" property="applyScope" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -36,7 +37,7 @@
         update_time,
         version,
         is_deleted,
-        business_type, notice_node, method, notice_status, title, notice_type, url, cron, role_type, specific_person, notice_method
+        business_type, notice_node, method, notice_status, title, notice_type, url, cron, role_type, specific_person, notice_method,apply_scope
     </sql>
     <select id="tabList" resultType="com.erp.model.sys.dto.CfgThirdNoticeDTO$TabListDTO">
         SELECT
@@ -72,6 +73,7 @@
         ctn.role_type as roleType,
         ctn.specific_person as specificPerson,
         ctn.notice_method as noticeMethod,
+        ctn.apply_scope as applyScope,
         ctn.post as post
         FROM
         cfg_third_notice AS ctn
@@ -98,6 +100,21 @@
 
     <select id="paging" resultType="com.erp.model.sys.dto.CfgThirdNoticeDTO$ListDTO">
         <include refid="paging_sql"></include>
+    </select>
+
+    <select id="dropDownByMoldMonitor" resultType="com.erp.model.sys.dto.CfgThirdNoticeDTO$DropDownDTO">
+        SELECT
+            DISTINCT
+            ctn.id ,
+            ctn.notice_status,
+            ctn.notice_type,
+            ctn.business_type
+        FROM
+            cfg_third_notice as ctn
+        where ctn.is_deleted = false
+          and ctn.business_type ='moldMonitor'
+          and ctn.method ='single'
+          and ctn.apply_scope like '%billLine%'
     </select>
 
 </mapper>

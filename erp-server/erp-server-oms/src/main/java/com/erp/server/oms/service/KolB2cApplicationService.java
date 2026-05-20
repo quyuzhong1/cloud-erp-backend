@@ -1,17 +1,18 @@
 package com.erp.server.oms.service;
-import com.common.business.validator.ValidList;
-import com.common.core.controller.vo.ApiResult;
+
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.AddressParseDTO;
+import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
+import com.erp.model.oms.dto.KolB2cApplicationDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
 import com.erp.model.oms.entity.KolB2cApplicationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.KolB2cApplicationDTO;
-import com.common.business.vo.PagingVO;
+
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -41,6 +42,15 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     * @return
     */
     Boolean update(KolB2cApplicationDTO.UpdateDTO dto);
+
+    /**
+     * 更新明细备注
+     * @param id 主表id
+     * @param detailId 明细id
+     * @param remark 明细备注
+     * @return 是否成功
+     */
+    Boolean updateDetailRemark(String id, String detailId, String remark);
 
     /**
     * 分页列表查询
@@ -135,13 +145,39 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     BatchResultDTO invalid(String id, String remark);
 
     /**
-    * 撤销
-    * @author jack
+     * 业务取消
+     * @param id 主键
+     * @return 结果
+     */
+    BatchResultDTO cancel(String id);
+
+    /**
+     * 根据拆分单回传刷新取消状态
+     * @param mainId 主单id
+     * @param failReason 取消失败原因
+     */
+    void refreshCancelStatusBySubOrder(String mainId, String failReason);
+
+    /**
+     * Handle domestic cancel success callback after DMP push success.
+     * @param dto callback payload
+     */
+    void handleDomesticCancelPushSuccess(KolB2cApplicationCancelCallbackDTO dto);
+
+    /**
+     * Handle domestic cancel fail callback after DMP push fail.
+     * @param dto callback payload
+     */
+    void handleDomesticCancelPushFail(KolB2cApplicationCancelCallbackDTO dto);
+
+    /**
+     * 撤销
+     * @author jack
     * @date: 2025-12-04
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
@@ -170,4 +206,6 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     void importKolB2cApplication(BaseDTO.ImportDTO dto);
 
     List<KolB2cApplicationImportExcelDTO> handleImportSuccessList(List<KolB2cApplicationImportExcelDTO> successList, List<KolB2cApplicationImportExcelDTO> errorList, List<KolB2cApplicationDetailImportExcelDTO> detailSuccessList, List<KolB2cApplicationAddressImportExcelDTO> addressSuccessList , String importType);
+
+    AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto);
 }

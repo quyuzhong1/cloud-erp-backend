@@ -1,11 +1,16 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +18,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -111,16 +117,9 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String virtualWarehouseId;
 
         /**
-        * 仓库操作类型
-         * WarehouseOperationTypeEnum
-        */
-        private String warehouseOperationType;
-        private String warehouseOperationTypeName;
-
-        /**
-        * 仓库操作描述
-        */
-        private String operationDesc;
+         * 仓库操作类型
+         */
+        private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
 
         /**
         * 备注
@@ -189,11 +188,29 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 详细地址
          */
         private String receiveAddress;
+        /**
+         * 地址2
+         */
+        private String address2;
 
+        /**
+         * 地址3
+         */
+        private String address3;
         /**
         * 是否API发货
         */
         private Boolean isApiDelivery;
+
+        /**
+         * 三方仓编码
+         */
+        private String thirdWarehouseCode;
+
+        /**
+         * 异常原因
+         */
+        private String errorMessage;
         /**
          * 产品明细
          */
@@ -312,20 +329,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
 
         private String virtualWarehouseId;
 
-        /**
-        * 仓库操作类型
-        */
-        @NotBlank(message = "仓库操作类型不能为空")
-        @Size(max = 50,message = "仓库操作类型最大长度不能超过50位")
-        private String warehouseOperationType;
-
-        /**
-        * 仓库操作描述
-        */
-        @NotBlank(message = "仓库操作描述不能为空")
-        @Size(max = 255,message = "仓库操作描述最大长度不能超过255位")
-        private String operationDesc;
-
+        private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
         /**
         * 备注
         */
@@ -402,6 +406,15 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 详细地址
          */
         private String receiveAddress;
+        /**
+         * 地址2
+         */
+        private String address2;
+
+        /**
+         * 地址3
+         */
+        private String address3;
         private String customerId;
         private String customerName;
 
@@ -538,9 +551,6 @@ public class B2bThirdDeliveryDTO implements Serializable {
          */
         private Boolean isApiDelivery;
         /**
-         * 产品明细
-         */
-        /**
          * 明细id
          */
         private String  detailId;
@@ -605,6 +615,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     /**
@@ -625,14 +639,22 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
     }
 
     @Data
     @NoArgsConstructor
-    public static class ViewQueryDTO {
+    public static class ViewQueryDTO extends BaseIdDTO {
         /**
          * 订单id
          */
@@ -645,5 +667,124 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 销售订单明细id
          */
         private List<String> soDetailIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WarehouseOperationTypeDTO {
+
+        private String warehouseOperationType;
+
+        private String warehouseOperationTypeName;
+
+        private String operationDesc;
+
+        public static WarehouseOperationTypeDTO getDefault(){
+            return new WarehouseOperationTypeDTO(WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getCode(),WarehouseOperationTypeEnum.NO_OPEN_RELABLE.getName(),"");
+        }
+
+        public static List<WarehouseOperationTypeDTO> convert(String warehouseOperationType,String operationDesc){
+            if(StringUtils.isBlank(warehouseOperationType)){
+                return new ArrayList<>();
+            }
+            List<String> splitWarehouseOperationType =  Arrays.asList(warehouseOperationType.split(","));
+            List<String> splitOperationDesc =  Arrays.asList(operationDesc.split(","));
+            List<WarehouseOperationTypeDTO> list = new ArrayList<>();
+            for (int i = 0; i < splitWarehouseOperationType.size(); i++) {
+                String type = splitWarehouseOperationType.get(i);
+                String name = WarehouseOperationTypeEnum.getName(type);
+                String desc = splitOperationDesc.size()<= i ? "" : splitOperationDesc.get(i);
+                list.add(new WarehouseOperationTypeDTO(type,name,desc));
+            }
+            return list;
+        }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ThirdWarehousePlatformDTO{
+
+        /**
+         * 三方仓平台编码
+         */
+        @NotBlank(message = "三方仓编码不能为空")
+        private String thirdWarehouse;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OtherWarehouseOperationDescriptionDTO{
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 三方仓平台编码
+         */
+        private String thirdWarehouse;
+
+        /**
+         * 三方仓平台名称
+         */
+        private String thirdWarehouseName;
+
+        /**
+         * 操作类型
+         */
+        private String operationType;
+
+        /**
+         * 操作类型名称
+         */
+        private String operationTypeName;
+
+        /**
+         * 输入类型:下拉框,输入框
+         */
+        private String inputType;
+
+        /**
+         * 下拉框值列表
+         */
+        private List<InputValueDTO> inputValueList;
+
+        /**
+         * 三方仓平台名称
+         */
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InputValueDTO{
+
+        /**
+         * 输入值名称
+         */
+        private String name;
+
+        /**
+         * 输入值
+         */
+        private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConvertDTO{
+
+        private String platformOrderCode;
+
+        private String trackNo;
+
+        private LocalDateTime deliveryTime;
     }
 }

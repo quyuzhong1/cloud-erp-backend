@@ -95,8 +95,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
-    public static final String TABLE_BUSINESS_KEY = "TABLE_BUSINESS_KEY";
-
     @Override
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
@@ -104,7 +102,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             return;
         }
         // 建议：增加debug日志
-        log.info("接收到MQ消息内容: {}", jsonStr);
+        log.info("通知配置消费者：接收到MQ消息内容: {}", jsonStr);
 
         Gson gson = new Gson();
         List<Map<String, Map<String, Object>>> list = new ArrayList<>();
@@ -120,25 +118,25 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                 list.add(jsonMap);
             }
         } catch (Exception e) {
-            log.error("MQ消息JSON解析异常: {}", jsonStr, e);
+            log.error("通知配置消费者：MQ消息JSON解析异常: {}", jsonStr, e);
             return;
         }
 
         for (Map<String, Map<String, Object>> jsonMap : list) {
             if (Objects.isNull(jsonMap)) {
-                log.error("解析后的jsonMap为null");
+                log.error("通知配置消费者：解析后的jsonMap为null");
                 continue;
             }
             Map<String, Object> before = jsonMap.getOrDefault("before", null);
             Map<String, Object> after = jsonMap.getOrDefault("after", null);
             if (Objects.isNull(after)) {
-                log.error("解析后的after为null");
+                log.error("通知配置消费者：解析后的after为null");
                 continue;
             }
             //获取变动字段
             List<String> diffFields = JsonFieldDiffUtil.compare(before, after);
             if (CollUtil.isEmpty(diffFields)) {
-                log.error("解析后的diffFields为null");
+                log.error("通知配置消费者：解析后的diffFields为null");
                 continue;
             }
             //转驼峰

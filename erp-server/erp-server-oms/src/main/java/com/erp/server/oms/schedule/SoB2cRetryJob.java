@@ -11,8 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.oms.dto.RuleLogisticsDTO;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
@@ -23,7 +22,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
-import com.xxl.job.core.context.XxlJobContext;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +71,7 @@ public class SoB2cRetryJob {
      **/
     @XxlJob("SoB2cRetryJob")
     public ReturnT<String> soB2cRetryJob() {
-        String redisKey =  CharSequenceUtil.format(RedisKeyConstant.SOB2C_RETRY_JOB, namespace+XxlJobHelper.getJobParam());
+        String redisKey =  CharSequenceUtil.format(RedisCacheConstants.SOB2C_RETRY_JOB, namespace+XxlJobHelper.getJobParam());
         Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 600, TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(setSignResult)) {
             XxlJobHelper.log("SoB2cRetryJob 执行中,当前跳过");
@@ -165,8 +163,12 @@ public class SoB2cRetryJob {
                             soB2cErrorService.updateById(soB2cErrorEntity);
                             continue;
                         };
+                        String newType = type;
+                        if(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode().equals(type) && soB2cErrorEntity.getMessage().contains("未获取面单")){
+                            newType = SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode();
+                        }
 
-                        List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId(),type);
+                        List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId(),newType);
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException e) {
@@ -191,6 +193,10 @@ public class SoB2cRetryJob {
                                 soB2cErrorEntity.getMainId(),
                                 ExceptionUtil.stacktraceToString(e)
                         );
+                        // 重试达到最大次数仍失败时，记录到操作日志
+                        if (soB2cErrorEntity.getRetryCount() + 1 > maxRetryCount) {
+                            operateLogService.addModuleOperateLog("系统有重试，超过了最大次数，异常类型：" + SoB2cErrorTypeEnum.getName(soB2cErrorEntity.getType()), ModuleTypeEnum.SO_B2C.getCode(), soB2cErrorEntity.getMainId(), "重试失败");
+                        }
                         // 成功重新记录重试数量任务
                         boolean update = soB2cErrorService.lambdaUpdate()
                                 .set(SoB2cErrorEntity::getRetryCount, soB2cErrorEntity.getRetryCount() + 1)

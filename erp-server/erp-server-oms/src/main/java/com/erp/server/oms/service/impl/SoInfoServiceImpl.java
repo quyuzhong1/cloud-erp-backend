@@ -43,7 +43,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
@@ -415,10 +415,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return;
         }
         CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
-        if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) ){
-            String country = customerInfo.getCountryId();
-
-            addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+        if (Objects.nonNull(customerInfo)) {
+            // 优先使用 CustomerInfo 中的 partitionId
+            if (StringUtils.isNotBlank(customerInfo.getPartitionId())) {
+                addEntity.setPartitionId(customerInfo.getPartitionId());
+                return;
+            }
+            // 若 partitionId 不存在，则按原逻辑通过 countryId 获取分区 ID
+            if (StringUtils.isNotBlank(customerInfo.getCountryId())) {
+                String country = customerInfo.getCountryId();
+                addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+            }
         }
     }
 
@@ -460,7 +467,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2B_ORDER_KEY, keyName = "entity.id")
     public BatchResultDTO submit(SoInfoEntity entity,Boolean isNeedProcess, boolean isFromDht) {
         if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
@@ -682,13 +689,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public SoInfoDTO.ViewDTO view(String id) {
-        SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.SO_NOT_FOUND);
         }
-
-        BeanMapper.copy(soInfo, view);
+        SoInfoDTO.ViewDTO view = SoInfoConverter.INSTANCE.entityToViewDTO(soInfo);
         String customerId = soInfo.getCustomerId();
         String customerName = "";
         if (StringUtils.isNotBlank(customerId)) {
@@ -700,9 +705,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isNotBlank(customerId)) {
 
             CustomerAddressEntity customerAddressEntity = customerAddressService.getById(addressId);
-
-            String countryId = customerAddressEntity.getCountryId();
-            view.setCountryId(countryId);
+            if(Objects.nonNull(customerAddressEntity)){
+                String countryId = customerAddressEntity.getCountryId();
+                view.setCountryId(countryId);
+            }
             // 国家
             List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
             //国家
@@ -1894,7 +1900,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-17 16:51
@@ -1902,7 +1908,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -1912,6 +1919,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -2290,14 +2298,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public void exportSoContractPdf(String id,HttpServletResponse response) {
+    public SysCommonDTO.AttachmentDTO exportSoContractPdf(String id) {
+        SysCommonDTO.AttachmentDTO attachmentDTO = new SysCommonDTO.AttachmentDTO();
         //销售合同订单
         SoInfoDTO.ExportPdfDTO result = listSoContractPdf(id);
         if (ObjectUtil.isEmpty(result)) {
             throw new ServiceException("未发现销售合同订单数据");
         }
-
-        List<String> base64List = new ArrayList<>();
+        attachmentDTO.setAttachName("销售合同模板"+result.getCode()+".pdf");
         FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
         getOneDTO.setName(FileTemplateConstant.SO_CONTRACT_PDF);
         getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
@@ -2307,17 +2315,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
         if (inputStream == null) {
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
-            return;
+            throw new ServiceException("获取模板文件失败");
         }
         Map<String, Object> map = BeanUtil.beanToMap(result);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
         map.put("detail", detail);
-        //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
-
-        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
-        String base = Base64.getEncoder().encodeToString(bytes);
-        base64List.add("data:application/pdf;base64," + base);
-        PdfUtil.exportBase64ForPdf(response,base64List);
+        String url = JasperHelperUtil.exportToPdfUrl(inputStream, map, Collections.singletonList(result));
+        attachmentDTO.setAttachUrl(url);
+        return attachmentDTO;
     }
 
     @Override
@@ -2514,6 +2519,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
+        List<String> sodIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getDetailId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
@@ -2525,6 +2532,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(view.getDeliveryQty()>0){
                 resultList.add(view);
             }
+
+            //发货通知数量
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)) {
+                Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(view.getDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                effectiveNoticeQty = effectiveNoticeQty * view.getPerBoxQty();
+                view.setEffectiveNoticeQty(effectiveNoticeQty);
+            }
+
         }
         if(CollectionUtils.isEmpty(resultList)){
             throw new ServiceException("没有待发货明细");
@@ -3741,6 +3757,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
+    public SoInfoEntity getByCode(String soCode) {
+        return  this.lambdaQuery().eq(SoInfoEntity::getCode, soCode).one();
+    }
+
+    @Override
     public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
         this.updateApproveStatus(Collections.singletonList(updateApprovalStatusDTO.getSoInfoEntity()),  updateApprovalStatusDTO.getBillApproveStatusEnum(), updateApprovalStatusDTO.getSoInfoEntity().getApproveUserName());
     }
@@ -3780,7 +3801,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
                 //如果是审核中，撤销审核
                 if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                    this.cancelProcess(Arrays.asList(exist.getId()));
+                    this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(exist.getId())));
                 }
                 //如果是已审核，反审核
                 if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
@@ -3802,7 +3823,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             //如果是审核中，撤销审核
             if(BillApproveStatusEnum.APPROVE_ING.equals(exist.getApproveStatus())){
-                this.cancelProcess(Arrays.asList(exist.getId()));
+                this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Arrays.asList(exist.getId())));
             }
             //如果是已审核，反审核
             if(BillApproveStatusEnum.APPROVE.equals(exist.getApproveStatus())){
@@ -3868,6 +3889,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setCurrency(dto.getCurrency());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
@@ -3950,11 +3973,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 detailDTO.setIsGift(platformB2bOrderDetailDTO.getIsGift());
                 detailDTO.setPlatformDetailId(platformB2bOrderDetailDTO.getPlatformDetailId());
                 detailDTO.setCurrency(dto.getCurrency());
+                detailDTO.setCustomerPO(platformB2bOrderDetailDTO.getCustomerPO());
                 detailDTO.setIsReissue(false);
                 detailDTO.setCustomerSkuNo(platformB2bOrderDetailDTO.getCustomerSkuNo());
                 detailDTO.setPrice(platformB2bOrderDetailDTO.getPrice());
                 detailDTO.setTaxPrice(platformB2bOrderDetailDTO.getTaxPrice());
                 detailDTO.setTaxRate(platformB2bOrderDetailDTO.getTaxRate());
+                detailDTO.setToCountry(platformB2bOrderDetailDTO.getToCountry());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -4182,6 +4207,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Collections.singletonList(warehouseId));
         String  providerCode = CollUtil.isNotEmpty(viewDTOS) ? viewDTOS.get(0).getProviderCode() : "";
+        String  providerId = CollUtil.isNotEmpty(viewDTOS) ? viewDTOS.get(0).getMainId() : "";
         List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(dto.getSoDetailIds());
         //根据销售订单查询三方仓发货明细
         List<B2bThirdDeliveryDetailEntity> b2bThirdDeliveryDetailEntityList = b2bThirdDeliveryFeign.listBySoDetailIds(dto.getSoDetailIds());
@@ -4206,9 +4232,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> deliverySkuIds = soDetailEntityList.stream().map(SoDetailEntity::getDeliverySkuId).distinct().collect(Collectors.toList());
         //库存sku映射查询
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        if (CharSequenceUtil.isNotBlank(providerCode)){
+        if ( CharSequenceUtil.isNotBlank(providerId)){
+            paramDTO.setAuthId(providerId);
+        }else if ( CharSequenceUtil.isNotBlank(providerCode)){
             paramDTO.setPlatform(providerCode);
-        }else if (CharSequenceUtil.isNotBlank(warehouseId)){
+        }else if ( CharSequenceUtil.isNotBlank(warehouseId)){
             paramDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
         }
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
@@ -4216,6 +4244,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         paramDTO.setIsExpire(Boolean.FALSE);
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
         B2bThirdDeliveryDTO.ViewDTO viewDTO = SoInfoConverter.INSTANCE.toB2bThirdDeliveryViewDTO(soInfoEntity,soDetailEntityList);
+        List<B2bThirdDeliveryDTO.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = Arrays.asList(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO.getDefault());
+        viewDTO.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         if (CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseName())){
             viewDTO.setDeliveryWarehouseName(updateDTOList.get(0).getName());
         }
@@ -4224,8 +4254,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             viewDTO.setCustomerName(Objects.nonNull(customerInfo) ? customerInfo.getName() : "");
         }
         if (CharSequenceUtil.isNotBlank(soInfoEntity.getReceiveAddressId()) && CharSequenceUtil.isBlank(viewDTO.getReceiveAddress())){
-            CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+            CustomerAddressDTO.ViewDTO customerAddressEntity = customerAddressService.getCustomerAddressById(soInfoEntity.getReceiveAddressId());
             viewDTO.setReceiveAddress(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress() : "");
+            viewDTO.setAddress2(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress2() : "");
+            viewDTO.setAddress3(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getAddress3() : "");
             viewDTO.setCountryId(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryId() : "");
             viewDTO.setCountryName(Objects.nonNull(customerAddressEntity) ? customerAddressEntity.getCountryName() : "");
         }
@@ -4245,6 +4277,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 e.setWarehousePlatformSku(p.getPlatformSkuNo());
             });
         });
+        OverseasProviderEntity overseasProvider = overseasProviderFeign.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+        if (Objects.nonNull(overseasProvider)) {
+            viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+            if (Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),overseasProvider.getCode())) {
+                viewDTO.setWarehouseOperationTypeDTOList(new ArrayList<>());
+            }
+        }
+
+        viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());
         return viewDTO;
     }
 

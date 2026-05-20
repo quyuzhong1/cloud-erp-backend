@@ -167,6 +167,49 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("tel_number")
     private String telNumber;
 
+    /**
+     * 发货单id
+     */
+    @TableField("so_delivery_id")
+    private String soDeliveryId;
+
+    /**
+     * 发货单号
+     */
+    @TableField("so_delivery_code")
+    private String soDeliveryCode;
+
+
+    /**
+     * 是否分摊费用
+     */
+    @TableField("is_allocate_cost_required")
+    private Boolean isAllocateCostRequired;
+
+    /**
+     * 不分摊费用原因
+     */
+    @TableField("not_allocate_cost_remark")
+    private String notAllocateCostRemark;
+
+    /**
+     * 是否分摊重量
+     */
+    @TableField("is_allocate_weight_required")
+    private Boolean isAllocateWeightRequired;
+
+    /**
+     * 不分摊重量原因
+     */
+    @TableField("not_allocate_weight_remark")
+    private String notAllocateWeightRemark;
+
+    /**
+     * 销售部门id
+     */
+    @TableField(exist = false)
+    private String salesDeptId;
+
     public static final String SALES_PLATFORM = "sales_platform";
 
     public static final String SHOP_ID = "shop_id";

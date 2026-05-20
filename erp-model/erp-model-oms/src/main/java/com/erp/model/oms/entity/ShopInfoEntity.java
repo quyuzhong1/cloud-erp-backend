@@ -251,16 +251,38 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
     private String accessToken;
 
     /**
+     * 是否有仓库权限
+     */
+    @TableField(exist = false)
+    private Boolean hasWarehouseAuth;
+
+    /**
      * 时区
      */
     @TableField("time_zone")
     private String timeZone = "";
+    /**
+     * AWD仓库id
+     */
+    @TableField("awd_warehouse_id")
+    private String awdWarehouseId;
+    /**
+     * AWD仓库名称
+     */
+    @TableField("awd_warehouse_name")
+    private String awdWarehouseName;
 
     /**
      * 订单路由类型
      */
     @TableField("order_route_type")
     private String orderRouteType;
+
+    /**
+     * 退货时间对应时区
+     */
+    @TableField("return_time_zone")
+    private String returnTimeZone;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

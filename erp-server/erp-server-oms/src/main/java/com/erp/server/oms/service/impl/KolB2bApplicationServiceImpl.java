@@ -12,6 +12,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -35,10 +37,7 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2bApplicationImportExcelDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
-import com.erp.model.oms.enums.KolB2bRefStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -119,6 +118,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     private KolB2bApplicationQueryHandler kolB2bApplicationQueryHandler;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private CustomerAddressService customerAddressService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -167,6 +170,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(old.getInvalidStatus())) {
+            throw new ServiceException(ApiError.BILL_VOID_EDIT_FORBIDDEN);
+        }
+
         KolB2bApplicationEntity kolB2bApplicationEntity =  BeanMapperUtils.map(KolB2bApplicationEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -184,6 +191,44 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "B2B寄样申请主单");
         operateLogService.addModuleOperateLogByObj(old, kolB2bApplicationEntity, ModuleTypeEnum.KOL_B2B_APPLICATION.getCode(), kolB2bApplicationEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateDetailRemark(String id, String detailId, String remark) {
+        KolB2bApplicationEntity entity = super.getById(id);
+        entity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "B2B寄样申请主单"));
+
+        KolB2bApplicationDetailEntity detailEntity = kolB2bApplicationDetailService.lambdaQuery()
+                .eq(KolB2bApplicationDetailEntity::getId, detailId)
+                .eq(KolB2bApplicationDetailEntity::getMainId, id)
+                .one();
+        detailEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException("B2B寄样申请明细不存在"));
+
+        String newRemark = StrUtil.nullToEmpty(remark);
+        if (Objects.equals(detailEntity.getRemark(), newRemark)) {
+            return Boolean.TRUE;
+        }
+
+        KolB2bApplicationDetailEntity oldDetail = BeanMapperUtils.map(KolB2bApplicationDetailEntity.class, detailEntity);
+        detailEntity.setRemark(newRemark);
+        boolean update = kolB2bApplicationDetailService.updateById(detailEntity);
+        if (!update) {
+            throw new ServiceException("B2B寄样申请明细备注更新失败");
+        }
+
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的明细【{}】备注，由[{}]变更为[{}]",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                StrUtil.blankToDefault(detailEntity.getSkuNo(), detailId),
+                formatOperateLogValue(oldDetail.getRemark()),
+                formatOperateLogValue(newRemark));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2B_APPLICATION.getCode(), id, "编辑信息");
+        return Boolean.TRUE;
+    }
+
+    private String formatOperateLogValue(String value) {
+        return StringUtils.isBlank(value) ? "空值" : value;
     }
 
 
@@ -239,8 +284,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2B寄样申请主单数据");
         }
-        if (entity.getInvalidStatus()) {
-            throw new ServiceException("已作废的B2B-KOL寄样申请单不支持提交操作");
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_SUBMIT);
         }
 
         validateSubmit(entity);
@@ -313,7 +358,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -378,6 +423,10 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
+        if (InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.BILL_VOIDED_CANNOT_DELETE);
+        }
+
         // 删除主单数据
         log.info("删除 开始删除B2B寄样申请主单主单数据，id：【{}】", id);
         super.removeById(id);
@@ -422,7 +471,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         KolB2bApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2B寄样申请主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -441,6 +491,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -619,7 +670,8 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
             SoInfoDTO.AddDTO addDTO = new SoInfoDTO.AddDTO();
             BeanUtil.copyProperties(mainEntity,addDTO);
             addDTO.setId(null);
-            addDTO.setOrderType(BillTypeEnum.B2B.getCode());
+            addDTO.setOrderType(BillTypeEnum.AFTER_SALES.getCode());
+            addDTO.setTransactionSubType(OrderSubTypeEnum.INFLUENCER_SAMPLE.getCode());
             LocalDate now = LocalDate.now();
             addDTO.setBillDate(now);
             addDTO.setRequireDate(now);
@@ -786,7 +838,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 KolB2bApplicationDetailDTO.AddDTO detailDTO = new KolB2bApplicationDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailInfo, detailDTO);
                 detailDTO.setSkuId(skuId);
-                detailDTO.setPlanFeedbackDate(LocalDateUtil.stringToLocalDateTime(detailInfo.getPlanFeedbackDateStr()).toLocalDate());
+                detailDTO.setPlanFeedbackDate(CharSequenceUtil.isBlank(detailInfo.getPlanFeedbackDateStr()) ? null : LocalDateUtil.stringToLocalDateTime(detailInfo.getPlanFeedbackDateStr()).toLocalDate());
                 detailList.add(detailDTO);
             }
             addDTO.setDetailList(detailList);
@@ -824,11 +876,53 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         startDTO.setBusinessKey(SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(KolB2bApplicationEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<KolB2bApplicationDetailEntity> detailList = kolB2bApplicationDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+
+        //客户名称
+        CustomerInfoEntity customerInfo = customerInfoService.getById(entity.getCustomerId());
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+            variablesMap.put("customerName", customerInfo.getName());
+        }
+
+        //部门名称
+        List<SysDepartmentEntity> sysDepartmentList = sysUserFeign.listDeptByIds(Collections.singletonList(entity.getApplyDeptId()));
+        if (CollUtil.isNotEmpty(sysDepartmentList)) {
+            variablesMap.put("applyDeptName", sysDepartmentList.get(0).getName());
+        }
+        //申请人名称
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getApplyUserId());
+        if (ObjectUtil.isNotEmpty(findUserDTO)) {
+            variablesMap.put("applyUserName", findUserDTO.getUserName());
+        }
+        //收货地址名称
+        CustomerAddressEntity addressEntity = customerAddressService.getById(entity.getReceiveAddressId());
+        if (ObjectUtil.isNotEmpty(addressEntity)) {
+            variablesMap.put("receiveAddressName",addressEntity.getAddress());
+        }
+        //地址类型名称
+        variablesMap.put("addressTypeName", CustomerAddressTypeEnum.getName(entity.getAddressType()));
+
+        return variablesMap;
     }
 
     /**
@@ -895,6 +989,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 throw new ServiceException(ApiError.PRODUCT_INFO_NOT_FOUND);
             }
             viewDTO.setProductName(skuVO.getSkuName());
+            viewDTO.setSpuNo(skuVO.getSpuNo());
             viewDTO.setBrandName(skuVO.getBrandName());
         }
         data.setDetailList(detailDTOList);
@@ -948,6 +1043,20 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.KOL_B2B_APPLICATION.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(), listApiResult.getMsg()));
+            }
+        }
+
         //产品信息
         List<String> skuIdList = list.stream().map(KolB2bApplicationDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
@@ -1017,6 +1126,21 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
                 data.setDeliveryStatusName(DeliveryStatusEnum.getName(soDetailEntity.getDeliveryStatus()));
             }
             data.setB2bRefStatusName(b2bRefStatusName);
+
+            //最新审核人：先判断流程中的审核人是否存在，如果存在则使用流程中的，否则保持数据库原值
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = listApiResult.getData().stream()
+                        .filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(curApproveList)) {
+                    String curApproveName = curApproveList.stream()
+                            .map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName)
+                            .collect(Collectors.joining(","));
+                    if (StringUtils.isNotBlank(curApproveName)) {
+                        data.setApproveUserName(curApproveName);
+                    }
+                }
+            }
 
             //回片信息
             KolFeedbackDTO.FeedbackQtyDTO feedbackQtyDTO = feedbackQtyMap.get(data.getDetailId());

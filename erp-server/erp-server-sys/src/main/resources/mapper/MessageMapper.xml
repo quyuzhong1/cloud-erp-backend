@@ -14,8 +14,9 @@
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
         <result column="type" property="type" />
-        <result column="data_json" property="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="data_json" property="dataJson" />
         <result column="remark" property="remark" />
+        <result column="is_read" property="isRead" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,6 +33,25 @@
         code, approve_status, type, data_json, remark
     </sql>
 
+    <!-- 系统通知(sys)未读统计/列表：按 param.application 过滤；未传参时兼容原逻辑 PDA+PC -->
+    <sql id="Message_Unread_Sys_Application_Clause">
+        <choose>
+            <when test="param.application != null and param.application.size &gt; 0">
+                AND m.application IN
+                <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                    #{app}
+                </foreach>
+            </when>
+            <otherwise>
+                AND m.application IN ('PDA', 'PC')
+            </otherwise>
+        </choose>
+    </sql>
+
+    <select id="getDatabaseNow" resultType="java.time.LocalDateTime">
+        SELECT LOCALTIMESTAMP
+    </select>
+
     <select id="listByNotReadMessage" resultType="com.erp.model.sys.entity.MessageEntity">
         SELECT
             m.id,
@@ -44,24 +64,34 @@
             m.version,
             m.is_deleted,
             m.type,
-            m.data_json,
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS data_json,
             m.remark
         FROM message m
-        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{param.userId}
         WHERE M.is_deleted = FALSE
-        AND mur.is_read = FALSE
-        <if test="param.userId != null and param.userId != ''">
-            AND mur.user_id = #{param.userId}
-        </if>
         <if test="param.type != null and param.type != ''">
             AND m.type = #{param.type}
         </if>
-        <if test="param.application != null and param.application.size > 0">
-            AND m.application IN
-            <foreach collection="param.application" item="app" open="(" close=")" separator=",">
-                #{app}
-            </foreach>
-        </if>
+        AND COALESCE(mur.is_read, FALSE) = FALSE
+        AND (
+            (m.type = 'sys'
+            <include refid="Message_Unread_Sys_Application_Clause"/>)
+            OR (
+                m.type != 'sys'
+                AND mur.user_id IS NOT NULL
+                <if test="param.application != null and param.application.size > 0">
+                    AND m.application IN
+                    <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                        #{app}
+                    </foreach>
+                </if>
+            )
+        )
+        AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
+        AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
     </select>
 
     <select id="list" resultMap="BaseResultMap">
@@ -76,23 +106,268 @@
             m.version,
             m.is_deleted,
             m.type,
-            m.data_json,
-            m.remark
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS data_json,
+            m.remark,
+            mur.is_read
         FROM message m
-        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{param.userId}
         WHERE m.is_deleted = FALSE
-        <if test="param.userId != null and param.userId != ''">
-            AND mur.user_id = #{param.userId}
-        </if>
         <if test="param.type != null and param.type != ''">
             AND m.type = #{param.type}
         </if>
-        <if test="param.application != null and param.application.size > 0">
-            AND m.application IN
-            <foreach collection="param.application" item="app" open="(" close=")" separator=",">
-                #{app}
-            </foreach>
+        AND COALESCE(mur.is_read, FALSE) = FALSE
+        AND (
+            (m.type = 'sys'
+            <include refid="Message_Unread_Sys_Application_Clause"/>)
+            OR (
+                m.type != 'sys'
+                AND mur.user_id IS NOT NULL
+                <if test="param.application != null and param.application.size > 0">
+                    AND m.application IN
+                    <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                        #{app}
+                    </foreach>
+                </if>
+            )
+        )
+        AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
+        AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
+        ORDER BY m.create_time DESC limit #{param.pageSize} offset #{param.offSet}
+    </select>
+    
+    <select id="listNotReadMessageNum" resultType="com.erp.model.sys.dto.MessageDTO$NotReadMessageNum">
+        SELECT m."type",count(*) count,max(m.create_time) latestTime FROM message m 
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{param.userId}
+        WHERE m.is_deleted = FALSE 
+        <if test="param.type != null and param.type != ''">
+            AND m.type = #{param.type}
+        </if>
+        AND COALESCE(mur.is_read, FALSE) = FALSE
+        AND (
+            (m.type = 'sys'
+            <include refid="Message_Unread_Sys_Application_Clause"/>)
+            OR (
+                m.type != 'sys'
+                AND mur.user_id IS NOT NULL
+                <if test="param.application != null and param.application.size > 0">
+                    AND m.application IN
+                    <foreach collection="param.application" item="app" open="(" close=")" separator=",">
+                        #{app}
+                    </foreach>
+                </if>
+            )
+        )
+        AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
+        AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
+        GROUP BY m."type"
+    </select>
+
+    <select id="getPcSysMessageUnreadCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM message m
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{userId}
+        WHERE m.is_deleted = FALSE
+          AND m.application = 'PC'
+          AND m.type = 'sys'
+          AND COALESCE(mur.is_read, FALSE) = FALSE
+    </select>
+
+    <select id="getLatestUnreadNotice" resultType="com.erp.model.sys.dto.MessageDTO$NoticeDTO">
+        SELECT
+            m.id,
+            '1' AS releaseType,
+            m.type AS messageType,
+            m.application AS application,
+            m.notice_title AS noticeTitle,
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS content,
+            m.notice_time AS noticeTime,
+            m.expire_time AS expireTime
+        FROM message m
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{userId}
+        WHERE m.is_deleted = FALSE
+          AND COALESCE(mur.is_read, FALSE) = FALSE
+          AND m.type = 'sys'
+          AND m.application IN ('PDA', 'PC')
+          AND (m.notice_time IS NULL OR m.notice_time <![CDATA[ <= ]]> NOW())
+          AND (m.expire_time IS NULL OR m.expire_time <![CDATA[ >= ]]> NOW())
+        ORDER BY COALESCE(m.notice_time, m.create_time) DESC, m.create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="getLatestUnreadNoticeByApplication" resultType="com.erp.model.sys.dto.MessageDTO$NoticeDTO">
+        SELECT
+            m.id,
+            '1' AS releaseType,
+            m.type AS messageType,
+            m.application AS application,
+            m.notice_title AS noticeTitle,
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS content,
+            m.notice_time AS noticeTime,
+            m.expire_time AS expireTime
+        FROM (
+            SELECT
+                id,
+                type,
+                application,
+                notice_title,
+                data_json,
+                remark,
+                notice_time,
+                expire_time,
+                create_time
+            FROM message
+            WHERE is_deleted = FALSE
+              AND type = 'sys'
+              AND application = #{application}
+              AND (notice_time IS NULL OR notice_time <![CDATA[ <= ]]> NOW())
+              AND (expire_time IS NULL OR expire_time <![CDATA[ >= ]]> NOW())
+            ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) m
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{userId}
+        WHERE COALESCE(mur.is_read, FALSE) = FALSE
+    </select>
+
+    <select id="getLatestUnreadUpgradeNoticeByApplication" resultType="com.erp.model.sys.dto.MessageDTO$NoticeDTO">
+        SELECT
+            m.id,
+            '0' AS releaseType,
+            m.type AS messageType,
+            m.application AS application,
+            COALESCE(NULLIF(m.notice_title, ''), 'PDA升级通知') AS noticeTitle,
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS content,
+            m.notice_time AS noticeTime,
+            m.expire_time AS expireTime
+        FROM (
+            SELECT
+                id,
+                type,
+                application,
+                notice_title,
+                data_json,
+                remark,
+                notice_time,
+                expire_time,
+                create_time
+            FROM message
+            WHERE is_deleted = FALSE
+              AND type = 'pda'
+              AND application = #{application}
+            ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) m
+        LEFT JOIN message_user_read mur
+            ON m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{userId}
+        WHERE COALESCE(mur.is_read, FALSE) = FALSE
+    </select>
+
+    <select id="pagingSysVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$ListDTO">
+        SELECT
+            m.id,
+            m.upgrade_version as upgradeVersion,
+            m.data_json as dataJson,
+            m.create_user_id as createUserId,
+            m.create_user_name as createUserName,
+            m.create_time as createTime,
+            m.expire_time as expireTime
+        FROM message m
+        WHERE
+        ${params.sqlMap.default}
+        and m.is_deleted = FALSE
+        AND (m.type = 'sysVersion' OR m.application = 'sysVersion')
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         ORDER BY m.create_time DESC
+    </select>
+
+    <select id="pagingHistoryMessage" resultType="com.erp.model.sys.dto.MessageDTO$ListHistoryMessageDTO">
+        SELECT
+            m.id,
+            m.notice_title,
+            m.type,
+            COALESCE(NULLIF(m.data_json, ''), m.remark, '') AS data_json,
+            TO_CHAR(m.create_time, 'YYYY-MM-DD HH24:MI:SS') AS noticeTime,
+            COALESCE(mur.is_read, FALSE) as isRead
+        FROM message m
+        LEFT JOIN message_user_read mur
+            on m.id = mur.message_id
+           AND mur.is_deleted = FALSE
+           AND mur.user_id = #{userId}
+        WHERE m.is_deleted = FALSE
+        AND m.application = 'PC'
+        AND m.type = 'sys'
+        <if test="params.id != null and params.id != ''">
+            AND m.id = #{params.id}
+        </if>
+        <if test="params.noticeTitle != null and params.noticeTitle != ''">
+            AND m.notice_title LIKE CONCAT('%', #{params.noticeTitle}, '%')
+        </if>
+        <if test="params.type != null and params.type != ''">
+            AND m.type = #{params.type}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <select id="pagingHistoryVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$ListHistoryVersionDTO">
+        SELECT
+            m.id,
+            m.upgrade_version as upgradeVersion,
+            m.data_json,
+            m.create_time as noticeTime,
+            COALESCE(mur.is_read, FALSE) as isRead
+        FROM message m
+        LEFT JOIN message_user_read mur on m.id = mur.message_id AND mur.is_deleted = FALSE AND mur.user_id = #{userId}
+        WHERE m.is_deleted = FALSE
+        AND (m.type = 'sysVersion' OR m.application = 'sysVersion')
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <select id="getLatestVersion" resultType="com.erp.model.sys.dto.SysVersionDTO$LatestVersionDTO">
+        SELECT
+            m.id,
+            m.upgrade_version as upgradeVersion,
+            m.data_json,
+            COALESCE(m.notice_time, m.create_time) as noticeTime
+        FROM (
+            SELECT
+                id,
+                upgrade_version,
+                data_json,
+                notice_time,
+                create_time
+            FROM message
+            WHERE is_deleted = FALSE
+              AND (type = 'sysVersion' OR application = 'sysVersion')
+            ORDER BY COALESCE(notice_time, create_time) DESC, create_time DESC
+            LIMIT 1
+        ) m
+        LEFT JOIN message_user_read mur ON mur.message_id = m.id
+        WHERE mur.user_id = #{userId}
+        AND mur.is_read = FALSE
+        AND mur.is_deleted = FALSE
     </select>
 </mapper>

@@ -11,6 +11,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -20,6 +21,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -30,12 +32,12 @@ import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ConfirmTypeEnum;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
+import com.erp.model.scm.enums.*;
+import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
+import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.*;
@@ -101,6 +103,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private PurchasePriceDetailService purchasePriceDetailService;
     @Resource
     private PurchasePriceService purchasePriceService;
+
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
 
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
@@ -345,6 +350,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 .map(obj -> new PurchasePriceDTO.PriceDTO(obj.getPurchaseQty(), obj.getSkuId(), supplierEntity.getSupplierId(),entity.getPurchaseOrgId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceList)) {
+            // 如果没有需要查询价格的非赠品项，直接处理赠品
+            for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
+                if (Boolean.TRUE.equals(addDTO.getIsGift())) {
+                    addDTO.setTaxPrice(BigDecimal.ZERO);
+                    addDTO.setTaxRate(BigDecimal.ZERO);
+                    addDTO.setCurrency("CNY");
+                    addDTO.setCurrencySymbol("¥");
+                    addDTO.setPurchaseAmount(BigDecimal.ZERO);
+                }
+            }
             return;
         }
         List<String> skuIdList = details.stream().map(PurchaseOrderDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -355,7 +370,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //根据sku查询是否是组合品
         List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = null;
-        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
+        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
+                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
             if (StrUtil.isBlank(entity.getSourceId())){
                 throw new ServiceException("委外订单id不能为空");
             }
@@ -383,27 +399,57 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<String> errorList = new ArrayList<>();
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
+            // 处理赠品
+            if (Boolean.TRUE.equals(addDTO.getIsGift())) {
+                // 赠品设置默认价格和税率
+                addDTO.setTaxPrice(BigDecimal.ZERO);
+                addDTO.setTaxRate(BigDecimal.ZERO);
+                addDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                addDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+                addDTO.setPurchaseAmount(BigDecimal.ZERO);
+                continue;
+            }
             //子件
             PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                     obj.getSkuId().equals(addDTO.getSkuId())
                             && obj.getSupplierId().equals(supplierEntity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
-            if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
+            if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
+                    || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
+                    || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
-                if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
+                if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
+                        && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
                     //sku是组合品时，取委外订单含税单价
-                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId()) && CharSequenceUtil.isBlank(e.getParentId()))
+                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream()
+                            .filter(e -> Objects.nonNull(e)
+                                    && StrUtil.isNotBlank(e.getSkuId())
+                                    && Objects.equals(e.getSkuId(), addDTO.getSkuId())
+                                    && Objects.equals(e.getId(), addDTO.getSourceDetailId())
+                                    && CharSequenceUtil.isBlank(e.getParentId()))
                             .findFirst().orElse(null);
                     if (Objects.isNull(subcontractOrderDetailEntity)){
                         throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
                     }else {
-                        BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getPrice()) ? subcontractOrderDetailEntity.getPrice():BigDecimal.ZERO;
-                        Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
-                        addDTO.setTaxPrice(subcontractOrderDetailEntity.getPrice());
-                        addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
-                        addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
-                        addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
-                        addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        SubcontractOrderEntity subcontractOrder = subcontractOrderService.getById(subcontractOrderDetailEntity.getMainId());
+                        if (Objects.equals(subcontractOrder.getType(), SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode())) {
+                            BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getRepairPrice()) ? subcontractOrderDetailEntity.getRepairPrice():BigDecimal.ZERO;
+                            Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getRepairQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
+                            addDTO.setTaxPrice(subcontractOrderDetailEntity.getRepairPrice());
+                            addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
+                            addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
+                            addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
+                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        } else {
+                            BigDecimal price = Objects.nonNull(subcontractOrderDetailEntity.getPrice()) ? subcontractOrderDetailEntity.getPrice():BigDecimal.ZERO;
+                            Integer qty = Objects.nonNull(subcontractOrderDetailEntity.getQty()) ? subcontractOrderDetailEntity.getRepairQty() : MathUtil.ZERO;
+                            addDTO.setTaxPrice(subcontractOrderDetailEntity.getPrice());
+                            addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
+                            addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
+                            addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
+                            addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
+                        }
+
                     }
                     //成品直接返回
                     continue;
@@ -415,7 +461,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setTaxRate(viewDTO.getTaxRate());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
                 } else {
-                    String purchasePriceError = CharSequenceUtil.format(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND.getMsg(), addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                    String purchasePriceError = MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, addDTO.getSkuNo(), addDTO.getPurchaseQty());
                     errorList.add(purchasePriceError);
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
@@ -772,6 +818,127 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             return Collections.emptyList();
         }
         return baseMapper.listAdjustPurchaseOrder(adjustParamList);
+    }
+
+    @Override
+    public List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplicationList = baseMapper.listPushQcApplication(dto);
+        //查询待入库数量
+        handlePushQcApplication(listPushQcApplicationList);
+        return listPushQcApplicationList;
+    }
+
+    @Override
+    public List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushSrmQcApplication(PurchaseOrderDetailDTO.ListPushQcApplicationParamDTO dto) {
+        List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplicationList = baseMapper.listPushSrmQcApplication(dto);
+        //查询待入库数量
+        handlePushSrmQcApplication(listPushQcApplicationList);
+        return listPushQcApplicationList;
+    }
+
+    private  void handlePushSrmQcApplication(List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> listPushQcApplicationList) {
+        if (CollUtil.isEmpty(listPushQcApplicationList)) {
+            return;
+        }
+        List<String> podIdList = listPushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
+        List<String> poIdList = listPushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPoId).distinct().collect(Collectors.toList());
+        //送货信息
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = srmDeliveryOrderFeign.listDetailDTOByDetailSourceIds(podIdList);
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(poIdList);
+        //入库信息
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
+        //退货信息
+        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+
+
+        for ( PurchaseOrderDetailDTO.ListPushQcApplicationDTO viewProductDTO : listPushQcApplicationList) {
+            //已送货数量
+            Integer deliveredQty = MathUtil.ZERO;
+            //有送货单的收货数量
+            Integer hasDeliveryReceiveQty = MathUtil.ZERO;
+            //无送货单收货数量
+            Integer unDeliveryReceiveQty = MathUtil.ZERO;
+            //无收货单的入库数量
+            Integer unReceiveInstockQty = MathUtil.ZERO;
+            //收发差异
+            Integer diffSendAndReceive = MathUtil.ZERO;
+            //退货补货数量
+            Integer returnQty = MathUtil.ZERO;
+
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                hasDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isNotEmpty(e.getSourceType())
+                                && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
+                                && e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //无收货单的入库数量
+            if (CollectionUtils.isNotEmpty(stockInDetailList)) {
+                // 采购入库单（无收货单），只有审核通过的才占用库存数量
+                unReceiveInstockQty = stockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())
+                                && Objects.equals(e.getSourceDetailId(), viewProductDTO.getPodId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            }
+            // 退货单（退货补货的才会导致在途数量变化）
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)) {
+                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                                && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                                && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                        .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            //已送货数量
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                deliveredQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(viewProductDTO.getPodId()))
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                //发货数量 - 已审核收货数量
+                Integer srmDeliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(viewProductDTO.getPodId())
+                                && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()))
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
+                diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
+            }
+            //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
+            viewProductDTO.setQty(viewProductDTO.getPoQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty);
+        }
+    }
+
+    /**
+     * 数据处理，计算待入库数量=采购数量-有效入库数量+退货数量
+     * @author will
+     * @date 2026/3/25 14:52
+     * @param pushQcApplicationList
+     * @return void
+     */
+    private void handlePushQcApplication (List<PurchaseOrderDetailDTO.ListPushQcApplicationDTO> pushQcApplicationList ) {
+        if (CollUtil.isEmpty(pushQcApplicationList)) {
+            return;
+        }
+        List<String> podIdList = pushQcApplicationList.stream().map(PurchaseOrderDetailDTO.ListPushQcApplicationDTO::getPodId).distinct().collect(Collectors.toList());
+
+        //查询退货数据
+        List<PoReturnDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+        //查询入库数据
+        List<PoInstockDetailEntity> stockInDetails = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
+
+        for ( PurchaseOrderDetailDTO.ListPushQcApplicationDTO viewProductDTO : pushQcApplicationList) {
+            Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            //有效入库数量（未审核通过）
+            Integer effectiveStockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(stockInDetails)) {
+                effectiveStockInQty = stockInDetails.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(viewProductDTO.getPodId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //未入库数量
+            viewProductDTO.setQty(viewProductDTO.getPoQty() - effectiveStockInQty + returnQty );
+        }
     }
 
     /**

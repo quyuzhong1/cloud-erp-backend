@@ -3,12 +3,15 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.MouldInfoDTO;
-import com.erp.model.plm.entity.CfgOperateLogFieldEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
 import com.erp.model.plm.enums.RefundStandardEnum;
 import com.erp.server.plm.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.plm.service.CfgOperateLogFieldService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,32 +34,18 @@ public class CfgOperateLogFieldServiceImpl extends ServiceImpl<CfgOperateLogFiel
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-         String  classPath = String.valueOf(MouldInfoDTO.LogDetailDTO.class);
-        List<CfgOperateLogFieldEntity> logFields =  Arrays.asList(
-            new CfgOperateLogFieldEntity().setField("thirdMouldNo").setFieldName("外部模具编号(供应商)").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("typeName").setFieldName("模具类型").setClassPath(classPath).setType(0) .setEnumClass(null),
-                 new CfgOperateLogFieldEntity().setField("mouldHoles").setFieldName("模具穴数").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("length").setFieldName("模具长").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("width").setFieldName("模具宽").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("height").setFieldName("模具高").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("material").setFieldName("模具材质").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("lifeCycle").setFieldName("模具寿命(万)(啤)").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("developCycle").setFieldName("开模周期(自然日)").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("enableDate").setFieldName("启用时间").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("supplierName").setFieldName("供应商").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("qty").setFieldName("数量").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("taxPrice").setFieldName("含税单价").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("taxRate").setFieldName("税率").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("payMethodName").setFieldName("结算方式").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("paymentConditionName").setFieldName("付款条件").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("isNeedRefund").setFieldName("是否费用返还").setClassPath(classPath).setType(1) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("refundStandard").setFieldName("返还标准").setClassPath(classPath).setType(2) .setEnumClass(String.valueOf(RefundStandardEnum.class)),
-                new CfgOperateLogFieldEntity().setField("refundOrderQty").setFieldName("退款单量").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("refundAmount").setFieldName("返还金额").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("productList").setFieldName("产品信息").setClassPath(classPath).setType(0) .setEnumClass(null),
-                new CfgOperateLogFieldEntity().setField("refProductList").setFieldName("关联产品").setClassPath(classPath).setType(0) .setEnumClass(null)
-        );
+        List<CfgOperateLogFieldEntity> logFields = new ArrayList<>();
+        String classPath = String.valueOf(ProductChangeEntity.class);;
+        logFields.add(new CfgOperateLogFieldEntity().setField("skuNo").setFieldName("sku编号").setClassPath(classPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("reason").setFieldName("变更原因").setClassPath(classPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("billDate").setFieldName("变更日期").setClassPath(classPath).setType(0).setEnumClass(""));
+
+        String detailClassPath = String.valueOf(ProductChangeDetailEntity.class);;
+        logFields.add(new CfgOperateLogFieldEntity().setField("field").setFieldName("变更字段").setClassPath(detailClassPath).setType(1).setEnumClass("com.erp.model.plm.enums.ProductChangeFieldEnum"));
+        logFields.add(new CfgOperateLogFieldEntity().setField("oldValue").setFieldName("变更原值").setClassPath(detailClassPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("newValue").setFieldName("变更新值").setClassPath(detailClassPath).setType(0).setEnumClass(""));
+        logFields.add(new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(detailClassPath).setType(0).setEnumClass(""));
+
         return this.saveBatch(logFields);
     }
 

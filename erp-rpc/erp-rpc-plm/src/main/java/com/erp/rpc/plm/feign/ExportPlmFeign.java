@@ -1,6 +1,7 @@
 package com.erp.rpc.plm.feign;
 
 import com.common.business.config.ExportFeignConfig;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -64,4 +65,21 @@ public interface ExportPlmFeign {
     PagingVO<CfgMoldAlertRuleDTO.ListDTO> exportCfgMoldAlert(@RequestBody @Validated PagingDTO<CfgMoldAlertRuleDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportMoldMonitor")
     PagingVO<MoldMonitorDTO.ListDTO> exportMoldMonitor(@RequestBody @Validated PagingDTO<MoldMonitorDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportDynamicProductDetail")
+    PagingVO<DynamicExcelDTO> exportDynamicProductDetail(PagingDTO<ProductSkuExcelDTO> dto);
+    
+    /**
+     * 构建产品图片文件夹结构并创建ZIP（用于批量下载）
+     * @param dto 批量下载参数（包含ids）
+     * @return ZIP文件的FastDFS URL
+     */
+    @PostMapping("/feign/export/buildProductImagesFolderStructure")
+    String buildProductImagesFolderStructure(@RequestBody @Validated RefProductImgAttachmentDTO.BatchDownloadDTO dto);
+
+
+    @PostMapping("/feign/export/productChange")
+    PagingVO<ProductChangeDTO.ListDTO> productChange(@RequestBody @Validated PagingDTO<ProductChangeDTO.PagingParamDTO> dto);
+    
+    @PostMapping("/feign/export/skuStdRetailPrice")
+    PagingVO<SkuStdRetailPriceDTO.ListDTO> skuStdRetailPrice(@RequestBody @Validated PagingDTO<SkuStdRetailPriceDTO.PagingParamDTO> dto);
 }

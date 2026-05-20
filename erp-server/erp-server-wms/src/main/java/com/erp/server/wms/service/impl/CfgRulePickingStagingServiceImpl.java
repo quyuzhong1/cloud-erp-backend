@@ -61,7 +61,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
         Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
         List<String> warehouseLocationIdList = list.stream()
-                .flatMap(obj -> Stream.of(obj.getB2bWarehouseLocationId(), obj.getFbaWarehouseLocationId(), obj.getThirdWarehouseLocationId()).filter(CharSequenceUtil::isNotBlank))
+                .flatMap(obj -> Stream.of(obj.getB2bWarehouseLocationId(), obj.getFbaWarehouseLocationId(), obj.getThirdWarehouseLocationId(), obj.getAwdWarehouseLocationId()).filter(CharSequenceUtil::isNotBlank))
                 .filter(value -> value != null && !value.isEmpty())
                 .collect(Collectors.toList());
         List<WarehouseLocationEntity> locationEntityList = warehouseLocationService.listByIds(warehouseLocationIdList);
@@ -70,6 +70,7 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
             obj.setWarehouseName(warehouseMap.getOrDefault(obj.getWarehouseId(), ""));
             obj.setB2bWarehouseLocationName(locationMap.getOrDefault(obj.getB2bWarehouseLocationId(), ""));
             obj.setFbaWarehouseLocationName(locationMap.getOrDefault(obj.getFbaWarehouseLocationId(), ""));
+            obj.setAwdWarehouseLocationName(locationMap.getOrDefault(obj.getAwdWarehouseLocationId(), ""));
             obj.setThirdWarehouseLocationName(locationMap.getOrDefault(obj.getThirdWarehouseLocationId(), ""));
         }
         return list;
@@ -90,6 +91,10 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         if (thirdWarehouseLocation == null) {
             throw new RuntimeException("第三方暂存库位不存在");
         }
+        WarehouseLocationEntity awdWarehouseLocation = locationMap.getOrDefault(dto.getAwdWarehouseLocationId(), null);
+        if (awdWarehouseLocation == null) {
+            throw new RuntimeException("AWD暂存库位不存在");
+        }
         List<CfgRulePickingStagingEntity> addList = new ArrayList<>(3);
         CfgRulePickingStagingEntity b2bStagingEntity = new CfgRulePickingStagingEntity();
         b2bStagingEntity.setBillType(PickingBillTypeEnum.B2B.getCode());
@@ -106,6 +111,14 @@ public class CfgRulePickingStagingServiceImpl extends SuperServiceImpl<CfgRulePi
         fbaStagingEntity.setWarehouseLocation(fbaWarehouseLocation.getCode());
         fbaStagingEntity.setWarehouseId(dto.getWarehouseId());
         addList.add(fbaStagingEntity);
+
+        CfgRulePickingStagingEntity awdStagingEntity = new CfgRulePickingStagingEntity();
+        awdStagingEntity.setBillType(PickingBillTypeEnum.AWD.getCode());
+        awdStagingEntity.setWarehouseAreaId(awdWarehouseLocation.getParentId());
+        awdStagingEntity.setWarehouseLocationId(awdWarehouseLocation.getId());
+        awdStagingEntity.setWarehouseLocation(awdWarehouseLocation.getCode());
+        awdStagingEntity.setWarehouseId(dto.getWarehouseId());
+        addList.add(awdStagingEntity);
 
         CfgRulePickingStagingEntity thirdStagingEntity = new CfgRulePickingStagingEntity();
         thirdStagingEntity.setBillType(PickingBillTypeEnum.THIRD.getCode());

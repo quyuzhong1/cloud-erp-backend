@@ -71,7 +71,7 @@ public abstract class EccangOutboundInitHandler extends DmpInputInitHandler {
 		while(true) {
 			antuGetOutboundReq.setPage(page);
 			String response = AntuUtils.callService(getPlatForm(),apiType,antuGetOutboundReq);
-			log.info(getPlatForm().getName()+"（"+apiType+"）api接口返回数据：{}", response);
+ 			log.info(getPlatForm().getName()+"（"+apiType+"）api接口返回数据：{}", response);
 			AntuResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<Object>>>() {}.getType());
 			List<?> data = result.getData();
 			int size = data.size();

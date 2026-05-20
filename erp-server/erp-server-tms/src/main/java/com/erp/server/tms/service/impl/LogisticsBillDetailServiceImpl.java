@@ -8,6 +8,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -21,6 +22,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +64,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Resource
     @Lazy
     private LogisticsCarrierService logisticsCarrierService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -199,6 +203,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return baseMapper.listTrackDto(query);
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -382,7 +387,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             return;
         }
         this.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackEnable, Boolean.FALSE)
+               .set(LogisticsBillDetailEntity::getTrackStatus, LogisticTrackStatusEnum.NOT_QUERY.getCode())
+               .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                .in(LogisticsBillDetailEntity::getId, detailIds).update();
+    }
+
+    @Override
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType) {
+        return baseMapper.listWaitingRegisterByConfig(query, platformType);
     }
 
     @Override
@@ -400,5 +412,28 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     @Override
     public Integer countByThirdRefId(String id) {
         return this.lambdaQuery().eq(LogisticsBillDetailEntity::getThirdRefId, id).count();
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateTrack(LogisticsTrackDTO.Kuaidi100Detail dto) {
+        LogisticsBillDetailService bean = ApplicationContextUtils.getBean(LogisticsBillDetailService.class);
+        //更新没有运单号的属于为暂不查询
+        if (CollUtil.isNotEmpty(dto.getDetailIds())){
+            bean.updateTrackEnableByIds(dto.getDetailIds());
+        }
+        //更新注册手机号和关联关系
+        if (CollUtil.isNotEmpty(dto.getRefList())){
+            bean.updateRegisterParams(dto.getRefList());
+        }
+        //更新异常物流单为注册失败
+        if (CollectionUtils.isNotEmpty(dto.getErrorList())){
+            bean.updateRegisterStatus(dto.getErrorList(), -1);
+        }
+        //更新物流单为注册成功
+        if (CollectionUtils.isNotEmpty(dto.getSucessList())){
+            bean.updateRegisterStatusByParams(dto.getSucessList(), 1);
+        }
     }
 }

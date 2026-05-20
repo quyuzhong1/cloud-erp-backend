@@ -15,9 +15,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.StocktakingProfitLossDetailDTO;
+import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
@@ -79,7 +79,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     private AbstractInventoryServiceImpl abstractInventoryService;
 
     @Resource
-    private StocktakingProfitLossService stocktakingProfitLossService;
+    private StocktakingTaskDetailService stocktakingTaskDetailService;
 
     @Resource
     private VirtualInventoryService virtualInventoryService;
@@ -165,7 +165,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         List<String> warehouseIds = txnFlows.stream().map(TransactionFlowEntity::getWarehouseId).distinct().collect(Collectors.toList());
         List<String> orgIds = txnFlows.stream().map(TransactionFlowEntity::getOrgId).distinct().collect(Collectors.toList());
         List<String> skuIds = txnFlows.stream().map(TransactionFlowEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.maxDateByParams(warehouseIds, orgIds, skuIds);
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingTaskDetailList = stocktakingTaskDetailService.maxDateByParams(warehouseIds, orgIds, skuIds);
 
         // 关联交易号
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
@@ -178,7 +178,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         txnFlows.forEach(txnFlow -> {
             // 检测是否允许库存交易=
             InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getAndCheckByCode(txnFlow.getDictInventoryStatus());
-            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(), txnFlow.getWarehouseId(), txnFlow.getWarehouseLocation(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getDictInventoryStatus(), txnFlow.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
+            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(), txnFlow.getWarehouseId(), txnFlow.getWarehouseLocation(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getDictInventoryStatus(), txnFlow.getBillDate(), inventoryStatusEnum, lastStocktakingTaskDetailList);
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
@@ -249,9 +249,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      * @param dictInventoryStatus           库存状态
      * @param billDate                      单据日期
      * @param inventoryStatusEnum
-     * @param lastStocktakingProfitLossList
+     * @param lastStocktakingTaskList
      */
-    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList) {
+    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingTaskList) {
         // 库存关账时间检测
         log.info("closeDate:{}", closeDate);
 
@@ -261,9 +261,9 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
          * 获取到非system的用户时正常校验
          */
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        checkCloseBill(closeDate, orgId, warehouseId, warehouseLocation, skuId, billDate, inventoryStatusEnum, lastStocktakingProfitLossList, userInfo);
+        checkCloseBill(closeDate, orgId, warehouseId, warehouseLocation, skuId, billDate, inventoryStatusEnum, lastStocktakingTaskList, userInfo);
         // 盘点冻结
-        String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
+        String redisKey = CharSequenceUtil.format(RedisCacheConstants.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
         Collection<String> keys = redisUtil.keys(redisKey);
         if (CollUtil.isEmpty(keys)) {
             return;
@@ -273,7 +273,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         ServiceException.runError(ApiError.WH_STOCK_FREEZE_NOT_ALLOW, warehouseName, warehouseLocation, skuNo, dictInventoryStatus, "盘点");
     }
 
-    private static void checkCloseBill(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList, LoginUser userInfo) {
+    private static void checkCloseBill(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingTaskList, LoginUser userInfo) {
         if (CharSequenceUtil.isBlank(userInfo.getUid())) {
             return;
         }
@@ -282,19 +282,21 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             throw new ServiceException(ApiError.WH_INV_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
         }
         // 检查盘盈盘亏单最新单据时间并非在途库存
-        if (CollUtil.isNotEmpty(lastStocktakingProfitLossList) && !Objects.equals(InventoryStatusEnum.IN_TRANSIT,inventoryStatusEnum)) {
+        if (CollUtil.isNotEmpty(lastStocktakingTaskList) && !Objects.equals(InventoryStatusEnum.IN_TRANSIT,inventoryStatusEnum)) {
             // 盘盈盘亏单 匹配 仓库ID, 组织ID，仓位，skuId
             warehouseLocation = CharSequenceUtil.isBlank(warehouseLocation) ? CharSequenceUtil.EMPTY : warehouseLocation;
             String finalWarehouseLocation = warehouseLocation;
-            StocktakingProfitLossDetailDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream()
+            StocktakingTaskDetailDTO.LastDTO lastDTO = lastStocktakingTaskList.stream()
                     .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId)
                             && Objects.equals(finalWarehouseLocation, e.getWarehouseLocation())
                             && e.getWarehouseOrgId().equalsIgnoreCase(orgId)
                             && e.getSkuId().equalsIgnoreCase(skuId))
                     .findFirst()
                     .orElse(null);
-            if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))) {
-                // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+            // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，禁止操作
+            // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
+            if (null != lastDTO && !billDate.isAfter(lastDTO.getBillDate())) {
+                // 已有盘盈盘亏单【{}】不允许操作【{}】及之前单据
                 ServiceException.runError(ApiError.WH_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
             }
         }
@@ -359,7 +361,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         // 查询最新库存关账记录
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
         // 最新盘盈盘亏单有效单据日期列表
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.maxDateByParams(
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingTaskDetailService.maxDateByParams(
                 Collections.singletonList(param.getWarehouseId()),
                 Collections.singletonList(warehouseInfo.getOrgId()),
                 Collections.singletonList(param.getSkuId())
@@ -414,7 +416,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         Map<String, LocalDate> closedDateMap = inventoryClosedRecordService.mapByOrgId(InventoryClosedRecordEnum.STK.getCode());
 
         // 最新盘盈盘亏单有效单据日期列表
-        List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingProfitLossService.maxDateByParams(
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingProfitLossList = stocktakingTaskDetailService.maxDateByParams(
                 Collections.singletonList(warehouseInfo.getId()),
                 Collections.singletonList(warehouseInfo.getOrgId()),
                 Collections.singletonList(param.getSkuId())

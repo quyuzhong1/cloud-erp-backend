@@ -389,6 +389,60 @@
           and lc.code = #{channelCode}
           and la.logistics_platform = #{logisticsPlatform}
     </select>
+    <select id="listChannel" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$ListChildTreeDTO">
+        select id,name,disabled,mainId
+        from
+        (
+            select
+            lc.id,
+            lc.name,
+            lc.disabled,
+            lc.main_id as mainId
+            from logistics_channel lc
+            where lc.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            </if>
+            order by lc.disabled asc,
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when lc.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when lc.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , lc.name,
+            </if>
+            code asc
+        ) wls
+    </select>
+
+    <select id="listChannelByPlatform" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$ListChildTreeDTO">
+        select id,name,disabled,mainId
+        from
+        (
+        SELECT
+        lc.id,
+        lc."name",
+        lc.main_id as mainId,
+        lc.disabled
+        FROM logistics_channel lc
+        LEFT JOIN logistics_auth la ON la.main_id = lc.main_id and la.is_deleted=false
+        LEFT JOIN logistics_supplier ls ON ls.id = lc.main_id and ls.is_deleted=false
+        where lc.is_deleted= false
+        <if test="params.logisticsPlatform != null and params.logisticsPlatform != ''">
+            and la.logistics_platform = #{params.logisticsPlatform}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((lc.code = #{params.searchKeyword}) or (lc.id = #{params.searchKeyword})  or lc.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by lc.disabled asc,
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when lc.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when lc.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when lc.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , lc.name,
+        </if>
+        code asc
+        ) wls
+    </select>
 
 
 </mapper>

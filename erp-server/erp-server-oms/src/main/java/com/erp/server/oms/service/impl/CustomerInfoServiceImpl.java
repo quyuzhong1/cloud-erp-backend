@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -35,13 +36,9 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.enums.AddressTypeEnum;
-import com.erp.model.oms.enums.CustomerAddressTypeEnum;
-import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
@@ -399,30 +396,18 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * 提交
      *
      * @param ids
+     * @param isUpdateAddress
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-12 16:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids, Boolean isUpdateAddress) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
         List<CustomerInfoEntity> list = this.listByIds(ids);
-        
-        List<CustomerInfoEntity> hasPartitionList = list.stream().filter(l -> StringUtils.isNotBlank(l.getPartitionId())).collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(hasPartitionList)) {
-        	Map<String, Map<String, Object>> cacheMap = new HashMap<>();
-            Map<String, String> dictPartitionIdCodeMap = FeignQuery.getByIds(DictPartitionEntity.class, 
-            		hasPartitionList.stream().map(CustomerInfoEntity::getPartitionId).filter(Objects::nonNull).collect(Collectors.toList()))
-            		  .stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getCode));
-            String errorDepartmentCodeJoin = hasPartitionList.stream().filter(l -> queryAndCacheOmsDictBasic(cacheMap, dictPartitionIdCodeMap.get(l.getPartitionId()), l.getPlatformType()) == null)
-            		.map(CustomerInfoEntity::getCode).collect(Collectors.joining("、"));
-            if(StringUtils.isNotBlank(errorDepartmentCodeJoin)) {
-            	throw new ServiceException(errorDepartmentCodeJoin + "军区未关联部门，请联系实施配置");
-            }
-        }
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -438,6 +423,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.BILL_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //提交流程
+        list.forEach(v->v.setIsUpdateAddress(isUpdateAddress?"是":"否"));
         startProcess(list);
         // 启动流程
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
@@ -647,7 +633,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
-        Boolean result = this.submit(Arrays.asList(id));
+        Boolean result = this.submit(Arrays.asList(id), false);
         if (result) {
             return id;
         }
@@ -884,7 +870,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Arrays.asList(id), false);
     }
 
 
@@ -1173,14 +1159,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-15 15:39
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<CustomerInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -1191,6 +1178,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -1283,6 +1271,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (address != null) {
             base.setAddress(address.getAddress());
+            base.setAddress2(address.getAddress2());
+            base.setAddress3(address.getAddress3());
             base.setAddressId(address.getId());
             base.setAddressType(address.getType());
             base.setPerson(address.getPerson());
@@ -2599,5 +2589,56 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String updateCustomerAddress(CustomerDTO.UpdateDTO dto) {
+        CustomerInfoEntity customerInfoEntity = this.getById(dto.getId());
+        if (customerInfoEntity == null) {
+            throw new ServiceException("客户信息不存在，无法修改联系人及地址信息");
+        }
+        ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+        if(approveStatus.equals(ApproveStatusEnum.APPROVE)){
+            this.disApprove(customerInfoEntity);
+        }
+        if(approveStatus.equals(ApproveStatusEnum.APPROVE_ING)){
+            this.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(dto.getId())));
+        }
+        dto.getAddressList().forEach(address -> {
+            if(StringUtils.isBlank(address.getType())){
+                address.setType("");
+            }
+        });
+        //待提交，直接修改，
+        String id = dto.getId();
+        //客户联系人
+        List<CustomerContactDTO.ViewDTO> contactList = dto.getContactList();
+        List<CustomerContactDTO.AddDTO> contactAddList = BeanMapper.copyList(contactList, CustomerContactDTO.AddDTO.class);
+        //检查联系人默认是否多个
+        customerContactService.checkIsDefault(contactAddList);
+
+        //检查默认地址是否多个
+        List<CustomerAddressDTO.ViewDTO> addressList = dto.getAddressList();
+        List<CustomerAddressDTO.AddDTO> addressAddList = BeanMapper.copyList(addressList, CustomerAddressDTO.AddDTO.class);
+        customerAddressService.checkIsDefault(addressAddList);
+
+        //批量修改联系人信息
+        List<DmpPushTaskEntity> dmpPushTaskList= customerContactService.updateBatchContact(id, dto.getContactList());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                dmpMqFeign.sendTask(dmpPushTaskList);
+            }
+        });
+
+        //批量修改地址信息
+        customerAddressService.updateBatchAddress(id, dto.getAddressList());
+        if(approveStatus.equals(ApproveStatusEnum.APPROVE)||approveStatus.equals(ApproveStatusEnum.APPROVE_ING)){
+            this.submit(Collections.singletonList(dto.getId()),true);
+        }
+
+        return customerInfoEntity.getId();
     }
 }

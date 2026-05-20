@@ -1,5 +1,6 @@
 package com.erp.server.plm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -65,9 +66,9 @@ public interface MouldInfoService extends SuperService<MouldInfoEntity> {
     /**
      * 取消流程
      *
-     * @param id 主表id
+     * @param dto) 主表id
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 审核

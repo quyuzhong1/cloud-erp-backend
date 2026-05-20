@@ -169,6 +169,11 @@ public enum RocketMqTagEnum {
      */
     DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
 
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(32, RocketMqTagEnum.SYNC_TMS,"dmp_async_get_logistics_order_label_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -366,6 +371,12 @@ public enum RocketMqTagEnum {
      * 第三方仓库存取消业务处理实现
      */
     ERP_B2B_THIRD_WAREHOUSE_CANCEL_TAG(1040, RocketMqTagEnum.SYNC_B2B_THIRD_WAREHOUSE_CANCEL,"erp_b2b_third_delivery_cancel_tag"),
+
+
+    /**
+     * 资金验收单同步金蝶
+     */
+    KINGDEE_ASSET_ACCEPT_TAG(1041, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_asset_accept_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -483,6 +494,11 @@ public enum RocketMqTagEnum {
      */
     SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4003,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
 
+    /**
+     *委外用料清单同步金蝶
+     */
+    KINGDEE_SUBCONTRACT_BOM_TAG(4006, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_bom_tag"),
+
 
     //---------------------------------WMS 数据更新从6001开始---------------------------------------------------------------------------------
 
@@ -596,6 +612,14 @@ public enum RocketMqTagEnum {
      * 异步更新物流获取记录
      */
     ASYNC_GET_TRACK123_LOGISTICS_TRACK(10002, RocketMqTagEnum.SYNC_TMS, "async_get_logistics_track"),
+    /**
+     * tms 费用分摊异步任务
+     */
+    TMS_PUSH_ALLOCATION_COST_TAG(10003, RocketMqTagEnum.SYNC_TMS, "tms_push_allocation_cost_tag"),
+    /**
+     * tms 异步获取物流下单面单标签
+     */
+    TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TAG(10004, RocketMqTagEnum.SYNC_TMS,"tms_async_get_logistics_order_label_tag"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**

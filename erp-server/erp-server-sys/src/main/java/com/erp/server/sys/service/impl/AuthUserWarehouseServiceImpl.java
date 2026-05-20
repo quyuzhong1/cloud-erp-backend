@@ -5,10 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
+import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.AuthUserWarehouseMapper;
@@ -18,7 +18,6 @@ import com.common.business.threadlocal.UserContext;
 //import com.erp.server.sys.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -123,51 +122,10 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         StringBuilder sqlString = new StringBuilder();
         //店铺
         List<String> warehouseTableFieldList = Arrays.asList(warehouseTableField.split(","));
-        int warehouseTableFieldSize = warehouseTableFieldList.size();
         if (CollectionUtils.isNotEmpty(warehouseUserList)) {
-        	boolean isDoris = DynamicDataSourceTypeEnum.isDorisByStr(dynamicDataSource);
             if ("part".equals(authType)){
-            	if(isDoris) {
-                    if (warehouseTableFieldSize == 1) {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '') OR (");
-                        SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                        sqlString.append(" )) ");
-                    } else {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '')");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            sqlString.append(warehouseTableFieldList.get(i)).append(" = '')");
-                        }
-                        sqlString.append(" OR (");
-                        SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(0), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                        sqlString.append(" )");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            SqlUtils.appendPermissionSql(sqlString, warehouseTableFieldList.get(i), warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()));
-                            sqlString.append(" )");
-                        }
-                        sqlString.append(" )");
-                    }
-                }else {
-                    if (warehouseTableFieldSize == 1) {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '') OR (");
-                        sqlString.append(" string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
-                        sqlString.append(" )");
-                    } else {
-                        sqlString.append(" AND ((").append(warehouseTableFieldList.get(0)).append( " = '')");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            sqlString.append(warehouseTableFieldList.get(i)).append(" = '')");
-                        }
-                        sqlString.append(" OR (");
-                        sqlString.append(" string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
-                        for (int i = 1; i < warehouseTableFieldSize; i++) {
-                            sqlString.append(" OR (");
-                            sqlString.append("string_to_array(").append(warehouseTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
-                        }
-                        sqlString.append(" )");
-                    }
-                }
+                List<String> warehouseIdList = warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
+                SqlUtils.appendBlankOrInPermissionSql(sqlString, warehouseTableFieldList, warehouseIdList);
             }
         }
         return sqlString.toString();
@@ -175,13 +133,13 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType) {
+    public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)){
             return;
         }
-        List<AuthUserWarehouseEntity> list = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, uid).list();
+        List<AuthUserWarehouseEntity> oldList = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, uid).list();
         if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(warehouseAuthType)){
-            AuthUserWarehouseEntity auth = list.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+            AuthUserWarehouseEntity auth = oldList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
             if (Objects.isNull(auth)){
                 //清空历史
                 this.lambdaUpdate().eq(AuthUserWarehouseEntity::getUserId, uid).remove();
@@ -192,19 +150,22 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                 this.save(entity);
             }
         }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(warehouseAuthType)){
-            //删除移除的权限
-            List<String> ids = new ArrayList<>();
-            if (CollUtil.isNotEmpty(list)){
-                ids = list.stream().map(AuthUserWarehouseEntity::getWarehouseId).collect(Collectors.toList());
-                List<String> deleteIdList = list.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
-                        .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(deleteIdList)){
-                    this.removeByIds(deleteIdList);
+            if (CollUtil.isNotEmpty(oldList)) {
+                if(!ifAdd){
+                    List<String> deleteIdList = oldList.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
+                            .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(deleteIdList)) {
+                        this.removeByIds(deleteIdList);
+                    }
                 }
+
+                Set<String> existingIds = oldList.stream()
+                        .map(AuthUserWarehouseEntity::getWarehouseId)
+                        .collect(Collectors.toSet());
+                warehouseIdList.removeIf(existingIds::contains);
             }
             //添加新增权限
             List<AuthUserWarehouseEntity> addList = new ArrayList<>();
-            List<String> finalIds = ids;
             if (CollUtil.isEmpty(warehouseIdList)){
                 AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
@@ -213,13 +174,11 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                 addList.add(entity);
             }else {
                 warehouseIdList.forEach(warehouseId ->{
-                    if (CollUtil.isEmpty(finalIds) || !finalIds.contains(warehouseId)){
-                        AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
-                        entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
-                        entity.setUserId(uid);
-                        entity.setWarehouseId(warehouseId);
-                        addList.add(entity);
-                    }
+                    AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                    entity.setUserId(uid);
+                    entity.setWarehouseId(warehouseId);
+                    addList.add(entity);
                 });
             }
             if (CollUtil.isNotEmpty(addList)){

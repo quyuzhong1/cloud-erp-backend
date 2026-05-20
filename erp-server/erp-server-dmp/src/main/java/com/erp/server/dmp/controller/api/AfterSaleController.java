@@ -2,10 +2,9 @@ package com.erp.server.dmp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -21,7 +20,6 @@ import com.erp.server.dmp.service.AfterSaleService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -306,7 +304,7 @@ public class AfterSaleController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = afterSaleService.cancelProcess(id);
+                cancelResult = afterSaleService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("售后申请单撤回流程失败",e);
                 AfterSaleEntity entity = idEntityMap.get(id);
@@ -418,4 +416,94 @@ public class AfterSaleController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据单据idList获取售后人员
+     * @param dto
+     * @return
+     */
+    @PostMapping("/listCsAgent")
+    public ApiResult<Map<String, String>> listCsAgent(@RequestBody AfterSaleDTO.ListCsAgentDTO dto ) {
+        return success(afterSaleService.listCsAgent(dto));
+    }
+
+    /**
+     * 物流下单
+     *
+     * @param dto AfterSaleDTO.LogisticsOrderDTO
+     * @return Object
+     */
+    @PostMapping("/logisticsOrder")
+    public ApiResult<List<BatchResultDTO>> logisticsOrder(@RequestBody AfterSaleDTO.LogisticsOrderDTO dto) {
+        List<String> ids = dto.getOrderInfoDTOList().stream().map(AfterSaleDTO.OrderInfoDTO::getId).collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = afterSaleService.logisticsOrder(ids, dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消物流下单
+     *
+     * @param dto AfterSaleDTO.LogisticsOrderDTO
+     * @return Object
+     */
+    @PostMapping("/batchCancel")
+    public ApiResult<List<BatchResultDTO>> batchCancel(@RequestBody AfterSaleDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = afterSaleService.batchCancel(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 上传物流面单
+     *
+     * @param dto AfterSaleDTO.UploadFileDTO
+     * @return String
+     */
+    @PostMapping("/uploadLogisticLabel")
+    public ApiResult<String> uploadLogisticLabel(@RequestBody @Validated AfterSaleDTO.UploadFileDTO dto) {
+        return success(afterSaleService.uploadLogisticLabel(dto));
+    }
+
+    /**
+     * 获取下单预览
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return List<AfterSaleDTO.OrderInfoDTO>
+     */
+    @PostMapping("/getPlaceOrderPreview")
+    public ApiResult<List<AfterSaleDTO.OrderInfoDTO>> getPlaceOrderPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(afterSaleService.getPlaceOrderPreview(dto));
+    }
+
+    /**
+     * 打印物流面单预览
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return AfterSaleDTO.LogisticsLabelPreviewDTO
+     */
+    @PostMapping("/printLogisticsLabelPreview")
+    public ApiResult<AfterSaleDTO.LogisticsLabelPreviewDTO> printLogisticsLabelPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(afterSaleService.printLogisticsLabelPreview(dto));
+    }
+
+    /**
+     * 打印物流面单确认
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    @PostMapping("/printLogisticsLabelConfirm")
+    public ApiResult<String> printLogisticsLabelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(afterSaleService.printLogisticsLabelConfirm(dto));
+    }
+
+    /**
+     * 手动批量获取面单
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return String
+     */
+    @PostMapping("/manualBatchGetLabel")
+    public ApiResult<List<BatchResultDTO>> manualBatchGetLabel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = afterSaleService.manualBatchGetLabel(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

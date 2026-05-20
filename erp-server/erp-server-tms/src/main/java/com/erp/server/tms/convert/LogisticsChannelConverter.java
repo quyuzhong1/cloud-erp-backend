@@ -328,4 +328,35 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByWdt(LogisticsQueryResponse.Details detail);
     List<LogisticsSaleChannelEntity> channelConvertByWdt(List<LogisticsQueryResponse.Details> detailList);
+
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "supplierName", ignore = true)
+    @Mapping(target = "supplierCode", ignore = true)
+    @Mapping(target = "sourceData", ignore = true)
+    @Mapping(target = "shipmentMethod", ignore = true)
+    @Mapping(target = "servicePlatform", constant = "oms,tms")
+    @Mapping(target = "platformWarehouseCode", source = "openWarehouse.warehouseCode")
+    @Mapping(target = "platformChannelId", source = "code")
+    @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId")
+    @Mapping(target = "originCountry", ignore = true)
+    @Mapping(target = "logisticsPlatform", expression = "java(com.common.business.enums.LogisticsPlatformEnum.ZHONG_BAO.getCode())")
+    @Mapping(target = "isUserSystem", ignore = true)
+    @Mapping(target = "isTrack", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "enName", source = "nameEn")
+    @Mapping(target = "destinationCountry", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "cnName", source = "name")
+    @Mapping(target = "channelType", ignore = true)
+    @Mapping(target = "channelStatus", ignore = true)
+    @Mapping(target = "carrierType", ignore = true)
+    @Mapping(target = "aging", ignore = true)
+    LogisticsSaleChannelEntity channelConvertByZhongBao(com.sdk.wms.zhongbao.dto.response.ChannelResponse.Channel channel);
+    List<LogisticsSaleChannelEntity> channelConvertByZhongBao(List<com.sdk.wms.zhongbao.dto.response.ChannelResponse.Channel> channels);
 }

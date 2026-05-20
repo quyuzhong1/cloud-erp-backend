@@ -106,7 +106,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     private ProcessTaskManagementFeign processTaskManagementFeign;
 
     @Resource
-    private CfgSettingService cfgSettingService;
+    private PlmCfgSettingService plmCfgSettingService;
     @Resource
     private BasicDictService basicDictService;
 
@@ -2891,7 +2891,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @param skuChangeFieldsDTOs 包含SKU变更信息的数据传输对象
      */
     @Override
-    public void productChangeNotice(NoticeEnum noticeEnum, List<ProductDetailDTO.SkuChangeFieldsDTO> skuChangeFieldsDTOs) {
+    public void bomChangeNotice(NoticeEnum noticeEnum, List<ProductDetailDTO.SkuChangeFieldsDTO> skuChangeFieldsDTOs) {
         // 根据节点标示获取到通知消息实体
         List<NoticeMessageEntity> noticeMessageList = baseMapper.listByNodeFlag(noticeEnum.getFlag());
         if (CollUtil.isNotEmpty(noticeMessageList) && CollUtil.isNotEmpty(skuChangeFieldsDTOs)) {
@@ -2930,10 +2930,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     // 如果有变更内容，则构造通知消息并发送
                     if(StringUtils.isNotBlank(content)){
                         sb = new StringBuilder();
-                        sb.append(String.format(NoticeMessageConstant.PRODUCT_CHANGE_CONTENT_START,skuChangeFieldsDTO.getSkuNo()));
+                        sb.append(String.format(NoticeMessageConstant.BOM_CHANGE_CONTENT_START,skuChangeFieldsDTO.getSkuNo()));
                         sb.append(content);
                         // 添加操作人和操作时间信息
-                        sb.append(String.format(NoticeMessageConstant.PRODUCT_CHANGE_CONTENT_END,loginUser == null ? "" : loginUser.getUserName(),nowStr));
+                        sb.append(String.format(NoticeMessageConstant.BOM_CHANGE_CONTENT_END,loginUser == null ? "" : loginUser.getUserName(),nowStr));
 
                         // 构造通知消息中的变量替换Map
                         Map<String,String> map = new HashMap<>();
@@ -2976,7 +2976,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //初始化消息发送的URL
         String url =fsAppUrl;
         //根据不同的环境选择对应的URL
-        PlmCfgSettingEntity pilotApplicationNoticeUrl = cfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "pilotApplicationNoticeUrl").one();
+        PlmCfgSettingEntity pilotApplicationNoticeUrl = plmCfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "pilotApplicationNoticeUrl").one();
         if(null != pilotApplicationNoticeUrl){
             Map<String, Object> dataJson = pilotApplicationNoticeUrl.getDataJson();
             boolean uat = BusinessCommonConstants.hasProfile("uat");
@@ -3123,7 +3123,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = changeFieldMap.get(field);
                 if (skuChangeInfoDTO != null) {
                     // 根据字段的变更信息，格式化变更内容并追加到字符串构建器中
-                    sb.append(String.format(NoticeMessageConstant.PRODUCT_CHANGE_CONTENT, changeMap.get(field), skuChangeInfoDTO.getOldValue(), skuChangeInfoDTO.getNewValue()));
+                    sb.append(String.format(NoticeMessageConstant.BOM_CHANGE_CONTENT, changeMap.get(field), skuChangeInfoDTO.getOldValue(), skuChangeInfoDTO.getNewValue()));
                 }
             }
         }

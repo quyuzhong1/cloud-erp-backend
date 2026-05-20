@@ -45,6 +45,16 @@ public class OtherOutstockDTO implements Serializable {
         private String detailId;
 
         /**
+         * 用途
+         */
+        private String usage;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
          * 其他出库编号
          */
         private String code;
@@ -320,6 +330,8 @@ public class OtherOutstockDTO implements Serializable {
          * 备注(同步金蝶)
          */
         private String remark;
+
+        private String usage;
 
         private String sourceCode;
 

@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -19,7 +20,6 @@ import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
@@ -121,7 +121,7 @@ public class CustomerInfoController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerInfoService.submit(dto.getIds());
+        Boolean result = customerInfoService.submit(dto.getIds(), false);
         return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
@@ -277,7 +277,7 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids")
     public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = customerInfoService.cancelProcess(dto.getIds());
+        Boolean result = customerInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
@@ -544,5 +544,25 @@ public class CustomerInfoController extends BaseController {
         List<CustomerDTO.InfoDTO> list = customerInfoService.listEnable2cCustomer(dto.getPermissionSql());
         return success(list);
     }
+
+    /**
+     * 修改客户地址
+     *
+     * @param
+     * @return
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改客户地址")
+    @PostMapping("/updateCustomerAddress")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customer:update",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "id"
+    )
+    public ApiResult<Object> updateCustomerAddress(@RequestBody CustomerDTO.UpdateDTO dto) {
+        String id = customerInfoService.updateCustomerAddress(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
 
 }

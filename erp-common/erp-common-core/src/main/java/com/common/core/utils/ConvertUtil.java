@@ -804,4 +804,62 @@ public class ConvertUtil {
         return new String(c);
     }
 
+    /**
+     * 判断字符串是否包含全角字符（全角空格、全角符号等）
+     * 全角字符范围：\u3000(全角空格)、\uFF01-\uFF5E(全角ASCII字符)
+     *
+     * @param input 待检测字符串，null或空返回false
+     * @return true-包含全角字符，false-不包含
+     */
+    public static boolean containsFullWidthChar(String input) {
+        if (StringUtils.isBlank(input)) {
+            return false;
+        }
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '\u3000' || (c >= '\uFF01' && c <= '\uFF5E')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断字符串是否包含特殊字符（表情符号、装饰符号等）
+     * 特殊字符范围包括：
+     * - U+1F600-U+1F64F (表情符号 - 人脸和情感表情)
+     * - U+1F300-U+1F5FF (杂项符号和象形文字 - 自然、物体、活动等)
+     * - U+1F680-U+1F6FF (交通和地图符号 - 车辆、指示牌等)
+     * - U+1F900-U+1F9FF (补充符号和象形文字 - 新加入的表情、人像等)
+     * - U+2700-U+27BF (装饰符号 - 传统符号如☆★等)
+     * - U+2600-U+26FF (杂项符号 - 天气、星座等)
+     * - U+1F1E6-U+1F1FF (国旗 - 字母符号，用于组合国旗)
+     *
+     * @param input 待检测字符串，null或空返回false
+     * @return true-包含特殊字符，false-不包含
+     */
+    public static boolean containsSpecialChar(String input) {
+        if (StringUtils.isBlank(input)) {
+            return false;
+        }
+        for (int i = 0; i < input.length(); i++) {
+            int codePoint = input.codePointAt(i);
+            // 检查是否在特殊字符范围内
+            if ((codePoint >= 0x1F600 && codePoint <= 0x1F64F) ||  // 表情符号
+                (codePoint >= 0x1F300 && codePoint <= 0x1F5FF) ||  // 杂项符号和象形文字
+                (codePoint >= 0x1F680 && codePoint <= 0x1F6FF) ||  // 交通和地图符号
+                (codePoint >= 0x1F900 && codePoint <= 0x1F9FF) ||  // 补充符号和象形文字
+                (codePoint >= 0x2700 && codePoint <= 0x27BF) ||    // 装饰符号
+                (codePoint >= 0x2600 && codePoint <= 0x26FF) ||    // 杂项符号
+                (codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF)) {  // 国旗
+                return true;
+            }
+            // 如果是代理对（surrogate pair），需要跳过下一个字符
+            if (Character.isSupplementaryCodePoint(codePoint)) {
+                i++;
+            }
+        }
+        return false;
+    }
+
 }

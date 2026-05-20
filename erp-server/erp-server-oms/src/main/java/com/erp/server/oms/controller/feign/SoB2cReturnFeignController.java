@@ -61,4 +61,11 @@ public class SoB2cReturnFeignController {
     public List<SoB2cReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
         return soB2cReturnDetailService.listByMainIds(mainIds);
     }
+
+
+    @PostMapping("/updateBatch")
+    void updateBatch(@RequestBody List<SoB2cReturnEntity> list){
+        soB2cReturnService.updateBatchById(list);
+    }
+
 }

@@ -19,6 +19,7 @@ import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -90,6 +91,12 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/user/getUserList")
     List<FindUserDTO> getUserList();
+
+    /**
+     * 获取用户列表(包括启用和未启用)
+     */
+    @GetMapping("feign/user/getAllUserList")
+    List<FindUserDTO> getAllUserList();
 
     /**
      * 更新用户管理更新时间
@@ -169,6 +176,12 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/code/getSkuNo")
     String getSkuNo(@RequestBody SysCodeSkuDTO dto);
+
+    /**
+     * 一次性查询 count 个连续的 sku 编码（替代循环单条调用，避免分布式锁竞争）
+     */
+    @PostMapping("feign/code/getSkuNoBatch/{count}")
+    List<String> getSkuNoBatch(@PathVariable("count") Integer count, @RequestBody SysCodeSkuDTO dto);
 
     /**
      * 根据名称列表批量查询示例用户

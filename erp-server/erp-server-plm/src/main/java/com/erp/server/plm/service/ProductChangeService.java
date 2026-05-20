@@ -1,113 +1,192 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.erp.model.plm.dto.excel.ProductChangeImportExcelDTO;
+import com.erp.model.plm.entity.*;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.plm.dto.ProductChangeDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.vo.ProductChangePagingVO;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.model.plm.enums.ProductChangeFieldEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 变更信息表(ProductChange)表服务接口
+ * <p>
+ * 产品变更信息表 服务类
+ * </p>
  *
- * @author yl
- * @since 2023-01-11 14:05:03
+ * @author lrp
+ * @since 2026-02-03
  */
-public interface ProductChangeService  extends IService<ProductChangeEntity> {
-
-
-    Boolean add(AddChangeDTO dto);
-
-    PagingVO<List<ProductChangePagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
-
-    Boolean cancellation(String id);
-
-    List<ChangeInfoDTO> getChangeByType(String type, String searchKeyword);
-
-    ProductChangeDTO details(String id);
-
-    Boolean edit(UpdateChangeDTO dto);
-
-    ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity);
+public interface ProductChangeService extends SuperService<ProductChangeEntity> {
 
     /**
-     * SKU 详情
-     * @author yl
-     * @date 2023-02-02 9:35
-     * @param changeEntity
-     * @return com.erp.model.plm.dto.ProductChangeDTO
-     */
-    ProductChangeDTO skuDetails(ProductChangeEntity changeEntity);
-
-    List<String> getBySourceId(List<String> sourceIds);
+    * 新增
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return
+    */
+    BaseResultDTO.AddDTO add(ProductChangeDTO.AddDTO dto);
 
     /**
-     *
-     * @param searchKeyword
+    * 修改
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return
+    */
+    Boolean update(ProductChangeDTO.UpdateDTO dto);
+
+
+    /**
+    * 分页列表查询
+    * @author lrp
+    * @date: 2026-02-03
+    * @param pagingParamDTO
+    * @return PagingVO<ProductChangeDTO.ListDTO>>
+    */
+    PagingVO<ProductChangeDTO.ListDTO> paging(PagingDTO<ProductChangeDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+    * 状态统计
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return List<ProductChangeDTO.TabListDTO>>
+    */
+    List<ProductChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+    * 详情
+    * @author lrp
+    * @date: 2026-02-03
+    * @param id
+    * @return
+    */
+    ProductChangeDTO.ViewDTO view(String id);
+
+    /**
+    * 新增并提交审核
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return BaseResultDTO.AddDTO
+    */
+    BaseResultDTO.AddDTO addAndSubmit(ProductChangeDTO.AddDTO dto);
+
+    /**
+    * 修改并提交审核
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return
+    */
+    void updateAndSubmit(ProductChangeDTO.UpdateDTO dto);
+
+     /**
+     * 提交审核
+     * @author lrp
+     * @date: 2026-02-03
+     * @param id
      * @return
      */
-    List<String> getChangeSearchCondition(String searchKeyword);
-
-    List<ApproveNodeRecordVO> auditInfo(String id);
-    /**
-     * @description: 根据变更id查询变更字段
-     * @author Will
-     * @date: 2023/2/14 18:35
-     * @param id
-     * @return List<String>
-     */
-    List<String> listChangeField(String id);
+    BatchResultDTO submit(String id);
 
     /**
-     * tab页
-     */
-    List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto);
+    * 审核
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return
+    */
+    BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
-     * 检查库存是否大于零
-     * 此方法用于检查给定商品的库存是否大于零如果库存大于零，则根据库存状态统计数量，并抛出异常
-     *
-     */
-    void checkInventoryGreaterThanZero(ProductInfoEntity productInfoEntity, String propertyId , String skuId) ;
+    * 反审核
+    * @author lrp
+    * @date: 2026-02-03
+    * @param id
+    * @return
+    */
+    BatchResultDTO disApprove(String id);
+
     /**
-     * 审核
-     * @author will
-     * @date 2025/5/16 18:13
-     * @param approveOneDTO
-     * @return BatchResultDTO
-     */
-    BatchResultDTO approve(ApproveOneDTO approveOneDTO);
-    /**
-     * 审核结束
-     * @author will
-     * @date 2025/5/16 18:25
-     * @param dto
-     * @param entity
-     * @return Boolean
-     */
-    Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity);
+    * 删除
+    * @author lrp
+    * @date: 2026-02-03
+    * @param id
+    * @return
+    */
+    BatchResultDTO delete(String id);
     /**
      * 取消流程
      * @author will
      * @date 2025/5/19 09:20
-     * @param id
+     * @param dto
      * @return BatchResultDTO
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
     /**
-     * 提交
-     * @author will
-     * @date 2025/5/19 09:57
-     * @param id
-     * @param isProcess
-     * @return BatchResultDTO
-     */
-    BatchResultDTO submit(String id, Boolean isProcess);
+    * 审核通过回调方法
+    * @param dto
+    * @param entity
+    * @return
+    */
+    Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity);
+
+    /**
+    * 导出Excel
+    * @author lrp
+    * @date: 2026-02-03
+    * @param dto
+    * @return
+    */
+    void exportList(ProductChangeDTO.PagingParamDTO dto  );
+
+    void downloadTemplate(HttpServletResponse response);
+
+    void importExcel(BaseDTO.ImportDTO dto);
+
+    void importProductChange(BaseDTO.ImportDTO dto);
+
+    void handleImportSuccessList(List<ProductChangeImportExcelDTO> successList, List<String> errorNoList, List<ProductChangeImportExcelDTO> errorList2, String importType);
+
+    BaseResultDTO.AddDTO batchAdd(ProductChangeDTO.BatchAddDTO dto);
+
+    Object convertValue(Class<?> targetType, String valueStr);
+
+    List<ProductChangeDTO.ProductChangeFieldDTO> getProductChangeFieldEnum();
+
+    BatchResultDTO invalid(ProductChangeEntity productChangeEntity,String remark);
+
+    void buildOldValue(List<ProductChangeEntity> mainList, List<ProductChangeDetailEntity> detailEntityList);
+
+    Object getOldValueByFieldEnum(ProductChangeFieldEnum fieldEnum,
+                                  ProductCostEntity productCostEntity,
+                                  ProductDetailEntity productDetailEntity,
+                                  ProductInfoEntity productInfoEntity,
+                                  ProductPackEntity productPackEntity,
+                                  ProductPurchaseEntity productPurchaseEntity,
+                                  ProductSaleEntity productSaleEntity,
+                                  List<ProductRefBuEntity> productRefBuEntityList);
+
+    String[] convertFieldValue(ProductChangeFieldEnum fieldEnum,
+                                      String oldValue,
+                                      String newValue,
+                                      List<BasicDictEntity> basicDictList,
+                                      List<BasicCategoryEntity> basicCategoryEntities,
+                                      List<ProductRDTTeamEntity> productRDTTeamEntities,
+                                      List<ProductBrandEntity> productBrandEntities,
+                                      List<ApplicationCategoryEntity> applicationCategoryEntities,
+                                      List<BasicProductBuEntity> basicProductBuEntities,
+                                      List<DictCountryDTO.ListDTO> countryList);
 }

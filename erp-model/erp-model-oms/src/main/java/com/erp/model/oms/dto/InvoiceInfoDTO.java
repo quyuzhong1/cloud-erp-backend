@@ -510,13 +510,17 @@ public class InvoiceInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportResultDTO {
         /**
-         * 响应体
+         * 响应体（同步导出时使用）
          */
        private StreamingResponseBody responseBody;
        /**
-        * 下载文件名称
+        * 下载文件名称（同步导出时使用）
         */
        private String fileName;
+       /**
+        * 任务ID（异步导出时使用）
+        */
+       private String taskId;
     }
 
 

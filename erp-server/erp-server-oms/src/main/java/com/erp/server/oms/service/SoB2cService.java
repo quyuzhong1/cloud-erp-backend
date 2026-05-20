@@ -13,15 +13,14 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.wms.dto.ReportOrderDataDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -200,6 +199,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO submitDelivery(String id, String channelId);
     /**
+     * 检查发货限制
+     * @param id 订单ID
+     * @param deliveryType 发货类型 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.DeliveryRestrictionEnum}
+     * @return 如果有限制返回错误信息，否则返回null
+     */
+    String checkDeliveryRestriction(String id, String deliveryType);
+    /**
      * @description: 发货拦截
      * @author Will
      * @date: 2023/8/18 16:52
@@ -350,8 +356,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Boolean platformWarehouseOrderHandle(String id , Map<String,Object> map);
 
-  
-    /** 
+
+    SoB2cDTO.RuleResultDTO warehouseRuleNotRequiresNew(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
+
+    /**
      * @description 正常订单拉取处理规则
      * @param id
      * @author Lambda
@@ -510,6 +518,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
 
+    SoB2cDTO.RuleResultDTO logisticsRuleNotRequiresNew(String id, Map<String, Object> map, Boolean isCheckProductRegistration);
+
     /**
      * 获取客户信息
      * @description
@@ -554,6 +564,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @create 2024-01-03 17:37
      */
     Boolean updateWarehouseByShopId(String id, String shopId);
+
+    /**
+     * 重新按TikTok平台仓库映射回填订单仓库
+     */
+    Boolean updateTikTokOrderWarehouse(String soId);
 
     /**
      * 撤销流程
@@ -896,6 +911,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
     SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
 
+    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
+            , SoB2cDetailDTO.ListDTO detailDTO, List<String> ignoreInventorySkuIds);
+
+    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+            , SoB2cDetailDTO.DetailLabelDTO detailLabelDTO, SoB2cDetailDTO.ListDTO detailDTO);
+
     /**
      * 校验是否缺货状态
      *
@@ -986,12 +1007,30 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<SoB2cEntity> getByPlatformCode(String platformCode);
 
+    List<SoB2cEntity> getByShippingOrderNo(String shippingOrderNo);
+
     /**
      * 更换发货sku预览
      * @param ids
      * @return
      */
     List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
+
+    /**
+     * 是否允许更换发货SKU
+     *
+     * @param entity 订单
+     * @return true-允许
+     */
+    Boolean allowChangeDeliverySku(SoB2cEntity entity);
+
+    /**
+     * 校验是否已生成B2C发货单或三方仓发货单
+     *
+     * @param soId 订单id
+     * @param operationName 操作名称
+     */
+    void checkGeneratedDeliveryForOperation(String soId, String operationName);
 
     /**
      * 更新是否更换sku状态
@@ -1044,9 +1083,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      *
      * @param entity
      * @param soB2cLogisticsEntity
+     * @param checkBillStatus
      * @return
      */
-    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean checkBillStatus);
 
     /**
      * 销售统计
@@ -1147,7 +1187,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     BatchResultDTO retryPackagePlan(String soId);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList);
+    void lockDeliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, List<BatchResultDTO> resultDTOList);
+
+    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity);
     /**
      * 1,创建订单
      * 2,匹配订单规则
@@ -1156,6 +1198,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 5.创建发货单
      */
     String processOrderCreation(SoB2cDTO.AddDTO dto);
+
+    BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity);
+
+    void retryPlatformOutbound( List<String> ids);
+
+    void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
 
     void deleteB2cSoJob();
 }

@@ -1,9 +1,14 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.PilotApplicationEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.PilotApplicationDTO;
+import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
+import com.erp.model.plm.dto.ProductPackViewDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -123,10 +128,10 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
     * 撤销
     * @author tmj
     * @date: 2024-08-27
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel

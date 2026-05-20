@@ -1,21 +1,10 @@
 package com.erp.server.tms.schedule;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.stereotype.Component;
-
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -26,19 +15,28 @@ import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author zdy
@@ -89,6 +87,11 @@ public class SmallBagCostAllocationJob {
             return ReturnT.SUCCESS;
         }
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
+        if (ReconciliationTypeEnum.NOT_GENERATE.getCode().equals(dto.getPackageAllocationType())) {
+            XxlJobHelper.log("[生成小包费用分摊] autoGenerateSmallBagCostAllocation 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+            return ReturnT.SUCCESS;
+        }
+
         Integer packageAllocationDate = dto.getPackageAllocationDate();
         int dayOfMonth = currentDateTime.getDayOfMonth();
         if(packageAllocationDate != null && dayOfMonth >= packageAllocationDate) {
@@ -108,38 +111,23 @@ public class SmallBagCostAllocationJob {
                         .withMinute(0)
                         .withSecond(0)
                         .withNano(0);
-            }else if(ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getPackageAllocationType())){
-                Integer packageBeginAllocationDate = dto.getPackageBeginAllocationDate();
-                if(packageBeginAllocationDate != null) {
-                	startTime = currentDateTime.minusMonths(2)
-                             .withDayOfMonth(packageBeginAllocationDate)
-                             .withHour(0)
-                             .withMinute(0)
-                             .withSecond(0)
-                             .withNano(0);
-                	endTime = currentDateTime.minusMonths(1)
-                            .withDayOfMonth(packageBeginAllocationDate)
-                            .withHour(0)
-                            .withMinute(0)
-                            .withSecond(0)
-                            .withNano(0);
-                }else {
-                	XxlJobHelper.log("====自动生成小包费用分摊周期生成指定日期不存在====");
-                	return ReturnT.SUCCESS;
-                }
+            } else {
+                XxlJobHelper.log("====自动生成小包费用分摊类型选择错误====");
+                return ReturnT.SUCCESS;
             }
             List<LogisticsBillCostEntity> list = logisticsBillCostService.lambdaQuery()
-                .ge(LogisticsBillCostEntity::getConfirmTime, startTime)
-                .lt(LogisticsBillCostEntity::getConfirmTime, endTime)
+                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
                 .in(LogisticsBillCostEntity::getType, Arrays.asList(DictCostAttributionEnum.SELF_DELIVER.getCode() , DictCostAttributionEnum.LAST_MILE.getCode()))
                 .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
+                .in(LogisticsBillCostEntity::getReconciliationStatus,Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()))
                 .list();
             if(CollUtil.isNotEmpty(list)) {
             	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             	for(LogisticsBillCostEntity l : list) {
             		costAllocationPool.execute(() -> {
             			try {
-    						logisticsBillCostService.pushAllocation(l.getId(), l.getConfirmTime().format(formatter));
+    						logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
     					} catch (Exception e) {
     						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
     				        warnMsgInfo.setBizName("自动生成小包分摊");

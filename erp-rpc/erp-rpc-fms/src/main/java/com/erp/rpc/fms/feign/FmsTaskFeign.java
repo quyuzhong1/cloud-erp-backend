@@ -1,6 +1,7 @@
 package com.erp.rpc.fms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * FMS 任务 Feign
@@ -58,5 +60,19 @@ public interface FmsTaskFeign {
      */
     @PostMapping("/feign/assetDisposal/approve")
     List<BatchResultDTO> assetDisposalApprove(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 更新业务单据状态
+     */
+    @PostMapping("feign/fmsSyncKingdee/updateBusinessSyncKingdeeStatus")
+    void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
+
+    /**
+     * 新中台查询同步
+     * @param syncParamDTO
+     * @return
+     */
+    @PostMapping("/feign/fmsSyncKingdee/newFindDataSendSyncTask")
+    Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }
 

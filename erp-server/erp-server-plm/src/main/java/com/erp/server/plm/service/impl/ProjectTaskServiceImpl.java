@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -1288,12 +1289,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
         if (CollectionUtils.isNotEmpty(chargeIdList)) {
+            //查询对应负责人的上级
+            List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(chargeIdList);
             //如果审核分配类型是上级负责人则需要更新审核人
             List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, dto.getTaskId());
             if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
                 for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
-                    //查询对应负责人的上级
-                    List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(chargeIdList);
                     if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
                         List<String> superiorTypeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                         for (String superiorType : superiorTypeList) {
@@ -4031,16 +4032,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 撤销流程
      *
-     * @param taskIdList
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-06-25 17:11
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public Boolean cancelProcess(List<String> taskIdList) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据任务id 获取所有的任务列表
-        List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
+        List<ProjectTaskEntity> taskList = this.getByTaskIds(ids);
         if (CollectionUtils.isEmpty(taskList)) {
             throw new ServiceException(ApiError.PROJECT_TASK_NOT_FOUND);
         }
@@ -4843,6 +4845,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         if (CollectionUtils.isNotEmpty(approvalList)) {
+            //查询上级
+            List<UserSuperiorDTO> userSuperiorDTOS = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(dto.getChargeIds())) {
+                List<String> ids = dto.getChargeIds();
+                List<UserSuperiorDTO> userSuperiorDTOList = sysUserFeign.listSuperiorByUserIds(ids);
+                if (!userSuperiorDTOList.isEmpty()) {
+                    userSuperiorDTOS.addAll(userSuperiorDTOList);
+                }
+            }
             for (TaskChargeDistributionDTO taskChargeDistributionDTO : approvalList) {
                 //保存集合
                 List<String> chargeList = taskChargeDistributionDTO.getChargeList();
@@ -4869,10 +4880,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 }
                 //按上级
                 if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionDTO.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
-                    //查询对应负责人的上级
-                    List<String> ids = dto.getChargeIds();
-                    //查询上级
-                    List<UserSuperiorDTO> userSuperiorDTOS = sysUserFeign.listSuperiorByUserIds(ids);
                     List<String> superiorTypeList = Arrays.stream(taskChargeDistributionDTO.getCharges().split(",")).collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(userSuperiorDTOS)) {
                         for (String superiorType : superiorTypeList) {

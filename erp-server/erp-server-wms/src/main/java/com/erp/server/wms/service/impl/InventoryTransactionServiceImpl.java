@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.redisson.RedissonMultiLock;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -335,10 +336,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
 			transactionId = RootContext.getXID().replace(":", "_");
 			transactionType = "global";
 		}else {
-			transactionId = MDC.get("traceId");
-			if(StringUtils.isBlank(transactionId)) {
+			transactionId = TraceContext.traceId();
+			if(StringUtils.isBlank(transactionId) || "N/A".equals(transactionId) || "Ignored_Trace".equals(transactionId)) {
 				transactionId = transactionFlowEntityList.get(0).getId();
-				MDC.put("traceId", transactionId);
 			}
 			transactionType = "local";
 		}
@@ -407,9 +407,9 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	}
     	if(CollUtil.isNotEmpty(transactionRedisParam)) {
     		inventoryRedisUtil.execute(InventoryRedisOpEnum.TRY , transactionId  , InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.OVERRIDE, ""),
-    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
-    				InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
-    				transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
+					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, ""),
+					InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.TRANSACTION, ""),
+					transactionRedisParam.stream().collect(Collectors.joining(InventoryRedisUtil.splitSign)));
     	}
     	log.info("{}结束" , logMsg);
     }
@@ -732,4 +732,36 @@ public class InventoryTransactionServiceImpl extends SuperServiceImpl<InventoryT
     	return redisCheckInventoryList;
 	}
 
+	@Override
+	public Integer getRedisQtyByInventory(String inventoryId) {
+		if(StringUtils.isBlank(inventoryId)) {
+			throw new ServiceException("库存id不能为空");
+		}
+		
+		String transactionId = "";
+		boolean inGlobalTransaction = RootContext.inGlobalTransaction();
+		if(inGlobalTransaction) {
+			transactionId = RootContext.getXID().replace(":", "_");
+		}else {
+			transactionId = TraceContext.traceId();
+		}
+		
+		Integer redisQty = 0;
+		Object redisQtyObj = inventoryRedisUtil.get(InventoryRedisOpKeyEnum.getKey(InventoryRedisOpKeyEnum.CURRENT, inventoryId));
+		if(redisQtyObj != null) {
+			String[] split = redisQtyObj.toString().split(InventoryRedisUtil.splitSign);
+			redisQty = Integer.valueOf(split[0]);
+			for(String s : split) {
+				String[] qtySplit = s.split(InventoryRedisUtil.atSign);
+				if(qtySplit.length > 1) {
+					Integer tryQty = Integer.valueOf(qtySplit[1]);
+					if(tryQty < 0 || (StringUtils.isNotBlank(transactionId) && qtySplit[0].equals(transactionId))) {
+						redisQty = redisQty + tryQty;
+					}
+				}
+			}
+		}
+		return redisQty;
+	}
+	
 }

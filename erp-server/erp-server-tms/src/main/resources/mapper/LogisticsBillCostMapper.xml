@@ -76,7 +76,7 @@
             lb.order_type as orderType,
             lb.source_type as sourceType,
             lbc.reconciliation_status as reconciliationStatus,
-            lc.main_id as logisticsSupplierId,
+            lb.logistics_supplier_id as logisticsSupplierId,
             lbc.transport_no as transportNo,
             lbc.track_no as trackNo,
             lbc.logistics_bill_detail_id,
@@ -97,23 +97,34 @@
             lb.shop_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
+            lb.so_delivery_id as soDeliveryId,
+            lb.so_delivery_code as soDeliveryCode,
             lbc.remark,
             lbc.weight_unit as weightUnit,
             lbc.currency,
             lb.platform_code as platformCode,
-            lbc.fee_rule,
+            lbc.fee_rule as feeRule,
             lbc.confirm_time as confirmTime,
-            lbc.shop_charge_id,
-            lbc.shop_charge_name,
+            lbc.shop_charge_id as shopChargeId,
+            lbc.shop_charge_name as shopChargeName,
             lbc.volume,
             lbc.pay_type payType,
             lbc.pay_status payStatus,
             lbc.pay_time payTime,
             lbc.check_status checkStatus,
-            lbc.create_time createTime
+            lbc.create_time createTime,
+            lbc.reconciliation_month reconciliationMonth,
+            lbc.third_length thirdLength,
+            lbc.third_width thirdWidth,
+            lbc.third_height thirdHeight,
+            lbc.third_actual_weight thirdActualWeight,
+            lbc.subregion_code as subregionCode,
+            lbc.dept_id as deptId,
+            lbc.partition_id as partitionId,
+            lb.is_allocate_cost_required as isAllocateRequired,
+            lb.not_allocate_cost_remark as notAllocateRemark
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
-        left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
@@ -158,6 +169,8 @@
             lb.shop_name as customerName,
             lb.order_time as orderTime,
             lb.delivery_time as deliveryTime,
+            lb.so_delivery_id as soDeliveryId,
+            lb.so_delivery_code as soDeliveryCode,
             lbc.remark,
             lbc.weight_unit as weightUnit,
             lbc.currency,
@@ -170,7 +183,17 @@
             lbc.pay_type,
             lbc.pay_status,
             lbc.pay_time,
-            lbc.check_status
+            lbc.check_status,
+            lbc.reconciliation_month reconciliationMonth,
+            lbc.third_length thirdLength,
+            lbc.third_width thirdWidth,
+            lbc.third_height thirdHeight,
+            lbc.third_actual_weight thirdActualWeight,
+            lbc.subregion_code as subregionCode,
+            lbc.dept_id as deptId,
+            lbc.partition_id as partitionId,
+            lb.is_allocate_cost_required as isAllocateRequired,
+            lb.not_allocate_cost_remark as notAllocateRemark
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (
@@ -306,5 +329,170 @@
         </where>
     </select>
 
+    <!-- 统计总数 -->
+    <select id="listTotalCostValueCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TotalCountDTO">
+        select
+            sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics,
+            sum((case when tcc.dict_cost_category = 'shippingCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualShippingCost,
+            sum((case when tcc.dict_cost_category = 'declareCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeclareCost,
+            sum((case when tcc.dict_cost_category = 'deductibleTax' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeductibleTax,
+            sum((case when tcc.dict_cost_category = 'otherCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualOtherCost
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        inner join tms_cost_detail tcd on tcd.main_id = lbc.id and tcd.is_deleted = false
+        inner join tms_cfg_cost tcc on tcd.cfg_cost_id = tcc.id and tcc.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lbc.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <select id="listByCanPushAllocation" resultType="java.lang.String">
+        SELECT lbc.id
+        FROM logistics_bill_cost AS lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        LEFT JOIN (
+            SELECT DISTINCT cost_id
+            FROM small_bag_cost_allocation_main
+            WHERE is_deleted = FALSE
+              AND (
+                  report_date = #{params.reportDate}
+                  OR report_status = 'confirmed'
+                  OR fee_source = 'confirmed'
+              )
+        ) excl_confirmed ON lbc.id = excl_confirmed.cost_id
+        LEFT JOIN (
+            SELECT DISTINCT cost_id
+            FROM small_bag_cost_allocation_main
+            WHERE is_deleted = FALSE
+              AND (
+                  report_date = #{params.reportDate}
+                  OR report_status = 'confirmed'
+              )
+        ) excl_estimate ON lbc.id = excl_estimate.cost_id
+        WHERE lbc.is_deleted = FALSE
+          AND lb.is_allocate_cost_required = true
+          AND lbc.type = #{params.type}
+          AND lbc.reconciliation_month = #{params.reportDate}
+          AND (
+              (lbc.reconciliation_status = 'confirmed'      AND excl_confirmed.cost_id IS NULL)
+              OR
+              (lbc.reconciliation_status = 'estimateConfirm' AND excl_estimate.cost_id IS NULL)
+          )
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND lbc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="pageByCanPushAllocation" resultType="java.lang.String">
+        SELECT
+        lbc.ID
+        FROM
+        logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        WHERE
+        lbc.is_deleted = FALSE
+        AND lb.is_allocate_cost_required = true
+        AND lbc.TYPE = #{params.type}
+        AND lbc.reconciliation_month = #{params.reportDate}
+        AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
+        AND NOT EXISTS (
+        SELECT
+        1
+        FROM
+        small_bag_cost_allocation_main sb
+        WHERE
+        sb.is_deleted = FALSE
+        AND sb.cost_id = lbc.ID
+        AND ( sb.report_date = #{params.reportDate} OR sb.report_status = 'confirmed' OR ( lbc.reconciliation_status = 'confirmed' AND sb.fee_source = 'confirmed' ) )
+        )
+        <if test="params.lastId != null and params.lastId != ''">
+            AND lbc.id &gt; #{params.lastId}
+        </if>
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND lbc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY
+        lbc.ID ASC
+        LIMIT #{params.batchSize}
+    </select>
+
+    <!-- 统计可下推分摊的总条数，用于设置 asyncTaskRecord 的 detailCount -->
+    <select id="countByCanPushAllocation" resultType="java.lang.Integer">
+        SELECT
+        COUNT(lbc.id)
+        FROM
+        logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        WHERE
+        lbc.is_deleted = FALSE
+        AND lb.is_allocate_cost_required = true
+        AND lbc.TYPE = #{params.type}
+        AND lbc.reconciliation_month = #{params.reportDate}
+        AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
+        AND NOT EXISTS (
+        SELECT
+        1
+        FROM
+        small_bag_cost_allocation_main sb
+        WHERE
+        sb.is_deleted = FALSE
+        AND sb.cost_id = lbc.ID
+        AND ( sb.report_date = #{params.reportDate} OR sb.report_status = 'confirmed' OR ( lbc.reconciliation_status = 'confirmed' AND sb.fee_source = 'confirmed' ) )
+        )
+        <if test="params.lastId != null and params.lastId != ''">
+            AND lbc.id &gt; #{params.lastId}
+        </if>
+        <if test="params.ids != null and params.ids.size() > 0">
+            AND lbc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- 查询计费重合计 -->
+    <select id="listTotalBillingWeightLogisticsCount" resultType="java.math.BigDecimal">
+        select
+            sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and lbc.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <!-- 批量确认接口 -->
+    <update id="batchConfirmImport">
+        update logistics_bill_cost
+        set reconciliation_status = #{reconciliationStatus},
+        confirm_time = case id
+        <foreach collection="confirmList" item="item">
+            when #{item.logisticsCostId} then cast(#{item.confirmDateTime,jdbcType=TIMESTAMP} as timestamp)
+        </foreach>
+        else confirm_time
+        end,
+        confirm_user_id = #{confirmUserId},
+        confirm_user_name = #{confirmUserName},
+        update_time = NOW()
+        where is_deleted = false
+        and id in
+        <foreach collection="confirmList" item="item" open="(" separator="," close=")">
+            #{item.logisticsCostId}
+        </foreach>
+    </update>
 
 </mapper>

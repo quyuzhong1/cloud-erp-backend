@@ -24,7 +24,6 @@ public interface B2bThirdDeliveryConverter {
     B2bThirdDeliveryConverter INSTANCE = Mappers.getMapper(B2bThirdDeliveryConverter.class);
 
     @Mapping(target = "attachList", ignore = true)
-    @Mapping(target = "warehouseOperationTypeName", expression = "java(com.erp.model.wms.enums.WarehouseOperationTypeEnum.getName(entity.getWarehouseOperationType()))")
     @Mapping(target = "statusName", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.getName(entity.getStatus()))")
     @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.getName(entity.getDeliveryMethod()))")
     @Mapping(target = "detailList", source = "detailEntityList")
@@ -58,18 +57,29 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "deliveryMethod", source = "entity.deliveryMethod")
     @Mapping(target = "channelCode", source = "entity.logisticsChannelCode")
-    @Mapping(target = "address3", ignore = true)
-    @Mapping(target = "address2", ignore = true)
+    @Mapping(target = "address3", source = "entity.address3")
+    @Mapping(target = "address2", source = "entity.address2")
     @Mapping(target = "address1", source = "entity.receiveAddress")
+    @Mapping(target = "customerName", source = "entity.customerName")
     ThirdWarehouseCreateFbaOutboundReq toCreateFbaOutboundReq(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
 
+    @Mapping(target = "deliveryQty", source = "deliveryQty")
     ThirdWarehouseCreateFbaOutboundReq.Item toCreateFbaOutboundReqItem(B2bThirdDeliveryDetailEntity entity);
 
     List<ThirdWarehouseQueryFbaOutboundResponse> toB2bThirdDeliveryQueryDTO(List<DaMaiGetFbaOrderResp> dataList);
+    @Mapping(target = "orderType", constant = "B2B")
+    @Mapping(target = "platformOriginalStatus", source = "status")
+    @Mapping(target = "status", expression = "java(com.sdk.wms.damai.enums.DaMaiEnums.B2BOrderStatusEnum.getErpOrderStatus(data.getStatus()))")
     @Mapping(target = "trackNo", source = "mainTrackingNo")
     @Mapping(target = "platformOrderCode", source = "fbaSoNo")
     @Mapping(target = "errorType", source = "seType")
     @Mapping(target = "deliveryTimeStr", source = "confirmTime")
+    @Mapping(target = "platformCreateTimeStr", source = "createTime")
+    @Mapping(target = "platformUpdateTimeStr", source = "confirmTime")
+    @Mapping(target = "swOrderNumber", source = "fbaSoNo")
+    @Mapping(target = "warehouseCode", source = "whCode")
+    @Mapping(target = "shippingMethod", source = "carriersCode")
+    @Mapping(target = "carrierName", source = "endProviderCode")
     @Mapping(target = "code", source = "custRefNo")
     ThirdWarehouseQueryFbaOutboundResponse toB2bThirdDeliveryQueryDTO(DaMaiGetFbaOrderResp data);
 

@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -24,6 +25,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
@@ -64,6 +66,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
     @Resource
     private ThirdShopService thirdShopService;
     @Resource
@@ -727,6 +731,51 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                 .eq(ThirdWarehouseEntity::getIsDeleted, false)
                 .eq(ThirdWarehouseEntity::getDisabled, false);
         return thirdWarehouseService.getBaseMapper().selectOne(warehouseWrapper);
+    }
+
+    @Override
+    public ThirdMappingDTO.ErpWarehouseDTO resolveErpWarehouseBySourceId(String platform, String sourceWarehouseId) {
+        if (StringUtils.isBlank(platform) || StringUtils.isBlank(sourceWarehouseId)) {
+            return null;
+        }
+        ThirdMappingEntity thirdMappingEntity = getWarehouseThirdMapping(platform, sourceWarehouseId);
+        if (Objects.isNull(thirdMappingEntity) || StringUtils.isBlank(thirdMappingEntity.getSysId())) {
+            return null;
+        }
+        ThirdWarehouseEntity thirdWarehouseEntity = StringUtils.isNotBlank(thirdMappingEntity.getThirdInfoId())
+                ? thirdWarehouseService.getByIdOpt(thirdMappingEntity.getThirdInfoId()).orElse(null)
+                : thirdWarehouseService.getByWarehouseId(thirdMappingEntity.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode());
+        if (Objects.isNull(thirdWarehouseEntity)) {
+            return null;
+        }
+        List<WarehouseDTO.ListDTO> warehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(thirdMappingEntity.getSysId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            return null;
+        }
+        WarehouseDTO.ListDTO warehouseDTO = warehouseList.get(0);
+        ThirdMappingDTO.ErpWarehouseDTO result = new ThirdMappingDTO.ErpWarehouseDTO();
+        result.setWarehouseId(warehouseDTO.getId());
+        result.setWarehouseName(warehouseDTO.getName());
+        result.setWarehouseOrgId(warehouseDTO.getOrgId());
+        if (StringUtils.isNotBlank(warehouseDTO.getOrgId())) {
+            List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(warehouseDTO.getOrgId()));
+            if (CollectionUtils.isNotEmpty(companyList)) {
+                result.setWarehouseOrgName(companyList.get(0).getName());
+            }
+        }
+        return result;
+    }
+
+    private ThirdMappingEntity getWarehouseThirdMapping(String platform, String sourceWarehouseId) {
+        ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
+        viewParamDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        viewParamDTO.setSysType(platform);
+        viewParamDTO.setThirdId(sourceWarehouseId);
+        List<ThirdMappingEntity> thirdMappingEntityList = this.getByThirdId(viewParamDTO);
+        if (CollectionUtils.isNotEmpty(thirdMappingEntityList)) {
+            return thirdMappingEntityList.get(0);
+        }
+        return this.getByThirdCodeAndType(sourceWarehouseId, platform, ThirdSysTypeEnum.WAREHOUSE.getCode());
     }
 
     private String checkData(ThirdMappingDTO.AddDTO addDTO, List<ThirdMappingEntity> saveList, List<ThirdMappingEntity> deleteList, List<ThirdMappingEntity> updateList) {

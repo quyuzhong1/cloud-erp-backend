@@ -94,6 +94,19 @@ public class DmpFbaShipmentEntity extends BaseEntity<DmpFbaShipmentEntity> {
      */
     @TableField("next_level_id")
     private String nextLevelId;
+
+    /**
+     * 是否sta
+     */
+    @TableField("is_sta")
+    private Boolean isSta;
+
+    /**
+     * 平台物流中心国家
+     */
+    @TableField("fulfillment_center_country")
+    private String fulfillmentCenterCountry;
+
     /**
      * 任务来源唯一加密代号
      */
@@ -104,7 +117,21 @@ public class DmpFbaShipmentEntity extends BaseEntity<DmpFbaShipmentEntity> {
      */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
+    /**
+     * 关联单号
+     */
+    @TableField("reference_id")
+    private String referenceId;
+    /**
+     * 面单url
+     */
+    @TableField("label_url")
+    private String labelUrl;
+    /**
+     * 面单类型
+     */
+    @TableField("page_type")
+    private String pageType;
 
     public static final String CODE = "code";
 

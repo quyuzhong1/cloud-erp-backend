@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FbaShipmentExtendMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaShipmentExtendEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="plan_code" property="planCode" />
+       <result column="delivery_code" property="deliveryCode" />
+       <result column="delivery_id" property="deliveryId" />
+       <result column="preferred_region" property="preferredRegion" />
+       <result column="delivery_from_name" property="deliveryFromName" />
+       <result column="delivery_from_mobile" property="deliveryFromMobile" />
+       <result column="delivery_from_city" property="deliveryFromCity" />
+       <result column="delivery_from_province" property="deliveryFromProvince" />
+       <result column="delivery_from_area" property="deliveryFromArea" />
+       <result column="delivery_from_post_code" property="deliveryFromPostCode" />
+       <result column="delivery_to_warehouse_id" property="deliveryToWarehouseId" />
+       <result column="shipment_delivery_time" property="shipmentDeliveryTime" />
+       <result column="carrier_name" property="carrierName" />
+       <result column="tracking_no" property="trackingNo" />
+       <result column="delivery_to_mobile" property="deliveryToMobile" />
+       <result column="delivery_to_name" property="deliveryToName" />
+       <result column="delivery_to_post_code" property="deliveryToPostCode" />
+       <result column="delivery_to_area" property="deliveryToArea" />
+       <result column="delivery_to_province" property="deliveryToProvince" />
+       <result column="delivery_to_city" property="deliveryToCity" />
+       <result column="delivery_to_country_id" property="deliveryToCountryId" />
+       <result column="delivery_to_country_name" property="deliveryToCountryName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        main_id, plan_code, delivery_code, delivery_id, preferred_region, delivery_from_name, delivery_from_mobile, delivery_from_city, delivery_from_province, delivery_from_area, delivery_from_post_code, delivery_to_warehouse_id, shipment_delivery_time, carrier_name, tracking_no, delivery_to_mobile, delivery_to_name, delivery_to_post_code, delivery_to_area, delivery_to_province, delivery_to_city, delivery_to_country_id, delivery_to_country_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.FbaShipmentExtendDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from fba_shipment_extend where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.FbaShipmentExtendDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.FbaShipmentExtendDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  fba_shipment_extend
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+
+</mapper>

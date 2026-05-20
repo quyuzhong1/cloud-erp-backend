@@ -7,6 +7,7 @@ import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * @author Lambda
@@ -89,6 +90,22 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private Integer diffQty;
 
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
+
+
+        /**
+         * 下推盘盈盘亏状态
+         */
+        private String pushStocktakingProfitLossStatus;
+
+
+        /**
+         * 下推盘盈盘亏状态名称
+         */
+        private String pushStocktakingProfitLossStatusName;
     }
 
 
@@ -108,6 +125,11 @@ public class StocktakingTaskDetailDTO implements Serializable {
         @NotNull(message = "盘点数量不能为空")
         @DecimalMin(value = "0",message ="盘点数量最小为0" )
         private Integer qty;
+
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
     }
 
     /**
@@ -193,5 +215,39 @@ public class StocktakingTaskDetailDTO implements Serializable {
          */
         private String stocktakingUserName;
 
+        /**
+         * 初盘数量
+         */
+        private Integer firstQty;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LastDTO {
+        /**
+         * 单据号
+         */
+        private String code;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
+         * 库存组织
+         */
+        private String warehouseOrgId;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * skuId
+         */
+        private String skuId;
     }
 }

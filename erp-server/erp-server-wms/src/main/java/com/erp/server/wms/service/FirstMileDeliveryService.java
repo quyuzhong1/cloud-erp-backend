@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -103,7 +104,7 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @param id
      * @return
      */
-    BatchResultDTO submit(String id);
+    BatchResultDTO submit(String id,Boolean isStartProcess);
 
     /**
     * 审核
@@ -149,10 +150,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     * 撤销
     * @author Luo_WG
     * @date: 2023-10-30
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel
@@ -389,4 +390,24 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return BatchResultDTO
      */
     BatchResultDTO retryOutstock(String id);
+
+    /**
+     * AWD出库货件下推头程发货单
+     */
+    BatchResultDTO generateFirstMileDeliveryByAwdOutStock(AwdOutstockDTO.GenerateDeliveryDTO dto);
+    /**
+     * 取消分货分页查询
+     * @author will
+     * @date 2026/1/23 16:32
+     * @return PagingVO<CancelDeliveryListDTO>
+     */
+    PagingVO<FirstMileDeliveryDTO.CancelDeliveryListDTO> cancelDeliveryPaging(PagingDTO<FirstMileDeliveryDTO.CancelDeliveryParamDTO> dto);
+    /**
+     * 取消发货
+     * @author will
+     * @date 2026/1/23 18:49
+     * @param cancelDeliveryDTO
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelDelivery(FirstMileDeliveryDTO.CancelDeliveryDTO cancelDeliveryDTO);
 }

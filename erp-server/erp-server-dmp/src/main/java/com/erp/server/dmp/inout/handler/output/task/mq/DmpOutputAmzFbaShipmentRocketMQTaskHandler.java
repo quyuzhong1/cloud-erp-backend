@@ -120,7 +120,12 @@ public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketM
         platformFbaShipmentDTO.setShipmentCreateTime(java.time.LocalDateTime.now(java.time.ZoneId.systemDefault()));
         platformFbaShipmentDTO.setPackType(dmpMainEntity.getPackType());
         platformFbaShipmentDTO.setDeliveryFromAddress(dmpMainEntity.getDeliveryFromAddress());
+        platformFbaShipmentDTO.setIsSta(dmpMainEntity.getIsSta());
         platformFbaShipmentDTO.setDeliveryStatus("unShipped");
+        platformFbaShipmentDTO.setLabelUrl(dmpMainEntity.getLabelUrl());
+        platformFbaShipmentDTO.setPageType(dmpMainEntity.getPageType());
+        platformFbaShipmentDTO.setFulfillmentCenterCountry(dmpMainEntity.getFulfillmentCenterCountry());
+        platformFbaShipmentDTO.setReferenceId(dmpMainEntity.getReferenceId());
 
         // 明细
         List<PlatformFbaShipmentReceiveDTO> dtoDetailList = new LinkedList<>();

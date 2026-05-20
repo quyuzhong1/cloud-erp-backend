@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 第三方系统仓库表 服务类
@@ -39,4 +41,6 @@ public interface ThirdWarehouseService extends SuperService<ThirdWarehouseEntity
     PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdWarehouseDTO.SelectDTO> dto);
 
     ThirdWarehouseEntity getByWarehouseId(String thirdId, String sysType);
+
+    List<ThirdWarehouseDTO.QueryMapDTO> listQueryMapping(ThirdWarehouseDTO.QueryMapParamDTO dto);
 }

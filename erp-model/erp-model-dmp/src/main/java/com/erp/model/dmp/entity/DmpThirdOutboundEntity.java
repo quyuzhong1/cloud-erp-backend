@@ -109,6 +109,35 @@ public class DmpThirdOutboundEntity extends BaseEntity<DmpThirdOutboundEntity> {
     @TableField("intercept_status")
     private String interceptStatus;
 
+    /**
+     *平台订单号
+     */
+    @TableField("sw_order_number")
+    private String swOrderNumber;
+
+    /**
+     *仓库代码
+     */
+    @TableField("warehouse_code")
+    private String warehouseCode;
+
+    /**
+     *运输方式
+     */
+    @TableField("shipping_method")
+    private String shippingMethod;
+
+    /**
+     *承运商
+     */
+    @TableField("carrier_name")
+    private String carrierName;
+
+    /**
+     *订单类型
+     */
+    @TableField("order_type")
+    private String orderType;
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 
     public static final String SOURCE_PLATFORM = "source_platform";

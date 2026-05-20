@@ -1,20 +1,21 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.StrUtil;
-import com.common.business.constant.DmpPullConstant;
-import com.common.business.dto.DmpInputFeignDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.OperationTypeEnum;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.*;
+import com.common.business.dto.DmpInputFeignDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -25,32 +26,25 @@ import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
-import com.erp.server.dmp.service.DmpBasicSystemService;
-import com.erp.server.dmp.service.DmpCfgInputDetailService;
-import com.erp.server.dmp.service.DmpCfgOutputDetailService;
-import com.erp.server.dmp.service.DmpCfgInputService;
-import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
-
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -144,11 +138,6 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         if (ObjUtil.isEmpty(inputDetailEntity)) {
             throw new ServiceException("飞书配置输入明细未找到，编码：" + cfgOptionDTO.getCode());
         }
-
-        //只有审批定义输出明细需要添加
-        if (CharSequenceUtil.equals(cfgOptionDTO.getSystem(),DmpPullConstant.FS) && CharSequenceUtil.equals(cfgOptionDTO.getCode(), DmpPullConstant.FS_APPROVALS)) {
-            return;
-        }
         optionCfgOutputDetail(cfgOptionDTO, inputDetailEntity);
     }
 
@@ -230,14 +219,16 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     */
     private void handleData(DmpCfgInputDetailEntity dmpCfgInputDetailEntity, DmpCfgInputDetailDTO.CommonDTO updateDTO) {
         // 验证数据 & 数据赋值
-        if (StringUtils.isBlank(updateDTO.getExtendJson())) {
+        String extendJson = StringUtils.trim(updateDTO.getExtendJson());
+        if (StringUtils.isBlank(extendJson)) {
             dmpCfgInputDetailEntity.setExtendJson("{}");
         } else {
-            // 校验是否json格式
-            if (!JSON.isValid(updateDTO.getExtendJson())) {
+            try {
+                JSON.parse(extendJson);
+            } catch (Exception e) {
                 ServiceException.runError("【拓展json】不是合法的JSON格式");
             }
-            dmpCfgInputDetailEntity.setExtendJson(updateDTO.getExtendJson());
+            dmpCfgInputDetailEntity.setExtendJson(extendJson);
         }
     }
 

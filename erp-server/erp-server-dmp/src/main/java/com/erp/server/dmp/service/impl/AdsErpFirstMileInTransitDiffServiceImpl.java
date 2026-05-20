@@ -142,7 +142,7 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
         }
         AdsErpFirstMileInTransitDiffDTO.FirstMileShipmentChangeFDTO newEntity = buildChangeEntity("firstMileAdjust", entity, adjustDTO.getAdjustQty(), entity.getAdjustReason(), entity.getCheckMonth(), reportMonth);
 
-        int afterAdjustQty = entity.getEndPeriodTransitQty() + adjustDTO.getAdjustQty();
+        int afterAdjustQty = entity.getAfterEndPeriodTransitQty() + adjustDTO.getAdjustQty();
         if (afterAdjustQty < 0) {
             throw new ServiceException("期末在途(调整后)不能小于0");
         }
@@ -311,8 +311,8 @@ public class AdsErpFirstMileInTransitDiffServiceImpl extends SuperServiceImpl<Ad
         JSONArray jsonArray = (JSONArray) JSON.toJSON(newListEntity);
         data.put("data", jsonArray);
         log.debug("请求数据json:{}", JSON.toJSONString(data));
-        boolean reCreate = RestCloudApiUtil.requestRestCloud(
-                "ods_erp/ods_flow_erp_shipment_change", data, true);
+        boolean reCreate = RestCloudApiUtil.syncRequestRestCloud(
+                "ods_erp/ods_flow_erp_shipment_change", data);
         if (reCreate) {
             List<String> shipmentIdList = newListEntity.stream()
                     .map(AdsErpFirstMileInTransitDiffDTO.FirstMileShipmentChangeFDTO::getPlatformShipmentId)

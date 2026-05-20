@@ -3,9 +3,9 @@ package com.erp.server.dmp.controller.api;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.dmp.enums.WebhookServiceEnum;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
 import com.erp.server.dmp.handler.WebhookHandler;
-import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestAttributes;
@@ -29,13 +29,15 @@ import java.util.Objects;
 @LogSystemModule("WebHook接收管理")
 @RequestMapping("/webhook")
 public class WebhookController extends BaseController {
-    @Resource
-    private CfgAppClientService cfgAppClientService;
     // 预先约定的Secret
     private static final String SECRET_KEY = "your_secret_key";
     // 允许的时间偏差（秒）
     private static final long MAX_AGE = 5 * 60L; // 5 minutes
     private final WebhookHandlerFactory webhookHandlerFactory;
+    @Resource
+    private FileFeign fileFeign;
+
+
 
     public WebhookController(WebhookHandlerFactory webhookHandlerFactory) {
         this.webhookHandlerFactory = webhookHandlerFactory;

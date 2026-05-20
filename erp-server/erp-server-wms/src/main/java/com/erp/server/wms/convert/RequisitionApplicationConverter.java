@@ -6,6 +6,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
+import org.codehaus.janino.Java;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -68,7 +69,14 @@ public interface RequisitionApplicationConverter {
     FirstMileDeliveryDTO.AddDTO generateDeliverFDD(RequisitionApplicationDTO.GenerateDeliverViewDTO dto);
 
     @Mappings({
-            @Mapping(target = "platformSkuNo", source = "platformSku")
+            @Mapping(target = "platformSkuNo", source = "platformSku"),
+            @Mapping(target = "declareQty", ignore = true),
+            @Mapping(target = "mainId", ignore = true),
+            @Mapping(target = "netWeight", ignore = true),
+            @Mapping(target = "productSizeHeight", ignore = true),
+            @Mapping(target = "productSizeLength", ignore = true),
+            @Mapping(target = "productSizeWidth", ignore = true),
+            @Mapping(target = "warehouseLocation", ignore = true)
     })
     FirstMileDeliveryDetailDTO.AddDTO generateDeliverDetailFDD(RequisitionApplicationDTO.GenerateDeliverViewDTO dto);
 
@@ -76,18 +84,21 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "sourceId", source = "entity.id"),
             @Mapping(target = "sourceType", expression = "java(com.common.business.enums.SourceTypeEnum.REQUISITION_APPLICATION.getCode())"),
             @Mapping(target = "sourceCode", source = "entity.code"),
-            @Mapping(target = "demandType", expression = "java(com.erp.model.wms.enums.FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())"),
+            @Mapping(target = "demandType", source = "fbaShipmentEntity.sourceType", qualifiedByName = "convertSourceTypeToDemandType"),
             @Mapping(target = "shopId", source = "shopInfo.id"),
             @Mapping(target = "shopName", source = "shopInfo.name"),
             @Mapping(target = "countryId", source = "fbaShipmentEntity.countryId"),
             @Mapping(target = "countryName", source = "fbaShipmentEntity.countryName"),
             @Mapping(target = "deliveryWarehouseId", source = "entity.requisitionWarehouseId"),
             @Mapping(target = "deliveryWarehouseName", source = "entity.requisitionWarehouseName"),
-            @Mapping(target = "destWarehouseId", source = "shopInfo.warehouseId"),
-            @Mapping(target = "destWarehouseName", source = "shopInfo.warehouseName"),
+            @Mapping(target = "destWarehouseId", expression = "java(fbaShipmentEntity.getSourceType().equals(com.erp.model.wms.enums.ShipmentSourceTypeEnum.AWD.getCode()) ? shopInfo.getAwdWarehouseId() : shopInfo.getWarehouseId())"),
+            @Mapping(target = "destWarehouseName", expression = "java(fbaShipmentEntity.getSourceType().equals(com.erp.model.wms.enums.ShipmentSourceTypeEnum.AWD.getCode()) ? shopInfo.getAwdWarehouseName() : shopInfo.getWarehouseName())"),
             @Mapping(target = "remark", ignore = true),
             @Mapping(target = "fulfillmentCenter", source = "shopInfo.warehouseName"),
             @Mapping(target = "inventoryOrgId", ignore = true),
+            @Mapping(target = "attachNameList", ignore = true),
+            @Mapping(target = "attachUrlList", ignore = true),
+            @Mapping(target = "detailList", ignore = true)
     })
     FirstMileDeliveryDTO.AddDTO generateFbaDeliverFDD(FbaShipmentEntity fbaShipmentEntity, RequisitionApplicationEntity entity, ShopInfoEntity shopInfo);
 
@@ -171,7 +182,8 @@ public interface RequisitionApplicationConverter {
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
             @Mapping(target = "toWarehouseId", ignore = true),
             @Mapping(target = "toWarehouseName", ignore = true),
-            @Mapping(target = "virtualFrozenQty", ignore = true)
+            @Mapping(target = "virtualFrozenQty", ignore = true),
+            @Mapping(target = "platformFnSku", source = "detailEntity.platformFnSku")
     })
     RequisitionApplicationDetailEntity wmsDeliveryPlanDetailToRequisitionApplicationDetail(WmsDeliveryPlanDetailEntity detailEntity);
     List<RequisitionApplicationDetailEntity> wmsDeliveryPlanDetailToRequisitionApplicationDetail(List<WmsDeliveryPlanDetailEntity> planDetailEntityList);

@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
@@ -9,6 +10,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -277,6 +279,19 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
 
+        /**
+         * 动态数据源，需要重新get方法
+         */
+        private String dynamicDataSource;
+
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+            if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+                return DynamicDataSourceTypeEnum.DORIS.getCode();
+            }
+            return dynamicDataSource;
+        }
+
     }
 
     /**
@@ -436,7 +451,7 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */
-        private String syncStatus;
+        private String syncStatus = "0";
         /**
          * 同步状态：0 无需同步 1 待同步 2 同步中，3同步成功，4同步失败，5手动同步
          */

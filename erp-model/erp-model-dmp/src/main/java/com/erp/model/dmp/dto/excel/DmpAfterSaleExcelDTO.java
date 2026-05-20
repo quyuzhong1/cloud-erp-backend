@@ -33,6 +33,11 @@ public class DmpAfterSaleExcelDTO implements Serializable {
         private String platformCode;
 
         /**
+         * 售后人员名称
+         */
+        private String csAgentName;
+
+        /**
          * 审核状态
          */
 //        @ExcelProperty(value = "审核状态", index = 2)
@@ -116,6 +121,11 @@ public class DmpAfterSaleExcelDTO implements Serializable {
          */
 //        @ExcelProperty(value = "商家寄出快递单号", index = 16)
         private String outboundTrackNo;
+
+        /**
+         * 商家寄出快递渠道
+         */
+        private String logisticsChannelName;
 
         /**
          * 故障描述

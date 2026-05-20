@@ -29,7 +29,7 @@ public enum SourceTypeEnum {
     CFG_SUPPLIER_SALES("cfgSupplierSales", "销量设置","cfg_supplier_sales"),
     CONTRACT_INFO("contractInfo", "合同管理","contract_info"),
     SUPPLIER_PHASE("supplierPhase", "供应商阶段审核列表","supplier_phase"),
-
+    SUBCONTRACT_BOM("subcontractBOM", "委外用料清单",""),
 
 
     //WMS
@@ -62,15 +62,17 @@ public enum SourceTypeEnum {
     B2B_THIRD_DELIVERY("b2bThirdDelivery", "B2B三方发货单","b2b_third_delivery"),
     B2B_THIRD_DELIVERY_CREATE("b2bthirdWarehouseDeliveryCreate", "数大臣B2B三方发货单创建","b2b_third_delivery"),
     B2B_THIRD_DELIVERY_CANCEL("b2bthirdWarehouseDeliveryCancel", "数大臣B2B三方发货单取消","b2b_third_delivery"),
+    SO_B2B_DELIVERY_INTERCEPT("soB2bDeliveryIntercept", "B2B发货单拦截","so_b2b_delivery_intercept"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
-
+    AWD_OUT_STOCK("awdOutStock","awd出库货件","awd_out_stock"),
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
     STOCKTAKING_LOSS("stocktakingTaskLoss", "盘亏单","stocktaking_profit_loss"),
     STOCKTAKING_PROFIT("stocktakingTaskProfit", "盘盈单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
+    AWD_SHIPMENT("awdShipment", "AWD货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
     FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     //当前仓可用减少，中转仓冻结增加
@@ -109,6 +111,8 @@ public enum SourceTypeEnum {
     KOL_B2C_APPLICATION("kolB2cApplication","B2C寄样申请","kol_b2c_application"),
 
     WDT_SO_B2B_DELIVERY( "wdtSoB2bDelivery", "旺店通B2B订单发货","so_info"),
+    QC_APPLICATION( "qcApplication", "质检申请单","qc_application"),
+
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -149,7 +153,7 @@ public enum SourceTypeEnum {
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
     PO_RECONCILIATION( "poReconciliation", "对账单","po_reconciliation"),
     PAYABLE_INFO( "payableInfo", "应付单","payable_info"),
-
+    WAIT_DELIVERY( "waitDelivery", "待发货",""),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
@@ -168,7 +172,7 @@ public enum SourceTypeEnum {
     SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
-    PRODUCT_CHANGE("productChange", "变更管理","product_change"),
+    BOM_CHANGE("bomChange", "BOM变更管理","bom_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
     APPLICATION_CATEGORY("applicationCategory", "应用分类","application_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
@@ -181,6 +185,11 @@ public enum SourceTypeEnum {
     ASSET_NOTICE("assetNotice","资产通知","asset_notice"),
     ASSET_PURCHASE_ORDER("assetPurchaseOrder","资产采购单","asset_purchase_order"),
     ASSET_PURCHASE_CHANGE("assetPurchaseChange","资产采购变更单","asset_purchase_change"),
+    CFG_MOLD_RETURN_ALERT_RULE("cfgMoldReturnAlertRule","资产采购变更单","cfg_mold_return_alert_rule"),
+    CFG_MOLD_ALERT_RULE("cfgMoldAlertRule","资产采购变更单","cfg_mold_alert_rule"),
+    MOLD_MONITOR("moldMonitor", "模具监控","mold_monitor"),
+
+    PRODUCT_CHANGE("productChange", "产品变更单","product_change"),
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),
@@ -249,6 +258,7 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CREATE_INBOUND_BILL("thirdWarehouseCreateInboundBill", "第三方仓创建入库单","dmp_push_task"),
     THIRD_WAREHOUSE_EDIT_INBOUND_BILL("thirdWarehouseEditInboundBill", "第三方仓编辑入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
+    THIRD_WAREHOUSE_APPROVE_INBOUND_BILL("thirdWarehouseApproveInboundBill", "第三方仓审核入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_FBA_OUTBOUND_BILL("thirdWarehouseCreateFbaOutboundBill", "B2B第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
@@ -279,6 +289,7 @@ public enum SourceTypeEnum {
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
     WDT_RETURN_ORDER("wdt_return_order", "旺店通退货入库单","dmp_pull_task"),
     WDT_VIRTUAL_INVENTORY("wdt_virtual_inventory", "旺店通虚拟仓库存","dmp_pull_task"),
+    WDT_INVENTORY_COMPARE("wdtInventoryCompare", "旺店通库存比对","virtual_warehouse_allocation"),
 
 
     //旺店通
@@ -319,7 +330,7 @@ public enum SourceTypeEnum {
 
 
     //售后申请
-    AFTER_SALE("afterSale", "售后申请","after_sale"),
+    AFTER_SALE("afterSale", "寄修申请","after_sale"),
     ;
 
     /**

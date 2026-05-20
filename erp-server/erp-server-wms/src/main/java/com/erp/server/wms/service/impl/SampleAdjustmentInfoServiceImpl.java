@@ -1,95 +1,81 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.SampleLedgerTypeEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.wms.mapper.SampleAdjustmentInfoMapper;
-import com.erp.server.wms.service.SampleAdjustmentInfoService;
-import com.erp.server.wms.service.SampleAdjustmentDetailService;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SampleAdjustmentDetailDTO;
-import com.erp.model.wms.enums.SampleAdjustmentTypeEnum;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.server.wms.service.WmsAttachmentService;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.baomidou.mybatisplus.annotation.TableName;
-import org.apache.commons.collections4.CollectionUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
-import org.apache.commons.lang3.StringUtils;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.Comparator;
-import java.util.function.Function;
-import java.util.List;
-import java.util.Map;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import org.apache.commons.math3.util.Pair;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleAdjustmentInfoDTO;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.wms.entity.SampleAdjustmentDetailEntity;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.file.feign.FileFeign;
-import com.erp.server.wms.service.SampleLedgerFlowService;
-import com.erp.server.wms.service.SampleLedgerFlowBuilder;
-import com.erp.server.wms.service.SampleLedgerService;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.utils.SampleDocumentAuditUtil;
-import com.common.business.validator.ValidList;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import javax.annotation.Resource;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.enums.FileTaskStatusEnum;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.SampleDocumentAuditUtil;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.wms.dto.SampleAdjustmentDetailDTO;
+import com.erp.model.wms.dto.SampleAdjustmentInfoDTO;
+import com.erp.model.wms.dto.SampleLedgerFlowDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.excel.SampleAdjustmentImportExcelDTO;
+import com.erp.model.wms.entity.SampleAdjustmentDetailEntity;
+import com.erp.model.wms.entity.SampleAdjustmentInfoEntity;
+import com.erp.model.wms.entity.SampleLedgerEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.SampleAdjustmentTypeEnum;
+import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.listener.SampleAdjustmentExcelListener;
+import com.erp.server.wms.mapper.SampleAdjustmentInfoMapper;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_ADJUSTMENT_INFO_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_ADJUSTMENT_INFO;
 /**
  * <p>
  * 样品调整单 服务实现类
@@ -492,7 +478,8 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SampleAdjustmentInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品调整单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -510,6 +497,7 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -566,10 +554,46 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             new LambdaQueryWrapper<SampleAdjustmentDetailEntity>().eq(SampleAdjustmentDetailEntity::getMainId, id)
         );
         
+        // 提取所有样品台账ID，用于查询使用方信息
+        List<String> sampleLedgerIds = detailEntities.stream()
+                .map(SampleAdjustmentDetailEntity::getSampleLedgerId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询台账信息，获取使用方
+        Map<String, String> ledgerIdToUserSideMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(sampleLedgerIds)) {
+            try {
+                List<SampleLedgerEntity> ledgerList = sampleLedgerService.listByIds(sampleLedgerIds);
+                if (CollUtil.isNotEmpty(ledgerList)) {
+                    ledgerIdToUserSideMap = ledgerList.stream()
+                            .filter(ledger -> StrUtil.isNotBlank(ledger.getUseUserName()))
+                            .collect(Collectors.toMap(
+                                    SampleLedgerEntity::getId,
+                                    SampleLedgerEntity::getUseUserName,
+                                    (existing, replacement) -> existing
+                            ));
+                }
+            } catch (Exception e) {
+                log.warn("查询样品台账使用方信息失败：{}", e.getMessage());
+            }
+        }
+        
+        // 设置明细列表，并填充使用方信息
+        Map<String, String> finalLedgerIdToUserSideMap = ledgerIdToUserSideMap;
         List<SampleAdjustmentDetailDTO.ViewDTO> detailList = detailEntities.stream()
             .map(detail -> {
                 SampleAdjustmentDetailDTO.ViewDTO detailDTO = new SampleAdjustmentDetailDTO.ViewDTO();
                 BeanMapperUtils.copy(detail, detailDTO);
+                // 从台账中获取使用方信息
+                String sampleLedgerId = detail.getSampleLedgerId();
+                if (StrUtil.isNotBlank(sampleLedgerId)) {
+                    String userSide = finalLedgerIdToUserSideMap.get(sampleLedgerId);
+                    if (StrUtil.isNotBlank(userSide)) {
+                        detailDTO.setUserSide(userSide);
+                    }
+                }
                 return detailDTO;
             })
             .collect(Collectors.toList());
@@ -804,7 +828,35 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
     * 新增修改处理数据
     */
     private void handleData(SampleAdjustmentInfoEntity sampleAdjustmentInfoEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 根据调整人ID查询并设置调整人名称，确保ID和名称的一致性
+        if (StrUtil.isNotBlank(sampleAdjustmentInfoEntity.getAdjustmentUserId())) {
+            try {
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(sampleAdjustmentInfoEntity.getAdjustmentUserId()));
+                if (CollUtil.isNotEmpty(userList)) {
+                    FindUserDTO user = userList.get(0);
+                    if (user != null && StrUtil.isNotBlank(user.getUserName())) {
+                        sampleAdjustmentInfoEntity.setAdjustmentUserName(user.getUserName());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("查询调整人信息失败，adjustmentUserId：{}，错误：{}", sampleAdjustmentInfoEntity.getAdjustmentUserId(), e.getMessage());
+            }
+        }
+        
+        // 根据调整部门ID查询并设置调整部门名称，确保ID和名称的一致性
+        if (StrUtil.isNotBlank(sampleAdjustmentInfoEntity.getAdjustmentDeptId())) {
+            try {
+                List<SysDepartmentEntity> departments = sysUserFeign.getDeptByIds(Arrays.asList(sampleAdjustmentInfoEntity.getAdjustmentDeptId()));
+                if (CollUtil.isNotEmpty(departments)) {
+                    SysDepartmentEntity department = departments.get(0);
+                    if (department != null && StrUtil.isNotBlank(department.getName())) {
+                        sampleAdjustmentInfoEntity.setAdjustmentDeptName(department.getName());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("查询调整部门信息失败，adjustmentDeptId：{}，错误：{}", sampleAdjustmentInfoEntity.getAdjustmentDeptId(), e.getMessage());
+            }
+        }
     }
 
     /**
@@ -1194,6 +1246,49 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
 
         SampleAdjustmentInfoServiceImpl bean = ApplicationContextUtils.getBean(SampleAdjustmentInfoServiceImpl.class);
 
+        // 批量收集所有调整人ID和调整部门ID（去重）
+        List<String> adjustmentUserIds = successList.stream()
+                .map(SampleAdjustmentImportExcelDTO::getAdjustmentUserId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        List<String> adjustmentDeptIds = successList.stream()
+                .map(SampleAdjustmentImportExcelDTO::getAdjustmentDeptId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 批量查询所有用户信息并构建Map
+        Map<String, String> userIdNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(adjustmentUserIds)) {
+            try {
+                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(adjustmentUserIds);
+                if (CollUtil.isNotEmpty(userList)) {
+                    userIdNameMap = userList.stream()
+                            .filter(user -> user != null && StrUtil.isNotBlank(user.getUserId()) && StrUtil.isNotBlank(user.getUserName()))
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (v1, v2) -> v1));
+                }
+            } catch (Exception e) {
+                log.warn("导入时批量查询调整人信息失败，错误：{}", e.getMessage());
+            }
+        }
+
+        // 批量查询所有部门信息并构建Map
+        Map<String, String> deptIdNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(adjustmentDeptIds)) {
+            try {
+                List<SysDepartmentEntity> departments = sysUserFeign.getDeptByIds(adjustmentDeptIds);
+                if (CollUtil.isNotEmpty(departments)) {
+                    deptIdNameMap = departments.stream()
+                            .filter(dept -> dept != null && StrUtil.isNotBlank(dept.getId()) && StrUtil.isNotBlank(dept.getName()))
+                            .collect(Collectors.toMap(SysDepartmentEntity::getId, SysDepartmentEntity::getName, (v1, v2) -> v1));
+                }
+            } catch (Exception e) {
+                log.warn("导入时批量查询调整部门信息失败，错误：{}", e.getMessage());
+            }
+        }
+
         //按序号分组
         Map<String, List<SampleAdjustmentImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(SampleAdjustmentImportExcelDTO::getNo));
         for (Map.Entry<String, List<SampleAdjustmentImportExcelDTO>> entry : collect.entrySet()) {
@@ -1264,9 +1359,15 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
                 SampleAdjustmentInfoDTO.AddDTO addDTO = new SampleAdjustmentInfoDTO.AddDTO();
                 BeanMapperUtils.copy(importMainDTO, addDTO);
                 addDTO.setAdjustmentUserId(importMainDTO.getAdjustmentUserId());
-                addDTO.setAdjustmentUserName(importMainDTO.getAdjustmentUserName());
+                // 从Map中获取调整人名称，确保ID和名称的一致性（不直接使用导入数据中的名称）
+                if (StrUtil.isNotBlank(importMainDTO.getAdjustmentUserId()) && userIdNameMap.containsKey(importMainDTO.getAdjustmentUserId())) {
+                    addDTO.setAdjustmentUserName(userIdNameMap.get(importMainDTO.getAdjustmentUserId()));
+                }
                 addDTO.setAdjustmentDeptId(importMainDTO.getAdjustmentDeptId());
-                addDTO.setAdjustmentDeptName(importMainDTO.getAdjustmentDeptName());
+                // 从Map中获取调整部门名称，确保ID和名称的一致性（不直接使用导入数据中的名称）
+                if (StrUtil.isNotBlank(importMainDTO.getAdjustmentDeptId()) && deptIdNameMap.containsKey(importMainDTO.getAdjustmentDeptId())) {
+                    addDTO.setAdjustmentDeptName(deptIdNameMap.get(importMainDTO.getAdjustmentDeptId()));
+                }
                 addDTO.setAdjustmentDate(importMainDTO.getAdjustmentDate());
                 addDTO.setAdjustmentType(importMainDTO.getAdjustmentType());
                 addDTO.setRemark(importMainDTO.getRemark());
@@ -1334,5 +1435,93 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
             }
         }
         // 其他类型：不进行校验
+    }
+
+    @Override
+    public List<SampleAdjustmentInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
+        SampleAdjustmentInfoDTO.PagingParamDTO searchParam = new SampleAdjustmentInfoDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_ADJUSTMENT_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        } else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
+
+        List<SampleAdjustmentInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        
+        // 移动端特殊处理：合并待提交和不通过
+        List<SampleAdjustmentInfoDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 计算待提交/不通过的总数
+        int waitSubmitCount = 0;
+        int rejectCount = 0;
+        SampleAdjustmentInfoDTO.TabListDTO waitSubmitItem = null;
+        SampleAdjustmentInfoDTO.TabListDTO rejectItem = null;
+        
+        for (SampleAdjustmentInfoDTO.TabListDTO item : list) {
+            if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag())) {
+                waitSubmitCount = item.getCount();
+                waitSubmitItem = item;
+            } else if (ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
+                rejectCount = item.getCount();
+                rejectItem = item;
+            }
+        }
+        
+        // 创建合并后的待提交/不通过标签
+        if (waitSubmitItem != null || rejectItem != null) {
+            SampleAdjustmentInfoDTO.TabListDTO mergedItem = new SampleAdjustmentInfoDTO.TabListDTO();
+            mergedItem.setTabFlag("waitSubmitOrReject");
+            mergedItem.setTabFlagName("待提交/不通过");
+            mergedItem.setCount(waitSubmitCount + rejectCount);
+            appList.add(mergedItem);
+        }
+        
+        // 添加其他标签（待我审核、已审核）
+        for (SampleAdjustmentInfoDTO.TabListDTO item : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag()) 
+                && !ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
+                if (Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), item.getTabFlag())) {
+                    item.setTabFlagName("待我审核");
+                } else if (Objects.equals(ApproveStatusEnum.APPROVE.getCode(), item.getTabFlag())) {
+                    item.setTabFlagName("已审核");
+                }
+                appList.add(item);
+            }
+        }
+
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、已审核
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "approve");
+        appList.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+
+        return appList;
+    }
+
+    @Override
+    public PagingVO<SampleAdjustmentInfoDTO.ListDTO> pagingApp(PagingDTO<SampleAdjustmentInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleAdjustmentInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 }

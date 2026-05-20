@@ -27,6 +27,7 @@ import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolPartnerInfoDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -254,7 +255,7 @@ public class KolPartnerInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "企业达人库下载模板")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
-        String standardPath = "classpath:excel/kolPartnerInfoTemplate.xlsx";
+        String standardPath = "excel/kolPartnerInfoTemplate.xlsx";
         String standardExcelName = "kolPartnerInfoTemplate.xlsx";
         ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
         return success();
@@ -284,6 +285,22 @@ public class KolPartnerInfoController extends BaseController {
     @PostMapping("/partnerAddressList")
     public ApiResult<List<KolPartnerInfoDTO.PartnerAddressDTO>> partnerAddressList(@RequestBody @Validated KolPartnerInfoDTO.AddressSelectDTO dto) {
         return success(kolPartnerInfoService.partnerAddressList(dto));
+    }
+
+    /**
+     * 地址解析
+     */
+    @PostMapping("/addressParse")
+    public ApiResult<AddressParseDTO.ParseResultDTO> addressParse(@RequestBody @Validated AddressParseDTO.ParseRequestDTO dto) {
+        return success(kolPartnerInfoService.addressParse(dto));
+    }
+
+    /**
+     * 批量地址解析
+     */
+    @PostMapping("/batchAddressParse")
+    public ApiResult<List<AddressParseDTO.BatchParseResultDTO>> batchAddressParse(@RequestBody @Validated List<AddressParseDTO.BatchParseRequestDTO> dtoList) {
+        return success(kolPartnerInfoService.batchAddressParse(dtoList));
     }
 
 

@@ -76,4 +76,6 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @return
      */
     List<WarehouseEntity> listByParam(@Param("params") WarehouseDTO.ListParamDTO dto);
+
+    List<WarehouseDTO.UpdateDTO> listWarehouseNameByIds(@Param("ids") List<String> ids);
 }

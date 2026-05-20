@@ -74,6 +74,15 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return SyncInfoDTO
      */
     DmpPushTaskDTO.SyncInfoDTO getErrorData(@Param("params") DmpSyncTaskDTO.OneDTO params);
+
+    /**
+     * 查询新中台推送任务记录列表
+     * @author will
+     * @date 2025/12/29 11:07
+     * @param params
+     * @return List<SyncInfoDTO>
+     */
+    List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(@Param("params") DmpSyncTaskDTO.ListDTO params);
     
     List<DmpOutputTaskRecordEntity> getOutputErrorTask(@Param("systemId") String systemId , @Param("size") String size);
     
@@ -95,7 +104,7 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
 
     List<DmpOutputTaskRecordEntity> getOutputTaskRecord(@Param("sourceCode") String sourceCode, @Param("outputClass") String outputClass);
     
-    List<String> outputErrorCountMsg();
+    List<String> outputErrorCountMsg(String conditionSql);
 
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(@Param("params") DmpSyncTaskDTO.OneDTO params);
 

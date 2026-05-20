@@ -1,12 +1,13 @@
 package com.erp.server.scm.service;
-import com.erp.model.scm.dto.AssetNoticeDetailDTO;
-import com.erp.model.scm.entity.AssetNoticeEntity;
-import com.common.business.service.SuperService;
+
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
-import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
+import com.erp.model.scm.dto.AssetNoticeDTO;
+import com.erp.model.scm.dto.excel.AssetNoticeImportExcelDTO;
+import com.erp.model.scm.entity.AssetNoticeEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -127,10 +128,10 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
     * 撤销
     * @author wtr
     * @date: 2025-10-16
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
@@ -155,7 +156,10 @@ public interface AssetNoticeService extends SuperService<AssetNoticeEntity> {
 
     BatchResultDTO invalid(AssetNoticeEntity entity,String remark);
 
-    void handleImportSuccessList(List<AssetNoticeDetailDTO.MoldImportDTO> successList);
+    void handleImportSuccessList(List<AssetNoticeImportExcelDTO> successList,
+                                 List<String> errorNoList, 
+                                 List<AssetNoticeImportExcelDTO> errorList2, 
+                                 String importType);
 
     /**
      *

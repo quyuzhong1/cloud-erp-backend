@@ -8,6 +8,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.excel.FirstMileInTransitAdjustExcelDTO;
 import com.erp.model.dmp.dto.excel.FirstMileInTransitInitExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
@@ -57,6 +58,11 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        // 兼容日期格式
+        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
+        if (Objects.nonNull(reportMonth)) {
+            excelDTO.setReportMonth(reportMonth.toString());
+        }
         //校验货件单号是否存在
         List<AdsErpFirstMileInTransitDiffEntity> shipmentList = adsErpFirstMileInTransitDiffService.lambdaQuery()
                 .eq(AdsErpFirstMileInTransitDiffEntity::getShipmentCode, excelDTO.getShipmentCode())
@@ -81,12 +87,8 @@ public class FirstMileInTransitAdjustExcelListener extends AnalysisEventListener
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】货件明细不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getPlatformSkuNo()));
         }
         String reportMonthStr = excelDTO.getReportMonth();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate reportMonth = null;
-        try {
-            reportMonth = LocalDate.parse(reportMonthStr,formatter).withDayOfMonth(1);
-        }catch (Exception e){
-            errorMsgList.add(CharSequenceUtil.format("导入月份格式【yyyy-MM-dd】错误:【{}】",reportMonthStr));
+        if (null != reportMonth){
+            excelDTO.setReportMonth(reportMonth.toString());
         }
         // 上个月1日
         LocalDate beforeMonth = LocalDate.now().withDayOfMonth(1).minusMonths(1);

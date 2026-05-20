@@ -221,12 +221,32 @@ public class LogisticsSupplierController extends BaseController {
 
 
     /**
+     * 所有物流商简称下拉
+     * @return
+     */
+    @GetMapping("/listWithAll")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithAll(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsSupplierService.listWithAll(filterDisabled));
+    }
+
+
+    /**
      * 物流商渠道树形结构
      * @return
      */
+    @Deprecated
     @GetMapping("/tree")
     public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> tree(){
         return success(logisticsSupplierService.tree());
+    }
+
+    /**
+     * 物流商渠道树形结构
+     * @return
+     */
+    @PostMapping("/listSupplierTree")
+    public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> listSupplierTree(@RequestBody LogisticsSupplierDTO.SelectDTO dto){
+        return success(logisticsSupplierService.listSupplierTree(dto));
     }
 
 
@@ -252,4 +272,16 @@ public class LogisticsSupplierController extends BaseController {
     public ApiResult<PagingVO<LogisticsSupplierDTO.PagingSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<LogisticsSupplierDTO.SelectDTO> dto){
         return success(logisticsSupplierService.pagingSelect(dto));
     }
+
+    /**
+     * 根据物流平台获取物流商渠道树形结构
+     *
+     * @param dto LogisticsSupplierDTO.SelectDTO
+     * @return List<LogisticsSupplierDTO.ListChildTreeDTO>
+     */
+    @PostMapping("/getSupplierTreeByPlatform")
+    public ApiResult<List<LogisticsSupplierDTO.ListChildTreeDTO>> getSupplierTreeByPlatform(@RequestBody LogisticsSupplierDTO.SelectDTO dto){
+        return success(logisticsSupplierService.getSupplierTreeByPlatform(dto));
+    }
+
 }

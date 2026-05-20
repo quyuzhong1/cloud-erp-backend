@@ -1,55 +1,61 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.MoldInfoDTO;
+import com.erp.model.plm.dto.MoldRefSkuDTO;
 import com.erp.model.plm.dto.excel.MoldRefSkuImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.model.plm.entity.MoldRefSkuEntity;
 import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.MoldRefSkuExcelListener;
+import com.erp.server.plm.mapper.MoldRefSkuMapper;
 import com.erp.server.plm.service.MoldInfoService;
+import com.erp.server.plm.service.MoldRefSkuService;
 import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.ProductDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.erp.model.plm.entity.MoldRefSkuEntity;
-import com.erp.server.plm.mapper.MoldRefSkuMapper;
-import com.erp.server.plm.service.MoldRefSkuService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.MoldRefSkuDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
@@ -59,10 +65,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_REF_SKU;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_MOLD_REF_SKU;
 
 /**
  * <p>
@@ -204,6 +208,14 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.MOLD_REF_SKU.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
+        MoldInfoEntity moldInfoEntity = moldInfoService.getById(entity.getMoldId());
+        if(Objects.nonNull(moldInfoEntity)){
+            map.put("chargeId",moldInfoEntity.getChargeId());
+            map.put("chargeName",moldInfoEntity.getChargeName());
+            map.put("projectChargeId",moldInfoEntity.getProjectChargeId());
+            map.put("projectChargeName",moldInfoEntity.getProjectChargeName());
+        }
         return map;
     }
 
@@ -255,7 +267,8 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         MoldRefSkuEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具关联sku数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -272,6 +285,7 @@ public class MoldRefSkuServiceImpl extends SuperServiceImpl<MoldRefSkuMapper, Mo
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCode(), "模具关联sku");
         sysLogService.addSysLogBySave(msg, "", id, "","撤销操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.MOLD_REF_SKU.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

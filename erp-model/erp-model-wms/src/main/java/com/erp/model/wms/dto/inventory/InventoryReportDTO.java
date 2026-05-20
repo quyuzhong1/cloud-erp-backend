@@ -537,6 +537,10 @@ public class InventoryReportDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+        /**
+         * 动态数据源
+         */
+        private String dynamicDataSource;
     }
 
     /**

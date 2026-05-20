@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -1494,7 +1495,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<SupplierEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -1511,6 +1513,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
             revokeDTO.setUserId(userInfo.getUid());
@@ -2402,6 +2405,29 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             errorMsgList.add("工厂地址不能为空");
         }
         return plantAddrList;
+    }
+
+    @Override
+    public List<Map<String, Object>> listSupplierDropDown() {
+        List<SupplierEntity> supplierList = super.list();
+        if (CollUtil.isEmpty(supplierList)) {
+            return Collections.emptyList();
+        }
+        for (SupplierEntity entity : supplierList) {
+            //审批状态不是审核通过的都置为不可用
+            if (!CharSequenceUtil.equals(entity.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getStatus())){
+                entity.setDisabled(Boolean.TRUE);
+            }
+        }
+        return supplierList.stream()
+                .map(entity -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", entity.getId());
+                    map.put("name", entity.getName());
+                    map.put("disabled", entity.getDisabled());
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 
 

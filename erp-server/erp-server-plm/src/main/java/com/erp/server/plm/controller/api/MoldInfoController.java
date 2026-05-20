@@ -1,33 +1,34 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.core.utils.ExcelUtil;
-import com.erp.server.plm.query.MoldInfoQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.plm.service.MoldInfoService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.dto.MoldInfoDTO;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
 import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.server.plm.query.MoldInfoQueryHandler;
+import com.erp.server.plm.service.MoldInfoService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 模具档案
@@ -330,6 +331,44 @@ public class MoldInfoController extends BaseController {
     }
 
     /**
+    * 更新备注
+    * @author jack
+    * @date: 2026-03-10
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/updateRemark")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "plm:moldInfo:update",
+            serviceClass = MoldInfoService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "模具档案更新备注：{remark}")
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<MoldInfoEntity> list = moldInfoService.lambdaQuery().in(MoldInfoEntity::getId, ids).list();
+        Map<String, MoldInfoEntity> idEntityMap = list.stream().collect(Collectors.toMap(MoldInfoEntity::getId, w -> w));
+        for (String id : ids) {
+            BatchResultDTO updateResult;
+            try {
+                updateResult = moldInfoService.updateRemark(id, dto.getRemark());
+            } catch (Exception e) {
+                log.error("模具档案更新备注失败", e);
+                MoldInfoEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateResult = BatchResultDTO.fail(id, id, "模具档案不存在, 更新备注失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(updateResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 撤销
     * @author jack
     * @date:  2025-10-10
@@ -351,7 +390,7 @@ public class MoldInfoController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = moldInfoService.cancelProcess(id);
+                cancelResult = moldInfoService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("模具档案撤回流程失败",e);
                 MoldInfoEntity entity = idEntityMap.get(id);
@@ -464,6 +503,18 @@ public class MoldInfoController extends BaseController {
     @PostMapping("/searchMold")
     public ApiResult<List<MoldInfoDTO.SearchMoldDTO>> searchMold(@RequestBody MoldInfoDTO.SearchDTO searchDTO) {
         return success(moldInfoService.searchMold(searchDTO));
+    }
+
+    /**
+     * 通过模具code获取供应商信息
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param code 模具编码
+     * @return ApiResult<MoldInfoDTO.SupplierInfoByCodeDTO>
+     */
+    @GetMapping("/getSupplierInfoByCode")
+    public ApiResult<MoldInfoDTO.SupplierInfoByCodeDTO> getSupplierInfoByCode(@RequestParam("code") String code) {
+        return success(moldInfoService.getSupplierInfoByCode(code));
     }
 
 }

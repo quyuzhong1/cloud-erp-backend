@@ -7,6 +7,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.server.sys.service.MessageService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,8 +49,10 @@ public class PdaMessageController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.lang.Integer>
      **/
     @GetMapping(value = "/listNotReadMessageDetail")
-    public ApiResult<List<MessageDTO.NotReadMessageNumDetail>> listNotReadMessageDetail(@RequestParam("type") String type) {
-        List<MessageDTO.NotReadMessageNumDetail> list = messageService.listNotReadMessageDetail(type);
+    public ApiResult<List<MessageDTO.NotReadMessageNumDetail>> listNotReadMessageDetail(@RequestParam("type") String type , 
+    		@RequestParam(value = "pageNo" , required = false) Integer pageNo , 
+    		@RequestParam(value = "pageSize" , required = false) Integer pageSize) {
+        List<MessageDTO.NotReadMessageNumDetail> list = messageService.listNotReadMessageDetail(type , pageNo , pageSize);
         return success(list);
     }
 
@@ -87,5 +91,15 @@ public class PdaMessageController extends BaseController {
     public ApiResult closeMessageNotice() {
         Boolean flag = messageService.closeMessageNotice();
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * PDA消息单条已读
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "PDA消息单条已读")
+    @PostMapping(value = "/readMessage")
+    public ApiResult<?> readMessage(@RequestBody MessageDTO.ReadHistoryMessageDTO dto) {
+        messageService.readMessage(dto);
+        return success();
     }
 }

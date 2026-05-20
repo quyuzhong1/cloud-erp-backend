@@ -1,4 +1,5 @@
 package com.erp.server.plm.service;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.common.business.service.SuperService;
@@ -127,13 +128,23 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
     BatchResultDTO invalid(String id, String remark);
 
     /**
+    * 更新备注
+    * @author jack
+    * @date: 2026-03-10
+    * @param id
+    * @param remark
+    * @return
+    */
+    BatchResultDTO updateRemark(String id, String remark);
+
+    /**
     * 撤销
     * @author jack
     * @date: 2025-10-10
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
@@ -179,4 +190,13 @@ public interface MoldInfoService extends SuperService<MoldInfoEntity> {
     void handleImportSuccessList(List<MoldInfoImportExcelDTO> successList, List<MoldInfoImportExcelDTO> errorList2, String importType);
 
     List<MoldInfoDTO.SearchMoldDTO> searchMold(MoldInfoDTO.SearchDTO searchDTO);
+
+    /**
+     * 通过模具code获取供应商信息
+     * @author wuhaotian
+     * @date: 2025-12-29
+     * @param code 模具编码
+     * @return MoldInfoDTO.SupplierInfoByCodeDTO
+     */
+    MoldInfoDTO.SupplierInfoByCodeDTO getSupplierInfoByCode(String code);
 }

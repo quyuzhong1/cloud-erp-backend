@@ -23,6 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.scm.dto.AssetNoticeDetailDTO;
+import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.plm.entity.MoldInfoEntity;
+import com.erp.server.scm.service.SupplierService;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
@@ -46,6 +49,9 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private SupplierService supplierService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -110,6 +116,8 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
             BeanMapperUtils.copy(addDTO, assetNoticeDetailEntity);
             assetNoticeDetailEntity.setMainId(assetNoticeId);
             assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
+            // 处理供应商等数据
+            handleData(assetNoticeDetailEntity);
             assetNoticeDetailEntities.add(assetNoticeDetailEntity);
         }
         super.saveBatch(assetNoticeDetailEntities);
@@ -158,6 +166,18 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
             if (StringUtils.isBlank(assetNoticeDetailEntity.getCreatePoType())) {
                 assetNoticeDetailEntity.setCreatePoType(CreatePoTypeEnum.NOT_GENERATED.getStatus());
             }
+            // 处理供应商等数据
+            handleData(assetNoticeDetailEntity);
+            //记录日志
+            if(StringUtils.isBlank(assetNoticeDetailEntity.getId())){
+                //新增
+                String msg = StrUtil.format("用户【{}】新增单据明细，模具编码【{}】 ", UserContext.getDefaultLoginUser().getUserName(),assetNoticeDetailEntity.getAssetCode());
+                moduleOperateLogService.addModuleOperateLogByObj(null, assetNoticeDetailEntity, ModuleTypeEnum.ASSET_NOTICE.getCode(),assetNoticeId,"", msg);
+            }else{
+                AssetNoticeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(assetNoticeDetailEntity.getId())).findFirst().orElse(null);
+                String msg = StrUtil.format("用户【{}】编辑单据明细 ", UserContext.getDefaultLoginUser().getUserName());
+                moduleOperateLogService.addModuleOperateLogByObj(old, assetNoticeDetailEntity, ModuleTypeEnum.ASSET_NOTICE.getCode(),assetNoticeId,"", msg);
+            }
         }
         this.saveOrUpdateBatch(newList);
 
@@ -187,6 +207,23 @@ public class AssetNoticeDetailServiceImpl extends SuperServiceImpl<AssetNoticeDe
     * 新增修改处理数据
     */
     private void handleData(AssetNoticeDetailEntity assetNoticeDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+        // 供应商信息处理
+        if (StringUtils.isNotBlank(assetNoticeDetailEntity.getSupplierId())) {
+            // 如果指定了供应商ID，验证并获取供应商名称
+            SupplierEntity supplierEntity = supplierService.getById(assetNoticeDetailEntity.getSupplierId());
+            if (Objects.isNull(supplierEntity)) {
+                throw new ServiceException("供应商不存在");
+            }
+            assetNoticeDetailEntity.setSupplierName(supplierEntity.getName());
+        } else {
+            // 如果未指定供应商ID，从模具档案获取默认供应商
+            if (StringUtils.isNotBlank(assetNoticeDetailEntity.getAssetCode())) {
+                MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(assetNoticeDetailEntity.getAssetCode());
+                if (Objects.nonNull(moldInfoEntity) && StringUtils.isNotBlank(moldInfoEntity.getSupplierId())) {
+                    assetNoticeDetailEntity.setSupplierId(moldInfoEntity.getSupplierId());
+                    assetNoticeDetailEntity.setSupplierName(moldInfoEntity.getSupplierName());
+                }
+            }
+        }
     }
 }

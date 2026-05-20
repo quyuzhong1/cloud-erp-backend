@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum FbaDemandTypeEnum implements EnumMessage {
     DEMAND_PLATFORM_WAREHOUSE("demandPlatformWarehouse", "备货FBA仓"),
+    DEMAND_FBT_WAREHOUSE("demandFbtWarehouse", "备货FBT仓"),
+    DEMAND_AWD_WAREHOUSE("demandAWDWarehouse", "备货AWD仓"),
     DEMAND_OVERSEAS_WAREHOUSE("demandOverseasWarehouse", "备货第三方仓"),
     DEMAND_ALIEXPRESS("demandAliexpress", "备货速卖通仓"),
     ;

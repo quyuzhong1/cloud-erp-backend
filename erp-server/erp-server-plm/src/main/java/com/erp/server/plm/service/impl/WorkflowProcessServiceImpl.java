@@ -53,9 +53,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     private BomInfoService bomInfoService;
 
     @Resource
-    private ProductChangeService productChangeService;
+    private BomChangeService bomChangeService;
     @Resource
-    private ProductChangeDetailsService productChangeDetailService;
+    private BomChangeDetailsService bomChangeDetailService;
 
     @Override
     public BatchResultDTO approve(ApproveDTO.ApproveOneDTO dto) {
@@ -89,7 +89,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 variablesMap = getBomInfoMap(dto);
                 //Bom信息
                 break;
-            case PRODUCT_CHANGE:
+            case BOM_CHANGE:
                 variablesMap = getProductChangeMap(dto);
                 //Bom信息
                 break;
@@ -163,12 +163,12 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      * @param dto
      */
     private Map<String, Object> getProductChangeMap(EndProcessDTO dto) {
-        ProductChangeEntity entity = productChangeService.getById(dto.getBusinessId());
+        BomChangeEntity entity = bomChangeService.getById(dto.getBusinessId());
         if(Objects.isNull(entity)){
             return null;
         }
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        List<ProductChangeDetailsEntity> detailList = productChangeDetailService.lambdaQuery().eq(ProductChangeDetailsEntity::getChangeInfoId, entity.getId()).list();
+        List<BomChangeDetailsEntity> detailList = bomChangeDetailService.lambdaQuery().eq(BomChangeDetailsEntity::getChangeInfoId, entity.getId()).list();
         if(CollUtil.isNotEmpty(detailList)){
             variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         }

@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -36,6 +37,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -96,6 +98,46 @@ public class FileTaskContext {
             }
         });
         return fileTask.getId();
+    }
+
+    /**
+     * 创建文件任务
+     */
+    @Transactional(rollbackFor = Exception.class ,propagation = Propagation.REQUIRES_NEW)
+    public String addNewImport(FileTaskDTO fileTaskDTO) {
+        // 创建文件任务
+        FileTask fileTask = FileTask.create(fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
+        LoginUser loginUser = UserContext.getLoginUser();
+        fileTask.setType(FileTaskTypeEnum.ASYNC_IMPORT.getCode());
+        // 保存文件任务
+        fileTaskRepository.save(fileTask);
+        log.info("文件任务[{}]创建成功,类型为[{}],状态[PENDING]", fileTask.getId(), fileTaskDTO.getEvent());
+        // 完成新增数据事务提交之后,异步执行
+        importProcess(fileTask.getId(), loginUser, false);
+        return fileTask.getId();
+    }
+
+    /**
+     *  重新触发任务
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public String reImportTask(String taskId,FileTaskDTO fileTaskDTO) {
+        // 创建文件任务
+        FileTask fileTask = FileTask.update(taskId,fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
+        LoginUser loginUser = UserContext.getLoginUser();
+        fileTask.setType(FileTaskTypeEnum.ASYNC_IMPORT.getCode());
+        // 保存文件任务
+        fileTaskRepository.updateById(fileTask);
+        // 创建文件任务
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                CompletableFuture.runAsync(() -> importProcess(taskId, loginUser,false), threadPoolTaskExecutor);
+                log.info("文件任务[{}]消息已投递,事务已提交", taskId);
+            }
+        });
+        return taskId;
+
     }
 
     /**
@@ -211,10 +253,30 @@ public class FileTaskContext {
                     ExceptionUtils.emptyThrow(eventHandler, String.format("事件Hanlder[%s]不存在,请联系IT人员检查配置", eventEnum.getHandler()));
                     eventHandler.handle(fileTask);
                 }else {
-                    BaseDTO.ImportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseDTO.ImportDTO>() {});
-                    dto.setTaskId(fileTask.getId());
-                    dto.setImportCount(fileTask.getCount());
-                    FeignQuery.invoke(eventEnum.getClassName(), eventEnum.getMethodName(), Collections.singletonList(dto));
+                    // 将 metaInfo JSON 字符串反序列化为 Map，然后添加 taskId 和 importCount
+                    // 这样可以支持自定义 DTO，而不仅仅是 BaseDTO.ImportDTO
+                    // 传递 Map 对象而不是 JSON 字符串，避免双重序列化问题
+                    Object metaInfoObj;
+                    try {
+                        String metaInfoJson = fileTask.getMetaInfo();
+                        if (metaInfoJson != null && metaInfoJson.startsWith("{")) {
+                            // 反序列化为 Map
+                            Map<String, Object> metaInfoMap = objectMapper.readValue(metaInfoJson, new TypeReference<Map<String, Object>>() {});
+                            // 添加 taskId 和 importCount
+                            metaInfoMap.put("taskId", fileTask.getId());
+                            if (fileTask.getCount() != null) {
+                                metaInfoMap.put("importCount", fileTask.getCount());
+                            }
+                            metaInfoObj = metaInfoMap;
+                        } else {
+                            // 如果不是 JSON 对象，使用原始值
+                            metaInfoObj = metaInfoJson;
+                        }
+                    } catch (Exception e) {
+                        log.warn("无法解析 metaInfo JSON，使用原始值", e);
+                        metaInfoObj = fileTask.getMetaInfo();
+                    }
+                    FeignQuery.invoke(eventEnum.getClassName(), eventEnum.getMethodName(), Collections.singletonList(metaInfoObj));
                 }
                 // 设置任务状态为 全部成功
                 importResultDTO.setStatus(FileTaskStatusEnum.FINISH.name());

@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -274,6 +276,16 @@ public class MoldInfoDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 是否已生成返还策略
+         */
+        private Boolean isReturnStrategyGenerated;
+
+        /**
+         * 是否已生成预警策略
+         */
+        private Boolean isAlertStrategyGenerated;
     }
 
     /**
@@ -659,31 +671,23 @@ public class MoldInfoDTO implements Serializable {
         /**
         * 含税单价
         */
-        @NotNull(message = "含税单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal taxPrice;
 
         /**
         * 税率(%)
         */
-        @NotNull(message = "税率(%)不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率(%)整数位不能超过12位，小数位不能超过4位")
         private BigDecimal rate;
 
         /**
         * 结算方式
          * http://172.16.100.11:3002/project/83/interface/api/7144 type = supplierPayMode
         */
-        @NotBlank(message = "结算方式不能为空")
-        @Size(max = 19,message = "结算方式最大长度不能超过19位")
         private String payMethodId;
 
         /**
         * 付款条件
          * http://172.16.100.11:3002/project/83/interface/api/31039 type=paymentCondition
         */
-        @NotBlank(message = "付款条件不能为空")
-        @Size(max = 64,message = "付款条件最大长度不能超过64位")
         private String paymentCondition;
 
 
@@ -780,6 +784,27 @@ public class MoldInfoDTO implements Serializable {
         private String approveStatus;
     }
 
+    /**
+     * 通过模具code获取供应商信息响应DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierInfoByCodeDTO {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
 
+        /**
+         * 供应商编码
+         */
+        private String supplierCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+    }
 
 }

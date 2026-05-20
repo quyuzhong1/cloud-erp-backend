@@ -4,6 +4,7 @@ package com.erp.server.fms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.FileTaskEventEnum;
@@ -361,7 +362,7 @@ public class AssetStocktakingPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = assetStocktakingPlanService.cancelProcess(id);
+                cancelResult = assetStocktakingPlanService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("资产盘点方案单撤回流程失败",e);
                 AssetStocktakingPlanEntity entity = idEntityMap.get(id);

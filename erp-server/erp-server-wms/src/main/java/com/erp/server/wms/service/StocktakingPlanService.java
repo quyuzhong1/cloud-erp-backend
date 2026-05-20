@@ -1,14 +1,16 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
-import com.common.business.service.SuperService;
 
-import com.common.business.vo.PagingVO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -123,10 +125,10 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
     * 撤销
     * @author Cloud
     * @date: 2023-08-08
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel
@@ -153,4 +155,22 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
      */
     void updateForStocktakingStatus(String sourceId, StocktakingStatusEnum stocktakingStatusEnum);
 
+    /**
+     * 下推盘点任务
+     * @param dto
+     * @return
+     */
+    Boolean pushStockingTask(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * xxljob下推盘点任务
+     * @param dto
+     * @return
+     */
+    Boolean pushStockingTaskByJob(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 过滤不能下推的盘点任务
+     */
+    Map<String, String> filterStocktakingPlan(List<String> idList);
 }

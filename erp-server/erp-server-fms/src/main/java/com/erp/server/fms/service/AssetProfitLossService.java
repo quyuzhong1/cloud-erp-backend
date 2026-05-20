@@ -1,4 +1,5 @@
 package com.erp.server.fms.service;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.fms.entity.AssetProfitLossEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -130,10 +131,10 @@ public interface AssetProfitLossService extends SuperService<AssetProfitLossEnti
     * 撤销
     * @author wuht
     * @date: 2025-10-11
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

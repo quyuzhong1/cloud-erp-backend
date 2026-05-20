@@ -62,7 +62,8 @@
         sp.start_time AS startTime,
         sp.end_time AS endTime,
         sp.create_time AS createTime,
-        sp.update_time AS updateTime
+        sp.update_time AS updateTime,
+        sp.stocktaking_date AS stocktakingDate
         FROM  stocktaking_plan sp
         left join stocktaking_plan_detail spd on sp.id = spd.main_id and spd.is_deleted=false
         WHERE ${params.sqlMap.default} and sp.is_deleted=FALSE
@@ -143,6 +144,21 @@
             ${params.permissionSql}
         </if>
         GROUP BY sp.approve_status
+    </select>
+
+    <select id="allowPushStocktakingPlan" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$AllowPushDTO">
+        SELECT
+            sp.ID AS ID
+        FROM
+            stocktaking_plan sp
+            LEFT JOIN stocktaking_task st ON st.source_id = sp.ID
+            AND st.is_deleted = FALSE
+        WHERE
+            sp.is_deleted = FALSE
+            and sp.approve_status = 'approve'
+            AND st.ID IS NULL
+            AND now( ) >= sp.plan_task_time
+            AND sp.end_time >= now( )
     </select>
 
 </mapper>

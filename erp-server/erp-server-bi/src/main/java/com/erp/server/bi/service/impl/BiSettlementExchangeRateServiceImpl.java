@@ -10,7 +10,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.RedisUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -18,7 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -146,6 +148,16 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     public String add(BiSettlementExchangeRateDTO.AddDTO addDTO) {
         BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
         BeanMapperUtils.copy(addDTO,entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        entity.setCreateTime(now);
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
         boolean save = this.save(entity);
         if (!save) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
@@ -157,6 +169,13 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
     public Boolean update(BiSettlementExchangeRateDTO.UpdateDTO updateDTO) {
         BiSettlementExchangeRateEntity entity = new BiSettlementExchangeRateEntity();
         BeanMapperUtils.copy(updateDTO,entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
         boolean update = this.updateById(entity);
         if (!update) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
@@ -168,7 +187,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
      * 添加redis缓存
      */
     private void setRedisExchangeRate (BiSettlementExchangeRateEntity entity) {
-        String existKey = CharSequenceUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode());
+        String existKey = CharSequenceUtil.format(RedisCacheConstants.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode());
 
         List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode());
         if (CollectionUtils.isEmpty(rateList)) {
@@ -225,8 +244,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新单据汇率
             updateSettlementExchangeRate(list);
-            //添加redis
-            list.stream().forEach(this::setRedisExchangeRate);
             //同步订货通
             createSyncDhtMsg(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -271,8 +288,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
 
         //更新单据为待提交
         updateApproveStatusForApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        //添加redis
-        list.stream().forEach(this::setRedisExchangeRate);
         return Boolean.TRUE;
     }
 
@@ -304,7 +319,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             return BigDecimal.ONE;
         }
         //查询redis中存储的成本信息
-        String existKey = CharSequenceUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
+        String existKey = CharSequenceUtil.format(RedisCacheConstants.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
         List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
         if (CollectionUtils.isEmpty(rateList)) {
             //查询库中数据添加缓存
@@ -347,6 +362,17 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         if (CollectionUtils.isNotEmpty(list)) {
             createSyncDhtMsg(list);
         }
+    }
+
+    @Override
+    public BiSettlementExchangeRateEntity getByExchangeParamUnique(BiSettlementExchangeRateDTO.ExchangeParamDTO exchangeParamDTO) {
+        return lambdaQuery().eq(BiSettlementExchangeRateEntity::getType, exchangeParamDTO.getType())
+                .eq(BiSettlementExchangeRateEntity::getTargetCurrencyCode, exchangeParamDTO.getTargetCurrencyCode())
+                .eq(BiSettlementExchangeRateEntity::getSourceCurrencyCode, exchangeParamDTO.getSourceCurrencyCode())
+                .eq(BiSettlementExchangeRateEntity::getSettlementDateBegin, exchangeParamDTO.getSettlementDateBegin())
+                .eq(BiSettlementExchangeRateEntity::getSettlementDateEnd, exchangeParamDTO.getSettlementDateEnd())
+                .last("limit 1")
+                .one();
     }
 
     // 构建DmpPushMsgEntity

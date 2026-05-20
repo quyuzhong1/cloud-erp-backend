@@ -79,6 +79,13 @@ public interface ProductPackService extends IService<ProductPackEntity> {
     List<ProductVO.ProductPackVO> getBySkuIds(List<String> skuIds);
 
     /**
+     * 根据skuNo 集合 获取到产品包装信息
+     * @param skuNos
+     * @return
+     */
+    List<ProductVO.ProductPackVO> getBySkuNos(List<String> skuNos);
+
+    /**
      * 根据sku id集合获取包装信息
      * @param skuIds
      * @return

@@ -4,10 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -15,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -154,6 +155,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+    @Resource
+    private IdentifierGenerator identifierGenerator;
 
     @Resource
     private InventoryService inventoryService;
@@ -219,8 +222,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) throws ExecutionException, InterruptedException {
-        StopWatch stopWatch = StopWatch.create("SoDeliveryNoticeServiceImpl paging");
-        stopWatch.start("paging");
         SoDeliveryNoticeDTO.PagingParam params = pagingParamDTO.getParams();
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         if(dynamicDataSourceTypeEnum == null) {
@@ -233,8 +234,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(new Page<>());
         }
-        stopWatch.stop();
-        stopWatch.start("整理数据");
         //明细数据
         List<SoDeliveryNoticeDTO.PagingView> records = pageData.getRecords();
         List<String> customerIds = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getCustomerId())).map(SoDeliveryNoticeDTO.PagingView::getCustomerId).distinct().collect(Collectors.toList());
@@ -278,8 +277,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 //        List<SoDeliveryNoticeDTO.PickStatus> pickStatusList = pickStatusFuture.get();
         //查询装箱数量
         List<WmsCartonDTO.CountDTO> countDTOS = packingCountFuture.get();
-        stopWatch.stop();
-        stopWatch.start("合并数据");
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
 //                pickStatusList.stream().filter(e -> e.getNoticeId().equals(obj.getId())).findFirst().ifPresent(p -> obj.setGenerationPickStatus(p.getGenerationPickStatus()));
@@ -347,8 +344,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 pagingView.setIsPicked(pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())&&val.stream().allMatch(SoDeliveryNoticeDTO.PagingView::getIsPicked));
             }
         });
-        stopWatch.stop();
-        log.warn("SoDeliveryNoticeServiceImpl paging 耗时:{}",stopWatch.prettyPrint(TimeUnit.SECONDS));
         return new PagingVO<>(pageData);
     }
 
@@ -555,7 +550,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //匹配中转规则
         matchTransferRule(soDeliveryNoticeEntity,soInfoEntity);
         this.save(soDeliveryNoticeEntity);
-        soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
+        soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId(),soInfoEntity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个发货通知单【%s】", code), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "新增操作");
         //生成装箱任务
@@ -975,7 +970,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -1228,7 +1224,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         String warehouseId;
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())) {
             List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
-            batchNo = IdUtil.getSnowflake().nextIdStr();
+            batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             if (Boolean.FALSE.equals(allNoInventorySku)) {
                 generateTransferInfo(batchNo, entity, entityList, warehouseStagingList, noInventorySkuIds, split);
             }
@@ -1429,7 +1425,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 detailList.add(detailAdd);
             }
             add.setDetailList(detailList);
-            this.add(add);
+            // 创建发货通知单
+            String deliveryNoticeId = this.add(add);
+            // 获取创建的发货通知单实体
+            SoDeliveryNoticeEntity entity = this.getById(deliveryNoticeId);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                // 自动提审
+                this.submit(entity, Boolean.TRUE);
+            }
         }
         return Boolean.TRUE;
     }

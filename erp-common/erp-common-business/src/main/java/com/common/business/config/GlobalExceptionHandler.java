@@ -1,5 +1,6 @@
 package com.common.business.config;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -51,6 +52,7 @@ import java.util.Objects;
         "com.erp.server.srm.controller.api",
         "com.erp.server.dmp.controller.api",
         "com.erp.server.mrp.controller.api",
+        "com.erp.server.file.controller.api",
 
         "com.erp.server.scm.controller.pda",
         "com.erp.server.wms.controller.pda",
@@ -122,6 +124,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ApiResult<?> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
         log.warn("[HttpMessageNotReadableException] {}", e.getMessage());
+        log.error("[HttpMessageNotReadableException]异常信息", e);
+        log.warn("[HttpMessageNotReadableException]详细信息 {}", ExceptionUtil.stacktraceToString(e));
         return buildResult(ApiError.HTTP_BAD_REQUEST.getCode(),
                 ApiError.HTTP_BAD_REQUEST.getMsg() + ":" + e.getMessage());
     }
@@ -192,6 +196,17 @@ public class GlobalExceptionHandler {
         return buildResult(ApiError.HTTP_UNKNOWN);
     }
 
+    /** RuntimeException 异常处理（确保异常消息能传递到前端） */
+    @ExceptionHandler(RuntimeException.class)
+    public ApiResult<?> handleRuntimeException(RuntimeException e) {
+        log.error("[RuntimeException] {}", e.getMessage(), e);
+        // 优先使用异常消息，如果为空则使用默认消息
+        String msg = CharSequenceUtil.isNotBlank(e.getMessage()) 
+                ? e.getMessage() 
+                : MessageUtils.getMessage(ApiError.HTTP_UNKNOWN);
+        return buildResult(ApiError.HTTP_UNKNOWN.getCode(), msg);
+    }
+
     @ExceptionHandler(Exception.class)
     public ApiResult<?> handleGenericException(Exception e) {
         log.error("[UnknownException] {}", e.getMessage(), e);
@@ -229,13 +244,14 @@ public class GlobalExceptionHandler {
         return result;
     }
 
-    /** 设置 HTTP 状态（401 → UNAUTHORIZED, 默认200） */
+    /** 设置 HTTP 状态码（401 → UNAUTHORIZED, 403 → FORBIDDEN, 默认200） */
     private void setHttpStatus(HttpServletResponse response, Integer code) {
-        if (Objects.equals(code, ApiError.HTTP_UNAUTHORIZED.getCode()) ||
-                Objects.equals(code, ApiError.HTTP_FORBIDDEN.getCode())) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        if (Objects.equals(code, ApiError.HTTP_UNAUTHORIZED.getCode())) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401: 未认证
+        } else if (Objects.equals(code, ApiError.HTTP_FORBIDDEN.getCode())) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);  // 403: 无权限
         } else {
-            response.setStatus(HttpServletResponse.SC_OK);
+            response.setStatus(HttpServletResponse.SC_OK);  // 200: 默认
         }
     }
 }

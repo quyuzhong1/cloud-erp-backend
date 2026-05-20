@@ -17,7 +17,7 @@ import com.common.core.enums.CountrySiteEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -427,7 +427,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
     public BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList, Boolean checkBillStatus) {
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
         if(Objects.isNull(soB2cEntity)){
@@ -493,12 +493,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public void updateLogisticsBySoId(String soId, String trackNo) {
+    public void updateLogisticsBySoId(String soId, String trackNo, Boolean isDelLabel) {
         if (CharSequenceUtil.isBlank(soId)){
             return;
         }
         SoB2cLogisticsEntity entity = this.getByMainId(soId);
-        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) ){
+        if (Objects.nonNull(entity) && !Objects.equals(trackNo, entity.getTrackNo()) && isDelLabel){
             this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
             //清空面单
             soB2cLabelService.deleteByMainIds(Collections.singletonList(soId));

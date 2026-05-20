@@ -192,14 +192,31 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     /**
      * 获取核算组织
      *
-     * @param
      * @return java.util.List<com.erp.model.sys.dto.SysAccountingCompanyDTO.ListDTO>
      * @author yl
      * @date 2023-03-21 17:44
      */
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> getList() {
-        List<SysAccountingCompanyEntity> list = this.lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled, false).list();
+        return getList(null);
+    }
+
+    /**
+     * 获取核算组织
+     *
+     * @param name 公司名称（模糊查询，非必填）
+     * @return java.util.List<com.erp.model.sys.dto.SysAccountingCompanyDTO.ListDTO>
+     * @author yl
+     * @date 2023-03-21 17:44
+     */
+    @Override
+    public List<SysAccountingCompanyDTO.ListDTO> getList(String name) {
+        LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysAccountingCompanyEntity::getDisabled, false);
+        if (StringUtils.isNotBlank(name)) {
+            queryWrapper.like(SysAccountingCompanyEntity::getCompanyName, name);
+        }
+        List<SysAccountingCompanyEntity> list = this.list(queryWrapper);
         // 按创建时间顺序排，最早的排在最前面
         list = list.stream().sorted(Comparator.comparing(SysAccountingCompanyEntity::getCreateTime)).collect(Collectors.toList());
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);

@@ -42,7 +42,7 @@ public class KolSampleCostImportExcelDTO implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "*原币金额", index = 2)
-    @FieldValid(fieldName = "原币金额",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "原币金额",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT_NORMAL)
     private String amountStr;
 
     /**

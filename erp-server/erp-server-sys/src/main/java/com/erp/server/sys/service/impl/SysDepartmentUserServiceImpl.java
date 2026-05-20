@@ -6,10 +6,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
@@ -23,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -80,8 +84,12 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     public void setLead(UpdateUserStateDTO dto) {
+        LoginUser loginUser = UserContext.getNonLoginUser();
         LambdaUpdateWrapper<SysDepartmentUserEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(SysDepartmentUserEntity::getLeadState, dto.getState());
+        updateWrapper.set(SysDepartmentUserEntity::getUpdateTime, LocalDateTime.now());
+        updateWrapper.set(SysDepartmentUserEntity::getUpdateUserId, loginUser.getUid());
+        updateWrapper.set(SysDepartmentUserEntity::getUpdateUserName, loginUser.getUserName());
         updateWrapper.in(SysDepartmentUserEntity::getId, dto.getIds());
         this.update(updateWrapper);
 
@@ -125,10 +133,20 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         List<String> addUserList=userIds.stream().filter(a->!existUserIdList.contains(a)).collect(Collectors.toList());
         //在添加
         List<SysDepartmentUserEntity> addList = new LinkedList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String currentUserId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         for (String userId : addUserList) {
             SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
             entity.setUserId(userId);
             entity.setDepartmentId(departmentId);
+            entity.setUpdateTime(now);
+            entity.setUpdateUserId(currentUserId);
+            entity.setUpdateUserName(userName);
+            entity.setCreateTime(now);
+            entity.setCreateUserId(currentUserId);
+            entity.setCreateUserName(userName);
             addList.add(entity);
         }
         if (CollectionUtils.isNotEmpty(addList)) {
@@ -176,6 +194,15 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             return new SysDepartmentUserNumberDTO();
         }
         return deptByUserId;
+    }
+
+    @Override
+    public SysDepartmentUserNumberDTO getDeptByUserIdWithDisabledFilter(String userId) {
+        List<SysDepartmentUserNumberDTO> deptByUserId = baseMapper.getDeptByUserIdWithDisabledFilter(userId);
+        if (CollectionUtils.isEmpty(deptByUserId)) {
+            return new SysDepartmentUserNumberDTO();
+        }
+        return deptByUserId.get(0);
     }
 
     @Override
@@ -233,6 +260,57 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             return Collections.emptyList();
         }
         return baseMapper.listDeptUserByDeptIdList(deptIdList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd) {
+        if (StringUtils.isBlank(uid)){
+            return;
+        }
+        //如果是修改 则要先删除数据
+        if (!ifAdd) {
+            deleteUidDepartmentRef(uid);
+        }
+        if(CollectionUtils.isNotEmpty(departmentIdList)){
+            //排除已存在的关联数据
+            List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).eq(SysDepartmentUserEntity::getUserId,uid).list();
+            if(CollUtil.isNotEmpty(oldDepartmentIds)){
+                Set<String> existingIds = oldDepartmentIds.stream()
+                        .map(SysDepartmentUserEntity::getDepartmentId)
+                        .collect(Collectors.toSet());
+                departmentIdList.removeIf(existingIds::contains);
+            }
+            if(CollectionUtils.isNotEmpty(departmentIdList)){
+                List<SysDepartmentUserEntity> addList = new LinkedList<>();
+                for (String departmentId : departmentIdList) {
+                    SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
+                    entity.setUserId(uid);
+                    entity.setDepartmentId(departmentId);
+                    addList.add(entity);
+                }
+                this.saveBatch(addList);
+            }
+        }
+    }
+
+    @Override
+    public List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId) {
+        return baseMapper.getDeptByUserIdWithDisabledFilter(userId);
+    }
+
+    @Override
+    public void deleteByUserIds(List<String> uids) {
+        if (CollectionUtils.isEmpty(uids)) {
+            return;
+        }
+        lambdaUpdate().in(SysDepartmentUserEntity::getUserId, uids).remove();
+    }
+
+    private void deleteUidDepartmentRef(String uid) {
+        LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
+        wrapper.eq(SysDepartmentUserEntity::getUserId, uid);
+        baseMapper.delete(wrapper);
     }
 
 

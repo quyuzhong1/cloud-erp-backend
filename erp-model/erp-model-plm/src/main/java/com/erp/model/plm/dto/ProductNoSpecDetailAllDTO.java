@@ -56,6 +56,11 @@ public class ProductNoSpecDetailAllDTO {
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
 
     /**
+     * 关联SKU信息
+     */
+    private List<ProductRefSkuDTO> productRefSkuList;
+
+    /**
      * 产品包装辅料
      */
     private List<ProductAccessoriesDTO> productAccessoriesList;
@@ -64,4 +69,9 @@ public class ProductNoSpecDetailAllDTO {
      * 目的国海关编码信息
      */
     private List<ProductCustomsEntity> productCustomsList;
+    
+    /**
+     * 标准零售价信息
+     */
+    private List<ProductRetailPriceShowDTO> productRetailPriceShowDTOList;
 }

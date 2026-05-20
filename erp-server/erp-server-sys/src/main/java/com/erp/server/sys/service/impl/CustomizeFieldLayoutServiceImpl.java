@@ -12,6 +12,7 @@ import com.erp.server.sys.mapper.CustomizeFieldLayoutMapper;
 import com.erp.server.sys.service.CustomizeFieldLayoutService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -27,10 +28,11 @@ public class CustomizeFieldLayoutServiceImpl extends ServiceImpl<CustomizeFieldL
     public Boolean add(CustomizeFieldLayoutDTO dto) {
         if (dto != null) {
             String userId = UserContext.getDefaultLoginUser().getUid();
+            LocalDateTime now = LocalDateTime.now();
             CustomizeFieldLayoutEntity entity = new CustomizeFieldLayoutEntity();
             BeanMapper.copy(dto, entity);
-            entity.setCreateTime(new Date());
-            entity.setUpdateTime(new Date());
+            entity.setCreateTime(now);
+            entity.setUpdateTime(now);
             entity.setCreateUserId(userId);
             entity.setUserId(userId);
             entity.setUpdateUserId(userId);

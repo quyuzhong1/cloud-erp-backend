@@ -131,10 +131,20 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return SyncInfoDTO
      */
     DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO);
+    /**
+     * 批量查询错误数据
+     * @author will
+     * @date 2025/12/29 11:04
+     * @param listDTO
+     * @return List<SyncInfoDTO>
+     */
+    List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(DmpSyncTaskDTO.ListDTO listDTO);
     
     List<DmpOutputTaskRecordEntity> getOutputErrorTask(String systemId , String size);
     
     void dmpInputMoveToHistoryTable(String beforeUpdateTime , String size);
+    
+    void dmpFdsDeleteHisFile(String beforeUpdateTime , String size);
     
     void dmpRelationMoveToHistoryTable(String beforeUpdateTime , String size);
     
@@ -153,7 +163,7 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
 
     List<DmpOutputTaskRecordEntity> getOutputTaskByIdAndType(List<String> sourceIdList, String sourceType);
 
-    List<String> outputErrorCountMsg();
+    List<String> outputErrorCountMsg(String conditionSql);
 
 
     DmpPushTaskDTO.SyncInfoDTO getSuccessData(DmpSyncTaskDTO.OneDTO oneDTO);

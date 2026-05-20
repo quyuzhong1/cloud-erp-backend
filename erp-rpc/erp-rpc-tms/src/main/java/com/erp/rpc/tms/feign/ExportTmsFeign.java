@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
+import com.erp.model.tms.dto.excel.TmsLogisticsOrderExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -81,4 +82,13 @@ public interface ExportTmsFeign {
     PagingVO<DictHsCodeDTO.ListDTO> exportDictHsCode(@RequestBody  PagingDTO<DictHsCodeDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportTmsCfgSailing")
     PagingVO<TmsCfgSailingDTO.ListDTO> exportTmsCfgSailing(@RequestBody PagingDTO<TmsCfgSailingDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportTmsCfgLogisticsCost")
+    PagingVO<CfgLogisticsCostImportDTO.ListDTO> exportTmsCfgLogisticsCost(@RequestBody PagingDTO<CfgLogisticsCostImportDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportTmsAsyncTaskRecord")
+    PagingVO<TmsAsyncTaskRecordDTO.ListDTO> exportTmsAsyncTaskRecord(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportTmsAsyncTaskDetail")
+    PagingVO<TmsAsyncTaskRecordDTO.DetailListDTO> exportTmsAsyncTaskDetail(PagingDTO<TmsAsyncTaskRecordDTO.PagingDetailParamDTO> dto);
+
+    @PostMapping("/feign/export/exportTmsLogisticsOrder")
+    PagingVO<TmsLogisticsOrderExcelDTO> exportTmsLogisticsOrder(@RequestBody PagingDTO<LogisticsOrderDTO.PagingParamDTO> dto);
 }

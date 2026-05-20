@@ -29,6 +29,7 @@ public enum DictBasicEnum {
     DECLARE_NATURE_LEVY("declareNatureLevy", "报关单-征免性质"),
     DECLARE_PACK_TYPE("declarePackType", "报关单-包装种类"),
     DECLARE_TRANSACTION_METHOD("declareTransactionMethod", "报关单-成交方式"),
+    CFG_COST_BUSINESSKEY("cfgCostBusinessKey", "费用配置-配置单据"),
     ;
     private String type;
     private String desc;

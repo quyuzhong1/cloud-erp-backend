@@ -22,6 +22,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
@@ -33,12 +34,16 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.dto.AuthUserShopDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.oms.enums.ShopOrderRouteEnum;
@@ -85,6 +90,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -92,6 +98,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 
@@ -167,12 +174,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<ShopInfoEntity> add(ShopDTO.AddDTO dto) {
-    	Boolean isHaveWarehouse = dto.getIsHaveWarehouse();
-    	if(Boolean.TRUE.equals(isHaveWarehouse)) {
-    		if(StringUtils.isBlank(dto.getWarehouseId()) || StringUtils.isBlank(dto.getReturnWarehouse())) {
-    			throw new ServiceException("包含平台仓业务，店铺平台仓库和店铺退货仓库不能为空");
-    		}
-    	}
         if (Objects.isNull(dto.getEnableTime())){
             dto.setEnableTime(LocalDateTime.now());
         }
@@ -186,8 +187,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         PlatformDictEnum wildberries = PlatformDictEnum.WILDBERRIES;
         //检查店铺是否存在
         checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
-        //检测仓库
-        checkWarehouseExist(isHaveWarehouse, dto.getWarehouseId());
         //如果是亚马逊
         if (amazon.getCode().equals(dictPlatform)) {
             return this.handleAmazonShop(dto);
@@ -231,13 +230,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //设置用户信息
         setCustom(dto.getCustomerId(), shop);
         shop.setChargeName(chargeName);
-        String warehouseId = dto.getWarehouseId();
-        if (StringUtils.isNotBlank(warehouseId)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-            shop.setWarehouseName(updateDTO.getName());
-            shop.setWarehouseId(dto.getWarehouseId());
-        }
         //处理扩展字段
         if(StringUtils.isNotBlank(dto.getClientId()) || StringUtils.isNotBlank(dto.getClientSecret())) {
             Map<String, Object> extendData = new HashMap<>();
@@ -471,15 +463,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 chargeName = user.getUserName();
             }
         }
-        String warehouseId = dto.getWarehouseId();
-        String warehouseName = "";
-        if (StringUtils.isNotBlank(warehouseId)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-            warehouseName = updateDTO.getName();
-        }
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
-
         for (String countryCode : countryCodeList) {
             String countryName = countryList.stream().filter(c -> c.getId().equals(countryCode)).findFirst().
                     map(DictCountryEntity::getNameCn).orElse("");
@@ -492,7 +475,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shop.setCountryName(countryName);
                 shop.setSalesOrgName(orgName);
                 shop.setChargeName(chargeName);
-                shop.setWarehouseName(warehouseName);
+                shop.setOrderRouteType(ShopOrderRouteEnum.B2C.getCode());
                 addList.add(shop);
             }
 
@@ -631,23 +614,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgId(dto.getSalesOrgId());
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
-        shopInfo.setIossTaxNo(dto.getIossTaxNo());
-        shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
-        shopInfo.setEoriTaxNo(dto.getEoriTaxNo());
         shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
-        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         shopInfo.setBusinessModel(dto.getBusinessModel());
         shopInfo.setTimeZone(StringUtils.isBlank(dto.getTimeZone())? shopInfo.getTimeZone() : dto.getTimeZone());
         shopInfo.setInitPullTime(dto.getInitPullTime());
         shopInfo.setIsMultiChannel(Objects.nonNull(dto.getIsMultiChannel())? dto.getIsMultiChannel() : shopInfo.getIsMultiChannel());
-        String warehouseId = dto.getWarehouseId();
-        if (StringUtils.isNotBlank(warehouseId)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-            WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-            shopInfo.setWarehouseName(updateDTO.getName());
-            shopInfo.setWarehouseId(dto.getWarehouseId());
-        }
         if(StringUtils.isNotBlank(dto.getDictAreaCode())){
             shopInfo.setDictAreaCode(dto.getDictAreaCode());
         }
@@ -1294,6 +1266,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuth.setAccessToken(accessToken);
         shopAuth.setRefreshToken(refreshToken);
         shopAuth.setExpiresIn(Math.toIntExact(expireIn));
+        shopAuth.setRefreshStatus(0);
+        shopAuth.setRefreshErrorMsg("");
         shopAuth.setShopId(dto.getId());
         shopAuth.setAppClientId(cfgAppClient.getId());
         LocalDateTime localDateTime = LocalDateTime.now().plusSeconds(Math.toIntExact(expireIn));
@@ -1493,6 +1467,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopInfoEntity> listByPlatformListAuth(List<String> platformList) {
+        List<ShopInfoEntity> shopList = this.listByPlatformList(platformList, "");
+        fillHasWarehouseAuth(shopList, UserContext.getDefaultLoginUser().getUid());
+        return shopList;
+    }
+
+    @Override
     public List<ShopInfoEntity> listShopByAmazon() {
         List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode()).list();
         return list;
@@ -1504,6 +1485,128 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         dto.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         return shopSysUserAuthService.listUserAuthShop(dto);
+    }
+
+    private void fillHasWarehouseAuth(List<ShopInfoEntity> shopList, String userId) {
+        if (CollectionUtils.isEmpty(shopList)) {
+            return;
+        }
+        shopList.forEach(shop -> shop.setHasWarehouseAuth(true));
+        List<SysUserDTO.WarehouseDTO> warehouseUserList = authDataFeign.getWarehouseUserList(userId);
+        if (CollUtil.isEmpty(warehouseUserList)) {
+            return;
+        }
+        boolean hasAllWarehouseAuth = warehouseUserList.stream()
+                .anyMatch(item -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(item.getAuthType()));
+        if (hasAllWarehouseAuth) {
+            return;
+        }
+        Set<String> warehouseIdSet = warehouseUserList.stream()
+                .map(SysUserDTO.WarehouseDTO::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        shopList.forEach(shop -> shop.setHasWarehouseAuth(warehouseIdSet.contains(shop.getWarehouseId())));
+        fillFbtWarehouseAuth(shopList, warehouseIdSet);
+    }
+
+    private void fillFbtWarehouseAuth(List<ShopInfoEntity> shopList, Set<String> warehouseIdSet) {
+        if (CollectionUtils.isEmpty(shopList) || CollUtil.isEmpty(warehouseIdSet)) {
+            return;
+        }
+        Map<String, String> tiktokAccountMap = shopList.stream()
+                .filter(Objects::nonNull)
+                .filter(shop -> PlatformDictEnum.TIK_TOK.getCode().equals(shop.getDictPlatform()))
+                .filter(shop -> CharSequenceUtil.isNotBlank(shop.getAccount()))
+                .collect(Collectors.toMap(
+                        shop -> shop.getAccount().toLowerCase(Locale.ROOT),
+                        ShopInfoEntity::getId,
+                        (first, second) -> first
+                ));
+        if (tiktokAccountMap.isEmpty()) {
+            return;
+        }
+        Set<String> shopIdSet = shopList.stream()
+                .map(ShopInfoEntity::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        List<OverseasProviderEntity> providerList = FeignQuery.create(OverseasProviderEntity.class)
+                .eq(OverseasProviderEntity::getCode, OmsPlatformEnum.FBT.getCode())
+                .eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(providerList)) {
+            return;
+        }
+        Map<String, List<String>> shopProviderIdsMap = new HashMap<>();
+        for (OverseasProviderEntity provider : providerList) {
+            String shopId = resolveFbtShopId(provider, tiktokAccountMap);
+            if (!shopIdSet.contains(shopId)) {
+                continue;
+            }
+            shopProviderIdsMap.computeIfAbsent(shopId, key -> new ArrayList<>()).add(provider.getId());
+        }
+        if (shopProviderIdsMap.isEmpty()) {
+            return;
+        }
+        Set<String> providerIdSet = shopProviderIdsMap.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toSet());
+        List<OverseasProviderWarehouseEntity> providerWarehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .in(OverseasProviderWarehouseEntity::getMainId, providerIdSet)
+                .list();
+        if (CollectionUtils.isEmpty(providerWarehouseList)) {
+            return;
+        }
+        Map<String, Boolean> providerWarehouseAuthMap = providerWarehouseList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> !Boolean.TRUE.equals(item.getDisabled()))
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getWarehouseId()))
+                .collect(Collectors.groupingBy(
+                        OverseasProviderWarehouseEntity::getMainId,
+                        Collectors.collectingAndThen(Collectors.toList(),
+                                list -> list.stream().anyMatch(item -> warehouseIdSet.contains(item.getWarehouseId())))
+                ));
+        if (providerWarehouseAuthMap.isEmpty()) {
+            return;
+        }
+        Map<String, Boolean> shopFbtWarehouseAuthMap = new HashMap<>();
+        shopProviderIdsMap.forEach((shopId, providerIds) -> shopFbtWarehouseAuthMap.put(
+                shopId,
+                providerIds.stream().anyMatch(providerId -> Boolean.TRUE.equals(providerWarehouseAuthMap.get(providerId)))
+        ));
+        shopList.forEach(shop -> {
+            if (Boolean.TRUE.equals(shopFbtWarehouseAuthMap.get(shop.getId()))) {
+                shop.setHasWarehouseAuth(true);
+            }
+        });
+    }
+
+    private String resolveFbtShopId(OverseasProviderEntity provider, Map<String, String> tiktokAccountMap) {
+        if (Objects.isNull(provider)) {
+            return null;
+        }
+        Map<String, Object> authJson = provider.getAuthJson();
+        String shopId = firstMeaningful(authJson == null ? null : authJson.get("shopId"));
+        if (CharSequenceUtil.isNotBlank(shopId)) {
+            return shopId;
+        }
+        String shopAccount = firstMeaningful(authJson == null ? null : authJson.get("shopAccount"));
+        if (CharSequenceUtil.isBlank(shopAccount)) {
+            return null;
+        }
+        return tiktokAccountMap.get(shopAccount.toLowerCase(Locale.ROOT));
+    }
+
+    private String firstMeaningful(Object... values) {
+        for (Object value : values) {
+            if (Objects.isNull(value)) {
+                continue;
+            }
+            String text = String.valueOf(value).trim();
+            if (CharSequenceUtil.isNotBlank(text) && !"null".equalsIgnoreCase(text)) {
+                return text;
+            }
+        }
+        return null;
     }
 
 
@@ -1759,6 +1862,40 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopDTO.ListShopInfoDTO> listShopInfoByPlatformList(List<String> platformList) {
+        List<ShopInfoEntity> shopInfoEntities = this.lambdaQuery()
+                .in(ShopInfoEntity::getDictPlatform, platformList)
+                .eq(ShopInfoEntity::getDisabled, Boolean.FALSE)
+                .list();
+
+        Map<String, List<ShopInfoEntity>> platformGroupedMap = shopInfoEntities.stream()
+                .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform));
+
+        List<ShopDTO.ListShopInfoDTO> result = new ArrayList<>();
+        for (Map.Entry<String, List<ShopInfoEntity>> entry : platformGroupedMap.entrySet()) {
+            String platform = entry.getKey();
+            List<ShopInfoEntity> entities = entry.getValue();
+
+            List<ShopDTO.ShopInfoDTO> shopInfoDTOList = entities.stream()
+                    .map(entity -> {
+                        ShopDTO.ShopInfoDTO dto = new ShopDTO.ShopInfoDTO();
+                        dto.setId(entity.getId());
+                        dto.setName(entity.getName());
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+
+            ShopDTO.ListShopInfoDTO listShopInfoDTO = new ShopDTO.ListShopInfoDTO();
+            listShopInfoDTO.setDictPlatform(platform);
+            listShopInfoDTO.setShopInfoDTOLists(shopInfoDTOList);
+            result.add(listShopInfoDTO);
+        }
+
+        return result;
+    }
+
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -1928,7 +2065,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                     if (Objects.isNull( approveStatus) || Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus()) || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
                         List<String> ids = Arrays.asList(customerInfoEntity.getId());
                         //提交
-                        Boolean submitResult = customerInfoService.submit(ids);
+                        Boolean submitResult = customerInfoService.submit(ids, false);
 //                    if (submitResult) {
 //                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
 //                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
@@ -2006,7 +2143,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopDTO.ViewBaseDTO view = new ShopDTO.ViewBaseDTO();
         BeanMapper.copy(shop, view);
         view.setOrderRouteTypeName(ShopOrderRouteEnum.getName(view.getOrderRouteType()));
-        List<String> warehouseIds = Arrays.asList(view.getWarehouseId(),view.getReturnWarehouse());
+        List<String> warehouseIds = Arrays.asList(view.getWarehouseId(),view.getReturnWarehouse(),view.getAwdWarehouseId());
         List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class, warehouseIds);
         if (CollectionUtils.isNotEmpty(warehouseEntityList)) {
             for (WarehouseEntity warehouseEntity : warehouseEntityList) {
@@ -2015,6 +2152,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 }
                 if (warehouseEntity.getId().equals(view.getReturnWarehouse())) {
                     view.setReturnWarehouseName(warehouseEntity.getName());
+                }
+                if (warehouseEntity.getId().equals(view.getAwdWarehouseId())) {
+                    view.setAwdWarehouseName(warehouseEntity.getName());
                 }
             }
         }
@@ -2044,10 +2184,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId,dto.getAwdWarehouseId()));
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
+            WarehouseDTO.UpdateDTO awdUpdateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getAwdWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+            shopInfo.setAwdWarehouseName(awdUpdateDTO.getName());
+            shopInfo.setAwdWarehouseId(dto.getAwdWarehouseId());
         }
         shopInfo.setIsHaveWarehouse(isHaveWarehouse);
         if (!isHaveWarehouse){

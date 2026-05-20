@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -15,10 +14,8 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +83,7 @@ public class B2bThirdDeliveryController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    public ApiResult<B2bThirdDeliveryDTO.ViewDTO> view(@RequestBody @Validated B2bThirdDeliveryDTO.ViewQueryDTO dto) {
+    public ApiResult<B2bThirdDeliveryDTO.ViewDTO> view(@RequestBody B2bThirdDeliveryDTO.ViewQueryDTO dto) {
         return success(b2bThirdDeliveryService.view(dto));
     }
 
@@ -112,7 +108,6 @@ public class B2bThirdDeliveryController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2B三方发货单修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:b2bThirdDelivery:update",
@@ -275,7 +270,17 @@ public class B2bThirdDeliveryController extends BaseController {
                 resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
 
             }
+            resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * zhongbao仓库操作指令类型下拉框
+     */
+    @PostMapping(value = "/listWarehouseOperationDescription")
+    public ApiResult<List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO>> listWarehouseOperationDescription(@RequestBody B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO) {
+        return success(b2bThirdDeliveryService.listWarehouseOperationDescription(thirdWarehousePlatformDTO));
+    }
+
 }

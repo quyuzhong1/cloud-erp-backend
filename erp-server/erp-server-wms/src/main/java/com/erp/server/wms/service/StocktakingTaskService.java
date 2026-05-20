@@ -1,12 +1,13 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -64,10 +65,10 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
 
     /**
      * 撤销流程
-     * @param id
+     * @param dto
      * @return
      */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 分配用户
@@ -127,7 +128,15 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @param detailEntityList
      * @return
      */
-    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
+    Boolean createTaskList(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList,Boolean isNowExecute);
+
+    /**
+     * 创建盘点任务
+     * @param entity
+     * @param detailEntityList
+     * @return
+     */
+    Boolean createTaskListByJob(StocktakingPlanEntity entity,List<StocktakingPlanDetailEntity> detailEntityList);
 
     /**
      * 流程监听结束
@@ -154,4 +163,7 @@ public interface StocktakingTaskService extends SuperService<StocktakingTaskEnti
      * @return java.util.List<com.erp.model.wms.dto.StocktakingTaskDTO.CheckResultDTO>
      */
     List<StocktakingTaskDTO.CheckResultDTO> checkQty(List<String> ids);
+
+    Boolean pushStocktakingProfitLoss(BaseIdsDTO.IdsDTO dto);
+
 }

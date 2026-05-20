@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -27,6 +28,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
+import com.erp.model.oms.enums.RuleOrderHandleEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -41,7 +43,6 @@ import com.erp.server.oms.kingdee.SyncAmazonSoMultiChannelService;
 import com.erp.server.oms.query.SoMultiChannelQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -365,7 +366,7 @@ public class SoMultiChannelController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = soMultiChannelService.cancelProcess(id);
+                cancelResult = soMultiChannelService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             } catch (Exception e) {
                 log.error("多渠道订单主单撤回流程失败", e);
                 SoMultiChannelEntity entity = idEntityMap.get(id);
@@ -458,6 +459,13 @@ public class SoMultiChannelController extends BaseController {
             ShopInfoEntity shopInfoEntity1 = shopInfoService.getById(soB2cEntity.getShopId());
             if (Objects.nonNull(shopInfoEntity1)) {
                 soB2cEntity.setShopName(shopInfoEntity1.getName());
+            }
+            // 检查发货限制
+            String restrictionMsg = soB2cService.checkDeliveryRestriction(id, RuleOrderHandleEnum.DeliveryRestrictionEnum.MULTI_CHANNEL_DELIVERY.getCode());
+            if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
+                submit = BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), restrictionMsg);
+                resultDTOS.add(submit);
+                continue;
             }
             try {
                 SoB2cDTO.SaveSoB2cDistributionDTO saveSoB2cDistributionDTO = soMultiChannelService.buildDistributionDTO(dto);

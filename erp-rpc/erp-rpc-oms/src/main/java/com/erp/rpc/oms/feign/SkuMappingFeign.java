@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @FeignClient(name = "erp-oms", contextId = "skuMappingFeign",configuration = {FeignErrorDecoder.class})
 public interface SkuMappingFeign {
@@ -50,6 +52,12 @@ public interface SkuMappingFeign {
     List<SkuMappingDTO.MappingSkuViewDTO> listByPlatformSkuNoAndPlatform(@RequestBody ListingInfoParamDTO listingInfoParamDTO);
 
     /**
+     * 更改库存sku 对照
+     */
+    @PostMapping("feign/skuMapping/updateWarehouseSku")
+    String updateWarehouseSku(@RequestBody SkuMappingDTO.UpdateWarehouseSkuDTO dto);
+
+    /**
      * 通过条件查询ListingInfoEntity列表
      *
      * @author Jim
@@ -82,4 +90,12 @@ public interface SkuMappingFeign {
      */
     @PostMapping("feign/skuMapping/listSkuBySkuNos")
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO);
+
+
+    @PostMapping("feign/skuMapping/mapListingByPlatformSkuNo")
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(@RequestBody SkuMappingDTO.PlatformSkuNoParamDTO paramDTO);
+
+    @PostMapping("feign/skuMapping/listByWarehouseAndPlatformSku")
+    List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@RequestParam("warehouseId") String warehouseId,
+                                                                      @RequestBody List<String> platformSkuNoList);
 }

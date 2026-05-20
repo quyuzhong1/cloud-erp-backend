@@ -373,4 +373,26 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryDTO.RealQtyDTO> getRealQty(List<String> skuIds, List<String> warehouseIds, List<String> inventoryStatusList);
 
     List<InventoryDTO.LocationInventory> recommendedLocations(InventoryDTO.RecommendedLocationParams params);
+    /**
+     * 查询redis库存信息
+     * @author will
+     * @date 2026/1/8 18:16
+     * @param dto
+     * @return List<RedisInventoryReturnDTO>
+     */
+    List<InventoryDTO.RedisInventoryReturnDTO> getRedisInventory(InventoryDTO.RedisInventoryParamDTO dto);
+
+    /**
+     * 根据条件查询仓库库存信息
+     * @param dto
+     * @return
+     */
+    List<InventoryQtyDTO.InventoryDTO> listWarehouseInventoryByParam(InventoryQtyDTO.InventoryParamDTO dto);
+
+    /**
+     * 根据仓库id、时间范围获取库存变更列表
+     * @param dto
+     * @return
+     */
+    List<InventoryQtyDTO.InventoryChangeDTO> listInventoryChangeByParam(InventoryQtyDTO.InventoryChangeQueryDTO dto);
 }

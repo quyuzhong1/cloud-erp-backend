@@ -49,6 +49,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
@@ -336,6 +338,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
             JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
             String form = JSONUtil.toJsonStr(objects);
+            // 提交飞书前打印组装后的 form，便于飞书报错(如 validate form error)时回查具体字段值
+            log.info("提交飞书审批表单: approvalCode={}, userId={}, form={}", code, userId, form);
             CreateInstanceReq req = CreateInstanceReq.newBuilder()
                     .instanceCreate(InstanceCreate.newBuilder()
                             .approvalCode(code)
@@ -394,7 +398,97 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             addDTO.setThirdApprovalCode(code);
             approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
-            throw new RuntimeException("飞书创建审批实例失败：" + e);
+            log.error("飞书创建审批实例失败：", e);
+            // 飞书原始错误只带 widget id（例：validate form error 控件值不合法或者为空。控件= widget17785774022440001。）
+            // 这里按 form 定义把 widget id 翻译成"控件名 + ERP 字段"，方便运营/开发快速定位。
+            // 不带 args 是为了避免 enrichedMsg 中可能出现的 `{}` 被 CharSequenceUtil.format 误当占位符。
+            String enrichedMsg = enrichWidgetIdInMessage(e.getMessage(), formArray, fieldMapList);
+            throw new ServiceException("飞书创建审批实例失败：" + enrichedMsg);
+        }
+    }
+
+    /**
+     * 把飞书报错 message 中的 widget id 替换为"widgetId(控件名,ERP 字段=xxx)"形式，
+     * 便于在飞书表单只暴露 widget id 时也能快速定位是哪个 ERP 字段。
+     * 当 message 中找不到 widget id 时，原样返回。
+     */
+    private String enrichWidgetIdInMessage(String message,
+                                           JSONArray formArray,
+                                           List<CfgProcessFieldMapEntity> fieldMapList) {
+        if (StrUtil.isBlank(message)) {
+            return "";
+        }
+        Pattern widgetPattern = Pattern.compile("widget[0-9]+");
+        Matcher matcher = widgetPattern.matcher(message);
+        if (!matcher.find()) {
+            return message;
+        }
+
+        Map<String, String> widgetNameMap = collectWidgetNameMap(formArray);
+        Map<String, String> widgetSysFieldMap = fieldMapList == null ? Collections.emptyMap() :
+                fieldMapList.stream()
+                        .filter(fm -> StrUtil.isNotBlank(fm.getThirdFieldId()))
+                        .collect(Collectors.toMap(
+                                CfgProcessFieldMapEntity::getThirdFieldId,
+                                fm -> StrUtil.nullToEmpty(fm.getSysField()),
+                                (a, b) -> a
+                        ));
+
+        matcher.reset();
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String widgetId = matcher.group();
+            String widgetName = widgetNameMap.getOrDefault(widgetId, "");
+            String sysField = widgetSysFieldMap.getOrDefault(widgetId, "");
+            StringBuilder repl = new StringBuilder(widgetId);
+            if (StrUtil.isNotBlank(widgetName) || StrUtil.isNotBlank(sysField)) {
+                repl.append("(");
+                if (StrUtil.isNotBlank(widgetName)) {
+                    repl.append("控件=").append(widgetName);
+                }
+                if (StrUtil.isNotBlank(sysField)) {
+                    if (StrUtil.isNotBlank(widgetName)) {
+                        repl.append(",");
+                    }
+                    repl.append("ERP字段=").append(sysField);
+                }
+                repl.append(")");
+            }
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(repl.toString()));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * 递归收集 form 中所有控件的 id->name 映射（包含 fieldList 子控件）。
+     */
+    private Map<String, String> collectWidgetNameMap(JSONArray formArray) {
+        Map<String, String> result = new HashMap<>();
+        if (formArray == null) {
+            return result;
+        }
+        for (int i = 0; i < formArray.size(); i++) {
+            collectWidgetNameRecursively(formArray.getJSONObject(i), result);
+        }
+        return result;
+    }
+
+    private void collectWidgetNameRecursively(JSONObject obj, Map<String, String> result) {
+        if (obj == null) {
+            return;
+        }
+        String id = obj.getStr("id");
+        String name = obj.getStr("name");
+        if (StrUtil.isNotBlank(id)) {
+            result.put(id, StrUtil.nullToEmpty(name));
+        }
+        Object children = obj.get("children");
+        if (children instanceof JSONArray) {
+            JSONArray arr = (JSONArray) children;
+            for (int j = 0; j < arr.size(); j++) {
+                collectWidgetNameRecursively(arr.getJSONObject(j), result);
+            }
         }
     }
 

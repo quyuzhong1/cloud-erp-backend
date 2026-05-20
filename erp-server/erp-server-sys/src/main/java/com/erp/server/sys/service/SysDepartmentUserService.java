@@ -60,6 +60,14 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
     SysDepartmentUserNumberDTO getDeptByUserId(String userId);
 
     /**
+     * 根据用户id查询部门信息（过滤已禁用部门，取最近绑定的部门）
+     * 自动带出用户绑定部门，如用户绑定多个部门，则取最近绑定的部门；若部门已禁用，则不带出
+     * @param userId 用户id
+     * @return 部门信息
+     */
+    SysDepartmentUserNumberDTO getDeptByUserIdWithDisabledFilter(String userId);
+
+    /**
      * 根据人员id查询所有上级
      *
      * @param userId 人员id
@@ -100,4 +108,16 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return List<SysDepartmentUserNumberDTO> 
      */
     List<SysDepartmentUserNumberDTO> listDeptUserByDeptIdList(List<String> deptIdList);
+
+    void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd);
+
+    List<SysDepartmentUserNumberDTO> listDeptByUserIdWithDisabledFilter(String userId);
+    /**
+     * 删除用户部门关联关系
+     * @author will
+     * @date 2026/3/9 16:32
+     * @param uids
+     * @return  void
+     */
+    void deleteByUserIds(List<String> uids);
 }

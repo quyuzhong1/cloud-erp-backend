@@ -2,11 +2,11 @@ package com.erp.server.oms.rocketmq.sync.wangdian.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.DictCityConstants;
 import com.erp.model.dmp.dto.DmpThirdCityDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -51,7 +51,7 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
-        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap);
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
         KolSubB2cApplicationEntity entity = pushDTO.getEntity();
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
@@ -65,7 +65,29 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public DmpPushTaskEntity syncCancelDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_INVALID.getCode());
+        KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_INVALID.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(request));
+        omsPushMsgService.save(omsPushMsgEntity);
+        return null;
+    }
+
+    @Override
     public PushSelf2Request newSyncKolB2c(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
+        return newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
+    @Override
+    public PushSelf2Request newSyncKolB2c(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap, String syncOperate) {
         //判断skuMap不能为null 不能为空
         if (skuMap == null || skuMap.isEmpty()) {
             List<String> skuIds = pushDTO.getDetailList().stream().map(KolSubB2cApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -89,7 +111,11 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
                 .eq(KolB2cApplicationAddressEntity::getPartnerId, entity.getPartnerId())
                 .one();
         //省市区的映射
-        List<String> sysIds = Arrays.asList(kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getDistrictId());
+        List<String> sysIds = Arrays.asList(kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getDistrictId())
+                .stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(id -> !DictCityConstants.isNoDistrictId(id))
+                .collect(Collectors.toList());
         DmpThirdCityDTO.SysAddressParamsDTO dto = new DmpThirdCityDTO.SysAddressParamsDTO();
         dto.setSourcePlatform(ThirdSysTypeEnum.WDT.getCode());
         dto.setSysIds(sysIds);
@@ -148,7 +174,13 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         rawTrade.setBuyerNick(entity.getNickname());
         rawTrade.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
         //省市区空格分隔，示例【北京 北京市 朝阳区】
-        rawTrade.setReceiverArea(StrUtil.format("{} {} {}",thirdAddressMap.get(kolB2cApplicationAddressEntity.getProvinceId()), thirdAddressMap.get(kolB2cApplicationAddressEntity.getCityId()), thirdAddressMap.get(kolB2cApplicationAddressEntity.getDistrictId())));
+        rawTrade.setReceiverArea(Arrays.asList(
+                        getAddressName(thirdAddressMap, kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getProvince()),
+                        getAddressName(thirdAddressMap, kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getCity()),
+                        getAddressName(thirdAddressMap, kolB2cApplicationAddressEntity.getDistrictId(), kolB2cApplicationAddressEntity.getDistrict()))
+                .stream()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(" ")));
         rawTrade.setReceiverAddress(kolB2cApplicationAddressEntity.getDetailAddress());
         rawTrade.setReceiverZip(kolB2cApplicationAddressEntity.getZipCode());
         rawTrade.setReceiverMobile(kolB2cApplicationAddressEntity.getReceiverPhone());
@@ -194,9 +226,27 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
             rawTradeOrder.setJson("");
             rawTradeOrderList.add(rawTradeOrder);
         }
+        if (StringUtils.equals(syncOperate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
+            rawTrade.setTradeStatus(PushSelf2Request.RawTrade.TRADE_STATUS_REFUNDED);
+            rawTrade.setProcessStatus(PushSelf2Request.RawTrade.PROCESS_STATUS_CANCELED);
+            for (PushSelf2Request.RawTradeOrder rawTradeOrder : rawTradeOrderList) {
+                rawTradeOrder.setStatus(PushSelf2Request.RawTradeOrder.STATUS_REFUNDED);
+                rawTradeOrder.setRefundStatus(PushSelf2Request.RawTradeOrder.REFUND_STATUS_SUCCESS);
+            }
+        }
         request.setRawTradeList(rawTradeList);
         request.setRawTradeOrderList(rawTradeOrderList);
         return request;
+    }
+
+    private String getAddressName(Map<String, String> thirdAddressMap, String addressId, String fallbackName) {
+        if (StringUtils.isNotBlank(addressId)) {
+            String thirdName = thirdAddressMap.get(addressId);
+            if (StringUtils.isNotBlank(thirdName)) {
+                return thirdName;
+            }
+        }
+        return fallbackName;
     }
 
 }

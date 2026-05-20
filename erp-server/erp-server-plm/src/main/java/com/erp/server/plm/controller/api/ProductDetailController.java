@@ -3,7 +3,9 @@ package com.erp.server.plm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.RequestPermissions;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -21,6 +23,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.plm.service.ProductBrandService;
 import com.erp.server.plm.service.ProductRDTTeamService;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
@@ -43,6 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -893,11 +897,11 @@ public class ProductDetailController extends BaseController {
         String path = "";
         String excelName = "template.xlsx";
         if(importType == 1){//导入新增
-            path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+            path = "excel/productNoSpecDetailTemplate.xlsx";
         }else if(importType == 2){//导入更新（待审核）
-            path = "classpath:excel/productUpdateNotApproveTemplate.xlsx";
+            path = "excel/productUpdateNotApproveTemplate.xlsx";
         }else if(importType == 3){//导入更新（已审核）
-            path = "classpath:excel/productUpdateApproveTemplate.xlsx";
+            path = "excel/productUpdateApproveTemplate.xlsx";
         }
         if(StringUtils.isEmpty(path)){
             throw new ServiceException(ApiError.HTTP_BAD_REQUEST);
@@ -935,6 +939,23 @@ public class ProductDetailController extends BaseController {
     @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<Boolean> exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
+        return success(true);
+    }
+
+    /**
+     * excel导出产品信息（全）
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @return com.common.core.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 11:49
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息（全）")
+    @PostMapping(value = "/exportProductAll")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:exportAll", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    public ApiResult<Boolean> exportProductAll(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+        productDetailService.exportProductAll(productSkuExcelDTO, response);
         return success(true);
     }
 
@@ -1243,7 +1264,7 @@ public class ProductDetailController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = productDetailService.cancelProcess(id);
+                cancelResult = productDetailService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("产品信息撤回流程失败",e);
                 ProductDetailEntity entity = productDetailService.getById(id);

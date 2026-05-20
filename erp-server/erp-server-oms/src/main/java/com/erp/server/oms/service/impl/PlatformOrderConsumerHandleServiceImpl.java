@@ -121,6 +121,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
+    @Resource
+    private SoB2cRefService soB2cRefService;
+
     @Override
     public void handleAll(PlatformOrderDTO dto) {
         String oldBillStatus = dto.getBillStatus();
@@ -141,8 +144,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
-        //如果已发货且仓库为空且是平台仓订单
-        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
+        //如果已发货且仓库为空且是平台仓订单，则统一回退店铺绑定仓
+        if (isShipped
+                && isWarehouseEmpty
+                && hasPlatformWarehouse
+                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
@@ -187,6 +193,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 取消订单不走规则
         if ( (!mainEntity.hasPlatformWarehouseOrder()
                 && !mainEntity.getIsCancel()
+                && (Objects.isNull(mainEntity.getIsFrozen()) || !mainEntity.getIsFrozen())
                 && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())) || Boolean.TRUE.equals(retryFlag)
         ) {
             // 已审核过的订单不走规则
@@ -199,7 +206,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cHandler.handleRule(mainEntity);
             }
         }
-        SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        if(!SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(mainEntity.getSignOrderError())){
+            SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        }
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
@@ -208,10 +217,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         // 非平台
         if (!mainEntity.hasPlatformWarehouseOrder()
                 && resultDTO.isUpdateCancel()
-                && SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
-                && !mainEntity.getIsIntercept()
         ){
-            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+            if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+                    && !mainEntity.getIsIntercept()){
+                soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+            }
+            handleSplitTargetPlatformCancel(mainEntity);
         }
 
 
@@ -254,6 +265,53 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        if (Objects.nonNull(entity) && ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())){
 //            cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
 //        }
+    }
+
+    /**
+     * 拆分原单平台取消后，同步子单取消状态；拦截成功后按最新状态决定是否作废子单。
+     */
+    private void handleSplitTargetPlatformCancel(SoB2cEntity mainEntity) {
+        if (!Boolean.TRUE.equals(mainEntity.getInvalidStatus()) || !SoB2cInvalidTypeEnum.ENUM_SPLIT.getCode().equals(mainEntity.getInvalidType())) {
+            return;
+        }
+        List<String> targetSoIds = soB2cRefService.listDeepestTargetIdsBySourceId(mainEntity.getId());
+        if (CollectionUtils.isEmpty(targetSoIds)) {
+            return;
+        }
+        List<SoB2cEntity> targetEntityList = soB2cService.listByIds(targetSoIds);
+        List<String> invalidTargetSoIds = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : targetEntityList) {
+            if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
+                    && !Boolean.TRUE.equals(soB2cEntity.getIsIntercept())) {
+                soB2cService.deliveryIntercept(soB2cEntity.getId(), "平台取消");
+                SoB2cEntity latestEntity = soB2cService.getById(soB2cEntity.getId());
+                if (Objects.nonNull(latestEntity)
+                        && !SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())
+                        && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(latestEntity.getBillStatus())) {
+                    invalidTargetSoIds.add(soB2cEntity.getId());
+                }
+            }
+        }
+        List<String> cancelTargetSoIds = targetSoIds.stream()
+                .filter(id -> !invalidTargetSoIds.contains(id))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(invalidTargetSoIds)) {
+            soB2cService.lambdaUpdate()
+                    .in(SoB2cEntity::getId, invalidTargetSoIds)
+                    .set(SoB2cEntity::getIsCancel, Boolean.TRUE)
+                    .set(SoB2cEntity::getRemark, "平台取消")
+                    .set(SoB2cEntity::getInvalidStatus, Boolean.TRUE)
+                    .set(SoB2cEntity::getInvalidType, SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode())
+                    .set(SoB2cEntity::getInvalidRemark, "平台取消")
+                    .update();
+        }
+        if (CollectionUtils.isNotEmpty(cancelTargetSoIds)) {
+            soB2cService.lambdaUpdate()
+                    .in(SoB2cEntity::getId, cancelTargetSoIds)
+                    .set(SoB2cEntity::getIsCancel, Boolean.TRUE)
+                    .set(SoB2cEntity::getRemark, "平台取消")
+                    .update();
+        }
     }
 
     /**

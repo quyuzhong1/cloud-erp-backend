@@ -111,7 +111,14 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
                 paramDTO.setShopIdList(Collections.singletonList(dto.getShopId()));
-                paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+                
+                // 根据数据类型设置查询条件：平台类型或仓库类型
+                if (StringUtils.isNotBlank(dto.getType())) {
+                    paramDTO.setType(dto.getType());
+                } else {
+                    paramDTO.setType(RuleTypeEnum.B2C_PLATFORM.getCode());
+                }
+                
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(dto.getPlatformSkuNo()));
                 // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
                 if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform()) ||
@@ -125,12 +132,31 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     paramDTO.setPlatformSpuNoList(Collections.singletonList(dto.getPlatformProductNo()));
                     paramDTO.setPlatformSkuIdList(StringUtils.isNotBlank(dto.getPlatformSkuId()) ? Collections.singletonList(dto.getPlatformSkuId()) : null);
                 }
+                
+                // FBT仓库类型需要使用authId进行匹配
+                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType()) && StringUtils.isNotBlank(dto.getAuthId())) {
+                    paramDTO.setAuthId(dto.getAuthId());
+                }
+                
                 paramDTO.setIsExpire(false);
                 List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
 
                 if (!CollectionUtils.isEmpty(listDto)) {
                     oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
                 }
+            }
+            if (oldEntity == null
+                    && RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                    && OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())
+                    && StringUtils.isNotBlank(dto.getAuthId())
+                    && StringUtils.isNotBlank(dto.getPlatformSkuId())) {
+                oldEntity = listingInfoService.lambdaQuery()
+                        .eq(ListingInfoEntity::getPlatform, dto.getPlatform())
+                        .eq(ListingInfoEntity::getType, RuleTypeEnum.WAREHOUSE.getCode())
+                        .eq(ListingInfoEntity::getAuthId, dto.getAuthId())
+                        .eq(ListingInfoEntity::getPlatformSkuId, dto.getPlatformSkuId())
+                        .last("limit 1")
+                        .one();
             }
 
             // 转换
@@ -157,6 +183,16 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (PlatformDictEnum.DHT.getCode().equals(dto.getPlatform())) {
                     skuMappingEntity.setType(RuleTypeEnum.B2B_PLATFORM);
                 }
+                // FBT仓库类型设置为WAREHOUSE类型
+//                if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())) {
+//                    skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
+//                    // FBT库存SKU拉取时不占用仓库字段，保留为空。
+//                    // 其他仓库型商品维持原有逻辑，使用authId作为关联标识。
+//                    if (StringUtils.isNotBlank(dto.getAuthId())
+//                            && !OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())) {
+//                        skuMappingEntity.setWarehouseId(dto.getAuthId());
+//                    }
+//                }
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
@@ -201,6 +237,14 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     }
                     if (StringUtils.isNotBlank(entity.getPlatformStatus())) {
                         oldEntity.setPlatformStatus(entity.getPlatformStatus());
+                    }
+                    if (StringUtils.isNotBlank(entity.getPlatformSkuId())) {
+                        oldEntity.setPlatformSkuId(entity.getPlatformSkuId());
+                    }
+                    if (RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                            && OmsPlatformEnum.FBT.getCode().equalsIgnoreCase(dto.getPlatform())
+                            && StringUtils.isNotBlank(entity.getPlatformSkuNo())) {
+                        oldEntity.setPlatformSkuNo(entity.getPlatformSkuNo());
                     }
                     oldEntity.setPlatformUpdateTime(entity.getPlatformUpdateTime());
                     listingInfoService.updateById(oldEntity);

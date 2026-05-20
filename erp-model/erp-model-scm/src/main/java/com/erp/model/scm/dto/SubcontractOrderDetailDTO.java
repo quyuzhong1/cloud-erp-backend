@@ -66,6 +66,21 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private String currencySymbol;
 
         /**
+         * 返修数量
+         */
+        private Integer repairQty;
+
+        /**
+         * 返修单价
+         */
+        private BigDecimal repairPrice;
+
+        /**
+         * 返修金额
+         */
+        private BigDecimal repairAmount;
+
+        /**
         * 采购金额
         */
         private BigDecimal amount;
@@ -236,6 +251,24 @@ public class SubcontractOrderDetailDTO implements Serializable {
         */
         @Size(max = 19,message = "供应商id最大长度不能超过19位")
         private String supplierId;
+
+        /**
+         * 返修数量
+         */
+        @NotNull(message = "返修数量不能为空")
+        private Integer repairQty;
+
+        /**
+         * 返修单价
+         */
+        @NotNull(message = "返修单价不能为空")
+        private BigDecimal repairPrice;
+
+        /**
+         * 返修金额
+         */
+        @NotNull(message = "返修金额不能为空")
+        private BigDecimal repairAmount;
         /**
         * 采购数量
         */

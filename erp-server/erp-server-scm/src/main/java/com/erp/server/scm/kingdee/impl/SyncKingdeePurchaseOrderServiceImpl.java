@@ -26,8 +26,10 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -37,6 +39,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -49,8 +52,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Will
@@ -98,6 +103,8 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -214,7 +221,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("purchaseDate", LocalDateTimeUtil.format(entity.getPurchaseDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //单据类型
-        resultMap.put("type",entity.getType());
+        resultMap.put("type",Objects.equals(entity.getType(), PurchaseOrderTypeEnum.ENUM_REPAIR.getCode()) ? PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode() : entity.getType());
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
@@ -491,6 +498,10 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (CollectionUtils.isEmpty(details)) {
             throw new ServiceException(ApiError.PO_DETAIL_NOT_FOUND);
         }
+        List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(details
+                .stream().map(AssetPurchaseOrderDetailEntity::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList())
+                );
+        Map<String, String> codeToProjectNameMap = moldInfoEntities.stream().filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName())).collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getPurchaseOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
@@ -505,16 +516,18 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         List<JSONObject> list = new ArrayList<>();
         for (AssetPurchaseOrderDetailEntity detailEntity : details) {
             JSONObject jsonObject = new JSONObject();
+            BigDecimal taxPrice = detailEntity.getTaxPrice() == null ? BigDecimal.ZERO : detailEntity.getTaxPrice();
+            BigDecimal taxRate = detailEntity.getTaxRate() == null ? BigDecimal.ZERO : detailEntity.getTaxRate();
             jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getAssetCode());
             jsonObject.set("purchaseQty",detailEntity.getPurchaseQty());
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
-            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
-            jsonObject.set("taxPrice",detailEntity.getTaxPrice());
+            jsonObject.set("price", MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, taxRate)) );
+            jsonObject.set("taxPrice",taxPrice);
             //新品首批
             //jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
 
-            jsonObject.set("taxRate",MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("taxRate",MathUtil.multiplyWithTwo(taxRate,MathUtil.BigDecimal_100));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 //采购组织编码
                 String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
@@ -522,10 +535,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                 jsonObject.set("receiveOrgCode", purchaseOrgCode);
                 jsonObject.set("purchaseOrgCode", purchaseOrgCode);
             }
-            jsonObject.set("isGift",Boolean.FALSE);
+            jsonObject.set("isGift",Boolean.TRUE.equals(detailEntity.getIsGift()));
             jsonObject.set("tag",detailEntity.getTag());
             jsonObject.set("endReceive",detailEntity.getEndReceive());
             jsonObject.set("detailRemark",detailEntity.getRemark());
+            jsonObject.set("projectName",codeToProjectNameMap.getOrDefault(detailEntity.getAssetCode(),""));
 
             list.add(jsonObject);
         }

@@ -3,6 +3,8 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -96,4 +98,56 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return List<String>
      */
     List<String> listLogisticsBillCostId(@Param("params") LogisticsBillCostDTO.ListParamDTO params);
+    /**
+     * 列表展示合计
+     * @author will
+     * @date 2026/1/20 12:20
+     * @param params
+     * @return ListDTO
+     */
+    LogisticsBillCostDTO.TotalCountDTO listTotalCostValueCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO params);
+
+    List<String> listByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 游标分页查询可下推分摊的费用ID（keyset pagination）
+     * 直接 JOIN logistics_bill 过滤无需分摊的单据，每次仅加载一批
+     *
+     * @param params 查询条件（含 lastId 游标位置、batchSize 批大小）
+     * @return 当前批次的费用ID列表，按 id 升序
+     * @author jack
+     * @date 2026-04-22
+     */
+    List<String> pageByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 统计可下推分摊的费用总条数，用于设置任务的 detailCount
+     *
+     * @param params 查询条件
+     * @return 总条数
+     * @author jack
+     * @date 2026-04-22
+     */
+    Integer countByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+    /**
+     * 查询计费重合计
+     * @author will
+     * @date 2026/4/15 10:53
+     * @param params
+     * @return java.math.BigDecimal
+     */
+    BigDecimal listTotalBillingWeightLogisticsCount(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
+    /**
+     * 批量确认导入数据
+     *
+     * @param confirmList 导入确认数据
+     * @param reconciliationStatus 对账状态
+     * @param confirmUserId 确认人ID
+     * @param confirmUserName 确认人名称
+     * @return 更新条数
+     */
+    int batchConfirmImport(@Param("confirmList") List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList,
+                           @Param("reconciliationStatus") String reconciliationStatus,
+                           @Param("confirmUserId") String confirmUserId,
+                           @Param("confirmUserName") String confirmUserName);
 }

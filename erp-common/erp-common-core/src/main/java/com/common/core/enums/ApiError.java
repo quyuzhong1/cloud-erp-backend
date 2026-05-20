@@ -51,7 +51,7 @@ public enum ApiError implements Serializable {
     HTTP_PAYLOAD_TOO_LARGE(413, "请求数据过大"),
     HTTP_UNSUPPORTED_MEDIA_TYPE(415, "不支持的媒体类型"),
     HTTP_TOO_MANY_REQUESTS(429, "访问频率过高，请稍后再试"),
-    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查：{0} "),
+    HTTP_UNKNOWN(500, "系统未知异常，请联系【实施人员】协调开发人员排查 "),
     HTTP_NOT_IMPLEMENTED(501, "接口未实现"),
     HTTP_BAD_GATEWAY(502, "网关错误"),
     HTTP_SERVICE_UNAVAILABLE(503, "服务不可用，服务器暂时过载或维护"),
@@ -94,7 +94,7 @@ public enum ApiError implements Serializable {
     COMMON_COPY_FAILED(1010,"对象复制异常"),
     COMMON_NOT_FOUND(1011,"{0}未找到"),
     COMMON_HAS_EXIST(1012,"{0}已存在"),
-    COMMON_DUPLICATION_NAME(1013,"名称不能重复"),
+    COMMON_DUPLICATION_NAME(1013,"名称【{0}】不能重复"),
     COMMON_COPY_ERROR(1014,"对象复制时类型错误"),
     COMMON_COMPANY_NOT_FOUND(1015, "核算公司不存在"),
     COMMON_ROLE_NOT_FOUND(1016, "角色不存在"),
@@ -188,8 +188,27 @@ public enum ApiError implements Serializable {
     COMMON_CONTRACT_TEMPLATE_NOT_AVAILABLE(1104,"合同模板不存在或被禁用"),
     COMMON_CONTRACT_TEMPLATE_BINDING_DUPLICATE(1105,"【{0}】已绑定【{1}】，不可重复绑定"),
     COMMON_CONTRACT_TEMPLATE_BOUND_BY_OTHER_SUPPLIER(1106,"【{0}】已被其他供应商绑定，请先解除关联再绑定所有供应商"),
+    COMMON_USER_NOT_FOUND(1107, "用户不存在"),
+    COMMON_CATEGORY_LEVEL_EXCEED_MAX(1107,"分类级别最多支持{0}级"),
+    COMMON_SYSTEM_CATEGORY_DELETE_FORBIDDEN(1108,"系统分类不允许删除"),
+    COMMON_SYSTEM_CATEGORY_UPDATE_FORBIDDEN(1109,"系统分类不允许编辑"),
+    COMMON_DELETE_CHILD_NODE_EXISTS(1110,"存在子节点，无法删除"),
     COMMON_CONTRACT_NOT_BINDING(98127,"无关联合同，请在合同管理页面关联后打印"),
 
+    COMMON_NO_DELIVERY_SKU(98128,"没有发货的SKU"),
+    COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE(98129,"SKU【{0}】不存在或未审核"),
+    COMMON_FILE_EMPTY(1111, "文件为空{0}"),
+    COMMON_FS_USER_NOT_BIND(98130,"飞书【{0}】事件,用户【{1}】未绑定飞书账号"),
+    COMMON_DEPARTMENT_HAVE_USER(98131,"【{0}】部门或下级部门存在用户"),
+    COMMON_FILE_HEAD_NOT_EMPTY(98132,"文件表头不能为空"),
+    COMMON_PLATFORM_SHOP_EXSIT(92132,"平台【{0}】下店铺【{1}】已存在，不能重复配置"),
+    COMMON_CSAGENT_EXSIT(92133,"平台【{1}】下售后人员【{1}】已存在，不能重复配置"),
+    COMMON_STATUS_SAME(92134,"存在相同状态"),
+    COMMON_FILE_HEAD_READ_HEAD_FAIL(98134,"配置有误，开始行读取失败"),
+
+    COMMON_NO_SKU(98128,"SKU不存在"),
+    COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
+    COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -219,6 +238,7 @@ public enum ApiError implements Serializable {
     AUTH_SSO_INVALID_PAYLOAD(2023, "单点登录Payload内容无效"),
     AUTH_SSO_USER_NOT_BOUND_ERP(2024, "用户未绑定ERP系统"),
     AUTH_SSO_SYSTEM_ERROR(2025, "单点登录系统异常：{0}"),
+    AUTH_ARCHIVE_DENIED(2026,"归档系统不允许增删改数据"),
 
     /**
      * EMAIL 邮件相关 2200 - 2400
@@ -264,13 +284,31 @@ public enum ApiError implements Serializable {
     FILE_SIZE_EXCEEDS_LIMIT(2427,"文件不可超过{0}m"),
     FILE_NAME_DUPLICATE(2428, "文档名已存在,不可重复提交"),
     FILE_EXPORT_DATA_EMPTY(2429,"导出数据不能为空"),
+    FILE_PARAM_EMPTY(2430, "请求参数不能为空"),
+    FILE_STRUCTURE_AND_FILES_EMPTY(2431, "文件夹结构和文件列表不能同时为空"),
+    FILE_ZIP_CREATE_FAILED(2432, "创建ZIP文件失败: {0}"),
+    FILE_ZIP_EXTRACT_FAILED(2433, "解压缩ZIP文件失败: {0}"),
+    FILE_ZIP_NOT_FOUND(2434, "ZIP文件为空或不存在: {0}"),
+    FILE_IMAGE_COMPRESS_FAILED(2435, "压缩图片失败: {0}"),
+    FILE_OPERATION_FAILED(2436, "FastDFS操作失败: {0}"),
+    FILE_DOWNLOAD_TIMEOUT(2437, "文件下载超时"),
+    FILE_OPERATION_INTERRUPTED(2438, "操作被中断"),
+    FILE_ZIP_EMPTY(2439, "ZIP文件中没有找到文件"),
+    FILE_CHECK_SIZE_FAILED(2440, "检查ZIP文件大小失败: {0}"),
+    FILE_MANAGEMENT_SKU_TYPE_EXIST(2441, "SKU【{0}】类型【{1}】已存在"),
+    FILE_MANAGEMENT_CATEGORY_TYPE_EXIST(2442, "品类【{0}】类型【{1}】已存在"),
+
+    FILE_URL_INVALID(2443, "文件url格式错误"),
+    FILE_UNSUPPORTED_TYPE(2444, "不支持的文件类型【{0}】"),
+    FILE_DOWNLOAD_FAILED(2445, "文件下载失败【{0}】"),
+    FILE_SHEET_NOT_EXIST(2446,"未找到配置的sheet页名称"),
 
     /**
      * 单据相关提示 从3000 - 3500
      */
     BILL_SAVE_FAILED(3000, "数据保存失败"),
     BILL_UPDATE_FAILED(3001, "数据修改失败"),
-    BILL_DATA_DUPLICATE(3002, "数据【{0}】重复，请修改后再提交"),
+    BILL_DATA_DUPLICATE(3002, "数据重复，请修改后再提交"),
     BILL_UPDATE_STATUS_NOT_ALLOWED(3003, "只有待提交和审核不通过数据支持修改"),
     BILL_SOURCE_NOT_FOUND(3004, "未找到来源单据"),
     BILL_SOURCE_DETAIL_NOT_FOUND(3005, "未找到来源单据明细"),
@@ -299,12 +337,13 @@ public enum ApiError implements Serializable {
     BILL_TASK_CANCEL_SUBMIT_INVALID(3029,"待审核任务才能取消提交"),
     BILL_URGE_ONLY_IN_APPROVING(3030, "仅支持审核中的单据支持催办提醒"),
     BILL_VOID_EDIT_FORBIDDEN(3031,"单据已作废，不支持编辑功能"),
+    BILL_VOID_SUBMIT_FORBIDDEN(3031,"单据已作废，不支持提交"),
     BILL_UPDATE_FIELD_APPROVEING(3032,"状态在审核中不可更新"),
     BILL_ROW_CHANGE_FORBIDDEN(3033,"已验收和已关闭的明细行不允许变更"),
     BILL_SELECTION_REQUIRED(3034,"选择数据不能为空"),
     BILL_PARAM_SELECTION_REQUIRED(3034,"{0}明细数据不能为空"),
     BILL_VOID_ALLOWED_STATUS_ONLY(3035,"只有待提交和审核不通过数据支持作废"),
-    BILL_DELETE_ALLOWED_STATUS_ONLY(3036,"只有待提交并且未作废数据支持删除"),
+    BILL_DELETE_ALLOWED_STATUS_ONLY(3036,"只有待提交数据支持删除"),
     BILL_SUBMIT_ALLOWED_STATUS_ONLY(3037,"只有待提交或审核不通过并且未作废数据支持提交"),
     BILL_ALREADY_VOID_CANNOT_VOID_AGAIN(3038,"已作废数据不支持作废"),
     BILL_WAIT_SUBMIT_TO_APPROVE_ING(3039,"只有待提交和审核不通过才能提交审核"),
@@ -313,11 +352,12 @@ public enum ApiError implements Serializable {
     BILL_INCONSISTENT_VOID_STATUS(3042,"存在已作废订单"),
     BILL_PUSH_ALLOWED_APPROVED_ONLY(3043,"只有审核通过才能下推单据"),
     BILL_VOIDED_CANNOT_SUBMIT(3044,"已作废单据不能提交审核"),
+    BILL_VOIDED_CANNOT_DELETE(3044,"已作废单据不能删除"),
     BILL_INV_ORG_NOT_FOUND(3045,"库存组织不存在"),
     BILL_NOT_EXIST(3046,"单据不存在"),
     BILL_NOT_EXIST_WITH_TYPE(3047, "{0}单据不存在"),
     BILL_ALREADY_EXIST(3048, "{0}单据已存在"),
-    BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN(3049, "【{0}】单据存在变更单,无法反审核"),
+    BILL_HAS_CHANGE_ORDER_REVERSE_FORBIDDEN(3049, "【{0}】单据存在调价表,无法反审核"),
     BILL_SUBMIT_ALLOWED_PENDING_ONLY(3050,"仅待提交状态的单据允许提交"),
     BILL_WAIT_HANDLE_CANCEL_PROCESS_ALLOWED(3051,"仅待处理、处理中、已处理状态允许撤销"),
     BILL_STATUS_ALREADY_HANDLED_NOT_OPERATE(3052,"已处理的数据不允许重复操作"),
@@ -355,7 +395,14 @@ public enum ApiError implements Serializable {
     DMP_THIRD_SYS_TYPE_SINGLE_BINDING(3510,"同一个第三方平台只能绑定一个{0}"),
     DMP_THIRD_LOGISTICS_NOT_FOUND(3511,"第三方渠道不存在"),
     DMP_PUSH_CFG_NOT_FOUND(3512,"未找到推送配置项【{0}】"),
-
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_FOUND(3513,"出库同步差异记录不存在"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_PLATFORM(3514,"请选择差异标签为平台单据多的"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PERIOD(3515, "请选择同一个核算周期的数据"),
+    DMP_ADS_ERP_DIFF_OUTSTOCK_NOT_SAME_PLATFORM(3516, "请选择同一个平台的数据"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_NOT_ALLOW_NULL(3513,"仓库操作类型不允许为空"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_MISSING_ENUM(3514,"缺少必要的仓库操作类型【{0}】"),
+    DMP_THIRD_WAREHOUSE_WAREHOUSE_OPERATION_VALUE_EMPTY(3515,"仓库操作类型或描述不能为空"),
+    DMP_KINGDEE_SUBORDER_NOT_ALLOW_DISAPPROVE(3516,"请操作金蝶反审核至待提交后执行反审核"),
 
     /**
      * 工作流错误 workflow 4000 - 4500
@@ -557,6 +604,7 @@ public enum ApiError implements Serializable {
     PRODUCT_ALREADY_INITIATED(5026, "已立项的产品不能再次立项"),
     PRODUCT_INITIATE_REQUIRED(5027, "项目未立项"),
     PRODUCT_INITIATE_MISSING_EXISTS(5028, "存在未立项的项目"),
+    PRODUCT_BU_IS_EXISTS_REF(5050,"产品BU线已绑定产品"),
     PRODUCT_SKU_REQUIRED(5029,"sku必须选择一个"),
     PRODUCT_SKU_NOT_FOUND(5030,"SKU不存在"),
     PRODUCT_NOT_FOUND_SKU(5031,"SKU【{0}】不存在"),
@@ -635,6 +683,24 @@ public enum ApiError implements Serializable {
     PRODUCT_APP_CATEGORY_CODE_EXISTS(5104, "应用分类代号已存在"),
     PRODUCT_APP_CATEGORY_NAME_EXISTS(5105, "应用分类名称已存在"),
     PRODUCT_PROPERTY_ASSET_NOT_EXIST(98161,"SKU【{0}】产品属性非资产，与供应商付款条件不一致"),
+    PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL(5106,"产品销售信息电池重量（g）不能为空"),
+    PRODUCT_IMG_ATTACHMENT_SAVE_FAILED(5107, "图片分类附件关联单保存失败"),
+    PRODUCT_IMG_ATTACHMENT_NOT_FOUND(5108, "未找到图片分类附件关联单数据"),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_ALL(5109, "不能移动到\"所有分类\""),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_MAIN(5110, "不能移动到\"产品主图\"分类"),
+    PRODUCT_IMG_CATEGORY_MOVE_FORBIDDEN_THUMBNAIL(5111, "不能移动到\"产品缩略图\"分类"),
+    PRODUCT_IMG_DOWNLOAD_MIN_REQUIRED(5112, "请至少选择一张图片"),
+    PRODUCT_IMG_DOWNLOAD_MAX_LIMIT(5113, "最多支持50张图片下载"),
+    PRODUCT_IMG_DOWNLOAD_NOT_FOUND(5114, "未找到可下载的图片"),
+    PRODUCT_CHANGE_SKU_NOT_APPROVE(5115, "【{0}】只有已审核SKU可以变更"),
+    PRODUCT_CHANGE_PRODUCT_SIZE_CHANGE(5115, "产品尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
+    PRODUCT_CHANGE_BOX_SIZE_CHANGE(5115, "箱规尺寸变更请遵循运费最优尺寸：长≥宽≥高"),
+    PRODUCT_CHANGE_EXIST(5115, "已存在未审核的变更单，sku:【{0}】"),
+    PRODUCT_RETAIL_PRICE_MISSING(5120, "{0}无零售价，会导致订单无法分摊"),
+    PRODUCT_RETAIL_PRICE_MISSING_ZERO(5120, "{0}零售价都是0，会导致订单无法分摊"),
+    PRODUCT_RETAIL_SKU_MISSING(5121, "提取SKU编号失败"),
+    PRODUCT_RETAIL_SKU_DUPLICATE(5122, "已存在同SKU同币种零售价,不可重复创建"),
+
 
     /**
      * BOM 错误信息 6000 - 6499
@@ -685,6 +751,8 @@ public enum ApiError implements Serializable {
     MOULD_PURCHASE_CHANGE_DETAIL_NOT_FOUND(6522,"未找到模具采购变更单明细"),
     MOULD_PURCHASE_AUDITED_ONLY_FOR_ACCEPTANCE(6523,"只有已审核的模具采购单才可以结束验收"),
     MOULD_CODE_ACCEPT_QTY_EXCEED(6524,"模具编码【{0}】验收数量不能超过可验收数量"),
+    MOULD_RETURN_EXIST(6525,"模具【{0}】已生成模具返还策略，无法再次生成"),
+    MOULD_ALERT_EXIST(6526,"模具【{0}】已生成模具预警策略，无法再次生成"),
 
     /**
      * BI 错误信息 7000 - 7499
@@ -714,6 +782,7 @@ public enum ApiError implements Serializable {
     MAPPING_EN_DESC_DUPLICATE(7501,"同平台下存在相同英文描述"),
     MAPPING_NOT_SET_PUSH_FORBIDDEN(7502,"未设置字段映射，不支持推送"),
     MAPPING_SKU_MAPPING_EXIST(7503,"该平台SKU已存在SKU映射关系!"),
+    MAPPING_SKU_MAPPING_NOT_EXIST(7503,"该平台SKU在对照表不存在!"),
     MAPPING_SKU_RULE_REQUIRED(7504,"SKU匹配规则详情不能为空"),
     MAPPING_SKU_HISTORY_EXISTS(7505,"当前SKU映射关系在【{0}】中已存在历史记录，不支持修改"),
     MAPPING_WAREHOUSE_WDT_NOT_FOUND(7506,"同步旺店通B2C单据时未找到对应仓库映射【{0}】"),
@@ -721,6 +790,8 @@ public enum ApiError implements Serializable {
     MAPPING_SKU_WDT_NOT_FOUND(7508,"同步旺店通单据时未找到对应SKU【{0}】"),
     MAPPING_THIRD_SHOP_EXISTS(7509,"店铺【{0}】已存在第三方映射关系，请在【中台配置】页面中解除绑定后再进行操作!"),
     MAPPING_START_DATE_INVALID(7510,"启用日期不能早于上个映射关系的开始时间【{0}】"),
+    MAPPING_MSKU_NOT_MAPPING(7511,"MSKU【{0}】未映射SKU"),
+    MAPPING_MSKU_NOT_EXIST(7512,"MSKU不存在"),
 
 
     /**
@@ -812,6 +883,8 @@ public enum ApiError implements Serializable {
     PO_SUBMIT_OR_REJECT_EXPORT_CONTRACT_FORBIDDEN(9517,"待提交和审核不通过采购订单不支持导出采购合同"),
 
     PO_APPROVED_ONLY_CAN_PUSH_RECEIPT(9518,"只有已审核采购订单能下推签收单"),
+    PO_APPROVED_ONLY_CAN_PUSH_QC_APPLICATION(9518,"只有已审核采购订单能下推质检申请单"),
+
     PO_DETAIL_CONFIRM_OR_DELIVER_CAN_PUSH_RECEIPT(9519,"只有已确认或送货中的采购订单明细允许下推签收单"),
     PO_APPROVED_ONLY_CAN_PUSH_INBOUND(9520,"只有已审核采购订单支持下推采购入库单"),
     PO_RECEIVE_ALREADY_PUSHED_REVERSE_FORBIDDEN(9521,"已存在下推收货单，不支持反审核"),
@@ -856,6 +929,32 @@ public enum ApiError implements Serializable {
     PO_QC_CANCEL_ALLOWED_STATUS_ONLY(9554,"仅待质检状态的质检单允许执行取消操作"),
     PO_QC_DELETE_ALLOWED_STATUS_ONLY(9555,"仅待质检、已取消、暂存状态的质检单允许删除"),
     PO_QC_REVOKE_ALLOWED_STATUS_ONLY(9556,"仅免检或已质检状态的质检单允许撤销质检"),
+    PO_QC_QUALITY_CONTROL_TYPE_ALREADY_EXISTS(9557,"质检类型【{0}】已存在全量的抽样方案，不能重复配置"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置全部SKU"),
+    PO_QC_QUALITY_CONTROL_TYPE_EXISTS_PARTIAL_SKU(9558,"质检类型【{0}】已存在部分SKU的抽样方案，不能配置相同SKU【{1}】"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_NOT_CONTINUOUS(9559,"抽样方案明细区间不连续【{0},{1}】->【{2},{3}】"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QTY_INVALID(9560,"抽样方案明细抽样数量只能输入大于0的整数"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QTY_EXCEEDS(9561,"抽样方案明细抽样数量不能大于批量范围"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QC_LEVEL_INVALID(9562,"检验水平不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_INVALID(9563,"严重缺陷AQL不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_EMPTY(9563,"严重缺陷AQL应该为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_INVALID(9564,"一般缺陷AQL不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_EMPTY(9564,"一般缺陷AQL应该为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_MAJOR_AQL_ENUM_INVALID(9564,"严重缺陷AQL枚举不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_GENERAL_AQL_ENUM_INVALID(9565,"一般缺陷AQL枚举不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_EMPTY(9566,"抽样方案明细要为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_DETAIL_NOT_EMPTY(9567,"抽样方案明细不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_INVALID(9568,"抽样方案明细范围不能为空"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_LESS_THAN_ZERO(9569,"范围必须大于等于0"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_EQUAL(9570,"范围前后值不能相同"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RANGE_GREATER_THAN_END(9571,"起始值不能大于结束值"),
+    PO_QC_SAMPLING_PLAN_DETAIL_QC_TYPE_NOT_FOUND(9572,"未找到抽样方案质检类型单数据"),
+    PO_QC_SAMPLING_PLAN_DETAIL_RATE_INVALID(9573,"抽样比例明细抽样比例只能输入大于等于0的小数且小于等于100"),
+    PO_QC_SAMPLING_PLAN_QC_TYPE_IS_NULL(9574,"质检类型【{0}】不存在抽样方案"),
+    PO_QC_SAMPLING_PLAN_NOT_FOUND(9575,"未找到抽样方案【{0}】，SKU【{1}】不存在"),
+    PO_QC_SAMPLING_PLAN_DETAIL_FOUND(9576,"未找到抽样方案明细【{0}】，SKU【{1}】不存在"),
+    PO_QC_SAMPLING_PLAN_GENERAL_AQL_IS_NULL(9577,"一般缺陷AQL【{0}】方案不存在"),
+    PO_QC_SAMPLING_PLAN_MAJOR_AQL_IS_NULL(9578,"严重缺陷AQL【{0}】方案不存在"),
 
     PO_SUBCONTRACT_ORDER_NOT_FOUND(9557,"未找到委外订单"),
     PO_SUBCONTRACT_DETAIL_NOT_FOUND(9558,"未找到委外订单明细"),
@@ -889,6 +988,7 @@ public enum ApiError implements Serializable {
     PO_INSTOCK_DETAIL_SKU_NOT_EXIST(9583,"sku【{0}】在采购收货单中未找到"),
     PO_PUSH_DOWN_CHANGE_EXISTS(9584,"采购订单已下推采购变更单"),
     PO_PUSH_DOWN_DELIVERY_EXISTS(9585,"采购订单已下推送货单"),
+    PO_PUSH_DOWN_QC_APPLICATION_EXISTS(9585,"采购订单已下质检申请单【{0}】"),
     PO_SUPPLIER_CONFIRM_NOT_ALLOWED(9586,"采购订单【{0}】未审核完成不支持确认"),
     PO_DETAIL_SUPPLIER_CONFIRM_NOT_ALLOWED(9587,"采购订单【{0}】非待确认不支持确认"),
     PO_SKU_PUSH_DOWN_NOT_ALLOWED(9588,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持下推"),
@@ -911,6 +1011,7 @@ public enum ApiError implements Serializable {
     PO_QC_PUSH_RETURN_ALLOWED_ONLY_IF_REJECTED(9605,"仅当质检结果为退货供应商时才允许下推退货单"),
     PO_RETURN_QTY_EXCEEDS_RECEIPT(9606,"【{0}】的退货数量不能大于收货数量"),
     PO_RETURN_TOTAL_QTY_EXCEEDS_INBOUND(9607,"【{0}】退货单的合计数量不能大于入库数量"),
+    PO_RETURN_SKU_CLOSE(9666,"采购订单【{0}】SKU【{1}】非已确认和送货中、已完成不支持质检"),
     PO_PUSH_TOTAL_QTY_EXCEEDS_RECEIPT(9608,"【{0}】下推的数量合计不能大于收货数量"),
     PO_QC_ALREADY_PUSHED_REVERSE_FORBIDDEN(9609,"质检单【{0}】已生成下游单据，不允许执行反审核"),
     PO_RECEIPT_QTY_EXCEEDS_UNDELIVERED(9610,"【{0}】的收货数量不能大于未交货数量"),
@@ -968,6 +1069,22 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_NOT_FOUND(9662,"采购对账明细不存在"),
     PO_RECONCILIATION_DETAIL_SUPPLIER_ORG_MISMATCH(9663,"对账单【{0}】新增对账明细的供应商【{1}】与结算组织【{2}】必须保持一致"),
     PO_FRAMEWORK_CONTRACT_ATTACHMENT_REQUIRED(9664,"采购框架合同类型附件不能为空"),
+    PO_SUBCONTRACT_ONLY_PUSH_ONE_ORDER(9665,"请选择同一采购退货单下明细进行下推"),
+    PO_RETURN_DETAIL_NOT_EXISTS(9666,"未找到采购退货单明细"),
+    PO_RETURN_REPAIR_QTY_NOT_ALLOW_BIGGER_THAN_RETURN_QTY(9667,"SKU【{0}】委外返修数量不能大于采购退货数量"),
+    PO_REPAIR_SUBCONTRACT_ORDER_NOT_ALLOW_DISAPPROVE(9668,"返修委外订单不允许反审核"),
+    PO_RETURN_ONLY_SAME_SUPPLIER(9669,"只能选择同一供应商的采购退货订单进行下推"),
+    PO_RETURN_ONLY_APPROVED_CONFIRMED(9670,"只能选择审核通过且已确认的采购退货订单进行下推"),
+    PO_RETURN_SKU_EXECUTION_STATUS_CLOSED(9665,"采购订单【{0}】SKU【{1}】执行状态已关闭，请线下退回"),
+    PO_QC_DEFECT_INFO_INCOMPLETE(9666,"缺陷信息必须同时填写或同时不填写"),
+    PO_QC_WAIT_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9667,"采购收货单待质检数量不允许小于0"),
+    PO_QC_DEFECT_LEVEL_DUPLICATE(9668,"缺陷等级不能重复"),
+    PO_QC_NOTICE_FINISH(9668,"【{0}】已质检完成"),
+    PO_QC_NOTICE_DETAIL_NOT_FOUND(9669,"没有找到质检通知单明细"),
+    PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO(9670,"良品/不良品数量不允许小于0或空"),
+    PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
+    PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
+    PO_RECONCILIATION_STATUS_NOT_CONFIRM(9673,"单据状态不是【已确认待完结】，不允许上传发票"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1080,7 +1197,8 @@ public enum ApiError implements Serializable {
     SO_NOT_FOUND(10579,"销售订单不存在"),
     SO_OUTBOUND_PUSH_REVERSE_FORBIDDEN(10580,"销售订单已下推销售出库单，不支持反审核"),
     SO_DELIVERY_RETURN_QTY_EXCEEDS_OUTBOUND(10581,"退货数量不能大于已出库数量"),
-    SO_DELIVERY_QTY_EXCEEDS_SALES(10582,"发货总数量不能大于销售数量"),
+    SO_DELIVERY_QTY_EXCEEDS_SALES(10582,"sku【{0}】发货总数量不能大于销售数量"),
+    SO_DELIVERY_QTY_EXCEEDS_FROZEN(10582,"sku【{0}】发货数量不能大于锁定数量"),
     SO_DELIVERY_RETURN_NOTICE_PUSH_REVERSE_FORBIDDEN(10583,"销售退货通知单已下推，不支持反审核"),
     SO_DELIVERY_RETURN_SIGN_PUSH_REVERSE_FORBIDDEN(10584,"销售退货签收单已下推，不支持反审核"),
     SO_DELIVERY_RETURN_ORDER_APPROVED_REQUIRED_NOTICE(10585,"仅已审核的销售退货订单才允许下推销售退货通知单"),
@@ -1158,7 +1276,7 @@ public enum ApiError implements Serializable {
     SO_B2C_UPDATE_REMARK_FORBIDDEN(10657,"已作废的订单不支持更新备注"),
     SO_B2C_NOT_APPROVED_DISTRIBUTION_FORBIDDEN(10658,"B2C销售订单【{0}】未审核，不支持配货"),
     SO_B2C_SUBMIT_FORBIDDEN_WHEN_FROZEN_OR_VOIDED(10659,"B2C销售订单【{0}】冻结中或已作废，不支持提交"),
-    SO_B2C_SPLIT_FORBIDDEN_BY_STATUS(10660,"冻结中、已作废、待发货或已发货状态不支持拆分"),
+    SO_B2C_SPLIT_FORBIDDEN_BY_STATUS(10660,"冻结中、已作废或待发货状态不支持拆分"),
     SO_B2C_MERGE_FORBIDDEN_BY_STATUS(10661,"冻结中、已作废、待发货或已发货状态不支持合并"),
     SO_B2C_SHOPEE_SPLIT_FORBIDDEN(10662,"B2C销售订单【{0}】为Shopee订单，不支持拆分"),
     SO_B2C_MERCADO_SPLIT_FORBIDDEN(10663,"B2C销售订单【{0}】为Mercado订单，不支持拆分"),
@@ -1191,8 +1309,9 @@ public enum ApiError implements Serializable {
     SO_B2C_SPLIT_BY_WAREHOUSE_FORBIDDEN(10690,"订单明细仓库一致，无法按仓库维度拆分"),
     SO_B2C_LOGISTICS_PLATFORM_REQUIRED(10691,"B2C销售订单【{0}】物流下单平台不能为空"),
     SO_B2C_MULTI_CHANNEL_FORBIDDEN(10692,"B2C销售订单【{0}】不支持设置多个销售渠道"),
+    SO_B2C_SPLIT_KOL_FORBIDDEN(10727,"销售订单由寄样申请单生成，无法拆单"),
     SO_DETAIL_SKU_ALL_EMPTY_FORBIDDEN(10693,"销售订单【{0}】明细中sku不能全部为空"),
-    SO_REPLACE_SKU_STATUS_INVALID(10694,"销售订单【{0}】只能在待提交和审核不通过状态更换发货SKU"),
+    SO_REPLACE_SKU_STATUS_INVALID(10694,"销售订单【{0}】只能在待提交、审核不通过或已发货状态更换发货SKU"),
     SO_B2B_SALESMAN_CHANGE(10695,"b2b客户销售员变更单" ),
     SO_REFUND_ORDER_DETAIL(10696,"退款订单明细"),
     SO_PLATFORM_ORDER_MERGE_TOO_LONG(10697,"合并后的平台订单号长度过长"),
@@ -1216,7 +1335,7 @@ public enum ApiError implements Serializable {
     SO_B2C_ADD_GIFT_STATUS_FORBIDDEN(10715,"非待提交或审核不通过状态的订单不允许添加赠品"),
     SO_WDT_SALES_RAW_TRADE_PUSHSELF(10716,"ERP原始订单推送旺店通结果：新增订单的数量:【{0}】，更新订单的数量:【{1}】，错误信息:【{2}】"),
     SO_LOGISTICS_WAYBILL_NOT_OBTAINED(92118,"【{0}】面单未获取，无法打印，请获取后操作！"),
-    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货允许发货拦截"),
+    SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED(92248,"只有待发货、异常订单允许发货拦截"),
     SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED(92248,"只有未开启B2B发货的允许手动发货"),
     SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED(92248,"只有待发货状态的允许发货"),
     SO_THIRD_DELIVERY_GENERATE_OUTSTOCK_ONLY_SHIPPED(92248,"只有已发货状态的允许生成销售出库单"),
@@ -1230,6 +1349,7 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_QTY_EXCEEDS_AVAILABLE(94108,"单号【{0}】SKU【{1}】本期对账数量{2}超出可对账数量{3}"),
     PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
+    SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
@@ -1327,7 +1447,7 @@ public enum ApiError implements Serializable {
     WH_TRANSFER_INFO_CANCEL_PROCESS_ERROR(11089,"关联的直接调拨单【{0}】撤销或删除失败，无法撤销"),
     WH_TRANSFER_DECLARE_DETAIL_NOT_EXIST(11090,"入库预报订单明细不能为空"),
     WH_THIRD_WAREHOUSE_NAME_EXIST(11091,"平台【{0}】下第三方仓【{1}】不能重复绑定多个仓库"),
-    WH_STOCKTAKING_PROFIT_LOSS_CLOSED(11092,"已存在盘盈/盘亏单【{0}】，不允许操作【{1}】之前的单据"),
+    WH_STOCKTAKING_PROFIT_LOSS_CLOSED(11092,"已存在盘盈/盘亏单【{0}】，不允许操作【{1}】及之前的单据"),
     WH_TRANSFER_WAREHOUSE_REQUIRED(11093,"中转出库配置的中转仓库不能为空，请检查配置"),
     WH_TRANSFER_ALREADY_APPROVED_MODIFY_FORBIDDEN(11094,"存在已审核的调拨单【{0}】，不允许修改中转仓配置"),
     WH_PARAM_NOT_FOUND(11095,"未找到仓库【{0}】"),
@@ -1365,14 +1485,26 @@ public enum ApiError implements Serializable {
     WH_BOX_RULE_SKU_DUPLICATE(11127,"箱规SKU【{0}】重复"),
     WH_BOX_RULE_PER_BOX_QTY_DUPLICATE(11128,"箱规单箱数量【{0}】重复"),
     WH_BOX_PER_QTY_FORBIDDEN_ONE(11129,"单箱数量必须大>1"),
+    WH_STOCKTAKING_BILL_DATE_NEED_GREATER_THAN_TODAY(11130,"盘点日期需要大于等于今天"),
+    WH_STOCKPLAN_NOT_FOUND(11131,"盘点计划不存在"),
+    WH_STOCKPLAN_ALREADY_PUSH(11132,"盘点计划【{0}】已下推盘点任务"),
+    WH_STOCKTAKING_PUSH_OVER(11133,"【{0}】已生成盘盈/亏单{1}，不允许再次生成"),
+    WH_STOCKTAKING_APPROVE_BILL_DATE_NEED_GREATER_THAN_TODAY(11134,"盘点日期不能小于当前日期，请修改后重新审核"),
+    WH_STOCKTAKING_PROFIT_LOSS_NOT_ALLOW_UPDATE(11135,"下推生成的盘盈盘亏单不允许修改"),
+    WH_STOCKTAKING_NOT_NEED_PUSH(11136,"【{0}】无需下推盘盈/亏单{1}"),
+    WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
+
+    WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+
+
     /**
      * 头程发货单 错误 信息 11500-12000
      */
-    FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL(11500, "FBA货件单据不存在！"),
+    FIRST_MILE_FBA_SHIPMENT_NOT_EXIST_BILL(11500, "货件单据不存在！"),
     FIRST_MILE_SHIPMENT_NOT_FOUND(11501,"未找到头程发货单"),
     FIRST_MILE_SHIPMENT_DELETE_ALLOWED_PENDING_ONLY(11502,"只有未发货的头程数据支持删除"),
-    FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST(11503,"FBA货件详情不存在"),
-    FIRST_MILE_SHIPMENT_NOT_EXIST(11504,"FBA货件不存在"),
+    FIRST_MILE_SHIPMENT_DETAIL_NOT_EXIST(11503,"货件详情不存在"),
+    FIRST_MILE_SHIPMENT_NOT_EXIST(11504,"货件不存在"),
     FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED(11505,"【{0}】包含未匹配到SKU的货件，不允许下推发货单"),
     FIRST_MILE_SHIPMENT_CONTAIN_COMBINATION_REQUIRE_MACHINE(11506,"发货单【{0}】包含组合产品，请先下推加工单并审核通过后重试"),
     FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT(11507,"提示：SKU【{0}】发货仓【{1}】可用库存不足，无法审核该发货单"),
@@ -1380,7 +1512,7 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_STATUS_FINISH_ONLY(11509,"仅【已发货】或【自动完结】状态的货件允许手动完结!"),
     FIRST_MILE_SHIPMENT_ALREADY_PUSHED_NOT_DELETE(11510,"已下推发货单，不能删除!"),
     FIRST_MILE_SHIPMENT_STATUS_CHECK_NOT_DELETE(11511,"状态为 DELETED 或 CANCELLED 的货件不允许下推发货单"),
-    FIRST_MILE_SHIPMENT_ERROR(11512,"FBA货件不存在或状态异常"),
+    FIRST_MILE_SHIPMENT_ERROR(11512,"货件不存在或状态异常"),
     FIRST_MILE_SHIPMENT_PLAN_NOT_EXIST(11513,"未找到发货计划单"),
     FIRST_MILE_SHIPMENT_DETAIL_NOT_DISAPPROVE(11514,"已下推发货单，不允许执行反审核"),
     FIRST_MILE_SHIPMENT_REQ_NOT_DISAPPROVE(11515,"已下推要货申请，不允许执行反审核"),
@@ -1396,6 +1528,12 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_PACKING_NOT_COMPLETED_CANNOT_GENERATE_INBOUND(11525,"装箱未完成，不能下推入库单"),
     FIRST_MILE_SHIPMENT_FINANCE_COST_ALLOCATION_REVERSE_FORBIDDEN(11526,"已进行费用分摊，不允许执行反审核操作"),
     FIRST_MILE_SHIPMENT_WAREHOUSE_REQUIRED(11527,"头程发货单【{0}】配置的发货仓库不能为空"),
+    FIRST_MILE_SHIPMENT_DELIVERY_GENERATE_FAIL(11528,"下推头程发货单失败"),
+    FIRST_MILE_SHIPMENT_AWD_OUTSTOCK_NOT_EXIST(11529,"AWD出库货件不存在"),
+    FIRST_MILE_SHIPMENT_GENERATE_NEED_BILL_DATE(11530,"出库货件【{0}】没有发货时间，不支持生成头程发货单"),
+    LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_RECONCILIATION_MONTH(11528,"物流费用导入对账月份不能为空"),
+    LOGISTICS_BILL_COST_IMPORT_NOT_EXIST_BILL(11529,"平台订单号、发货单号、销售单号、物流跟踪单号必须至少填一个"),
+    FIRST_MILE_COST_ALLOCATION_ORG_ID_REQUIRED(11531,"分摊组织id为空"),
 
     /**
      * 样品管理 错误 信息 12000-12500
@@ -1415,6 +1553,12 @@ public enum ApiError implements Serializable {
     SAMPLE_ASSET_ACCEPT_QTY_EXCEEDS_PURCHASE_QTY(12012,"资产验收数量不能大于模具采购单的采购数量"),
     SAMPLE_ASSET_NOT_FOUND(12013,"资产卡片【{0}】不存在"),
     SAMPLE_ASSET_DISPOSAL_QTY_EXCEEDS_BOOK_QTY(12014,"资产编码【{0}】处置数量不能大于账存数量"),
+    SAMPLE_B2C_DISAPPROVE_FORBIDDEN(12015,"B2C寄样单不允许反审核"),
+    SAMPLE_B2C_CANCEL_APPROVE_REQUIRED(12016,"B2C寄样单仅审核通过后允许取消"),
+    SAMPLE_B2C_CANCEL_STATUS_INVALID(12017,"B2C寄样单当前单据状态不允许取消"),
+    SAMPLE_B2C_CANCEL_ALREADY(12018,"B2C寄样单已取消，不允许再次取消"),
+    SAMPLE_ADDRESS_PARSE_ONLY_CN(12019,"只支持中国地区地址解析，请检查地址内容"),
+    SAMPLE_ADDRESS_PARSE_EMPTY_INPUT(12020,"待解析地址不能为空"),
     SAMPLE_B2B_APPLICATION_NOT_FOUND(10716,"B2B寄样申请单不存在"),
     SAMPLE_B2B_APPLICATION_DETAIL_NOT_FOUND(10717,"B2B寄样申请单明细不存在"),
     SAMPLE_B2B_APPLICATION_NOT_APPROVED(10718,"B2B寄样申请单【{0}】未审核完成，暂不支持下推"),
@@ -1432,6 +1576,17 @@ public enum ApiError implements Serializable {
     SAMPLE_DETAIL_NOT_BELONG_TO_APPLY(10741,"部分明细不存在或不属于该样品领用单"),
     SAMPLE_AUDIT_QTY_EXCEEDS_APPLY_QTY(10742,"SKU【{0}】的审核数量【{1}】不能大于领用数量【{2}】"),
     SAMPLE_AUDIT_QTY_UPDATE_FAILED(10743,"修改审核数量失败"),
+    SAMPLE_PARTNER_IN_USE(10744,"企业达人已被引用，不允许删除"),
+    SAMPLE_ASSET_ACCEPT_DETAIL_NOT_FOUND(10744,"资产验收单明细不存在"),
+    SAMPLE_ASSET_PURCHASE_ORDER_NOT_FOUND(10745,"资产采购订单不存在"),
+    SAMPLE_ASSET_PURCHASE_ORDER_DETAIL_NOT_FOUND(10746,"资产采购订单明细不存在"),
+
+
+
+    SAMPLE_USER_ID_CHINESE_NOT_FOUND(10745,"领用人【{0}】不存在，请传入正确的用户ID或用户名称"),
+    SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
+    SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
+    SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */
@@ -1462,6 +1617,8 @@ public enum ApiError implements Serializable {
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
+    VM_ALLOCATION_NOT_REPEAT(92292,"存在未同步成功的虚拟仓分货单调出任务，调出仓库ID：{0}，调出虚拟仓ID：{1}，SKU：{2}，请确认后再操作"),
+    VM_VIRTUAL_WAREHOUSE_NOT_FOUND(12524,"虚拟仓【{0}】未找到"),
 
     /**
      * 客户管理 错误 信息 13000-13500
@@ -1558,12 +1715,12 @@ public enum ApiError implements Serializable {
     LOGISTICS_CHANNEL_NOT_FOUND(13574,"物流渠道不存在"),
     LOGISTICS_CHANNEL_ADDRESS_TYPE_EMPTY(13575,"渠道【{0}】下类型【{1}】的地址为空"),
     LOGISTICS_SALES_CHANNEL_NOT_CONFIGURED(13576,"渠道【{0}】尚未配置销售渠道"),
-    LOGISTICS_PRINT_WAYBILL_FAILED(13577,"调用第三方接口打印面单异常，原因：{0}"),
+    LOGISTICS_PRINT_WAYBILL_FAILED(13577,"调用第三方接口打印面单异常，订单ID:{0}，原因：{1}"),
     LOGISTICS_CHANNEL_QUOTE_REF_DELETE_FORBIDDEN(13578,"该物流渠道已被引用，不支持删除"),
     LOGISTICS_SELF_SHIP_BILL_STATUS_CHANGE_FORBIDDEN(13579,"已确认或已作废的自发货费用单不支持状态变更"),
     LOGISTICS_CHANNEL_ALREADY_USED(13580,"物流渠道【{0}】已被使用，不支持重复选择"),
     LOGISTICS_SAILING_CONFIG_ALREADY_EXISTS(13581,"已存在渠道【{0}】的截单开船配置数据"),
-    LOGISTICS_COST_NAME_ALREADY_EXISTS(13582,"费用名称【{0}】已存在"),
+    LOGISTICS_COST_NAME_ALREADY_EXISTS(13582,"费用归属【{0}】费用名称【{1}】已存在"),
     LOGISTICS_WAREHOUSE_MAPPING_ALREADY_EXISTS(13583,"物流商仓库代码【{0}】已存在"),
     LOGISTICS_DECLARE_RECONCILIATION_NOT_FOUND(13584,"报关对账单不存在"),
     LOGISTICS_DECLARE_RECONCILIATION_DETAIL_NOT_FOUND(13585,"报关对账单明细不存在"),
@@ -1595,7 +1752,40 @@ public enum ApiError implements Serializable {
     LOGISTICS_SMALL_BAG_NOT_CONFIRMED(13611,"小包费用分摊未确认，不能生成物流大表"),
     LOGISTICS_SELF_SHIP_FEE_NOT_FOUND(13612,"自发货费用不存在"),
     LOGISTICS_ACTUAL_EXISTS_CANNOT_PUSH(13613,"已存在实际账单，不能再下推实际账单"),
-
+    LOGISTICS_MAPPING_NOT_NULL(13614,"【{0}】所属的平台【{1}】没有配置【{2}】的标发信息，不允许提交发货"),
+    LOGISTICS_SUPPLIER_NOT_FOUND(13615,"头程费用分摊物流商为空"),
+    LOGISTICS_SUPPLIER_NOT_EXIST(13616,"头程费用分摊物流商不存在"),
+    LOGISTICS_IMPORT_FILE_NAME_NOT_FOUND(13617,"导入文件名称不能为空"),
+    LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND(13618,"导入的物流配置明细不能为空"),
+    LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND(13619,"文件【{0}】导入的物流配置明细唯一键未找到"),
+    LOGISTICS_SUPPLIER_NAME_NOT_FOUND(13620,"物流商名称【{0}】未找到"),
+    LOGISTICS_BILL_COST_IMPORT_RECORD_UNIQUE_KEY_ERROR(13621,"导入唯一识别单号查询失败，请检查识别单号配置"),
+    LOGISTICS_ASYNC_TASK_CREATE_ERROR(13622,"异步任务已存在参数【{0}】"),
+    LOGISTICS_PENDING_COST_NOT_FOUND(13623,"待确认费用分摊记录不存在"),
+    LOGISTICS_SELECT_AT_LEAST_ONE(13624,"明细至少勾选一个识别单号"),
+    LOGISTICS_BILL_FIELD_DUPLICATE_NOT_ALLOWED(13625,"数大臣单据字段【{0}】不允许重复"),
+    LOGISTICS_BILL_DETAIL_FIELD_REQUIRED(13626,"数大臣单据明细字段不允许为空"),
+    LOGISTICS_SMALL_BAG_NOT_CAN_Allocate(13627,"费用分摊设置为不分摊，不能生成小包费用分摊"),
+    LOGISTICS_BILL_COST_IMPORT_RECORD_HEAD_NOTFOUND(13628,"导入未匹配到表头字段，请检查费用配置"),
+    LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED(13629,"【{0}】不能作为识别单号字段"),
+    LOGISTICS_THIRD_CHANNEL_PUSH_TYPE_REQUIRED(13630,"推送类型不能为空"),
+    LOGISTICS_THIRD_CHANNEL_SAVE_FAILED(13631,"物流-第三方渠道关系单保存失败"),
+    LOGISTICS_THIRD_CHANNEL_NOT_FOUND(13632,"未找到渠道配置数据"),
+    LOGISTICS_THIRD_CHANNEL_IN_USE_DELETE_FORBIDDEN(13633,"该渠道配置已被使用，不能删除"),
+    LOGISTICS_THIRD_CHANNEL_STATUS_UNCHANGED(13634,"渠道配置数据状态未变更"),
+    LOGISTICS_THIRD_CHANNEL_DUPLICATE(13635,"同一个平台下我司物流商【{0}】+渠道【{1}】，查询物流商+渠道仅可创建一条"),
+    LOGISTICS_THIRD_CHANNEL_SUPPLIER_NOT_FOUND(13636,"物流商不存在"),
+    LOGISTICS_THIRD_CHANNEL_CHANNEL_NOT_FOUND(13637,"物流商渠道不存在"),
+    LOGISTICS_THIRD_CHANNEL_QUERY_PROVIDER_NOT_FOUND(13638,"查询物流商【{0}】不存在"),
+    LOGISTICS_THIRD_CHANNEL_PUSH_MOBILE_IMMUTABLE(13639,"是否推送电话不能修改"),
+    LOGISTICS_THIRD_CHANNEL_MOBILE_REQUIRED(13640,"手机号码不能为空"),
+    LOGISTICS_THIRD_CHANNEL_SHOP_ID_REQUIRED(13641,"店铺Id不能为空"),
+    LOGISTICS_THIRD_CHANNEL_PLATFORM_REQUIRED(13642,"平台不能为空"),
+    LOGISTICS_THIRD_CHANNEL_DETAIL_NOT_REQUIRED(13643,"推送明细不需要配置"),
+    LOGISTICS_THIRD_CHANNEL_QUERY_SUPPLIER_NAME_REQUIRED(13644,"查询物流商(中文)不能为空"),
+    LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),
+    LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
+    LOGISTICS_CHANNEL_CODE_EMPTY(13647,"渠道代码为空或者格式不正确"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
@@ -1649,6 +1839,28 @@ public enum ApiError implements Serializable {
      */
     DELIVERY_SUGGESTION_ONLY_COMPLETED_ALLOW_PUSH(15500,"发货建议【{0}】未完成，不支持下推"),
     DELIVERY_SUGGESTION_INVALID_FORBIDDEN(15501,"发货建议【{0}】已作废，不支持下推"),
+
+
+    /**
+     * 质检申请 错误 信息 16000-16500
+      */
+    QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
+    QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
+    QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
+    QC_APPLICATION_NOT_APPROVE_PUSH(16003,"质检申请单未审核不支持下推"),
+    QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW(16004,"期望质检日期不能早于当前日期"),
+    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_PO_QTY(16005,"申请质检数量不能大于未入库数量，SKU【{0}】未入库数量：【{1}】"),
+    QC_STANDARD_SKU_NOT_FOUND(11140,  "SKU【{0}】未查得质检标准"),
+    QC_STANDARD_NOT_FOUND(11141, "质检标准不存在"),
+    QC_STANDARD_SKU_EXISTS(11142, "该SKU已存在质检标准"),
+    QC_STANDARD_IMPORT_SKU_NOT_FOUND(11143, "未在Excel中找到“产品SKU”对应值"),
+    QC_STANDARD_IMPORT_DETAIL_NOT_FOUND(11144, "未发现有效的质检明细（请确保从第15行开始有数字序号的明细项）"),
+    QC_APPLICATION_DETAIL_QTY_NOT_GREATER_THAN_WAIT_DELIVERY_QTY(16006,"申请质检数量不能大于剩余送货数量，SKU【{0}】剩余送货数量：【{1}】"),
+    QC_APPLICATION_SOURCE_WAIT_DELIVERY_NOT_OPTION(16007,"待发货来源质检申请单不允许操作"),
+    QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
+    QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
+    QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
+
     ;
     @Getter
     private final Integer code;
@@ -1673,9 +1885,9 @@ public enum ApiError implements Serializable {
             return true;
         } else {
             ServiceException serviceException = (ServiceException) e;
-            return serviceException.getMsg().contains("系统异常，请联系【实施人员】协调开发人员排查") ||
-                    serviceException.getMsg().contains("Read timed out") ||
-                    serviceException.getMsg().contains("获取锁失败,请求超时")
+            return !serviceException.getMsg().contains("获取汇率异常") &&
+                    !serviceException.getMsg().contains("sku") &&
+                    !serviceException.getMsg().contains("SKU")
                     ;
         }
     }

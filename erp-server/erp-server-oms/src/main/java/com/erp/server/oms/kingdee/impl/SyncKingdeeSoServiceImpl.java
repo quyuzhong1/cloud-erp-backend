@@ -31,6 +31,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
@@ -40,12 +41,10 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
@@ -436,6 +435,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 resultMap.put("deptCode", kingdeeSeller.getDeptCode());
             }
         }
+        //通过军区和平台获取部门信息
 
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
@@ -468,13 +468,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 resultMap.put("customerCode", customerInfo.getCode());
                 String platformType = customerInfo.getPlatformType();
                 if(StringUtils.isNotBlank(platformType)) {
-                	List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
+                    List<DictBasicEntity> dictBasicEntityList = dictBasicService.lambdaQuery()
                             .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                             .eq(DictBasicEntity::getName, platformType)
                             .list();
-                	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
-                		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
-                	}
+                    if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+                        resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
+                    }
                 }
             }
         }

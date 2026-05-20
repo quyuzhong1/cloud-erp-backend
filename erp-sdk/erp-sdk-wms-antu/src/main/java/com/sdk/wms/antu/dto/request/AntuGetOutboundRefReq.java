@@ -21,4 +21,8 @@ public class AntuGetOutboundRefReq implements Serializable {
     //参考号,仅返回有效订单数据
     @JSONField(name = "reference_no")
     private String referenceNo;
+
+    //订单号
+    @JSONField(name = "order_code")
+    private String orderCode;
 }

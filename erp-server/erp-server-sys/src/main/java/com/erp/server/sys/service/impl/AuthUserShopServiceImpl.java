@@ -6,7 +6,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -22,6 +21,7 @@ import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserShopEntity;
+import com.erp.model.sys.entity.AuthUserWarehouseEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.AuthUserConvert;
@@ -30,7 +30,6 @@ import com.erp.server.sys.service.AuthUserShopService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,54 +136,9 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         StringBuilder sqlString = new StringBuilder();
         //店铺
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
-        int shopTableFieldSize = shopTableFieldList.size();
         if ("part".equals(authType)){
-            boolean isDoris = DynamicDataSourceTypeEnum.isDorisByStr(dynamicDataSource);
-        	if(isDoris) {
-                if (shopTableFieldSize == 1) {
-                    sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append( " = '') OR (");
-                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                    sqlString.append(" )) ");
-                } else {
-                    sqlString.append(" AND ((");
-                    sqlString.append(shopTableFieldList.get(0)).append( " = '')");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append(" OR (");
-                        sqlString.append(shopTableFieldList.get(i)).append(" = ''");
-                        sqlString.append(" )");
-                    }
-                    sqlString.append(" OR (");
-                    SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(0), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                    sqlString.append(" )");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append("OR (");
-                        SqlUtils.appendPermissionSql(sqlString, shopTableFieldList.get(i), shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()));
-                        sqlString.append(" )");
-                    }
-                    sqlString.append(" )");
-                }
-            }else {
-                if (shopTableFieldSize == 1) {
-                    sqlString.append(" AND ((").append(shopTableFieldList.get(0)).append( " = '') OR (");
-                    sqlString.append(" string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')))");
-                } else {
-                    sqlString.append(" AND ((");
-                    sqlString.append(shopTableFieldList.get(0)).append( " = '')");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append(" OR (");
-                        sqlString.append(shopTableFieldList.get(i)).append(" = ''");
-                        sqlString.append(" )");
-                    }
-                    sqlString.append(" OR (");
-                    sqlString.append(" string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
-                    sqlString.append(" )");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append("OR (");
-                        sqlString.append("string_to_array(").append(shopTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
-                    }
-                    sqlString.append(" )");
-                }
-            }
+            List<String> shopIdList = shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).distinct().collect(Collectors.toList());
+            SqlUtils.appendBlankOrInPermissionSql(sqlString, shopTableFieldList, shopIdList);
         }
         return sqlString.toString();
     }
@@ -233,13 +187,13 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType) {
+    public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType, boolean ifAdd) {
         if (CharSequenceUtil.isBlank(uid)){
             return;
         }
-        List<AuthUserShopEntity> list = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, uid).list();
+        List<AuthUserShopEntity> oldList = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, uid).list();
         if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(shopAuthType)){
-            AuthUserShopEntity auth = list.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+            AuthUserShopEntity auth = oldList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
             if (Objects.isNull(auth)){
                 //清空历史
                 this.lambdaUpdate().eq(AuthUserShopEntity::getUserId, uid).remove();
@@ -250,34 +204,35 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 this.save(entity);
             }
         }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(shopAuthType)){
-            //删除移除的权限
-            List<String> ids = new ArrayList<>();
-            if (CollUtil.isNotEmpty(list)){
-                ids = list.stream().map(AuthUserShopEntity::getShopId).collect(Collectors.toList());
-                List<String> deleteIdList = list.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
-                        .map(AuthUserShopEntity::getId).collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(deleteIdList)){
-                    this.removeByIds(deleteIdList);
+            if (CollUtil.isNotEmpty(oldList)){
+                if(!ifAdd){
+                    List<String> deleteIdList = oldList.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
+                            .map(AuthUserShopEntity::getId).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(deleteIdList)){
+                        this.removeByIds(deleteIdList);
+                    }
                 }
+
+                Set<String> existingIds = oldList.stream()
+                        .map(AuthUserShopEntity::getShopId)
+                        .collect(Collectors.toSet());
+                shopIdList.removeIf(existingIds::contains);
+
             }
             //添加新增权限
             List<AuthUserShopEntity> addList = new ArrayList<>();
-            List<String> finalIds = ids;
             if (CollUtil.isNotEmpty(shopIdList)){
                 shopIdList.forEach(shopId ->{
-                    if (CollUtil.isEmpty(finalIds) || !finalIds.contains(shopId)){
-                        AuthUserShopEntity entity = new AuthUserShopEntity();
-                        entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
-                        entity.setUserId(uid);
-                        entity.setShopId(shopId);
-                        addList.add(entity);
-                    }
+                    AuthUserShopEntity entity = new AuthUserShopEntity();
+                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                    entity.setUserId(uid);
+                    entity.setShopId(shopId);
+                    addList.add(entity);
                 });
             }else {
                 AuthUserShopEntity entity = new AuthUserShopEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setUserId(uid);
-                entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setShopId("-1");
                 addList.add(entity);
             }

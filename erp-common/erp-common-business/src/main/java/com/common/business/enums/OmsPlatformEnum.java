@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
  **/
 @Getter
 public enum OmsPlatformEnum {
-    OMS_GOOD_CANG("goodcang","谷仓海外仓"),
-    OMS_IML("iml","艾姆勒海外仓"),
+    OMS_GOOD_CANG("goodcang","谷仓"),
+    OMS_IML("iml","艾姆勒"),
     OMS_ANTU("antu","安兔"),
     OMS_SPT("spt","速派通"),
     OMS_ECCANG("eccang","易仓"),
@@ -25,6 +25,8 @@ public enum OmsPlatformEnum {
     WEI_SHI("weishi","纬狮"),
     DA_MAI("damai","大卖仓"),
     TONG_YOU("tongyou","通邮"),
+    FBT("fbt","FBT仓"),
+    ZHONG_BAO("zhongbao","众包"),
     ;
 
     @EnumValue

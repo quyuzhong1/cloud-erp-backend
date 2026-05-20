@@ -85,10 +85,12 @@ public class AntuServerTest {
     @Test
     public void getOutboundBatchTest() {
         AntuGetOutboundReq req = AntuGetOutboundReq.builder()
-                .page(1)
-                .pageSize(100)
-                .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
-                .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
+//                .page(1)
+//                .pageSize(1)
+//                .modifyDateFrom(LocalDateTime.parse("2025-07-25T18:30:11"))
+//                .modifyDateTo(LocalDateTime.parse("2025-08-28T18:40:11"))
+//                .orderStatus("D")
+                .orderCodeArr(Arrays.asList("A001-260413-0004"))
                 .build();
         AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
@@ -96,9 +98,19 @@ public class AntuServerTest {
     @Test
     public void getOrderByRefCode() {
         AntuGetOutboundRefReq req = AntuGetOutboundRefReq.builder()
-                .referenceNo("WFHD251030000008")
+                .referenceNo("SFFH260413000013")
                 .build();
         AntuResponse<AntuOutboundResp> response = antuService.getOrderByRefCode(req, OmsPlatformEnum.OMS_ANTU);
+        System.out.println(response);
+    }
+
+    @Test
+    public void getOrderByCode() {
+        AntuGetOutboundRefReq req = AntuGetOutboundRefReq.builder()
+                .referenceNo("SFFH260413000013")
+                .orderCode("A001-260413-0004")
+                .build();
+        AntuResponse<AntuOutboundResp> response = antuService.getOrderByCode(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 

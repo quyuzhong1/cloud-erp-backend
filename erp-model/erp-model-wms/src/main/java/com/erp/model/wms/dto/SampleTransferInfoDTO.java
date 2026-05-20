@@ -197,6 +197,11 @@ public class SampleTransferInfoDTO implements Serializable {
         private String createUserName;
 
         /**
+         * 商品种类
+         */
+        private String skuCount;
+
+        /**
         * 明细ID（用于导出）
         */
         private String detailId;
@@ -247,6 +252,21 @@ public class SampleTransferInfoDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+        * 创建人ID
+        */
+        private String createUserId;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
 
         /**
         * 转移单号

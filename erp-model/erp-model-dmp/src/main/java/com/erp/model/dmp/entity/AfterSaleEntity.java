@@ -145,6 +145,24 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     private String phoneNumber;
 
     /**
+     * 售后人员id
+     */
+    @TableField("cs_agent_id")
+    private String csAgentId;
+
+    /**
+     * 售后人员名称
+     */
+    @TableField("cs_agent_name")
+    private String csAgentName;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
      * 客服备注
      */
     @TableField("csr_remark")
@@ -155,6 +173,18 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
      */
     @TableField("rma_remark")
     private String rmaRemark;
+
+    /**
+     * 单号类型,API:API获取, MANUAL:手动获取
+     */
+    @TableField("type")
+    private String type;
+
+    /**
+     * 物流渠道id
+     */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
 
 
     public static final String CODE = "code";
@@ -198,6 +228,10 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     public static final String INVALID_TIME = "invalid_time";
 
     public static final String REMARK = "remark";
+
+    public static final String TYPE = "type";
+
+    public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
     @Override
     public Serializable pkVal() {

@@ -222,7 +222,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         DaMaiCreateOrderRequest daMaiCreateOrderRequest = this.buildOrderDto(createOutboundReq);
         log.warn(getPlatForm().getName()+"创建出库单请求:{}", JSONUtil.toJsonStr(createOutboundReq));
         DaMaiBaseResp<DaMaiCreateOrderResp> resp = daMaiService.createOrder(ThirdWarehouseContext.getAuthMap(), daMaiCreateOrderRequest);
@@ -230,7 +230,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
-        return success(resp.getData().getSoNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(resp.getData().getSoNo()).build());
     }
 
     @Override
@@ -250,10 +250,15 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private DaMaiCreateFbaOrderRequest buildFbaOrderDto(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         DaMaiCreateFbaOrderRequest request = B2bThirdDeliveryConverter.INSTANCE.toDaMaiFbaOrderRequest(createOutboundReq);
-        DaMaiCreateFbaOrderRequest.CommandDTO commandDTO = new DaMaiCreateFbaOrderRequest.CommandDTO();
-        commandDTO.setCommandDesc(createOutboundReq.getOperationDesc());
-        commandDTO.setCommandType(createOutboundReq.getWarehouseOperationType());
-        request.setCommandList(Collections.singletonList(commandDTO));
+        List<DaMaiCreateFbaOrderRequest.CommandDTO> commandList =  new ArrayList<>();
+        List<ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO> warehouseOperationTypeDTOList = createOutboundReq.getWarehouseOperationTypeDTOList();
+        for (ThirdWarehouseCreateFbaOutboundReq.WarehouseOperationTypeDTO warehouseOperationTypeDTO : warehouseOperationTypeDTOList) {
+            DaMaiCreateFbaOrderRequest.CommandDTO commandDTO = new DaMaiCreateFbaOrderRequest.CommandDTO();
+            commandDTO.setCommandDesc(warehouseOperationTypeDTO.getOperationDesc());
+            commandDTO.setCommandType(warehouseOperationTypeDTO.getWarehouseOperationType());
+            commandList.add(commandDTO);
+        }
+        request.setCommandList(commandList);
         return request;
     }
 
@@ -290,13 +295,16 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(!isSuccess(resp)){
             return failure(resp.getMsg());
         }
-        if (!Objects.equals(resp.getMsg(), "请求已受理") || !Objects.equals(resp.getMsg(), "订单单已取消")){
+        if (Objects.equals(resp.getMsg(), "请求已受理")) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
+        }
+        if (Objects.equals(resp.getMsg(), "订单取消失败") || Objects.equals(resp.getMsg(), "拦截失败")) {
             return failure(resp.getMsg());
         }
         return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
     @Override
-    protected ApiResult<String> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
+    protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq){
         DaMaiGetOrderRequest daMaiGetOrderRequest = new DaMaiGetOrderRequest();
         daMaiGetOrderRequest.setCustRefNoList(Collections.singletonList(queryOutboundReq.getErpOrderCode()));
         DaMaiBaseResp<List<DaMaiGetOrderResp>> orderList = daMaiService.getOrderList(ThirdWarehouseContext.getAuthMap(), daMaiGetOrderRequest);
@@ -307,7 +315,7 @@ public class DaMaiHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(CollectionUtils.isEmpty(data)){
             return failure("订单不存在");
         }
-        return success(data.get(0).getSoNo());
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(data.get(0).getSoNo()).build());
     }
 
     @Override

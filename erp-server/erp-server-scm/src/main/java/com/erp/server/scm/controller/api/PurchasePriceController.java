@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -348,7 +349,7 @@ public class PurchasePriceController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(purchasePriceService.cancelProcessEntity((entity)));
+                resultDTOS.add(purchasePriceService.cancelProcessEntity(new ApproveDTO.CancelProcessDTO(id),entity));
             }catch (Exception e){
                 log.error("采购价目撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -417,6 +418,9 @@ public class PurchasePriceController extends BaseController {
             List<PurchasePriceChangeDetailEntity> changeDetailEntityList = changeDetailList.stream().filter(e -> priceDetailList.contains(e.getPurchasePriceDetailId())).collect(Collectors.toList());
             try {
                 resultDTOS.add(purchasePriceService.disApprove(entity,detailEntityList,changeDetailEntityList));
+            }catch (ServiceException e){
+                log.error("采购价目反审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMsg()));
             }catch (Exception e){
                 log.error("采购价目反审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

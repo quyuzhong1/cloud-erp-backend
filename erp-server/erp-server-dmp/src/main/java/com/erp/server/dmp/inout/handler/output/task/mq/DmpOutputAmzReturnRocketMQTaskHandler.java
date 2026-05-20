@@ -12,8 +12,10 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoReturnDetailEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Scope;
@@ -102,9 +104,9 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
         }
         PlatformReturnOrderDTO dto = new PlatformReturnOrderDTO();
         BeanUtils.copyProperties(dmpEntity, dto);
-        dto.setUniqueId(CharSequenceUtil.format("return_{}_{}_{}", dmpEntity.getThirdCode(), dmpEntity.getSourceId(), dmpEntity.getBatchNo()));
+        dto.setUniqueId(dmpDetailList.get(0).getThirdDetailId());
         dto.setPlatformReturnNo(dmpEntity.getThirdCode());
-        dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
+        dto.setPlatformOrderNo(resolvePlatformOrderNo(dmpEntity));
         dto.setReason(dmpEntity.getRemark());
         dto.setDictPlatform(dmpEntity.getSourceSystem());
         dto.setPlatform(dmpEntity.getSourceSystem());
@@ -130,6 +132,13 @@ public class DmpOutputAmzReturnRocketMQTaskHandler extends DmpOutputRocketMQTask
             resultList.add(detail);
         }
         return resultList;
+    }
+
+    private String resolvePlatformOrderNo(DmpSoReturnInfoEntity dmpEntity) {
+        if (StringUtils.equalsIgnoreCase(dmpEntity.getSourceSystem(), DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())) {
+            return StringUtils.defaultIfBlank(dmpEntity.getPlatformOrderCode(), dmpEntity.getPlatformCode());
+        }
+        return dmpEntity.getPlatformCode();
     }
 
 

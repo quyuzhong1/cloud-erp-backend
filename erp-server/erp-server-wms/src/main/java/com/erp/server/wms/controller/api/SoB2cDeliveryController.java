@@ -13,12 +13,10 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
-import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoB2cDeliveryQueryHandler;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WaveListService;
@@ -58,7 +56,7 @@ public class SoB2cDeliveryController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "b2c发货单新增")
-    @DataIdempotent(keyIdName = "dto.soCode",businessType = RedisKeyConstant.SO_B2C_DELIVERY_KEY)
+    @DataIdempotent(keyIdName = "dto.soCode",businessType = DistributeKeyConstant.SO_B2C_DELIVERY_KEY)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoB2cDeliveryDTO.AddDTO dto) {
         soB2cDeliveryService.add(dto);
         return success();
@@ -325,10 +323,23 @@ public class SoB2cDeliveryController extends BaseController {
     @PostMapping("/printLogisticsBillConfirm")
     @Idempotent
     public ApiResult<String> printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
-        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirm(dto, response);
+        String pdfUrl = soB2cDeliveryService.printLogisticsBillConfirm(dto.getPrintType(),dto.getDetailList(), response);
         return success(pdfUrl);
     }
 
+    /**
+     * 打印物流面单确认分页查询
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintLogisticsWaybillDTO>>
+     * @Author Luo_WG
+     * @Date 2023/12/13 20:13
+     **/
+    @PostMapping("/printLogisticsBillConfirmPaging")
+    @Idempotent
+    public ApiResult<PagingVO<String>> printLogisticsBillConfirmPaging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO> dto, HttpServletResponse response) {
+        return success(soB2cDeliveryService.printLogisticsBillConfirmPaging(dto, response));
+    }
     /**
      * 根据发货单大于物流面单
      * @author will

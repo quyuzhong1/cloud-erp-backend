@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -75,7 +76,7 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "要货申请单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RequisitionApplicationDTO.AddDTO dto) {
         // 检查和刷新fnSku
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equalsIgnoreCase(dto.getType())){
             fbaInventoryService.checkAndUpdateFnsku(dto);
         }
 
@@ -98,7 +99,7 @@ public class RequisitionApplicationController extends BaseController {
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RequisitionApplicationDTO.UpdateDTO dto) {
         // 检查和刷新fnSku
-        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType()) || RequisitionApplicationTypeEnum.AWD.getCode().equalsIgnoreCase(dto.getType())){
             fbaInventoryService.checkAndUpdateFnsku(dto);
         }
         requisitionApplicationService.update(dto);
@@ -321,7 +322,7 @@ public class RequisitionApplicationController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = requisitionApplicationService.cancelProcess(id);
+                deleteResult = requisitionApplicationService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("要货申请撤销失败",e);
                 RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);

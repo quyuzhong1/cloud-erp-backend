@@ -1,9 +1,11 @@
 package com.erp.server.tms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.excel.ImportLogisticsThirdChannelRefExcelDTO;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsThirdChannelRefDTO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -85,6 +87,9 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
+    @Transactional(rollbackFor = Exception.class)
+    void handleImportFile(List<ImportLogisticsThirdChannelRefExcelDTO> successList, List<String> errorNoList, List<ImportLogisticsThirdChannelRefExcelDTO> errorList, String importType);
+
     void downloadTemplate(HttpServletResponse response);
 
     /**
@@ -93,4 +98,37 @@ public interface LogisticsThirdChannelRefService extends SuperService<LogisticsT
      * @return
      */
     List<LogisticsThirdChannelRefDTO.PagingVO> listByPlatform(String platformType);
+
+    /**
+     * 根据物流渠道id获取已启用查询配置（为物流渠道轨迹查询只读回填使用）
+     * @param channelId 物流渠道id
+     * @return
+     */
+    List<LogisticsThirdChannelRefDTO.PagingVO> listByChannelId(String channelId);
+
+    Boolean existRefBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
+
+    /**
+     * 根据销售平台、物流渠道、物流商获取轨迹查询方式
+     *
+     * @param salePlatform 销售平台
+     * @param channelId 物流渠道id
+     * @param logisticsSupplierId 物流商id
+     * @return TrackPlatformTypeEnum code
+     */
+    String getTrackQueryModeBySalePlatform(String salePlatform, String channelId, String logisticsSupplierId);
+
+    /**
+     * 根据单号搜索对应的三方渠道配置映射
+     *
+     * @param trackNos 物流单号列表
+     * @return 映射关系列表
+     * @author jack
+     * @date 2026-04-02
+     */
+    List<LogisticsThirdChannelRefDTO.ListByTrackNosDTO> listByTrackNos(List<String> trackNos);
+
+    Boolean importFile(BaseDTO.ImportDTO dto);
+
+    void importLogisticsThirdChannelRef(BaseDTO.ImportDTO dto);
 }

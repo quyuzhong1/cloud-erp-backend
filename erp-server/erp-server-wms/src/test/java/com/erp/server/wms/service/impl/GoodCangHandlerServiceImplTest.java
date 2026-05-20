@@ -186,14 +186,14 @@ public class GoodCangHandlerServiceImplTest {
                         .province("nowyork")
                         .city("hs")
                         .address1("13")
-                        .zipcode("51200")
+                        .zipCode("51200")
                         .build())
                 .items(Arrays.asList(ThirdWarehouseCreateOutboundReq.Item.builder()
                         .productSku("USRAD01454-C")
                         .quantity(5)
                         .build()))
                 .build();
-        ApiResult<String> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1726456935660867586");
+        ApiResult<ThirdWarehouseQueryOutboundResponse> code = thirdWarehouseService.createOutboundBill(createOutboundReq,"1726456935660867586");
         System.out.println(code);
         System.out.println(code.getData());
     }

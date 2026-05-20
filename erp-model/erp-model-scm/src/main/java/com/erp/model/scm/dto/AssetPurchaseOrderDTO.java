@@ -259,6 +259,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
         private String assetName;
 
         /**
+         * 项目名称
+         */
+        private String projectName;
+
+        /**
          * 计划交期
          */
         private LocalDate planDeliveryDate;
@@ -307,6 +312,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
     }
 
     /**
@@ -707,6 +717,11 @@ public class AssetPurchaseOrderDTO implements Serializable {
          * 是否加急
          */
         private Boolean isUrgent;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
 
         /**
          * 备注

@@ -10,6 +10,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 飞书系统预警请求实体
@@ -75,6 +76,10 @@ public class WarnMsgInfoDTO implements Serializable {
      * 消息唯一键
      */
     private String msgId;
+    /**
+     * 预警用户id
+     */
+    private List<String> userIdList;
     /**
      * 是否发送
      * 0未发送 1发送中 2已发送 -1发送异常 3无需发送

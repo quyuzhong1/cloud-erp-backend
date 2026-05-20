@@ -7,7 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.fms.dto.AttachmentDTO;
-import com.erp.model.fms.entity.AttachmentEntity;
+import com.erp.model.fms.entity.FmsAttachmentEntity;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.fms.mapper.AttachmentMapper;
 import com.erp.server.fms.service.AttachmentService;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, AttachmentEntity> implements AttachmentService {
+public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, FmsAttachmentEntity> implements AttachmentService {
 
     @Resource
     private FileFeign fileFeign;
@@ -43,9 +43,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         this.delete(type, businessId);
         int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
         if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
-            List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
+            List<FmsAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                FmsAttachmentEntity entity = new FmsAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
                 if (CollectionUtils.isNotEmpty(attachmentNameList)) {
                     if (nameSize > i) {
@@ -67,9 +67,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         //先删除
         this.delete(type, businessId);
         if (CollectionUtils.isNotEmpty(attachmentList)) {
-            List<AttachmentEntity> addList = new ArrayList<>(attachmentList.size());
+            List<FmsAttachmentEntity> addList = new ArrayList<>(attachmentList.size());
             for (int i = 0; i < attachmentList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                FmsAttachmentEntity entity = new FmsAttachmentEntity();
                 entity.setAttachUrl(attachmentList.get(i).getAttachUrl());
                 entity.setAttachName(attachmentList.get(i).getAttachName());
                 entity.setType(type);
@@ -86,9 +86,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     public void batchSaveNotDel(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
         int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
         if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
-            List<AttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
+            List<FmsAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
             for (int i = 0; i < attachmentUrlList.size(); i++) {
-                AttachmentEntity entity = new AttachmentEntity();
+                FmsAttachmentEntity entity = new FmsAttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
                 if (CollectionUtils.isNotEmpty(attachmentNameList)) {
                     if (nameSize > i) {
@@ -111,9 +111,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      * @param businessId 业务ID
      */
     private void delete(String type, String businessId) {
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
-        queryWrapper.eq(AttachmentEntity::getType, type);
+        LambdaQueryWrapper<FmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(FmsAttachmentEntity::getBusinessId, businessId);
+        queryWrapper.eq(FmsAttachmentEntity::getType, type);
         this.remove(queryWrapper);
         log.info("FMS附件删除成功，type={}, businessId={}", type, businessId);
     }
@@ -123,9 +123,9 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         if (CollectionUtils.isEmpty(businessIds)) {
             return Collections.emptyList();
         }
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
-        List<AttachmentEntity> list = this.list(queryWrapper);
+        LambdaQueryWrapper<FmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(FmsAttachmentEntity::getBusinessId, businessIds);
+        List<FmsAttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
@@ -140,10 +140,10 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AttachmentEntity::getAttachUrl, dto.getAttachUrl());
+        LambdaQueryWrapper<FmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(FmsAttachmentEntity::getAttachUrl, dto.getAttachUrl());
         if (CharSequenceUtil.isNotBlank(dto.getBusinessId())) {
-            queryWrapper.eq(AttachmentEntity::getBusinessId, dto.getBusinessId());
+            queryWrapper.eq(FmsAttachmentEntity::getBusinessId, dto.getBusinessId());
         }
         this.remove(queryWrapper);
         fileFeign.deleteFile(dto.getAttachUrl());
@@ -156,8 +156,8 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         if (CollectionUtils.isEmpty(businessIds)) {
             return;
         }
-        LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
+        LambdaQueryWrapper<FmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(FmsAttachmentEntity::getBusinessId, businessIds);
         this.remove(queryWrapper);
         log.info("FMS附件批量删除成功，共删除{}个业务的附件", businessIds.size());
     }
@@ -170,7 +170,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         if (CharSequenceUtil.isBlank(fileName) || CharSequenceUtil.isBlank(url)) {
             return;
         }
-        AttachmentEntity entity = new AttachmentEntity();
+        FmsAttachmentEntity entity = new FmsAttachmentEntity();
         entity.setAttachUrl(url);
         entity.setAttachName(fileName);
         this.save(entity);
@@ -181,8 +181,8 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     @Transactional(rollbackFor = Exception.class)
     public void deleteByUrlList(List<String> urlList) {
         if (CollectionUtils.isNotEmpty(urlList)) {
-            LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.in(AttachmentEntity::getAttachUrl, urlList);
+            LambdaQueryWrapper<FmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(FmsAttachmentEntity::getAttachUrl, urlList);
             this.remove(queryWrapper);
             //批量删除fastdfs 数据
             FastDFSClientUtil.deleteBatchFile(urlList);

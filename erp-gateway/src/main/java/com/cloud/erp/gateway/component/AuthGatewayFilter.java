@@ -132,13 +132,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 String token = headers.getFirst(TokenConstants.AUTHENTICATION);
                 if (StringUtils.isBlank(token)) {
                     // 响应中放入返回的状态吗, 没有权限访问
-                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+                    Mono<Void> mono = unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                     return mono;
                 }
                 //解析token
                 LoginUser loginUser = tokenService.getLoginUser(token);
                 if (Objects.isNull(loginUser)) {
-                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_FORBIDDEN, exchange.getRequest()), ApiError.HTTP_FORBIDDEN.getCode());
+                    return unauthorizedResponse(exchange, localeUtils.getMessage(ApiError.HTTP_UNAUTHORIZED, exchange.getRequest()), ApiError.HTTP_UNAUTHORIZED.getCode());
                 }
 
                 // 检查JWT Token是否包含pathList权限
@@ -153,13 +153,19 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 }
 
                 loginUser.setAccessToken(token);
-                request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
+                // 只传后端需要的基础字段，不传 permissionList/menuList，避免 header 过大导致 HTTP 解析异常
+                String tokenUserInfo = LoginUser.simpleLoginUser(loginUser);
+                ServerHttpRequest mutatedRequest = request.mutate()
+                        .header("tokenUserInfo", tokenUserInfo)
+                        .build();
+                return chain.filter(exchange.mutate().request(mutatedRequest).build());
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         return chain.filter(exchange);
     }
+
 
     @Override
     public int value() {
@@ -281,7 +287,9 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                             return;
                         }
                         loginUser.setAccessToken(token);
-                        request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
+                        // 只传后端需要的基础字段，不传 permissionList/menuList，避免 header 过大导致 HTTP 解析异常
+                        String tokenUserInfo = LoginUser.simpleLoginUser(loginUser);
+                        request.mutate().header("tokenUserInfo", tokenUserInfo).build();
 //                        log.info("埋点接口token解析成功:{}", data);
                     }
 //                    log.warn("埋点接口未找到前端提交的token:{}", data);

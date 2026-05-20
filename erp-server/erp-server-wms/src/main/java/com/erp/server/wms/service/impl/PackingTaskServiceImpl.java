@@ -602,7 +602,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //组装数据
         PackingTaskEntity entity = this.getById(taskId);
         String titleCode = "";
-        if(entity.getSourceType().equals(PickingSourceTypeEnum.FBA.getCode())){
+        if(entity.getSourceType().equals(PickingSourceTypeEnum.FBA.getCode())
+                || entity.getSourceType().equals(PickingSourceTypeEnum.FBT.getCode())
+                || entity.getSourceType().equals(PickingSourceTypeEnum.AWD.getCode())){
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getByCode(entity.getSourceCode());
             if(Objects.nonNull(firstMileDeliveryEntity)){
                 RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
@@ -885,7 +887,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(pagingViewDTO.getSourceId()) || v.getId().equals(pagingViewDTO.getSourceId())).findFirst().orElse(new FirstMileDeliveryEntity());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId()) && v.getSkuId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
             pagingViewDTO.setDeliveryCode(firstMileDeliveryEntity.getCode());
-            if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())) {
+            if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())
+                    || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())) {
                 pagingViewDTO.setBusinessCode(firstMileDeliveryDetailEntity.getFbaShipmentCode());
             }else{
                 OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntityList.stream().filter(v->v.getSourceId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new OverseasWarehouseInboundEntity());
@@ -2183,7 +2187,25 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public void addPackingByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity) {
         String demandType = firstMileDeliveryEntity.getDemandType();
-        String sourceType = FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.THIRD.getCode():FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)? PickingSourceTypeEnum.FBA.getCode():PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        String sourceType;
+        if (FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(demandType)){
+            sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.FBT.getCode();
+        }else if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.FBA.getCode();
+            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(firstMileDeliveryEntity.getSourceType())) {
+                RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
+                if (Objects.nonNull(requisitionApplicationEntity)
+                        && RequisitionApplicationTypeEnum.FBT.getCode().equals(requisitionApplicationEntity.getType())) {
+                    sourceType = PickingSourceTypeEnum.FBT.getCode();
+                }
+            }
+        }else if (FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(demandType)){
+            sourceType = PickingSourceTypeEnum.AWD.getCode();
+        }else {
+            sourceType = PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        }
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(firstMileDeliveryEntity.getId(), sourceType);
         if (CollectionUtils.isNotEmpty(taskEntityList)){
@@ -2219,7 +2241,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
-            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())){
+            if(firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode())
+                    || firstMileDeliveryEntity.getDemandType().equals(FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode())
+                    || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
                 packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getFnSku());
             }else{
                 packingTaskDetailEntity.setFnSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
@@ -2447,7 +2471,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setShopName(shopInfo.getName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId())
+                    && (Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())
+                    || Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBT.getCode())
+                    || Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.AWD.getCode()))){
                 printDTO.setShopId(requisitionApplication.getChannelId());
                 printDTO.setShopName(requisitionApplication.getChannelName());
                 ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
@@ -2489,7 +2516,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void addPackingByRequisition(RequisitionApplicationEntity entity) {
         String type = entity.getType();
-        String sourceType = RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)? PickingSourceTypeEnum.THIRD.getCode():RequisitionApplicationTypeEnum.FBA.getCode().equals(type)? PickingSourceTypeEnum.FBA.getCode():PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        String sourceType;
+        if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)){
+            sourceType =  PickingSourceTypeEnum.THIRD.getCode();
+        }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.FBA.getCode();
+        }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.FBT.getCode();
+        }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.AWD.getCode();
+        }else {
+            sourceType = PickingSourceTypeEnum.ALIEXPRESS.getCode();
+        }
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(entity.getId(), sourceType);
         //是否是第三方仓
@@ -2561,7 +2599,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
             RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new RequisitionApplicationDetailEntity());
-            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode()) || entity.getType().equals(RequisitionApplicationTypeEnum.AWD.getCode())){
                 packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
             }else{
                 packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());

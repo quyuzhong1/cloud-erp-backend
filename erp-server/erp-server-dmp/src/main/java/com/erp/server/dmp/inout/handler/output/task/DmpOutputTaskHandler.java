@@ -240,7 +240,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				pushRate = 3;
 			}
 			for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : pushDmpOutputTaskRecordEntityList) {
-				MDC.put("traceId", dmpOutputTaskRecordEntity.getId());
 				String dataId = dmpOutputTaskRecordEntity.getDataId();
 				String redisKey = "dmp:output:task:" + dataId;
 				try {

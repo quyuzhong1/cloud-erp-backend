@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -129,10 +130,10 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto ids
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废
@@ -447,4 +448,8 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO>
      */
     PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> exportSupplierPoReturn(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto);
+
+    PurchaseReturnOrderDTO.PushDownSubcontractOrderViewDTO pushDownSubcontractOrderView(PurchaseReturnOrderDTO.detailIdsDTO detailIdsDTO);
+
+    Boolean pushDownSubcontractOrder(PurchaseReturnOrderDTO.PushDownSubcontractOrderDTO pushDownSubcontractOrderDTO);
 }

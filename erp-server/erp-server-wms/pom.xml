@@ -21,18 +21,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.28</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
-            <version>3.3.1</version>
-        </dependency>
-
         <!--公共服务-->
         <dependency>
             <groupId>com.cloud.erp</groupId>
@@ -291,6 +279,12 @@
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-oms-mercado-local</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-wms-zhongbao</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

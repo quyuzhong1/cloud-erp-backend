@@ -15,6 +15,7 @@ import org.apache.ibatis.annotations.Param;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -155,4 +156,23 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return
      */
     List<TabListDTO> countTotalWeight(@Param("orderType") String orderType, @Param("permissionSql") String permissionSql);
+    /**
+     * 查询物流信息
+     * @author will
+     * @date 2026/1/9 15:31
+     * @param platformCodeList
+     * @param soCodeList
+     * @param soDeliveryCodeList
+     * @param trackNoList
+     * @return List<LogisticsBillVo>
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByData(@Param("platformCodeList") List<String> platformCodeList,@Param("soCodeList") List<String> soCodeList,@Param("soDeliveryCodeList") List<String> soDeliveryCodeList,@Param("trackNoList") List<String> trackNoList);
+    /**
+     * 根据唯一键查询物流单信息
+     * @author will
+     * @date 2026/1/22 15:09
+     * @param paramMap
+     * @return List<LogisticsBillVo>
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillByUniqueKey(@Param("paramMap")Map<String, List<Object>> paramMap);
 }

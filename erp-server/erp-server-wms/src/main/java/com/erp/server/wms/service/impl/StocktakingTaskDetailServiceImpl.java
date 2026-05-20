@@ -11,16 +11,15 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OperateLogDTO;
-import com.erp.model.wms.dto.StocktakingTaskDTO;
-import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
+import com.erp.model.wms.dto.excel.StocktakingTaskFirstQtyExcelDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PushStocktakingProfitLossStatusEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
-import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.listener.StocktakingTaskDetailExcelListener;
+import com.erp.server.wms.listener.StocktakingTaskFirstQtyExcelListener;
 import com.erp.server.wms.mapper.StocktakingTaskDetailMapper;
 import com.erp.server.wms.mapper.StocktakingTaskMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
@@ -28,6 +27,7 @@ import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.BeanUtils;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING_TASK_DETAIL;
@@ -74,6 +76,13 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     private StocktakingTaskMapper stocktakingTaskMapper;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private StocktakingProfitLossService stocktakingProfitLossService;
+
+    @Resource
+    private StocktakingProfitLossDetailService stocktakingProfitLossDetailService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Override
@@ -97,15 +106,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (Objects.isNull(task)) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST);
         }
-        //状态
-        StocktakingStatusEnum status = task.getStatus();
-        List<StocktakingStatusEnum> statusList = Arrays.asList(StocktakingStatusEnum.NOT_STARTED, StocktakingStatusEnum.RECOUNT);
-        if (!statusList.contains(status)) {
-            throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
-        }
 
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseService, operateLogService);
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(stocktakingTaskService,this,stocktakingProfitLossService, task.getCode(), taskDetailList, warehouseService, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -154,10 +157,12 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             }
             //这是修改的数量
             Integer updateQty = item.getQty();
+            Integer updateFirstQty = item.getFirstQty();
             //这是数控
             Integer dbQty = taskDetail.getQty();
+            Integer dbFirstQty = taskDetail.getFirstQty();
             //是否秀发i
-            Boolean isUpdate = !updateQty.equals(dbQty);
+            Boolean isUpdate = !updateQty.equals(dbQty) || !updateFirstQty.equals(dbFirstQty);
             if (isUpdate) {
                 OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = new OperateLogDTO.AddModuleOperateLogDTO();
                 addModuleOperateLogDTO.setOperation("修改操作");
@@ -170,6 +175,10 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 sb.append(taskDetail.getQty());
                 Integer qty = item.getQty();
                 sb.append("修改为:").append(qty);
+                sb.append("初盘库存由原来的:");
+                sb.append(taskDetail.getFirstQty());
+                Integer firstQty = item.getFirstQty();
+                sb.append("修改为:").append(firstQty);
                 addModuleOperateLogDTO.setContent(sb.toString());
                 operateLogList.add(addModuleOperateLogDTO);
 
@@ -181,6 +190,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
                 //差异数量 等于盘点库存-可用库存-冻结库存
                 Integer diffQty = qty - usableQty - frozenQty;
                 taskDetail.setDiffQty(diffQty);
+                //初盘数量
+                taskDetail.setFirstQty(item.getFirstQty());
                 updateTaskDetailList.add(taskDetail);
             }
         }
@@ -233,22 +244,70 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId) {
+        // 批量查询所有详情数据
         List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
-        List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
-        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = dbList.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
-        for (StocktakingTaskDetailDTO.ViewDTO item : resultList) {
-            String skuId = item.getSkuId();
-            String skuName = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().
-                    map(ProductDetailEntity::getName).orElse("");
-            item.setProductName(skuName);
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getWarehouseId().equals(item.getWarehouseId()) && e.getCode().equals(item.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
-            item.setWarehouseLocationName(warehouseLocationEntity.getName());
+        if (CollectionUtils.isEmpty(dbList)) {
+            return Collections.emptyList();
         }
-        return resultList;
+
+        // 预加载所有需要的SKU信息
+        Set<String> skuIdSet = dbList.stream()
+                .map(StocktakingTaskDetailEntity::getSkuId)
+                .collect(Collectors.toSet());
+        Map<String, ProductDetailEntity> skuMap = productDetailService.listProductDetailByIds(new ArrayList<>(skuIdSet))
+                .stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
+
+        // 预加载所有仓库位置信息
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationService.listByWarehouseIdAndCode(
+                dbList.stream()
+                        .map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation()))
+                        .collect(Collectors.toList())
+        ).stream()
+                .collect(Collectors.toMap(
+                        e -> e.getWarehouseId() + "_" + e.getCode(),
+                        Function.identity()
+                ));
+
+        // 批量查询盈亏状态
+        Set<String> detailIds = dbList.stream()
+                .map(StocktakingTaskDetailEntity::getId)
+                .collect(Collectors.toSet());
+        Map<String, List<StocktakingProfitLossDetailEntity>> profitLossMap = stocktakingProfitLossDetailService.listBySourceIds(new ArrayList<>(detailIds))
+                .stream()
+                .collect(Collectors.groupingBy(StocktakingProfitLossDetailEntity::getSourceDetailId));
+
+        // 一次性转换并填充所有数据
+        return dbList.stream().map(entity -> {
+            StocktakingTaskDetailDTO.ViewDTO dto = new StocktakingTaskDetailDTO.ViewDTO();
+            BeanUtils.copyProperties(entity,dto);
+
+            // 设置SKU名称
+            ProductDetailEntity sku = skuMap.get(dto.getSkuId());
+            dto.setProductName(sku != null ? sku.getName() : "");
+
+            // 设置仓库位置名称
+            String locationKey = entity.getWarehouseId() + "_" + entity.getWarehouseLocation();
+            WarehouseLocationEntity location = warehouseLocationMap.get(locationKey);
+            dto.setWarehouseLocationName(location != null ? location.getName() : "");
+
+            // 设置盈亏状态
+            List<StocktakingProfitLossDetailEntity> profitLossDetails = profitLossMap.getOrDefault(entity.getId(), Collections.emptyList());
+            if (entity.getDiffQty() == 0) {
+                dto.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getCode());
+                dto.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_NEED_GENERATE.getName());
+            } else if (profitLossDetails.isEmpty()) {
+                dto.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getCode());
+                dto.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.NOT_GENERATE.getName());
+            } else {
+                dto.setPushStocktakingProfitLossStatus(PushStocktakingProfitLossStatusEnum.GENERATED.getCode());
+                dto.setPushStocktakingProfitLossStatusName(PushStocktakingProfitLossStatusEnum.GENERATED.getName());
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
     }
+
 
 
     /**
@@ -379,5 +438,74 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
 
         }
         return new PagingVO<>(exportList, exportList.size(), dto.getPageSize(), dto.getCurrPage());
+    }
+    @Override
+    public List<StocktakingTaskDetailDTO.LastDTO> maxDateByParams(List<String> warehouseIds, List<String> orgIds, List<String> skuIds) {
+        if (CollectionUtils.isEmpty(warehouseIds)){
+            throw new ServiceException("仓库IDS 不能为空");
+        }
+        if (CollectionUtils.isEmpty(orgIds)){
+            throw new ServiceException("组织IDS 不能为空");
+        }
+        if (CollectionUtils.isEmpty(skuIds)){
+            throw new ServiceException("SKU IDS不能为空");
+        }
+        return baseMapper.maxDateByParams(warehouseIds, orgIds, skuIds);
+    }
+
+    @Override
+    public boolean checkClosed(List<String> warehouseIds, List<String> warehourseLocationList, List<String> orgIds, List<String> skuIds, LocalDate billDate) {
+        // 查询最新盘点任务明细（根据盘点任务创建日期）
+        List<StocktakingTaskDetailDTO.LastDTO> lastStocktakingProfitLossList = this.maxDateByParams(warehouseIds, orgIds, skuIds);
+        if (CollectionUtils.isNotEmpty(lastStocktakingProfitLossList)){
+            // 业务规则：根据盘点任务创建日期判断，当业务单据日期 <= 盘点任务创建日期时，返回true（已关闭）
+            // 判断逻辑：!billDate.isAfter(盘点日期) 等价于 billDate <= 盘点日期
+            return lastStocktakingProfitLossList.stream()
+                    .anyMatch(e-> warehourseLocationList.contains(e.getWarehouseLocation()) &&
+                            (!billDate.isAfter(e.getBillDate()))
+                    );
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean importFirstQty(MultipartFile excelFile, HttpServletResponse response) {
+        StocktakingTaskFirstQtyExcelListener excelListener = new StocktakingTaskFirstQtyExcelListener(stocktakingTaskService, this,stocktakingProfitLossService, warehouseService,operateLogService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StocktakingTaskFirstQtyExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("盘点任务初盘数量导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<StocktakingTaskFirstQtyExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "盘点任务初盘数量导入错误信息";
+            ExcelUtil.export(fileName, "error", errorList, StocktakingTaskFirstQtyExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadFirstQtyTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/StocktakingTaskFirstQtyTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("盘点任务单 downloadTemplate  出错了 e==={}", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
     }
 }

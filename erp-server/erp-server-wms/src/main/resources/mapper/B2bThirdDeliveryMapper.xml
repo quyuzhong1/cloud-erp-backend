@@ -22,20 +22,31 @@
        <result column="platform_order_code" property="platformOrderCode" />
        <result column="delivery_warehouse_id" property="deliveryWarehouseId" />
        <result column="delivery_warehouse_name" property="deliveryWarehouseName" />
+       <result column="third_warehouse_code" property="thirdWarehouseCode" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
        <result column="warehouse_operation_type" property="warehouseOperationType" />
        <result column="operation_desc" property="operationDesc" />
        <result column="remark" property="remark" />
        <result column="logistics_channel_id" property="logisticsChannelId" />
        <result column="logistics_channel_name" property="logisticsChannelName" />
+       <result column="logistics_channel_code" property="logisticsChannelCode" />
        <result column="delivery_method" property="deliveryMethod" />
        <result column="track_no" property="trackNo" />
        <result column="receiver_name" property="receiverName" />
        <result column="tel_number" property="telNumber" />
+       <result column="country_id" property="countryId" />
        <result column="country_name" property="countryName" />
        <result column="province" property="province" />
        <result column="city" property="city" />
        <result column="postal_code" property="postalCode" />
+       <result column="receive_address" property="receiveAddress" />
+       <result column="address2" property="address2" />
+       <result column="address3" property="address3" />
        <result column="is_api_delivery" property="isApiDelivery" />
+       <result column="error_message" property="errorMessage" />
+       <result column="push_type" property="pushType" />
+       <result column="customer_id" property="customerId" />
+       <result column="customer_name" property="customerName" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -49,7 +60,7 @@
         update_time,
         version,
         is_deleted,
-        code, status, so_id, so_code, delivery_time, warehouse_org_id, warehouse_org_name, platform_order_code, delivery_warehouse_id, delivery_warehouse_name, warehouse_operation_type, operation_desc, remark, logistics_channel_id, logistics_channel_name, delivery_method, track_no, receiver_name, tel_number, country_name, province, city, postal_code, is_api_delivery
+        code, status, so_id, so_code, delivery_time, warehouse_org_id, warehouse_org_name, platform_order_code, delivery_warehouse_id, delivery_warehouse_name, third_warehouse_code, virtual_warehouse_id, warehouse_operation_type, operation_desc, remark, logistics_channel_id, logistics_channel_name, logistics_channel_code, delivery_method, track_no, receiver_name, tel_number, country_id, country_name, province, city, postal_code, receive_address, address2, address3, is_api_delivery, error_message, push_type, customer_id, customer_name
     </sql>
     <select id="tabList" resultType="com.erp.model.wms.dto.B2bThirdDeliveryDTO$TabListDTO">
         SELECT
@@ -93,7 +104,8 @@
             btdd.delivery_sku_no,
             btdd.warehouse_platform_sku,
             btdd.per_box_qty,
-            btdd.box_qty
+            btdd.box_qty,
+            btd.remark
         FROM b2b_third_delivery btd
                  LEFT JOIN b2b_third_delivery_detail btdd ON btd.id = btdd.main_id AND btdd.is_deleted=false
         WHERE ${params.sqlMap.default} and btd.is_deleted=false

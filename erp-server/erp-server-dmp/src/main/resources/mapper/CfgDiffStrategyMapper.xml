@@ -65,4 +65,20 @@
 	    </if>
 	    t.id desc
     </select>
+
+    <select id="listByBillType" resultType="com.erp.model.dmp.dto.CfgDiffStrategyDTO$ListByBillTypeDTO">
+        SELECT DISTINCT G.ID,type_name, diff_tag, condition_sql, suggest_type
+        FROM
+            cfg_diff_strategy T
+            LEFT JOIN cfg_diff_strategy_detail G ON T.ID = G.main_id
+            LEFT JOIN dict_basic h ON T.bill_type = h.VALUE
+        WHERE
+            T.bill_type =  #{billType}
+          AND T.is_deleted = FALSE
+          AND T.status = TRUE
+          AND G.is_deleted = FALSE
+        ORDER BY
+            G.ID DESC
+    </select>
+
 </mapper>

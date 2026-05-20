@@ -1,46 +1,54 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.fms.dto.AssetAcceptDTO;
 import com.erp.model.plm.entity.MoldInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.MoldInfoTagEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.function.Function;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.excel.AssetPurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -48,49 +56,42 @@ import com.erp.rpc.fms.feign.AssetAceptFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
 import com.erp.server.scm.listener.AssetPurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.AssetPurchaseOrderMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.scm.entity.AssetPurchaseOrderEntity;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
-import java.util.stream.Collectors;
-import java.util.*;
-import java.util.stream.Stream;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_ASSET_PURCHASE_ORDER;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_SCM_ASSET_PURCHASE_ORDER;
 
 /**
  * <p>
@@ -572,7 +573,8 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetPurchaseOrderEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -589,6 +591,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购订单【%s】取消流程", ModuleTypeEnum.ASSET_PURCHASE_ORDER.getCode(), pairList, "取消流程");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_PURCHASE_ORDER.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -895,6 +898,17 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             }
         }
 
+        //获取项目名称
+        List<String> moldCodes = list.stream().map(AssetPurchaseOrderDTO.ListDTO::getAssetCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> codeToProjectNameMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(moldCodes)) {
+            List<MoldInfoEntity> moldInfoEntities = plmTaskFeign.listMoldInfoByCodes(moldCodes);
+            codeToProjectNameMap = moldInfoEntities.stream()
+                    .filter(x -> StringUtils.isNotBlank(x.getCode()) && StringUtils.isNotBlank(x.getProjectName()))
+                    .collect(Collectors.toMap(MoldInfoEntity::getCode, MoldInfoEntity::getProjectName, (oldValue, newValue) -> oldValue));
+        }
+
+
         // 属性赋值
         for(AssetPurchaseOrderDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -921,6 +935,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                     data.setApproveUserName(curApprove);
                 }
             }
+            data.setProjectName(codeToProjectNameMap.getOrDefault(data.getAssetCode(),""));
 
         }
     }
@@ -1072,6 +1087,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             dto.setProductName(detail.getAssetName());
             dto.setPurchaseQty(detail.getPurchaseQty() != null ? detail.getPurchaseQty().intValue() : 0);
             dto.setIsUrgent(detail.getIsUrgent());
+            dto.setIsGift(detail.getIsGift());
             dto.setRemark(detail.getRemark());
             dto.setMoldCode(detail.getAssetCode()); // 模具编码使用资产编码
             dto.setMoldName(detail.getAssetName()); // 模具名称使用资产名称
@@ -1122,7 +1138,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)
     public void handleImportSuccessList(List<AssetPurchaseOrderDetailDTO.MoldImportDTO> successList) throws Exception{
         if (CollectionUtils.isEmpty(successList)) {
             return;
@@ -1207,33 +1223,66 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
                         List<PurchasePriceDTO.PriceDTO> convertList = convertMoldDetailToPriceDTO(moldDetailImportDTOList,
                                 firstMoldImportDTO.getPurchaseOrgId(),
                                 firstMoldImportDTO.getSupplierImportDTO().getSupplierId());
-                        List<PurchasePriceDTO.PriceDTO> priceDTOList = purchasePriceService.batchGetPurchasePrice(convertList);
+                        List<PurchasePriceDTO.PriceDTO> priceDTOList = CollectionUtils.isEmpty(convertList)
+                                ? Collections.emptyList()
+                                : purchasePriceService.batchGetPurchasePrice(convertList);
+                        List<PurchasePriceDTO.PriceDTO> safePriceDTOList = CollectionUtils.isEmpty(priceDTOList)
+                                ? Collections.emptyList()
+                                : priceDTOList;
 
                         for (AssetPurchaseOrderDetailDTO.MoldDetailImportDTO moldDetailImportDTO : moldDetailImportDTOList) {
                             AssetPurchaseOrderDetailEntity assetPurchaseOrderDetailEntity = new AssetPurchaseOrderDetailEntity();
                             BeanMapperUtils.copy(moldDetailImportDTO, assetPurchaseOrderDetailEntity);
                             assetPurchaseOrderDetailEntity.setMainId(entity.getId()); // 关联主表ID
+                            assetPurchaseOrderDetailEntity.setIsGift(Boolean.TRUE.equals(moldDetailImportDTO.getIsGift()));
+                            assetPurchaseOrderDetailEntity.setRemark(moldDetailImportDTO.getRemark());
 
                             AssetNoticeDetailEntity assetNoticeDetailEntity = assetNoticeDetailService.lambdaQuery()
                                     .eq(AssetNoticeDetailEntity::getMainId, firstMoldImportDTO.getSourceId())
                                     .eq(AssetNoticeDetailEntity::getIsDeleted, Boolean.FALSE)
                                     .eq(AssetNoticeDetailEntity::getAssetCode, moldDetailImportDTO.getAssetCode())
                                     .one();
+                            if (Objects.isNull(assetNoticeDetailEntity)) {
+                                throw new ServiceException(StrUtil.format("开模通知单【{}】未找到SKU【{}】明细",
+                                        firstMoldImportDTO.getSourceCode(), moldDetailImportDTO.getAssetCode()));
+                            }
                             assetPurchaseOrderDetailEntity.setSourceDetailId(assetNoticeDetailEntity.getId());
 
-                            PurchasePriceDTO.PriceDTO priceDTO = priceDTOList.stream()
-                                    .filter(obj -> obj.getSkuId().equals(assetPurchaseOrderDetailEntity.getAssetId()))
+                            PurchasePriceDTO.PriceDTO priceDTO = safePriceDTOList.stream()
+                                    .filter(obj -> Objects.equals(obj.getSkuId(), assetPurchaseOrderDetailEntity.getAssetId()))
                                     .findFirst()
                                     .orElse(null);
 
                             MoldInfoEntity moldInfoEntity = plmTaskFeign.getMoldInfoByCode(moldDetailImportDTO.getAssetCode());
+                            if (Objects.isNull(moldInfoEntity)) {
+                                throw new ServiceException(StrUtil.format("未找到SKU【{}】对应的模具档案", moldDetailImportDTO.getAssetCode()));
+                            }
                             assetPurchaseOrderDetailEntity.setTag(moldInfoEntity.getTag());
 
-                            assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
-                            assetPurchaseOrderDetailEntity.setTaxRate(priceDTO.getTaxRate());
-                            assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
-                            assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrencySymbol());
-                            assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            if (Boolean.TRUE.equals(assetPurchaseOrderDetailEntity.getIsGift())) {
+                                assetPurchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+                                assetPurchaseOrderDetailEntity.setTaxRate(BigDecimal.ZERO);
+                                if (StringUtils.isNotBlank(firstMoldImportDTO.getSupplierImportDTO().getPayCurrency())) {
+                                    assetPurchaseOrderDetailEntity.setCurrency(firstMoldImportDTO.getSupplierImportDTO().getPayCurrency());
+                                    assetPurchaseOrderDetailEntity.setCurrencySymbol(CurrencyEnum.getSymbolByCode(firstMoldImportDTO.getSupplierImportDTO().getPayCurrency()));
+                                }
+                                assetPurchaseOrderDetailEntity.setTotalAmount(BigDecimal.ZERO);
+                            } else {
+                                if (Objects.isNull(priceDTO)) {
+                                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_NOT_FOUND, assetPurchaseOrderDetailEntity.getAssetCode());
+                                }
+                                if (Objects.isNull(priceDTO.getTaxPrice()) || priceDTO.getTaxPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                                    throw new ServiceException(ApiError.PURCHASE_PRICE_SKU_PRICE_ZERO, assetPurchaseOrderDetailEntity.getAssetCode());
+                                }
+                                if (StringUtils.isBlank(priceDTO.getAmount())) {
+                                    throw new ServiceException(StrUtil.format("SKU【{}】价税合计不能为空", assetPurchaseOrderDetailEntity.getAssetCode()));
+                                }
+                                assetPurchaseOrderDetailEntity.setTaxPrice(priceDTO.getTaxPrice());
+                                assetPurchaseOrderDetailEntity.setTaxRate(priceDTO.getTaxRate());
+                                assetPurchaseOrderDetailEntity.setCurrency(priceDTO.getCurrency());
+                                assetPurchaseOrderDetailEntity.setCurrencySymbol(priceDTO.getCurrencySymbol());
+                                assetPurchaseOrderDetailEntity.setTotalAmount(new BigDecimal(priceDTO.getAmount()));
+                            }
                             assetPurchaseOrderDetailEntity.setEndReceive(AssetPurchaseOrderReceiveEnum.WAIT_RECEIVE.getCode());
 
                             assetPurchaseOrderDetailEntities.add(assetPurchaseOrderDetailEntity);
@@ -1809,6 +1858,7 @@ public class AssetPurchaseOrderServiceImpl extends SuperServiceImpl<AssetPurchas
             String supplierId) {
 
         return moldDetailImportDTOList.stream()
+                .filter(moldDetail -> !Boolean.TRUE.equals(moldDetail.getIsGift()))
                 .map(moldDetail -> PurchasePriceDTO.PriceDTO.builder()
                         .purchaseOrgId(purchaseOrgId)
                         .skuId(moldDetail.getAssetId())

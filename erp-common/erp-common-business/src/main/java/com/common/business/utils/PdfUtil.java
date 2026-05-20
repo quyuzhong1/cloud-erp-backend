@@ -1,8 +1,10 @@
 package com.common.business.utils;
 
 import cn.hutool.core.net.URLDecoder;
+import cn.hutool.core.util.RandomUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfCopy;
@@ -276,7 +278,7 @@ public class PdfUtil {
     }
 
     public static void main(String[] args) {
-        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/3a0c23f5c0a7493780e942573d4e21f1?rk3s=8c7bcdf4\\u0026x-expires=1744537712\\u0026x-signature=H6nSq74XJ%2FcNo5BSr91P4UOaMQ4%3D";
+        String pdfUrl = "https://erp.ulanzi.cn:8088/group1/M00/66/F6/rBBkCmlthECAco5kAAAAAAAAAAA504.pdf";
         try {
             String base64String = convertPdfUrlToBase64(pdfUrl,true);
             System.out.println("Base64 encoded PDF:\n" + base64String);
@@ -295,7 +297,43 @@ public class PdfUtil {
             e.printStackTrace();
         }
     }
+    public static String convertPdfUrlToErpUrl(String pdfUrl,boolean needEscape) throws IOException {
+        {
+            if(needEscape){
+                String decoded = StringEscapeUtils.unescapeJava(pdfUrl)
+                        .replaceAll("%(?![0-9a-fA-F]{2})", "%25");
+                pdfUrl = URLDecoder.decode(decoded, StandardCharsets.UTF_8);
+            }
+            URL url = new URL(pdfUrl);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+            try (InputStream inputStream = url.openStream()) {
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                int totalBytesRead = 0;
+
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
+                }
+
+                // 如果没有读取到任何数据，返回null
+                if (totalBytesRead == 0) {
+                    log.error("下载的PDF为空 URL:{}", pdfUrl);
+                    throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
+                }
+            }
+
+            byte[] pdfBytes = outputStream.toByteArray();
+
+            // 再次检查字节数组是否为空
+            if (pdfBytes.length == 0) {
+                log.error("下载的PDF为空 URL:{}", pdfUrl);
+                throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
+            }
+            return FastDFSClientUtil.uploadFile(pdfBytes, RandomUtil.randomNumbers(5) + ".pdf", null);
+        }
+    }
     public static String convertPdfUrlToBase64(String pdfUrl,boolean needEscape) throws IOException {
         if(needEscape){
             String decoded = StringEscapeUtils.unescapeJava(pdfUrl)
@@ -308,12 +346,28 @@ public class PdfUtil {
         try (InputStream inputStream = url.openStream()) {
             byte[] buffer = new byte[4096];
             int bytesRead;
+            int totalBytesRead = 0;
+
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+            }
+
+            // 如果没有读取到任何数据，返回null
+            if (totalBytesRead == 0) {
+                log.error("下载的PDF为空 URL:{}", pdfUrl);
+                throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
             }
         }
 
         byte[] pdfBytes = outputStream.toByteArray();
+
+        // 再次检查字节数组是否为空
+        if (pdfBytes.length == 0) {
+            log.error("下载的PDF为空 URL:{}", pdfUrl);
+            throw new ServiceException(ApiError.COMMON_FILE_EMPTY,pdfUrl);
+        }
+
         return Base64.getEncoder().encodeToString(pdfBytes);
     }
 

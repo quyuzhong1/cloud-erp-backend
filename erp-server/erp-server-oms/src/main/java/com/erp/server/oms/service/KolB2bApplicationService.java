@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -39,6 +40,15 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
     * @return
     */
     Boolean update(KolB2bApplicationDTO.UpdateDTO dto);
+
+    /**
+     * 更新明细备注
+     * @param id 主表id
+     * @param detailId 明细id
+     * @param remark 明细备注
+     * @return 是否成功
+     */
+    Boolean updateDetailRemark(String id, String detailId, String remark);
 
     /**
     * 分页列表查询
@@ -134,10 +144,10 @@ public interface KolB2bApplicationService extends SuperService<KolB2bApplication
     * 撤销
     * @author will
     * @date: 2025-12-01
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

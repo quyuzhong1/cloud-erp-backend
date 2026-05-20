@@ -30,10 +30,12 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.listener.B2CCustomerImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
 import com.erp.server.oms.service.*;
@@ -246,19 +248,35 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Override
     public void buildPartitionId(SoB2cReceiverEntity receiverEntity, ShopInfoEntity shopInfoEntity) {
         String country = receiverEntity.getCountry();
-        if(Objects.nonNull(shopInfoEntity)){
-            if(StringUtils.isNotBlank(shopInfoEntity.getDictCountryCode())&& !shopInfoEntity.getDictCountryCode().equals(DictValueEnum.ALL.getCode())){
+        CustomerInfoEntity customerInfo = null; // 用于缓存查询结果，避免重复查询
+
+        if (Objects.nonNull(shopInfoEntity)) {
+            // 如果存在 customerId，先尝试获取 CustomerInfo
+            if (StringUtils.isNotBlank(shopInfoEntity.getCustomerId())) {
+                customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
+                // 优先使用 CustomerInfo 的 partitionId
+                if (Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getPartitionId())) {
+                    receiverEntity.setPartitionId(customerInfo.getPartitionId());
+                    return;
+                }
+            }
+
+            // 确定 country（可能使用 shopInfo 的 dictCountryCode 或 CustomerInfo 的 countryId）
+            if (StringUtils.isNotBlank(shopInfoEntity.getDictCountryCode()) &&
+                    !shopInfoEntity.getDictCountryCode().equals(DictValueEnum.ALL.getCode())) {
                 country = shopInfoEntity.getDictCountryCode();
-            }else if (StringUtils.isNotBlank(shopInfoEntity.getCustomerId())){
-                CustomerInfoEntity customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
-                if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.ALL.getCode())){
+            } else if (Objects.nonNull(customerInfo)) {
+                if (StringUtils.isNotBlank(customerInfo.getCountryId()) &&
+                        !customerInfo.getCountryId().equals(DictValueEnum.ALL.getCode())) {
                     country = customerInfo.getCountryId();
                 }
             }
         }
-        if(StringUtils.isBlank(country)){
+
+        if (StringUtils.isBlank(country)) {
             return;
         }
+
         receiverEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
     }
 
@@ -514,5 +532,14 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         }
         receiverEntity.setCountry(country);
         updateById(receiverEntity);
+    }
+
+    @Override
+    public LogisticsBillDTO.ReceiverDTO listReceiverByMainId(String id) {
+        SoB2cReceiverEntity receiverEntity = getByMainId(id);
+        if (null == receiverEntity) {
+            return null;
+        }
+        return B2cOrderConverter.INSTANCE.convertReceiver(receiverEntity);
     }
 }

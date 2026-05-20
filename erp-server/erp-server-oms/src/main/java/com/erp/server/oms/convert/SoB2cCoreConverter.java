@@ -3,8 +3,10 @@ package com.erp.server.oms.convert;
 import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.SoB2cCoreDTO;
+import com.erp.model.oms.dto.SoB2cReceiverDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -41,4 +43,6 @@ public interface SoB2cCoreConverter {
     SoB2cCoreDTO.ListRetryOutstockDTO convertSoB2cToRetryOutstock(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity);
 
 
+    @Mapping(target = "soB2cCode", ignore = true)
+    SoB2cReceiverDTO.ViewDTO convertReceiverEntityToViewDTO(SoB2cReceiverEntity soB2cReceiverEntity);
 }

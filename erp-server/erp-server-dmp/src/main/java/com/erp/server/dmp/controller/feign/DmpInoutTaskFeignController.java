@@ -1,23 +1,10 @@
 package com.erp.server.dmp.controller.feign;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -29,6 +16,8 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.controller.api.DmpCfgEtlController;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
@@ -42,10 +31,21 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
-import cn.hutool.json.JSONUtil;
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/feign/inout")
@@ -80,6 +80,27 @@ public class DmpInoutTaskFeignController{
 	}
 
 	/**
+	 * 重新同步（批量同步）输出记录
+	 */
+	@PostMapping("/batchSyncOutputTaskRecord")
+	public ApiResult<Boolean> batchSyncOutputTaskRecord(@RequestBody BaseIdsDTO.IdsDTO dto) {
+		if (ObjUtil.isEmpty(dto) || CollectionUtils.isEmpty(dto.getIds())) {
+			return ApiResult.success(Boolean.FALSE);
+		}
+		dmpOutputTaskRecordService.lambdaUpdate()
+				.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
+				.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
+				.setSql("error_count = COALESCE(error_count, 0) + 1")
+				.in(DmpOutputTaskRecordEntity::getId, dto.getIds())
+				.update();
+
+		List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
+				.in(DmpOutputTaskRecordEntity::getId, dto.getIds())
+				.list();
+		return ApiResult.success(dmpOutputTaskRecordService.batchSync(list));
+	}
+
+	/**
 	 * 查询同步数据
 	 * @author will
 	 * @date 2024/10/21 18:44
@@ -89,6 +110,17 @@ public class DmpInoutTaskFeignController{
 	@PostMapping("/getErrorData")
 	public DmpPushTaskDTO.SyncInfoDTO getErrorData(@RequestBody DmpSyncTaskDTO.OneDTO oneDTO) {
 		return dmpOutputTaskRecordService.getErrorData(oneDTO);
+	}
+	/**
+	 * 查询同步数据列表
+	 * @author will
+	 * @date 2025/12/29 11:18
+	 * @param listDTO
+	 * @return List<SyncInfoDTO>
+	 */
+	@PostMapping("/listErrorData")
+	public List<DmpPushTaskDTO.SyncInfoDTO> listErrorData(@RequestBody DmpSyncTaskDTO.ListDTO listDTO) {
+		return dmpOutputTaskRecordService.listErrorData(listDTO);
 	}
 
 	/**
@@ -136,7 +168,10 @@ public class DmpInoutTaskFeignController{
 			// 拉取时间
 			dmpInputCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
 			dmpInputCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
-			dmpInputCreateRequest.setTaskType(createDTO.getTaskType());
+            // restCloud系统热修复任务类型强制转换为normal，避免restCloud系统热修复任务无法执行
+            String enableTaskType = DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(listDTO.getExecSystem())
+                    && DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(createDTO.getTaskType()) ? DmpInputTaskTaskTypeEnum.NORMAL.getCode(): createDTO.getTaskType();
+			dmpInputCreateRequest.setTaskType(enableTaskType);
 			// 创建任务
 			DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
 			// 执行任务
@@ -193,7 +228,10 @@ public class DmpInoutTaskFeignController{
 			// 拉取时间
 			dmpInputCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
 			dmpInputCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
-			dmpInputCreateRequest.setTaskType(createDTO.getTaskType());
+            // restCloud系统热修复任务类型强制转换为normal，避免restCloud系统热修复任务无法执行
+            String enableTaskType = DmpCfgInputExecSystemEnum.REST_CLOUD.getCode().equals(listDTO.getExecSystem())
+                    && DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(createDTO.getTaskType()) ? DmpInputTaskTaskTypeEnum.NORMAL.getCode(): createDTO.getTaskType();
+			dmpInputCreateRequest.setTaskType(enableTaskType);
 			// 创建任务
 			DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
 			// 执行任务

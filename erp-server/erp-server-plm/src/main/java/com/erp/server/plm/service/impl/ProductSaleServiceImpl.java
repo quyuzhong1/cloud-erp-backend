@@ -4,6 +4,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
@@ -15,6 +17,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.ProductSaleMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.BomInfoService;
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,16 +71,37 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
+        //收集所有需要查询的国家ID
+        Set<String> allCountryIds = new HashSet<>();
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                allCountryIds.addAll(saleCountryList);
+            }
+        }
+
+        Map<String, String> countryIdToNameMap = new HashMap<>();
+        if (!allCountryIds.isEmpty()) {
+            List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(new ArrayList<>(allCountryIds));
+            countryIdToNameMap = dictCountryEntities.stream()
+                    .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+        }
+
         for (ProductSaleShowDTO productSaleShowDTO : list) {
 
             if(StringUtils.isNotBlank(productSaleShowDTO.getInsuranceProperty())){
                 productSaleShowDTO.setInsurancePropertyList(Arrays.asList(productSaleShowDTO.getInsuranceProperty().split(",")));
                 productSaleShowDTO.setInsurancePropertyNameList(getInsurancePropertyList(productSaleShowDTO.getInsuranceProperty(), insurancePropertyMap));
             }
+
             if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
                 List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
-                List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(saleCountryList);
-                List<String> saleCountryNameList = dictCountryEntities.stream().map(DictCountryEntity::getNameCn).collect(Collectors.toList());
+                //从map中获取国家名称
+                List<String> saleCountryNameList = saleCountryList.stream()
+                        .map(countryIdToNameMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
                 productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
             }
         }
@@ -121,15 +146,35 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
+        //收集所有需要查询的国家ID
+        Set<String> allCountryIds = new HashSet<>();
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                allCountryIds.addAll(saleCountryList);
+            }
+        }
+
+        Map<String, String> countryIdToNameMap = new HashMap<>();
+        if (!allCountryIds.isEmpty()) {
+            List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(new ArrayList<>(allCountryIds));
+            countryIdToNameMap = dictCountryEntities.stream()
+                    .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+        }
+
         for (ProductSaleShowDTO productSaleShowDTO : list) {
             if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(productSaleShowDTO.getInsuranceProperty())){
                 productSaleShowDTO.setInsurancePropertyList(Arrays.asList(productSaleShowDTO.getInsuranceProperty().split(",")));
                 productSaleShowDTO.setInsurancePropertyNameList(getInsurancePropertyList(productSaleShowDTO.getInsuranceProperty(), insurancePropertyMap));
             }
+
             if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
                 List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
-                List<DictCountryEntity> dictCountryEntities = sysDictFeign.listCountryByIds(saleCountryList);
-                List<String> saleCountryNameList = dictCountryEntities.stream().map(DictCountryEntity::getNameCn).collect(Collectors.toList());
+                //从map中获取国家名称
+                List<String> saleCountryNameList = saleCountryList.stream()
+                        .map(countryIdToNameMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
                 productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
             }
         }
@@ -153,11 +198,20 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
             List<String> propertyIdList = Arrays.stream(productSaleDTO.getProductPropertyId().split(",")).collect(Collectors.toList());
             String propertyNames = propertytList.stream().filter(obj -> propertyIdList.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
             saleEntity.setProductProperty(propertyNames);
+
+            //电池重量（g）
+            BigDecimal batteryWeight = saleEntity.getBatteryWeight();
+            if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                    && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                throw new ServiceException(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL);
+            }
         }
         //处理数据
+
         handleSaveOrUpdate(saleEntity);
+        Boolean result = this.saveOrUpdate(saleEntity);
         this.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(productSaleDTO.getSkuId()));
-        return this.saveOrUpdate(saleEntity);
+        return result;
     }
 
     /**
@@ -197,12 +251,21 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 List<String> propertyIdList = Arrays.stream(productSaleEntity.getProductPropertyId().split(",")).collect(Collectors.toList());
                 String propertyNames = propertytList.stream().filter(obj -> propertyIdList.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
                 productSaleEntity.setProductProperty(propertyNames);
+
+                //电池重量（g）
+                BigDecimal batteryWeight = productSaleEntity.getBatteryWeight();
+                if( (Objects.isNull(batteryWeight) || batteryWeight.compareTo(BigDecimal.ZERO) <=0 )
+                        && ( propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_METAL)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_ION)|| propertyNames.contains(ProductConstant.PRODUCT_BATTERY_LITHIUM_POLYMER) ) ){
+                    throw new ServiceException(ApiError.PRODUCT_SALES_BATTERY_WEIGHT_NOT_NULL);
+                }
             }
         }
         for (ProductSaleEntity entity : list) {
             entity.setId(map.get(entity.getSkuId()));
         }
-        return this.saveOrUpdateBatch(list);
+        Boolean result = this.saveOrUpdateBatch(list);
+        this.saveOrUpdateParentPropertyIdByChildSkuId(skuIdList);
+        return result;
     }
 
     /**
@@ -339,7 +402,12 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                     .distinct()
                     .collect(Collectors.joining(","));
             if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(propertyIds)){
-                String productProperty = propertytList.stream().filter(obj -> childrenLPropertyIds.contains(obj.getId())).map(BasicDictEntity::getName).collect(Collectors.joining(","));
+                // 使用处理后的propertyIds来生成productProperty
+                List<String> propertyIdList = Arrays.asList(propertyIds.split(","));
+                String productProperty = propertytList.stream()
+                        .filter(obj -> propertyIdList.contains(obj.getId()))
+                        .map(BasicDictEntity::getName)
+                        .collect(Collectors.joining(","));
                 productSaleEntity.setProductProperty(productProperty);
                 //物流属性名称
                 productSaleEntity.setProductPropertyId(propertyIds);

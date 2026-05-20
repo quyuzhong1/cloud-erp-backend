@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -226,6 +227,11 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submit(String id) {
+        return submit(id, true);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submit(String id, boolean isNeedProcess) {
         AssetLocationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到资产位置单数据");
@@ -235,9 +241,11 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         log.info("提交 开始修改资产位置单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动资产位置单流程，id=：【{}】", entity.getId());
-        startProcess(entity);
+        if (isNeedProcess) {
+            // TODO 启动流程（如果需要的话）
+            log.info("提交 开始启动资产位置单流程，id=：【{}】", entity.getId());
+            startProcess(entity);
+        }
         // 记录操作日志
         log.info("提交 开始记录资产位置单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单");
@@ -252,7 +260,31 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
-        this.submit(result.getId());
+        this.submit(result.getId(), true);
+        return result;
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO addAndSubmitAndApprove(AssetLocationDTO.AddDTO dto) {
+        // 新增并提交（自动审核链路不启动流程）
+        BaseResultDTO.AddDTO result = this.add(dto);
+        this.submit(result.getId(), false);
+        // 审核（系统用户，绕过创建人和审核人不能一致校验）
+        Boolean originalValue = UserContext.getIsUserSystem();
+        LoginUser originalLoginUser = UserContext.getLoginUser();
+        UserContext.setIsUserSystem(Boolean.TRUE);
+        UserContext.setLoginUser(UserContext.getSystemLoginUser());
+        try {
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO(result.getId(), ApproveTypeEnum.PASS.getStatus(), "");
+            approveOneDTO.setIsUserSystem(Boolean.TRUE);
+            approveOneDTO.setIsNeedProcess(Boolean.FALSE);
+            this.approve(approveOneDTO);
+        } finally {
+            UserContext.setLoginUser(originalLoginUser);
+            UserContext.setIsUserSystem(originalValue);
+        }
         return result;
     }
 
@@ -294,6 +326,10 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     * @param dto
     */
     private void approveProcess(AssetLocationEntity entity, ApproveOneDTO dto) {
+        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
+            approveEnd(dto, entity);
+            return;
+        }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -386,7 +422,8 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         AssetLocationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到资产位置单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -402,6 +439,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "资产位置单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.ASSET_LOCATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.ASSET_LOCATION.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -416,7 +454,7 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        updateForApprove(entity.getId(), approveStatus.getStatus(), resolveApproveUser(dto));
 
         return Boolean.TRUE;
     }
@@ -463,15 +501,24 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
     * @param approveStatus
     */
     public void updateForApprove(String id, String approveStatus) {
-        //当前登录人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        updateForApprove(id, approveStatus, UserContext.getDefaultLoginUser());
+     }
+
+    private void updateForApprove(String id, String approveStatus, LoginUser userInfo) {
         this.lambdaUpdate().eq(AssetLocationEntity::getId, id)
             .set(AssetLocationEntity::getApproveUserId, userInfo.getUid())
             .set(AssetLocationEntity::getApproveUserName, userInfo.getUserName())
             .set(AssetLocationEntity::getApproveStatus, approveStatus)
             .set(AssetLocationEntity::getApproveTime, LocalDateTime.now())
             .update(new AssetLocationEntity());
-     }
+    }
+
+    private LoginUser resolveApproveUser(ApproveOneDTO dto) {
+        if (dto != null && Boolean.TRUE.equals(dto.getIsUserSystem())) {
+            return UserContext.getSystemLoginUser();
+        }
+        return UserContext.getDefaultLoginUser();
+    }
 
     /**
     * 反审核更新审核信息

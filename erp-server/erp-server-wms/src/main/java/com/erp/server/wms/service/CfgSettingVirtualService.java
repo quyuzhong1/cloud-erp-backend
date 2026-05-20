@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.model.wms.dto.CfgSettingVirtualDTO;
 
 /**
@@ -24,4 +25,11 @@ public interface CfgSettingVirtualService {
      * @return ViewDTO
      */
     CfgSettingVirtualDTO.ViewDTO viewVirtual();
+
+    /**
+     * 匹配虚拟仓调拨规则
+     * @param dto
+     * @return
+     */
+    CfgSettingVirtualDTO.MatchVirtualTransferResultDTO matchTransferRule(CfgSettingVirtualDTO.MatchVirtualTransferRuleDTO dto);
 }

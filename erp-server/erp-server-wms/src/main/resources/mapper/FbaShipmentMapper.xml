@@ -14,6 +14,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
+        fs.source_type AS sourceType,
+        fse.carrier_name AS carrierName,
+        fse.tracking_no AS trackingNo,
         (SELECT fd.code FROM first_mile_delivery fd
                         INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
                         WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
@@ -28,11 +31,16 @@
         fsd.receive_qty AS receiveQty,
         fsd.diff_qty AS diffQty,
         fsd.is_combination AS isCombination,
-        fs.is_packing_download as isPackingDownload
+        fs.is_packing_download as isPackingDownload,
+        fs.is_sta as isSta
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        LEFT JOIN fba_shipment_extend fse ON fse.main_id = fs.id AND fse.is_deleted = FALSE
         WHERE
         fs.is_deleted = FALSE
+        <if test="params.sourceType != null and params.sourceType != ''">
+            and fs.source_type = #{params.sourceType}
+        </if>
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
         </if>
@@ -95,6 +103,7 @@
             fs.code AS sourceCode,
             fs.shop_id AS channelId,
             fs.shop_name AS channelName,
+            fs.source_type AS fbaType,
             fsd.asin,
             fsd.msku,
             fsd.fn_sku,
@@ -119,6 +128,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
+        fs.source_type AS sourceType,
+        fse.carrier_name AS carrierName,
+        fse.tracking_no AS trackingNo,
         (SELECT fd.code FROM first_mile_delivery fd
         INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
         WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
@@ -136,9 +148,13 @@
         fs.is_packing_download as isPackingDownload
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        LEFT JOIN fba_shipment_extend fse ON fse.main_id = fs.id AND fse.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         and fs.is_deleted = FALSE
+        <if test="params.sourceType != null and params.sourceType != ''">
+            and fs.source_type = #{params.sourceType}
+        </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -178,6 +194,9 @@
         <if test="params.shopId!=null and params.shopId!=''">
             and fs.shop_id = #{params.shopId}
         </if>
+        <if test="params.sourceType != null and params.sourceType != ''">
+            and fs.source_type = #{params.sourceType}
+        </if>
     </select>
 
     <select id="listByReceiveAndReportMonth"
@@ -216,6 +235,76 @@
         <if test="msku != null and msku != ''">
             AND fsd.msku = #{msku}
         </if>
+    </select>
+    <select id="awdPaging" resultType="com.erp.model.wms.dto.FbaShipmentDTO$AwdListDTO">
+        SELECT
+        fs.id,
+        fsd.id AS detailId,
+        fs.code,
+        fse.plan_code AS planCode,
+        fs.shop_id AS shopId,
+        fs.shop_name AS shopName,
+        fs.country_id AS countryId,
+        fs.country_name AS countryName,
+        fs.fulfillment_center AS fulfillmentCenter,
+        fs.delivery_status AS deliveryStatus,
+        (SELECT fd.code FROM first_mile_delivery fd
+        INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+        WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
+        fs.platform_shipment_status AS platformShipmentStatus,
+        fs.shipment_create_time AS shipmentCreateTime,
+        fse.shipment_delivery_time AS shipmentDeliveryTime,
+        fse.delivery_to_warehouse_id AS deliveryToWarehouseId,
+        fse.delivery_to_warehouse_name AS deliveryToWarehouseName,
+        fs.reference_id AS referenceId,
+        fs.create_user_name AS createUserName,
+        fs.remark AS remark,
+        fsd.receive_date AS shipmentReceiveTime,
+        fsd.asin,
+        fsd.msku,
+        fsd.fn_sku AS fnSku,
+        fsd.sku_no AS skuNo,
+        fsd.declare_qty AS declareQty,
+        fsd.receive_qty AS receiveQty,
+        fsd.diff_qty AS diffQty,
+        fsd.is_combination AS isCombination,
+        fsd.box_qty AS boxQty,
+        fsd.per_box_qty AS perBoxQty,
+        fs.is_packing_download as isPackingDownload
+        FROM fba_shipment_detail fsd
+        INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
+        INNER JOIN fba_shipment_extend fse ON fse.main_id = fsd.main_id AND fse.is_deleted = FALSE
+        WHERE
+        fs.is_deleted = FALSE
+        <if test="params.sourceType != null and params.sourceType != ''">
+            and fs.source_type = #{params.sourceType}
+        </if>
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fs.id IN
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.detailIds != null and params.detailIds.size > 0">
+            AND fsd.id IN
+            <foreach collection="params.detailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fs.shipment_create_time DESC
     </select>
 
     <sql id="FbaDataCompareByCondition">

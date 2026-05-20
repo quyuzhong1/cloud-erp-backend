@@ -85,7 +85,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     private DmpMqFeign dmpMqFeign;
 
     @Resource
-    private CfgSettingService cfgSettingService;
+    private PlmCfgSettingService plmCfgSettingService;
     
     @Resource
     private PlmPushMsgService plmPushMsgService;
@@ -94,6 +94,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     private ProductDetailService productDetailService;
     @Resource
     private ApplicationCategoryService applicationCategoryService;
+    @Resource
+    private ProductRefBuService productRefBuService;
 
     /**
      * 组装数据发送到金蝶
@@ -238,6 +240,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 
         //产品经理
         resultMap.put("chargeName", productInfoEntity.getChargeName());
+        //产品BU线（同步金蝶字段 F_ULZ_buName）
+        ProductRefBuEntity productRefBu = productRefBuService.getByProductIds(entity.getProductId());
+        if (ObjectUtils.isNotEmpty(productRefBu) && StringUtils.isNotBlank(productRefBu.getBuName())) {
+            resultMap.put("buName", productRefBu.getBuName());
+        }
         //销售信息
         if (ObjectUtils.isNotEmpty(productSaleEntity)) {
             //上市时间
@@ -339,7 +346,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             resultMap.put("mainSupplier", productPurchaseEntity.getMainSupplier());
         }
         //获取系统配置的物料属性控制
-        List<PlmCfgSettingDTO.MaterialAttributeControlDetail> materialAttributeControlDetailList = cfgSettingService.view().getMaterialAttributeControl().getDetailList();
+        List<PlmCfgSettingDTO.MaterialAttributeControlDetail> materialAttributeControlDetailList = plmCfgSettingService.view().getMaterialAttributeControl().getDetailList();
         if(CollectionUtils.isNotEmpty(materialAttributeControlDetailList)){
             PlmCfgSettingDTO.MaterialAttributeControlDetail materialAttributeControlDetail = materialAttributeControlDetailList.stream().filter(v->v.getMaterialAttributeList().contains(productInfoEntity.getPropertyId())).findFirst().orElse(null);
             if(Objects.nonNull(materialAttributeControlDetail)) {

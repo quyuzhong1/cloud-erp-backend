@@ -1,26 +1,46 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.*;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.MoldInfoImportExcelDTO;
 import com.erp.model.plm.entity.*;
-import com.erp.model.plm.enums.*;
 import com.erp.model.plm.enums.ProductTypeEnum;
+import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.DictBasicEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.SupplierCategoryEnum;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -28,47 +48,32 @@ import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.listener.MoldInfoExcelListener;
+import com.erp.server.plm.mapper.MoldInfoMapper;
 import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.server.plm.mapper.MoldInfoMapper;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_INFO;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_PLM_MOLD_INFO;
 
 /**
  * <p>
@@ -351,6 +356,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
         dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.MOLD_INFO.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
+
         Map<String, Object> map = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
         return map;
     }
@@ -457,13 +463,41 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
+        if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.BILL_VOID_EDIT_FORBIDDEN);
+        }
+        String oldRemark = entity.getRemark();
+        boolean updated = this.lambdaUpdate()
+                .eq(MoldInfoEntity::getId, id)
+                .set(MoldInfoEntity::getRemark, remark)
+                .update();
+        if (!updated) {
+            throw new ServiceException("模具档案更新备注失败");
+        }
+        String msg = StrUtil.format(
+                "用户【{}】编辑单号为【{}】的【{}】备注，由【{}】更新为【{}】",
+                UserContext.getDefaultLoginUser().getUserName(),
+                entity.getCode(),
+                "模具档案",
+                StrUtil.nullToEmpty(oldRemark),
+                remark
+        );
+        sysLogService.addSysLogBySave(msg, String.valueOf(MoldInfoEntity.class), id, "", "更新备注");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
     /**
     * 撤销
     */
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         MoldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具档案数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -479,6 +513,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "模具档案");
         sysLogService.addSysLogBySave(msg, "", id, "","撤销操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.MOLD_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -868,14 +903,6 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
         Map<String, BasicCategoryEntity> categoryMap = categoryList.stream().collect(Collectors.toMap(BasicCategoryEntity::getName, Function.identity(),(o1,o2)->o1));
 
-        //结算方式
-        List<DictBasicDTO> settleDictList = scmDictFeign.listDictByKey(DictBasicEnum.SUPPLIER_PAY_MODE.getType());
-        Map<String, String> settleDictMap = settleDictList.stream().collect(Collectors.toMap(DictBasicDTO::getName, DictBasicDTO::getId,(o1,o2)->o1));
-
-        //付款条件
-        List<BaseDropDownDTO.DisabledDTO>  paymentConditionList =  scmTaskFeign.listPaymentCondition();
-        Map<String, String> paymentConditionMap = paymentConditionList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode,(o1,o2)->o1));
-
         //货款供应商
         List<SupplierDTO.SupplierSimpleDTO> supplierSimpleList = supplierFeign.listApproveSupplierByCategoryType(SupplierCategoryEnum.LOAN.getCode());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierSimpleList.stream().collect(Collectors.toMap(SupplierDTO.SupplierSimpleDTO::getName, Function.identity(),(o1,o2)->o1));
@@ -884,8 +911,8 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
         List<CfgMouldSettingEntity> cfgMouldSettingEntites = cfgMouldSettingService.mouldList();
         Map<String, String> cfgMouldSettingMap = cfgMouldSettingEntites.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId));
 
-        //用户
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        //用户（包括启用和未启用）
+        List<FindUserDTO> userList = sysUserFeign.getAllUserList();
 
         //设置操作人
         FindUserDTO findUserDTO = userList.stream().filter(e -> StringUtils.isNotBlank(dto.getUserId()) && Objects.equals(e.getUserId(), dto.getUserId())).findFirst().orElse(null);
@@ -899,7 +926,7 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             UserContext.setLoginUser(user);
         }
 
-        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,cfgMouldSettingMap,categoryMap,settleDictMap,paymentConditionMap);
+        MoldInfoExcelListener excelListenerUtil = new MoldInfoExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),userList,supplierMap,cfgMouldSettingMap,categoryMap);
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), MoldInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -1018,6 +1045,22 @@ public class MoldInfoServiceImpl extends SuperServiceImpl<MoldInfoMapper, MoldIn
             sysLogService.addSysLogByBatchSave(sysLogEntityList);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public MoldInfoDTO.SupplierInfoByCodeDTO getSupplierInfoByCode(String code) {
+        if (StrUtil.isBlank(code)) {
+            throw new ServiceException("模具编码不能为空");
+        }
+        MoldInfoEntity moldInfo = lambdaQuery().eq(MoldInfoEntity::getCode, code).one();
+        if (moldInfo == null) {
+            throw new ServiceException("未找到编码为【" + code + "】的模具档案");
+        }
+        return new MoldInfoDTO.SupplierInfoByCodeDTO(
+                moldInfo.getSupplierId(),
+                moldInfo.getSupplierCode(),
+                moldInfo.getSupplierName()
+        );
     }
 
 }

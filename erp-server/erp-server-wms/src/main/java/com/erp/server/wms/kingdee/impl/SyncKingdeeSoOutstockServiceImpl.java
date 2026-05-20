@@ -550,18 +550,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             		resultMap.put("sdyPlatformType", dictBasicEntityList.get(0).getRemark());
             	}
             }
-        }
 
-//        //部门
-//        if (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
-//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-//            dto.setDeptId(entity.getSalesDeptId());
-//            dto.setOrgId(entity.getSalesOrgId());
-//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-//            }
-//        }
+        }
 
         //销售员
         String sellerId = entity.getSellerId();

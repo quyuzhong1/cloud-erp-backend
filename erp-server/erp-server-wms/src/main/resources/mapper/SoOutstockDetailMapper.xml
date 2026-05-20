@@ -148,7 +148,9 @@
             so.code as soOutstockCode,
             so.so_id as soId,
             so.so_code as soCode,
+            sod.platform_code as platformCode,
             so.source_type as sourceType,
+            so.source_code as sourceCode,
             so.sales_org_id as salesOrgId,
             so.sales_org_name as salesOrgName,
             so.bill_date as soOutstockDate,
@@ -157,11 +159,12 @@
             sod.sku_id as skuId,
             sod.sku_no as skuNo,
             sod.actual_qty as actualQty,
-            sod.warehouse_id as warehouseId,
-            sod.warehouse_name as warehouseName
+            so.warehouse_id as warehouseId,
+            so.warehouse_name as warehouseName,
+            so.customer_id as customerId
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
-        where so.is_deleted = false and so.approve_status = 'approve' and so.source_type in ('soInfo','soDeliveryNotice','soB2c','soB2cDelivery')
+        where so.is_deleted = false and so.approve_status = 'approve'
         <if test="param.startTime != null">
             and so.bill_date &gt;= #{param.startTime}
         </if>

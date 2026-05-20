@@ -17,7 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.DistributeKeyConstant;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
@@ -606,7 +606,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 16:43
      */
     @PostMapping("/saveFullyDistribution")
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
     @LogAction(value = LogActionEnum.INSERT, desc = "订单配货保存（前端手动配货）")
     public ApiResult<List<BatchResultDTO>> saveFullyDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -700,7 +700,7 @@ public class FullyManagedOrderController extends BaseController {
                 continue;
             }
             try {
-                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity);
+                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity, true);
             } catch (Exception e) {
                 log.error("全平台销售订单获取物流单号失败", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -719,7 +719,7 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023/8/18 16:49
      */
     @PostMapping("/submitDelivery")
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
+    @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交发货")
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -1142,9 +1142,16 @@ public class FullyManagedOrderController extends BaseController {
                 resultDTOS.add(result);
                 continue;
             }
-            //订单更换发货SKU操作只能在待提交和审核不通过状态操作
-            if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
+            //订单更换发货SKU操作只能在待提交、审核不通过或已发货状态操作
+            if (!Boolean.TRUE.equals(soB2cService.allowChangeDeliverySku(entity))){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.SO_REPLACE_SKU_STATUS_INVALID.getMsg(), entity.getCode()));
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "更换SKU");
+            } catch (Exception e) {
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), e.getMessage());
                 resultDTOS.add(result);
                 continue;
             }

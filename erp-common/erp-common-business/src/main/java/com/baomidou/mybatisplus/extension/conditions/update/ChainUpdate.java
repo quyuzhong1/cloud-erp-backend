@@ -88,6 +88,9 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
         				if(!notBlankSqlSet.contains("update_user_name=") && StringUtils.isNotBlank(userName)) {
         					sqlSetList.add("update_user_name='" + userName+"'");
         				}
+        				if(!notBlankSqlSet.contains("version=")) {
+        					sqlSetList.add("version=version+1");
+        				}
         			}
         		}
     		}

@@ -249,4 +249,17 @@ public class CfgApproveSyncController extends BaseController {
     }
 
 
+    /**
+     *
+     * @author jack
+     * @date:  2025-05-14
+     * /api/workflow/dict/basic/drop/down?type=processCondition&remark=assetNotice
+     * /api/workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
+     */
+    @PostMapping("/listApproveNoticeRoleType")
+    public ApiResult<List<Map<String, Object>>> listApproveNoticeRoleType(@RequestBody CfgApproveSyncDTO.ApproveNoticeRoleTypeParamDTO dto) {
+        return success(cfgApproveSyncService.listApproveNoticeRoleType(dto));
+    }
+
+
 }

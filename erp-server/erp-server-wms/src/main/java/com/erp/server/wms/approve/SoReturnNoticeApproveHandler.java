@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 
 @Slf4j
 @Component
@@ -42,7 +41,7 @@ public class SoReturnNoticeApproveHandler extends AbstractApproveHandler {
 
     @Override
     public Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto) {
-        return soReturnNoticeService.cancelProcess(Collections.singletonList(dto.getId()));
+        return soReturnNoticeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto));
     }
 
     @Override

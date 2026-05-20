@@ -1,97 +1,79 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.ClientTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.SampleLedgerLockUtil;
 import com.common.business.utils.SampleLedgerQtyValidator;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-
-import cn.hutool.core.util.StrUtil;
-import com.erp.model.wms.entity.SampleLedgerEntity;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.file.feign.FileFeign;
-import io.seata.spring.annotation.GlobalTransactional;
-import com.common.business.annotation.DistributeLocker;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.FindUserDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.model.wms.dto.SampleLedgerDTO;
-import com.erp.model.wms.dto.SampleLedgerFlowDTO;
-import com.erp.model.wms.dto.SampleTransferDetailDTO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.SampleTransferImportExcelDTO;
+import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.entity.SampleTransferDetailEntity;
 import com.erp.model.wms.entity.SampleTransferInfoEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.listener.SampleTransferInfoExcelListener;
 import com.erp.server.wms.mapper.SampleTransferInfoMapper;
-import com.erp.server.wms.service.SampleLedgerFlowService;
-import com.erp.server.wms.service.SampleLedgerService;
-import com.erp.server.wms.service.SampleTransferDetailService;
-import com.erp.server.wms.service.SampleTransferInfoService;
-import com.erp.server.wms.service.SampleLedgerFlowBuilder;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import com.erp.server.wms.service.WmsAttachmentService;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SampleTransferInfoDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.validator.ValidList;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
-import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.utils.ApplicationContextUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.erp.model.wms.dto.excel.SampleTransferImportExcelDTO;
-import com.erp.server.wms.listener.SampleTransferInfoExcelListener;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
-import cn.hutool.core.text.CharSequenceUtil;
+import org.springframework.transaction.annotation.Transactional;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
-
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import java.util.stream.Collectors;
-import java.util.*;
-import java.util.function.Function;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.Comparator;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SAMPLE_TRANSFER_INFO_REPORT;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SAMPLE_TRANSFER_INFO;
 /**
  * <p>
  * 样品转移单主表 服务实现类
@@ -749,7 +731,8 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         SampleTransferInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到样品转移单主单数据"));
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -765,6 +748,7 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "样品转移单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SAMPLE_TRANSFER_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -1663,5 +1647,91 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
             log.info("转入人台账数量校验通过，单据编号：{}", entity.getCode());
             return null;
         });
+    }
+
+    @Override
+    public List<SampleTransferInfoDTO.TabListDTO> tabListApp(PermissionsDTO param) {
+        SampleTransferInfoDTO.PagingParamDTO searchParam = new SampleTransferInfoDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        //待我审核
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.SAMPLE_TRANSFER_INFO.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(UserContext.getNonLoginUser().getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            searchParam.setIds(ids);
+        }else {
+            searchParam.setIds(Arrays.asList("-1"));
+        }
+        List<SampleTransferInfoDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        
+        // 移动端特殊处理：合并待提交和不通过
+        List<SampleTransferInfoDTO.TabListDTO> appList = new ArrayList<>();
+        
+        // 计算待提交/不通过的总数
+        int waitSubmitCount = 0;
+        int rejectCount = 0;
+        SampleTransferInfoDTO.TabListDTO waitSubmitItem = null;
+        SampleTransferInfoDTO.TabListDTO rejectItem = null;
+        
+        for (SampleTransferInfoDTO.TabListDTO item : list) {
+            if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag())) {
+                waitSubmitCount = item.getCount();
+                waitSubmitItem = item;
+            } else if (ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
+                rejectCount = item.getCount();
+                rejectItem = item;
+            }
+        }
+        
+        // 创建合并后的待提交/不通过标签
+        if (waitSubmitItem != null || rejectItem != null) {
+            SampleTransferInfoDTO.TabListDTO mergedItem = new SampleTransferInfoDTO.TabListDTO();
+            mergedItem.setTabFlag("waitSubmitOrReject");
+            mergedItem.setTabFlagName("待提交/不通过");
+            mergedItem.setCount(waitSubmitCount + rejectCount);
+            appList.add(mergedItem);
+        }
+        
+        // 添加其他标签（待我审核、已审核）
+        for (SampleTransferInfoDTO.TabListDTO item : list) {
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(item.getTabFlag()) 
+                && !ApproveStatusEnum.REJECT.getCode().equals(item.getTabFlag())) {
+                if (Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), item.getTabFlag())) {
+                    item.setTabFlagName("待我审核");
+                } else if (Objects.equals(ApproveStatusEnum.APPROVE.getCode(), item.getTabFlag())) {
+                    item.setTabFlagName("已审核");
+                }
+                appList.add(item);
+            }
+        }
+
+        // 按照移动端指定顺序排序：待提交/不通过、审核中、已审核
+        List<String> orderList = Arrays.asList("waitSubmitOrReject", "approveIng", "approve");
+        appList.sort((a, b) -> {
+            int indexA = orderList.indexOf(a.getTabFlag());
+            int indexB = orderList.indexOf(b.getTabFlag());
+            if (indexA == -1) indexA = Integer.MAX_VALUE;
+            if (indexB == -1) indexB = Integer.MAX_VALUE;
+            return Integer.compare(indexA, indexB);
+        });
+
+        return appList;
+    }
+
+    @Override
+    public PagingVO<SampleTransferInfoDTO.ListDTO> pagingApp(PagingDTO<SampleTransferInfoDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SampleTransferInfoDTO.ListDTO> pageData = this.baseMapper.pagingApp(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+           return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 }
