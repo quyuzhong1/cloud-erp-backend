@@ -84,6 +84,8 @@ public class MaskProtectInputProcessor {
         if (plans.isEmpty()) {
             return Collections.emptyList();
         }
+
+        // 固定锁顺序，降低批量 FOR UPDATE 并发时的死锁概率。
         plans.sort(Comparator
                 .comparing(FieldRestorePlan::lockGroupKey)
                 .thenComparing(FieldRestorePlan::getRecordId)
@@ -112,6 +114,8 @@ public class MaskProtectInputProcessor {
         if (plans == null || plans.isEmpty()) {
             return;
         }
+
+        // 先校验所有保护字段，再统一改 DTO，避免一个字段失败但其他字段已被部分回填。
         validateDbComparePlans(plans);
         for (FieldRestorePlan plan : plans) {
             plan.apply();
@@ -218,6 +222,7 @@ public class MaskProtectInputProcessor {
             List<CfgMaskFieldSnapshotEntry> rules =
                     configCache.getValueProtectRules(pojo.getClass().getName(), field.getName());
             if (!rules.isEmpty()) {
+                // 写保护绑定的是更新 DTO 字段，不要求和读 VO 共用同一个类。
                 collectFieldPlan(pojo, field, value, rules, user, permissionSet, plans);
             }
             if (value != null && shouldRecurse(field.getType(), value)) {
@@ -232,6 +237,8 @@ public class MaskProtectInputProcessor {
             if (hasPlainPermission(user, permissionSet, entry.getPermission())) {
                 continue;
             }
+
+            // 无原值权限时，前端提交值一律不可信，哪怕提交的不是脱敏占位符。
             MaskProtectMode protectMode = entry.getProtectMode() == null
                     ? MaskProtectMode.REJECT : entry.getProtectMode();
             if (protectMode == MaskProtectMode.REJECT) {
@@ -240,6 +247,7 @@ public class MaskProtectInputProcessor {
                 throw new MaskProtectException();
             }
             if (protectMode == MaskProtectMode.SET_NULL) {
+                // 必填字段不能静默置 null，避免后续校验或数据库非空约束才失败。
                 if (field.getType().isPrimitive() || hasNotNullConstraint(field)) {
                     throw new MaskProtectException();
                 }
@@ -258,6 +266,8 @@ public class MaskProtectInputProcessor {
             if (StringUtils.isBlank(recordId)) {
                 throw new MaskProtectException();
             }
+
+            // RESTORE_ORIGINAL 使用当前数据库值，不依赖上一次查询时缓存的旧值。
             plans.add(new FieldRestorePlan(pojo, field, null, entry, recordId, true));
             return;
         }

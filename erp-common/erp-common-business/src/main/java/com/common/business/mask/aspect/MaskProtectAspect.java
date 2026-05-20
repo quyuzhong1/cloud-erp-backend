@@ -52,6 +52,9 @@ public class MaskProtectAspect {
             inputProcessor.validateAndApply(plans);
             return pjp.proceed(args);
         }
+
+        // RESTORE_ORIGINAL 必须把锁读原值和旧业务更新放在同一个事务里，
+        // 避免回填后、保存前被其他请求改掉同一行。
         TransactionTemplate template = resolveTransactionTemplate();
         if (template == null) {
             throw new MaskProtectException();
@@ -82,6 +85,8 @@ public class MaskProtectAspect {
         TransactionTemplate template = transactionTemplate == null
                 ? new TransactionTemplate(manager)
                 : new TransactionTemplate(manager, transactionTemplate);
+
+        // 每次创建独立模板，避免保护逻辑的超时时间污染全局 TransactionTemplate。
         int timeout = transactionTimeoutSeconds == null ? 8 : transactionTimeoutSeconds;
         if (timeout > 0) {
             template.setTimeout(timeout);

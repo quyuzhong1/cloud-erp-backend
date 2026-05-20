@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
@@ -86,9 +87,12 @@ public class JdbcMaskProtectCurrentValueReader implements MaskProtectCurrentValu
         if (StringUtils.isNotBlank(deletedColumn)) {
             sql.append(" AND COALESCE(").append(deletedColumn).append(", false) = false");
         }
+
+        // 按 id 顺序加锁，保证并发批量更新时锁获取顺序尽量一致。
         sql.append(" ORDER BY ").append(idColumn).append(" FOR UPDATE");
         Object[] args = ids.toArray(new Object[0]);
-        return jdbcTemplate.query(sql.toString(), args, rs -> toMap(rs));
+        ResultSetExtractor<Map<String, MaskProtectCurrentValue>> extractor = this::toMap;
+        return jdbcTemplate.query(sql.toString(), args, extractor);
     }
 
     private Map<String, MaskProtectCurrentValue> toMap(ResultSet rs) throws SQLException {
@@ -111,6 +115,7 @@ public class JdbcMaskProtectCurrentValueReader implements MaskProtectCurrentValu
             return null;
         }
         try {
+            // PostgreSQL 下该配置只在当前事务生效；其他数据库不支持时直接跳过。
             jdbcTemplate.execute("SET LOCAL lock_timeout = '" + timeout + "ms'");
         } catch (Throwable ignored) {
             // Some non-PostgreSQL databases do not support SET LOCAL lock_timeout.
