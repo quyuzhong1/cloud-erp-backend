@@ -437,6 +437,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         AfterSalePackEntity afterSalePackEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后装箱单数据"));
         AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
         data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
+        data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
+        data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
+        data.setPackStatusName(AfterSalePackStatusEnum.getByName(data.getPackStatus()));
+        data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
         // 查询采购退货信息
         PoReturnEntity poReturnEntity = poReturnService.getById(data.getSourceId());
         if (ObjectUtil.isNotEmpty(poReturnEntity)) {
@@ -493,7 +497,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 属性赋值
         for (AfterSalePackDTO.ListDTO data : list) {
             data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
-            data.setIsUseName(Boolean.TRUE.equals(data.getIsUse()) ? "已使用" : "未使用");
+            data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
             data.setIsDifferenceName(BooleanEnum.getByCode(data.getIsDifference()));
             data.setPackStatusName(AfterSalePackStatusEnum.getByName(data.getPackStatus()));
             data.setIsMoveWarehouseName(BooleanEnum.getByCode(data.getIsMoveWarehouse()));
