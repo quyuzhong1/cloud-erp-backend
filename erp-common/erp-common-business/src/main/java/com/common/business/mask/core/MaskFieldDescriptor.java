@@ -53,12 +53,12 @@ public final class MaskFieldDescriptor {
     private final List<MaskProtectBinding> protectParamBindings;
 
     /**
-     * 当前对象中用于定位记录主键的字段名。
+     * 读侧对象记录 ID 字段名，保留用于配置兼容。
      */
     private final String protectRecordIdField;
 
     /**
-     * 当前对象中用于校验数据版本或更新时间的字段名。
+     * 读侧对象版本 / 更新时间字段名，保留用于配置兼容。
      */
     private final String protectVersionField;
 
@@ -88,12 +88,12 @@ public final class MaskFieldDescriptor {
     private final String protectDeletedColumn;
 
     /**
-     * 回显保护 Redis TTL（秒）。
+     * 保留兼容字段；当前 DB 当前值恢复流程不使用。
      */
     private final Integer protectTtlSeconds;
 
     /**
-     * 识别提交值是否为脱敏占位的正则。
+     * 保留兼容字段；当前写保护不再按提交值是否像脱敏值来决定是否保护。
      */
     private final String protectMaskedValueRegex;
 

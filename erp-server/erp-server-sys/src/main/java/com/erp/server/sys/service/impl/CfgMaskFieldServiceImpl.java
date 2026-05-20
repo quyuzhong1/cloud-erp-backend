@@ -309,9 +309,6 @@ public class CfgMaskFieldServiceImpl
         if (dto == null) {
             throw new ServiceException("回显保护配置不能为空");
         }
-        if (dto.getProtectTtlSeconds() != null && dto.getProtectTtlSeconds() <= 0) {
-            throw new ServiceException("回显保护 Redis TTL 必须大于 0 秒");
-        }
         if (parseProtectMode(dto.getProtectMode()) == null) {
             throw new ServiceException("非法回显保护模式：" + dto.getProtectMode());
         }
@@ -340,7 +337,7 @@ public class CfgMaskFieldServiceImpl
         if (StringUtils.isNotBlank(dto.getProtectMaskedValueRegex())) {
             String reason = RegexSafetyGuard.checkAndCompile(dto.getProtectMaskedValueRegex());
             if (reason != null) {
-                throw new ServiceException("脱敏值识别正则不安全：" + reason);
+                throw new ServiceException("回显保护兼容正则不安全：" + reason);
             }
         }
         List<MaskProtectBinding> bindings = normalizeProtectBindings(toProtectBindings(dto.getProtectParamBindings()),

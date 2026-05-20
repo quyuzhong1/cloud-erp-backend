@@ -8,12 +8,17 @@ package com.common.business.mask.protect;
 public enum MaskProtectMode {
 
     /**
-     * 确认提交值是本次查询返回的脱敏值时，从 Redis 恢复原值后继续走原业务保存流程。
+     * 无字段权限时，锁读数据库当前值并覆盖入参字段后继续走原业务保存流程。
      */
     RESTORE_ORIGINAL,
 
     /**
-     * 确认提交值是脱敏值时直接拒绝保存。
+     * 无字段权限时，把保存 DTO 字段置为 null 后继续走原业务保存流程。
+     */
+    SET_NULL,
+
+    /**
+     * 无字段权限时直接拒绝保存。
      */
     REJECT
 }

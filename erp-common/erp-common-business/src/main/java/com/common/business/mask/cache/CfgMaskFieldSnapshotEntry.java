@@ -54,7 +54,7 @@ public class CfgMaskFieldSnapshotEntry {
     private String protectParamFieldName;
 
     /**
-     * 当前对象中用于定位记录主键的字段名，默认 id。
+     * 读侧 VO 记录 ID 字段名，保留用于配置兼容；写保护恢复以保存入参绑定的 recordId 为准。
      */
     private String protectRecordIdField;
 
@@ -64,12 +64,12 @@ public class CfgMaskFieldSnapshotEntry {
     private String protectParamRecordIdField;
 
     /**
-     * 当前对象中用于校验数据版本或更新时间的字段名，推荐 version 或 updateTime。
+     * 读侧 VO 版本 / 更新时间字段名，保留用于配置兼容。
      */
     private String protectVersionField;
 
     /**
-     * 保存接口入参 DTO 中用于校验数据版本或更新时间的字段名，默认与 protectVersionField 一致。
+     * 保存接口入参 DTO 版本 / 更新时间字段名，保留用于配置兼容。
      */
     private String protectParamVersionField;
 
@@ -104,12 +104,12 @@ public class CfgMaskFieldSnapshotEntry {
     private List<MaskProtectBinding> protectParamBindings = new ArrayList<>();
 
     /**
-     * 回显保护 Redis TTL（秒）。
+     * 保留兼容字段；当前 DB 当前值恢复流程不使用。
      */
     private Integer protectTtlSeconds;
 
     /**
-     * 识别提交值是否为脱敏占位的正则，空则使用默认识别规则。
+     * 保留兼容字段；当前写保护不再按提交值是否像脱敏值来决定是否保护。
      */
     private String protectMaskedValueRegex;
 

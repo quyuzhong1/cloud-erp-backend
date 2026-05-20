@@ -154,7 +154,7 @@ public class MaskProtectFlowTest {
     }
 
     @Test
-    public void realNewValueShouldNotRestoreRedisOriginal() {
+    public void realNewValueShouldRestoreOriginalWhenNoPermission() {
         SampleViewDTO view = new SampleViewDTO("1", 1, "101.77", "other");
         tokenService.save(view, descriptor(SampleViewDTO.class, "amount",
                 SampleUpdateDTO.class, "amount", true, "id", "version"), view.amount, user);
@@ -163,7 +163,26 @@ public class MaskProtectFlowTest {
 
         processor.process(new Object[]{dto});
 
-        assertEquals("200.00", dto.amount);
+        assertEquals("101.77", dto.amount);
+    }
+
+    @Test
+    public void setNullModeShouldClearFieldWhenNoPermission() {
+        CfgMaskFieldSnapshotEntry entry = entry("amount");
+        entry.setProtectMode(MaskProtectMode.SET_NULL);
+        SampleUpdateDTO dto = new SampleUpdateDTO("1", 1, "200.00", "changed");
+
+        processor(entry).process(new Object[]{dto});
+
+        assertEquals(null, dto.amount);
+    }
+
+    @Test(expected = MaskProtectException.class)
+    public void rejectModeShouldRejectWhenNoPermission() {
+        CfgMaskFieldSnapshotEntry entry = entry("amount");
+        entry.setProtectMode(MaskProtectMode.REJECT);
+
+        processor(entry).process(new Object[]{new SampleUpdateDTO("1", 1, "200.00", "changed")});
     }
 
     @Test(expected = MaskProtectException.class)

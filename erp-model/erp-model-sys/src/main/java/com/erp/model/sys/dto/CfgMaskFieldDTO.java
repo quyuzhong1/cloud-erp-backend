@@ -58,7 +58,7 @@ public class CfgMaskFieldDTO implements Serializable {
          */
         private String protectParamFieldName;
         /**
-         * 记录 ID 字段名，默认 id。
+         * 读侧 VO 记录 ID 字段名，保留用于配置兼容。
          */
         private String protectRecordIdField = "id";
         /**
@@ -66,11 +66,11 @@ public class CfgMaskFieldDTO implements Serializable {
          */
         private String protectParamRecordIdField;
         /**
-         * 版本 / 更新时间字段名，推荐 version 或 updateTime。
+         * 读侧 VO 版本 / 更新时间字段名，保留用于配置兼容。
          */
         private String protectVersionField;
         /**
-         * 保存接口入参 DTO 版本 / 更新时间字段名，默认与 protectVersionField 一致。
+         * 保存接口入参 DTO 版本 / 更新时间字段名，保留用于配置兼容。
          */
         private String protectParamVersionField;
         /**
@@ -98,15 +98,15 @@ public class CfgMaskFieldDTO implements Serializable {
          */
         private List<ProtectParamBindingDTO> protectParamBindings = new ArrayList<>();
         /**
-         * 回显保护 Redis TTL（秒）。
+         * 保留兼容字段；当前 DB 当前值恢复流程不使用。
          */
         private Integer protectTtlSeconds = 300;
         /**
-         * 识别提交值是否为脱敏占位的正则，空则使用默认识别规则。
+         * 保留兼容字段；当前写保护不再按提交值是否像脱敏值来决定是否保护。
          */
         private String protectMaskedValueRegex;
         /**
-         * 回显保护模式：RESTORE_ORIGINAL / REJECT。
+         * 回显保护模式：RESTORE_ORIGINAL / SET_NULL / REJECT。
          */
         private String protectMode = "RESTORE_ORIGINAL";
         private Boolean disabled = Boolean.FALSE;

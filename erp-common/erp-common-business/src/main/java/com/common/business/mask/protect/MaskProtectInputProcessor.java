@@ -57,34 +57,20 @@ public class MaskProtectInputProcessor {
     private MaskPermissionResolver permissionResolver;
 
     @Autowired(required = false)
-    private MaskProtectTokenService tokenService;
-
-    @Autowired(required = false)
     private MaskProtectCurrentValueReader currentValueReader;
-
-    @Autowired
-    private MaskedValueDetector maskedValueDetector;
 
     public MaskProtectInputProcessor() {
     }
 
     MaskProtectInputProcessor(CfgMaskFieldLocalCache configCache, MaskPermissionResolver permissionResolver,
-                              MaskProtectTokenService tokenService, MaskedValueDetector maskedValueDetector) {
-        this(configCache, permissionResolver, tokenService, maskedValueDetector, null);
-    }
-
-    MaskProtectInputProcessor(CfgMaskFieldLocalCache configCache, MaskPermissionResolver permissionResolver,
-                              MaskProtectTokenService tokenService, MaskedValueDetector maskedValueDetector,
                               MaskProtectCurrentValueReader currentValueReader) {
         this.configCache = configCache;
         this.permissionResolver = permissionResolver;
-        this.tokenService = tokenService;
-        this.maskedValueDetector = maskedValueDetector;
         this.currentValueReader = currentValueReader;
     }
 
     public List<FieldRestorePlan> collect(Object[] args) {
-        if (args == null || args.length == 0 || configCache == null || tokenService == null) {
+        if (args == null || args.length == 0 || configCache == null) {
             return Collections.emptyList();
         }
         LoginUser user = UserContext.getLoginUser();
@@ -157,16 +143,18 @@ public class MaskProtectInputProcessor {
                 if (current == null) {
                     throw new MaskProtectException();
                 }
-                MaskProtectContext context = plan.getContext();
-                if (Boolean.TRUE.equals(context.getOriginalNull())) {
-                    if (!current.isNullValue()) {
-                        throw new MaskProtectException();
-                    }
-                } else if (current.isNullValue()
-                        || !StringUtils.equals(current.getValue(), context.getOriginalValue())) {
+                try {
+                    plan.setValue(current.isNullValue()
+                            ? null : MaskProtectReflectionUtils.convertString(current.getValue(), plan.getFieldType()));
+                } catch (Throwable e) {
+                    log.warn("mask protect db current value convert failed, class={}, field={}, msg={}",
+                            plan.getTargetClassName(), plan.getFieldName(), e.getMessage());
                     throw new MaskProtectException();
                 }
             }
+        }
+        for (FieldRestorePlan plan : plans) {
+            plan.validateAssignableValue();
         }
     }
 
@@ -243,15 +231,26 @@ public class MaskProtectInputProcessor {
             if (hasPlainPermission(user, permissionSet, entry.getPermission())) {
                 continue;
             }
-            if (!maskedValueDetector.isMaskedValue(value, entry)) {
-                continue;
+            MaskProtectMode protectMode = entry.getProtectMode() == null
+                    ? MaskProtectMode.REJECT : entry.getProtectMode();
+            if (protectMode == MaskProtectMode.REJECT) {
+                log.debug("mask protect reject update, class={}, field={}",
+                        pojo.getClass().getName(), field.getName());
+                throw new MaskProtectException();
             }
-            if (entry.getProtectMode() == MaskProtectMode.REJECT) {
+            if (protectMode == MaskProtectMode.SET_NULL) {
+                plans.add(new FieldRestorePlan(pojo, field, null, entry,
+                        "", MaskProtectVerifyMode.REJECT));
+                return;
+            }
+            if (protectMode != MaskProtectMode.RESTORE_ORIGINAL) {
                 throw new MaskProtectException();
             }
             MaskProtectVerifyMode verifyMode = entry.getProtectVerifyMode() == null
                     ? MaskProtectVerifyMode.DB_VALUE_COMPARE : entry.getProtectVerifyMode();
-            if (verifyMode == MaskProtectVerifyMode.REJECT) {
+            if (verifyMode != MaskProtectVerifyMode.DB_VALUE_COMPARE) {
+                log.debug("mask protect unsupported verify mode without redis, mode={}, class={}, field={}",
+                        verifyMode, pojo.getClass().getName(), field.getName());
                 throw new MaskProtectException();
             }
             MaskProtectBinding binding = configCache.findProtectBinding(entry, pojo.getClass().getName(),
@@ -260,25 +259,10 @@ public class MaskProtectInputProcessor {
                 throw new MaskProtectException();
             }
             String recordId = stringField(pojo, binding.getParamRecordIdField());
-            String versionValue = verifyMode == MaskProtectVerifyMode.PARAM_VERSION
-                    ? stringField(pojo, binding.getParamVersionField()) : "";
-            if (StringUtils.isBlank(recordId)
-                    || (verifyMode == MaskProtectVerifyMode.PARAM_VERSION && StringUtils.isBlank(versionValue))) {
+            if (StringUtils.isBlank(recordId)) {
                 throw new MaskProtectException();
             }
-            MaskProtectContext context = tokenService.loadAndValidate(
-                    entry, binding, recordId, versionValue, user);
-            Object restoreValue;
-            try {
-                restoreValue = Boolean.TRUE.equals(context.getOriginalNull())
-                        ? null : MaskProtectReflectionUtils.convertString(context.getOriginalValue(), field.getType());
-            } catch (Throwable e) {
-                log.warn("mask protect original value convert failed, class={}, field={}, msg={}",
-                        pojo.getClass().getName(), field.getName(), e.getMessage());
-                throw new MaskProtectException();
-            }
-            plans.add(new FieldRestorePlan(pojo, field, restoreValue, entry, binding,
-                    context, recordId, verifyMode));
+            plans.add(new FieldRestorePlan(pojo, field, null, entry, recordId, verifyMode));
             return;
         }
     }
@@ -375,22 +359,17 @@ public class MaskProtectInputProcessor {
     public static class FieldRestorePlan {
         private final Object target;
         private final Field field;
-        private final Object value;
+        private Object value;
         private final CfgMaskFieldSnapshotEntry entry;
-        private final MaskProtectBinding binding;
-        private final MaskProtectContext context;
         private final String recordId;
         private final MaskProtectVerifyMode verifyMode;
 
         private FieldRestorePlan(Object target, Field field, Object value, CfgMaskFieldSnapshotEntry entry,
-                                 MaskProtectBinding binding, MaskProtectContext context, String recordId,
-                                 MaskProtectVerifyMode verifyMode) {
+                                 String recordId, MaskProtectVerifyMode verifyMode) {
             this.target = target;
             this.field = field;
             this.value = value;
             this.entry = entry;
-            this.binding = binding;
-            this.context = context;
             this.recordId = recordId;
             this.verifyMode = verifyMode;
         }
@@ -398,7 +377,17 @@ public class MaskProtectInputProcessor {
         private void apply() {
             try {
                 field.set(target, value);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalAccessException | IllegalArgumentException e) {
+                throw new MaskProtectException();
+            }
+        }
+
+        private void setValue(Object value) {
+            this.value = value;
+        }
+
+        private void validateAssignableValue() {
+            if (value == null && field.getType().isPrimitive()) {
                 throw new MaskProtectException();
             }
         }
@@ -407,8 +396,12 @@ public class MaskProtectInputProcessor {
             return entry;
         }
 
-        private MaskProtectContext getContext() {
-            return context;
+        private Class<?> getFieldType() {
+            return field.getType();
+        }
+
+        private String getTargetClassName() {
+            return target == null ? "" : target.getClass().getName();
         }
 
         private String getRecordId() {
