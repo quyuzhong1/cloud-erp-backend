@@ -17,6 +17,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -28,6 +29,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
@@ -37,10 +39,15 @@ import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.listener.SkuStdCostChangeExcelListener;
 import com.erp.server.plm.listener.SkuStdCostUpdateExcelListener;
@@ -58,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -94,6 +102,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private BomSkuService bomSkuService;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private LogisticsFeign logisticsFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     private static final String CLASSPATH = String.valueOf(SkuStdCostDetailEntity.class);
 
@@ -247,6 +259,102 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException(ApiError.BILL_UPDATE_STATUS_NOT_ALLOWED);
         }
         return updateAndLog(addOrUpdateDTO, old);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean autoFetch(SkuStdCostDTO.AutoFetchDTO dto) {
+        SkuStdCostEntity mainEntity = skuStdCostService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            throw new ServiceException("SKU标准成本主数据不存在");
+        }
+        if (StringUtils.isBlank(mainEntity.getSkuId())) {
+            throw new ServiceException("SKU标准成本主数据未关联SKU");
+        }
+
+        SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(dto.getOrgId());
+        if (ObjectUtil.isEmpty(companyEntity)) {
+            throw new ServiceException("组织不存在");
+        }
+
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(dto.getWarehouseId()));
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException("仓库不存在");
+        }
+
+        List<SkuStdCostDetailEntity> detailList = lambdaQuery()
+                .eq(SkuStdCostDetailEntity::getMainId, mainEntity.getId())
+                .list();
+        SkuStdCostDetailEntity detailEntity = resolveAutoFetchDetail(detailList);
+        InventorySkuCostDTO.SkuCostCNYDTO skuCost = getAutoFetchSkuCost(mainEntity.getSkuId(), dto.getOrgId(), dto.getWarehouseId());
+
+        SkuStdCostDetailEntity oldEntity = new SkuStdCostDetailEntity();
+        BeanUtil.copyProperties(detailEntity, oldEntity, true);
+
+        BigDecimal stdCostPrice = skuCost.getProductCostCNY();
+        detailEntity.setStdCostPrice(stdCostPrice);
+        detailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+        detailEntity.setEffectiveDate(getAutoFetchEffectiveDate(skuCost));
+
+        boolean update = super.updateById(detailEntity);
+        if (!update) {
+            throw new ServiceException("SKU标准成本自动获取保存失败");
+        }
+
+        String msg = CharSequenceUtil.format("SKU[{}]标准成本自动获取", mainEntity.getSkuNo());
+        Boolean logResult = operateLogService.addSysLogByUpdate(oldEntity, detailEntity, CLASSPATH, detailEntity.getId(), mainEntity.getSkuId(), msg);
+        if (!Boolean.TRUE.equals(logResult)) {
+            throw new ServiceException("SKU标准成本自动获取日志记录失败");
+        }
+
+        SkuStdCostDetailServiceImpl bean = ApplicationContextUtils.getBean(SkuStdCostDetailServiceImpl.class);
+        bean.submitEntity(detailEntity, mainEntity);
+        return Boolean.TRUE;
+    }
+
+    SkuStdCostDetailEntity resolveAutoFetchDetail(List<SkuStdCostDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("仅支持待提交且标准成本为空或为0的明细自动获取");
+        }
+        List<SkuStdCostDetailEntity> enableDetailList = detailList.stream()
+                .filter(detail -> Objects.equals(detail.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT))
+                .filter(detail -> detail.getStdCostPrice() == null || BigDecimal.ZERO.compareTo(detail.getStdCostPrice()) == 0)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(enableDetailList)) {
+            throw new ServiceException("仅支持待提交且标准成本为空或为0的明细自动获取");
+        }
+        if (enableDetailList.size() > 1) {
+            throw new ServiceException("存在多条可自动获取的SKU标准成本明细");
+        }
+        return enableDetailList.get(0);
+    }
+
+    private InventorySkuCostDTO.SkuCostCNYDTO getAutoFetchSkuCost(String skuId, String orgId, String warehouseId) {
+        InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO = InventorySkuCostDTO.SkuCostCNYQueryDTO.builder()
+                .skuIds(Collections.singletonList(skuId))
+                .warehouseIds(Collections.singletonList(warehouseId))
+                .orgId(orgId)
+                .build();
+        return resolveAutoFetchSkuCost(logisticsFeign.getSkuCostInCNY(queryDTO));
+    }
+
+    InventorySkuCostDTO.SkuCostCNYDTO resolveAutoFetchSkuCost(List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
+        if (CollectionUtils.isEmpty(skuCostList)) {
+            throw new ServiceException("未找到最新已审核SKU成本");
+        }
+        InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.get(0);
+        if (skuCost.getProductCostCNY() == null || BigDecimal.ZERO.compareTo(skuCost.getProductCostCNY()) >= 0) {
+            throw new ServiceException("最新已审核SKU成本材料成本无效");
+        }
+        if (skuCost.getAllocatedMonth() == null) {
+            throw new ServiceException("最新已审核SKU成本核算月份为空");
+        }
+        return skuCost;
+    }
+
+    LocalDate getAutoFetchEffectiveDate(InventorySkuCostDTO.SkuCostCNYDTO skuCost) {
+        return skuCost.getAllocatedMonth().withDayOfMonth(1);
     }
 
     @Transactional(rollbackFor = Exception.class)
