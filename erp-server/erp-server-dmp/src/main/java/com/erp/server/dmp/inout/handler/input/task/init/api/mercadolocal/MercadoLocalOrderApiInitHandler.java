@@ -36,6 +36,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,7 +90,7 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
         //当前页数
         int pageNo = 0;
 
-        Boolean nexflag = true;
+        boolean nexflag = true;
 
         String platformOrderCreateTime = "";
         String taskExtendJson = dmpInputApiInitRequest.getTaskExtendJson();

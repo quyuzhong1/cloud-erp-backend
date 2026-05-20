@@ -411,7 +411,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             DmpInoutDTO.CreateInputDTO createInputDTO = new DmpInoutDTO.CreateInputDTO();
             createInputDTO.setSystemCode(PlatformDictEnum.TIK_TOK.getCode());
-            createInputDTO.setBillType("fba_shipment");
+            createInputDTO.setBillType("fbt_shipment");
             createInputDTO.setNextLevelId(authId);
             createInputDTO.setTaskType("hotfix");
             Map<String, Object> detailExtendJson = new LinkedHashMap<>();
