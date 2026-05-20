@@ -144,8 +144,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
                                 TransferLogisticsStatusEnum.OUTSTOCK.getCode(),
                                 TransferLogisticsStatusEnum.SIGNED.getCode()))
                 .gt(TransferDeclareDetailEntity::getCreateTime, sixMonthsAgo)
-                .orderByDesc(TransferDeclareDetailEntity::getCreateTime)
-                .last(SqlConstants.LIMIT_50)
+                .orderByDesc(TransferDeclareDetailEntity::getUpdateTime)
                 .list();
     }
 
