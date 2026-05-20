@@ -7,16 +7,15 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.DmpThirdWarehouseInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
-import com.erp.server.dmp.service.DmpThirdWarehouseInfoService;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengInventoryResp;
 import com.sdk.wms.jifeng.service.JiFengService;
@@ -41,9 +40,6 @@ public class JiFengInventoryInitHandler extends DmpInputInitHandler {
 
 	@Resource
 	private JiFengService jiFengService;
-
-	@Resource
-	private DmpThirdWarehouseInfoService dmpThirdWarehouseInfoService;
 
 	@Resource
 	private OverseasProviderFeign overseasProviderFeign;
@@ -73,20 +69,23 @@ public class JiFengInventoryInitHandler extends DmpInputInitHandler {
 		}
 		String id = overseasProviderEntity.getId();
 		//查询服务商仓库
-		List<DmpThirdWarehouseInfoEntity> dmpThirdWarehouseInfoEntityList = dmpThirdWarehouseInfoService.listByAuthId(id);
-		if (CollUtil.isEmpty(dmpThirdWarehouseInfoEntityList)) {
+		List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+				.eq(OverseasProviderWarehouseEntity::getMainId, id)
+				.eq(OverseasProviderWarehouseEntity::getDisabled, false)
+				.list();
+		if (CollUtil.isEmpty(overseasProviderWarehouseEntityList)) {
 			log.warn("{}授权ID下没有仓库信息", id);
 			return Collections.emptyList();
 		}
-		for (DmpThirdWarehouseInfoEntity dmpThirdWarehouseInfoEntity : dmpThirdWarehouseInfoEntityList) {
-			JiFengBaseResp<List<JiFengInventoryResp.RowsDTO>> resp = jiFengService.getInventoryList(overseasProviderEntity.getAuthJson(),dmpThirdWarehouseInfoEntity.getWarehouseCode());
+		for (OverseasProviderWarehouseEntity overseasProviderWarehouseEntity : overseasProviderWarehouseEntityList) {
+			JiFengBaseResp<List<JiFengInventoryResp.RowsDTO>> resp = jiFengService.getInventoryList(overseasProviderEntity.getAuthJson(),overseasProviderWarehouseEntity.getPlatformWarehouseCode());
 			if(resp == null) {
 				return Collections.emptyList();
 			}
 			if(resp.getCode() != 0) {
 				if(resp.getMessage().contains("Invalid ACCESS TOKEN")){
 					overseasProviderEntity = overseasProviderFeign.refreshToken(overseasProviderEntity);
-					resp = jiFengService.getInventoryList(overseasProviderEntity.getAuthJson(),dmpThirdWarehouseInfoEntity.getWarehouseCode());
+					resp = jiFengService.getInventoryList(overseasProviderEntity.getAuthJson(),overseasProviderWarehouseEntity.getPlatformWarehouseCode());
 					if(resp == null) {
 						return Collections.emptyList();
 					}
@@ -94,8 +93,8 @@ public class JiFengInventoryInitHandler extends DmpInputInitHandler {
 						throw new ServiceException("极风获取库存列表失败,code:"+resp.getCode()+",msg:"+resp.getMessage());
 					}
 					resp.getData().forEach(v->{
-						v.setWarehouseCode(dmpThirdWarehouseInfoEntity.getWarehouseCode());
-						v.setWarehouseName(dmpThirdWarehouseInfoEntity.getWarehouseName());
+						v.setWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
+						v.setWarehouseName(overseasProviderWarehouseEntity.getPlatformWarehouseName());
 					});
 					allResult.addAll(resp.getData());
 				}else{
@@ -103,8 +102,8 @@ public class JiFengInventoryInitHandler extends DmpInputInitHandler {
 				}
 			}else{
 				resp.getData().forEach(v->{
-					v.setWarehouseCode(dmpThirdWarehouseInfoEntity.getWarehouseCode());
-					v.setWarehouseName(dmpThirdWarehouseInfoEntity.getWarehouseName());
+					v.setWarehouseCode(overseasProviderWarehouseEntity.getPlatformWarehouseCode());
+					v.setWarehouseName(overseasProviderWarehouseEntity.getPlatformWarehouseName());
 				});
 				allResult.addAll(resp.getData());
 			}
