@@ -1,6 +1,5 @@
 package com.common.business.cache;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -142,7 +141,7 @@ public class LocalCache implements CommandLineRunner{
 				}
 			}
 			
-			if(BusinessCommonConstants.isDynamicEnabled()) {
+			if(BusinessCommonConstants.isArchive()) {
 				try {
 					Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 						String formatDateTime = DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
