@@ -88,14 +88,14 @@ public class MybatisArchiveInterceptor implements Interceptor{
 		}
 		log.debug("归档替换前sql语句{}" , oldSql);
 		String newSql = oldSql;
-		ServiceCodeNameEnum[] values = ServiceCodeNameEnum.values();
-		for(ServiceCodeNameEnum value : values) {
-			if(ServiceCodeNameEnum.DEFAULT != value) {
-				String code = value.getCode();
-				newSql = newSql.replace("erp_" + code + ".", "erp_" + code + "_archive.");
-			}
-		}
 		if(DynamicDataSourceTypeEnum.isDorisByStr(dsKey)) {
+			ServiceCodeNameEnum[] values = ServiceCodeNameEnum.values();
+			for(ServiceCodeNameEnum value : values) {
+				if(ServiceCodeNameEnum.DEFAULT != value) {
+					String code = value.getCode();
+					newSql = newSql.replace("erp_" + code + ".", "erp_" + code + "_archive.");
+				}
+			}
 			newSql = newSql.replace("\"index\"", "`index`");
 			newSql = newSql.replace("\"key\"", "`key`");
 		}
