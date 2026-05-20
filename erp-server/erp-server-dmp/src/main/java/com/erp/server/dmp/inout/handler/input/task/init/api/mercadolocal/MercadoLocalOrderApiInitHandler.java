@@ -1,13 +1,18 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mercadolocal;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.dmp.constant.DmpInputConstant;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -18,6 +23,8 @@ import com.sdk.oms.mercadolocal.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercadolocal.dto.mercadolocal.order.OrderDataDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -34,6 +41,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -50,7 +59,10 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
-
+    	List<DmpInputTaskInitDTO> dealOrderIdQuery = dealOrderIdQuery(dmpInputApiInitRequest);
+    	if(dealOrderIdQuery != null) {
+    		return dealOrderIdQuery;
+    	}
         List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
@@ -80,6 +92,14 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
 
         boolean nexflag = true;
 
+        String platformOrderCreateTime = "";
+        String taskExtendJson = dmpInputApiInitRequest.getTaskExtendJson();
+        if(StringUtils.isNotBlank(taskExtendJson)) {
+        	JSONObject parseObject = JSON.parseObject(taskExtendJson);
+            if(parseObject != null) {
+            	platformOrderCreateTime = parseObject.getString(DmpInputConstant.PLATFORM_ORDER_CREATE_TIME);
+            }
+        }
         while (nexflag) {
             int offset = pageSize * pageNo;
 
@@ -92,10 +112,17 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
             sb.append(pageSize);
             sb.append("&offset=");
             sb.append(offset);
-            sb.append("&order.date_last_updated.from=");
-            sb.append(this.dateToStr(dmpInputApiInitRequest.getStartTime()));
-            sb.append("&order.date_last_updated.to=");
-            sb.append(this.dateToStr(dmpInputApiInitRequest.getEndTime()));
+            if(StringUtils.isNotBlank(platformOrderCreateTime)) {
+            	sb.append("&order.date_created.from=");
+                sb.append(OffsetDateTime.parse(platformOrderCreateTime).plusSeconds(-5));
+                sb.append("&order.date_created.to=");
+                sb.append(OffsetDateTime.parse(platformOrderCreateTime).plusSeconds(5));
+            }else {
+            	sb.append("&order.date_last_updated.from=");
+                sb.append(this.dateToStr(dmpInputApiInitRequest.getStartTime()));
+                sb.append("&order.date_last_updated.to=");
+                sb.append(this.dateToStr(dmpInputApiInitRequest.getEndTime()));
+            }
             sb.append("&order.status=");
             sb.append("cancelled,paid,invalid");
             //入参
@@ -164,4 +191,83 @@ public class MercadoLocalOrderApiInitHandler implements DmpInputApiInitHandler {
 
         return formatted.replace("+00:00", "-00");
     }
+    
+    private List<DmpInputTaskInitDTO> dealOrderIdQuery(DmpInputApiInitRequest dmpInputApiInitRequest) {
+    	String extendJson = dmpInputApiInitRequest.getTaskExtendJson();
+    	if(StringUtils.isBlank(extendJson)) {
+            return null;
+        }
+        JSONObject parseObject = JSON.parseObject(extendJson);
+        if(null == parseObject) {
+            return null;
+        }
+        JSONArray jsonArray = parseObject.getJSONArray(DmpInputConstant.ORDER_ID_LIST);
+        if (CollectionUtils.isEmpty(jsonArray)){
+            return null;
+        }
+     	List<String> orderIdList = jsonArray.stream()
+            .map(Object::toString)
+            .collect(Collectors.toList());
+     	parseObject.remove(DmpInputConstant.ORDER_ID_LIST);
+     	
+     	String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
+
+        MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(nextLevelId);
+        if (ObjectUtil.isEmpty(shopInfoDTO)) {
+            throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
+        }
+     	
+        //入参
+        HashMap<String, Object> params = new HashMap<>(2);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
+        
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+        for(String orderId : orderIdList) {
+        	StringBuffer sb = new StringBuffer();
+            sb.append(MercadoConstant.URL);
+            sb.append("/orders/");
+            sb.append(orderId);
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            String jsonStr = JSONUtil.toJsonStr(apiResult.getData());
+            JSONObject resultJson = JSON.parseObject(jsonStr);
+            String date_created = resultJson.getString("date_created");
+            if(StringUtils.isNotBlank(date_created)) {
+            	parseObject.put(DmpInputConstant.PLATFORM_ORDER_CREATE_TIME, date_created);
+            	dmpInputApiInitRequest.setTaskExtendJson(parseObject.toJSONString());
+            	dmpInputTaskInitDTOList.addAll(this.getApiData(dmpInputApiInitRequest));
+            }else {
+            	log.warn("{}未查询到数据，返回报文：{}" , orderId , jsonStr);
+            }
+        }
+        
+     	return dmpInputTaskInitDTOList;
+    }
+    
+    public static void main(String[] args) {
+    	String orderId = "2000012005512202";
+    	Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer APP_USR-8670168511142898-022801-35a8c4c6a12f145dadcee53dc33cbafd-1959267524");
+    	ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult("https://api.mercadolibre.com/orders/" + orderId, null, null, headerMap, RequestMethod.GET);
+    	String jsonStr = JSONUtil.toJsonStr(apiResult.getData());
+        JSONObject resultJson = JSON.parseObject(jsonStr);
+        String date_created = resultJson.getString("date_created");
+        if(StringUtils.isNotBlank(date_created)) {
+        	LocalDateTime localDateTime = OffsetDateTime.parse(date_created).toLocalDateTime();
+        	StringBuffer sb = new StringBuffer();
+            sb.append("https://api.mercadolibre.com/orders/search?seller=1959267524&limit=50");
+            sb.append("&order.date_created.from=");
+            sb.append(OffsetDateTime.parse(date_created).plusSeconds(-5));
+            sb.append("&order.date_created.to=");
+            sb.append(OffsetDateTime.parse(date_created).plusSeconds(5));
+            sb.append("&order.status=");
+            sb.append("cancelled,paid,invalid");
+        	apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), null, null, headerMap, RequestMethod.GET);
+        	System.out.println(JSONUtil.toJsonStr(apiResult.getData()));
+        }else {
+        	log.warn("{}返回报文：{}" , orderId , jsonStr);
+        }
+	}
 }
