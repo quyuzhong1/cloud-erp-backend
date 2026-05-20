@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
 import com.erp.model.wms.entity.AfterSalePackEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
@@ -65,6 +66,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 修改
@@ -171,6 +175,15 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     }
 
     private Map<String, WarehouseLocationEntity> getWarehouseLocationMap(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
+        // 查询东莞售后仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getName, "东莞售后仓库")
+                .eq(WarehouseEntity::getApproveStatus, "approve")
+                .eq(WarehouseEntity::getDisabled, false)
+                .one();
+        if (warehouseEntity == null) {
+            throw new ServiceException("东莞售后仓库不存在或者被禁用");
+        }
         List<String> warehouseLocationCodes = new ArrayList<>();
         warehouseLocationCodes.add(addOrUpdateDTO.getOutWarehouseLocationCode());
         if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
@@ -179,6 +192,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
                 .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
                 .list();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
         if (warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()) == null) {

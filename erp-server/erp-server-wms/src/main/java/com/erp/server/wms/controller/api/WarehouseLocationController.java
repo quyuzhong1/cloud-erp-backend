@@ -1114,4 +1114,24 @@ public class WarehouseLocationController extends BaseController {
         warehouseLocationService.downloadTemplate(response);
     }
 
+    /**
+     * 查询东莞售后仓库下的所有仓位列表
+     *
+     * @return List<WarehouseLocationDTO.LocationSelectDTO>
+     */
+    @GetMapping(value = "/listByAfterSalesWarehouse")
+    public ApiResult<List<WarehouseLocationDTO.ViewDto>> listByAfterSalesWarehouse(@RequestParam("name") String name) {
+        return success(warehouseLocationService.listByAfterSalesWarehouse(name));
+    }
+
+    /**
+     * 根据仓位编号查询仓位信息
+     *
+     * @param code 仓库编码
+     * @return WarehouseLocationEntity
+     */
+    @GetMapping(value = "/getByCode")
+    public ApiResult<WarehouseLocationEntity> getByCode(@RequestParam("code") String code) {
+        return success(warehouseLocationService.getByCode(code));
+    }
 }
