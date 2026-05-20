@@ -744,19 +744,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .list();
 
         //非货到付款
-        List<String> soB2cIdList = soB2cList.stream()
+        List<SoB2cEntity> toDeleteList = soB2cList.stream()
                 .filter(entity -> !Boolean.TRUE.equals(soB2cCoreService.listPayMethodSetting(entity)))
-                .map(SoB2cEntity::getId)
                 .collect(Collectors.toList());
 
-        if (CollUtil.isNotEmpty(soB2cIdList)) {
-            soB2cDetailService.removeByIds(soB2cIdList);
-
-            this.removeByIds(soB2cIdList);
-
-            log.info("成功删除{}条b2c销售订单，ID为: [{}]", soB2cIdList.size(),
-                    soB2cIdList.stream().limit(10).collect(Collectors.joining(", ")));
+        if (CollUtil.isEmpty(toDeleteList)) {
+            return;
         }
+
+        List<String> soB2cIdList = toDeleteList.stream()
+                .map(SoB2cEntity::getId)
+                .collect(Collectors.toList());
+        String codes = toDeleteList.stream()
+                .map(SoB2cEntity::getCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.joining(","));
+
+        this.deleteById(soB2cIdList, codes);
+
+        log.info("成功删除{}条b2c销售订单，ID为: [{}]", soB2cIdList.size(),
+                soB2cIdList.stream().limit(10).collect(Collectors.joining(", ")));
     }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
