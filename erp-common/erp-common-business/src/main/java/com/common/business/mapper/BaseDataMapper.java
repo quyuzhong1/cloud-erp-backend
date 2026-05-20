@@ -35,6 +35,9 @@ public interface BaseDataMapper {
 	 List<Map<String, Object>> queryValueByType(@Param("tableName") String tableName, @Param("queryFieldName") String queryFieldName,
 			 @Param("returnFieldName") String returnFieldName , @Param("queryTypeField") String queryTypeField);
 
+	 @Select("select * from ${tableName} where ${extendQuerySql}")
+	 List<Map<String, Object>> queryDbBySql(@Param("tableName") String tableName, @Param("extendQuerySql") String extendQuerySql);
+	 
 	 /**
 	  * 按时间字段批量删除过期数据，返回实际删除行数
 	  *
