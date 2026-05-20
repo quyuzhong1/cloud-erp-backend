@@ -681,7 +681,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Override
     public void getOrderByCodeJob() {
         List<TransferDeclareDetailEntity> detailEntities = transferDeclareDetailService.listWaitSyncTransferStatus();
-        XxlJobHelper.log("====查询待同步中转状态的订单信息，data.size={}====", JSONUtil.toJsonStr(detailEntities.size()));
+        XxlJobHelper.log("====查询待同步中转状态的订单信息，data.size={}====", detailEntities.size());
         if (CollUtil.isEmpty(detailEntities)){
             return;
         }
