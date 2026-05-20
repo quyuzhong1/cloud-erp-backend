@@ -4,13 +4,15 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
@@ -24,9 +26,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,6 +83,13 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     @Getter
     private List<String> headList;
+    private ExcelWriter matchExcelWriter;
+    private WriteSheet matchWriteSheet;
+    private File matchResultFile;
+    private boolean hasMatchResult;
+    private int matchSuccessCount;
+    private int matchFailCount;
+    private String matchResultUrl = "";
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
@@ -139,7 +151,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             List<JSONObject> errorList2 = new ArrayList<>();
             // 批量处理，由 Service 内部负责事务控制
             List<ImportHistoryRecordDTO.ImportConfirmDTO> importConfirmDTOS = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
-            matchList.addAll(errorList2);
+            writeMatchResult(errorList2);
             confirmPairList.addAll(importConfirmDTOS);
         } catch (Exception e) {
             log.error("批量导入处理异常批次，条数：{}", successList.size(), e);
@@ -159,7 +171,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 if (matchIdxStr != null) jsonObject.set(matchIdxStr, MATCH_FAIL);
                 if (errorIdxStr != null) jsonObject.set(errorIdxStr, finalMsg);
             });
-            matchList.addAll(new ArrayList<>(successList));
+            writeMatchResult(successList);
         }
     }
 
@@ -171,14 +183,19 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        if (!successList.isEmpty()) {
-            processBatch();
-            successList.clear();
+        try {
+            if (!successList.isEmpty()) {
+                processBatch();
+                successList.clear();
+            }
+            finishMatchExcelWriter();
+            //对所有确认数据进行批量确认
+            importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
+            //添加匹配结果
+            addMatchExcelResult();
+        } finally {
+            finishMatchExcelWriter();
         }
-        //对所有确认数据进行批量确认
-        importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
-        //添加匹配结果
-        addMatchExcelResult();
     }
     /**
      * 添加匹配结果
@@ -197,13 +214,12 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         //清洗结果
         String url = "";
         String fileName = importDTO.getFileName();
-        if (CollectionUtils.isNotEmpty(matchList) && headList != null) {
-            //matchList = matchList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-            File file = ExcelUtil.customExportUtil(costImportEntity.getSheetName(), matchList, headList);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+        if (hasMatchResult && matchResultFile != null) {
+            if (!matchResultFile.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(matchResultFile, fileName);
             }
         }
+        matchResultUrl = url;
         addOrUpdateDTO.setSheetName(costImportEntity.getSheetName());
         addOrUpdateDTO.setCleanFileUrl(url);
         addOrUpdateDTO.setCleanFileName(fileName);
@@ -216,10 +232,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         addOrUpdateDTO.setOperationUserId(importDTO.getUserId());
         addOrUpdateDTO.setImportCount(count);
 
-        //匹配结果序号
-        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
-        long errorCount = matchList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) obj.get(matchIndex.toString()))).count();
-        addOrUpdateDTO.setMatchCount((int)errorCount);
+        addOrUpdateDTO.setMatchCount(matchSuccessCount);
         importHistoryRecordService.addOrUpdate(addOrUpdateDTO);
     }
 
@@ -233,6 +246,56 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         map.put(size + 1,ERROR_MSG);
         this.headMap = map;
         this.headList = headList;
+    }
+
+    private void writeMatchResult(List<JSONObject> batchMatchList) {
+        if (CollectionUtils.isEmpty(batchMatchList) || headList == null) {
+            return;
+        }
+        initMatchExcelWriter();
+        List<List<String>> rows = new ArrayList<>(batchMatchList.size());
+        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+        String matchIndexStr = matchIndex == null ? null : matchIndex.toString();
+        for (JSONObject map : batchMatchList) {
+            List<String> row = new ArrayList<>(headList.size());
+            for (int j = 0; j < headList.size(); j++) {
+                Object value = map.get(String.valueOf(j));
+                row.add(ObjectUtil.isEmpty(value) ? "" : value.toString());
+            }
+            rows.add(row);
+            if (matchIndexStr != null && CharSequenceUtil.equals(MATCH_SUCCESS, (CharSequence) map.get(matchIndexStr))) {
+                matchSuccessCount++;
+            } else if (matchIndexStr != null && CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) map.get(matchIndexStr))) {
+                matchFailCount++;
+            }
+        }
+        matchExcelWriter.write(rows, matchWriteSheet);
+        hasMatchResult = true;
+    }
+
+    private void initMatchExcelWriter() {
+        if (matchExcelWriter != null) {
+            return;
+        }
+        try {
+            matchResultFile = File.createTempFile("import-history-record-", ".xlsx", FileUtils.getTempDirectory());
+        } catch (IOException e) {
+            throw new ServiceException("创建导入结果临时文件失败");
+        }
+        List<List<String>> heads = headList.stream().map(Arrays::asList).collect(Collectors.toList());
+        matchExcelWriter = EasyExcel.write(matchResultFile)
+                .head(heads)
+                .inMemory(false)
+                .build();
+        matchWriteSheet = EasyExcel.writerSheet(costImportEntity.getSheetName()).build();
+    }
+
+    private void finishMatchExcelWriter() {
+        if (matchExcelWriter == null) {
+            return;
+        }
+        matchExcelWriter.finish();
+        matchExcelWriter = null;
     }
 
     private void updateTask(Integer count){
