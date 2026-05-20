@@ -13,7 +13,6 @@ import com.common.business.mask.cache.CfgMaskFieldSnapshotEntry;
 import com.common.business.mask.handler.RegexSafetyGuard;
 import com.common.business.mask.protect.MaskProtectBinding;
 import com.common.business.mask.protect.MaskProtectMode;
-import com.common.business.mask.protect.MaskProtectVerifyMode;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
@@ -243,30 +242,14 @@ public class CfgMaskFieldServiceImpl
         snap.setSort(entity.getSort() == null ? 0 : entity.getSort());
         snap.setHideWhenMasked(Boolean.TRUE.equals(entity.getHideWhenMasked()));
         snap.setValueProtectEnabled(Boolean.TRUE.equals(entity.getValueProtectEnabled()));
-        snap.setProtectParamClassPath(entity.getProtectParamClassPath() == null
-                ? "" : entity.getProtectParamClassPath());
-        snap.setProtectParamFieldName(StringUtils.isBlank(entity.getProtectParamFieldName())
-                ? entity.getFieldName() : entity.getProtectParamFieldName());
-        snap.setProtectRecordIdField(StringUtils.isBlank(entity.getProtectRecordIdField())
-                ? "id" : entity.getProtectRecordIdField());
-        snap.setProtectParamRecordIdField(StringUtils.isBlank(entity.getProtectParamRecordIdField())
-                ? snap.getProtectRecordIdField() : entity.getProtectParamRecordIdField());
-        snap.setProtectVersionField(StringUtils.isBlank(entity.getProtectVersionField())
-                ? "" : entity.getProtectVersionField());
-        snap.setProtectParamVersionField(StringUtils.isBlank(entity.getProtectParamVersionField())
-                ? snap.getProtectVersionField() : entity.getProtectParamVersionField());
-        snap.setProtectVerifyMode(parseProtectVerifyMode(entity.getProtectVerifyMode()));
         snap.setProtectTableName(entity.getProtectTableName() == null ? "" : entity.getProtectTableName());
         snap.setProtectRecordIdColumn(StringUtils.isBlank(entity.getProtectRecordIdColumn())
                 ? "id" : entity.getProtectRecordIdColumn());
         snap.setProtectValueColumn(entity.getProtectValueColumn() == null ? "" : entity.getProtectValueColumn());
         snap.setProtectDeletedColumn(entity.getProtectDeletedColumn() == null
                 ? "" : entity.getProtectDeletedColumn());
-        snap.setProtectTtlSeconds(entity.getProtectTtlSeconds() == null ? 300 : entity.getProtectTtlSeconds());
-        snap.setProtectMaskedValueRegex(entity.getProtectMaskedValueRegex() == null
-                ? "" : entity.getProtectMaskedValueRegex());
         snap.setProtectMode(parseProtectMode(entity.getProtectMode()));
-        snap.setProtectParamBindings(resolveProtectBindings(entity, snap));
+        snap.setProtectParamBindings(resolveProtectBindings(entity));
         return snap;
     }
 
@@ -312,20 +295,13 @@ public class CfgMaskFieldServiceImpl
         if (parseProtectMode(dto.getProtectMode()) == null) {
             throw new ServiceException("非法回显保护模式：" + dto.getProtectMode());
         }
-        MaskProtectVerifyMode verifyMode = parseProtectVerifyMode(dto.getProtectVerifyMode());
-        if (verifyMode == null) {
-            throw new ServiceException("非法回显保护校验模式：" + dto.getProtectVerifyMode());
-        }
-        if (verifyMode == MaskProtectVerifyMode.PARAM_VERSION
-                && StringUtils.isBlank(dto.getProtectVersionField())) {
-            throw new ServiceException("PARAM_VERSION 模式下 protectVersionField 不能为空");
-        }
-        if (verifyMode == MaskProtectVerifyMode.DB_VALUE_COMPARE) {
+        MaskProtectMode protectMode = parseProtectMode(dto.getProtectMode());
+        if (protectMode == MaskProtectMode.RESTORE_ORIGINAL) {
             if (StringUtils.isAnyBlank(dto.getProtectTableName(), dto.getProtectValueColumn())) {
-                throw new ServiceException("DB_VALUE_COMPARE 模式下 protectTableName/protectValueColumn 不能为空");
+                throw new ServiceException("RESTORE_ORIGINAL 模式下 protectTableName/protectValueColumn 不能为空");
             }
             if (StringUtils.isBlank(dto.getProtectRecordIdColumn())) {
-                throw new ServiceException("DB_VALUE_COMPARE 模式下 protectRecordIdColumn 不能为空");
+                throw new ServiceException("RESTORE_ORIGINAL 模式下 protectRecordIdColumn 不能为空");
             }
             validateTableName(dto.getProtectTableName(), "protectTableName");
             validateColumnName(dto.getProtectRecordIdColumn(), "protectRecordIdColumn");
@@ -334,16 +310,8 @@ public class CfgMaskFieldServiceImpl
                 validateColumnName(dto.getProtectDeletedColumn(), "protectDeletedColumn");
             }
         }
-        if (StringUtils.isNotBlank(dto.getProtectMaskedValueRegex())) {
-            String reason = RegexSafetyGuard.checkAndCompile(dto.getProtectMaskedValueRegex());
-            if (reason != null) {
-                throw new ServiceException("回显保护兼容正则不安全：" + reason);
-            }
-        }
-        List<MaskProtectBinding> bindings = normalizeProtectBindings(toProtectBindings(dto.getProtectParamBindings()),
-                dto.getProtectParamClassPath(), dto.getProtectParamFieldName(), dto.getFieldName(),
-                dto.getProtectRecordIdField(), dto.getProtectParamRecordIdField(),
-                dto.getProtectVersionField(), dto.getProtectParamVersionField());
+        List<MaskProtectBinding> bindings = normalizeProtectBindings(
+                toProtectBindings(dto.getProtectParamBindings()), dto.getFieldName());
         if (bindings.isEmpty()) {
             throw new ServiceException("开启回显保护时至少配置一个保存入参 DTO 绑定");
         }
@@ -352,32 +320,6 @@ public class CfgMaskFieldServiceImpl
     private void fillProtectDefaults(CfgMaskFieldEntity entity) {
         if (entity.getValueProtectEnabled() == null) {
             entity.setValueProtectEnabled(Boolean.FALSE);
-        }
-        if (entity.getProtectParamClassPath() == null) {
-            entity.setProtectParamClassPath("");
-        }
-        if (entity.getProtectParamFieldName() == null) {
-            entity.setProtectParamFieldName("");
-        }
-        if (Boolean.TRUE.equals(entity.getValueProtectEnabled())
-                && StringUtils.isNotBlank(entity.getProtectParamClassPath())
-                && StringUtils.isBlank(entity.getProtectParamFieldName())) {
-            entity.setProtectParamFieldName(entity.getFieldName());
-        }
-        if (StringUtils.isBlank(entity.getProtectRecordIdField())) {
-            entity.setProtectRecordIdField("id");
-        }
-        if (StringUtils.isBlank(entity.getProtectParamRecordIdField())) {
-            entity.setProtectParamRecordIdField(entity.getProtectRecordIdField());
-        }
-        if (entity.getProtectVersionField() == null) {
-            entity.setProtectVersionField("");
-        }
-        if (entity.getProtectParamVersionField() == null) {
-            entity.setProtectParamVersionField(entity.getProtectVersionField());
-        }
-        if (StringUtils.isBlank(entity.getProtectVerifyMode())) {
-            entity.setProtectVerifyMode(MaskProtectVerifyMode.DB_VALUE_COMPARE.name());
         }
         if (StringUtils.isBlank(entity.getProtectRecordIdColumn())) {
             entity.setProtectRecordIdColumn("id");
@@ -391,12 +333,6 @@ public class CfgMaskFieldServiceImpl
         if (entity.getProtectDeletedColumn() == null) {
             entity.setProtectDeletedColumn("is_deleted");
         }
-        if (entity.getProtectTtlSeconds() == null) {
-            entity.setProtectTtlSeconds(300);
-        }
-        if (entity.getProtectMaskedValueRegex() == null) {
-            entity.setProtectMaskedValueRegex("");
-        }
         if (StringUtils.isBlank(entity.getProtectMode())) {
             entity.setProtectMode(MaskProtectMode.RESTORE_ORIGINAL.name());
         }
@@ -407,8 +343,7 @@ public class CfgMaskFieldServiceImpl
         }
     }
 
-    private List<MaskProtectBinding> resolveProtectBindings(CfgMaskFieldEntity entity,
-                                                            CfgMaskFieldSnapshotEntry snap) {
+    private List<MaskProtectBinding> resolveProtectBindings(CfgMaskFieldEntity entity) {
         List<MaskProtectBinding> bindings = Collections.emptyList();
         if (StringUtils.isNotBlank(entity.getProtectParamBindings())) {
             try {
@@ -419,50 +354,25 @@ public class CfgMaskFieldServiceImpl
                 bindings = Collections.emptyList();
             }
         }
-        return normalizeProtectBindings(bindings, entity.getProtectParamClassPath(),
-                snap.getProtectParamFieldName(), snap.getFieldName(),
-                snap.getProtectRecordIdField(), snap.getProtectParamRecordIdField(),
-                snap.getProtectVersionField(), snap.getProtectParamVersionField());
+        return normalizeProtectBindings(bindings, entity.getFieldName());
     }
 
     private List<MaskProtectBinding> normalizeProtectBindings(List<? extends MaskProtectBinding> source,
-                                                              String compatParamClassPath,
-                                                              String compatParamFieldName,
-                                                              String defaultParamFieldName,
-                                                              String defaultRecordIdField,
-                                                              String defaultParamRecordIdField,
-                                                              String defaultVersionField,
-                                                              String defaultParamVersionField) {
+                                                              String defaultParamFieldName) {
         List<MaskProtectBinding> result = new ArrayList<>();
         if (source != null) {
             for (MaskProtectBinding item : source) {
-                MaskProtectBinding binding = normalizeProtectBinding(item, defaultParamFieldName,
-                        defaultParamRecordIdField, defaultParamVersionField);
+                MaskProtectBinding binding = normalizeProtectBinding(item, defaultParamFieldName);
                 if (binding != null) {
                     result.add(binding);
                 }
-            }
-        }
-        if (result.isEmpty() && StringUtils.isNotBlank(compatParamClassPath)) {
-            MaskProtectBinding binding = new MaskProtectBinding();
-            binding.setParamClassPath(compatParamClassPath);
-            binding.setParamFieldName(compatParamFieldName);
-            binding.setParamRecordIdField(defaultParamRecordIdField);
-            binding.setParamVersionField(defaultParamVersionField);
-            MaskProtectBinding normalized = normalizeProtectBinding(binding, defaultParamFieldName,
-                    defaultParamRecordIdField,
-                    defaultParamVersionField);
-            if (normalized != null) {
-                result.add(normalized);
             }
         }
         return result;
     }
 
     private MaskProtectBinding normalizeProtectBinding(MaskProtectBinding source,
-                                                       String defaultParamFieldName,
-                                                       String defaultRecordIdField,
-                                                       String defaultVersionField) {
+                                                       String defaultParamFieldName) {
         if (source == null || StringUtils.isBlank(source.getParamClassPath())) {
             return null;
         }
@@ -470,10 +380,7 @@ public class CfgMaskFieldServiceImpl
         binding.setParamClassPath(source.getParamClassPath());
         binding.setParamFieldName(StringUtils.isBlank(source.getParamFieldName())
                 ? defaultParamFieldName : source.getParamFieldName());
-        binding.setParamRecordIdField(StringUtils.isBlank(source.getParamRecordIdField())
-                ? defaultRecordIdField : source.getParamRecordIdField());
-        binding.setParamVersionField(StringUtils.isBlank(source.getParamVersionField())
-                ? defaultVersionField : source.getParamVersionField());
+        binding.setParamRecordIdField(source.getParamRecordIdField());
         if (StringUtils.isBlank(binding.getParamFieldName())
                 || StringUtils.isBlank(binding.getParamRecordIdField())) {
             return null;
@@ -494,7 +401,6 @@ public class CfgMaskFieldServiceImpl
             binding.setParamClassPath(dto.getParamClassPath());
             binding.setParamFieldName(dto.getParamFieldName());
             binding.setParamRecordIdField(dto.getParamRecordIdField());
-            binding.setParamVersionField(dto.getParamVersionField());
             result.add(binding);
         }
         return result;
@@ -524,17 +430,6 @@ public class CfgMaskFieldServiceImpl
         }
         try {
             return MaskProtectMode.valueOf(name.trim());
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-    private MaskProtectVerifyMode parseProtectVerifyMode(String name) {
-        if (StringUtils.isBlank(name)) {
-            return MaskProtectVerifyMode.DB_VALUE_COMPARE;
-        }
-        try {
-            return MaskProtectVerifyMode.valueOf(name.trim());
         } catch (IllegalArgumentException e) {
             return null;
         }

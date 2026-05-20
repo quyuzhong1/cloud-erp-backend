@@ -31,8 +31,4 @@ public class MaskProtectBinding implements Serializable {
      */
     private String paramRecordIdField;
 
-    /**
-     * 保存接口入参 DTO 中用于校验数据版本或更新时间的字段名。
-     */
-    private String paramVersionField;
 }

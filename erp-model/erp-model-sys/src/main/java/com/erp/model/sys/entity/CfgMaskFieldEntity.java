@@ -80,67 +80,25 @@ public class CfgMaskFieldEntity extends BaseEntity<CfgMaskFieldEntity> {
     private Boolean valueProtectEnabled;
 
     /**
-     * 保存接口入参 DTO 类路径，兼容单绑定简写。
-     */
-    @TableField("protect_param_class_path")
-    private String protectParamClassPath;
-
-    /**
-     * 保存接口入参 DTO 字段名，默认与 {@link #fieldName} 一致。
-     */
-    @TableField("protect_param_field_name")
-    private String protectParamFieldName;
-
-    /**
-     * 读侧 VO 记录 ID 字段名，保留用于配置兼容。
-     */
-    @TableField("protect_record_id_field")
-    private String protectRecordIdField;
-
-    /**
-     * 保存接口入参 DTO 记录 ID 字段名，默认与 protectRecordIdField 一致。
-     */
-    @TableField("protect_param_record_id_field")
-    private String protectParamRecordIdField;
-
-    /**
-     * 读侧 VO 版本 / 更新时间字段名，保留用于配置兼容。
-     */
-    @TableField("protect_version_field")
-    private String protectVersionField;
-
-    /**
-     * 保存接口入参 DTO 版本 / 更新时间字段名，保留用于配置兼容。
-     */
-    @TableField("protect_param_version_field")
-    private String protectParamVersionField;
-
-    /**
-     * 回显保护安全校验方式：DB_VALUE_COMPARE / PARAM_VERSION / REJECT。
-     */
-    @TableField("protect_verify_mode")
-    private String protectVerifyMode;
-
-    /**
-     * DB_VALUE_COMPARE 模式下查询当前值的表名。
+     * RESTORE_ORIGINAL 模式下查询当前值的表名。
      */
     @TableField("protect_table_name")
     private String protectTableName;
 
     /**
-     * DB_VALUE_COMPARE 模式下记录 ID 列名，默认 id。
+     * RESTORE_ORIGINAL 模式下记录 ID 列名，默认 id。
      */
     @TableField("protect_record_id_column")
     private String protectRecordIdColumn;
 
     /**
-     * DB_VALUE_COMPARE 模式下敏感字段原值列名。
+     * RESTORE_ORIGINAL 模式下敏感字段原值列名。
      */
     @TableField("protect_value_column")
     private String protectValueColumn;
 
     /**
-     * DB_VALUE_COMPARE 模式下逻辑删除列名，空表示不追加逻辑删除条件。
+     * RESTORE_ORIGINAL 模式下逻辑删除列名，空表示不追加逻辑删除条件。
      */
     @TableField("protect_deleted_column")
     private String protectDeletedColumn;
@@ -150,18 +108,6 @@ public class CfgMaskFieldEntity extends BaseEntity<CfgMaskFieldEntity> {
      */
     @TableField("protect_param_bindings")
     private String protectParamBindings;
-
-    /**
-     * 保留兼容字段；当前 DB 当前值恢复流程不使用。
-     */
-    @TableField("protect_ttl_seconds")
-    private Integer protectTtlSeconds;
-
-    /**
-     * 保留兼容字段；当前写保护不再按提交值是否像脱敏值来决定是否保护。
-     */
-    @TableField("protect_masked_value_regex")
-    private String protectMaskedValueRegex;
 
     /**
      * 回显保护模式：RESTORE_ORIGINAL / SET_NULL / REJECT。
@@ -193,20 +139,11 @@ public class CfgMaskFieldEntity extends BaseEntity<CfgMaskFieldEntity> {
     public static final String PERMISSION_CODE = "permission_code";
     public static final String HIDE_WHEN_MASKED = "hide_when_masked";
     public static final String VALUE_PROTECT_ENABLED = "value_protect_enabled";
-    public static final String PROTECT_PARAM_CLASS_PATH = "protect_param_class_path";
-    public static final String PROTECT_PARAM_FIELD_NAME = "protect_param_field_name";
-    public static final String PROTECT_RECORD_ID_FIELD = "protect_record_id_field";
-    public static final String PROTECT_PARAM_RECORD_ID_FIELD = "protect_param_record_id_field";
-    public static final String PROTECT_VERSION_FIELD = "protect_version_field";
-    public static final String PROTECT_PARAM_VERSION_FIELD = "protect_param_version_field";
-    public static final String PROTECT_VERIFY_MODE = "protect_verify_mode";
     public static final String PROTECT_TABLE_NAME = "protect_table_name";
     public static final String PROTECT_RECORD_ID_COLUMN = "protect_record_id_column";
     public static final String PROTECT_VALUE_COLUMN = "protect_value_column";
     public static final String PROTECT_DELETED_COLUMN = "protect_deleted_column";
     public static final String PROTECT_PARAM_BINDINGS = "protect_param_bindings";
-    public static final String PROTECT_TTL_SECONDS = "protect_ttl_seconds";
-    public static final String PROTECT_MASKED_VALUE_REGEX = "protect_masked_value_regex";
     public static final String PROTECT_MODE = "protect_mode";
     public static final String DISABLED = "disabled";
     public static final String SORT = "sort";

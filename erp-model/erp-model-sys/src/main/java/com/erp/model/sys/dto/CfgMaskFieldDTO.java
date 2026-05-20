@@ -50,64 +50,25 @@ public class CfgMaskFieldDTO implements Serializable {
          */
         private Boolean valueProtectEnabled = Boolean.FALSE;
         /**
-         * 保存接口入参 DTO 类路径，兼容单绑定简写。
-         */
-        private String protectParamClassPath;
-        /**
-         * 保存接口入参 DTO 字段名，默认与 fieldName 一致。
-         */
-        private String protectParamFieldName;
-        /**
-         * 读侧 VO 记录 ID 字段名，保留用于配置兼容。
-         */
-        private String protectRecordIdField = "id";
-        /**
-         * 保存接口入参 DTO 记录 ID 字段名，默认与 protectRecordIdField 一致。
-         */
-        private String protectParamRecordIdField;
-        /**
-         * 读侧 VO 版本 / 更新时间字段名，保留用于配置兼容。
-         */
-        private String protectVersionField;
-        /**
-         * 保存接口入参 DTO 版本 / 更新时间字段名，保留用于配置兼容。
-         */
-        private String protectParamVersionField;
-        /**
-         * 回显保护安全校验方式：DB_VALUE_COMPARE / PARAM_VERSION / REJECT。
-         */
-        private String protectVerifyMode = "DB_VALUE_COMPARE";
-        /**
-         * DB_VALUE_COMPARE 模式下查询当前值的表名。
+         * RESTORE_ORIGINAL 模式下查询当前值的表名。
          */
         private String protectTableName;
         /**
-         * DB_VALUE_COMPARE 模式下记录 ID 列名，默认 id。
+         * RESTORE_ORIGINAL 模式下记录 ID 列名，默认 id。
          */
         private String protectRecordIdColumn = "id";
         /**
-         * DB_VALUE_COMPARE 模式下敏感字段原值列名。
+         * RESTORE_ORIGINAL 模式下敏感字段原值列名。
          */
         private String protectValueColumn;
         /**
-         * DB_VALUE_COMPARE 模式下逻辑删除列名，空表示不追加逻辑删除条件。
+         * RESTORE_ORIGINAL 模式下逻辑删除列名，空表示不追加逻辑删除条件。
          */
         private String protectDeletedColumn = "is_deleted";
         /**
          * 保存接口入参 DTO 绑定列表，支持一个读侧 VO 字段保护多个保存 DTO。
          */
         private List<ProtectParamBindingDTO> protectParamBindings = new ArrayList<>();
-        /**
-         * 保留兼容字段；当前 DB 当前值恢复流程不使用。
-         */
-        private Integer protectTtlSeconds = 300;
-        /**
-         * 保留兼容字段；当前写保护不再按提交值是否像脱敏值来决定是否保护。
-         */
-        private String protectMaskedValueRegex;
-        /**
-         * 回显保护模式：RESTORE_ORIGINAL / SET_NULL / REJECT。
-         */
         private String protectMode = "RESTORE_ORIGINAL";
         private Boolean disabled = Boolean.FALSE;
         private Integer sort = 0;
@@ -137,12 +98,7 @@ public class CfgMaskFieldDTO implements Serializable {
         private String permissionCode;
         private Boolean hideWhenMasked;
         private Boolean valueProtectEnabled;
-        private String protectParamClassPath;
-        private String protectParamFieldName;
-        private String protectParamRecordIdField;
-        private String protectParamVersionField;
         private String protectParamBindings;
-        private String protectVerifyMode;
         private String protectTableName;
         private String protectRecordIdColumn;
         private String protectValueColumn;
@@ -164,20 +120,11 @@ public class CfgMaskFieldDTO implements Serializable {
         private String permissionCode;
         private Boolean hideWhenMasked;
         private Boolean valueProtectEnabled;
-        private String protectParamClassPath;
-        private String protectParamFieldName;
-        private String protectRecordIdField;
-        private String protectParamRecordIdField;
-        private String protectVersionField;
-        private String protectParamVersionField;
         private String protectParamBindings;
-        private String protectVerifyMode;
         private String protectTableName;
         private String protectRecordIdColumn;
         private String protectValueColumn;
         private String protectDeletedColumn;
-        private Integer protectTtlSeconds;
-        private String protectMaskedValueRegex;
         private String protectMode;
         private Boolean disabled;
         private Integer sort;
@@ -197,6 +144,5 @@ public class CfgMaskFieldDTO implements Serializable {
         private String paramClassPath;
         private String paramFieldName;
         private String paramRecordIdField;
-        private String paramVersionField;
     }
 }

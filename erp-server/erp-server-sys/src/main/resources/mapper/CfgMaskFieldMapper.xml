@@ -20,20 +20,11 @@
         <result column="permission_code" property="permissionCode"/>
         <result column="hide_when_masked" property="hideWhenMasked"/>
         <result column="value_protect_enabled" property="valueProtectEnabled"/>
-        <result column="protect_param_class_path" property="protectParamClassPath"/>
-        <result column="protect_param_field_name" property="protectParamFieldName"/>
-        <result column="protect_record_id_field" property="protectRecordIdField"/>
-        <result column="protect_param_record_id_field" property="protectParamRecordIdField"/>
-        <result column="protect_version_field" property="protectVersionField"/>
-        <result column="protect_param_version_field" property="protectParamVersionField"/>
-        <result column="protect_verify_mode" property="protectVerifyMode"/>
         <result column="protect_table_name" property="protectTableName"/>
         <result column="protect_record_id_column" property="protectRecordIdColumn"/>
         <result column="protect_value_column" property="protectValueColumn"/>
         <result column="protect_deleted_column" property="protectDeletedColumn"/>
         <result column="protect_param_bindings" property="protectParamBindings"/>
-        <result column="protect_ttl_seconds" property="protectTtlSeconds"/>
-        <result column="protect_masked_value_regex" property="protectMaskedValueRegex"/>
         <result column="protect_mode" property="protectMode"/>
         <result column="disabled" property="disabled"/>
         <result column="sort" property="sort"/>
@@ -50,20 +41,11 @@
         <result column="permission_code" property="permissionCode"/>
         <result column="hide_when_masked" property="hideWhenMasked"/>
         <result column="value_protect_enabled" property="valueProtectEnabled"/>
-        <result column="protect_param_class_path" property="protectParamClassPath"/>
-        <result column="protect_param_field_name" property="protectParamFieldName"/>
-        <result column="protect_record_id_field" property="protectRecordIdField"/>
-        <result column="protect_param_record_id_field" property="protectParamRecordIdField"/>
-        <result column="protect_version_field" property="protectVersionField"/>
-        <result column="protect_param_version_field" property="protectParamVersionField"/>
-        <result column="protect_verify_mode" property="protectVerifyMode"/>
         <result column="protect_table_name" property="protectTableName"/>
         <result column="protect_record_id_column" property="protectRecordIdColumn"/>
         <result column="protect_value_column" property="protectValueColumn"/>
         <result column="protect_deleted_column" property="protectDeletedColumn"/>
         <result column="protect_param_bindings" property="protectParamBindings"/>
-        <result column="protect_ttl_seconds" property="protectTtlSeconds"/>
-        <result column="protect_masked_value_regex" property="protectMaskedValueRegex"/>
         <result column="protect_mode" property="protectMode"/>
         <result column="disabled" property="disabled"/>
         <result column="sort" property="sort"/>
@@ -77,11 +59,9 @@
 
     <sql id="BaseColumns">
         id, class_path, field_name, strategy, custom_regex, custom_replace, permission_code,
-        hide_when_masked, value_protect_enabled, protect_param_class_path, protect_param_field_name,
-        protect_record_id_field, protect_param_record_id_field, protect_version_field, protect_param_version_field,
-        protect_verify_mode, protect_table_name, protect_record_id_column, protect_value_column,
-        protect_deleted_column, protect_param_bindings, protect_ttl_seconds, protect_masked_value_regex,
-        protect_mode, disabled, sort, remark,
+        hide_when_masked, value_protect_enabled, protect_table_name, protect_record_id_column,
+        protect_value_column, protect_deleted_column, protect_param_bindings, protect_mode,
+        disabled, sort, remark,
         version, create_time, create_user_id, create_user_name,
         update_time, update_user_id, update_user_name, is_deleted
     </sql>
@@ -89,11 +69,9 @@
     <select id="paging" resultMap="ListMap">
         SELECT
         id, class_path, field_name, strategy, custom_regex, custom_replace, permission_code,
-        hide_when_masked, value_protect_enabled, protect_param_class_path, protect_param_field_name,
-        protect_record_id_field, protect_param_record_id_field, protect_version_field, protect_param_version_field,
-        protect_verify_mode, protect_table_name, protect_record_id_column, protect_value_column,
-        protect_deleted_column, protect_param_bindings, protect_ttl_seconds, protect_masked_value_regex,
-        protect_mode, disabled, sort, remark,
+        hide_when_masked, value_protect_enabled, protect_table_name, protect_record_id_column,
+        protect_value_column, protect_deleted_column, protect_param_bindings, protect_mode,
+        disabled, sort, remark,
         version, create_time, create_user_name, update_time, update_user_name
         FROM cfg_mask_field
         WHERE is_deleted = false
@@ -115,12 +93,6 @@
             </if>
             <if test="params.valueProtectEnabled != null">
                 AND value_protect_enabled = #{params.valueProtectEnabled}
-            </if>
-            <if test="params.protectParamClassPath != null and params.protectParamClassPath != ''">
-                AND protect_param_class_path LIKE CONCAT('%', #{params.protectParamClassPath}, '%')
-            </if>
-            <if test="params.protectParamFieldName != null and params.protectParamFieldName != ''">
-                AND protect_param_field_name LIKE CONCAT('%', #{params.protectParamFieldName}, '%')
             </if>
             <if test="params.disabled != null">
                 AND disabled = #{params.disabled}

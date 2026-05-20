@@ -3,7 +3,6 @@ package com.common.business.mask.cache;
 import com.common.business.mask.MaskStrategy;
 import com.common.business.mask.protect.MaskProtectBinding;
 import com.common.business.mask.protect.MaskProtectMode;
-import com.common.business.mask.protect.MaskProtectVerifyMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,41 +43,6 @@ public class CfgMaskFieldSnapshotEntry {
     private boolean valueProtectEnabled;
 
     /**
-     * 保存接口入参 DTO 类路径，兼容单绑定简写。
-     */
-    private String protectParamClassPath;
-
-    /**
-     * 保存接口入参 DTO 字段名，兼容单绑定简写。
-     */
-    private String protectParamFieldName;
-
-    /**
-     * 读侧 VO 记录 ID 字段名，保留用于配置兼容；写保护恢复以保存入参绑定的 recordId 为准。
-     */
-    private String protectRecordIdField;
-
-    /**
-     * 保存接口入参 DTO 中用于定位记录主键的字段名，默认与 protectRecordIdField 一致。
-     */
-    private String protectParamRecordIdField;
-
-    /**
-     * 读侧 VO 版本 / 更新时间字段名，保留用于配置兼容。
-     */
-    private String protectVersionField;
-
-    /**
-     * 保存接口入参 DTO 版本 / 更新时间字段名，保留用于配置兼容。
-     */
-    private String protectParamVersionField;
-
-    /**
-     * 回显保护安全校验方式。
-     */
-    private MaskProtectVerifyMode protectVerifyMode;
-
-    /**
      * DB_VALUE_COMPARE 模式下查询当前值的表名。
      */
     private String protectTableName;
@@ -102,16 +66,6 @@ public class CfgMaskFieldSnapshotEntry {
      * 保存接口入参 DTO 绑定列表；支持一个读侧 VO 字段保护多个 UpdateDTO。
      */
     private List<MaskProtectBinding> protectParamBindings = new ArrayList<>();
-
-    /**
-     * 保留兼容字段；当前 DB 当前值恢复流程不使用。
-     */
-    private Integer protectTtlSeconds;
-
-    /**
-     * 保留兼容字段；当前写保护不再按提交值是否像脱敏值来决定是否保护。
-     */
-    private String protectMaskedValueRegex;
 
     /**
      * 回显保护模式。

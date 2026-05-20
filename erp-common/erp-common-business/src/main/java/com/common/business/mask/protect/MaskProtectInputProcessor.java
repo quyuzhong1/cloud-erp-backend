@@ -100,7 +100,7 @@ public class MaskProtectInputProcessor {
             return false;
         }
         for (FieldRestorePlan plan : plans) {
-            if (plan.getVerifyMode() == MaskProtectVerifyMode.DB_VALUE_COMPARE) {
+            if (plan.isDbRestore()) {
                 return true;
             }
         }
@@ -120,7 +120,7 @@ public class MaskProtectInputProcessor {
     private void validateDbComparePlans(List<FieldRestorePlan> plans) {
         Map<DbCompareGroup, List<FieldRestorePlan>> groups = new LinkedHashMap<>();
         for (FieldRestorePlan plan : plans) {
-            if (plan.getVerifyMode() != MaskProtectVerifyMode.DB_VALUE_COMPARE) {
+            if (!plan.isDbRestore()) {
                 continue;
             }
             if (currentValueReader == null) {
@@ -239,18 +239,10 @@ public class MaskProtectInputProcessor {
                 throw new MaskProtectException();
             }
             if (protectMode == MaskProtectMode.SET_NULL) {
-                plans.add(new FieldRestorePlan(pojo, field, null, entry,
-                        "", MaskProtectVerifyMode.REJECT));
+                plans.add(new FieldRestorePlan(pojo, field, null, entry, "", false));
                 return;
             }
             if (protectMode != MaskProtectMode.RESTORE_ORIGINAL) {
-                throw new MaskProtectException();
-            }
-            MaskProtectVerifyMode verifyMode = entry.getProtectVerifyMode() == null
-                    ? MaskProtectVerifyMode.DB_VALUE_COMPARE : entry.getProtectVerifyMode();
-            if (verifyMode != MaskProtectVerifyMode.DB_VALUE_COMPARE) {
-                log.debug("mask protect unsupported verify mode without redis, mode={}, class={}, field={}",
-                        verifyMode, pojo.getClass().getName(), field.getName());
                 throw new MaskProtectException();
             }
             MaskProtectBinding binding = configCache.findProtectBinding(entry, pojo.getClass().getName(),
@@ -262,7 +254,7 @@ public class MaskProtectInputProcessor {
             if (StringUtils.isBlank(recordId)) {
                 throw new MaskProtectException();
             }
-            plans.add(new FieldRestorePlan(pojo, field, null, entry, recordId, verifyMode));
+            plans.add(new FieldRestorePlan(pojo, field, null, entry, recordId, true));
             return;
         }
     }
@@ -362,16 +354,16 @@ public class MaskProtectInputProcessor {
         private Object value;
         private final CfgMaskFieldSnapshotEntry entry;
         private final String recordId;
-        private final MaskProtectVerifyMode verifyMode;
+        private final boolean dbRestore;
 
         private FieldRestorePlan(Object target, Field field, Object value, CfgMaskFieldSnapshotEntry entry,
-                                 String recordId, MaskProtectVerifyMode verifyMode) {
+                                 String recordId, boolean dbRestore) {
             this.target = target;
             this.field = field;
             this.value = value;
             this.entry = entry;
             this.recordId = recordId;
-            this.verifyMode = verifyMode;
+            this.dbRestore = dbRestore;
         }
 
         private void apply() {
@@ -412,8 +404,8 @@ public class MaskProtectInputProcessor {
             return field.getName();
         }
 
-        private MaskProtectVerifyMode getVerifyMode() {
-            return verifyMode;
+        private boolean isDbRestore() {
+            return dbRestore;
         }
 
         private String lockGroupKey() {
