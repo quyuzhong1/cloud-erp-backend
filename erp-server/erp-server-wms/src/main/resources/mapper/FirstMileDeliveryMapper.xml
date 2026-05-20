@@ -376,7 +376,7 @@
             fmd.code as sourceCode,
             fmd.country_id as country,
             fmd.country_name as countryName,
-            fmd.source_type as businessType
+            fmd.demand_type as businessType
         from
              first_mile_delivery fmd
         inner join packing_task pt on  (pt.source_id = fmd.id  or  pt.source_id = fmd.source_id) and pt.is_deleted = false
@@ -910,8 +910,8 @@
             cd.box_no as boxNo,
             fmd.delivery_warehouse_id as fromWarehouseId,
             fmd.delivery_warehouse_name as fromWarehouseName,
-            fmd.delivery_warehouse_id as destWarehouseId,
-            fmd.delivery_warehouse_name as destWarehouseName,
+            fmd.dest_warehouse_id as destWarehouseId,
+            fmd.dest_warehouse_name as destWarehouseName,
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
         inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false and pt.packing_status = 'packed'
@@ -990,8 +990,8 @@
             fmd.country_id as countryId,
             fmd.delivery_warehouse_id as fromWarehouseId,
             fmd.delivery_warehouse_name as fromWarehouseName,
-            fmd.delivery_warehouse_id as destWarehouseId,
-            fmd.delivery_warehouse_name as destWarehouseName,
+            fmd.dest_warehouse_id as destWarehouseId,
+            fmd.dest_warehouse_name as destWarehouseName,
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
          INNER JOIN packing_task pt
@@ -1024,8 +1024,8 @@
             fmd.country_id as countryId,
             fmd.delivery_warehouse_id as fromWarehouseId,
             fmd.delivery_warehouse_name as fromWarehouseName,
-            fmd.delivery_warehouse_id as destWarehouseId,
-            fmd.delivery_warehouse_name as destWarehouseName,
+            fmd.dest_warehouse_id as destWarehouseId,
+            fmd.dest_warehouse_name as destWarehouseName,
             fmd.transfer_warehouse_ids as transferWarehouseIds
         from first_mile_delivery fmd
          INNER JOIN packing_task pt
