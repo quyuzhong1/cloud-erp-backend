@@ -335,18 +335,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 .sourceTypeEnum(SourceTypeEnum.FIRST_MILE_DELIVERY)
                 .checkCfg(Boolean.TRUE)
                 .build();
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    try {
-                        sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
-                    } catch (Exception e) {
-                        log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
-                    }
-                }
-            });
-            return;
+        try {
+            sendFirstMileDeclareAutoGenerateTask(autoGenerateBillDTO, entity.getCode());
+        } catch (Exception e) {
+            log.error("头程发货单{}提交后发送自动生成报关明细任务失败：{}", entity.getCode(), e.getMessage(), e);
         }
     }
 
@@ -885,8 +877,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
 
@@ -1439,8 +1431,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(toWarehouse)).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (Objects.nonNull(listDTO) && listDTO.getId().equals(destWarehouse.getTypeId())) {
 

@@ -424,7 +424,9 @@ public class AfterSalesWarehouseLocationSuggestServiceImpl extends SuperServiceI
                         AfterSalesWarehouseLocationSuggestEntity::getDisabled
                 )
                 .eq(AfterSalesWarehouseLocationSuggestEntity::getSkuNo, searchDto.getSkuNo())
-                .eq(AfterSalesWarehouseLocationSuggestEntity::getWarehouseId, searchDto.getWarehouseId());
+                .eq(AfterSalesWarehouseLocationSuggestEntity::getWarehouseId, searchDto.getWarehouseId())
+                .orderByAsc(AfterSalesWarehouseLocationSuggestEntity::getSort)
+                .orderByAsc(AfterSalesWarehouseLocationSuggestEntity::getWarehouseLocationCode);
 
         List<AfterSalesWarehouseLocationSuggestEntity> entityList = list(wrapper);
         if (CollUtil.isEmpty(entityList)) {

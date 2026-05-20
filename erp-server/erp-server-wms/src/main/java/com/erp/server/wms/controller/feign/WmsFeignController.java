@@ -6,6 +6,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +48,7 @@ public class WmsFeignController extends BaseController {
      */
     @GetMapping("/dict/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> dictList(@RequestParam("key") String key) {
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(key);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(key);
         return success(dictList.stream()
                 .map(dict -> new BaseDropDownDTO.CommonDTO(dict.getValue(), dict.getName()))
                 .collect(Collectors.toList()));

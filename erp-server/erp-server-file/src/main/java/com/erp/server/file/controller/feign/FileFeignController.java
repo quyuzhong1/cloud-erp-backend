@@ -80,12 +80,13 @@ public class FileFeignController {
     @GetMapping("/getInputStream/{fileId}")
     public void getInputStream(@PathVariable("fileId") String fileId, HttpServletResponse response) throws IOException {
         FileService fileService = fileRegistry.getHandler();
-        InputStream input = fileService.getInputStream(fileId);
         OutputStream out = response.getOutputStream();
-        byte[] buffer = new byte[1024];
-        int bytesRead;
-        while ((bytesRead = input.read(buffer)) != -1) {
-            out.write(buffer, 0, bytesRead);
+        try (InputStream input = fileService.getInputStream(fileId)) {
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = input.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
         }
     }
     @PostMapping(value = "/uploadFileByBase64")

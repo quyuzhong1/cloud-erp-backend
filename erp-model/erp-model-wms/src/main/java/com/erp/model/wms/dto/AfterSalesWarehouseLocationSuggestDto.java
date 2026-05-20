@@ -383,7 +383,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
          */
         @NotBlank(message = "箱唛号不能为空")
         @Size(max = 64, message = "箱唛号最大长度不能超过64位")
-        private String boxLabelCode;
+        private String cartonCode;
     }
 
     /**
@@ -436,9 +436,9 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String mainId;
 
         /**
-         * 箱唛，与 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getCode()} 相同；提交时用于再次校验 usageStatus；不传则仅按 mainId 查主单。
+         * 箱唛号，与 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getCode()} 相同；提交时用于再次校验 usageStatus；不传则仅按 mainId 查主单。
          */
-        @Size(max = 64, message = "箱唛最大长度不能超过64位")
+        @Size(max = 64, message = "箱唛号最大长度不能超过64位")
         private String code;
 
         /**
@@ -455,11 +455,11 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String skuId;
 
         /**
-         * 源仓位编码，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getWarehouseLocationCode()} 相同。
+         * 源仓位编码，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getOutWarehouseLocationCode()} 相同。
          */
-        @NotBlank(message = "仓位编码不能为空")
-        @Size(max = 50, message = "仓位编码最大长度不能超过50位")
-        private String warehouseLocationCode;
+        @NotBlank(message = "源仓位不能为空")
+        @Size(max = 50, message = "源仓位编码最大长度不能超过50位")
+        private String outWarehouseLocationCode;
 
         /**
          * 本行移动数量，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getPackQty()} 相同。
@@ -467,6 +467,44 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         @NotNull(message = "装箱数量不能为空")
         @Min(value = 1, message = "装箱数量必须大于0")
         private Integer packQty;
+    }
+
+    /**
+     * 移仓箱唛明细列表 VO（对应 wms_move_carton_detail 表，用于移箱明细弹窗展示）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BoxMoveDetailListDto {
+
+        /** 仓位移动主单 ID（main_id） */
+        private String mainId;
+
+        /** 汇总明细 ID（detail_id） */
+        private String detailId;
+
+        /** 箱唛号 */
+        private String cartonCode;
+
+        /** 装箱单主键（after_sale_pack.id） */
+        private String cartonId;
+
+        /** 装箱明细主键（after_sale_pack_detail.id） */
+        private String cartonDetailId;
+
+        /** SKU 主键 */
+        private String skuId;
+
+        /** SKU 编码 */
+        private String skuNo;
+
+        /** 移出仓位编码（取货仓位） */
+        private String outWarehouseLocation;
+
+        /** 移入仓位编码（上架仓位） */
+        private String inWarehouseLocation;
+
+        /** 移动数量 */
+        private Integer qty;
     }
 
     @Data

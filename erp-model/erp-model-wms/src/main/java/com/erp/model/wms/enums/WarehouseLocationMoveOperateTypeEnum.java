@@ -5,7 +5,7 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-public enum WarehouseLocationMoveSyncOperateEnum implements EnumMessage {
+public enum WarehouseLocationMoveOperateTypeEnum implements EnumMessage {
 
     AFTER_SALES_SHELVING("afterSalesShelving", "售后上架"),
     FULL_BOX_TRANSFER("fullBoxTransfer", "整箱移位"),
@@ -24,14 +24,14 @@ public enum WarehouseLocationMoveSyncOperateEnum implements EnumMessage {
      */
     private final String name;
 
-    WarehouseLocationMoveSyncOperateEnum(String code, String name) {
+    WarehouseLocationMoveOperateTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
     public static String getNameByCode(String code) {
         String defaultCode = defaultCode(code);
-        for (WarehouseLocationMoveSyncOperateEnum typeEnum : WarehouseLocationMoveSyncOperateEnum.values()) {
+        for (WarehouseLocationMoveOperateTypeEnum typeEnum : WarehouseLocationMoveOperateTypeEnum.values()) {
             if (typeEnum.getCode().equals(defaultCode)) {
                 return typeEnum.getName();
             }
