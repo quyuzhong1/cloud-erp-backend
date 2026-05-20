@@ -254,7 +254,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             importResultDTO.setTaskId(importSyncDTO.getTaskId());
             importResultDTO.setCount(excelListenerUtil.getCount());
             //导出错误数据
-            List<JSONObject> errorList = excelListenerUtil.getMatchList();
             Map<Integer, String> headMap = excelListenerUtil.getHeadMap();
             //未找到表头直接跳过
             if (ObjectUtil.isEmpty(headMap)) {
@@ -263,20 +262,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             isExistSheet = Boolean.TRUE;
 
             //匹配结果序号
-            Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
-            List<JSONObject> matchErrorList = errorList.stream().filter(obj -> CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
-
-            String url = "";
-            if (CollectionUtils.isNotEmpty(matchErrorList) && !CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(),importSyncDTO.getProcessingType())) {
-                String fileName = "物流商费用错误数据.xlsx";
-                File file = ExcelUtil.customExportUtil(fileName, matchErrorList, excelListenerUtil.getHeadList());
-                if (!file.isDirectory()) {
-                    url = FastDFSClientUtil.uploadFile(file, fileName);
-                }
-            }
+            Integer matchErrorCount = excelListenerUtil.getMatchFailCount();
+            String url = CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(),importSyncDTO.getProcessingType())
+                    ? "" : excelListenerUtil.getMatchResultUrl();
             importResultDTO.setErrorUrl(url);
             importResultDTO.setFinishTime(LocalDateTime.now());
-            importResultDTO.setRemark("处理完成，失败" + matchErrorList.size() + "条");
+            importResultDTO.setRemark("处理完成，失败" + matchErrorCount + "条");
             importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
             downloadTaskFeign.updateTask(importResultDTO);
         }
