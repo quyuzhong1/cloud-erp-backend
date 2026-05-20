@@ -8,9 +8,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -24,34 +21,20 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
-
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.cache.LocalCache;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
-import com.common.business.mapper.BaseDataMapper;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
+import com.common.business.utils.ApplicationContextUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
 @WebFilter(urlPatterns = "/*", asyncSupported = true)
 @Slf4j
-public class DynamicDataSourceFilter implements Filter,CommandLineRunner{
+public class DynamicDataSourceFilter implements Filter{
 
-	@Value("${fresh.cache.time:5}")
-    private int freshCacheTime;
-	
-	@Value("${fresh.cache.switch:true}")
-    private boolean freshCacheSwitch;
-	
-	@Autowired(required = false)
-	private BaseDataMapper baseDataMapper;
-	
-	private Map<String , DorisQuerySettingDTO> dorisQueryCfgSettingMappingCache;
-	
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
@@ -64,7 +47,7 @@ public class DynamicDataSourceFilter implements Filter,CommandLineRunner{
             return;
         }
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        DorisQuerySettingDTO setting = getDorisQuerySettingDTO(httpRequest.getRequestURI());
+        DorisQuerySettingDTO setting = ApplicationContextUtils.getBean(LocalCache.class).getDorisQuerySettingDTO(httpRequest.getRequestURI());
         if (setting == null) {
             chain.doFilter(request, response);
             return;
@@ -91,40 +74,6 @@ public class DynamicDataSourceFilter implements Filter,CommandLineRunner{
         }
     }
     
-	private synchronized void initDorisQueryCfgSetting() {
-		LambdaQueryWrapper<CfgSettingEntity> queryWrapper = new LambdaQueryWrapper<>();
-		queryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
-		queryWrapper.eq(CfgSettingEntity::getStatus, true);
-		dorisQueryCfgSettingEntityCache = cfgSettingService.listMaps(queryWrapper);
-		dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityCache.stream().collect(Collectors.toMap(c -> {
-			String key = c.get("key").toString();
-			if(!key.startsWith("/")) {
-				key = "/" + key;
-			}
-			return key;
-		}, c -> {
-			DorisQuerySettingDTO d = new DorisQuerySettingDTO();
-			String value = c.get("value").toString();
-			if(StringUtils.isNotBlank(value)) {
-				try {
-					d = JSON.parseObject(value, DorisQuerySettingDTO.class);
-				} catch (Exception e) {
-					log.error("转换doris配置查询错误" , e);
-				}
-			}
-			return d;
-		} , (c1 , c2) -> c1));
-	}
-	
-	private DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
-		if(dorisQueryCfgSettingMappingCache == null) {
-			this.initDorisQueryCfgSetting();
-		}
-		if(!requestURI.startsWith("/")) {
-			requestURI = "/" + requestURI;
-		}
-		return dorisQueryCfgSettingMappingCache.get(requestURI);
-	}
 
     private DynamicDataSourceTypeEnum getDynamicDataSourceType(DorisQuerySettingDTO dorisQuerySettingDTO , ServletRequest requestWrapper) {
     	StringBuilder sb = new StringBuilder();
@@ -239,25 +188,4 @@ public class DynamicDataSourceFilter implements Filter,CommandLineRunner{
         }
     }
 
-	@Override
-	public void run(String... args) throws Exception {
-		if(BusinessCommonConstants.isDynamicEnabled()) {
-			this.initCache(freshCacheSwitch);
-		}
-	}
-
-	public void initCache(boolean isCreateTask) {
-		this.initDorisQueryCfgSetting();
-		if(isCreateTask) {
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-				LambdaQueryWrapper<CfgSettingEntity> updateQueryWrapper = new LambdaQueryWrapper<>();
-				updateQueryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
-				updateQueryWrapper.gt(CfgSettingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
-				List<Map<String , Object>> cfgSettingEntityFreshList = cfgSettingService.listMaps(updateQueryWrapper);
-				if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
-					this.initDorisQueryCfgSetting();
-				}
-			}, 1, freshCacheTime, TimeUnit.SECONDS);
-		}
-	}
 }
