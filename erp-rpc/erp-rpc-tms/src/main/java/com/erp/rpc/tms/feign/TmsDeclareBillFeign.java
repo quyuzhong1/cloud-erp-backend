@@ -37,11 +37,11 @@ public interface TmsDeclareBillFeign {
      * 删除tms发货明细
      * @author will
      * @date 2026/4/24 14:55
-     * @param sourceIdList 
+     * @param dto 删除参数
      * @return java.lang.Boolean
      */
     @PostMapping("/feign/tmsDeclareBill/deleteDeliveryDeclareDetailMid")
-    Boolean deleteDeliveryDeclareDetailMid(@RequestBody List<String> sourceIdList);
+    Boolean deleteDeliveryDeclareDetailMid(@RequestBody TmsDeclareBillDTO.DeleteDeliveryDeclareDetailMidDTO dto);
 
 
     /**
