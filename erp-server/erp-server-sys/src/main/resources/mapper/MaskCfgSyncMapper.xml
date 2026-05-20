@@ -5,7 +5,7 @@
     <!--
       cfg_mask_field 整表 hash
       只覆盖影响脱敏行为的列：class_path / field_name / strategy / custom_regex /
-      custom_replace / permission_code / hide_when_masked / disabled / sort
+      custom_replace / permission_code / hide_when_masked / value protect columns / disabled / sort
       remark 等无关字段改动不会触发 Redis 缓存刷新
       空表时 string_agg 返回 null，外面套 coalesce 兜底为空字符串
     -->
@@ -19,6 +19,22 @@
                    || '|' || coalesce(custom_replace, '')
                    || '|' || coalesce(permission_code, '')
                    || '|' || coalesce(hide_when_masked::text, '')
+                   || '|' || coalesce(value_protect_enabled::text, '')
+                   || '|' || coalesce(protect_param_class_path, '')
+                   || '|' || coalesce(protect_param_field_name, '')
+                   || '|' || coalesce(protect_record_id_field, '')
+                   || '|' || coalesce(protect_param_record_id_field, '')
+                   || '|' || coalesce(protect_version_field, '')
+                   || '|' || coalesce(protect_param_version_field, '')
+                   || '|' || coalesce(protect_verify_mode, '')
+                   || '|' || coalesce(protect_table_name, '')
+                   || '|' || coalesce(protect_record_id_column, '')
+                   || '|' || coalesce(protect_value_column, '')
+                   || '|' || coalesce(protect_deleted_column, '')
+                   || '|' || coalesce(protect_param_bindings, '')
+                   || '|' || coalesce(protect_ttl_seconds::text, '')
+                   || '|' || coalesce(protect_masked_value_regex, '')
+                   || '|' || coalesce(protect_mode, '')
                    || '|' || coalesce(disabled::text, '')
                    || '|' || coalesce(sort::text, ''),
                ',' ORDER BY id::text)), '') AS fp

@@ -7,6 +7,7 @@ import com.common.business.mask.MaskPermissionEvaluator;
 import com.common.business.mask.MaskPermissionResolver;
 import com.common.business.mask.MaskScan;
 import com.common.business.mask.MaskStrategy;
+import com.common.business.mask.protect.MaskProtectTokenService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -71,6 +72,9 @@ public class MaskCore {
      */
     @Autowired(required = false)
     private MaskPermissionResolver permissionResolver;
+
+    @Autowired(required = false)
+    private MaskProtectTokenService maskProtectTokenService;
 
     /**
      * MaskStrategy -> MaskHandler 调度表（启动时一次性构建）
@@ -234,6 +238,14 @@ public class MaskCore {
             boolean fieldGranted = fd.hasStrategy() && isFieldGranted(user, permissionSet, pojo, fd);
 
             if (fd.hasStrategy() && !fieldGranted) {
+                if (fd.isValueProtectEnabled() && maskProtectTokenService != null) {
+                    try {
+                        maskProtectTokenService.save(pojo, fd, value, user);
+                    } catch (Throwable e) {
+                        log.debug("MaskCore protect context save failed, class={}, field={}, msg={}",
+                                clazz.getName(), field.getName(), e.getMessage());
+                    }
+                }
                 Object newValue = applyStrategy(pojo, fd, value);
                 // hideWhenMasked=true 表示"不可见"语义：脱敏后再置 null 整字段不返回
                 if (fd.isHideWhenMasked()) {

@@ -1,8 +1,14 @@
 package com.common.business.mask.core;
 
 import com.common.business.mask.MaskStrategy;
+import com.common.business.mask.protect.MaskProtectBinding;
+import com.common.business.mask.protect.MaskProtectMode;
+import com.common.business.mask.protect.MaskProtectVerifyMode;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 单个字段的脱敏元数据快照
@@ -27,6 +33,76 @@ public final class MaskFieldDescriptor {
     private final boolean hideWhenMasked;
 
     /**
+     * 是否开启脱敏回显保护。
+     */
+    private final boolean valueProtectEnabled;
+
+    /**
+     * 保存接口入参 DTO 类路径，兼容单绑定简写。
+     */
+    private final String protectParamClassPath;
+
+    /**
+     * 保存接口入参 DTO 字段名，兼容单绑定简写。
+     */
+    private final String protectParamFieldName;
+
+    /**
+     * 保存接口入参 DTO 绑定列表。
+     */
+    private final List<MaskProtectBinding> protectParamBindings;
+
+    /**
+     * 当前对象中用于定位记录主键的字段名。
+     */
+    private final String protectRecordIdField;
+
+    /**
+     * 当前对象中用于校验数据版本或更新时间的字段名。
+     */
+    private final String protectVersionField;
+
+    /**
+     * 回显保护安全校验方式。
+     */
+    private final MaskProtectVerifyMode protectVerifyMode;
+
+    /**
+     * DB_VALUE_COMPARE 模式下查询当前值的表名。
+     */
+    private final String protectTableName;
+
+    /**
+     * DB_VALUE_COMPARE 模式下记录 ID 列名。
+     */
+    private final String protectRecordIdColumn;
+
+    /**
+     * DB_VALUE_COMPARE 模式下敏感字段原值列名。
+     */
+    private final String protectValueColumn;
+
+    /**
+     * DB_VALUE_COMPARE 模式下逻辑删除列名，空表示不追加逻辑删除条件。
+     */
+    private final String protectDeletedColumn;
+
+    /**
+     * 回显保护 Redis TTL（秒）。
+     */
+    private final Integer protectTtlSeconds;
+
+    /**
+     * 识别提交值是否为脱敏占位的正则。
+     */
+    private final String protectMaskedValueRegex;
+
+    /**
+     * 回显保护模式。
+     */
+    private final MaskProtectMode protectMode;
+
+    /**
      * 多条配置规则作用在同一字段时的执行顺序，越小越先执行。
      */
     private final int sort;
@@ -47,6 +123,62 @@ public final class MaskFieldDescriptor {
     public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
                                String permission, boolean recursive, boolean keepEmpty,
                                boolean hideWhenMasked, boolean container, int sort) {
+        this(field, strategy, regex, replacement, permission, recursive, keepEmpty,
+                hideWhenMasked, container, sort, false, "", "", null, "", MaskProtectMode.REJECT);
+    }
+
+    public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
+                               String permission, boolean recursive, boolean keepEmpty,
+                               boolean hideWhenMasked, boolean container, int sort,
+                               boolean valueProtectEnabled, String protectRecordIdField,
+                               String protectVersionField, Integer protectTtlSeconds,
+                               String protectMaskedValueRegex, MaskProtectMode protectMode) {
+        this(field, strategy, regex, replacement, permission, recursive, keepEmpty,
+                hideWhenMasked, container, sort, valueProtectEnabled, "", "",
+                protectRecordIdField, protectVersionField, protectTtlSeconds,
+                protectMaskedValueRegex, protectMode, Collections.emptyList());
+    }
+
+    public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
+                               String permission, boolean recursive, boolean keepEmpty,
+                               boolean hideWhenMasked, boolean container, int sort,
+                               boolean valueProtectEnabled, String protectParamClassPath,
+                               String protectParamFieldName, String protectRecordIdField,
+                               String protectVersionField, Integer protectTtlSeconds,
+                               String protectMaskedValueRegex, MaskProtectMode protectMode) {
+        this(field, strategy, regex, replacement, permission, recursive, keepEmpty,
+                hideWhenMasked, container, sort, valueProtectEnabled, protectParamClassPath,
+                protectParamFieldName, protectRecordIdField, protectVersionField,
+                protectTtlSeconds, protectMaskedValueRegex, protectMode,
+                singletonBinding(protectParamClassPath, protectParamFieldName, protectRecordIdField,
+                        protectVersionField));
+    }
+
+    public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
+                               String permission, boolean recursive, boolean keepEmpty,
+                               boolean hideWhenMasked, boolean container, int sort,
+                               boolean valueProtectEnabled, String protectParamClassPath,
+                               String protectParamFieldName, String protectRecordIdField,
+                               String protectVersionField, Integer protectTtlSeconds,
+                               String protectMaskedValueRegex, MaskProtectMode protectMode,
+                               List<MaskProtectBinding> protectParamBindings) {
+        this(field, strategy, regex, replacement, permission, recursive, keepEmpty,
+                hideWhenMasked, container, sort, valueProtectEnabled, protectParamClassPath,
+                protectParamFieldName, protectRecordIdField, protectVersionField,
+                MaskProtectVerifyMode.PARAM_VERSION, "", "", "", "",
+                protectTtlSeconds, protectMaskedValueRegex, protectMode, protectParamBindings);
+    }
+
+    public MaskFieldDescriptor(Field field, MaskStrategy strategy, String regex, String replacement,
+                               String permission, boolean recursive, boolean keepEmpty,
+                               boolean hideWhenMasked, boolean container, int sort,
+                               boolean valueProtectEnabled, String protectParamClassPath,
+                               String protectParamFieldName, String protectRecordIdField,
+                               String protectVersionField, MaskProtectVerifyMode protectVerifyMode,
+                               String protectTableName, String protectRecordIdColumn,
+                               String protectValueColumn, String protectDeletedColumn,
+                               Integer protectTtlSeconds, String protectMaskedValueRegex,
+                               MaskProtectMode protectMode, List<MaskProtectBinding> protectParamBindings) {
         this.field = field;
         this.strategy = strategy;
         this.regex = regex == null ? "" : regex;
@@ -57,6 +189,22 @@ public final class MaskFieldDescriptor {
         this.hideWhenMasked = hideWhenMasked;
         this.container = container;
         this.sort = sort;
+        this.valueProtectEnabled = valueProtectEnabled;
+        this.protectParamClassPath = protectParamClassPath == null ? "" : protectParamClassPath;
+        this.protectParamFieldName = protectParamFieldName == null || protectParamFieldName.isEmpty()
+                ? field.getName() : protectParamFieldName;
+        this.protectRecordIdField = protectRecordIdField == null ? "" : protectRecordIdField;
+        this.protectVersionField = protectVersionField == null ? "" : protectVersionField;
+        this.protectVerifyMode = protectVerifyMode == null ? MaskProtectVerifyMode.PARAM_VERSION : protectVerifyMode;
+        this.protectTableName = protectTableName == null ? "" : protectTableName;
+        this.protectRecordIdColumn = protectRecordIdColumn == null ? "" : protectRecordIdColumn;
+        this.protectValueColumn = protectValueColumn == null ? "" : protectValueColumn;
+        this.protectDeletedColumn = protectDeletedColumn == null ? "" : protectDeletedColumn;
+        this.protectTtlSeconds = protectTtlSeconds;
+        this.protectMaskedValueRegex = protectMaskedValueRegex == null ? "" : protectMaskedValueRegex;
+        this.protectMode = protectMode == null ? MaskProtectMode.REJECT : protectMode;
+        this.protectParamBindings = normalizeBindings(field, protectParamClassPath, protectParamFieldName,
+                protectRecordIdField, protectVersionField, protectParamBindings);
     }
 
     public Field getField() {
@@ -91,6 +239,62 @@ public final class MaskFieldDescriptor {
         return hideWhenMasked;
     }
 
+    public boolean isValueProtectEnabled() {
+        return valueProtectEnabled;
+    }
+
+    public String getProtectParamClassPath() {
+        return protectParamClassPath;
+    }
+
+    public String getProtectParamFieldName() {
+        return protectParamFieldName;
+    }
+
+    public List<MaskProtectBinding> getProtectParamBindings() {
+        return protectParamBindings;
+    }
+
+    public String getProtectRecordIdField() {
+        return protectRecordIdField;
+    }
+
+    public String getProtectVersionField() {
+        return protectVersionField;
+    }
+
+    public MaskProtectVerifyMode getProtectVerifyMode() {
+        return protectVerifyMode;
+    }
+
+    public String getProtectTableName() {
+        return protectTableName;
+    }
+
+    public String getProtectRecordIdColumn() {
+        return protectRecordIdColumn;
+    }
+
+    public String getProtectValueColumn() {
+        return protectValueColumn;
+    }
+
+    public String getProtectDeletedColumn() {
+        return protectDeletedColumn;
+    }
+
+    public Integer getProtectTtlSeconds() {
+        return protectTtlSeconds;
+    }
+
+    public String getProtectMaskedValueRegex() {
+        return protectMaskedValueRegex;
+    }
+
+    public MaskProtectMode getProtectMode() {
+        return protectMode;
+    }
+
     public boolean isContainer() {
         return container;
     }
@@ -105,5 +309,64 @@ public final class MaskFieldDescriptor {
      */
     public boolean hasStrategy() {
         return strategy != null && strategy != MaskStrategy.AUTO_FROM_CONFIG;
+    }
+
+    private List<MaskProtectBinding> normalizeBindings(Field field, String paramClassPath, String paramFieldName,
+                                                       String recordIdField, String versionField,
+                                                       List<MaskProtectBinding> bindings) {
+        List<MaskProtectBinding> result = new ArrayList<>();
+        if (bindings != null) {
+            for (MaskProtectBinding binding : bindings) {
+                MaskProtectBinding normalized = normalizeBinding(binding, field, recordIdField, versionField);
+                if (normalized != null) {
+                    result.add(normalized);
+                }
+            }
+        }
+        if (result.isEmpty() && paramClassPath != null && !paramClassPath.isEmpty()) {
+            MaskProtectBinding binding = new MaskProtectBinding();
+            binding.setParamClassPath(paramClassPath);
+            binding.setParamFieldName(paramFieldName == null || paramFieldName.isEmpty()
+                    ? field.getName() : paramFieldName);
+            binding.setParamRecordIdField(recordIdField);
+            binding.setParamVersionField(versionField);
+            MaskProtectBinding normalized = normalizeBinding(binding, field, recordIdField, versionField);
+            if (normalized != null) {
+                result.add(normalized);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    private MaskProtectBinding normalizeBinding(MaskProtectBinding source, Field field,
+                                                String recordIdField, String versionField) {
+        if (source == null || source.getParamClassPath() == null || source.getParamClassPath().isEmpty()) {
+            return null;
+        }
+        MaskProtectBinding target = new MaskProtectBinding();
+        target.setParamClassPath(source.getParamClassPath());
+        target.setParamFieldName(source.getParamFieldName() == null || source.getParamFieldName().isEmpty()
+                ? field.getName() : source.getParamFieldName());
+        target.setParamRecordIdField(source.getParamRecordIdField() == null || source.getParamRecordIdField().isEmpty()
+                ? recordIdField : source.getParamRecordIdField());
+        target.setParamVersionField(source.getParamVersionField() == null || source.getParamVersionField().isEmpty()
+                ? versionField : source.getParamVersionField());
+        if (target.getParamRecordIdField() == null || target.getParamRecordIdField().isEmpty()) {
+            return null;
+        }
+        return target;
+    }
+
+    private static List<MaskProtectBinding> singletonBinding(String paramClassPath, String paramFieldName,
+                                                             String recordIdField, String versionField) {
+        if (paramClassPath == null || paramClassPath.isEmpty()) {
+            return Collections.emptyList();
+        }
+        MaskProtectBinding binding = new MaskProtectBinding();
+        binding.setParamClassPath(paramClassPath);
+        binding.setParamFieldName(paramFieldName);
+        binding.setParamRecordIdField(recordIdField);
+        binding.setParamVersionField(versionField);
+        return Collections.singletonList(binding);
     }
 }

@@ -387,6 +387,19 @@ public interface RedisCacheConstants {
     String MASK_WORD_CFG_FULL_KEY = "erp:mask_word_cfg:full";
 
     /**
+     * 脱敏回显保护上下文 Redis key 前缀。
+     * <p>实际 key 后缀是不可猜测 token，不包含敏感原值。</p>
+     */
+    String MASK_PROTECT_CONTEXT_PREFIX = "erp:mask:protect:ctx:";
+
+    /**
+     * 脱敏回显保护索引 Redis key 前缀。
+     * <p>实际 key 后缀是 user/read-class/read-field/write-class/write-field/record/permission 的 SHA-256，
+     * 不只按 recordId 建索引。</p>
+     */
+    String MASK_PROTECT_INDEX_PREFIX = "erp:mask:protect:idx:";
+
+    /**
      * 脱敏框架用户权限失效广播 channel
      *
      * <p>由 sys 服务在 {@code sys_user_role / sys_role_menu / sys_user} 写入路径 publish；

@@ -176,7 +176,21 @@ public class MaskClassDescriptorRegistry {
                         hasAnno ? anno.recursive() : true,
                         hasAnno ? anno.keepEmpty() : true,
                         config.isHideWhenMasked(), container,
-                        config.getSort() == null ? 0 : config.getSort()));
+                        config.getSort() == null ? 0 : config.getSort(),
+                        config.isValueProtectEnabled(),
+                        config.getProtectParamClassPath(),
+                        config.getProtectParamFieldName(),
+                        config.getProtectRecordIdField(),
+                        config.getProtectVersionField(),
+                        config.getProtectVerifyMode(),
+                        config.getProtectTableName(),
+                        config.getProtectRecordIdColumn(),
+                        config.getProtectValueColumn(),
+                        config.getProtectDeletedColumn(),
+                        config.getProtectTtlSeconds(),
+                        config.getProtectMaskedValueRegex(),
+                        config.getProtectMode(),
+                        config.getProtectParamBindings()));
             }
             return result;
         }

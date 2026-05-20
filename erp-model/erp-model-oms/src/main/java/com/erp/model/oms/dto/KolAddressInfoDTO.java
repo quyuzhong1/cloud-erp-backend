@@ -2,10 +2,7 @@ package com.erp.model.oms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -104,7 +101,6 @@ public class KolAddressInfoDTO implements Serializable {
         * 是否启用
         */
         private Boolean disabled;
-
 
     }
 

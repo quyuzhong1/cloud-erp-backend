@@ -3,6 +3,7 @@ package com.common.business.mask.cache;
 import com.alibaba.fastjson.JSON;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.mask.MaskStrategy;
+import com.common.business.mask.protect.MaskProtectBinding;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -80,6 +81,46 @@ public class CfgMaskFieldLocalCache {
                 .comparingInt((CfgMaskFieldSnapshotEntry e) -> e.getSort() == null ? 0 : e.getSort())
                 .thenComparing(e -> e.getStrategy() == null ? "" : e.getStrategy().name()));
         return Collections.unmodifiableList(result);
+    }
+
+    public List<CfgMaskFieldSnapshotEntry> getValueProtectRules(String classPath, String fieldName) {
+        if (classPath == null || fieldName == null) {
+            return Collections.emptyList();
+        }
+        CfgMaskFieldFullCacheDTO payload = loadPayload();
+        List<CfgMaskFieldSnapshotEntry> data = payload == null ? null : payload.getData();
+        if (data == null || data.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<CfgMaskFieldSnapshotEntry> result = new ArrayList<>();
+        for (CfgMaskFieldSnapshotEntry entry : data) {
+            if (!usable(entry) || !entry.isValueProtectEnabled()) {
+                continue;
+            }
+            if (findBinding(entry, classPath, fieldName) != null) {
+                result.add(entry);
+            }
+        }
+        if (result.isEmpty()) {
+            return Collections.emptyList();
+        }
+        result.sort(Comparator
+                .comparingInt((CfgMaskFieldSnapshotEntry e) -> e.getSort() == null ? 0 : e.getSort())
+                .thenComparing(e -> e.getClassPath() == null ? "" : e.getClassPath()));
+        return Collections.unmodifiableList(result);
+    }
+
+    void setRedissonClientForTest(RedissonClient redissonClient) {
+        this.redissonClient = redissonClient;
+    }
+
+    void setLoaderProviderForTest(ObjectProvider<CfgMaskFieldCacheLoader> loaderProvider) {
+        this.loaderProvider = loaderProvider;
+    }
+
+    public MaskProtectBinding findProtectBinding(CfgMaskFieldSnapshotEntry entry,
+                                                 String classPath, String fieldName) {
+        return findBinding(entry, classPath, fieldName);
     }
 
     /**
@@ -168,4 +209,24 @@ public class CfgMaskFieldLocalCache {
                 && entry.getStrategy() != null
                 && entry.getStrategy() != MaskStrategy.AUTO_FROM_CONFIG;
     }
+
+    private static MaskProtectBinding findBinding(CfgMaskFieldSnapshotEntry entry,
+                                                  String classPath, String fieldName) {
+        if (entry == null || classPath == null || fieldName == null
+                || entry.getProtectParamBindings() == null) {
+            return null;
+        }
+        for (MaskProtectBinding binding : entry.getProtectParamBindings()) {
+            if (binding == null || binding.getParamClassPath() == null || binding.getParamClassPath().isEmpty()) {
+                continue;
+            }
+            String bindingField = binding.getParamFieldName() == null || binding.getParamFieldName().isEmpty()
+                    ? entry.getFieldName() : binding.getParamFieldName();
+            if (classPath.equals(binding.getParamClassPath()) && fieldName.equals(bindingField)) {
+                return binding;
+            }
+        }
+        return null;
+    }
+
 }
