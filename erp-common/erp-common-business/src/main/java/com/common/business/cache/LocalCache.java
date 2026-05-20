@@ -45,7 +45,14 @@ public class LocalCache implements CommandLineRunner{
 		try {
 			List<Map<String , Object>> dorisQueryCfgSettingEntityList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL);
 			dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityList.stream().filter(c -> !Boolean.valueOf(c.get("is_deleted").toString())).collect(Collectors.toMap(c -> {
-				String value = c.get("value").toString();
+				Object valueObject = c.get("value");
+				String value = "";
+				if(valueObject != null) {
+					value = valueObject.toString();
+				}
+				if(StringUtils.isBlank(value)) {
+					value = c.get("code").toString();
+				}
 				if(!value.startsWith("/")) {
 					value = "/" + value;
 				}
@@ -63,6 +70,7 @@ public class LocalCache implements CommandLineRunner{
 				return d;
 			} , (c1 , c2) -> c1));
 		} catch (Exception e) {
+			log.error("转换doris配置查询错误" , e);
 		}
 	}
 	
@@ -96,6 +104,7 @@ public class LocalCache implements CommandLineRunner{
 						}
 					}, 1, freshCacheTime, TimeUnit.SECONDS);
 				} catch (Exception e) {
+					log.error("开启转换doris配置查询任务错误" , e);
 				}
 			}
 		}
