@@ -844,8 +844,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     if(Objects.isNull(skuVO)){
                         throw new ServiceException(ApiError.COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE, firstMileDeliveryDetailEntity.getSkuNo());
                     }
-                    Integer usableInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
-                    if (firstMileDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
+                    Integer frozenInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
+                    if (firstMileDeliveryDetailEntity.getDeliveryQty() > frozenInventoryTotal) {
                         throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT, firstMileDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());
                     }
                 }
