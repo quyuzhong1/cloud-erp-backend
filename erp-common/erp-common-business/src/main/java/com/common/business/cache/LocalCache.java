@@ -42,25 +42,28 @@ public class LocalCache implements CommandLineRunner{
 	private Map<String , DorisQuerySettingDTO> dorisQueryCfgSettingMappingCache;
 	
 	private synchronized void initDorisQueryCfgSetting() {
-		List<Map<String , Object>> dorisQueryCfgSettingEntityList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL);
-		dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityList.stream().filter(c -> Boolean.valueOf(c.get("is_deleted").toString())).collect(Collectors.toMap(c -> {
-			String value = c.get("value").toString();
-			if(!value.startsWith("/")) {
-				value = "/" + value;
-			}
-			return value;
-		}, c -> {
-			DorisQuerySettingDTO d = new DorisQuerySettingDTO();
-			String name = c.get("name").toString();
-			if(StringUtils.isNotBlank(name)) {
-				try {
-					d = JSON.parseObject(name, DorisQuerySettingDTO.class);
-				} catch (Exception e) {
-					log.error("转换doris配置查询错误" , e);
+		try {
+			List<Map<String , Object>> dorisQueryCfgSettingEntityList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL);
+			dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityList.stream().filter(c -> Boolean.valueOf(c.get("is_deleted").toString())).collect(Collectors.toMap(c -> {
+				String value = c.get("value").toString();
+				if(!value.startsWith("/")) {
+					value = "/" + value;
 				}
-			}
-			return d;
-		} , (c1 , c2) -> c1));
+				return value;
+			}, c -> {
+				DorisQuerySettingDTO d = new DorisQuerySettingDTO();
+				String name = c.get("name").toString();
+				if(StringUtils.isNotBlank(name)) {
+					try {
+						d = JSON.parseObject(name, DorisQuerySettingDTO.class);
+					} catch (Exception e) {
+						log.error("转换doris配置查询错误" , e);
+					}
+				}
+				return d;
+			} , (c1 , c2) -> c1));
+		} catch (Exception e) {
+		}
 	}
 	
 	public DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
@@ -84,13 +87,16 @@ public class LocalCache implements CommandLineRunner{
 		}
 		if(isCreateTask) {
 			if(BusinessCommonConstants.isDynamicEnabled()) {
-				Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-					String formatDateTime = DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
-					List<Map<String , Object>> cfgSettingEntityFreshList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL + " and update_time >= '" + formatDateTime + "' ");
-					if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
-						this.initDorisQueryCfgSetting();
-					}
-				}, 1, freshCacheTime, TimeUnit.SECONDS);
+				try {
+					Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+						String formatDateTime = DateUtil.formatDateTime(DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
+						List<Map<String , Object>> cfgSettingEntityFreshList = baseDataMapper.queryDbBySql(TABLE_NAME, BASE_EXTEND_QUERY_SQL + " and update_time >= '" + formatDateTime + "' ");
+						if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
+							this.initDorisQueryCfgSetting();
+						}
+					}, 1, freshCacheTime, TimeUnit.SECONDS);
+				} catch (Exception e) {
+				}
 			}
 		}
 	}
