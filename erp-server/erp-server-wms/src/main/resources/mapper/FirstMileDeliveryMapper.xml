@@ -39,10 +39,12 @@
         pt.packing_status as packingStatus,
         pt.id as taskId,
         fd.declare_status,
-        fd.transfer_warehouse_ids
+        fd.transfer_warehouse_ids,
+        owi.code AS overseasInboundCode
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE AND owi.instock_status &lt;&gt; 'canceled'
         WHERE
         ${params.sqlMap.default}
         and    fd.is_deleted = FALSE
@@ -100,10 +102,12 @@
         pt.packing_status as packingStatus,
         pt.id as taskId,
         fd.declare_status,
-        fd.transfer_warehouse_ids
+        fd.transfer_warehouse_ids,
+        owi.code AS overseasInboundCode
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE AND owi.instock_status &lt;&gt; 'canceled'
         WHERE
         ${params.sqlMap.default}
         and fd.is_deleted = FALSE

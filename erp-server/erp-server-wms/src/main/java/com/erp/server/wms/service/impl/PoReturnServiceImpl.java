@@ -296,8 +296,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PoReturnEntity add(PurchaseReturnOrderDTO.AddDTO dto) {
+        // 整箱退货要求 returnDetailType=pack 且明细带 afterSalePackDetailList，不能与普通 SKU 明细混用。
         checkReturnDetailType(dto);
+        // 整箱退货的退货数量以后端按箱内 actualQty 汇总为准，不直接使用前端传入的明细 returnQty。
         fillAfterSalePackReturnQty(dto);
+        // 普通 SKU 退货校验 returnQty > 0；整箱退货由箱明细数量逻辑处理。
         checkSkuReturnQtyForAdd(dto);
         FindUserDTO userDTO = new FindUserDTO();
 
@@ -405,6 +408,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //保存详情信息
         poReturnDetailService.add(dto, poReturnEntity.getId());
+        // 整箱退货保存后占用售后装箱单，并回写箱明细实退数量和差异数量。
         syncAfterSalePackForAdd(dto, poReturnEntity);
         //记录明细sku信息日志
         List<PoReturnDetailEntity> detailEntityList = poReturnDetailService.getDetailByMainId(poReturnEntity.getId());
@@ -430,8 +434,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        // 修改时仍按整箱/普通 SKU 两种明细类型校验，避免同一退货单混用。
         checkReturnDetailType(dto);
+        // 整箱退货重新按本次传入的箱内 actualQty 汇总每个 SKU 的 returnQty。
         fillAfterSalePackReturnQty(dto);
+        // 普通 SKU 退货校验 returnQty > 0；整箱退货不走该校验。
         checkSkuReturnQtyForUpdate(dto);
 
         PoReturnEntity oldEntity = this.getById(dto.getId());
@@ -519,6 +526,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //更新收货单详情表信息
         Boolean update = poReturnDetailService.update(dto, poReturnEntity.getId());
+        // 仅同步本次传入的售后装箱明细；移除的行/SKU 需要前端以 actualQty=0 传回。
         syncAfterSalePackForUpdate(dto, poReturnEntity);
         return update;
     }
@@ -773,6 +781,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PoReturnEntity addAndSubmit(PurchaseReturnOrderDTO.AddDTO dto) {
+        // 新增并提交复用 add 的整箱退货逻辑，提交环节不再额外同步售后装箱信息。
         PoReturnEntity entity = this.add(dto);
         if (CharSequenceUtil.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.BILL_SAVE_FAILED);
@@ -1761,6 +1770,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     /**
      * 新增采购退货单后，同步整箱退货占用状态与箱内实退差异。
+     * 前端需在退货明细的 afterSalePackDetailList 中传入售后装箱明细 id、售后装箱 id 和 actualQty。
      */
     private void syncAfterSalePackForAdd(PurchaseReturnOrderDTO.AddDTO dto, PoReturnEntity poReturnEntity) {
         List<AfterSalePackDTO.DetailDTO> boxDetailList = getAfterSalePackDetailsForAdd(dto);
@@ -1834,6 +1844,16 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         return CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU);
     }
 
+    private boolean isPackReturnDetail(PurchaseReturnOrderDTO.AddDTO dto) {
+        return dto != null && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), RETURN_DETAIL_TYPE_PACK);
+    }
+
+    private boolean isPackReturnDetail(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        return dto != null && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), RETURN_DETAIL_TYPE_PACK);
+    }
+
     private boolean hasAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
         return dto.getPurchasePriceDetailList().stream()
                 .filter(Objects::nonNull)
@@ -1861,6 +1881,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 修改采购退货单后，仅同步本次传入的箱内实退差异。
      * 单行移除、SKU移除需要由前端传回对应箱明细且实际数量为0；整箱移除不传回，不做箱码处理。
+     * 如果需求要求整箱移除后释放箱唛，前端需要传回该箱全部明细并将 actualQty 置 0，或后端另补释放逻辑。
      */
     private void syncAfterSalePackForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, PoReturnEntity poReturnEntity) {
         List<AfterSalePackDTO.DetailDTO> newBoxDetailList = getAfterSalePackDetailsForUpdate(dto);
@@ -1936,6 +1957,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     private void syncAfterSalePack(List<AfterSalePackDTO.DetailDTO> newBoxDetailList,
                                    PoReturnEntity poReturnEntity) {
+        // 按售后装箱主表 id 分组，同一箱内多行 SKU 明细统一更新。
         Map<String, List<AfterSalePackDTO.DetailDTO>> detailMap = groupAfterSalePackDetail(newBoxDetailList);
         List<String> newPackIds = new ArrayList<>(detailMap.keySet());
         if (CollectionUtils.isEmpty(newPackIds)) {
@@ -1954,6 +1976,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         Map<String, AfterSalePackDetailEntity> dbDetailMap = dbDetailList.stream()
                 .collect(Collectors.toMap(AfterSalePackDetailEntity::getId, Function.identity(), (v1, v2) -> v1));
 
+        // 校验箱唛存在、未被其它单据占用、已封箱且已识别移仓记录。
         validateAfterSalePack(newPackIds, packMap, poReturnEntity);
 
         List<AfterSalePackDetailEntity> updateDetailList = new ArrayList<>();
@@ -1961,10 +1984,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             List<AfterSalePackDTO.DetailDTO> detailList = detailMap.getOrDefault(packId, Collections.emptyList());
             updateDetailList.addAll(buildAfterSalePackDetailUpdates(packId, detailList, dbDetailList, dbDetailMap));
         }
+        // 回写 after_sale_pack_detail.actual_qty / diff_qty。
         if (CollectionUtils.isNotEmpty(updateDetailList) && !afterSalePackDetailService.updateBatchById(updateDetailList)) {
             throw new ServiceException("售后装箱明细保存失败");
         }
 
+        // 回写 after_sale_pack.is_use / is_difference / source_*。
         List<AfterSalePackEntity> updatePackList = newPackIds.stream()
                 .map(packMap::get)
                 .filter(Objects::nonNull)
@@ -2907,6 +2932,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (isPackReturnDetail(dto)) {
+            PoReturnEntity entity = this.add(dto);
+            return entity.getId();
+        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
@@ -2980,6 +3009,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (isPackReturnDetail(dto)) {
+            return this.update(dto);
+        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());

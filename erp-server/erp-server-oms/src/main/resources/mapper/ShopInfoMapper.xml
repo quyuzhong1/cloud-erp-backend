@@ -162,6 +162,7 @@
                 #{platform}
             </foreach>
         </if>
+        order by si.name
     </select>
     <select id="listShopByName" resultType="com.erp.model.oms.dto.ShopInfoDTO$ListDTO">
         select

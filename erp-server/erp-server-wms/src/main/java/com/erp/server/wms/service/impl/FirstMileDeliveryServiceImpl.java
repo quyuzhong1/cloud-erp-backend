@@ -2122,9 +2122,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询库存sku
         List<DictCountryEntity> dictCountryEntityList = FeignQuery.list(DictCountryEntity.class);
 
-        //查询已下推的海外入库单
-        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
-
         String bomType = BomTypeEnum.COMBINATION.getType();
 
         Map<String,Integer> qtyMap = new HashMap<>();
@@ -2188,14 +2185,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
-            //查询已下推的入库单获取入库单号
-            OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
-                    .filter(req -> req.getSourceId().equals(data.getId())
-                            && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())
-                    ).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
-                data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
-            }
             if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())
                     || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(data.getDemandType())
                     || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
@@ -3204,26 +3193,22 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public void sendMsg(List<String> logisticsBillIds){
         List<LogisticsBillEntity> list = FeignQuery.create(LogisticsBillEntity.class).in(LogisticsBillEntity::getId, logisticsBillIds).list();
         if(CollUtil.isNotEmpty(list)){
-            List<String> fmIds = list.stream().map(LogisticsBillEntity::getOutstockId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-            if(CollUtil.isNotEmpty(fmIds)){
-                List<FirstMileDeliveryEntity> firstMileDeliveryEntities = listByIds(fmIds);
-                List<String> jsonStrList = new ArrayList<>(firstMileDeliveryEntities.size());
-                TableName tableName = FirstMileDeliveryEntity.class.getDeclaredAnnotation(TableName.class);
-                for (FirstMileDeliveryEntity firstMileDeliveryEntity : firstMileDeliveryEntities) {
-                    Map<String, Object> before = BeanUtil.beanToMap(firstMileDeliveryEntity);
-                    Map<String, Object> after = new HashMap<>(before);
-                    after.put("table", tableName.value());
-                    after.put("P_TAG_IUD", "U");
-                    after.put("db", "erp-wms");
-                    after.put("cancelDelivery", Boolean.TRUE);
-                    Map<String, Map<String, Object>> map = new HashMap<>();
-                    map.put("before", before);
-                    map.put("after", after);
-                    String jsonStr = JSONUtil.toJsonStr(map);
-                    jsonStrList.add(jsonStr);
-                }
-                thirdNoticePushRecordFeign.batchSendMqRecordConsumer(jsonStrList);
+            List<String> jsonStrList = new ArrayList<>(list.size());
+            TableName tableName = LogisticsBillEntity.class.getDeclaredAnnotation(TableName.class);
+            for (LogisticsBillEntity entity : list) {
+                Map<String, Object> before = BeanUtil.beanToMap(entity);
+                Map<String, Object> after = new HashMap<>(before);
+                after.put("table", tableName.value());
+                after.put("P_TAG_IUD", "U");
+                after.put("db", "erp-tms");
+                after.put("cancelDelivery", Boolean.TRUE);
+                Map<String, Map<String, Object>> map = new HashMap<>();
+                map.put("before", before);
+                map.put("after", after);
+                String jsonStr = JSONUtil.toJsonStr(map);
+                jsonStrList.add(jsonStr);
             }
+            thirdNoticePushRecordFeign.batchSendMqRecordConsumer(jsonStrList);
         }
     }
 

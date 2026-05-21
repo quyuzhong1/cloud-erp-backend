@@ -771,6 +771,11 @@ public class NfeInvoiceService {
             uploadShopeeBrazilInvoice(soB2cEntity);
             return;
         }
+        if (!isMercadoLocalOrder(soB2cEntity)) {
+            throw new ServiceException(CharSequenceUtil.format("当前平台不支持上传NF-e发票，订单平台：{}，订单号：{}",
+                    ObjUtil.isEmpty(soB2cEntity) ? CharSequenceUtil.EMPTY : soB2cEntity.getDictPlatform(),
+                    ObjUtil.isEmpty(soB2cEntity) ? CharSequenceUtil.EMPTY : soB2cEntity.getCode()));
+        }
         //上传到平台
         MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
         mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
@@ -1117,22 +1122,24 @@ public class NfeInvoiceService {
     private boolean shouldAutoUploadInvoice(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
         return ObjUtil.isNotEmpty(invoiceSettingDetail)
                 && Boolean.TRUE.equals(invoiceSettingDetail.getIsAutoUpload())
-                && (CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform())
+                && (isMercadoLocalOrder(soB2cEntity)
                 || isShopeeBrazilOrder(soB2cEntity));
     }
 
-    private boolean isShopeeBrazilOrder(SoB2cEntity soB2cEntity) {
-        if (ObjUtil.isEmpty(soB2cEntity) || CharSequenceUtil.isBlank(soB2cEntity.getShopId())) {
-            return false;
-        }
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
-        return isShopeeBrazilShop(shopInfoEntity);
+    private boolean isMercadoLocalOrder(SoB2cEntity soB2cEntity) {
+        return ObjUtil.isNotEmpty(soB2cEntity)
+                && CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform());
     }
 
-    private boolean isShopeeBrazilShop(ShopInfoEntity shopInfoEntity) {
-        return ObjUtil.isNotEmpty(shopInfoEntity)
-                && CharSequenceUtil.equals(shopInfoEntity.getDictPlatform(), PlatformDictEnum.SHOPEE.getCode())
-                && CharSequenceUtil.equalsIgnoreCase(shopInfoEntity.getDictCountryCode(), "BR");
+    private boolean isShopeeBrazilOrder(SoB2cEntity soB2cEntity) {
+        if (ObjUtil.isEmpty(soB2cEntity)
+                || CharSequenceUtil.isBlank(soB2cEntity.getId())
+                || !CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.SHOPEE.getCode(), soB2cEntity.getDictPlatform())) {
+            return false;
+        }
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        return ObjUtil.isNotEmpty(receiverEntity)
+                && CharSequenceUtil.equalsIgnoreCase(receiverEntity.getCountry(), "BR");
     }
 
     private void fillReceiverFallbackClientInfo(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, SoB2cReceiverEntity receiverEntity) {

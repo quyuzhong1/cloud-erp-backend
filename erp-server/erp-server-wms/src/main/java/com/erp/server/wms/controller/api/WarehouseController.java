@@ -35,6 +35,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -351,6 +352,20 @@ public class WarehouseController extends BaseController {
             showByAuth = Boolean.TRUE;
         }
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
+        return success(list);
+    }
+
+    /**
+     * 仓库列表（根据名称排序）
+     */
+    @GetMapping("/listOrderByName")
+    public ApiResult<List<WarehouseDTO.ListDTO>> listOrderByName(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
+        //根据名称排序
+        list.sort(Comparator.comparing(WarehouseDTO.ListDTO::getName));
         return success(list);
     }
 

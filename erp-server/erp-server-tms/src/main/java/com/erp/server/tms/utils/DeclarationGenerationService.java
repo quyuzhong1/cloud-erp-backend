@@ -361,7 +361,7 @@ public class DeclarationGenerationService {
         if (boxNo.isEmpty()) {
             return businessCode;
         }
-        return businessCode + "+" + boxNo;
+        return businessCode + "-" + boxNo;
     }
 
     /**

@@ -108,7 +108,8 @@ public class PurchaseReturnOrderDetailDTO {
         private String purchaseWarehouseLocation;
 
         /**
-         * 整箱退货明细
+         * 整箱退货明细。
+         * returnDetailType=pack 时必传；后端按该列表 actualQty 合计回填本行 returnQty。
          */
         private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
@@ -200,7 +201,8 @@ public class PurchaseReturnOrderDetailDTO {
         private String warehouseLocation;
 
         /**
-         * 整箱退货明细
+         * 整箱退货明细。
+         * returnDetailType=pack 时必传；单行或 SKU 移除时需把对应明细传回并将 actualQty 置 0。
          */
         private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }
@@ -337,7 +339,8 @@ public class PurchaseReturnOrderDetailDTO {
         private String mainSupplierName;
 
         /**
-         * 整箱退货明细
+         * 整箱退货明细。
+         * 按 SKU 聚合返回本单占用的售后装箱明细，供前端编辑整箱退货数量和差异。
          */
         private List<AfterSalePackDTO.DetailDTO> afterSalePackDetailList;
     }

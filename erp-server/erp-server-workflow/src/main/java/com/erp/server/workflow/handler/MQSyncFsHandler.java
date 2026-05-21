@@ -292,10 +292,10 @@ public class MQSyncFsHandler {
         if(Objects.isNull(req)){
             return true;
         }
-        log.info("MQSyncFsInstanceConsumerService 同步三方审批实例请求参数: {}" ,  new Gson().toJson(req.getExternalInstance()));
+        log.error("MQSyncFsInstanceConsumerService 同步三方审批实例请求参数: {}" ,  new Gson().toJson(req.getExternalInstance()));
         //三方审批同步w
         CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
-        log.info("MQSyncFsInstanceConsumerService 同步三方审批实例响应参数: {}" ,  new Gson().toJson(resp));
+        log.error("MQSyncFsInstanceConsumerService 同步三方审批实例响应参数: {}" ,  new Gson().toJson(resp));
 
         if (!resp.success()) {
             String msg = String.format("同步三方审批实例失败:code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
