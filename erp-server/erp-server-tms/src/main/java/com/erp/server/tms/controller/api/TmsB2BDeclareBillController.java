@@ -179,10 +179,11 @@ public class TmsB2BDeclareBillController extends BaseController {
 
     /**
      * 批量更新字段下拉配置
+     * fmDeclareBill = 头程报关单 b2bDeclareBill = B2B报关单
      */
     @GetMapping("/batchUpdateFieldDropDown")
-    public ApiResult<List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO>> batchUpdateFieldDropDown() {
-        return success(tmsDeclareBillService.batchUpdateFieldDropDown());
+    public ApiResult<List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO>> batchUpdateFieldDropDown(@RequestParam("type") String type) {
+        return success(tmsDeclareBillService.batchUpdateFieldDropDown(type));
     }
 
     /**

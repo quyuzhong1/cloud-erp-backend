@@ -677,41 +677,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown() {
+    public List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown(String type) {
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_BATCH_UPDATE_FIELD.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
             return Collections.emptyList();
         }
-        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> dropDownList = parseBatchUpdateFieldDropDown(cfgSettingEntity.getDataJson());
+        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> dropDownList = parseBatchUpdateFieldDropDown(type,cfgSettingEntity.getDataJson());
         dropDownList.sort(Comparator.comparing(TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO::getIndex, Comparator.nullsLast(Integer::compareTo)));
         return dropDownList;
     }
 
-    private List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> parseBatchUpdateFieldDropDown(JSONObject dataJson) {
+    private List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> parseBatchUpdateFieldDropDown(String type,JSONObject dataJson) {
         if (ObjectUtil.isEmpty(dataJson)) {
             return new ArrayList<>();
         }
-        if (ObjectUtil.isNotEmpty(dataJson.getJSONArray("data"))) {
-            return JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class);
-        }
-        if (ObjectUtil.isNotEmpty(dataJson.get("field"))) {
-            return Collections.singletonList(JSONUtil.toBean(dataJson, TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class));
-        }
-        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> result = new ArrayList<>();
-        dataJson.values().forEach(value -> {
-            if (ObjectUtil.isEmpty(value)) {
-                return;
-            }
-            try {
-                TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO dto = JSONUtil.toBean(JSONUtil.parseObj(value), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class);
-                if (ObjectUtil.isNotEmpty(dto) && ObjectUtil.isNotEmpty(dto.getField())) {
-                    result.add(dto);
-                }
-            } catch (Exception e) {
-                log.warn("解析报关单批量更新字段配置失败, value={}", value, e);
-            }
-        });
-        return result;
+        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> data = JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class).stream().filter(e -> e.getType().contains(type)).collect(Collectors.toList());;
+        return data;
     }
 
     /**
@@ -2423,7 +2404,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             case PRE_INPUT_NO:
             case DEST_CUSTOMS:
             case DECLARE_TYPE:
-            case SENDER_ID:
             case EXPORT_CUSTOMS_NAME:
             case DICT_SUPERVISION_METHOD:
             case DICT_NATURE_LEVY:
@@ -2437,9 +2417,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             case REMARK:
                 updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
                 break;
+            case SENDER_ID:
+                updateWrapper.set(fieldName, "");
+                updateWrapper.set("sender_name", "");
             case RECEIVER_ID:
-                updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
-                updateWrapper.set("receiver_name", name);
+                String str = Objects.toString(fieldValue, "");
+                if(StringUtils.isNotBlank(str)){
+                    List<CustomerInfoEntity> list = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, str).list();
+                    if(CollUtil.isNotEmpty(list)){
+                        updateWrapper.set("receiver_type", CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode());
+                    }else{
+                        updateWrapper.set("receiver_type", CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode());
+                    }
+                    updateWrapper.set(fieldName, str);
+                    updateWrapper.set("receiver_name", name);
+                }else {
+                    updateWrapper.set(fieldName, "");
+                    updateWrapper.set("receiver_name", "");
+                    updateWrapper.set("receiver_type", "");
+                }
                 break;
             case EXPORT_DATE:
             case DECLARE_DATE:
