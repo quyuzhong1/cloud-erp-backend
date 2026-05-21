@@ -88,13 +88,14 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      */
     Boolean update(SkuStdCostDetailDTO.UpdateDTO dto);
 
+
     /**
-     * 自动获取标准成本
+     * 批量自动获取标准成本
      *
      * @param dto
      * @return
      */
-    Boolean autoFetch(SkuStdCostDTO.AutoFetchDTO dto);
+    List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto);
 
 
     /**
