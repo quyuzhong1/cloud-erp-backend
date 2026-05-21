@@ -13,9 +13,12 @@ import com.erp.model.dmp.entity.DmpThirdInboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
+import com.erp.server.dmp.service.DmpThirdInboundService;
+import com.taobao.api.request.FenxiaoOrderRemarkUpdateRequest;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,6 +26,9 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class JituInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+
+    @Resource
+    private DmpThirdInboundService dmpThirdInboundService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -80,29 +86,32 @@ public class JituInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
         platformInboundDTO.setPlatform(sourcePlatform);
         platformInboundDTO.setProvider(sourcePlatform);
-        List<JituInboundReturnDTO.Item> boxListDTOS = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), JituInboundReturnDTO.Item.class);
-
         platformInboundDTO.setReceivingStatus(this.convertStatus(dmpThirdInboundEntity.getReceivingStatus()));
         List<Receiving> receivingDataList = new ArrayList<>();
 
-
-        for (JituInboundReturnDTO.Item skuListDTO : boxListDTOS) {
-            if (!skuListDTO.getInventoryType().equals("ZP")) {
-                continue;
-            }
-            LocalDateTime operateTime = skuListDTO.getOperateTime();
-            String lineNo = skuListDTO.getLineNo();
-            for (JituInboundReturnDTO.Item.Batche batch : skuListDTO.getBatches()) {
-                Receiving receiving = new Receiving();
-                platformInboundDTO.setDownloadTime(LocalDateTime.now());
-                receiving.setProductSku(skuListDTO.getItemCode());
-                receiving.setReceiveQty(batch.getActualQty());
-                receiving.setReceiveTime(operateTime);
-                receiving.setThirdId(lineNo);
-                receivingDataList.add(receiving);
-            }
-
-        }
+        //获取订单详情数据
+        List<DmpThirdInboundEntity> entityList = dmpThirdInboundService.listBySourceCode(dmpThirdInboundEntity.getSourceCode());
+        List<String> detailJsonList = entityList.stream().filter(e -> dmpThirdInboundEntity.getSourcePlatform().equals(e.getSourcePlatform())).map(DmpThirdInboundEntity::getDetailListJson).filter(Objects::nonNull).collect(Collectors.toList());
+        //批量转换detailJsonList为List<JituInboundReturnDTO.Item>
+        detailJsonList.forEach(detailJson -> {
+                List<JituInboundReturnDTO.Item> items = JSON.parseArray(detailJson, JituInboundReturnDTO.Item.class);
+            for (JituInboundReturnDTO.Item item : items) {
+                    if (!item.getInventoryType().equals("ZP")) {
+                        continue;
+                    }
+                    LocalDateTime operateTime = item.getOperateTime();
+                    String lineNo = item.getLineNo();
+                    for (JituInboundReturnDTO.Item.Batche batch : item.getBatches()) {
+                        Receiving receiving = new Receiving();
+                        platformInboundDTO.setDownloadTime(LocalDateTime.now());
+                        receiving.setProductSku(item.getItemCode());
+                        receiving.setReceiveQty(batch.getActualQty());
+                        receiving.setReceiveTime(operateTime);
+                        receiving.setThirdId(lineNo);
+                        receivingDataList.add(receiving);
+                    }
+                }
+        });
         platformInboundDTO.setReceivingDataList(receivingDataList);
         if (CollUtil.isNotEmpty(receivingDataList)) {
             platformInboundDTO.setHasReceivedData(true);

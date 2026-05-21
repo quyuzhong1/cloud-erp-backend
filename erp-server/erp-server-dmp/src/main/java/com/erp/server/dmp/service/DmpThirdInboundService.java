@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpThirdInboundDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 第三方仓库存 服务类
@@ -33,4 +35,5 @@ public interface DmpThirdInboundService extends SuperService<DmpThirdInboundEnti
     Boolean update(DmpThirdInboundDTO.UpdateDTO dto);
 
 
+    List<DmpThirdInboundEntity> listBySourceCode(String sourceCode);
 }
