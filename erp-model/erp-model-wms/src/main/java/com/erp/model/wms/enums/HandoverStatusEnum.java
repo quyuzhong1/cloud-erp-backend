@@ -33,6 +33,13 @@ public enum HandoverStatusEnum implements EnumMessage {
     CLOSING("closing","关闭中"),
     CLOSED("closed","已关闭"),
 
+    // Shopee first mile
+    SHOPEE_ORDER_CREATED("ORDER_CREATED","已提交"),
+    SHOPEE_ORDER_RECEIVED("ORDER_RECEIVED","等待快递揽收"),
+    SHOPEE_PICKED_UP("PICKED_UP","已揽收"),
+    SHOPEE_CANCELING("CANCELING","取消中"),
+    SHOPEE_DELIVERED("SHOPEE_DELIVERED","已到达"),
+
     //TIKTOKFully
     INIT_2("INIT","初始化"),
     WAIT_CREATE("WAIT_CREATE","等待建单"),

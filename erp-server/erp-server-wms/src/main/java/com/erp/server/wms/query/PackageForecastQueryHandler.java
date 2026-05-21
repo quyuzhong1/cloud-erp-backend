@@ -41,6 +41,9 @@ public class PackageForecastQueryHandler extends AbstractQueryHandler {
         if("platformNo".equals(field)){
            return "COALESCE ( pf.handover_no, '' ) || '/' || COALESCE ( pf.platform_package_no, '' ) " + compareCodeSplicingValueSql;
         }
+        if("platformOrderCode".equals(field)){
+            return "exists (select 1 from package_forecast_detail pfd_query inner join so_b2c sb_query on pfd_query.so_id = sb_query.id and sb_query.is_deleted = false where pfd_query.main_id = pf.id and pfd_query.is_deleted = false and sb_query.platform_code " + compareCodeSplicingValueSql + ")";
+        }
         return null;
     }
 }

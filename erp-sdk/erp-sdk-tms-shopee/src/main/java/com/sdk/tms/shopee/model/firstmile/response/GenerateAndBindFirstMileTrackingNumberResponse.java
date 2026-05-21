@@ -16,6 +16,9 @@ public class GenerateAndBindFirstMileTrackingNumberResponse implements Serializa
     @JSONField(name = "binding_id")
     private String bindingId;
 
+    @JSONField(name = "first_mile_tracking_number")
+    private String firstMileTrackingNumber;
+
     @JSONField(name = "success_list")
     private List<FirstMileBindingOrder> successList;
 

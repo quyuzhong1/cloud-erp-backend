@@ -167,6 +167,12 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
         for (PackageForecastDetailDTO.ViewDTO item : resultList) {
             String soId = item.getSoId();
+            SoB2cEntity sourceSoB2cEntity = soB2cEntityList.stream()
+                    .filter(req -> req.getId().equals(soId))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)) {
+                item.setPlatformOrderCode(sourceSoB2cEntity.getPlatformCode());
+            }
             SoB2cEntity soB2cEntity = soB2cEntityList.stream()
                     .filter(req -> req.getId().equals(soId)
                             && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
@@ -253,6 +259,12 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
         for (PackageForecastDetailDTO.ViewDTO item : resultList) {
             String soId = item.getSoId();
+            SoB2cEntity sourceSoB2cEntity = soB2cEntityList.stream()
+                    .filter(req -> req.getId().equals(soId))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)) {
+                item.setPlatformOrderCode(sourceSoB2cEntity.getPlatformCode());
+            }
             SoB2cEntity soB2cEntity = soB2cEntityList.stream()
                     .filter(req -> req.getId().equals(soId)
                             && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))

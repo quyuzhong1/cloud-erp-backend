@@ -280,6 +280,11 @@ public class PackageForecastDTO implements Serializable {
         private String collectMode;
 
         /**
+         * 发货区域，Shopee 头程默认 CN
+         */
+        private String region = "CN";
+
+        /**
          * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
          */
         private String collectAddressId;
@@ -312,6 +317,57 @@ public class PackageForecastDTO implements Serializable {
          * 服务商名称
          */
         private String providerName;
+
+        /**
+         * Shopee 快递寄送付款方式
+         */
+        private String paymentMode;
+
+        /**
+         * Shopee 转运仓ID
+         */
+        private String warehouseId;
+
+        /**
+         * Shopee 物流产品ID
+         */
+        private Long logisticsProductId;
+
+        /**
+         * Shopee 快递服务ID
+         */
+        private String courierServiceId;
+
+        /**
+         * Shopee 月结账号ID
+         */
+        private Long prepaidAccountId;
+
+        /**
+         * Shopee 非快递/卖家自送物流渠道ID
+         */
+        private Integer logisticsChannelId;
+
+        /**
+         * Shopee 非快递/卖家自送物流渠道名
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 是否生成并绑定新揽收批次号
+         */
+        private Boolean generateNewTrackingNumber;
+
+        /**
+         * Shopee 头程追踪号/揽收批次号
+         */
+        private String firstMileTrackingNumber;
+
+        /**
+         * Shopee 申报/取货日期
+         */
+        private LocalDate declareDate;
+
         /**
          * 预约揽收日期
          */
@@ -359,6 +415,11 @@ public class PackageForecastDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
+
+        /**
+         * 平台单号
+         */
+        private String platformOrderCode;
 
 
         /**
@@ -548,6 +609,108 @@ public class PackageForecastDTO implements Serializable {
          * 明细
          */
         private List<PagingDetailViewDTO> detailViewDTOList;
+    }
+
+    /**
+     * Shopee 组包预报下拉查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeOptionParamDTO {
+
+        @Size(min = 1, message = "组包预报单不能为空")
+        private List<String> ids;
+
+        /**
+         * 发货区域，默认 CN
+         */
+        private String region = "CN";
+
+        /**
+         * 揽收方式
+         */
+        private String collectMode;
+
+        /**
+         * 申报/取货日期
+         */
+        private LocalDate declareDate;
+    }
+
+    /**
+     * Shopee 快递寄送下单初始化数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeCourierDeliveryOptionsDTO {
+        private List<ShopeeWarehouseDTO> warehouseList;
+        private List<ShopeeAddressDTO> addressList;
+        private List<ShopeeCourierChannelDTO> logisticsChannelList;
+        private List<ShopeePrepaidAccountDTO> prepaidAccountList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeWarehouseDTO {
+        private String warehouseId;
+        private String warehouseNameEn;
+        private String warehouseNameCn;
+        private Integer warehouseType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeAddressDTO {
+        private Long addressId;
+        private String region;
+        private String state;
+        private String city;
+        private String address;
+        private String zipcode;
+        private String district;
+        private String town;
+        private List<String> addressType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeCourierChannelDTO {
+        private Long logisticsProductId;
+        private String logisticsProductName;
+        private List<ShopeeCourierServiceDTO> courierList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeCourierServiceDTO {
+        private String courierName;
+        private String courierServiceId;
+        private String courierServiceName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeePrepaidAccountDTO {
+        private Long prepaidAccountId;
+        private String prepaidAccountCourierName;
+        private String prepaidAccountPartnerName;
+        private Boolean prepaidAccountIsDefault;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeFirstMileChannelDTO {
+        private String shipmentMethod;
+        private Integer logisticsChannelId;
+        private String logisticsChannelName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShopeeTrackingNumberDTO {
+        private String firstMileTrackingNumber;
+        private String status;
+        private String declareDate;
     }
 
 
@@ -988,6 +1151,11 @@ public class PackageForecastDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
+
+        /**
+         * 平台单号
+         */
+        private String platformOrderCode;
 
 
         /**

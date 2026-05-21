@@ -3,7 +3,8 @@ package com.erp.server.wms.schedule;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.model.wms.enums.HandoverStatusEnum;
+import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapter;
+import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapterFactory;
 import com.erp.server.wms.service.PackageForecastService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -13,9 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author jack
@@ -29,6 +28,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SyncPackageForecastStatusJob {
     @Resource
     private PackageForecastService packageForecastService;
+
+    @Resource
+    private PackageForecastPlatformAdapterFactory packageForecastPlatformAdapterFactory;
+
     /**
      * 同步组包订单详情
      */
@@ -38,14 +41,21 @@ public class SyncPackageForecastStatusJob {
         DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
         //根据订单查询组包明细  默认查询 3月内的组包数据
         List<PackageForecastEntity> awaitingPickupList = packageForecastService.getAliExpressHandoverList(dateTime);
-        if (CollectionUtils.isEmpty(awaitingPickupList)){
-            XxlJobHelper.log("syncPackageForecastStatusJob end : {}", LocalDateTime.now());
-            return;
+        if (CollectionUtils.isNotEmpty(awaitingPickupList)){
+            awaitingPickupList.forEach(packageForecastEntity -> {
+                packageForecastService.queryAliExpressInfo(packageForecastEntity);
+                XxlJobHelper.log("syncPackageForecastStatusJob awaitingPickupList update : {}", packageForecastEntity.getHandoverNo());
+            });
         }
-        awaitingPickupList.forEach(packageForecastEntity -> {
-            packageForecastService.queryAliExpressInfo(packageForecastEntity);
-            XxlJobHelper.log("syncPackageForecastStatusJob awaitingPickupList update : {}", packageForecastEntity.getHandoverNo());
-        });
+        for (PackageForecastPlatformAdapter adapter : packageForecastPlatformAdapterFactory.listAdapters()) {
+            List<PackageForecastEntity> trackingList = adapter.listSyncTrackingStatus(dateTime);
+            if (CollectionUtils.isNotEmpty(trackingList)) {
+                trackingList.forEach(packageForecastEntity -> {
+                    adapter.syncTrackingStatus(packageForecastEntity);
+                    XxlJobHelper.log("syncPackageForecastStatusJob platformTrackingList update : {}", packageForecastEntity.getTransportNo());
+                });
+            }
+        }
         XxlJobHelper.log("syncPackageForecastStatusJob end : {}", LocalDateTime.now());
     }
 }
