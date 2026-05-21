@@ -285,8 +285,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
 
     List<BaseDropDownDTO.DisabledDTO> listWithAll(String logisticsSupplierId);
 
-    void checkDeliveryType(String id, String logisticsPlatform);
-
     List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(List<String> channelNames);
 
     /**
@@ -296,4 +294,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return List<LogisticsSupplierDTO.ListChildTreeDTO>
      */
     List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto);
+
+    void checkDeliveryType(String id, String logisticsPlatform);
 }

@@ -1111,6 +1111,11 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto) {
+        return baseMapper.listChannelByPlatform(dto);
+    }
+
+    @Override
     public void checkDeliveryType(String id, String logisticsPlatform) {
         if (StringUtils.isBlank(id) || StringUtils.isBlank(logisticsPlatform)){
             return;
@@ -1145,10 +1150,5 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 this.lambdaUpdate().set(LogisticsChannelEntity::getDeliveryType, "").eq(LogisticsChannelEntity::getId, e.getId()).update();
             }
         });
-    }
-
-    @Override
-    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto) {
-        return baseMapper.listChannelByPlatform(dto);
     }
 }

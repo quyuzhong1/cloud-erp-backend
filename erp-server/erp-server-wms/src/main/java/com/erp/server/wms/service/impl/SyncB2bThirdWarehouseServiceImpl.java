@@ -164,7 +164,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setWarehouseOperationTypeDTOList(warehouseOperationTypeDTOList);
         req.setAuthId(overseasProviderEntity.getId());
         req.setThirdWarehouseProvideCode(overseasProviderEntity.getCode());
-        req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         req.setIsInsurance(false);
         req.setIsSignature(false);
         if (StrUtil.isNotBlank(entity.getLogisticsChannelId())) {
@@ -174,6 +173,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 req.setIsSignature(Boolean.TRUE.equals(logisticsChannelEntity.getIsApiSign()));
             }
         }
+        req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
     }
