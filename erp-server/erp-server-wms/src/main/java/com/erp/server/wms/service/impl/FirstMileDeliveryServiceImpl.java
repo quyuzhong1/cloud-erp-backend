@@ -1948,9 +1948,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询库存sku
         List<DictCountryEntity> dictCountryEntityList = FeignQuery.list(DictCountryEntity.class);
 
-        //查询已下推的海外入库单
-        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
-
         String bomType = BomTypeEnum.COMBINATION.getType();
 
         Map<String,Integer> qtyMap = new HashMap<>();
@@ -2014,14 +2011,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
-            //查询已下推的入库单获取入库单号
-            OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
-                    .filter(req -> req.getSourceId().equals(data.getId())
-                            && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())
-                    ).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
-                data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
-            }
             if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())
                     || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(data.getDemandType())
                     || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
