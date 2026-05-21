@@ -1842,6 +1842,16 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         return CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU);
     }
 
+    private boolean isPackReturnDetail(PurchaseReturnOrderDTO.AddDTO dto) {
+        return dto != null && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), RETURN_DETAIL_TYPE_PACK);
+    }
+
+    private boolean isPackReturnDetail(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        return dto != null && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), RETURN_DETAIL_TYPE_PACK);
+    }
+
     private boolean hasAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
         return dto.getPurchasePriceDetailList().stream()
                 .filter(Objects::nonNull)
@@ -2920,6 +2930,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        if (isPackReturnDetail(dto)) {
+            PoReturnEntity entity = this.add(dto);
+            return entity.getId();
+        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
@@ -2993,6 +3007,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        if (isPackReturnDetail(dto)) {
+            return this.update(dto);
+        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
