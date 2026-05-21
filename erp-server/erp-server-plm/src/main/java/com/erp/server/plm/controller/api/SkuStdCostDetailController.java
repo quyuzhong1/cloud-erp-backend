@@ -137,10 +137,10 @@ public class SkuStdCostDetailController extends BaseController {
             tableField = "create_user_id",
             menuCode = "plm:skuStdCost:autoFetch",
             serviceClass = SkuStdCostService.class,
-            keyIdName = "id")
-    public ApiResult<?> autoFetch(@RequestBody @Validated SkuStdCostDTO.AutoFetchDTO dto) {
-        skuStdCostDetailService.autoFetch(dto);
-        return success();
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> autoFetch(@RequestBody @Validated SkuStdCostDTO.AutoFetchBatchDTO dto) {
+        List<BatchResultDTO> resultDTOS = skuStdCostDetailService.autoFetchBatch(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

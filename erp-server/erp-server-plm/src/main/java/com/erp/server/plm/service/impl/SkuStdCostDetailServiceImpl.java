@@ -262,16 +262,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean autoFetch(SkuStdCostDTO.AutoFetchDTO dto) {
-        SkuStdCostEntity mainEntity = skuStdCostService.getById(dto.getId());
-        if (ObjectUtil.isEmpty(mainEntity)) {
-            throw new ServiceException("SKU标准成本主数据不存在");
-        }
-        if (StringUtils.isBlank(mainEntity.getSkuId())) {
-            throw new ServiceException("SKU标准成本主数据未关联SKU");
-        }
+    public List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SkuStdCostEntity> mainEntityList = skuStdCostService.lambdaQuery()
+                .in(SkuStdCostEntity::getId, ids)
+                .list();
+        Map<String, SkuStdCostEntity> mainEntityMap = mainEntityList.stream()
+                .collect(Collectors.toMap(SkuStdCostEntity::getId, Function.identity(), (a, b) -> a));
 
         SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(dto.getOrgId());
         if (ObjectUtil.isEmpty(companyEntity)) {
@@ -283,11 +281,80 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("仓库不存在");
         }
 
-        List<SkuStdCostDetailEntity> detailList = lambdaQuery()
-                .eq(SkuStdCostDetailEntity::getMainId, mainEntity.getId())
-                .list();
+        List<String> mainIds = mainEntityList.stream()
+                .map(SkuStdCostEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<SkuStdCostDetailEntity>> detailMap = CollectionUtils.isEmpty(mainIds)
+                ? Collections.emptyMap()
+                : lambdaQuery()
+                .in(SkuStdCostDetailEntity::getMainId, mainIds)
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(SkuStdCostDetailEntity::getMainId));
+
+        List<String> skuIds = mainEntityList.stream()
+                .map(SkuStdCostEntity::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<InventorySkuCostDTO.SkuCostCNYDTO>> skuCostMap = Collections.emptyMap();
+        if (CollectionUtils.isNotEmpty(skuIds)) {
+            InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO = InventorySkuCostDTO.SkuCostCNYQueryDTO.builder()
+                    .skuIds(skuIds)
+                    .warehouseIds(Collections.singletonList(dto.getWarehouseId()))
+                    .orgId(dto.getOrgId())
+                    .build();
+            List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList = logisticsFeign.getSkuCostInCNY(queryDTO);
+            if (CollectionUtils.isNotEmpty(skuCostList)) {
+                skuCostMap = skuCostList.stream()
+                        .filter(item -> StringUtils.isNotBlank(item.getSkuId()))
+                        .collect(Collectors.groupingBy(InventorySkuCostDTO.SkuCostCNYDTO::getSkuId));
+            }
+        }
+
+        SkuStdCostDetailServiceImpl bean = ApplicationContextUtils.getBean(SkuStdCostDetailServiceImpl.class);
+        for (String id : ids) {
+            BatchResultDTO resultItem;
+            SkuStdCostEntity mainEntity = mainEntityMap.get(id);
+            if (ObjectUtil.isEmpty(mainEntity)) {
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 自动获取失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            if (StringUtils.isBlank(mainEntity.getSkuId())) {
+                resultItem = BatchResultDTO.fail(mainEntity.getId(), mainEntity.getSkuNo(), "sku标准成本主信息未关联SKU");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+            try {
+                bean.autoFetchWithContext(mainEntity, detailMap.get(id), skuCostMap.get(mainEntity.getSkuId()));
+                resultItem = BatchResultDTO.success(mainEntity.getId(), mainEntity.getSkuNo(), "sku标准成本自动获取成功");
+            } catch (Exception e) {
+                log.error("sku标准成本自动获取失败", e);
+                resultItem = BatchResultDTO.fail(mainEntity.getId(), mainEntity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultItem);
+        }
+        return resultDTOS;
+    }
+
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public Boolean autoFetchWithContext(SkuStdCostEntity mainEntity,
+                                        List<SkuStdCostDetailEntity> detailList,
+                                        List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
+        if (ObjectUtil.isEmpty(mainEntity)) {
+            throw new ServiceException("SKU标准成本主数据不存在");
+        }
+        if (StringUtils.isBlank(mainEntity.getSkuId())) {
+            throw new ServiceException("SKU标准成本主数据未关联SKU");
+        }
+
         SkuStdCostDetailEntity detailEntity = resolveAutoFetchDetail(detailList);
-        InventorySkuCostDTO.SkuCostCNYDTO skuCost = getAutoFetchSkuCost(mainEntity.getSkuId(), dto.getOrgId(), dto.getWarehouseId());
+        InventorySkuCostDTO.SkuCostCNYDTO skuCost = resolveAutoFetchSkuCost(skuCostList);
 
         SkuStdCostDetailEntity oldEntity = new SkuStdCostDetailEntity();
         BeanUtil.copyProperties(detailEntity, oldEntity, true);
@@ -308,8 +375,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("SKU标准成本自动获取日志记录失败");
         }
 
-        SkuStdCostDetailServiceImpl bean = ApplicationContextUtils.getBean(SkuStdCostDetailServiceImpl.class);
-        bean.submitEntity(detailEntity, mainEntity);
+        submitEntity(detailEntity, mainEntity);
         return Boolean.TRUE;
     }
 
