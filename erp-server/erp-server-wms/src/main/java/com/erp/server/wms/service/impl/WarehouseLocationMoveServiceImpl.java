@@ -1442,7 +1442,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 throw new ServiceException(CharSequenceUtil.format("该箱码【{}】已被单据绑定，不能再移仓了", boxInfo.getCode()));
             }
             //如果这个箱唛没有封箱就报错
-            if (!boxInfo.getPackStatus().equals(AfterSalePackStatusEnum.SEALED_BOX.getCode())) {
+            if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(boxInfo.getPackStatus())) {
                 throw new ServiceException(CharSequenceUtil.format("该箱码【{}】尚未封箱，不能移仓了，请尽快完成封箱", boxInfo.getCode()));
             }
             boxInfoList.add(boxInfo);
