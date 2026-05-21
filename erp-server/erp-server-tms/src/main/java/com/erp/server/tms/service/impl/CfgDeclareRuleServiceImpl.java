@@ -40,17 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -122,6 +112,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         }
 
         if (SourceTypeEnum.B2B_DECLARE_BILL.getCode().equals(type)) {
+            if(Objects.isNull(isShowCustomerId) ) isShowCustomerId = false;
             List<BaseDropDownDTO.Tree> result = new ArrayList<>(2);
             result.add(buildDropDown(
                     type,
