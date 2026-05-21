@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
@@ -238,6 +239,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (CollectionUtils.isEmpty(logisticsList)) {
             if (null == oldEntity) {
                 SoB2cLogisticsEntity entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(null, mainEntity.getId(), allNetWeight, maxLength, maxWidth, totalHeight);
+                fillShopeePlatformWarehousePackageNumber(mainEntity, entity);
                 handleLogisticsData(entity);
                 // 无信息新增空表
                 if (!this.save(entity)) {
@@ -262,6 +264,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 oldEntity.setLength(maxLength);
                 oldEntity.setWidth(maxWidth);
                 oldEntity.setHeight(totalHeight);
+                fillShopeePlatformWarehousePackageNumber(mainEntity, oldEntity);
                 if (!this.updateById(oldEntity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
@@ -278,6 +281,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             if (Objects.isNull(entity)) {
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());
+                fillShopeePlatformWarehousePackageNumber(mainEntity, entity);
                 handleLogisticsData(entity);
                 if (isShopee && StringUtils.isNotEmpty(entity.getLogisticsChannelName())){
                     //虾皮存在渠道名称不存在渠道id 特殊处理
@@ -330,12 +334,29 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 entity2.setWidth(maxWidth);
                 entity2.setHeight(totalHeight);
                 entity2.setId(entity.getId());
+                fillShopeePlatformWarehousePackageNumber(mainEntity, entity2);
                 if (!this.updateById(entity2)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
                 entity = entity2;
             }
         return entity;
+    }
+
+    private void fillShopeePlatformWarehousePackageNumber(SoB2cEntity mainEntity, SoB2cLogisticsEntity logisticsEntity) {
+        if (Objects.isNull(mainEntity)
+                || Objects.isNull(logisticsEntity)
+                || !PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
+                || !Boolean.TRUE.equals(mainEntity.hasPlatformWarehouseOrder())
+                || StringUtils.isBlank(mainEntity.getLabelJson())) {
+            return;
+        }
+        String packageNumber = JSONUtil.parseObj(mainEntity.getLabelJson()).getStr("package_number");
+        if (StringUtils.isBlank(packageNumber)) {
+            return;
+        }
+        logisticsEntity.setCode(packageNumber);
+        logisticsEntity.setTrackNo(packageNumber);
     }
 
     @Override
