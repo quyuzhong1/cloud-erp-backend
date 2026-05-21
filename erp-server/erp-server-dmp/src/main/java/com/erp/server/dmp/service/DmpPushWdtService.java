@@ -32,4 +32,12 @@ public interface DmpPushWdtService extends SuperService<DmpPushWdtEntity> {
     Boolean addBatch(List<DmpPushWdtDTO.AddDTO> dtoList);
 
     List<DmpPushWdtDTO.ViewDTO> listByIdList(List<String> ids);
+
+    /**
+     * 按 sourceId + operateType + type 查询中间表数据，用于幂等校验
+     *
+     * @param queryDTO 查询条件
+     * @return 中间表数据列表（不含明细）
+     */
+    List<DmpPushWdtDTO.ViewDTO> listBySourceIdAndType(DmpPushWdtDTO.QueryDTO queryDTO);
 }

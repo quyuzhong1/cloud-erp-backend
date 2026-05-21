@@ -71,4 +71,20 @@ public class DmpPushWdtServiceImpl extends SuperServiceImpl<DmpPushWdtMapper, Dm
         }
         return resultList;
     }
+
+    @Override
+    public List<DmpPushWdtDTO.ViewDTO> listBySourceIdAndType(DmpPushWdtDTO.QueryDTO queryDTO) {
+        if (queryDTO == null
+                || queryDTO.getSourceId() == null || queryDTO.getSourceId().isEmpty()
+                || queryDTO.getOperateType() == null || queryDTO.getOperateType().isEmpty()
+                || queryDTO.getType() == null || queryDTO.getType().isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<DmpPushWdtEntity> list = this.lambdaQuery()
+                .eq(DmpPushWdtEntity::getSourceId, queryDTO.getSourceId())
+                .eq(DmpPushWdtEntity::getOperateType, queryDTO.getOperateType())
+                .eq(DmpPushWdtEntity::getType, queryDTO.getType())
+                .list();
+        return BeanMapper.copyList(list, DmpPushWdtDTO.ViewDTO.class);
+    }
 }

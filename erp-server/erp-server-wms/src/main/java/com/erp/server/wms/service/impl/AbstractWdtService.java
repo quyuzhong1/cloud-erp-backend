@@ -175,6 +175,23 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
     public void structBill(SyncOperateEnum operateEnum, String midTableId, BusinessNoTypeEnum businessNoTypeEnum, SourceTypeEnum sourceTypeEnum, List<T> goodsLists, String thirdWarehouseCode) {
         List<DmpPushWdtDTO.ViewDTO> viewDTOList = dmpPushWdtFeign.listByIds(Collections.singletonList(midTableId));
         DmpPushWdtDTO.ViewDTO viewDTO = viewDTOList.get(0);
+
+        // 幂等校验：同 sourceId + operateType + type='1' 的中间表数据，正常情况只应有 1 条（即传入的 midTableId 本身）。
+        // 若已存在其他记录，说明 structBill 已被处理过；继续执行会向 dmp_push_wdt 追加新中间表，
+        // 而新记录在 dmp_push_msg 中没有对应推送记录，会导致下游单据（分货等）上游校验持续失败、雪球式累积。
+        DmpPushWdtDTO.QueryDTO queryDTO = new DmpPushWdtDTO.QueryDTO();
+        queryDTO.setSourceId(viewDTO.getSourceId());
+        queryDTO.setOperateType(operateEnum.getCode());
+        queryDTO.setType("1");
+        List<DmpPushWdtDTO.ViewDTO> existedList = dmpPushWdtFeign.listBySourceIdAndType(queryDTO);
+        boolean alreadyProcessed = existedList.stream().anyMatch(v -> !midTableId.equals(v.getId()));
+        if (alreadyProcessed) {
+            log.warn("structBill 已处理过，跳过避免重复生成中间表: sourceId={}, sourceCode={}, midTableId={}, existedIds={}",
+                    viewDTO.getSourceId(), viewDTO.getSourceCode(), midTableId,
+                    existedList.stream().map(DmpPushWdtDTO.ViewDTO::getId).collect(Collectors.toList()));
+            return;
+        }
+
         String warehouseId = viewDTO.getWarehouseId();
         String sourceCode = viewDTO.getSourceCode();
         Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
