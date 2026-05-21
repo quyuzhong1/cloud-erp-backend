@@ -101,6 +101,10 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     public static class BatchUpdateFieldDropDownDTO {
         /**
+         * fmDeclareBill = 头程报关单 b2bDeclareBill = B2B报关单
+         */
+        private String type;
+        /**
          * 字段编码
          */
         private String field;

@@ -48,8 +48,9 @@ public class CfgDeclareRuleController extends BaseController {
 
     @GetMapping("/dropDownList")
     public ApiResult<List<BaseDropDownDTO.Tree>> dropDownList(@RequestParam("type") String type,
+                                                              @RequestParam(value = "isShowCustomerId", required = false) Boolean isShowCustomerId,
                                                               @RequestParam(value = "name", required = false) String name) {
-        return success(cfgDeclareRuleService.dropDownList(type, name));
+        return success(cfgDeclareRuleService.dropDownList(type, isShowCustomerId,name));
     }
 
     /**
