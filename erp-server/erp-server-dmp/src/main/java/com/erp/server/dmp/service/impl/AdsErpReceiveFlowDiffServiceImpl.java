@@ -187,17 +187,20 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 	public Boolean reCreate(ReCreateDTO dto) {
 		String checkMonth = dto.getCheckMonth();
 		checkMonth = checkMonth.replace("-", "年") + "月";
+		String sourceSystem = dto.getSourceSystem();
 		if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
 			throw new ServiceException("只允许重新生成上月核对任务");
 		}
 		Integer count = lambdaQuery().eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, checkMonth)
+				.eq(AdsErpReceiveFlowDiffEntity::getSourceSystem, sourceSystem)
 				.eq(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing").count();
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_receive_flow_diff_recreate");
+		boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_receive_flow_diff_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, checkMonth)
+			.eq(AdsErpReceiveFlowDiffEntity::getSourceSystem, sourceSystem)
 			.set(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing")
 			.set(AdsErpReceiveFlowDiffEntity::getExecStatusName, "执行中")
 			.setSql(" finish_time = null ")
@@ -206,32 +209,6 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 		return true;
 	}
 	
-	@Override
-	public Boolean updateErp(UpdateErpDTO dto) {
-		String querySql = dto.getSqlMap().get("default");
-		String permissionSql = dto.getPermissionSql();
-		List<AdsErpReceiveFlowDiffEntity> list = lambdaQuery().eq(AdsErpReceiveFlowDiffEntity::getIsDeleted, false)
-				.eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月"))
-		.select(AdsErpReceiveFlowDiffEntity::getSourceSystem , AdsErpReceiveFlowDiffEntity::getAccountCode , AdsErpReceiveFlowDiffEntity::getCheckMonth)
-		.last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql) + " group by source_system,account_code,check_month ")
-		.list();
-		if(CollUtil.isNotEmpty(list)) {
-			Integer count = lambdaQuery().in(AdsErpReceiveFlowDiffEntity::getCheckMonth, list.stream().map(AdsErpReceiveFlowDiffEntity::getCheckMonth).collect(Collectors.toSet()))
-					.eq(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing").count();
-			if(count != null && count > 0) {
-				throw new ServiceException(list.stream().map(AdsErpReceiveFlowDiffEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
-			}
-			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_receive_flow_diff_update");
-			if(reCreate) {
-				lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
-				.set(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing")
-				.set(AdsErpReceiveFlowDiffEntity::getExecStatusName, "执行中")
-				.setSql(" finish_time = null ")
-				.update();
-			}
-		}
-		return true;
-	}
 	
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {

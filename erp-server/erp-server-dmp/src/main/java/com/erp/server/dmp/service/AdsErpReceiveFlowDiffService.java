@@ -83,14 +83,7 @@ public interface AdsErpReceiveFlowDiffService extends SuperService<AdsErpReceive
      * @return Boolean
      */
     Boolean reCreate(AdsErpReceiveFlowDiffDTO.ReCreateDTO dto);
-    /**
-     * 更新ERP单号
-     * @author will
-     * @date 2026/3/11 10:30
-     * @param dto
-     * @return Boolean
-     */
-    Boolean updateErp(AdsErpReceiveFlowDiffDTO.UpdateErpDTO dto);
+
     /**
      * 更新备注
      * @author will

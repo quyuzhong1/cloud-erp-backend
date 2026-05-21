@@ -2,6 +2,7 @@ package com.erp.model.dmp.dto;
 
 import java.util.Date;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 
 import java.util.List;
@@ -112,7 +113,14 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
       	/**
            * 核算周期
            */
+          @NotBlank(message = "核算周期不能为空")
           private String checkMonth;
+
+          /**
+           * 核对仓库
+           */
+          @NotBlank(message = "核对仓库不能为空")
+          private String sourceSystem;
       }
       
       @Data
@@ -139,17 +147,6 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
            */
           private List<String> ids;
       }
-      
-      @Data
-      @NoArgsConstructor
-      @AllArgsConstructor
-      public static class UpdateErpDTO extends PagingParamDTO{
-      	/**
-           * 主键id
-           */
-          private List<String> ids;
-      }
-
 
     /**
     * 分页列表
@@ -253,6 +250,11 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         private Date platformBillDate;
 
         /**
+         * 平台跟踪号
+         */
+        private String platformTrackNo;
+
+        /**
         * ERP单据名称
         */
         private String billName;
@@ -309,6 +311,11 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         * erp单据日期
         */
         private Date billDate;
+
+        /**
+         * ERP-跟踪号
+         */
+        private String trackNo;
 
         /**
         * 差异数量

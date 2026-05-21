@@ -737,7 +737,14 @@ public class AdsErpInventoryDiffDTO implements Serializable {
         /**
          * 生成月份:格式:202511
          */
+        @NotBlank(message = "核算周期不能为空")
         private String checkMonth;
+
+        /**
+         * 核对仓库
+         */
+        @NotBlank(message = "核对仓库不能为空")
+        private String sourceSystem;
 
     }
 

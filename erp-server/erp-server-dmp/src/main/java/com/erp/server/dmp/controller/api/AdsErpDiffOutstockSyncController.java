@@ -97,21 +97,7 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
     public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.ReCreateDTO dto) {
         return success(adsErpDiffOutstockSyncService.reCreate(dto));
     }
-    
-    /**
-     * ERP数据更新
-     * @author Will
-     * @date: 2023/11/13 16:19
-     * @param dto
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "ERP出库单差异表ERP数据更新")
-    @PostMapping(value = "/updateErp")
-    @WebAdvanceQuery(handler = AdsErpDiffOutstockSyncQueryHandler.class)
-    public ApiResult<Boolean> updateErp(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.UpdateErpDTO dto) {
-    	return success(adsErpDiffOutstockSyncService.updateErp(dto));
-    }
-    
+
     /**
      * 修改备注
      * @author Will

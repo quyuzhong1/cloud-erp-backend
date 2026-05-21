@@ -79,9 +79,7 @@ public interface AdsErpDiffReturnInstockSyncService extends SuperService<AdsErpD
     AdsErpDiffReturnInstockSyncDTO.TotalDTO total(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
     
     Boolean reCreate(AdsErpDiffReturnInstockSyncDTO.ReCreateDTO dto);
-    
-    Boolean updateErp(AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO dto);
-    
+
     Boolean updateRemark(AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO dto);
