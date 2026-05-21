@@ -1506,18 +1506,13 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             assertUsableQtyAtLocation(warehouseId, orgId, skuVO.getSkuId(), aggregate.sourceLoc, aggregate.qty, skuNo);
 
-            String remark = CharSequenceUtil.format("整箱移仓{}", aggregate.boxDisplay());
-            if (CharSequenceUtil.isNotBlank(dto.getRemark())) {
-                remark = remark + " " + CharSequenceUtil.trim(dto.getRemark());
-            }
-
             WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
             detail.setSkuId(skuVO.getSkuId());
             detail.setSkuNo(skuNo);
             detail.setOutWarehouseLocation(aggregate.sourceLoc);
             detail.setInWarehouseLocation(aggregate.targetLoc);
             detail.setQty(aggregate.qty);
-            detail.setRemark(remark);
+            detail.setRemark(dto.getRemark());
             detailList.add(detail);
         }
 
