@@ -95,6 +95,12 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             AfterSalePackEntity afterSalePackEntity = new AfterSalePackEntity();
             afterSalePackEntity.setCode(code);
             afterSalePackEntity.setType(dto.getType());
+            afterSalePackEntity.setIsUse(Boolean.FALSE);
+            afterSalePackEntity.setIsDifference(Boolean.FALSE);
+            afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
+            afterSalePackEntity.setSkuSpeciesQty(0);
+            afterSalePackEntity.setTotalQty(0);
             afterSalePackEntityList.add(afterSalePackEntity);
         }
         boolean save = super.saveBatch(afterSalePackEntityList);
@@ -119,6 +125,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BOX);
         afterSalePackEntity.setCode(code);
+        afterSalePackEntity.setIsUse(Boolean.FALSE);
+        afterSalePackEntity.setIsDifference(Boolean.FALSE);
+        afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
         // 处理装箱明细数据
         if (CollectionUtils.isNotEmpty(addDTO.getDetailList())) {
             afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.PENDING.getCode());
@@ -541,6 +550,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 deleteResult = BatchResultDTO.fail(id, id, "售后装箱不存在, 删除失败");
             } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
                 deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 删除失败");
+            } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
+                    || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+                deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "箱唛状态等于复审中或者已封箱状态, 删除失败");
             } else {
                 // 删除数据
                 if (!this.removeById(id)) {
