@@ -881,13 +881,13 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
     }
 
     @Override
-    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
+    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response) {
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }
         //店铺不为空代表是fba ，否则是第三方仓
         if(CharSequenceUtil.isNotBlank(shopId)){
-            return fbaImportFile(excelFile, thirdSkuNoList, shopId);
+            return fbaImportFile(excelFile, thirdSkuNoList, shopId, type);
         }else{
             return thirdImportFile(excelFile, thirdSkuNoList, warehouseId, shopId);
         }
@@ -935,9 +935,12 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         return importDTO;
     }
 
-    private ListingInfoDTO.ImportDTO fbaImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String shopId) {
+    private ListingInfoDTO.ImportDTO fbaImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String shopId, String type) {
         //查询店铺id下的SKU信息
         List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","", shopId);
+        if (DeliveryPlanTypeEnum.FBS.getCode().equals(type)) {
+            return platformImportFile(excelFile, thirdSkuNoList, listingWithSkuMappingDTOList);
+        }
         DeliveryPlanDetailPdaExcelListener excelListenerUtil = new DeliveryPlanDetailPdaExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList);
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailPdaExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -962,6 +965,41 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         if (CollUtil.isNotEmpty(errorList)) {
             String fileName = "FBA发货计划错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailPdaExportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        this.fillData(successList);
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
+    }
+
+    private ListingInfoDTO.ImportDTO platformImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList) {
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList, listingWithSkuMappingDTOList, "", Boolean.TRUE);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        //验证导入数据是否为空
+        List<DeliveryPlanDetailExportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        ListingInfoDTO.ImportDTO importDTO = new ListingInfoDTO.ImportDTO();
+        //导入数据处理
+        List<ListingInfoDTO.PageDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "FBS发货计划错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailExportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

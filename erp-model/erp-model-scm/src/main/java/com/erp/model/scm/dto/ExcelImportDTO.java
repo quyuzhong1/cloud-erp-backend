@@ -48,6 +48,11 @@ public class ExcelImportDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+
+        /**
+         * 单据类型
+         */
+        private String type;
     }
 
     @Data
