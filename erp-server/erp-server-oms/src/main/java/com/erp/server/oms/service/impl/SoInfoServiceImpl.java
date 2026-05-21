@@ -791,18 +791,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
-        List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> productAndDeliverySkuIds = detailList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getDeliverySkuId()))
+                .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(productAndDeliverySkuIds);
         //查询第三方SKU信息
         List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingService.listByErpSkuIdAndType(skuIds,"",soInfo.getWarehouseId(),"");
         for (SoDetailDTO.ViewDTO viewDTO : detailList) {
-            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), viewDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(skuVO)) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                 viewDTO.setUnitName(skuVO.getUnitName());
-                if ("费用".equalsIgnoreCase(skuVO.getPropertyName()) || "服务".equalsIgnoreCase(skuVO.getPropertyName())){
-                    viewDTO.setFilterCalculate(true);
-                }
+            }
+            boolean filterCalculate = skuList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), viewDTO.getSkuId())
+                            || CharSequenceUtil.equals(obj.getSkuId(), viewDTO.getDeliverySkuId()))
+                    .map(SkuVO::getPropertyName)
+                    .anyMatch(propertyName -> "费用".equalsIgnoreCase(propertyName) || "服务".equalsIgnoreCase(propertyName));
+            if (filterCalculate) {
+                viewDTO.setFilterCalculate(true);
             }
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
