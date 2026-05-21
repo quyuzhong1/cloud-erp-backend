@@ -39,6 +39,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -401,7 +402,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(Objects.isNull(updateDTO.getOtherFee())){
             updateDTO.setOtherFee(BigDecimal.ZERO);
         }
-        TmsDeclareBillEntity tmsDeclareBillEntity =  BeanMapperUtils.map(TmsDeclareBillEntity.class, updateDTO);
+        TmsDeclareBillEntity tmsDeclareBillEntity = new TmsDeclareBillEntity();
+        BeanMapper.copy(old,tmsDeclareBillEntity);
+        BeanMapper.copy(updateDTO,tmsDeclareBillEntity);
+
+
         Set<String> boxNoSet = mergeDetailList.stream()
                 .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
                 .filter(CollUtil::isNotEmpty)
@@ -2825,23 +2830,44 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 准备前端提交的报关明细
+     * <p>
+     * 该方法负责处理前端传入的合并报关明细列表，根据是否启用合并模式进行不同的处理：
+     * - 合并模式（isMerge=true）：调用mergeEditedDetails对编辑后的明细进行重新合并计算
+     * - 非合并模式（isMerge=false/null）：为明细列表中的每一项应用默认值填充
+     * <p>
+     * 处理流程：
+     * 1. 过滤掉列表中的null元素，保证数据有效性
+     * 2. 校验过滤后的列表不为空，为空则抛出异常
+     * 3. 根据isMerge标志选择对应的处理策略
+     *
+     * @param mergeDetailList 前端提交的合并报关明细列表，不能为null
+     * @param isMerge         是否为合并模式标识
+     *                        true-启用合并模式，会对编辑后的明细进行重新合并
+     *                        false/null-非合并模式，仅应用默认值
+     * @return 处理后的报关明细列表，已根据模式完成合并或默认值填充
+     * @throws ServiceException 当过滤后的明细列表为空时，抛出LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED异常
      * @author will
      * @date 2026/5/7 14:08
-     * @param mergeDetailList
-     * @param isMerge
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDetailDTO>
      */
     private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> prepareSubmittedMergeDetailList(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
                                                                                              Boolean isMerge) {
+        // 过滤掉列表中的null元素
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> filteredList = mergeDetailList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        
+        // 校验过滤后的列表不能为空
         if (CollUtil.isEmpty(filteredList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
+        
+        // 根据合并模式选择不同的处理策略
         if (Boolean.TRUE.equals(isMerge)) {
+            // 合并模式：对编辑后的明细进行重新合并计算
             return mergeEditedDetails(filteredList);
         }
+        
+        // 非合并模式：为所有明细应用默认值
         filteredList.forEach(this::applyMergeDeclareDetailDefaults);
         return filteredList;
     }
