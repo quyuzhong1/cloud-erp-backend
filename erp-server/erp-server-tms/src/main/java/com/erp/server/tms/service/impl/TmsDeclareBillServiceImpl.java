@@ -881,7 +881,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         this.lambdaUpdate()
                 .eq(TmsDeclareBillEntity::getId, entity.getId())
                 .set(TmsDeclareBillEntity::getDeclareStatus, declareStatus)
-                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? LocalDate.now() : declarConfirmDate)
+                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? null : declarConfirmDate)
                 .set(TmsDeclareBillEntity::getDeclarUserId, Objects.isNull(declarUserId) ? "" : declarUserId)
                 .set(TmsDeclareBillEntity::getDeclarUserName, Objects.isNull(declarUserName) ? "" : declarUserName)
                 .update(new TmsDeclareBillEntity());
