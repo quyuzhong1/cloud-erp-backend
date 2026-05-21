@@ -90,6 +90,15 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
 
 
     /**
+     * 批量自动获取标准成本
+     *
+     * @param dto
+     * @return
+     */
+    List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto);
+
+
+    /**
      * 修改
      * @param addOrUpdateDTO
      * @param old
