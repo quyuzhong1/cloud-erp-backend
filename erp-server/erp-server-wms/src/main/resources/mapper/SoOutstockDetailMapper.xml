@@ -189,7 +189,7 @@
         join so_outstock_detail sod
         on so.id = sod.main_id
         and sod.is_deleted = false
-        where sod.platform_code like 'kol%'
+        where sod.platform_code like 'KOL%'
         union
         select  so.id as soOutstockId,
             so.code as soOutstockCode,
