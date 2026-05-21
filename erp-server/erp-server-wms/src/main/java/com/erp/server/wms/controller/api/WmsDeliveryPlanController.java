@@ -541,7 +541,7 @@ public class WmsDeliveryPlanController extends BaseController {
      */
     @GetMapping("/exportFbaTemplate")
     public ApiResult exportFbaTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/deliveryPlanDetailFbaTemplate.xlsx";
+        String path = "excel/deliveryPlanDetailFbaTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
