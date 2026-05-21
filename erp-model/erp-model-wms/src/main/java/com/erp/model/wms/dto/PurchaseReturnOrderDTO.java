@@ -127,7 +127,8 @@ public class PurchaseReturnOrderDTO {
         private String sourceId;
 
         /**
-         * 退货明细类型 sku 单个SKU退货，pack 整箱退货
+         * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货。
+         * 传 pack 时，purchasePriceDetailList.afterSalePackDetailList 必须有值，且不能混入普通 SKU 退货明细。
          */
         private String returnDetailType;
 
@@ -222,7 +223,8 @@ public class PurchaseReturnOrderDTO {
         private String purchaseUserId;
 
         /**
-         * 退货明细类型 sku 单个SKU退货，pack 整箱退货
+         * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货。
+         * 传 pack 时，修改会按本次传入的箱明细同步售后装箱；被移除的行/SKU 需以 actualQty=0 传回。
          */
         private String returnDetailType;
 
@@ -428,7 +430,8 @@ public class PurchaseReturnOrderDTO {
         private String returnWarehouseName;
 
         /**
-         * 退货明细类型 sku 单个SKU退货，pack 整箱退货
+         * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货。
+         * 返回 pack 时，退货明细中的 afterSalePackDetailList 为本单占用的售后装箱明细。
          */
         private String returnDetailType;
 
