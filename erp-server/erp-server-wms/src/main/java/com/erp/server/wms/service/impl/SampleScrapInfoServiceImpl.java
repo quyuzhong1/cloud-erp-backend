@@ -433,12 +433,12 @@ public class SampleScrapInfoServiceImpl extends SuperServiceImpl<SampleScrapInfo
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SampleScrapInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SampleScrapInfoDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+        Set<String> existStatusSet = list.stream().map(SampleScrapInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
+                list.add(new SampleScrapInfoDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
+            }
         }
-        });
         list.stream().forEach(e ->{
             if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){
                 e.setTabFlagName("待我审核");

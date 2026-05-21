@@ -468,12 +468,12 @@ public class SampleTransferInfoServiceImpl extends SuperServiceImpl<SampleTransf
         List<String> statusList = ApproveStatusEnum.getStatusList();
         
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SampleTransferInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-                list.add(new SampleTransferInfoDTO.TabListDTO(status,"" ,0));
+        Set<String> existStatusSet = list.stream().map(SampleTransferInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
+                list.add(new SampleTransferInfoDTO.TabListDTO(status, "", 0));
             }
-        });
+        }
         
         // 设置状态名称
         list.stream().forEach(e ->{

@@ -654,12 +654,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(AfterSaleDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status) && !ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(status)) {
+        Set<String> existStatusSet = list.stream().map(AfterSaleDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status) && !ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(status)) {
                 list.add(new AfterSaleDTO.TabListDTO(status, ApproveStatusEnum.getName(status), 0));
             }
-        });
+        }
         return list;
     }
 

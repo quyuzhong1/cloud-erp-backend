@@ -258,12 +258,12 @@ public class SampleAdjustmentInfoServiceImpl extends SuperServiceImpl<SampleAdju
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SampleAdjustmentInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
+        Set<String> existStatusSet = list.stream().map(SampleAdjustmentInfoDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
                 list.add(new SampleAdjustmentInfoDTO.TabListDTO(status, "", 0));
             }
-        });
+        }
 
         list.stream().forEach(e -> {
             if(Objects.equals(ApproveStatusEnum.APPROVE_ING.getCode(), e.getTabFlag())){

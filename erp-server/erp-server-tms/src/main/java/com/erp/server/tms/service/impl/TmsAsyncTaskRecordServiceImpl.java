@@ -235,12 +235,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         // 获取状态列表
         List<String> statusList = TmsAsyncTaskRecordStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(TmsAsyncTaskRecordDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
+        Set<String> existStatusSet = list.stream().map(TmsAsyncTaskRecordDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
                 list.add(new TmsAsyncTaskRecordDTO.TabListDTO(status, "", 0));
             }
-        });
+        }
 
         list.stream().forEach(e ->{
             e.setTabFlagName(TmsAsyncTaskRecordStatusEnum.getName(e.getTabFlag()));
