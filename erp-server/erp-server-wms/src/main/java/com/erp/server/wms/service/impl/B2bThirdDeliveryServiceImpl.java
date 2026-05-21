@@ -375,7 +375,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     public B2bThirdDeliveryDTO.ViewDTO view(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
         if (CharSequenceUtil.isBlank(dto.getId())) {
-            return soInfoFeign.getB2bThirdDeliveryView(dto);
+            B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(dto);
+            if (Objects.nonNull(viewDTO)) {
+                viewDTO.setPlatformOrderCode(CharSequenceUtil.EMPTY);
+            }
+            return viewDTO;
         } else {
             B2bThirdDeliveryEntity entity = this.getById(dto.getId());
             if (Objects.isNull(entity)) {
@@ -431,6 +435,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
                 }
             }
+//            viewDTO.setPlatformOrderCode(CharSequenceUtil.EMPTY);
 
             return viewDTO;
         }
