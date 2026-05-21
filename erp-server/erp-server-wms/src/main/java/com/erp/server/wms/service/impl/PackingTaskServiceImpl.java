@@ -435,9 +435,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             }else {
                 //待审核的数据可以上传装箱数据
                 FirstMileDeliveryEntity firstMileDeliveryEntity = this.getFirstMileDeliveryByTask(packingTask);
-                checkFirstMileStatus(firstMileDeliveryEntity,packingTask);
-                //下推自动生成报关单
-                firstMileDeliveryService.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_PACKING);
+                if(Objects.nonNull(firstMileDeliveryEntity)){
+                    checkFirstMileStatus(firstMileDeliveryEntity,packingTask);
+                    //下推自动生成报关单
+                    firstMileDeliveryService.autoGenerateByPacked(firstMileDeliveryEntity, BillGenerateTimingEnum.AFTER_PACKING);
+                }
             }
             if(packingTask.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
                 //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
