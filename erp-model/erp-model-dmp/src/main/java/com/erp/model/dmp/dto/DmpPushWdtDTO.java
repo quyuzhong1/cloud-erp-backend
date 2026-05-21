@@ -75,4 +75,22 @@ public class DmpPushWdtDTO implements Serializable {
     public static class ViewDTO extends CommonDTO{
         private String id;
     }
+
+    @Data
+    public static class QueryDTO implements Serializable {
+        /**
+         * erp单据id
+         */
+        private String sourceId;
+
+        /**
+         * 操作类型：审核/反审核
+         */
+        private String operateType;
+
+        /**
+         * 映射状态：0原始数据，1按仓位映射后数据
+         */
+        private String type;
+    }
 }

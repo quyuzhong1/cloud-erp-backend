@@ -43,4 +43,12 @@ public interface DmpPushWdtFeign {
      */
     @PostMapping("/listByIds")
     List<DmpPushWdtDTO.ViewDTO> listByIds(@RequestBody List<String> ids);
+
+    /**
+     * 根据 sourceId + operateType + type 查询中间表数据，用于幂等校验
+     * @param queryDTO 查询条件
+     * @return 中间表数据列表
+     */
+    @PostMapping("/listBySourceIdAndType")
+    List<DmpPushWdtDTO.ViewDTO> listBySourceIdAndType(@RequestBody DmpPushWdtDTO.QueryDTO queryDTO);
 }

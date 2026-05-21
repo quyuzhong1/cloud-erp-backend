@@ -43,4 +43,12 @@ public class DmpPushWdtFeignController {
 //        return dmpPushWdtService.listByIds(ids);
         return dmpPushWdtService.listByIdList(ids);
     }
+
+    /**
+     * 按 sourceId + operateType + type 查询中间表数据，用于 structBill 幂等校验
+     */
+    @PostMapping("/listBySourceIdAndType")
+    List<DmpPushWdtDTO.ViewDTO> listBySourceIdAndType(@RequestBody DmpPushWdtDTO.QueryDTO queryDTO){
+        return dmpPushWdtService.listBySourceIdAndType(queryDTO);
+    }
 }
