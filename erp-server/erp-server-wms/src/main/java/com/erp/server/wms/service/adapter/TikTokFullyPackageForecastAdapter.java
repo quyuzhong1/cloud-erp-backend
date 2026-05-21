@@ -53,9 +53,10 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(1);
-        resultDTOS.add(uploadTikTokFully(dto));
+        resultDTOS.add(doUpload(dto));
         return resultDTOS;
     }
 
@@ -109,7 +110,6 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         // TikTok 全托管状态同步保留在原有 syncPackageForecastInfo 任务中。
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void tikTokFullyCancel(PackageForecastEntity entity) {
         if (StringUtils.isBlank(entity.getHandoverNo())) {
             return;
@@ -145,9 +145,7 @@ public class TikTokFullyPackageForecastAdapter extends AbstractPackageForecastPl
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto) {
+    private BatchResultDTO doUpload(PackageForecastDTO.UploadDTO dto) {
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainIds(dto.getIds());
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);

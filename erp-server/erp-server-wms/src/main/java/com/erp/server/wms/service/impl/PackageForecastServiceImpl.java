@@ -51,7 +51,6 @@ import com.erp.server.wms.service.*;
 import com.erp.server.wms.service.adapter.AliExpressPackageForecastAdapter;
 import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapter;
 import com.erp.server.wms.service.adapter.PackageForecastPlatformAdapterFactory;
-import com.erp.server.wms.service.adapter.TikTokFullyPackageForecastAdapter;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyShippingProviderReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyShippingProviderResp;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyDeliveryOrderDTO;
@@ -131,9 +130,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Resource
     private AliExpressPackageForecastAdapter aliExpressPackageForecastAdapter;
-
-    @Resource
-    private TikTokFullyPackageForecastAdapter tikTokFullyPackageForecastAdapter;
 
     @Resource
     @Lazy
@@ -479,8 +475,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO upload(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -1010,9 +1004,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto) {
-        return tikTokFullyPackageForecastAdapter.uploadTikTokFully(dto);
+        PackageForecastPlatformAdapter adapter = packageForecastPlatformAdapterFactory.getByPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode())
+                .orElseThrow(() -> new ServiceException("TikTok全托管平台尚未对接上传"));
+        dto.setDeliveryPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
+        return adapter.upload(dto).get(0);
     }
 
     private String platformName(String platform) {

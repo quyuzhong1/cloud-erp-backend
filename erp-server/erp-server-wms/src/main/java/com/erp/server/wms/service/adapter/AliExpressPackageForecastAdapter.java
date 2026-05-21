@@ -47,10 +47,11 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.RoundingMode;
@@ -111,9 +112,7 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         return resultDTOS;
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO uploadOne(String id, String collectMode, String collectAddressId) {
+    private BatchResultDTO uploadOne(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = getForecastOrThrow(id);
         validateUploadable(entity);
         try {
@@ -223,7 +222,6 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         return alExpressHandoverBaseDTO;
     }
 
-    @Async
     public void syncAliExpressInfo(PackageForecastEntity packageForecastEntity) {
         queryAliExpressInfo(packageForecastEntity);
     }
@@ -318,9 +316,22 @@ public class AliExpressPackageForecastAdapter extends AbstractPackageForecastPla
         String addressName = addressEntity.getName();
         entity.setCollectAddress(addressName);
         addBigPackage(entity, addressEntity);
-        CompletableFuture.runAsync(() -> this.syncAliExpressInfo(entity), packAsyncExecutor);
+        asyncSyncAfterCommit(entity);
         packageForecastMapper.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
+    }
+
+    private void asyncSyncAfterCommit(PackageForecastEntity entity) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            CompletableFuture.runAsync(() -> this.syncAliExpressInfo(entity), packAsyncExecutor);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                CompletableFuture.runAsync(() -> syncAliExpressInfo(entity), packAsyncExecutor);
+            }
+        });
     }
 
     private String aliExpressPrint(PackageForecastEntity entity) {

@@ -73,9 +73,7 @@ public class TikTokPackageForecastAdapter extends AbstractPackageForecastPlatfor
         return resultDTOS;
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO uploadOne(String id, String collectMode, String collectAddressId) {
+    private BatchResultDTO uploadOne(String id, String collectMode, String collectAddressId) {
         PackageForecastEntity entity = getForecastOrThrow(id);
         validateUploadable(entity);
         try {
