@@ -32,6 +32,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -247,22 +248,22 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         List<String> missUserIds = new ArrayList<>();
         for (String userId : userIds) {
             String redisKey = String.format("cache:sys:dept:getDeptByUserId::%s", userId);
-            List<SysDepartmentUserNumberDTO> cacheList = redisService.getCacheObject(redisKey);
-            if (cacheList != null) {
-                result.addAll(cacheList);
+            SysDepartmentUserNumberDTO cacheObject = redisService.getCacheObject(redisKey);
+            if (cacheObject != null) {
+                result.add(cacheObject);
             } else {
                 missUserIds.add(userId);
             }
         }
         if (CollectionUtils.isNotEmpty(missUserIds)) {
             List<SysDepartmentUserNumberDTO> dbList = baseMapper.listDeptUserByUserIdList(missUserIds);
-            Map<String, List<SysDepartmentUserNumberDTO>> dbMap = dbList.stream()
-                    .collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId));
+            Map<String, SysDepartmentUserNumberDTO> dbMap = dbList.stream()
+                    .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, Function.identity(), (existing, replacement) -> existing));
             for (String userId : missUserIds) {
-                List<SysDepartmentUserNumberDTO> list = dbMap.getOrDefault(userId, new ArrayList<>());
+                SysDepartmentUserNumberDTO dto = dbMap.getOrDefault(userId, new SysDepartmentUserNumberDTO());
                 String redisKey = String.format("cache:sys:dept:getDeptByUserId::%s", userId);
-                redisService.setCacheObject(redisKey, list, 8L, TimeUnit.HOURS);
-                result.addAll(list);
+                redisService.setCacheObject(redisKey, dto, 8L, TimeUnit.HOURS);
+                result.add(dto);
             }
         }
         return result;
