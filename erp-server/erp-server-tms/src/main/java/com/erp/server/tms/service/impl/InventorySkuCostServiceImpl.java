@@ -31,6 +31,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -390,6 +391,56 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             viewDTO.setDetailList(viewDTOList);
         }
         return viewDTO;
+    }
+
+    @Override
+    public InventorySkuCostDTO.AddDTO copyView(String id) {
+        InventorySkuCostEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("SKU成本记录不存在");
+        }
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
+            throw new ServiceException("仅支持复制已审核的SKU成本单");
+        }
+
+        InventorySkuCostDTO.AddDTO copyDTO = new InventorySkuCostDTO.AddDTO();
+        copyDTO.setRemark(entity.getRemark());
+        copyDTO.setAllocatedMonth(entity.getAllocatedMonth());
+        copyDTO.setAccountingMonth(entity.getAccountingMonth());
+        copyDTO.setCurrency(entity.getCurrency());
+        copyDTO.setCurrencySymbol(entity.getCurrencySymbol());
+        copyDTO.setExchangeRate(entity.getExchangeRate());
+        copyDTO.setCompanyId(null);
+        copyDTO.setCompanyName(null);
+        copyDTO.setStatus(null);
+
+        List<InventorySkuCostDetailEntity> detailEntityList = inventorySkuCostDetailService.listByMainIds(Collections.singletonList(id));
+        if (CollUtil.isNotEmpty(detailEntityList)) {
+            List<InventorySkuCostDetailDTO.AddDTO> detailList = detailEntityList.stream()
+                    .map(this::buildCopyDetail)
+                    .collect(Collectors.toList());
+            copyDTO.setDetailList(detailList);
+        }
+        return copyDTO;
+    }
+
+    private InventorySkuCostDetailDTO.AddDTO buildCopyDetail(InventorySkuCostDetailEntity detailEntity) {
+        InventorySkuCostDetailDTO.AddDTO detailDTO = new InventorySkuCostDetailDTO.AddDTO();
+        detailDTO.setRemark(detailEntity.getRemark());
+        detailDTO.setSkuId(detailEntity.getSkuId());
+        detailDTO.setSkuNo(detailEntity.getSkuNo());
+        detailDTO.setProductName(detailEntity.getProductName());
+        detailDTO.setUnit(detailEntity.getUnit());
+        detailDTO.setProductCost(formatAmount(detailEntity.getProductCost()));
+        detailDTO.setWarehouseId(detailEntity.getWarehouseId());
+        detailDTO.setWarehouseName(detailEntity.getWarehouseName());
+        detailDTO.setFirstMileShippingCost(detailEntity.getFirstMileShippingCost());
+        detailDTO.setClearanceCustomsTax(detailEntity.getClearanceCustomsTax());
+        return detailDTO;
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        return Objects.isNull(amount) ? null : amount.stripTrailingZeros().toPlainString();
     }
 
     @Override

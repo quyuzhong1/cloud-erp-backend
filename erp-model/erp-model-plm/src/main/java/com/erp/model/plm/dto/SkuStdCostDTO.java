@@ -48,6 +48,20 @@ public class SkuStdCostDTO implements Serializable {
         private LocalDate billDate;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class AutoFetchDTO implements Serializable {
+
+        @NotBlank(message = "SKU标准成本ID不能为空")
+        private String id;
+
+        @NotBlank(message = "组织ID不能为空")
+        private String orgId;
+
+        @NotBlank(message = "仓库ID不能为空")
+        private String warehouseId;
+    }
+
 
 
 }

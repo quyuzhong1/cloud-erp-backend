@@ -4,6 +4,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
@@ -87,6 +88,14 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      * @date: 2025-08-08
      */
     Boolean update(SkuStdCostDetailDTO.UpdateDTO dto);
+
+    /**
+     * 自动获取标准成本
+     *
+     * @param dto
+     * @return
+     */
+    Boolean autoFetch(SkuStdCostDTO.AutoFetchDTO dto);
 
 
     /**

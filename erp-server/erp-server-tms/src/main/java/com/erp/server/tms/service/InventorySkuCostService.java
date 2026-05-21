@@ -127,6 +127,13 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
     InventorySkuCostDTO.ViewDTO view(String id);
 
     /**
+     * 复制新增草稿
+     * @param id 源单据ID
+     * @return 新增草稿
+     */
+    InventorySkuCostDTO.AddDTO copyView(String id);
+
+    /**
      * 根据组织和sku获取成本列表
      *
      * @param orgId
