@@ -26,10 +26,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
-import com.erp.model.wms.entity.AfterSalePackDetailEntity;
-import com.erp.model.wms.entity.AfterSalePackEntity;
-import com.erp.model.wms.entity.PoReturnEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.AfterSalePackMapper;
 import com.erp.server.wms.service.*;
@@ -59,6 +56,7 @@ import java.util.stream.Stream;
 public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapper, AfterSalePackEntity> implements AfterSalePackService {
 
     private static final String AFTER_SALE_PACK_LOCK_KEY = "AFTER_SALE_PACK";
+    private static final String EMPTY_WAREHOUSE_LOCATION_NAME = "空仓位";
 
     @Resource
     private OperateLogService operateLogService;
@@ -77,6 +75,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -158,20 +159,39 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (CollectionUtils.isNotEmpty(skuNotInProduct)) {
             throw new ServiceException("售后装箱单保存失败，以下SKU不存在：" + String.join(",", skuNotInProduct));
         }
-        // 查询仓位信息
+        // 查询东莞售后仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getName, "东莞售后仓库")
+                .eq(WarehouseEntity::getApproveStatus, "approve")
+                .eq(WarehouseEntity::getDisabled, false)
+                .one();
+        if (warehouseEntity == null) {
+            throw new ServiceException("东莞售后仓库不存在或者被禁用");
+        }
+        // 查询仓位信息，普通仓位按 code 查询；空仓位没有 code，需要按 name 查询后参与后续校验和赋值。
         List<String> warehouseLocationCodes = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
                 .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
                 .list();
-        Set<String> warehouseLocationCodeSet = warehouseLocationEntityList.stream()
-                .map(WarehouseLocationEntity::getCode)
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> item, (v1, v2) -> v1));
+        if (warehouseLocationCodes.contains(EMPTY_WAREHOUSE_LOCATION_NAME)) {
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationService.lambdaQuery()
+                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
+                    .eq(WarehouseLocationEntity::getDisabled, false)
+                    .eq(WarehouseLocationEntity::getName, EMPTY_WAREHOUSE_LOCATION_NAME)
+                    .one();
+            if (ObjectUtil.isNotEmpty(warehouseLocationEntity)) {
+                warehouseLocationMap.put(EMPTY_WAREHOUSE_LOCATION_NAME, warehouseLocationEntity);
+            }
+        }
         List<String> notExistWarehouseLocationCodeList = detailList.stream()
                 .map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode)
                 .filter(Objects::nonNull)
-                .filter(outWarehouseLocationCode -> !warehouseLocationCodeSet.contains(outWarehouseLocationCode))
+                .filter(outWarehouseLocationCode -> !warehouseLocationMap.containsKey(outWarehouseLocationCode))
                 .distinct()
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notExistWarehouseLocationCodeList)) {
@@ -194,7 +214,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (CollectionUtils.isNotEmpty(deleteDetailList) && !afterSalePackDetailService.removeByIds(deleteDetailList)) {
             throw new ServiceException("售后装箱明细删除失败");
         }
-        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> item, (v1, v2) -> v1));
         List<AfterSalePackDetailEntity> detailEntityList = new ArrayList<>();
         List<AfterSalePackDetailEntity> addList = new ArrayList<>();
         List<AfterSalePackDetailEntity> updateList = new ArrayList<>();
@@ -254,6 +273,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     private void checkDetailList(List<AfterSalePackDetailDTO.UpdateDTO> detailList) {
+        // 校验所有的拣货仓位都不能为空
+        if (detailList.stream().anyMatch(detail -> StringUtils.isBlank(detail.getOutWarehouseLocationCode()))) {
+            throw new ServiceException("售后装箱明细拣货仓位不能为空");
+        }
         for (AfterSalePackDetailDTO.UpdateDTO detail : detailList) {
             if (StringUtils.isBlank(detail.getSkuNo())) {
                 throw new ServiceException("售后装箱明细SKU不能为空");
@@ -464,12 +487,12 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 BeanMapperUtils.copy(afterSalePackDetailEntity, viewDTO);
                 WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
                 if (ObjectUtil.isNotEmpty(outWarehouseLocationEntity)) {
-                    viewDTO.setOutWarehouseLocationCode(outWarehouseLocationEntity.getCode());
+                    viewDTO.setOutWarehouseLocationCode(StringUtils.isNotBlank(outWarehouseLocationEntity.getCode()) ? outWarehouseLocationEntity.getCode() : outWarehouseLocationEntity.getName());
                     viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
                 }
                 WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
                 if (ObjectUtil.isNotEmpty(inWarehouseLocationEntity)) {
-                    viewDTO.setInWarehouseLocationCode(inWarehouseLocationEntity.getCode());
+                    viewDTO.setInWarehouseLocationCode(StringUtils.isNotBlank(inWarehouseLocationEntity.getCode()) ? inWarehouseLocationEntity.getCode() : inWarehouseLocationEntity.getName());
                     viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
                 }
                 viewDTOList.add(viewDTO);

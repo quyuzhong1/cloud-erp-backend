@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.entity.AfterSalePackDetailEntity;
 import com.erp.model.wms.entity.AfterSalePackEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
@@ -50,6 +51,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     private static final String OPERATION_ADD = "add";
     private static final String OPERATION_REDUCE = "reduce";
     private static final String OPERATION_REMOVE = "remove";
+    private static final String EMPTY_WAREHOUSE_LOCATION_NAME = "空仓位";
 
     @Resource
     private OperateLogService operateLogService;
@@ -65,6 +67,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 修改
@@ -171,16 +176,45 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     }
 
     private Map<String, WarehouseLocationEntity> getWarehouseLocationMap(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO) {
+        // 查询东莞售后仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getName, "东莞售后仓库")
+                .eq(WarehouseEntity::getApproveStatus, "approve")
+                .eq(WarehouseEntity::getDisabled, false)
+                .one();
+        if (warehouseEntity == null) {
+            throw new ServiceException("东莞售后仓库不存在或者被禁用");
+        }
         List<String> warehouseLocationCodes = new ArrayList<>();
         warehouseLocationCodes.add(addOrUpdateDTO.getOutWarehouseLocationCode());
         if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
             warehouseLocationCodes.add(addOrUpdateDTO.getInWarehouseLocationCode());
         }
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
-                .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
+        List<String> normalWarehouseLocationCodes = warehouseLocationCodes.stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(code -> !EMPTY_WAREHOUSE_LOCATION_NAME.equals(code))
+                .distinct()
+                .collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = CollectionUtils.isEmpty(normalWarehouseLocationCodes)
+                ? Collections.emptyList()
+                : warehouseLocationService.lambdaQuery()
+                .in(WarehouseLocationEntity::getCode, normalWarehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
                 .list();
-        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream()
+                .filter(location -> StringUtils.isNotBlank(location.getCode()))
+                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
+        if (warehouseLocationCodes.contains(EMPTY_WAREHOUSE_LOCATION_NAME)) {
+            WarehouseLocationEntity emptyWarehouseLocation = warehouseLocationService.lambdaQuery()
+                    .eq(WarehouseLocationEntity::getName, EMPTY_WAREHOUSE_LOCATION_NAME)
+                    .eq(WarehouseLocationEntity::getDisabled, false)
+                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
+                    .one();
+            if (emptyWarehouseLocation != null) {
+                warehouseLocationMap.put(EMPTY_WAREHOUSE_LOCATION_NAME, emptyWarehouseLocation);
+            }
+        }
         if (warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()) == null) {
             throw new ServiceException("拣货仓位不存在或已禁用");
         }
@@ -198,37 +232,42 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (!Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
             return;
         }
+        WarehouseLocationEntity outWarehouseLocation = warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode());
+        WarehouseLocationEntity inWarehouseLocation = warehouseLocationMap.get(addOrUpdateDTO.getInWarehouseLocationCode());
+        String outWarehouseLocationCode = CharSequenceUtil.trimToEmpty(outWarehouseLocation.getCode());
+        String inWarehouseLocationCode = CharSequenceUtil.trimToEmpty(inWarehouseLocation.getCode());
         WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
         detail.setSkuId(old.getSkuId());
         detail.setSkuNo(old.getSkuNo());
-        detail.setOutWarehouseLocation(addOrUpdateDTO.getOutWarehouseLocationCode());
-        detail.setInWarehouseLocation(addOrUpdateDTO.getInWarehouseLocationCode());
+        detail.setOutWarehouseLocation(outWarehouseLocationCode);
+        detail.setInWarehouseLocation(inWarehouseLocationCode);
         detail.setQty(moveQty);
         WarehouseLocationMoveDTO.AddDTO addDTO = new WarehouseLocationMoveDTO.AddDTO();
-        addDTO.setWarehouseId(CharSequenceUtil.trim(warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()).getWarehouseId()));
+        addDTO.setWarehouseId(CharSequenceUtil.trim(outWarehouseLocation.getWarehouseId()));
         addDTO.setDetailList(CollUtil.newArrayList(detail));
         addDTO.setPcShow(false);
         addDTO.setOperateType(WarehouseLocationMoveOperateTypeEnum.UNBOX_TRANSFER.getCode());
         log.info("拆箱移位 warehouseId={} source={} target={} skuNo={} qty={}",
-                addDTO.getWarehouseId(), addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), old.getSkuNo(), moveQty);
+                addDTO.getWarehouseId(), outWarehouseLocationCode, inWarehouseLocationCode, old.getSkuNo(), moveQty);
         String moveId = warehouseLocationMoveService.addAndApprove(addDTO);
         warehouseLocationMoveService.saveMoveCartonDetails(moveId,
-                addOrUpdateDTO.getInWarehouseLocationCode(),
-                CollUtil.newArrayList(buildMoveSourceBoxInfo(addOrUpdateDTO, old, afterSalePackEntity, moveQty)),
+                inWarehouseLocationCode,
+                CollUtil.newArrayList(buildMoveSourceBoxInfo(old, afterSalePackEntity, moveQty, outWarehouseLocationCode, inWarehouseLocationCode)),
                 Collections.emptyMap());
     }
 
-    private AfterSalePackDTO.ViewDTO buildMoveSourceBoxInfo(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO,
-                                                            AfterSalePackDetailEntity old,
+    private AfterSalePackDTO.ViewDTO buildMoveSourceBoxInfo(AfterSalePackDetailEntity old,
                                                             AfterSalePackEntity afterSalePackEntity,
-                                                            Integer moveQty) {
+                                                            Integer moveQty,
+                                                            String outWarehouseLocationCode,
+                                                            String inWarehouseLocationCode) {
         AfterSalePackDetailDTO.ViewDTO detail = new AfterSalePackDetailDTO.ViewDTO();
         detail.setId(old.getId());
         detail.setMainId(old.getMainId());
         detail.setSkuId(old.getSkuId());
         detail.setSkuNo(old.getSkuNo());
-        detail.setOutWarehouseLocationCode(addOrUpdateDTO.getOutWarehouseLocationCode());
-        detail.setInWarehouseLocationCode(addOrUpdateDTO.getInWarehouseLocationCode());
+        detail.setOutWarehouseLocationCode(outWarehouseLocationCode);
+        detail.setInWarehouseLocationCode(inWarehouseLocationCode);
         detail.setPackQty(moveQty);
         AfterSalePackDTO.ViewDTO boxInfo = new AfterSalePackDTO.ViewDTO();
         boxInfo.setId(afterSalePackEntity.getId());

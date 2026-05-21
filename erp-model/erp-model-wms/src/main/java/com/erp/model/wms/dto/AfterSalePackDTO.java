@@ -432,12 +432,14 @@ public class AfterSalePackDTO implements Serializable {
     public static class DetailDTO {
 
         /**
-         * 售后装箱明细id
+         * 售后装箱明细id。
+         * 采购整箱退货新增/修改时必传，用于回写 after_sale_pack_detail。
          */
         private String id;
 
         /**
-         * 售后装箱id
+         * 售后装箱id。
+         * 采购整箱退货新增/修改时必传，用于定位 after_sale_pack 主表。
          */
         private String mainId;
 
@@ -457,17 +459,20 @@ public class AfterSalePackDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 实退数量
+         * 装箱数量。
+         * 来源于售后装箱明细原始数量，后端用 packQty - actualQty 计算 diffQty。
          */
         private Integer packQty;
 
         /**
-         * 实际数量
+         * 实退数量。
+         * 采购整箱退货时前端传本次实际退货数量；移除单行/SKU 时传 0。
          */
         private Integer actualQty;
 
         /**
-         * 差异数量
+         * 差异数量。
+         * 后端按装箱数量 packQty - 实退数量 actualQty 回写，前端展示用。
          */
         private Integer diffQty;
 
