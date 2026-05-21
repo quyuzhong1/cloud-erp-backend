@@ -1326,7 +1326,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     afterSaleProgressEntity.setRemark(dto.getRemark());
                     afterSaleProgressService.updateById(afterSaleProgressEntity);
 
-                    //erp状态变更客户寄件，输入快递单号后，需要流转至售后签收（待签收）
+                    //erp状态变更客户寄件，输入快递单号后，需要流转至待售后签收（待签收）
                     if (StringUtils.isNotBlank(dto.getTrackNo()) && afterSaleStatus.getCode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())) {
                         AfterSaleProgressEntity byNode = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
                         byNode.setNodeTime(LocalDateTime.now());
@@ -1561,7 +1561,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 .update();
 
         //更新节点时间
-        //更新通过，则进入下一个节点：售后签收
+        //更新通过，则进入下一个节点：待售后签收
         updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(), "", "待签收");
         //日志
         String msg = StrUtil.format("用户填写买家寄出快递单号为[{}]", trackNo);
