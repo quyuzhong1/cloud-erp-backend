@@ -172,6 +172,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 req.setIsInsurance(Boolean.TRUE.equals(logisticsChannelEntity.getIsApiInsurance()));
                 req.setIsSignature(Boolean.TRUE.equals(logisticsChannelEntity.getIsApiSign()));
             }
+        }
         req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         fillAttachmentInfo(req, attachmentList);
         return BeanUtil.beanToMap(req);
