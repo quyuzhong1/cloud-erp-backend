@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,6 +101,14 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 线上订单物流单号
      */
     private String trackingNo;
+    /**
+     * 包裹号
+     */
+    private String planPackageNo;
+    /**
+     * 物流服务商ID
+     */
+    private String planSupplierId;
 
     /**
      * 线上面单url
@@ -128,6 +137,14 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 销售订单id
      */
     private String soId;
+    /**
+     * 付款时间
+     */
+    private LocalDateTime payTime;
+    /**
+     * 买家备注
+     */
+    private String buyerRemark;
     /**
      * 是否签名服务
      */
@@ -173,6 +190,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 收件人国家
          */
         private String countryCode;
+        /**
+         * 国家三字码
+         */
+        private String countryCode3;
 
         /**
          * 收件人国家名称
@@ -302,6 +323,14 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
         private String skuId;
 
         private String skuNo;
+        /**
+         * 平台SKU编码（tiktok使用）
+         */
+        private String platformSkuNo;
+        /**
+         * 真实售价（原始币别）
+         */
+        private BigDecimal price;
 
         private String sourceSkuNo;
 

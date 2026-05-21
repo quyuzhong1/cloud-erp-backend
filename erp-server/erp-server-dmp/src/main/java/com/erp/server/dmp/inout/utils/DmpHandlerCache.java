@@ -27,7 +27,6 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
-import com.common.business.dto.DorisQuerySettingFullCacheDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
@@ -116,16 +115,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private Map<String, DataSource> dmpCfgDbDataSourceMap;
 	
-	private List<Map<String, Object>> dorisQueryCfgSettingEntityCache;
-	
-	private Map<String , DorisQuerySettingDTO> dorisQueryCfgSettingMappingCache;
-
-	/**
-	 * Doris 路由配置当前版本号，每次 {@link #initDorisQueryCfgSetting()} 重建时刷新为 System.currentTimeMillis()。
-	 * 同时作为 Redis 广播消息及 Feign 全量返回的 version 字段，订阅端据此严格单调比较忽略乱序消息。
-	 */
-	private volatile long dorisQueryCfgVersion = 0L;
-
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
 	@Autowired
@@ -274,16 +263,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return dmpCfgDbDataSourceMap.get(dbId);
 	}
 	
-	public DorisQuerySettingDTO getDorisQuerySettingDTO(String requestURI) {
-		if(dorisQueryCfgSettingMappingCache == null) {
-			this.initDorisQueryCfgSetting();
-		}
-		if(!requestURI.startsWith("/")) {
-			requestURI = "/" + requestURI;
-		}
-		return dorisQueryCfgSettingMappingCache.get(requestURI);
-	}
-	
 	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {
 		int i = 0;
 		while(overseasProviderEntityCache == null) {
@@ -404,9 +383,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgOutputEntityCache = dmpCfgOutputService.lambdaQuery()
 				.eq(DmpCfgOutputEntity::getDisabled, false).list();
-		
-		this.initDorisQueryCfgSetting();
-		
 		
 		try {
 			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
@@ -588,29 +564,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 				
 			}, 5, freshCacheTime, TimeUnit.SECONDS);
 			
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-				LambdaQueryWrapper<CfgSettingEntity> updateQueryWrapper = new LambdaQueryWrapper<>();
-				updateQueryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
-				updateQueryWrapper.gt(CfgSettingEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)));
-				List<Map<String , Object>> cfgSettingEntityFreshList = cfgSettingService.listMaps(updateQueryWrapper);
-				if(CollUtil.isNotEmpty(cfgSettingEntityFreshList)) {
-					this.initDorisQueryCfgSetting();
-				}
-			}, 1, freshCacheTime, TimeUnit.SECONDS);
-
-			// 周期性全量广播：覆盖"启动时订阅者还没就绪"以及"订阅链路抖动消息丢失"的场景，
-			// 业务节点 LocalCache.apply 内部按 version 单调递增校验，重复广播只对刚启动的节点生效。
-			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
-				try {
-					if(dorisQueryCfgSettingMappingCache == null) {
-						this.initDorisQueryCfgSetting();
-					} else {
-						this.publishDorisQueryCfgRefresh();
-					}
-				} catch (Throwable e) {
-					log.warn("doris query cfg periodic broadcast failed", e);
-				}
-			}, 1, 5, TimeUnit.MINUTES);
 		}
 	}
 	
@@ -680,75 +633,6 @@ public class DmpHandlerCache implements CommandLineRunner{
 				.eq(DmpCfgDbEntity::getDisabled, false).list());
 	}
 	
-	private synchronized void initDorisQueryCfgSetting() {
-		LambdaQueryWrapper<CfgSettingEntity> queryWrapper = new LambdaQueryWrapper<>();
-		queryWrapper.eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG);
-		queryWrapper.eq(CfgSettingEntity::getStatus, true);
-		dorisQueryCfgSettingEntityCache = cfgSettingService.listMaps(queryWrapper);
-		dorisQueryCfgSettingMappingCache = dorisQueryCfgSettingEntityCache.stream().collect(Collectors.toMap(c -> {
-			String key = c.get("key").toString();
-			if(!key.startsWith("/")) {
-				key = "/" + key;
-			}
-			return key;
-		}, c -> {
-			DorisQuerySettingDTO d = new DorisQuerySettingDTO();
-			String value = c.get("value").toString();
-			if(StringUtils.isNotBlank(value)) {
-				try {
-					d = JSON.parseObject(value, DorisQuerySettingDTO.class);
-				} catch (Exception e) {
-					log.error("转换doris配置查询错误" , e);
-				}
-			}
-			return d;
-		} , (c1 , c2) -> c1));
-		dorisQueryCfgVersion = System.currentTimeMillis();
-		publishDorisQueryCfgRefresh();
-	}
-
-	/**
-	 * 给跨进程业务节点 Feign 拉全量使用：返回当前内存全量 + 版本号，
-	 * 节点据此原子替换本地 {@code DorisQuerySettingLocalCache} 快照。
-	 */
-	public DorisQuerySettingFullCacheDTO getAllDorisQuerySettings() {
-		if(dorisQueryCfgSettingMappingCache == null) {
-			this.initDorisQueryCfgSetting();
-		}
-		DorisQuerySettingFullCacheDTO dto = new DorisQuerySettingFullCacheDTO();
-		dto.setVersion(dorisQueryCfgVersion);
-		dto.setData(new HashMap<>(dorisQueryCfgSettingMappingCache));
-		return dto;
-	}
-
-	/**
-	 * 手动触发重建并广播；供 {@code DmpInoutController#refreshDorisCfg} 使用，
-	 * 内部直接复用 {@link #initDorisQueryCfgSetting()}（已包含发布广播）。
-	 */
-	public void rebuildAndPublishDorisQueryCfg() {
-		this.initDorisQueryCfgSetting();
-	}
-
-	private void publishDorisQueryCfgRefresh() {
-		if(redissonClient == null) {
-			return;
-		}
-		try {
-			DorisQuerySettingFullCacheDTO payload = new DorisQuerySettingFullCacheDTO();
-			payload.setVersion(dorisQueryCfgVersion);
-			payload.setData(new HashMap<>(dorisQueryCfgSettingMappingCache));
-			String body = JSON.toJSONString(payload);
-			// 严格顺序：先写 Bucket（新节点启动 @PostConstruct 同步读取依据），再 publish（在线节点实时刷新）
-			redissonClient.<String>getBucket(RedisCacheConstants.DORIS_QUERY_CFG_FULL_KEY).set(body);
-			RTopic topic = redissonClient.getTopic(RedisCacheConstants.DORIS_QUERY_CFG_REFRESH_CHANNEL);
-			long received = topic.publish(body);
-			log.info("publishDorisQueryCfgRefresh ok, size={}, version={}, receivedBy={}",
-					payload.getData().size(), payload.getVersion(), received);
-		} catch (Throwable e) {
-			log.warn("publishDorisQueryCfgRefresh failed, subscribers will fallback to 5min sync", e);
-		}
-	}
-
 
 	/**
 	 * 查询国家信息
@@ -766,7 +650,4 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return list;
 	}
 	
-	public List<Map<String, Object>> getDorisQueryCfgSettingEntityCache(){
-		return dorisQueryCfgSettingEntityCache;
-	}
 }

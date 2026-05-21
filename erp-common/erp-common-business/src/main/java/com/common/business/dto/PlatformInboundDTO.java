@@ -8,8 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- *  平台入库单DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
- *
+ * 平台入库单DTO,所有平台订单通用数据，转换为此类后发送mq统一消费处理
  **/
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -42,6 +41,8 @@ public class PlatformInboundDTO extends UniqueDto {
 
     //下载时间
     private LocalDateTime downloadTime;
+    //出库时间
+    private LocalDateTime dateShipping;
 
     //入库明细
     private List<Item> items;

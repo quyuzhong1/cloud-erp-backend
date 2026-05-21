@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -12,12 +13,15 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgReconciliationFieldEntity;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
@@ -25,12 +29,10 @@ import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.mapper.TmsCfgCostMapper;
-import com.erp.server.tms.service.CfgReconciliationFieldService;
-import com.erp.server.tms.service.DictBasicService;
-import com.erp.server.tms.service.TmsCfgCostService;
-import com.erp.server.tms.service.TmsCostDetailService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,10 +64,18 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Resource
     private TmsCostDetailService tmsCostDetailService;
 
+    @Resource
+    private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
+
+    @Resource
+    private OperateLogService operateLogService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TmsCfgCostDTO.AddDTO addDTO) {
+
+
         TmsCfgCostEntity tmsCfgCostEntity = new TmsCfgCostEntity();
         BeanMapperUtils.copy(addDTO, tmsCfgCostEntity);
 
@@ -105,6 +115,19 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         boolean save = super.updateById(tmsCfgCostEntity);
         if(!save) {
             throw new ServiceException("费用管理配置单保存失败");
+        }
+        // 费用名称变更时同步物流费用导入字段映射中的展示名称，避免配置页仍显示旧名称
+        if (!CharSequenceUtil.equals(old.getCostName(), tmsCfgCostEntity.getCostName())) {
+            List<CfgLogisticsCostImportDetailEntity> oldList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getTargetDetailFieldId, old.getId()).list();
+            cfgLogisticsCostImportDetailService.lambdaUpdate()
+                    .eq(CfgLogisticsCostImportDetailEntity::getTargetDetailFieldId, old.getId())
+                    .set(CfgLogisticsCostImportDetailEntity::getTargetDetailFieldName, tmsCfgCostEntity.getCostName())
+                    .update();
+            for (CfgLogisticsCostImportDetailEntity detailEntity : oldList) {
+                // 操作日志
+                String msg = StrUtil.format("用户【{}】编辑费用管理【{}】由【{}】变更【{}】", UserContext.getDefaultLoginUser().getUserName(), "费用项" ,old.getCostName(), updateDTO.getCostName());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(), detailEntity.getMainId(), "编辑信息");
+            }
         }
         //更新其他相同归属和分类的默认状态
         updateDefault(tmsCfgCostEntity);
