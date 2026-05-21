@@ -152,7 +152,7 @@ public interface SoB2cDeliveryFeign {
     void generateDeliveryAndOutStock(@RequestBody GenerateDeliveryAndOutStockDTO generateDeliveryAndOutStockDTO);
 
     @PostMapping("/feign/soB2cDelivery/getDeliveryCodeBySourceId")
-    Map<String,String> getDeliveryCodeBySourceId(@RequestParam("sourceIds") List<String> sourceIds);
+    Map<String,String> getDeliveryCodeBySourceId(@RequestBody List<String> sourceIds);
     /**
      * 自动反审核并删除发货单
      * @param id

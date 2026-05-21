@@ -278,6 +278,9 @@ public interface BusinessNoConstant {
     //质检申请
     String ZJSQ = "ZJSQ";
     String WDGL = "WDGL";
+    String VJ = "VJ";
     //tms异步任务记录
     String Z="Z";
+
+    String WLD = "WLD";
 }

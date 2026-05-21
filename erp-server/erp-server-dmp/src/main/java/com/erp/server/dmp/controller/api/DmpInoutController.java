@@ -218,7 +218,6 @@ public class DmpInoutController extends BaseController {
             typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
             typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
             typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
-            typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
         }
         return success(typeCacheMap);
     }

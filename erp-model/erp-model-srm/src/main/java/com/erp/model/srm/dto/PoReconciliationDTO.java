@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -186,6 +187,16 @@ public class PoReconciliationDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 发票状态
+         */
+        private Boolean invoiceStatus;
+
+        /**
+         * 发票状态名称
+         */
+        private String invoiceStatusName;
     }
 
     /**
@@ -667,6 +678,22 @@ public class PoReconciliationDTO implements Serializable {
          * 采方备注
          */
         private String purchaseRemark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UploadFileDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        @NotBlank(message = "附件url不能为空")
+        private String attachUrl;
+
+        @NotBlank(message = "附件名称不能为空")
+        private String attachName;
     }
 
 }

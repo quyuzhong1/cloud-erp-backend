@@ -2,6 +2,8 @@ package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.constant.SqlConstants;
 import com.common.core.utils.BeanMapper;
 import com.common.business.dto.FindUserDTO;
@@ -21,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,6 +67,16 @@ public class WorkflowBusinessServiceImpl extends ServiceImpl<WorkflowBusinessMap
     public Boolean saveBusiness(WorkflowBusinessDTO dto) {
         WorkflowBusinessEntity processEntity = new WorkflowBusinessEntity();
         BeanMapper.copy(dto, processEntity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        processEntity.setUpdateTime(now);
+        processEntity.setUpdateUserId(userId);
+        processEntity.setUpdateUserName(userName);
+        processEntity.setCreateTime(now);
+        processEntity.setCreateUserId(userId);
+        processEntity.setCreateUserName(userName);
         return this.save(processEntity);
     }
 

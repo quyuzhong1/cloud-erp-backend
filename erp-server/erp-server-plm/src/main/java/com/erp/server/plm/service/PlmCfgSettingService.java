@@ -12,7 +12,7 @@ import com.erp.model.sys.dto.PlmCfgSettingDTO;
  * @author lrp
  * @since 2024-07-25
  */
-public interface CfgSettingService extends SuperService<PlmCfgSettingEntity> {
+public interface PlmCfgSettingService extends SuperService<PlmCfgSettingEntity> {
 
 
     Boolean addOrUpdate(PlmCfgSettingDTO.CommonDTO dto);

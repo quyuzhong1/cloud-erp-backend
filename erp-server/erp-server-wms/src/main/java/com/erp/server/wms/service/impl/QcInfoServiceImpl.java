@@ -1131,6 +1131,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcInfo.setQcGoodQty(0);
         qcInfo.setQcQty(0);
         qcInfo.setLotQualifiedQty(qcInfo.getTotalQty());
+        qcInfo.setAllowInstockQty(qcInfo.getLotQualifiedQty());
         qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());
         Boolean isExist = CharSequenceUtil.isNotBlank(purchaseOrderId);
         String skuId = dto.getQcProduct().getSkuId();
@@ -3260,11 +3261,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     }
 
     @Override
-    public PagingVO<QcInfoDTO.OpenPagingViewDTO> qcPaging(PagingDTO<QcInfoDTO.OpenPagingParamDTO> dto) {
+    public PagingVO<QcInfoDTO.OpenPagingViewDTO> qcPaging(PagingDTO<QcInfoDTO.PagingParamDTO> dto) {
+        QcInfoDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        QcInfoDTO.OpenPagingParamDTO params = dto.getParams();
-        //构建查询条件
-        buildOpenPagingQuery(params);
         IPage pageData = baseMapper.qcPaging(query, params);
         List<QcInfoDTO.OpenPagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {

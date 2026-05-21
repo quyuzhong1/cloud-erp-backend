@@ -3,6 +3,8 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.BatchSavePostUserDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysPostUserEntity;
@@ -11,6 +13,7 @@ import com.erp.server.sys.service.SysPostUserService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -73,10 +76,20 @@ public class SysPostUserServiceImpl extends ServiceImpl<SysPostUserMapper, SysPo
         removePostUser(postId, userIds);
         //在添加
         List<SysPostUserEntity> addList = new LinkedList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String currentUserId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         for (String userId : userIds) {
             SysPostUserEntity entity = new SysPostUserEntity();
             entity.setUserId(userId);
             entity.setPostId(postId);
+            entity.setUpdateTime(now);
+            entity.setUpdateUserId(currentUserId);
+            entity.setUpdateUserName(userName);
+            entity.setCreateTime(now);
+            entity.setCreateUserId(currentUserId);
+            entity.setCreateUserName(userName);
             addList.add(entity);
         }
         if (CollectionUtils.isNotEmpty(addList)) {

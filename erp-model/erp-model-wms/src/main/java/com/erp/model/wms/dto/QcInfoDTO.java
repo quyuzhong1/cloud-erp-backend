@@ -18,10 +18,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -126,7 +123,7 @@ public class QcInfoDTO implements Serializable {
          * 产品信息
          * 从这个 接口获取http://172.16.100.11:3002/project/83/interface/api/9511
          */
-        @Valid
+//        @Valid 前端进行区分web进行校验  pda端不校验
         private QcProductDTO.AddDTO qcProduct;
 
         /**
@@ -822,6 +819,11 @@ public class QcInfoDTO implements Serializable {
         private Integer qcBadQty;
 
         /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
+
+        /**
          * 质检结果
          */
         private QcResultEnum qcResult;
@@ -1073,6 +1075,10 @@ public class QcInfoDTO implements Serializable {
          * 来源编号
          */
         private String sourceCode;
+        /**
+         * 允许入库量
+         */
+        private Integer allowInstockQty;
     }
 
     @Data

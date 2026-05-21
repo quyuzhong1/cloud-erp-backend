@@ -49,7 +49,7 @@ public class PurchaseApplicationApproveHandler extends AbstractApproveHandler {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.PO_APPLY_NOT_FOUND);
         }
-        BatchResultDTO resultDTO = purchaseApplicationService.cancelProcess(entity);
+        BatchResultDTO resultDTO = purchaseApplicationService.cancelProcess(dto,entity);
         return resultDTO.getSuccess();
     }
 

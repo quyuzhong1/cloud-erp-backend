@@ -1,4 +1,5 @@
 package com.erp.server.fms.service;
+import com.common.business.dto.ApproveDTO;
 import com.erp.model.fms.entity.AssetLocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -152,12 +153,12 @@ public interface AssetLocationService extends SuperService<AssetLocationEntity> 
     /**
      * 撤销
      *
-     * @param id
+     * @param dto
      * @return
      * @author wuht
      * @date: 2025-10-11
      */
-    BatchResultDTO cancelProcess(String id);
+    BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
      * 导出Excel

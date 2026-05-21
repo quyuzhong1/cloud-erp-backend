@@ -4,20 +4,20 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.QcReportDTO;
 import com.erp.model.wms.dto.QcRuleDTO;
 import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.QcRuleService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -218,7 +218,7 @@ public class QcRuleController extends BaseController {
             serviceClass = QcRuleService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = qcRuleService.cancelProcess(dto.getIds());
+        Boolean flag = qcRuleService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return flag == true ? success() : failure();
     }
 

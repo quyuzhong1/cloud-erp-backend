@@ -224,6 +224,7 @@
             isc.company_id as orgId,
             isc.currency,
             isc.exchange_rate,
+            isc.create_time as createTime,
             iscd.warehouse_id as warehouseId,
             iscd.sku_id as skuId,
             iscd.product_cost as productCost,
@@ -257,6 +258,7 @@
             and #{param.endAccountingMonth} > isc.accounting_month
         </if>
         and isc.status = 'approve'
+        order by isc.create_time desc, isc.id desc
     </select>
 
 </mapper>

@@ -46,12 +46,12 @@ public class QcNoticeDetailEntity extends BaseEntity<QcNoticeDetailEntity> {
     @TableField("product_name")
     private String productName;
     /**
-    * 质检通知数量
+    * 送检数量
     */
     @TableField("qc_notice_qty")
     private Integer qcNoticeQty;
     /**
-    * 质检数量
+    * 抽检数量
     */
     @TableField("qc_qty")
     private Integer qcQty;

@@ -1,10 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.StocktakingPlanEntity;
-import com.common.business.service.SuperService;
 
-import com.common.business.vo.PagingVO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
+import com.erp.model.wms.entity.StocktakingPlanEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 
 import javax.servlet.http.HttpServletResponse;
@@ -124,10 +125,10 @@ public interface StocktakingPlanService extends SuperService<StocktakingPlanEnti
     * 撤销
     * @author Cloud
     * @date: 2023-08-08
-    * @param id
+    * @param dto
     * @return
     */
-    BatchResultDTO cancelProcess(String id);
+   BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

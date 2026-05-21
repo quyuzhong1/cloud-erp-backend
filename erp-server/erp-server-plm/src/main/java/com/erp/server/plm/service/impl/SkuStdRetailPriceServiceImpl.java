@@ -55,7 +55,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.mapper.SkuStdRetailPriceMapper;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
-import com.erp.server.plm.service.CfgSettingService;
+import com.erp.server.plm.service.PlmCfgSettingService;
 import com.erp.server.plm.service.OperateLogService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.SkuStdRetailPriceService;
@@ -89,7 +89,7 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
     private DownloadTaskFeign downloadTaskFeign;
     
     @Resource
-    private CfgSettingService cfgSettingService;
+    private PlmCfgSettingService plmCfgSettingService;
     
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
@@ -431,16 +431,16 @@ public class SkuStdRetailPriceServiceImpl extends SuperServiceImpl<SkuStdRetailP
 	public Boolean setting(SettingDTO dto) {
 		String skuStdSetting = dto.getSkuStdSetting();
 		String key = "sku_std_setting";
-		List<PlmCfgSettingEntity> list = cfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, key).list();
+		List<PlmCfgSettingEntity> list = plmCfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, key).list();
 		if(CollUtil.isNotEmpty(list)) {
 			PlmCfgSettingEntity plmCfgSettingEntity = list.get(0);
 			plmCfgSettingEntity.setRemark(skuStdSetting);
-			cfgSettingService.updateById(plmCfgSettingEntity);
+			plmCfgSettingService.updateById(plmCfgSettingEntity);
 		}else {
 			PlmCfgSettingEntity plmCfgSettingEntity = new PlmCfgSettingEntity();
 			plmCfgSettingEntity.setKey(key);
 			plmCfgSettingEntity.setRemark(skuStdSetting);
-			cfgSettingService.save(plmCfgSettingEntity);
+			plmCfgSettingService.save(plmCfgSettingEntity);
 		}
 		return true;
 	}

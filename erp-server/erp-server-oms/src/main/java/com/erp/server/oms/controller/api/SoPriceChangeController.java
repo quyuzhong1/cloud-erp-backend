@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -340,7 +341,7 @@ public class SoPriceChangeController extends BaseController {
                 continue;
             }
             try {
-                Boolean disabled = soPriceChangeService.cancelProcess(Collections.singletonList(id));
+                Boolean disabled = soPriceChangeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(Collections.singletonList(id)));
                 if (disabled) {
                     resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "撤销销售调价单成功"));
                 } else {

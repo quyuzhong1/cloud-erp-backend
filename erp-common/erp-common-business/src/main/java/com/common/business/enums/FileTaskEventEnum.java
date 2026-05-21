@@ -155,6 +155,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_OMS_KOL_B2B_APPLICATION("IMPORT_OMS_KOL_B2B_APPLICATION","B2B寄样申请导入","com.erp.rpc.wms.feign.ImportWmsFeign","importKolB2bApplication",""),
     EXPORT_OMS_KOL_B2C_APPLICATION("EXPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导出","","",""),
     IMPORT_OMS_KOL_B2C_APPLICATION("IMPORT_OMS_KOL_B2C_APPLICATION","B2C寄样申请导入","com.erp.rpc.oms.feign.ImportOmsFeign","importKolB2cApplication",""),
+    IMPORT_OMS_B2C_MANUAL_DELIVERY("IMPORT_OMS_B2C_MANUAL_DELIVERY","B2C销售订单手动发货","com.erp.rpc.oms.feign.ImportOmsFeign","importB2cManualDelivery",""),
+
     //scm
     EXPORT_SCM_SUPPLIER_USER("EXPORT_SCM_SUPPLIER_USER","供应商协同用户列表","","",""),
     EXPORT_SCM_PURCHASE_PRICE_CHANGE("EXPORT_SCM_PURCHASE_PRICE_CHANGE","采购调价数据","","",""),
@@ -162,6 +164,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_SCM_PURCHASE_ORDER("EXPORT_SCM_PURCHASE_ORDER","采购订单数据","","",""),
     EXPORT_SCM_PURCHASE_ORDER_CONTRACT("EXPORT_SCM_PURCHASE_ORDER_CONTRACT","采购单网采合同","","",""),
     EXPORT_SCM_PURCHASE_APPLICATION("EXPORT_SCM_PURCHASE_APPLICATION","采购申请单数据","","",""),
+    EXPORT_SCM_PURCHASE_APPLICATION_ALL("EXPORT_SCM_PURCHASE_APPLICATION_ALL","采购申请单数据（全）","","",""),
     EXPORT_SCM_SALES_DEMAND("EXPORT_SCM_SALES_DEMAND","备货申请单数据","","",""),
     EXPORT_SCM_SUBCONTRACT_CHANGE_ORDER("EXPORT_SCM_SUBCONTRACT_CHANGE_ORDER","委外变更单导出","","",""),
     EXPORT_SCM_PURCHASE_PRICE("EXPORT_SCM_PURCHASE_PRICE","采购价目数据","","",""),
@@ -362,6 +365,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF("IMPORT_TMS_LOGISTICS_THIRD_CHANNEL_REF", "轨迹查询策略导入","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsThirdChannelRef",""),
     EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出","","",""),
     EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出","","",""),
+    EXPORT_TMS_LOGISTICS_ORDER("EXPORT_TMS_LOGISTICS_ORDER", "物流下单导出","","",""),
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入尾程费用(自发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用(平台发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),

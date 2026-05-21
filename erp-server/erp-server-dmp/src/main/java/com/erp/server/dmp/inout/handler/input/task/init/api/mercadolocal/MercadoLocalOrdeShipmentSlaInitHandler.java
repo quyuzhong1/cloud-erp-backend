@@ -15,6 +15,7 @@ import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
@@ -45,7 +46,11 @@ import java.util.stream.Collectors;
 public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler {
 	@Resource
 	private MercadoLocalSdkClientService mercadoLocalSdkClientService;
-	
+	@Resource
+	private MercadoLocalRateLimitHelper rateLimitHelper;
+
+	private static final String BIZ_TYPE = MercadoLocalRateLimitHelper.BIZ_SHIPMENT_SLA;
+
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 
@@ -75,12 +80,21 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 
 		Map<Object, Map<String, Object>> shipmentMongoListMap = shipmentMongoList.stream().collect(Collectors.toMap(e -> e.get("fid"), e -> e));
 
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
-
 		MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
 			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
+		String userId = String.valueOf(shopInfoDTO.getUserId());
+
+		// 入口检查限流退避标记，命中则软退
+		if (rateLimitHelper.isLimited(userId, BIZ_TYPE)) {
+			log.warn("【美客多本土站-shipments SLA】userId={} 处于限流退避中，跳过本轮 inputTaskId={}",
+					userId, this.dmpInputTaskEntity == null ? null : this.dmpInputTaskEntity.getId());
+			((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
+			return Collections.emptyList();
+		}
+
+		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
 		//平台接口地址
 		String url = MercadoConstant.URL;
@@ -105,7 +119,7 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 			if(Objects.isNull(fid) || fid.toString().equals("0")){
 				continue;
 			}
-			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", fid.toString());
+			String shippingId = fid.toString();
 
 			Map<String, Object>  shipmentMap = shipmentMongoListMap.getOrDefault(fid, null);
 			if(Objects.isNull(shipmentMap)){
@@ -117,6 +131,18 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 				continue;
 			}
 
+			// 优先复用结果缓存（按 inputTaskId 隔离：仅在当前任务软退后下次重试命中，跨任务不复用）
+			// 注意上面的 dmpInputTaskEntity 是局部变量遮蔽，这里要用 this. 引用当前任务实体
+			String cached = rateLimitHelper.getResultCache(this.dmpInputTaskEntity.getId(), userId, BIZ_TYPE, shippingId);
+			if (StringUtils.isNotBlank(cached)) {
+				DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
+				dto.setMsg(cached);
+				dmpInputTaskInitDTOList.add(dto);
+				continue;
+			}
+
+			String path = dmpCfgApiEntity.getApiType().replace("{shippingId}", shippingId);
+
 			//入参
 			HashMap<String, Object> orderParams = new HashMap<>(1);
 
@@ -125,26 +151,22 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 			orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 			orderHeaderMap.put("x-format-new", "true");
 
-			//拉取数据
-			ApiResult apiResult = new ApiResult();
-			Object data = null;
-			long sleepTime = 1000;
-			int count = 0;
-			while(ObjectUtil.isEmpty(data)) {
-				apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-				if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-					if(count == 10) {
-						throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
-					}
-					try {
-						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-					sleepTime = sleepTime + 1000;
-					count = count + 1;
-				}
-				data = apiResult.getData();
+			ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path,
+					JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+
+			if (rateLimitHelper.isRateLimitedCode(apiResult.getCode())
+					|| (apiResult.getMsg() != null && apiResult.getMsg().equalsIgnoreCase("Read timed out"))) {
+				rateLimitHelper.markLimited(userId, BIZ_TYPE, MercadoLocalRateLimitHelper.DEFAULT_BACKOFF_SECONDS);
+				log.warn("【美客多本土站-shipments SLA】触发限流/超时，写入退避标记。userId={}, code={}, msg={}, url={}",
+						userId, apiResult.getCode(), apiResult.getMsg(), url + path);
+				((DmpInputInitResponse) dmpResponse).setDoNextStatus(false);
+				return Collections.emptyList();
+			}
+
+			if (Objects.equals(apiResult.getCode(), 404)) {
+				log.info("【美客多本土站-shipments SLA】shipmentId={} 未找到SLA信息，按空数据处理。userId={}, url={}, responseMap={}",
+						shippingId, userId, url + path, JSONUtil.toJsonStr(apiResult));
+				continue;
 			}
 
 			if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
@@ -152,77 +174,35 @@ public class MercadoLocalOrdeShipmentSlaInitHandler extends DmpInputInitHandler 
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
+			if (ObjectUtil.isEmpty(apiResult.getData())) {
+				continue;
+			}
 			//解析数据
 			ObjectMapper objectMapper = new ObjectMapper();
-			ShipmentSlaViewDTO shipmentViewDTO = null;
+			ShipmentSlaViewDTO shipmentViewDTO;
 			try {
 				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ShipmentSlaViewDTO.class);
 			} catch (JsonProcessingException e) {
-				System.out.println(e.getMessage());
-				e.printStackTrace();
-				log.error("美客多shipments/'shippingId'/sla接口数据解析错误，数据={}", apiResult.getData());
+				log.error("美客多shipments/'shippingId'/sla接口数据解析错误，数据={}", apiResult.getData(), e);
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {
-				return Collections.emptyList();
+				continue;
 			}
 			//设置shipmentId 后续用于关联查询
-			shipmentViewDTO.setFid(Long.valueOf( shipping.get("id").toString()));
+			shipmentViewDTO.setFid(Long.valueOf(shippingId));
 
+			String resultJson = JSONArray.toJSONString(Collections.singletonList(shipmentViewDTO));
 			DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-			dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(Arrays.asList(shipmentViewDTO)));
+			dmpInputTaskInitDTO.setMsg(resultJson);
 			dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
+
+			rateLimitHelper.setResultCache(this.dmpInputTaskEntity.getId(), userId, BIZ_TYPE, shippingId, resultJson,
+					MercadoLocalRateLimitHelper.CACHE_SECONDS_STABLE);
 		}
 
 		return dmpInputTaskInitDTOList;
-
-	}
-
-
-	public static void main(String[] args) {
-		//平台接口地址 https://api.mercadolibre.com/shipments/$SHIPMENT_ID/sla
-//		String url = "https://api.mercadolibre.com/shipments/45292056172/sla";
-//		String url = "https://api.mercadolibre.com/shipments/45292056172";
-		String url = "https://api.mercadolibre.com/shipments/45244744357";
-//		String url = "https://api.mercadolibre.com/shipments/45244744357/sla";
-
-		//入参
-		HashMap<String, Object> orderParams = new HashMap<>(1);
-
-		//设置请求头
-		Map<String, String> orderHeaderMap = new HashMap<>(1);
-		orderHeaderMap.put("Authorization", "Bearer " + "APP_USR-8670168511142898-080601-0b5b8134eb499b56874f4f634e8e96d8-2277013170");
-		orderHeaderMap.put("x-format-new", "true");
-
-		//拉取数据
-		ApiResult apiResult = new ApiResult();
-		Object data = null;
-		long sleepTime = 1000;
-		int count = 0;
-		while(ObjectUtil.isEmpty(data)) {
-			apiResult = HttpCommonUtil.sendOkHttpApiResult(url, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-			if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-				if(count == 10) {
-					throw new ServiceException("调用美客多" + url  + "接口重试" + count + "失败");
-				}
-				try {
-					Thread.sleep(sleepTime);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-				sleepTime = sleepTime + 1000;
-				count = count + 1;
-			}
-			data = apiResult.getData();
-		}
-
-		if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-			log.error("调用url={},入参params={}, 美客多shipments/'shippingId'/sla数据失败，返回值 responseMap={}", url , orderParams.toString(), JSONUtil.toJsonStr(apiResult));
-			throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-					url , orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
-		}
-
 
 	}
 }

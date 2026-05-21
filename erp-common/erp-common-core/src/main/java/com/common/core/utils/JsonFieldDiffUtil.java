@@ -15,7 +15,7 @@ public class JsonFieldDiffUtil {
      * - version: 版本号，通常不需要比较
      */
     private static final Set<String> DEFAULT_IGNORED_FIELDS = new HashSet<>(Arrays.asList(
-        "id", "create_user_id", "create_user_name", "create_time","update_user_id", "update_user_name", "update_time", "version","db","P_TAG_IUD","table","schema","P_TAG_CTS","P_TAG_BATCHNO","cdc_kafka_key_rc"
+        "id", "create_time","update_user_id", "update_user_name", "update_time", "version","db","P_TAG_IUD","table","schema","P_TAG_CTS","P_TAG_BATCHNO","cdc_kafka_key_rc"
     ));
 
     /**

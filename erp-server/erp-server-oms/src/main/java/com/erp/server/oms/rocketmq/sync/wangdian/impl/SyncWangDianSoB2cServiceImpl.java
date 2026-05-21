@@ -2,11 +2,11 @@ package com.erp.server.oms.rocketmq.sync.wangdian.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.DictCityConstants;
 import com.erp.model.dmp.dto.DmpThirdCityDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
@@ -111,7 +111,11 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
                 .eq(KolB2cApplicationAddressEntity::getPartnerId, entity.getPartnerId())
                 .one();
         //省市区的映射
-        List<String> sysIds = Arrays.asList(kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getDistrictId());
+        List<String> sysIds = Arrays.asList(kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getDistrictId())
+                .stream()
+                .filter(StringUtils::isNotBlank)
+                .filter(id -> !DictCityConstants.isNoDistrictId(id))
+                .collect(Collectors.toList());
         DmpThirdCityDTO.SysAddressParamsDTO dto = new DmpThirdCityDTO.SysAddressParamsDTO();
         dto.setSourcePlatform(ThirdSysTypeEnum.WDT.getCode());
         dto.setSysIds(sysIds);
@@ -170,7 +174,13 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         rawTrade.setBuyerNick(entity.getNickname());
         rawTrade.setReceiverName(kolB2cApplicationAddressEntity.getReceiverName());
         //省市区空格分隔，示例【北京 北京市 朝阳区】
-        rawTrade.setReceiverArea(StrUtil.format("{} {} {}",thirdAddressMap.get(kolB2cApplicationAddressEntity.getProvinceId()), thirdAddressMap.get(kolB2cApplicationAddressEntity.getCityId()), thirdAddressMap.get(kolB2cApplicationAddressEntity.getDistrictId())));
+        rawTrade.setReceiverArea(Arrays.asList(
+                        getAddressName(thirdAddressMap, kolB2cApplicationAddressEntity.getProvinceId(), kolB2cApplicationAddressEntity.getProvince()),
+                        getAddressName(thirdAddressMap, kolB2cApplicationAddressEntity.getCityId(), kolB2cApplicationAddressEntity.getCity()),
+                        getAddressName(thirdAddressMap, kolB2cApplicationAddressEntity.getDistrictId(), kolB2cApplicationAddressEntity.getDistrict()))
+                .stream()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(" ")));
         rawTrade.setReceiverAddress(kolB2cApplicationAddressEntity.getDetailAddress());
         rawTrade.setReceiverZip(kolB2cApplicationAddressEntity.getZipCode());
         rawTrade.setReceiverMobile(kolB2cApplicationAddressEntity.getReceiverPhone());
@@ -227,6 +237,16 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         request.setRawTradeList(rawTradeList);
         request.setRawTradeOrderList(rawTradeOrderList);
         return request;
+    }
+
+    private String getAddressName(Map<String, String> thirdAddressMap, String addressId, String fallbackName) {
+        if (StringUtils.isNotBlank(addressId)) {
+            String thirdName = thirdAddressMap.get(addressId);
+            if (StringUtils.isNotBlank(thirdName)) {
+                return thirdName;
+            }
+        }
+        return fallbackName;
     }
 
 }

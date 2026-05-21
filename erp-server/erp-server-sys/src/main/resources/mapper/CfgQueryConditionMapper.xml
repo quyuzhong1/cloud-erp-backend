@@ -114,9 +114,10 @@
         with menu as (
         select sm.menu_code,sm2.menu_name,CASE WHEN sm3.type = 1 THEN sm3.menu_name ELSE sm4.menu_name END as system
         from sys_menu sm
-        left join sys_menu sm2 on sm.parent_id = sm2.menu_id
-        left join sys_menu sm3 on sm2.parent_id = sm3.menu_id
-        left join sys_menu sm4 on sm3.parent_id = sm4.menu_id
+        left join sys_menu sm2 on sm.parent_id = sm2.menu_id and sm2.is_deleted = false
+        left join sys_menu sm3 on sm2.parent_id = sm3.menu_id and sm3.is_deleted = false
+        left join sys_menu sm4 on sm3.parent_id = sm4.menu_id and sm4.is_deleted = false
+        where sm.is_deleted = false
         )
         select
         qc.id,
@@ -168,10 +169,10 @@
                sm2.menu_name as name,
                CASE WHEN sm3.type = 1 THEN sm3.menu_name ELSE sm4.menu_name END as system
         from sys_menu sm
-        left join sys_menu sm2 on sm.parent_id = sm2.menu_id
-        left join sys_menu sm3 on sm2.parent_id = sm3.menu_id
-        left join sys_menu sm4 on sm3.parent_id = sm4.menu_id
-        where  sm.disabled = false and sm.type in (3,4)
+        left join sys_menu sm2 on sm.parent_id = sm2.menu_id and sm2.disabled = false
+        left join sys_menu sm3 on sm2.parent_id = sm3.menu_id and sm3.disabled = false
+        left join sys_menu sm4 on sm3.parent_id = sm4.menu_id and sm4.disabled = false
+        where sm.disabled = false and sm.is_deleted = false and sm.type in (3,4)
         <if test="params.menuCode != null and params.menuCode != ''">
             and sm.menu_code ILIKE concat('%',#{params.menuCode}::text,'%')
         </if>

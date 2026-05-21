@@ -446,6 +446,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                     }
                 }
 
+                excelDTO.setUrl(StrUtil.trim(excelDTO.getUrl()));
+
                 // URL哈希值计算
                 if (StrUtil.isNotBlank(excelDTO.getUrl())) {
                     String urlHash = DigestUtil.md5Hex(excelDTO.getUrl());
@@ -652,6 +654,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                  kolFeedbackEntity.setPartnerNickname(kolPartnerInfoEntity.getNickname());
              }
          }
+
+        kolFeedbackEntity.setUrl(StrUtil.trim(kolFeedbackEntity.getUrl()));
 
         // urlHash 用 hutool hash 工具（如果 url 不为空）
         if (StrUtil.isNotBlank(kolFeedbackEntity.getUrl())) {

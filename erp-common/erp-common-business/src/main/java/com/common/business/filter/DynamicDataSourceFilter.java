@@ -7,8 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -23,78 +22,59 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.cache.LocalCache;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.DorisQuerySettingDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
-import com.common.business.wrapper.FeignQuery;
+import com.common.business.utils.ApplicationContextUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
-@WebFilter("/*")
+@WebFilter(urlPatterns = "/*", asyncSupported = true)
 @Slf4j
-public class DynamicDataSourceFilter implements Filter {
-	
-	private static final List<String> ARCHIVE_BLACK_URL = Arrays.asList(
-			"/workOption/"
-			);
-	
+public class DynamicDataSourceFilter implements Filter{
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
                          FilterChain chain) throws IOException, ServletException {
-    	String requestURI = "";
-    	requestURI = ((HttpServletRequest) request).getRequestURI();
-    	if(BusinessCommonConstants.isArchive() && !requestURI.contains("/feign") && ARCHIVE_BLACK_URL.stream().noneMatch(requestURI::contains)) {
-    		try {
-        		DynamicDataSourceThreadLocal.set(DynamicDataSourceTypeEnum.ARCHIVE_DORIS);
-	            DynamicDataSourceContextHolder.push(DynamicDataSourceTypeEnum.ARCHIVE_DORIS.getCode());
-	            chain.doFilter(request, response);
-            } finally {
-                DynamicDataSourceContextHolder.poll();
-                DynamicDataSourceThreadLocal.remove();
-            }
-    	}else {
-    		DorisQuerySettingDTO dorisQuerySettingDTO = null;
-        	try {
-    			dorisQuerySettingDTO = FeignQuery.invoke(DorisQuerySettingDTO.class, "com.erp.server.dmp.inout.utils.DmpHandlerCache", "getDorisQuerySettingDTO", Arrays.asList(requestURI));
-    		} catch (Throwable e) {
-    			log.error("获取动态数据源配置错误" , e);
-    		}
-        	if(dorisQuerySettingDTO == null) {
-        		chain.doFilter(request, response);
-        	}else {
-        		ServletRequest requestWrapper = null;
-                if(request instanceof HttpServletRequest) {
-                    requestWrapper = new RequestReaderHttpServletRequestWrapper((HttpServletRequest) request);
-                }
-                //获取请求中的流如何，将取出来的字符串，再次转换成流，然后把它放入到新request对象中。
-                // 在chain.doFiler方法中传递新的request对象
-                if(requestWrapper == null) {
-                    chain.doFilter(request, response);
-                } else {
-                	DynamicDataSourceTypeEnum dynamicDataSourceType = null;
-                    try {
-        				dynamicDataSourceType = getDynamicDataSourceType(dorisQuerySettingDTO , requestWrapper);
-        			} catch (Throwable e) {
-        				log.error("获取动态数据源类型错误" , e);
-        			}
-                    if(dynamicDataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dynamicDataSourceType) {
-                    	chain.doFilter(requestWrapper, response);
-                    }else {
-                    	try {
-                    		DynamicDataSourceThreadLocal.set(dynamicDataSourceType);
-            	            DynamicDataSourceContextHolder.push(dynamicDataSourceType.getCode());
-            	            chain.doFilter(requestWrapper, response);
-                        } finally {
-                            DynamicDataSourceContextHolder.poll();
-                            DynamicDataSourceThreadLocal.remove();
-                        }
-                    }
-                }
-        	}
-    	}
+        if (!BusinessCommonConstants.isDynamicEnabled()) {
+            chain.doFilter(request, response);
+            return;
+        }
+        if (!(request instanceof HttpServletRequest)) {
+            chain.doFilter(request, response);
+            return;
+        }
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        DorisQuerySettingDTO setting = ApplicationContextUtils.getBean(LocalCache.class).getDorisQuerySettingDTO(httpRequest.getRequestURI());
+        if (setting == null) {
+            chain.doFilter(request, response);
+            return;
+        }
+        // 命中路由配置：包装 request 让 body 可重复读取，再用 body 决定走 Doris 还是 Postgres
+        RequestReaderHttpServletRequestWrapper wrapper = new RequestReaderHttpServletRequestWrapper(httpRequest);
+        DynamicDataSourceTypeEnum dataSourceType = null;
+        try {
+            dataSourceType = getDynamicDataSourceType(setting, wrapper);
+        } catch (Throwable e) {
+            log.error("获取动态数据源类型错误", e);
+        }
+        if (dataSourceType == null || DynamicDataSourceTypeEnum.POSTGRES == dataSourceType) {
+            chain.doFilter(wrapper, response);
+            return;
+        }
+        try {
+            DynamicDataSourceThreadLocal.set(dataSourceType);
+            DynamicDataSourceContextHolder.push(dataSourceType.getCode());
+            chain.doFilter(wrapper, response);
+        } finally {
+            DynamicDataSourceContextHolder.poll();
+            DynamicDataSourceThreadLocal.remove();
+        }
     }
     
+
     private DynamicDataSourceTypeEnum getDynamicDataSourceType(DorisQuerySettingDTO dorisQuerySettingDTO , ServletRequest requestWrapper) {
     	StringBuilder sb = new StringBuilder();
         try (BufferedReader reader = requestWrapper.getReader()) {
@@ -142,7 +122,7 @@ public class DynamicDataSourceFilter implements Filter {
      
         @Override
         public BufferedReader getReader() throws IOException {
-            return new BufferedReader(new InputStreamReader(getInputStream()));
+            return new BufferedReader(new InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
         }
      
         @Override
@@ -151,25 +131,26 @@ public class DynamicDataSourceFilter implements Filter {
             final ByteArrayInputStream bais = new ByteArrayInputStream(body);
      
             return new ServletInputStream() {
-     
+
                 @Override
                 public int read() throws IOException {
                     return bais.read();
                 }
-     
+
                 @Override
                 public boolean isFinished() {
-                    return false;
+                    return bais.available() <= 0;
                 }
-     
+
                 @Override
                 public boolean isReady() {
-                    return false;
+                    // body 已驻留在内存 ByteArrayInputStream，永远可立即读取不阻塞
+                    return true;
                 }
-     
+
                 @Override
                 public void setReadListener(ReadListener readListener) {
-     
+                    // 同步路径下不会被调用；保留空实现以兼容偶发框架探测
                 }
             };
         }
@@ -206,4 +187,5 @@ public class DynamicDataSourceFilter implements Filter {
             return sb.toString();
         }
     }
+
 }

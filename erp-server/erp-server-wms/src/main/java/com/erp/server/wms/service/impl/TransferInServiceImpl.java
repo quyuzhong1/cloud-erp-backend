@@ -12,6 +12,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -559,13 +560,14 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     /**
      * 撤销流程
      *
-     * @param ids
+     * @param dto
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-26 19:00
      */
     @Override
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.WH_TRANSFER_INBOUND_NOT_FOUND);
@@ -578,6 +580,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
             revokeDTO.setUserId(userInfo.getUid());

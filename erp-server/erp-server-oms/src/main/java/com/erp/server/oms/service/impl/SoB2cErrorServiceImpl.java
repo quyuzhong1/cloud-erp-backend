@@ -13,6 +13,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.ConditionElement;
@@ -50,6 +52,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,6 +94,10 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     public Boolean add(SoB2cErrorDTO.AddDTO addDTO) {
         //记录是否已存在
         SoB2cErrorEntity soB2cErrorEntity = this.getByMainIdAndType(addDTO.getMainId(),addDTO.getType());
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
         if (Objects.nonNull(soB2cErrorEntity)){
             soB2cErrorEntity.setParamJson(addDTO.getParamJson());
             soB2cErrorEntity.setMessage(addDTO.getMessage());
@@ -101,7 +108,13 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
             soB2cErrorEntity.setMainId(addDTO.getMainId());
             soB2cErrorEntity.setType(addDTO.getType());
             soB2cErrorEntity.setDetailId(StringUtils.isNotBlank(addDTO.getDetailId()) ? addDTO.getDetailId() : "");
+            soB2cErrorEntity.setCreateTime(now);
+            soB2cErrorEntity.setCreateUserId(userId);
+            soB2cErrorEntity.setCreateUserName(userName);
         }
+        soB2cErrorEntity.setUpdateTime(now);
+        soB2cErrorEntity.setUpdateUserId(userId);
+        soB2cErrorEntity.setUpdateUserName(userName);
         boolean save = super.saveOrUpdate(soB2cErrorEntity);
         if(!save) {
             throw new ServiceException("B2C销售订单异常单保存失败");

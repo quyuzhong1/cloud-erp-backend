@@ -18,7 +18,7 @@ import java.io.Serializable;
  *
  * @author will
  * @since 2026-01-19
-*/
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
@@ -27,53 +27,53 @@ import java.io.Serializable;
 public class ImportHistoryRecordEntity extends BaseEntity<ImportHistoryRecordEntity> {
 
     /**
-    * 批次编号
-    */
+     * 批次编号
+     */
     @TableField("code")
     private String code;
     /**
-    * 对账月份
-    */
+     * 对账月份
+     */
     @TableField("reconciliation_month")
     private String reconciliationMonth;
     /**
-    * 业务类型，自发货费用/尾程费用
-    */
+     * 业务类型，自发货费用/尾程费用
+     */
     @TableField("business_type")
     private String businessType;
     /**
-    * 上传导入附件的url
-    */
+     * 上传导入附件的url
+     */
     @TableField("file_url")
     private String fileUrl;
     /**
-    * 附件名称
-    */
+     * 附件名称
+     */
     @TableField("file_name")
     private String fileName;
     /**
-    * 导入数量
-    */
+     * 导入数量
+     */
     @TableField("import_count")
     private Integer importCount;
     /**
-    * 匹配数量
-    */
+     * 匹配数量
+     */
     @TableField("match_count")
     private Integer matchCount;
     /**
-    * 处理状态
-    */
+     * 处理状态
+     */
     @TableField("status")
     private String status;
     /**
-    * 类型
-    */
+     * 类型
+     */
     @TableField("type")
     private String type;
     /**
-    * 操作人id
-    */
+     * 操作人id
+     */
     @TableField("operation_user_id")
     private String operationUserId;
 
@@ -88,6 +88,13 @@ public class ImportHistoryRecordEntity extends BaseEntity<ImportHistoryRecordEnt
      */
     @TableField("clean_file_name")
     private String cleanFileName;
+
+    /**
+     * sheet页名称
+     */
+    @TableField("sheet_name")
+    private String sheetName;
+
 
     public static final String CODE = "code";
 

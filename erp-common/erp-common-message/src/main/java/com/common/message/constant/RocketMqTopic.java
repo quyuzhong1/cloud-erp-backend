@@ -182,4 +182,14 @@ public class RocketMqTopic {
      * tms 费用分摊异步任务--自动
      */
     public static final String TMS_ASYNC_TASK_RECORD_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_async_task_record_topic";
+
+    /**
+     * tms 异步获取物流下单面单标签
+     */
+    public static final String TMS_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-tms_async_get_logistics_order_label_topic";
+
+    /**
+     * dmp 异步获取物流下单面单标签
+     */
+    public static final String DMP_ASYNC_GET_LOGISTICS_ORDER_LABEL_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_async_get_logistics_order_label_topic";
 }

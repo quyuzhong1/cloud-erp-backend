@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
@@ -41,6 +42,12 @@ import com.erp.rpc.sys.feign.MessageUserReadFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
+import com.erp.server.wms.service.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.erp.server.wms.service.DictBasicService;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.QcResultService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -271,7 +278,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             List<QcResultEntity> qcResultEntities = this.lambdaQuery()
                     .in(QcResultEntity::getMainId, ids)
                     .list();
-            
+
             for (QcResultEntity entity : qcResultEntities) {
                 entity.setQcBadQty(0);
                 entity.setQcGoodQty(0);
@@ -281,8 +288,9 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                 entity.setQcSampleRate(BigDecimal.ZERO);
                 entity.setQcResult(QcResultEnum.CONFORMITY.getCode());
                 entity.setLotQualifiedQty(entity.getTotalQty());
+                entity.setAllowInstockQty(entity.getLotQualifiedQty());
             }
-            
+
             if (CollectionUtils.isNotEmpty(qcResultEntities)) {
                 this.updateBatchById(qcResultEntities);
             }
@@ -665,24 +673,30 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     }
 
     private void addPdaMessage(List<String> userIdList, QcResultDTO.QcNoticeDTO item) {
-        MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setType(MessageTypeEnum.QC.getCode());
-        LinkedHashMap<String, Object> map = new LinkedHashMap();
-        map.put("code", item.getCode());
-        map.put("status", item.getQcStatus());
-        map.put("statusName", QcBillStatusEnum.getByCode(item.getQcStatus()).getName());
-        map.put("skuId", item.getSkuId());
-        map.put("skuNo", item.getSkuNo());
-        map.put("qty", item.getQcQty());
-        messageEntity.setDataJson(map);
-        String messageId = messageFeign.save(messageEntity);
-        List<MessageUserReadEntity> userReadEntityList = new ArrayList<>();
-        for (String userId : userIdList) {
-            MessageUserReadEntity userReadEntity = new MessageUserReadEntity();
-            userReadEntity.setUserId(userId);
-            userReadEntity.setMessageId(messageId);
-            userReadEntityList.add(userReadEntity);
+        try{
+            MessageEntity messageEntity = new MessageEntity();
+            messageEntity.setType(MessageTypeEnum.QC.getCode());
+            LinkedHashMap<String, Object> map = new LinkedHashMap();
+            map.put("code", item.getCode());
+            map.put("status", item.getQcStatus());
+            map.put("statusName", QcBillStatusEnum.getByCode(item.getQcStatus()).getName());
+            map.put("skuId", item.getSkuId());
+            map.put("skuNo", item.getSkuNo());
+            map.put("qty", item.getQcQty());
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonString = objectMapper.writeValueAsString(map);
+            messageEntity.setDataJson(jsonString);
+            String messageId = messageFeign.save(messageEntity);
+            List<MessageUserReadEntity> userReadEntityList = new ArrayList<>();
+            for (String userId : userIdList) {
+                MessageUserReadEntity userReadEntity = new MessageUserReadEntity();
+                userReadEntity.setUserId(userId);
+                userReadEntity.setMessageId(messageId);
+                userReadEntityList.add(userReadEntity);
+            }
+            messageUserReadFeign.saveBatch(userReadEntityList);
+        }catch (Exception e){
+            throw new ServiceException("消息数据格式化失败",e);
         }
-        messageUserReadFeign.saveBatch(userReadEntityList);
     }
 }
