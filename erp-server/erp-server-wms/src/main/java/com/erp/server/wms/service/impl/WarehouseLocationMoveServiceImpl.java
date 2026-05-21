@@ -1577,7 +1577,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 .map(b -> CharSequenceUtil.trimToEmpty(b.getId()))
                 .filter(CharSequenceUtil::isNotBlank)
                 .collect(Collectors.toList());
-        afterSalePackService.markBoxesAsMoved(boxIds);
+        afterSalePackService.markBoxesAsMoved(boxIds, targetLocation.getId());
 
         return moveId;
     }

@@ -26,10 +26,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
-import com.erp.model.wms.entity.AfterSalePackDetailEntity;
-import com.erp.model.wms.entity.AfterSalePackEntity;
-import com.erp.model.wms.entity.PoReturnEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.AfterSalePackMapper;
 import com.erp.server.wms.service.*;
@@ -77,6 +74,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
 
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -158,11 +158,21 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (CollectionUtils.isNotEmpty(skuNotInProduct)) {
             throw new ServiceException("售后装箱单保存失败，以下SKU不存在：" + String.join(",", skuNotInProduct));
         }
+        // 查询东莞售后仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getName, "东莞售后仓库")
+                .eq(WarehouseEntity::getApproveStatus, "approve")
+                .eq(WarehouseEntity::getDisabled, false)
+                .one();
+        if (warehouseEntity == null) {
+            throw new ServiceException("东莞售后仓库不存在或者被禁用");
+        }
         // 查询仓位信息
         List<String> warehouseLocationCodes = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
                 .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
                 .list();
         Set<String> warehouseLocationCodeSet = warehouseLocationEntityList.stream()
                 .map(WarehouseLocationEntity::getCode)
@@ -643,9 +653,12 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void markBoxesAsMoved(List<String> ids) {
+    public void markBoxesAsMoved(List<String> ids, String targetWarehouseLocationId) {
         if (CollUtil.isEmpty(ids)) {
             return;
+        }
+        if (StringUtils.isBlank(targetWarehouseLocationId)) {
+            throw new ServiceException("移入仓位不能为空");
         }
         // 重新从库查询最新状态，防止前序步骤查询到落库之间存在并发窗口（卡顿/重复提交）
         List<AfterSalePackEntity> latestList = this.listByIds(ids);
@@ -662,6 +675,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .in(AfterSalePackEntity::getId, ids)
                 .eq(AfterSalePackEntity::getIsMoveWarehouse, false)
                 .set(AfterSalePackEntity::getIsMoveWarehouse, true)
+                .update();
+        afterSalePackDetailService.lambdaUpdate()
+                .in(AfterSalePackDetailEntity::getMainId, ids)
+                .set(AfterSalePackDetailEntity::getInWarehouseLocationId, targetWarehouseLocationId)
                 .update();
     }
 

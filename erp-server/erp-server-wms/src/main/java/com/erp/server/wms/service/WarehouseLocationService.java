@@ -352,4 +352,19 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo);
 
     List<BatchResultDTO> updateStatusBatch(WarehouseLocationDTO.UpdateStatusDto dto);
+
+    /**
+     * 查询东莞售后仓库下的所有仓位列表
+     *
+     * @return List<WarehouseLocationDTO.ViewDto>
+     */
+    List<WarehouseLocationDTO.ViewDto> listByAfterSalesWarehouse(String name);
+
+    /**
+     * 根据仓位编号查询仓位信息
+     *
+     * @param code 仓库编码
+     * @return WarehouseLocationEntity
+     */
+    WarehouseLocationEntity getByCode(String code);
 }

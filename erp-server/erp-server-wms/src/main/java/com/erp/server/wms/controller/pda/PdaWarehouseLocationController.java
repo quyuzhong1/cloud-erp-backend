@@ -6,6 +6,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PdaWarehouseLocationDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +49,27 @@ public class PdaWarehouseLocationController extends BaseController {
     public ApiResult addWarehouseLocation(@RequestBody PdaWarehouseLocationDTO.WarehouseLocationAddDTO dto) {
         Boolean flag = warehouseLocationService.addWarehouseLocation(dto);
         return flag ? success() : failure();
+    }
+
+    /**
+     * 查询东莞售后仓库下的所有仓位列表
+     *
+     * @return List<WarehouseLocationDTO.LocationSelectDTO>
+     */
+    @GetMapping(value = "/listByAfterSalesWarehouse")
+    public ApiResult<List<WarehouseLocationDTO.ViewDto>> listByAfterSalesWarehouse(@RequestParam("name") String name) {
+        return success(warehouseLocationService.listByAfterSalesWarehouse(name));
+    }
+
+    /**
+     * 根据仓位编号查询仓位信息
+     *
+     * @param code 仓库编码
+     * @return WarehouseLocationEntity
+     */
+    @GetMapping(value = "/getByCode")
+    public ApiResult<WarehouseLocationEntity> getByCode(@RequestParam("code") String code) {
+        return success(warehouseLocationService.getByCode(code));
     }
 
 }
