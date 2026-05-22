@@ -43,6 +43,7 @@
         pro.unusual_handle_user_name,
         pro.confirm_date,
         pro.return_type,
+        pro.return_detail_type AS returnDetailType,
         prod.is_combination as isCombination,
         po.type as purchaseType,
         po.source_id as purchaseSourceId,
@@ -195,6 +196,7 @@
             pro.approve_status,
             pro.supplier_name,
             pro.return_warehouse_name,
+            pro.return_detail_type AS returnDetailType,
             pro.create_time
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
@@ -239,7 +241,8 @@
             pro.unusual_type AS unusualType,
             pro.unusual_remark AS unusualRemark,
             pro.bill_date AS billDate,
-            pro.source_type AS sourceType
+            pro.source_type AS sourceType,
+            pro.return_detail_type AS returnDetailType
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
