@@ -326,7 +326,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         			PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
 //                          .code(p.getPackageNumber())
                           .name(LogisticsPlatformEnum.SHOPEE.getName())
-//                          .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
+                          .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
 //                          .logisticsChannelName(p.getShippingCarrier())
                           .estimatedShippingCost(dmpSoInfoEntity.getEstimatedShippingFee())
                           .actualShippingCost(dmpSoInfoEntity.getActualShippingFee())
