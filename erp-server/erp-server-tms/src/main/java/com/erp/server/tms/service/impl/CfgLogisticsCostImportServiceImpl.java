@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -104,7 +105,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
         // 验证明细列表
-        validateDetailList(dto.getDetailList());
+        validateDetailList(dto.getBusinessType(),dto.getDetailList());
 
 
         dto.setImportType(String.join(",", dto.getImportTypeList()));
@@ -182,7 +183,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),dto.getId());
 
         // 验证明细列表
-        validateDetailList(dto.getDetailList());
+        validateDetailList(dto.getBusinessType(),dto.getDetailList());
 
         CfgLogisticsCostImportEntity old = super.getById(dto.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置"));
@@ -300,21 +301,36 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     /**
      * 验证明细列表数据的有效性
      */
-    private void validateDetailList(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+    private void validateDetailList(String businessType,List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
         validateAtLeastOneUniqueKey(detailList);
         validateMainItemDuplicates(detailList);
         validateCostItemFields(detailList);
-        validateLogisticsCostImportUniqueFields(detailList);
+        validateLogisticsCostImportUniqueFields(businessType,detailList);
     }
 
     /**
      * 验证字段是否允许作为识别单号
      */
-    private void validateLogisticsCostImportUniqueFields(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+    private void validateLogisticsCostImportUniqueFields(String businessType,List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+        //费用项
+        List<CfgLogisticsCostImportFieldEntity> list = cfgLogisticsCostImportFieldService.lambdaQuery().eq(CfgLogisticsCostImportFieldEntity::getBusinessType,businessType).list();
+        if(CollUtil.isEmpty(list)){
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"配置单据类型下费用项");
+        }else{
+            Map<String, CfgLogisticsCostImportFieldEntity> map = list.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, Function.identity(), (o1, o2) -> o1));
+            int i = 1;
+            for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
+                String targetFieldId = updateDTO.getTargetFieldId();
+                CfgLogisticsCostImportFieldEntity entity = map.get(targetFieldId);
+//                if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, CfgLogisticsCostImportBusinessTypeEnum.getName(businessType)+"类型第"+i+"行数大臣单据字段");
+                if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, updateDTO.getTargetFieldName()+"单据字段");
+            }
+        }
+
         //校验字段是否可以唯一
         List<String> uniqueKeyTargetFieldIds = detailList.stream().filter(e -> e.getIsUniqueKey()).map(CfgLogisticsCostImportDetailDTO.UpdateDTO::getTargetFieldId).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(uniqueKeyTargetFieldIds)){
-            List<CfgLogisticsCostImportFieldEntity> uniqueKeyTargetField = cfgLogisticsCostImportFieldService.listByIds(uniqueKeyTargetFieldIds).stream().filter(e -> !e.getIsUniqueField()).collect(Collectors.toList());;
+            List<CfgLogisticsCostImportFieldEntity> uniqueKeyTargetField = list.stream().filter(e -> uniqueKeyTargetFieldIds.contains(e.getId())).filter(e -> !e.getIsUniqueField()).collect(Collectors.toList());;
             if(CollUtil.isNotEmpty(uniqueKeyTargetField)){
                 //uniqueKeyTargetField中的fieldName字段，使用英文逗号拼接成一个字符串
                 String uniqueKeyTargetFieldName = uniqueKeyTargetField.stream().map(CfgLogisticsCostImportFieldEntity::getFieldName).collect(Collectors.joining(","));

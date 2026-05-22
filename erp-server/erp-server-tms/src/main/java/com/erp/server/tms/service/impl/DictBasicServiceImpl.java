@@ -6,11 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.tms.dto.TmsDictConstants;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.RedisService;
@@ -192,6 +194,23 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         queryWrapper.eq(DictBasicEntity::getCode, value);
         queryWrapper.last(SqlConstants.LIMIT_1);
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<DictBasicDTO.TreeDTO> carrierTree(DictBasicDTO.TreeQueryDTO queryDTO) {
+        List<String> types = queryDTO.getTypes();
+        List<DictBasicEntity> list = getByKeyList(types);
+        List<DictBasicDTO.TreeDTO> treeDTOS =  new ArrayList<>(types.size());
+        for (String type : types) {
+            DictBasicDTO.TreeDTO treeDTO = new DictBasicDTO.TreeDTO();
+            treeDTO.setCode(type);
+            treeDTO.setName(TmsDictConstants.JI_TU_CARRIER.equals(type) ? "极兔云仓" : "大卖仓");
+            List<DictBasicEntity> children = list.stream().filter(r -> CharSequenceUtil.equals(r.getType(), type)).collect(Collectors.toList());
+            List<DictBasicDTO.TreeDTO> treeNodes = BeanMapper.copyList(children, DictBasicDTO.TreeDTO.class);
+            treeDTO.setChildren(treeNodes);
+            treeDTOS.add(treeDTO);
+        }
+        return treeDTOS;
     }
 
 

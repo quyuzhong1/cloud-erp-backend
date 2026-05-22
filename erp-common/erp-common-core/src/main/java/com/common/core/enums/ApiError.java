@@ -1507,7 +1507,7 @@ public enum ApiError implements Serializable {
     FIRST_MILE_SHIPMENT_NOT_EXIST(11504,"货件不存在"),
     FIRST_MILE_SHIPMENT_SKU_NOT_MAPPED(11505,"【{0}】包含未匹配到SKU的货件，不允许下推发货单"),
     FIRST_MILE_SHIPMENT_CONTAIN_COMBINATION_REQUIRE_MACHINE(11506,"发货单【{0}】包含组合产品，请先下推加工单并审核通过后重试"),
-    FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT(11507,"提示：SKU【{0}】发货仓【{1}】可用库存不足，无法审核该发货单"),
+    FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT(11507,"提示：SKU【{0}】发货仓【{1}】冻结库存不足，无法审核该发货单"),
     FIRST_MILE_SHIPMENT_RECEIVE_EXIST_REVERSE_FORBIDDEN(11508,"已存在货件签收数量的发货单，不允许反审核!"),
     FIRST_MILE_SHIPMENT_STATUS_FINISH_ONLY(11509,"仅【已发货】或【自动完结】状态的货件允许手动完结!"),
     FIRST_MILE_SHIPMENT_ALREADY_PUSHED_NOT_DELETE(11510,"已下推发货单，不能删除!"),

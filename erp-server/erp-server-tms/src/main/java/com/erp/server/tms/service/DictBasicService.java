@@ -58,4 +58,6 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return com.erp.model.tms.entity.DictBasicEntity
      */
     DictBasicEntity getByTypeAndValue(String type, String value);
+
+    List<DictBasicDTO.TreeDTO> carrierTree(DictBasicDTO.TreeQueryDTO queryDTO);
 }
