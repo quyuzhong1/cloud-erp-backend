@@ -3,6 +3,12 @@ spring:
     name: erp-dmp
   profiles:
     active: dev
+  mvc:
+    contentnegotiation:
+      favor-parameter: true
+      media-types:
+        json: application/json
+        xml: application/xml
 server:
   port: 9060
 

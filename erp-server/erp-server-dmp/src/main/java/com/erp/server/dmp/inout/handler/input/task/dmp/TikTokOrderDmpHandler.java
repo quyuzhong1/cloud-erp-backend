@@ -160,13 +160,24 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     String shippingProviderId = String.valueOf(shippingProviderIdObj);
                     dmpDataMap.put("logisticsChannelId", isSelfDeliveryOrder(fulfillmentType, shippingType) ? "" : shippingProviderId);
                 }
-
                 //渠道名称
                 Object shippingProviderObj = dmpDataMap.get("shippingProvider");
                 if (shippingProviderObj != null && hasDeliveryType) {
                     String shippingProvider = String.valueOf(shippingProviderObj);
                     dmpDataMap.put("logisticsChannelName", isSelfDeliveryOrder(fulfillmentType, shippingType) ? "" : shippingProvider);
                 }
+                //包裹号
+                Object packages = dmpDataMap.get("packages");
+                if (packages != null){
+                    JSONArray jsonArray = JSONUtil.parseArray(packages);
+                    if (CollUtil.isNotEmpty(jsonArray)){
+                        Object object = jsonArray.get(0);
+                        JSONObject jsonObject = JSONUtil.parseObj(object);
+                        dmpDataMap.put("planPackageNo", Objects.nonNull(jsonObject) ? jsonObject.getStr("fid") : "");
+                    }
+                }
+                //物流商id
+                dmpDataMap.put("planSupplierId", Objects.nonNull(shippingProviderObj) ? String.valueOf(shippingProviderObj) : "");
 
                 Object orderTypeObj = dmpDataMap.get("orderType");
                 if (orderTypeObj != null) {

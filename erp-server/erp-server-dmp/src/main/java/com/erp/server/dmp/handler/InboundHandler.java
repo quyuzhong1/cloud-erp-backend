@@ -1,10 +1,12 @@
 package com.erp.server.dmp.handler;
 
 import cn.hutool.extra.spring.SpringUtil;
+import com.common.business.dto.WebhookResult;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +15,8 @@ import java.util.Map;
 /**
  * 订单出口回告处理类
  */
+@Slf4j
 public class InboundHandler implements WebhookHandler{
-
-    private static final Logger log = LoggerFactory.getLogger(InboundHandler.class);
 
     private final DmpInputCreateFactory dmpInputCreateFactory = SpringUtil.getBean(DmpInputCreateFactory.class);
 
@@ -38,9 +39,9 @@ public class InboundHandler implements WebhookHandler{
     }
 
     @Override
-    public String process(String data, Map<String, String> headers, String serviceFlag) {
+    public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
         if(StringUtils.isBlank(data)){
-            return "";
+            return WebhookResult.isSuccess();
         }
         log.warn("webhook 获取入库单数据,{}",data);
         try {
@@ -51,7 +52,7 @@ public class InboundHandler implements WebhookHandler{
         }finally {
             ThirdWarehouseContext.remove();
         }
-        return "success";
+        return WebhookResult.isSuccess();
     }
 
 //    private boolean verifySignature(String data, String signature) {
