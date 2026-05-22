@@ -618,6 +618,9 @@ public class PackageForecastDTO implements Serializable {
     @NoArgsConstructor
     public static class ShopeeOptionParamDTO {
 
+        /**
+         * 组包预报单 ID 集合
+         */
         @Size(min = 1, message = "组包预报单不能为空")
         private List<String> ids;
 
@@ -643,73 +646,218 @@ public class PackageForecastDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ShopeeCourierDeliveryOptionsDTO {
+        /**
+         * Shopee 转运仓列表
+         */
         private List<ShopeeWarehouseDTO> warehouseList;
+
+        /**
+         * Shopee 寄件地址列表
+         */
         private List<ShopeeAddressDTO> addressList;
+
+        /**
+         * 快递寄送物流产品和快递服务列表
+         */
         private List<ShopeeCourierChannelDTO> logisticsChannelList;
+
+        /**
+         * 快递账号月结列表
+         */
         private List<ShopeePrepaidAccountDTO> prepaidAccountList;
     }
 
+    /**
+     * Shopee 转运仓信息
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeeWarehouseDTO {
+        /**
+         * 转运仓 ID
+         */
         private String warehouseId;
+
+        /**
+         * 转运仓英文名称
+         */
         private String warehouseNameEn;
+
+        /**
+         * 转运仓中文名称
+         */
         private String warehouseNameCn;
+
+        /**
+         * 转运仓类型
+         */
         private Integer warehouseType;
     }
 
+    /**
+     * Shopee 寄件地址信息
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeeAddressDTO {
+        /**
+         * 寄件地址 ID
+         */
         private Long addressId;
+
+        /**
+         * 国家/地区
+         */
         private String region;
+
+        /**
+         * 州/省
+         */
         private String state;
+
+        /**
+         * 城市
+         */
         private String city;
+
+        /**
+         * 详细地址
+         */
         private String address;
+
+        /**
+         * 邮编
+         */
         private String zipcode;
+
+        /**
+         * 区/县
+         */
         private String district;
+
+        /**
+         * 镇/街道
+         */
         private String town;
+
+        /**
+         * 地址类型
+         */
         private List<String> addressType;
     }
 
+    /**
+     * Shopee 快递寄送物流产品
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeeCourierChannelDTO {
+        /**
+         * 物流产品 ID
+         */
         private Long logisticsProductId;
+
+        /**
+         * 物流产品名称
+         */
         private String logisticsProductName;
+
+        /**
+         * 快递服务列表
+         */
         private List<ShopeeCourierServiceDTO> courierList;
     }
 
+    /**
+     * Shopee 快递服务信息
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeeCourierServiceDTO {
+        /**
+         * 快递商名称
+         */
         private String courierName;
+
+        /**
+         * 快递服务 ID
+         */
         private String courierServiceId;
+
+        /**
+         * 快递服务名称
+         */
         private String courierServiceName;
     }
 
+    /**
+     * Shopee 快递账号月结信息
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeePrepaidAccountDTO {
+        /**
+         * 月结账号 ID
+         */
         private Long prepaidAccountId;
+
+        /**
+         * 月结账号快递商名称
+         */
         private String prepaidAccountCourierName;
+
+        /**
+         * 月结账号合作方名称
+         */
         private String prepaidAccountPartnerName;
+
+        /**
+         * 是否默认月结账号
+         */
         private Boolean prepaidAccountIsDefault;
     }
 
+    /**
+     * Shopee 非快递/卖家自送物流渠道
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeeFirstMileChannelDTO {
+        /**
+         * 揽收方式
+         */
         private String shipmentMethod;
+
+        /**
+         * 物流渠道 ID
+         */
         private Integer logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
         private String logisticsChannelName;
     }
 
+    /**
+     * Shopee 可绑定揽收批次号
+     */
     @Data
     @NoArgsConstructor
     public static class ShopeeTrackingNumberDTO {
+        /**
+         * 揽收批次号
+         */
         private String firstMileTrackingNumber;
+
+        /**
+         * 批次号状态
+         */
         private String status;
+
+        /**
+         * 申报/取货日期
+         */
         private String declareDate;
     }
 
