@@ -22,6 +22,7 @@ import java.util.*;
 @Scope("prototype")
 public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
+    private static final String ALIEXPRESS_REFUND_SUCCESS = "refund_success";
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -92,7 +93,13 @@ public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTask
      * 批量转换退款单DTO
      */
     public PlatformRefundOrderDTO convert(DmpSoRefundInfoEntity dmpEntity, List<DmpSoRefundDetailEntity> dmpDetailList, String cfgOutputId) {
+        if (dmpEntity == null) {
+            return null;
+        }
         if (this.validateDataBlack(dmpEntity, cfgOutputId)) {
+            return null;
+        }
+        if (isAliExpressRefund(dmpEntity) && !ALIEXPRESS_REFUND_SUCCESS.equalsIgnoreCase(dmpEntity.getPlatformOriginalStatus())) {
             return null;
         }
         if (CollUtil.isEmpty(dmpDetailList)) {
@@ -131,6 +138,11 @@ public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTask
             resultList.add(detail);
         }
         return resultList;
+    }
+
+    private boolean isAliExpressRefund(DmpSoRefundInfoEntity dmpEntity) {
+        return StringUtils.equalsIgnoreCase(dmpEntity.getSourceSystem(), DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())
+                || StringUtils.equalsIgnoreCase(dmpEntity.getSourcePlatform(), DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     }
 
     private String resolvePlatformOrderNo(DmpSoRefundInfoEntity dmpEntity) {
