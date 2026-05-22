@@ -386,8 +386,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         Map<String, String> finalSalesPlatformOrderCodeMap = salesPlatformOrderCodeMap;
         Map<String, String> finalCustomerPOMap = customerPOMap;
         records.forEach(e -> {
-            e.setSalesPlatformOrderCode(finalSalesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
-            e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            if (CharSequenceUtil.isBlank(e.getSalesPlatformOrderCode())) {
+                e.setSalesPlatformOrderCode(finalSalesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            }
+            if (CharSequenceUtil.isBlank(e.getCustomerPO())) {
+                e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            }
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             String warehouseOperationType = e.getWarehouseOperationType();
             if (CharSequenceUtil.isBlank(warehouseOperationType)) {
