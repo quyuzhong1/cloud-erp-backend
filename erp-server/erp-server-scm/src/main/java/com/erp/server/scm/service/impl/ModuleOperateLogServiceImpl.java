@@ -95,7 +95,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                     valuePair = setEnumValue(fieldEntity,valuePair);
                     break;
                 case TYPE_DIST :
-                    valuePair = setDistValue(valuePair);
+                    valuePair = setDistValue(fieldEntity, valuePair);
                     break;
                 case TYPE_USER :
                     valuePair = setUserValue(valuePair);
@@ -201,18 +201,48 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     /**
      * 设置字典值
      */
-    private Pair<String,String> setDistValue (Pair<String, String> valuePair) {
-        String  oldValue = "";
-        String  newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
-        if (CollectionUtils.isNotEmpty(oldList)) {
-            oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-        }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
-        if (CollectionUtils.isNotEmpty(newList)) {
-            newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-        }
+    private Pair<String,String> setDistValue (CfgModuleOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
+        String  oldValue = getDictName(fieldEntity.getValue(), valuePair.getKey());
+        String  newValue = getDictName(fieldEntity.getValue(), valuePair.getValue());
         return new Pair<>(oldValue,newValue);
+    }
+
+    private String getDictName(String dictType, String value) {
+        if (StringUtils.isBlank(value)) {
+            return "";
+        }
+        List<String> valueList = Arrays.stream(value.split(","))
+                .map(StringUtils::trim)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(valueList)) {
+            return "";
+        }
+
+        Map<String, String> nameById = dictBasicService.listByIds(valueList).stream()
+                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
+        Map<String, String> nameByValue = Collections.emptyMap();
+        if (StringUtils.isNotBlank(dictType)) {
+            nameByValue = dictBasicService.lambdaQuery()
+                    .eq(DictBasicEntity::getType, dictType)
+                    .in(DictBasicEntity::getValue, valueList)
+                    .list()
+                    .stream()
+                    .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
+        }
+
+        Set<String> resultSet = new LinkedHashSet<>();
+        for (String item : valueList) {
+            String name = nameById.get(item);
+            if (StringUtils.isBlank(name)) {
+                name = nameByValue.get(item);
+            }
+            if (StringUtils.isNotBlank(name)) {
+                resultSet.add(name);
+            }
+        }
+        return String.join(",", resultSet);
     }
 
     /**

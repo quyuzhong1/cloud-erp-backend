@@ -59,6 +59,12 @@ public class CfgModuleOperateLogFieldEntity extends BaseEntity<CfgModuleOperateL
     @TableField("enum_class")
     private String enumClass;
 
+    /**
+     * 当类型3时存储字典类型
+     */
+    @TableField("value")
+    private String value;
+
 
     public static final String FIELD_FIELD = "field";
 
@@ -69,6 +75,8 @@ public class CfgModuleOperateLogFieldEntity extends BaseEntity<CfgModuleOperateL
     public static final String FIELD_TYPE = "type";
 
     public static final String ENUM_CLASS = "enum_class";
+
+    public static final String VALUE = "value";
 
     @Override
     public Serializable pkVal() {
