@@ -98,10 +98,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.annotation.Transactional;
 import sun.misc.BASE64Decoder;
 
@@ -184,6 +188,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private WaveListService waveListService;
     @Resource
     private WaveListDetailService waveListDetailService;
+    @Resource
+    private RedissonClient redissonClient;
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
@@ -2203,7 +2209,104 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BaseResultDTO.AddDTO> generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
-        List<SoB2cDeliveryEntity> b2cDelivery = listByIds(dto.getIds());
+        List<String> deliveryIds = new ArrayList<>(new LinkedHashSet<>(dto.getIds()));
+        List<RLock> locks = lockGenerationWaveDelivery(deliveryIds);
+        boolean unlockAfterTransaction = unlockGenerationWaveDeliveryAfterTransaction(locks);
+        try {
+            List<SoB2cDeliveryEntity> b2cDelivery = listByIds(deliveryIds);
+            List<String> platformList = checkGenerationWaveAllowed(b2cDelivery, deliveryIds);
+            List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(deliveryIds);
+            List<String> warehouseIds = detailList.stream().map(SoB2cDeliveryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(warehouseIds) && warehouseIds.size() > 1) {
+                throw new ServiceException(ApiError.SO_WAVE_SAME_WAREHOUSE_REQUIRED);
+            }
+            for (SoB2cDeliveryEntity entity : b2cDelivery) {
+                List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
+                List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
+                if (CollectionUtils.isNotEmpty(skus)) {
+                    try {
+                        UserContext.setIsUserSystem(true);
+                        generateReplenish(detailEntities, entity, skus);
+                    }finally {
+                        UserContext.clearIsUserSystem();
+                    }
+                    //生成拣货单失败，发货单生成异常
+                    updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
+                    deliveryIds.remove(entity.getId());
+                }
+            }
+            if (CollectionUtils.isNotEmpty(deliveryIds)) {
+                List<BaseResultDTO.AddDTO> addDTOS = new ArrayList<>();
+                List<List<String>> partitions = Lists.partition(deliveryIds, dto.getNum());
+                for (List<String> partition : partitions) {
+                    if (Boolean.FALSE.equals(dto.getAtuoAemainder()) && partition.size() < dto.getNum()) {
+                        ApplicationContextUtils.getBean(SoB2cDeliveryService.class).rollbackPickingInventory(partition);
+                        break;
+                    }
+                    WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
+                    addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
+                    addDTO.setDeliveryIdList(partition);
+                    addDTO.setPickingType(dto.getPickingType());
+                    addDTO.setName("手动生成波次");
+//                addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
+                    addDTO.setWaveType(dto.getWaveType());
+                    addDTO.setIsFullyManaged(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()));
+                    addDTOS.add(waveListService.add(addDTO));
+                }
+                return addDTOS;
+            }
+            return Collections.emptyList();
+        } finally {
+            if (!unlockAfterTransaction) {
+                unlockGenerationWaveDelivery(locks);
+            }
+        }
+    }
+
+    private List<RLock> lockGenerationWaveDelivery(List<String> deliveryIds) {
+        List<RLock> locks = new ArrayList<>();
+        for (String deliveryId : deliveryIds.stream().sorted().collect(Collectors.toList())) {
+            RLock lock = redissonClient.getLock(CharSequenceUtil.format("wms:generationWaves:delivery:{}", deliveryId));
+            try {
+                if (!lock.tryLock(30, -1, TimeUnit.SECONDS)) {
+                    throw new ServiceException("发货单正在生成波次，请稍后重试");
+                }
+                locks.add(lock);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                unlockGenerationWaveDelivery(locks);
+                throw new ServiceException("发货单正在生成波次，请稍后重试");
+            } catch (RuntimeException e) {
+                unlockGenerationWaveDelivery(locks);
+                throw e;
+            }
+        }
+        return locks;
+    }
+
+    private boolean unlockGenerationWaveDeliveryAfterTransaction(List<RLock> locks) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            return false;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                unlockGenerationWaveDelivery(locks);
+            }
+        });
+        return true;
+    }
+
+    private void unlockGenerationWaveDelivery(List<RLock> locks) {
+        for (int i = locks.size() - 1; i >= 0; i--) {
+            RLock lock = locks.get(i);
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+    }
+
+    private List<String> checkGenerationWaveAllowed(List<SoB2cDeliveryEntity> b2cDelivery, List<String> deliveryIds) {
         List<String> platformList = b2cDelivery.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         //校验平台列表中是否全部都是全托管订单或者非全托管订单
         boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
@@ -2218,47 +2321,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (Boolean.FALSE.equals(match) || Boolean.TRUE.equals(isIntercept)) {
             throw new ServiceException(ApiError.SO_WAVE_GEN_ALLOWED_PENDING_NON_INTERCEPT);
         }
-        List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(dto.getIds());
-        List<String> warehouseIds = detailList.stream().map(SoB2cDeliveryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(warehouseIds) && warehouseIds.size() > 1) {
-            throw new ServiceException(ApiError.SO_WAVE_SAME_WAREHOUSE_REQUIRED);
+        if (waveListDetailService.lambdaQuery().in(WaveListDetailEntity::getDeliveryId, deliveryIds).count() > 0) {
+            throw new ServiceException(ApiError.SO_WAVE_GEN_ALLOWED_PENDING_NON_INTERCEPT);
         }
-        for (SoB2cDeliveryEntity entity : b2cDelivery) {
-            List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
-            if (CollectionUtils.isNotEmpty(skus)) {
-                try {
-                    UserContext.setIsUserSystem(true);
-                    generateReplenish(detailEntities, entity, skus);
-                }finally {
-                    UserContext.clearIsUserSystem();
-                }
-                //生成拣货单失败，发货单生成异常
-                updateAbnormal(Collections.singletonList(entity.getId()), AbnormalCauseEnum.GENERATION_WAVE);
-                dto.getIds().remove(entity.getId());
-            }
-        }
-        if (CollectionUtils.isNotEmpty(dto.getIds())) {
-            List<BaseResultDTO.AddDTO> addDTOS = new ArrayList<>();
-            List<List<String>> partitions = Lists.partition(dto.getIds(), dto.getNum());
-            for (List<String> partition : partitions) {
-                if (Boolean.FALSE.equals(dto.getAtuoAemainder()) && partition.size() < dto.getNum()) {
-                    ApplicationContextUtils.getBean(SoB2cDeliveryService.class).rollbackPickingInventory(partition);
-                    break;
-                }
-                WaveListDTO.AddDTO addDTO = new WaveListDTO.AddDTO();
-                addDTO.setPickCartTypeIdList(Collections.singletonList(dto.getPickingCartTypeId()));
-                addDTO.setDeliveryIdList(partition);
-                addDTO.setPickingType(dto.getPickingType());
-                addDTO.setName("手动生成波次");
-//                addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
-                addDTO.setWaveType(dto.getWaveType());
-                addDTO.setIsFullyManaged(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()));
-                addDTOS.add(waveListService.add(addDTO));
-            }
-            return addDTOS;
-        }
-        return Collections.emptyList();
+        return platformList;
     }
 
     private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity, List<String> skus) {
