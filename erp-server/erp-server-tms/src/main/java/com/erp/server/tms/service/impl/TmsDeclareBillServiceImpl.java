@@ -39,6 +39,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -401,7 +402,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(Objects.isNull(updateDTO.getOtherFee())){
             updateDTO.setOtherFee(BigDecimal.ZERO);
         }
-        TmsDeclareBillEntity tmsDeclareBillEntity =  BeanMapperUtils.map(TmsDeclareBillEntity.class, updateDTO);
+        TmsDeclareBillEntity tmsDeclareBillEntity = new TmsDeclareBillEntity();
+        BeanMapper.copy(old,tmsDeclareBillEntity);
+        BeanMapper.copy(updateDTO,tmsDeclareBillEntity);
+
+
         Set<String> boxNoSet = mergeDetailList.stream()
                 .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
                 .filter(CollUtil::isNotEmpty)
@@ -677,41 +682,22 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
-    public List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown() {
+    public List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown(String type) {
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_BATCH_UPDATE_FIELD.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
             return Collections.emptyList();
         }
-        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> dropDownList = parseBatchUpdateFieldDropDown(cfgSettingEntity.getDataJson());
+        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> dropDownList = parseBatchUpdateFieldDropDown(type,cfgSettingEntity.getDataJson());
         dropDownList.sort(Comparator.comparing(TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO::getIndex, Comparator.nullsLast(Integer::compareTo)));
         return dropDownList;
     }
 
-    private List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> parseBatchUpdateFieldDropDown(JSONObject dataJson) {
+    private List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> parseBatchUpdateFieldDropDown(String type,JSONObject dataJson) {
         if (ObjectUtil.isEmpty(dataJson)) {
             return new ArrayList<>();
         }
-        if (ObjectUtil.isNotEmpty(dataJson.getJSONArray("data"))) {
-            return JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class);
-        }
-        if (ObjectUtil.isNotEmpty(dataJson.get("field"))) {
-            return Collections.singletonList(JSONUtil.toBean(dataJson, TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class));
-        }
-        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> result = new ArrayList<>();
-        dataJson.values().forEach(value -> {
-            if (ObjectUtil.isEmpty(value)) {
-                return;
-            }
-            try {
-                TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO dto = JSONUtil.toBean(JSONUtil.parseObj(value), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class);
-                if (ObjectUtil.isNotEmpty(dto) && ObjectUtil.isNotEmpty(dto.getField())) {
-                    result.add(dto);
-                }
-            } catch (Exception e) {
-                log.warn("解析报关单批量更新字段配置失败, value={}", value, e);
-            }
-        });
-        return result;
+        List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> data = JSONUtil.toList(dataJson.getJSONArray("data"), TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO.class).stream().filter(e -> e.getType().contains(type)).collect(Collectors.toList());;
+        return data;
     }
 
     /**
@@ -881,7 +867,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         this.lambdaUpdate()
                 .eq(TmsDeclareBillEntity::getId, entity.getId())
                 .set(TmsDeclareBillEntity::getDeclareStatus, declareStatus)
-                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? LocalDate.now() : declarConfirmDate)
+                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? null : declarConfirmDate)
                 .set(TmsDeclareBillEntity::getDeclarUserId, Objects.isNull(declarUserId) ? "" : declarUserId)
                 .set(TmsDeclareBillEntity::getDeclarUserName, Objects.isNull(declarUserName) ? "" : declarUserName)
                 .update(new TmsDeclareBillEntity());
@@ -2423,7 +2409,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             case PRE_INPUT_NO:
             case DEST_CUSTOMS:
             case DECLARE_TYPE:
-            case SENDER_ID:
             case EXPORT_CUSTOMS_NAME:
             case DICT_SUPERVISION_METHOD:
             case DICT_NATURE_LEVY:
@@ -2437,9 +2422,25 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             case REMARK:
                 updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
                 break;
+            case SENDER_ID:
+                updateWrapper.set(fieldName, "");
+                updateWrapper.set("sender_name", "");
             case RECEIVER_ID:
-                updateWrapper.set(fieldName, Objects.toString(fieldValue, ""));
-                updateWrapper.set("receiver_name", name);
+                String str = Objects.toString(fieldValue, "");
+                if(StringUtils.isNotBlank(str)){
+                    List<CustomerInfoEntity> list = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, str).list();
+                    if(CollUtil.isNotEmpty(list)){
+                        updateWrapper.set("receiver_type", CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode());
+                    }else{
+                        updateWrapper.set("receiver_type", CfgDeclareRuleReceiverTypeEnum.BY_COMPANY.getCode());
+                    }
+                    updateWrapper.set(fieldName, str);
+                    updateWrapper.set("receiver_name", name);
+                }else {
+                    updateWrapper.set(fieldName, "");
+                    updateWrapper.set("receiver_name", "");
+                    updateWrapper.set("receiver_type", "");
+                }
                 break;
             case EXPORT_DATE:
             case DECLARE_DATE:
@@ -2829,23 +2830,44 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 准备前端提交的报关明细
+     * <p>
+     * 该方法负责处理前端传入的合并报关明细列表，根据是否启用合并模式进行不同的处理：
+     * - 合并模式（isMerge=true）：调用mergeEditedDetails对编辑后的明细进行重新合并计算
+     * - 非合并模式（isMerge=false/null）：为明细列表中的每一项应用默认值填充
+     * <p>
+     * 处理流程：
+     * 1. 过滤掉列表中的null元素，保证数据有效性
+     * 2. 校验过滤后的列表不为空，为空则抛出异常
+     * 3. 根据isMerge标志选择对应的处理策略
+     *
+     * @param mergeDetailList 前端提交的合并报关明细列表，不能为null
+     * @param isMerge         是否为合并模式标识
+     *                        true-启用合并模式，会对编辑后的明细进行重新合并
+     *                        false/null-非合并模式，仅应用默认值
+     * @return 处理后的报关明细列表，已根据模式完成合并或默认值填充
+     * @throws ServiceException 当过滤后的明细列表为空时，抛出LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED异常
      * @author will
      * @date 2026/5/7 14:08
-     * @param mergeDetailList
-     * @param isMerge
-     * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDetailDTO>
      */
     private List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> prepareSubmittedMergeDetailList(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList,
                                                                                              Boolean isMerge) {
+        // 过滤掉列表中的null元素
         List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> filteredList = mergeDetailList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        
+        // 校验过滤后的列表不能为空
         if (CollUtil.isEmpty(filteredList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
+        
+        // 根据合并模式选择不同的处理策略
         if (Boolean.TRUE.equals(isMerge)) {
+            // 合并模式：对编辑后的明细进行重新合并计算
             return mergeEditedDetails(filteredList);
         }
+        
+        // 非合并模式：为所有明细应用默认值
         filteredList.forEach(this::applyMergeDeclareDetailDefaults);
         return filteredList;
     }

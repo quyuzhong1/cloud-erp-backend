@@ -347,6 +347,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostEntity> logisticsBillCostList = BeanUtil.copyToList(dtoList, LogisticsBillCostEntity.class);
         //导入数据批量处理
         handleImportData(logisticsBillList,logisticsBillDetailList,logisticsBillCostList);
+        // saveOrUpdateBatch 对已存在 id 的行会走 UPDATE，与并发 batchImportUpdate 同源死锁；
+        // 统一按 id 升序排序，消除"并发事务加锁顺序不一致"这一 PG 40P01 主因。
+        logisticsBillCostList.sort(Comparator.nullsLast(Comparator.comparing(LogisticsBillCostEntity::getId, Comparator.nullsLast(String::compareTo))));
         log.info("开始新增尾程费用(自发货)");
         boolean save = super.saveOrUpdateBatch(logisticsBillCostList);
         if(!save) {
@@ -362,6 +365,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return Collections.emptyList();
         }
         List<LogisticsBillCostEntity> logisticsBillCostList = BeanUtil.copyToList(dtoList, LogisticsBillCostEntity.class);
+        // updateBatchById 按 list 顺序逐条 UPDATE，并发事务 id 顺序不同必然死锁；
+        // 提前按 id 升序排序，确保所有并发批次以一致顺序加锁。
+        logisticsBillCostList.sort(Comparator.nullsLast(Comparator.comparing(LogisticsBillCostEntity::getId, Comparator.nullsLast(String::compareTo))));
         List<String> costIdList = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> oldLogisticsBillCostList = super.listByIds(costIdList);
         Map<String, LogisticsBillCostEntity> oldCostMap = CollUtil.isEmpty(oldLogisticsBillCostList) ? new HashMap<>() : oldLogisticsBillCostList.stream().collect(Collectors.toMap(LogisticsBillCostEntity::getId, obj -> obj));

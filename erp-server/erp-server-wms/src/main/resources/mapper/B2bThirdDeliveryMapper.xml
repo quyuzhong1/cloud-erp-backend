@@ -79,6 +79,8 @@
             btd.code as code,
             btd.so_id as soId,
             btd.so_code as soCode,
+            si.platform_order_code as salesPlatformOrderCode,
+            sdpo.customer_po as customerPO,
             btd.receiver_name as receiverName,
             btd.warehouse_org_id,
             btd.warehouse_org_name,
@@ -108,6 +110,16 @@
             btd.remark
         FROM b2b_third_delivery btd
                  LEFT JOIN b2b_third_delivery_detail btdd ON btd.id = btdd.main_id AND btdd.is_deleted=false
+                 LEFT JOIN so_info si ON si.id = btd.so_id AND si.is_deleted = false
+                 LEFT JOIN (
+                     SELECT
+                         main_id,
+                         string_agg(DISTINCT customer_po, ',') AS customer_po
+                     FROM so_detail
+                     WHERE is_deleted = false
+                       AND coalesce(customer_po, '') != ''
+                     GROUP BY main_id
+                 ) sdpo ON sdpo.main_id = btd.so_id
         WHERE ${params.sqlMap.default} and btd.is_deleted=false
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

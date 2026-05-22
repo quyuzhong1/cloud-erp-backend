@@ -95,20 +95,6 @@ public class AdsErpDiffReturnInstockSyncController extends BaseController {
     }
     
     /**
-     * ERP数据更新
-     * @author Will
-     * @date: 2023/11/13 16:19
-     * @param dto
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "ERP退货入库单差异表ERP数据更新")
-    @PostMapping(value = "/updateErp")
-    @WebAdvanceQuery(handler = AdsErpDiffReturnInstockSyncQueryHandler.class)
-    public ApiResult<Boolean> updateErp(@RequestBody @Validated AdsErpDiffReturnInstockSyncDTO.UpdateErpDTO dto) {
-    	return success(adsErpDiffReturnInstockSyncService.updateErp(dto));
-    }
-    
-    /**
      * 修改备注
      * @author Will
      * @date: 2023/11/13 16:19

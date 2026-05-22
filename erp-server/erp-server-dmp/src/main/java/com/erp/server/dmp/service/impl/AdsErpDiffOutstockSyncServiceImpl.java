@@ -37,7 +37,6 @@ import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ExpotParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.PagingParamDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.ReCreateDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
-import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateErpDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -240,17 +239,20 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	public Boolean reCreate(ReCreateDTO dto) {
 		String checkMonth = dto.getCheckMonth();
 		checkMonth = checkMonth.replace("-", "年") + "月";
+		String sourceSystem = dto.getSourceSystem();
 		if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
 			throw new ServiceException("只允许重新生成上月核对任务");
 		}
 		Integer count = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
+				.eq(AdsErpDiffOutstockSyncEntity::getSourceSystem, sourceSystem)
 				.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_recreate");
+		boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_flow_outstock_diff_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
+			.eq(AdsErpDiffOutstockSyncEntity::getSourceSystem, sourceSystem)
 			.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
 			.set(AdsErpDiffOutstockSyncEntity::getExecStatusName, "执行中")
 			.setSql(" finish_time = null ")
@@ -259,32 +261,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 		return true;
 	}
 	
-	@Override
-	public Boolean updateErp(UpdateErpDTO dto) {
-		String querySql = dto.getSqlMap().get("default");
-		String permissionSql = dto.getPermissionSql();
-		List<AdsErpDiffOutstockSyncEntity> list = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false)
-				.eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月"))
-		.select(AdsErpDiffOutstockSyncEntity::getSourceSystem , AdsErpDiffOutstockSyncEntity::getAccountCode , AdsErpDiffOutstockSyncEntity::getCheckMonth)
-		.last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql) + " group by source_system,account_code,check_month ")
-		.list();
-		if(CollUtil.isNotEmpty(list)) {
-			Integer count = lambdaQuery().in(AdsErpDiffOutstockSyncEntity::getCheckMonth, list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).collect(Collectors.toSet()))
-					.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
-			if(count != null && count > 0) {
-				throw new ServiceException(list.stream().map(AdsErpDiffOutstockSyncEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
-			}
-			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_flow_outstock_diff_update");
-			if(reCreate) {
-				lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
-				.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
-				.set(AdsErpDiffOutstockSyncEntity::getExecStatusName, "执行中")
-				.setSql(" finish_time = null ")
-				.update();
-			}
-		}
-		return true;
-	}
 	
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {

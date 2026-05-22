@@ -194,17 +194,20 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
     public Boolean generateDiff(AdsErpInventoryDiffKingdeeDTO.GenerateDiffDTO dto) {
         String checkMonth = dto.getCheckMonth();
         checkMonth = checkMonth.replace("-", "年") + "月";
+        String sourceSystem = dto.getSourceSystem();
         if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
             throw new ServiceException("只允许重新生成上月核对任务");
         }
         Integer count = lambdaQuery().eq(AdsErpInventoryDiffKingdeeEntity::getCheckMonth, checkMonth)
+                .eq(AdsErpInventoryDiffKingdeeEntity::getSourceSystem, sourceSystem)
                 .eq(AdsErpInventoryDiffKingdeeEntity::getExecStatus, "doing").count();
         if(count != null && count > 0) {
             throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
         }
-        boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_kingdee_inout_summary_recreate");
+        boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_flow_kingdee_inout_summary_recreate");
         if(reCreate) {
             lambdaUpdate().eq(AdsErpInventoryDiffKingdeeEntity::getCheckMonth, checkMonth)
+                    .eq(AdsErpInventoryDiffKingdeeEntity::getSourceSystem, sourceSystem)
                     .set(AdsErpInventoryDiffKingdeeEntity::getExecStatus, "doing")
                     .set(AdsErpInventoryDiffKingdeeEntity::getExecStatusName, "执行中")
                     .setSql(" finish_time = null ")

@@ -122,7 +122,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * 查询报关单批量更新字段下拉配置
      * @return 下拉字段配置
      */
-    List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown();
+    List<TmsDeclareBillDTO.BatchUpdateFieldDropDownDTO> batchUpdateFieldDropDown(String type);
 
     /**
      * 删除报关单
