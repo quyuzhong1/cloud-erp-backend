@@ -1,7 +1,9 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.dmp.entity.DmpThirdInboundEntity;
 import com.erp.server.dmp.mapper.DmpThirdInboundMapper;
@@ -83,6 +85,14 @@ public class DmpThirdInboundServiceImpl extends SuperServiceImpl<DmpThirdInbound
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dmpThirdInboundEntity, null, dmpThirdInboundEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<DmpThirdInboundEntity> listBySourceCode(String sourceCode) {
+        if (CharSequenceUtil.isBlank(sourceCode)) {
+            return Collections.emptyList();
+        }
+        return this.list(new LambdaQueryWrapper<DmpThirdInboundEntity>().eq(DmpThirdInboundEntity::getSourceCode, sourceCode));
     }
 
 

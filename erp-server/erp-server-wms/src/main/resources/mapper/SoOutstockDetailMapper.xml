@@ -189,7 +189,7 @@
         join so_outstock_detail sod
         on so.id = sod.main_id
         and sod.is_deleted = false
-        where sod.platform_code like 'kol%'
+        where sod.platform_code like 'KOL%'
         union
         select  so.id as soOutstockId,
             so.code as soOutstockCode,
@@ -240,7 +240,7 @@
         join so_b2c sb
         on sb.id = so.so_id
         and sb.is_deleted = false
-        and sb.source_type = 'kolB2cApplication'
+        and sb.source_type in ('kolB2cApplication','selfAdd')
         join so_outstock_detail sod
         on so.id = sod.main_id
         and sod.is_deleted = false;

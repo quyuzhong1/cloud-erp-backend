@@ -28,9 +28,6 @@ import java.util.Objects;
 @Service
 @Scope("prototype")
 public class JituInboundReturnInitHandler extends DmpInputInitHandler{
-
-	@Resource
-    private DmpHandlerCache dmpHandlerCache;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {

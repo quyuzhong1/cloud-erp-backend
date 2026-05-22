@@ -4114,8 +4114,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(dtoList)) {
             return false;
         }
+        // 过滤掉 purchaseOrderDetailId 为空的记录，防御 Collectors.groupingBy null key 抛 NPE
+        List<PurchaseOrderDTO.QcQtyDTO> invalidList = dtoList.stream()
+                .filter(e -> CharSequenceUtil.isBlank(e.getPurchaseOrderDetailId()))
+                .collect(Collectors.toList());
+        if (!invalidList.isEmpty()) {
+            log.warn("addQcGoodQty 收到 {} 条 purchaseOrderDetailId 为空的记录，已忽略。invalidList={}",
+                    invalidList.size(), invalidList);
+        }
         //dtoList 根据purchaseOrderDetailId 汇总qcGoodQty之和
         Map<String, Integer> qcGoodQtyMap = dtoList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getPurchaseOrderDetailId()))
                 .filter(e -> Objects.nonNull(e.getQcGoodQty()) && e.getQcGoodQty() != 0)
                 .collect(Collectors.groupingBy(
                         PurchaseOrderDTO.QcQtyDTO::getPurchaseOrderDetailId,
