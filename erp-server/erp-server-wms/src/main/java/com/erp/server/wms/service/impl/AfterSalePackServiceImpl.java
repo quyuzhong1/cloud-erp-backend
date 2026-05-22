@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -110,7 +111,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         for (AfterSalePackEntity afterSalePackEntity : afterSalePackEntityList) {
             // 操作日志
             String msg = StrUtil.format("用户【{}】新增【箱唛】号为【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "新增操作");
         }
         return result;
     }
@@ -148,7 +149,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【箱唛】号为【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(afterSalePackEntity.getId(), code);
     }
 
@@ -222,18 +223,11 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toSet());
-        List<String> deleteDetailList = afterSalePackDetailEntityList.stream()
-                .map(AfterSalePackDetailEntity::getId)
-                .filter(Objects::nonNull)
-                .filter(id -> !retainDetailIds.contains(id))
-                .distinct()
-                .collect(Collectors.toList());
-        List<AfterSalePackDetailEntity> deleteDetailEntityList = afterSalePackDetailEntityList.stream()
-                .filter(detail -> deleteDetailList.contains(detail.getId()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(deleteDetailList) && !afterSalePackDetailService.removeByIds(deleteDetailList)) {
-            throw new ServiceException("售后装箱明细删除失败");
-        }
+        Set<String> processedDetailIds = new HashSet<>(retainDetailIds);
+        Map<String, Deque<AfterSalePackDetailEntity>> matchDetailMap = afterSalePackDetailEntityList.stream()
+                .filter(detail -> !retainDetailIds.contains(detail.getId()))
+                .collect(Collectors.groupingBy(detail -> buildDetailMatchKey(detail.getSkuNo(), detail.getOutWarehouseLocationId()),
+                        Collectors.toCollection(ArrayDeque::new)));
         List<AfterSalePackDetailEntity> detailEntityList = new ArrayList<>();
         List<AfterSalePackDetailEntity> addList = new ArrayList<>();
         List<AfterSalePackDetailEntity> updateList = new ArrayList<>();
@@ -251,19 +245,45 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 detailEntity.setPackQty(dto.getPackQty());
                 detailEntityList.add(detailEntity);
                 updateList.add(detailEntity);
+                processedDetailIds.add(detailEntity.getId());
             } else {
-                AfterSalePackDetailEntity afterSalePackDetailEntity = new AfterSalePackDetailEntity();
-                BeanMapperUtils.copy(dto, afterSalePackDetailEntity);
-                afterSalePackDetailEntity.setMainId(afterSalePackEntity.getId());
-                afterSalePackDetailEntity.setSkuId(productDetailEntity.getId());
-                afterSalePackDetailEntity.setOutWarehouseLocationId(warehouseLocationEntity.getId());
-                detailEntityList.add(afterSalePackDetailEntity);
-                addList.add(afterSalePackDetailEntity);
+                String detailMatchKey = buildDetailMatchKey(dto.getSkuNo(), warehouseLocationEntity.getId());
+                Deque<AfterSalePackDetailEntity> matchQueue = matchDetailMap.get(detailMatchKey);
+                AfterSalePackDetailEntity matchedDetailEntity = CollectionUtils.isNotEmpty(matchQueue) ? matchQueue.pollFirst() : null;
+                if (matchedDetailEntity != null) {
+                    matchedDetailEntity.setSkuId(productDetailEntity.getId());
+                    matchedDetailEntity.setSkuNo(dto.getSkuNo());
+                    matchedDetailEntity.setOutWarehouseLocationId(warehouseLocationEntity.getId());
+                    matchedDetailEntity.setPackQty(dto.getPackQty());
+                    detailEntityList.add(matchedDetailEntity);
+                    updateList.add(matchedDetailEntity);
+                    processedDetailIds.add(matchedDetailEntity.getId());
+                } else {
+                    AfterSalePackDetailEntity afterSalePackDetailEntity = new AfterSalePackDetailEntity();
+                    BeanMapperUtils.copy(dto, afterSalePackDetailEntity);
+                    afterSalePackDetailEntity.setMainId(afterSalePackEntity.getId());
+                    afterSalePackDetailEntity.setSkuId(productDetailEntity.getId());
+                    afterSalePackDetailEntity.setOutWarehouseLocationId(warehouseLocationEntity.getId());
+                    detailEntityList.add(afterSalePackDetailEntity);
+                    addList.add(afterSalePackDetailEntity);
+                }
             }
         }
+        List<String> deleteDetailList = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getId)
+                .filter(Objects::nonNull)
+                .filter(id -> !processedDetailIds.contains(id))
+                .distinct()
+                .collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> deleteDetailEntityList = afterSalePackDetailEntityList.stream()
+                .filter(detail -> deleteDetailList.contains(detail.getId()))
+                .collect(Collectors.toList());
         fillPackSummary(detailList, afterSalePackEntity);
         if (!afterSalePackDetailService.saveOrUpdateBatch(detailEntityList)) {
             throw new ServiceException("售后装箱明细保存失败");
+        }
+        if (CollectionUtils.isNotEmpty(deleteDetailList) && !afterSalePackDetailService.removeByIds(deleteDetailList)) {
+            throw new ServiceException("售后装箱明细删除失败");
         }
         // 删除明细日志
         if (CollectionUtils.isNotEmpty(deleteDetailEntityList)) {
@@ -305,10 +325,14 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         for (AfterSalePackDetailEntity update : updateList) {
             AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
             if (old != null) {
-                String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("[{}] ", old.getSkuNo()) : "";
+                String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("【{}】 ", old.getSkuNo()) : "";
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
             }
         }
+    }
+
+    private String buildDetailMatchKey(String skuNo, String outWarehouseLocationId) {
+        return CharSequenceUtil.trimToEmpty(skuNo) + "#" + CharSequenceUtil.trimToEmpty(outWarehouseLocationId);
     }
 
     private void fillPackSummary(List<AfterSalePackDetailDTO.UpdateDTO> detailList, AfterSalePackEntity afterSalePackEntity) {
@@ -391,7 +415,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 记录主单操作日志
         log.info("编辑 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
         String msg = "";
-        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -427,8 +451,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 记录主单操作日志
         log.info("确定提审 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
         String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "确定提审");
-        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "");
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "确定提审");
         return Boolean.TRUE;
     }
 
@@ -456,7 +480,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 记录主单操作日志
         log.info("复核驳回 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
         String msg = StrUtil.format("用户【{}】复核驳回单号为【{}】的【{}】单据，驳回原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode(), "售后装箱单", addOrUpdateDTO.getRejectDescription());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "复核驳回");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "复核驳回");
         return Boolean.TRUE;
     }
 
@@ -492,8 +516,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 记录主单操作日志
         log.info("确定并封箱 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
         String msg = StrUtil.format("用户【{}】确定并封箱单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "确定并封箱");
-        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "");
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "确定并封箱");
         return Boolean.TRUE;
     }
 
