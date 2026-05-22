@@ -1402,7 +1402,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @author jack
      * @date 2026-05-06
      */
-    private Map<String, String> getTransferWarehouseNameMap(List<String> transferWarehouseIdsList) {
+    @Override
+    public Map<String, String> getTransferWarehouseNameMap(List<String> transferWarehouseIdsList) {
         if (CollectionUtils.isEmpty(transferWarehouseIdsList)) {
             return Collections.emptyMap();
         }
@@ -1436,7 +1437,8 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
      * @author jack
      * @date 2026-05-06
      */
-    private String buildTransferWarehouseNames(String transferWarehouseIds, Map<String, String> transferWarehouseNameMap) {
+    @Override
+    public String buildTransferWarehouseNames(String transferWarehouseIds, Map<String, String> transferWarehouseNameMap) {
         if (CharSequenceUtil.isBlank(transferWarehouseIds) || CollUtil.isEmpty(transferWarehouseNameMap)) {
             return "";
         }

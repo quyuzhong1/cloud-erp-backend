@@ -283,6 +283,12 @@ public class TmsDeclareBillDTO implements Serializable {
     @NoArgsConstructor
     public static class SoOutDTO {
         /**
+         * 柜号
+         * B2B 走 getCanGenerateSoOut 时由后端按发货通知单关联的 logistics_bill.counter_no 回填，
+         * 保存到 tms_declare_bill.transport_no 上。
+         */
+        private String counterNo;
+        /**
          * 业务id（发货单id或发货通知单id）
          */
         private String sourceId;
