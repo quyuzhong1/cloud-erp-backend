@@ -2970,6 +2970,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     sourceDeliveryDetailDTO.setBomVersion(logisticDTO.getBomVersion());
                     sourceDeliveryDetailDTO.setBomHistoryId(logisticDTO.getBomHistoryId());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
+                    // BOM 拆分场景：子 SKU 的境内货源地/征免必须按子 SKU 自己的物流产品信息取值，
+                    // 否则会通过上面的 BeanUtil.copyProperties 继承父 SKU 已被 fillDeclareInfo / applyDeclareLineDefaults
+                    // 处理过的值（fillDeclareInfo 对这两个字段是"非空才覆盖"，子 PLM 为空时会让父值泄漏到子级）。
+                    // 这里显式置空，让下面的 fillDeclareInfo + applyDeclareLineDefaults 按
+                    //   子 PLM > DeclareMergeDefaults 默认值（深圳特区 / 照章征税）
+                    // 的优先级独立取值，不依赖父 SKU。
+                    sourceDeliveryDetailDTO.setSourceCargo(null);
+                    sourceDeliveryDetailDTO.setExemption(null);
                     fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
                     applyDeclareLineDefaults(sourceDeliveryDetailDTO);
                     result.add(sourceDeliveryDetailDTO);
