@@ -18,6 +18,7 @@
         <result column="class_path" property="classPath" />
         <result column="type" property="type" />
         <result column="enum_class" property="enumClass" />
+        <result column="value" property="value" />
     </resultMap>
 
 </mapper>
