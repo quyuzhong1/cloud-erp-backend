@@ -200,6 +200,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private static final int DECLARE_MULTI_EXPORT_LIMIT = 100;
 
+    /**
+     * 贸易国默认值（ERP-17240）。
+     * 业务要求新增报关单时贸易国默认中国香港；如果后续后端有更精确的国家字典码，可以再调整。
+     */
+    private static final String DEFAULT_TRADING_AREA = "HK";
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -236,7 +242,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setInsuranceFee(Objects.isNull(declareBillEntity.getInsuranceFee()) ? BigDecimal.ZERO : declareBillEntity.getInsuranceFee());
             declareBillEntity.setOtherFee(Objects.isNull(declareBillEntity.getOtherFee()) ? BigDecimal.ZERO : declareBillEntity.getOtherFee());
             declareBillEntity.setGrossWeight(Objects.isNull(declareBillEntity.getGrossWeight()) ? BigDecimal.ZERO : declareBillEntity.getGrossWeight());
-            declareBillEntity.setNetWeight(Objects.isNull(declareBillEntity.getNetWeight()) ? BigDecimal.ZERO : declareBillEntity.getNetWeight());
+            // ERP-17240: 复用 batchAddMergeDetail 链路里的 calculateSelectedNetWeight，
+            // 按 SKU × qty 真实累加，且已经处理了组合品 SPLIT 拆分。
+            declareBillEntity.setNetWeight(calculateSelectedNetWeight(flattenMergeSourceDetails(mergeDetailList)));
+            // ERP-17240: 贸易国默认中国香港。
+            applyTradingAreaDefault(declareBillEntity);
 
             List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(mergeDetailList.size());
             for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
@@ -272,6 +282,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         BeanMapperUtils.copy(deliveryDTO, baseTmsDeclareBillEntity);
         baseTmsDeclareBillEntity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
         baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+        // ERP-17240: 贸易国默认中国香港。
+        applyTradingAreaDefault(baseTmsDeclareBillEntity);
         //50个明细为一个报关单
         List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
         if(CollectionUtils.isEmpty(allProductDetailList)){
@@ -325,6 +337,32 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      */
     private String firstSourceId(List<String> sourceIdList) {
         return CollUtil.isEmpty(sourceIdList) ? "" : sourceIdList.get(0);
+    }
+
+    /**
+     * 把合并明细打平成 {@code List<SourceDeliveryDetailDTO>}，供 {@link #calculateSelectedNetWeight} 复用。
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> flattenMergeSourceDetails(
+            List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+        if (CollUtil.isEmpty(mergeDetailList)) {
+            return Collections.emptyList();
+        }
+        return mergeDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 贸易国默认值兜底（ERP-17240）。trading_area 是 tms_declare_bill 本表列，可以保存侧赋值。
+     */
+    private void applyTradingAreaDefault(TmsDeclareBillEntity entity) {
+        if (entity != null && StringUtils.isBlank(entity.getTradingArea())) {
+            entity.setTradingArea(DEFAULT_TRADING_AREA);
+        }
     }
 
     @Override
@@ -511,6 +549,97 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return;
         }
         List<DictBasicDTO.ViewDTO> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
+
+        if (SourceTypeEnum.B2B_DECLARE_BILL.getCode().equals(type)) {
+            // 通过中间表反查 source_id 后批量取 SoDeliveryNotice.carrier_*，
+            fillB2bDeclareCarrier(list);
+        } else if (SourceTypeEnum.FM_DECLARE_BILL.getCode().equals(type)) {
+            fillFmDeclareSupplier(list);
+        }
+
+        list.forEach(v->{
+            v.setDeclareStatusName(EnumMessage.getNameByCode(com.erp.model.tms.enums.DeclareStatusEnum.class,v.getDeclareStatus()));
+            DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            v.setDeclareTypeName(declareType.getName());
+        });
+    }
+
+    /**
+     * B2B 报关单列表：从中间表反查发货通知单 id -> 批量取 SoDeliveryNotice -> 取承运商字段 -> 写回 logisticsSupplierId/Name。
+     * 多个发货通知（合并报关）的承运商按逗号去重拼接。
+     */
+    private void fillB2bDeclareCarrier(List<TmsDeclareBillDTO.PagingVO> list) {
+        List<String> declareIds = list.stream()
+                .map(TmsDeclareBillDTO.PagingVO::getId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<String>> declareSourceIdMap = Collections.emptyMap();
+        Map<String, SoDeliveryNoticeEntity> noticeMap = Collections.emptyMap();
+        if (CollectionUtils.isNotEmpty(declareIds)) {
+            List<DeliveryDeclareDetailMidEntity> midList = deliveryDeclareDetailMidService.listByDeclareBillIdList(declareIds);
+            if (CollectionUtils.isNotEmpty(midList)) {
+                declareSourceIdMap = midList.stream()
+                        .filter(m -> SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(m.getSourceType()))
+                        .filter(m -> StringUtils.isNotBlank(m.getSourceId()))
+                        .collect(Collectors.groupingBy(
+                                DeliveryDeclareDetailMidEntity::getDeclareId,
+                                Collectors.mapping(DeliveryDeclareDetailMidEntity::getSourceId,
+                                        Collectors.toCollection(LinkedHashSet::new))))
+                        .entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
+                List<String> allSourceIds = declareSourceIdMap.values().stream()
+                        .flatMap(Collection::stream)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(allSourceIds)) {
+                    try {
+                        List<SoDeliveryNoticeEntity> notices = soDeliveryNoticeFeign.listByIds(allSourceIds);
+                        if (CollUtil.isNotEmpty(notices)) {
+                            noticeMap = notices.stream()
+                                    .filter(n -> StringUtils.isNotBlank(n.getId()))
+                                    .collect(Collectors.toMap(SoDeliveryNoticeEntity::getId, n -> n, (a, b) -> a));
+                        }
+                    } catch (Exception e) {
+                        log.warn("B2B 报关单列表填充承运商失败: {}", e.getMessage());
+                    }
+                }
+            }
+        }
+        Map<String, List<String>> finalDeclareSourceMap = declareSourceIdMap;
+        Map<String, SoDeliveryNoticeEntity> finalNoticeMap = noticeMap;
+        list.forEach(v -> {
+            List<String> sourceIds = finalDeclareSourceMap.getOrDefault(v.getId(), Collections.emptyList());
+            if (CollectionUtils.isNotEmpty(sourceIds) && !finalNoticeMap.isEmpty()) {
+                List<SoDeliveryNoticeEntity> matched = sourceIds.stream()
+                        .map(finalNoticeMap::get)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+                String carrierIds = matched.stream()
+                        .map(SoDeliveryNoticeEntity::getCarrierId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.joining(","));
+                String carrierNames = matched.stream()
+                        .map(SoDeliveryNoticeEntity::getCarrierName)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.joining(","));
+                if (StringUtils.isNotBlank(carrierIds)) {
+                    v.setLogisticsSupplierId(carrierIds);
+                }
+                if (StringUtils.isNotBlank(carrierNames)) {
+                    v.setLogisticsSupplierName(carrierNames);
+                }
+            }
+            v.setBusinessTypeName(OrderTypeEnum.getName(v.getBusinessType()));
+        });
+    }
+
+    /**
+     * 头程报关单列表：物流商沿用 logistics_bill 链路（按 outstockCode 关联），与历史口径保持一致。
+     */
+    private void fillFmDeclareSupplier(List<TmsDeclareBillDTO.PagingVO> list) {
         List<String> sourceCodes = list.stream()
                 .map(TmsDeclareBillDTO.PagingVO::getSourceCode)
                 .filter(StringUtils::isNotBlank)
@@ -519,42 +648,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-
-        //处理供应商
-        List<LogisticsBillEntity> logisticsList =  fmLogisticService.listByOutstcockCode(sourceCodes);
-        List<String> supplierIds = logisticsList.stream().map(LogisticsBillEntity::getLogisticsSupplierId).distinct().collect(Collectors.toList());
-        List<LogisticsSupplierEntity> supplierList = CollectionUtils.isNotEmpty(supplierIds)?logisticsSupplierService.listByIds(supplierIds):new ArrayList<>();
-
-        if(type.equals(SourceTypeEnum.FM_DECLARE_BILL.getCode())){
-            list.forEach(v->{
-                //供应商
-                LogisticsBillEntity logistics = logisticsList.stream().filter(e->e.getOutstockCode().equals(v.getSourceCode())).findFirst().orElse(null);
-                if(logistics!=null){
-                    LogisticsSupplierEntity supplier = supplierList.stream().filter(e->e.getId().equals(logistics.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
-                    v.setLogisticsSupplierId(supplier.getId());
-                    v.setLogisticsSupplierName(supplier.getSupplierName());
-                }
-                //发货类型
-                v.setBusinessTypeName(FbaDemandTypeEnum.getName(v.getBusinessType()));
-            });
-        }else if (type.equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode())){
-            list.forEach(v->{
-                //供应商
-                LogisticsBillEntity logistics = logisticsList.stream().filter(e->e.getOutstockCode().equals(v.getSourceCode())).findFirst().orElse(null);
-                if(logistics!=null){
-                    LogisticsSupplierEntity supplier = supplierList.stream().filter(e->e.getId().equals(logistics.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
-                    v.setLogisticsSupplierId(supplier.getId());
-                    v.setLogisticsSupplierName(supplier.getSupplierName());
-                }
-                //发货类型
-                v.setBusinessTypeName(OrderTypeEnum.getName(v.getBusinessType()));
-            });
-        }
-
-        list.forEach(v->{
-            v.setDeclareStatusName(EnumMessage.getNameByCode(com.erp.model.tms.enums.DeclareStatusEnum.class,v.getDeclareStatus()));
-            DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
-            v.setDeclareTypeName(declareType.getName());
+        List<LogisticsBillEntity> logisticsList = CollectionUtils.isEmpty(sourceCodes)
+                ? Collections.emptyList()
+                : fmLogisticService.listByOutstcockCode(sourceCodes);
+        List<String> supplierIds = logisticsList.stream()
+                .map(LogisticsBillEntity::getLogisticsSupplierId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<LogisticsSupplierEntity> supplierList = CollectionUtils.isNotEmpty(supplierIds)
+                ? logisticsSupplierService.listByIds(supplierIds)
+                : new ArrayList<>();
+        list.forEach(v -> {
+            LogisticsBillEntity logistics = logisticsList.stream()
+                    .filter(e -> e.getOutstockCode().equals(v.getSourceCode()))
+                    .findFirst().orElse(null);
+            if (logistics != null) {
+                LogisticsSupplierEntity supplier = supplierList.stream()
+                        .filter(e -> e.getId().equals(logistics.getLogisticsSupplierId()))
+                        .findFirst().orElse(new LogisticsSupplierEntity());
+                v.setLogisticsSupplierId(supplier.getId());
+                v.setLogisticsSupplierName(supplier.getSupplierName());
+            }
+            v.setBusinessTypeName(FbaDemandTypeEnum.getName(v.getBusinessType()));
         });
     }
 
@@ -654,6 +770,29 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //物流供应商名称
             String logisticsSupplierNames = deliveryDTOList.stream().map(TmsDeclareBillDTO.DeliveryDTO::getLogisticsSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
             viewDTO.setLogisticsSupplierName(logisticsSupplierNames);
+            // 运输方式 / 柜号都不再落 tms_declare_bill，详情时按发货单关联的 logistics_bill 反查回显。
+            // 多发货单合并时用 ";" 拼接（与 supplier 的处理保持一致）。
+            String shippingMethods = deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.DeliveryDTO::getShippingMethod)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(";"));
+            viewDTO.setShippingMethod(shippingMethods);
+            String shippingMethodNames = deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.DeliveryDTO::getShippingMethodName)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(";"));
+            viewDTO.setShippingMethodName(shippingMethodNames);
+            // 柜号 (counter_no) 没落 tms_declare_bill，按发货单关联的 logistics_bill 反查回显。
+            // 提运单号 (transport_no) 是 tms_declare_bill 本表列：addFmDeclare 这条路径里没写；
+            // batchAddMergeDetail 写了，BeanUtil.copyProperties(entity, ViewDTO) 已经搬到 viewDTO，这里不覆盖。
+            String counterNos = deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.DeliveryDTO::getCounterNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(";"));
+            viewDTO.setCounterNo(counterNos);
         }else if(entity.getType().equals(SourceTypeEnum.B2B_DECLARE_BILL.getCode())){
             List<TmsDeclareBillDTO.SoOutDTO> deliveryDTOList = this.getCanGenerateSoOut(TmsDeclareBillDTO.QuerySourceDTO.builder().ids(listBillSourceDTO.getSourceIdList()).build());
             if(CollectionUtils.isEmpty(deliveryDTOList)){
@@ -675,6 +814,27 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //物流供应商名称
             String logisticsSupplierNames = deliveryDTOList.stream().map(TmsDeclareBillDTO.SoOutDTO::getLogisticsSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
             viewDTO.setLogisticsSupplierName(logisticsSupplierNames);
+            // ERP-17240: 运输方式 / 柜号同 FM，按发货通知单关联的 logistics_bill 反查回显。
+            String shippingMethods = deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getShippingMethod)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(";"));
+            viewDTO.setShippingMethod(shippingMethods);
+            String shippingMethodNames = deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getShippingMethodName)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(";"));
+            viewDTO.setShippingMethodName(shippingMethodNames);
+            // B2B 的 transport_no 是页面手动录入，BeanUtil.copyProperties 已经把 entity.transport_no 搬到 viewDTO，
+            // 这里只补 counterNo（来自物流单），二者互不覆盖。
+            String counterNos = deliveryDTOList.stream()
+                    .map(TmsDeclareBillDTO.SoOutDTO::getCounterNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.joining(";"));
+            viewDTO.setCounterNo(counterNos);
         }
 
         fillViewDTO(viewDTO);
@@ -1137,6 +1297,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             deliveryDTO.setShippingMethodName(LogisticsMethodEnum.getName(logisticsBillEntity.getShippingMethod()));
             deliveryDTO.setLogisticsSupplierId(logisticsBillEntity.getLogisticsSupplierId());
             deliveryDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+            //  与 FM 端 getCanGenerateDeliveryOrder 对齐，柜号需要带出来用于保存到 transport_no
+            deliveryDTO.setCounterNo(logisticsBillEntity.getCounterNo());
         }
         return deliveryDTOList;
     }
@@ -1481,7 +1643,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setInsuranceFee(Objects.isNull(declareBillEntity.getInsuranceFee()) ? BigDecimal.ZERO : declareBillEntity.getInsuranceFee());
             declareBillEntity.setOtherFee(Objects.isNull(declareBillEntity.getOtherFee()) ? BigDecimal.ZERO : declareBillEntity.getOtherFee());
             declareBillEntity.setGrossWeight(Objects.isNull(declareBillEntity.getGrossWeight()) ? BigDecimal.ZERO : declareBillEntity.getGrossWeight());
-            declareBillEntity.setNetWeight(Objects.isNull(declareBillEntity.getNetWeight()) ? BigDecimal.ZERO : declareBillEntity.getNetWeight());
+            // B2B 同 FM，新合并路径复用 calculateSelectedNetWeight 真实累加净重。
+            declareBillEntity.setNetWeight(calculateSelectedNetWeight(flattenMergeSourceDetails(mergeDetailList)));
+            // 贸易国默认中国香港。
+            applyTradingAreaDefault(declareBillEntity);
 
             List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(mergeDetailList.size());
             for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
@@ -3439,6 +3604,21 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                                                            String fallbackSourceId,
                                                                            String declareId,
                                                                            String declareCode) {
+        //  源表 first_mile_delivery / so_delivery_notice 只存 transfer_warehouse_ids，
+        // 上游 SQL (listBeforePushFmDeclare / listBeforePushB2bDeclare 等) 也仅 select ids，
+        // 因此 SourceDeliveryDetailDTO.transferWarehouseNames 必然为空。
+        // 这里按"整张报关单"为单位一次性收集 ids → 一次 RPC 拉名称 map，避免每行/每条来源单独 RPC。
+        List<String> allTransferWarehouseIds = mergeDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.MergeDeclareBillDetailDTO::getSourceDeliveryDetailList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getTransferWarehouseIds)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        Map<String, String> transferWarehouseNameMap = deliveryDeclareDetailMidService.getTransferWarehouseNameMap(allTransferWarehouseIds);
+
         List<DeliveryDeclareDetailMidEntity> midList = new ArrayList<>();
         for (int i = 0; i < mergeDetailList.size(); i++) {
             TmsDeclareBillDTO.MergeDeclareBillDetailDTO declareDetail = mergeDetailList.get(i);
@@ -3448,7 +3628,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : declareDetail.getSourceDeliveryDetailList()) {
                 midList.add(buildDeclareDetailMidEntity(sourceType, sourceDetail, declareDetail,
-                        fallbackSourceId, declareId, declareCode, billDetailEntity.getId()));
+                        fallbackSourceId, declareId, declareCode, billDetailEntity.getId(),
+                        transferWarehouseNameMap));
             }
         }
         return midList;
@@ -3473,7 +3654,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                                                        String fallbackSourceId,
                                                                        String declareId,
                                                                        String declareCode,
-                                                                       String declareDetailId) {
+                                                                       String declareDetailId,
+                                                                       Map<String, String> transferWarehouseNameMap) {
         DeliveryDeclareDetailMidEntity midEntity = new DeliveryDeclareDetailMidEntity();
         midEntity.setGenerateStatus(DeliveryDeclareDetailMidGenerateStatusEnum.FINISH.getCode());
         midEntity.setSourceType(sourceType);
@@ -3503,7 +3685,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         midEntity.setFromWarehouseName(sourceDetail.getFromWarehouseName());
         midEntity.setDestWarehouseId(sourceDetail.getDestWarehouseId());
         midEntity.setDestWarehouseName(sourceDetail.getDestWarehouseName());
-        midEntity.setTransferWarehouseIds(StringUtils.defaultString(sourceDetail.getTransferWarehouseIds()));
+        String transferWarehouseIds = StringUtils.defaultString(sourceDetail.getTransferWarehouseIds());
+        midEntity.setTransferWarehouseIds(transferWarehouseIds);
+        // 列表查询 dn.transferWarehouseName 才有值，避免显示成 "-"。
+        midEntity.setTransferWarehouseNames(deliveryDeclareDetailMidService.buildTransferWarehouseNames(
+                transferWarehouseIds, transferWarehouseNameMap));
         midEntity.setSalesOrgId(sourceDetail.getSalesOrgId());
         midEntity.setSalesOrgName(sourceDetail.getSalesOrgName());
         return midEntity;
@@ -3907,6 +4093,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         declareBillEntity.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
         declareBillEntity.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
         declareBillEntity.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
+        // ERP-17240: 贸易国默认中国香港，与 addFmDeclare / addB2BDeclare 对齐。
+        applyTradingAreaDefault(declareBillEntity);
     }
 
     /**

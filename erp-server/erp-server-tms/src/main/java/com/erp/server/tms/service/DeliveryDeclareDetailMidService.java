@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -168,4 +169,26 @@ public interface DeliveryDeclareDetailMidService extends SuperService<DeliveryDe
      * @return java.util.List<com.erp.model.tms.entity.TmsDeclareBillEntity>
      */
     List<DeliveryDeclareDetailMidEntity> listBySourceIdList(List<String> sourceIds);
+
+    /**
+     * 批量取仓库 id → 名称 映射。
+     * 入参为多条"逗号分隔的仓库 id 串"，会扁平化拆分、去重，单次 RPC 拉所有仓库名。
+     *
+     * <p>用于在写入 delivery_declare_detail_mid 之前一次性把 transfer_warehouse_names
+     * 填齐：源表（first_mile_delivery / so_delivery_notice）只存 transfer_warehouse_ids，
+     * 名称必须依据 id 反查。</p>
+     *
+     * @param transferWarehouseIdsList 形如 ["id1,id2", "id3"] 的集合
+     * @return id -> name map；入参空或仓库查不到时返回空 map
+     */
+    Map<String, String> getTransferWarehouseNameMap(List<String> transferWarehouseIdsList);
+
+    /**
+     * 按 id 串与名称 map 拼出"name1,name2"形式的名称串。
+     *
+     * @param transferWarehouseIds 形如 "id1,id2"
+     * @param transferWarehouseNameMap {@link #getTransferWarehouseNameMap} 的结果
+     * @return "name1,name2"，无可用名称时返回 ""
+     */
+    String buildTransferWarehouseNames(String transferWarehouseIds, Map<String, String> transferWarehouseNameMap);
 }
