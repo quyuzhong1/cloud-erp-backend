@@ -551,7 +551,7 @@ public class NfeInvoiceService {
     private String cleanTaxNo(String taxNo) {
         return CharSequenceUtil.isBlank(taxNo) ? CharSequenceUtil.EMPTY : taxNo.replaceAll("[^0-9]", "");
     }
-    
+
     /**
      * 从数据源获取城市信息
      * 优先从账单地址接口（DmpSoBillDetailEntity）获取，否则从订单接口（SoB2cReceiverEntity）获取
