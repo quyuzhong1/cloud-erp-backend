@@ -148,4 +148,12 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") PurchaseOrderDTO.SearchParamDTO searchParamDTO);
+
+    /**
+     * @description: 质检单分页查询(pda端)
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<QcInfoDTO.OpenPagingViewDTO> qcPaging(@Param("query") Page query, @Param("params") QcInfoDTO.PagingParamDTO params);
 }

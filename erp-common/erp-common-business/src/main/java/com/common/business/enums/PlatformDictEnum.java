@@ -73,6 +73,7 @@ public enum PlatformDictEnum implements EnumMessage {
     QI_MEN("qimen", "奇门", "奇门", "52"),
     TONG_YOU_WAREHOUSE("tongyou", "通邮", "通邮", "62"),
     ZHONG_BAO_WAREHOUSE("zhongbao", "众包", "众包", "63"),
+    JI_TU_WAREHOUSE("jitu", "极兔", "极兔", "64"),
 
     // 拼多多海外版
     TE_MU("TeMu", "TEMU半托管", "TEMU半托管", "034"),
@@ -88,7 +89,11 @@ public enum PlatformDictEnum implements EnumMessage {
     DA_MAI("damai", "大卖仓", "大卖仓", "60"),
     WILDBERRIES("wildberries", "Wildberries", "Wildberries", "61"),
 
+    KUAIDI100("KUAIDI100", "快递100", "快递100物流平台", "64"),
+
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),
+
+    COUPANG("Coupang", "Coupang", "Coupang", "048"),
         ;
 
 

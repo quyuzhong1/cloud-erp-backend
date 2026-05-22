@@ -202,6 +202,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 trackingInfo.setCompany(tmsScaleChannelShipDTOList.get(0).getCode());
                 payload.setLineItemsByFulfillmentOrder(orderList);
                 payload.setTrackingInfo(trackingInfo);
+                payload.setNotifyCustomer(true);
                 ShopifyFulfillmentPayloadRoot request = new ShopifyFulfillmentPayloadRoot();
                 request.setFulfillment(payload);
                 // 查询订单发货状态

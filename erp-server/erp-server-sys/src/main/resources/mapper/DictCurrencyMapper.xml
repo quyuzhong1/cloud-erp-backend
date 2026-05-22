@@ -6,7 +6,7 @@
             dc.id, dc.name, dc.symbol,dc.kingdee_code as kingdeeCode,dc.currency_num as currencyNum,dc.disabled
         from dict_currency dc
         where dc.is_deleted = false
-        order by dc.index asc
+        order by dc."index" asc
     </select>
     <select id="pagingSelect" resultType="com.erp.model.sys.dto.CurrencyDTO$ViewDTO">
         select id,name,symbol,kingdeeCode,currencyNum,disabled

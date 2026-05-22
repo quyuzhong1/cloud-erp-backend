@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -384,7 +385,7 @@ public class TransferInfoController extends BaseController {
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = transferInfoService.cancelProcess(dto.getIds());
+        Boolean result = transferInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result == true ? success() : failure();
     }
 

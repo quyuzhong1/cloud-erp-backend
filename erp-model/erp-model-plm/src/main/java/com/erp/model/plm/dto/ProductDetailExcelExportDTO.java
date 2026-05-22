@@ -372,8 +372,6 @@ public class ProductDetailExcelExportDTO {
     @MenuCode("plm:product:detail:listProductPurchase")
     private String firstCertificateNames;
 
-    @ExcelIgnore
-    private String mainSupplier;
 //
 //    /**
 //     * 二级供应商
@@ -381,6 +379,12 @@ public class ProductDetailExcelExportDTO {
 //    @ExcelProperty("二级供应商")
 //    @MenuCode("plm:product:detail:listProductPurchase")
 //    private String secondSupplier;
+    /**
+     * 一级供应商
+     */
+    @ExcelProperty("一级供应商")
+    @MenuCode("plm:product:detail:listProductPurchase")
+    private String mainSupplier;
 
     /**
      * 年目标销量

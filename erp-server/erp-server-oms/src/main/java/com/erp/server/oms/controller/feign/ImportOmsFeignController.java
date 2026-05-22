@@ -39,6 +39,8 @@ public class ImportOmsFeignController {
     @Resource
     private KolB2cApplicationService kolB2cApplicationService;
 
+    @Resource
+    private SoB2cImportService soB2cImportService;
 
     @PostMapping("/exhibitionOrder")
     public void importExhibitionOrder(@RequestBody BaseDTO.ImportDTO dto) {
@@ -124,4 +126,19 @@ public class ImportOmsFeignController {
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }
+
+    @PostMapping("/importB2cManualDelivery")
+    public void importB2cManualDelivery(@RequestBody BaseDTO.ImportDTO dto) {
+        try {
+            soB2cImportService.importB2cManualDelivery(dto);
+        } catch (Exception e) {
+            log.error("导入B2C手动发货失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
 }

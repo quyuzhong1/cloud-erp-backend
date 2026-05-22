@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -345,7 +346,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         StocktakingProfitLossEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException("未找到盘盈盘亏单");
@@ -357,6 +359,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         }
         LoginUser user = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
         revokeDTO.setUserId(user.getUid());

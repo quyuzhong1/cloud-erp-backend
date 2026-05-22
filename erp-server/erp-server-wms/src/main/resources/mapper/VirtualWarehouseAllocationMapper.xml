@@ -38,9 +38,6 @@
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ListDTO">
         <include refid="list"/>
     </select>
-    <select id="listExport" resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ListDTO">
-        <include refid="list"/>
-    </select>
     <select id="listCount" resultType="integer">
         select
         count(distinct vma.id)

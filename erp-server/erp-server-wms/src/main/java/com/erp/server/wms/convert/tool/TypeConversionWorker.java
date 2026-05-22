@@ -38,7 +38,15 @@ public class TypeConversionWorker {
         if (CharSequenceUtil.isBlank(fileData)){
             return fileData;
         }
-        return fileData.replace("data:application/pdf;base64,","");
+        return fileData.replaceFirst("(?i)^data:application/pdf;base64,", "");
+    }
+
+    @Named("replaceBase64DataUrlPrefix")
+    public String replaceBase64DataUrlPrefix(String fileData){
+        if (CharSequenceUtil.isBlank(fileData)){
+            return fileData;
+        }
+        return fileData.replaceFirst("(?i)^data:[^;]+;base64,", "");
     }
 
     @Named("getPdfFileName")
@@ -103,6 +111,20 @@ public class TypeConversionWorker {
             return FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode();
         }
         return sourceType;
+    }
+
+
+    /**
+     * 字符串转大写
+     * @param source
+     * @return
+     */
+    @Named("toUpperCase")
+    public String toUpperCase(String source){
+        if (CharSequenceUtil.isBlank(source)){
+            return source;
+        }
+        return source.toUpperCase();
     }
 }
 

@@ -306,6 +306,11 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         if (StrUtil.hasBlank(processDefinitionId, type)) {
             return;
         }
+        // 仅飞书流程才需要拉飞书审批定义校验必填字段；ERP 流程的 processDefinitionId 不是飞书 approval code，
+        // 若误调 fsService.getApproval 会因 "approval code not found" 而失败，导致整个 cfgProcess 更新被阻塞
+        if (!CfgProcessRuleTypeEnum.FSPROCESS.getCode().equals(type)) {
+            return;
+        }
 
         // 2. 调用 view 方法获取飞书审批定义的完整字段信息
         List<CfgProcessFieldMapDTO.ViewDTO> allFeishuFields = this.view(processDefinitionId, type);

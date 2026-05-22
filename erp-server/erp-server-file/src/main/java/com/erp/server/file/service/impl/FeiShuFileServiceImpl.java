@@ -220,7 +220,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("下载导出任务成功：{}", JSONUtil.toJsonStr(resp));
+        log.warn("下载导出任务成功：{}", JSONUtil.toJsonStr(req));
         return resp;
     }
 
@@ -234,16 +234,16 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
      */
     private static GetExportTaskResp retryQueryTask(String ticket, String objToken, Client client) throws Exception {
         int retryCount = 0;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 10; i++) {
             try {
                 return queryTask(ticket, objToken, client);
             } catch (Exception e) {
                 retryCount++;
-                log.warn("查询导出任务结果失败，重试{}次，间隔1秒", retryCount);
-                Thread.sleep(1000);
+                log.warn("查询导出任务结果失败，重试{}次，间隔3秒", retryCount);
+                Thread.sleep(3000);
             }
         }
-        throw new ServiceException("查询导出任务结果失败，重试3次后仍失败");
+        throw new ServiceException("查询导出任务结果失败，重试10次后仍失败");
     }
     /**
      * 查询导出任务结果
@@ -269,7 +269,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
                     getExportTaskResp.getCode(), getExportTaskResp.getMsg(), getExportTaskResp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(getExportTaskResp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("查询导出任务结果成功：{}", JSONUtil.toJsonStr(getExportTaskResp));
+        log.warn("查询导出任务结果成功：{}", JSONUtil.toJsonStr(req));
         if (getExportTaskResp.getData().getResult() == null || CharSequenceUtil.isBlank(getExportTaskResp.getData().getResult().getFileToken())) {
             throw new ServiceException("查询导出任务结果失败，导出任务结果为空");
         }
@@ -328,6 +328,10 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
      * @throws Exception
      */
     private static GetNodeSpaceResp getNode(String fileToken, Client client) throws Exception {
+        //OWMXwxyg3iYx7Fkh7cec9ZFLngf?sheet=0mwGFe 截取？之前的内容
+        if (fileToken.contains("?")) {
+            fileToken = fileToken.split("\\?")[0];
+        }
         // 创建请求对象
         GetNodeSpaceReq req = GetNodeSpaceReq.newBuilder()
                 .token(fileToken)

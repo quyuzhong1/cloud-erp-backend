@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -140,10 +141,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto ids
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 批量作废
@@ -168,11 +169,11 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @description: 原子批量删除销售退货入库单
      * @author Will
      * @date: 2023/5/17 15:15
-     * @param ids
+     * @param entity
      * @param returnDetails
      * @return List<BatchResultDTO>
      */
-    List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails);
+    BatchResultDTO deleteByIds(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> returnDetails);
 
     /**
      * 删除单个实体

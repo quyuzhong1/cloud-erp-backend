@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.UserStateConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -713,7 +714,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);

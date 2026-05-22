@@ -24,6 +24,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.TmsDictConstants;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DeliveryTypeEnum;
@@ -197,6 +198,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);
+        List<LogisticsAuthEntity> authEntityList = logisticsAuthService.listByMainIds(mainIdList);
+        Map<String, String> authMap = authEntityList.stream().collect(Collectors.toMap(LogisticsAuthEntity::getMainId, LogisticsAuthEntity::getLogisticsPlatform));
         for (LogisticsChannelEntity item : list) {
             LogisticsChannelDTO.BaseDTO base = LogisticsChannelConverter.INSTANCE.convertToChannelDTO(item);
             String effectiveTime = item.getEffectiveTime();
@@ -207,25 +210,18 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String ShippingTemplateName = shippingTemplateList.stream().filter(s -> s.getLogisticsChannelId().equals(id)).
                     map(ShippingTemplateRefChannelEntity::getShippingTemplateName).findFirst().orElse("");
             base.setShippingTemplateName(ShippingTemplateName);
-            //获取服务商编号
-            LogisticsAuthEntity authEntity = logisticsAuthService.getByMainId("", item.getMainId());
-            if (ObjectUtil.isNotEmpty(authEntity)) {
-                String logisticsPlatform = authEntity.getLogisticsPlatform();
-                base.setLogisticsPlatform(logisticsPlatform);
-                if(Objects.nonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform))){
-                    String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
-                    if ("N".equals(printDelivery)) {
-                        base.setIsPrintPlatform(Boolean.FALSE);
-                    } else {
-                        base.setIsPrintPlatform(Boolean.TRUE);
-                    }
-                }else{
+            String logisticsPlatform = authMap.get(item.getMainId());
+            base.setLogisticsPlatform(logisticsPlatform);
+            if(Objects.nonNull(LogisticsPlatformEnum.getByCode(logisticsPlatform))){
+                String printDelivery = LogisticsPlatformEnum.getByCode(logisticsPlatform).getPrintDelivery();
+                if ("N".equals(printDelivery)) {
+                    base.setIsPrintPlatform(Boolean.FALSE);
+                } else {
                     base.setIsPrintPlatform(Boolean.TRUE);
                 }
-            } else {
+            }else{
                 base.setIsPrintPlatform(Boolean.TRUE);
             }
-
             resultList.add(base);
         }
         return resultList;
@@ -426,8 +422,46 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         List<LogisticsChannelEntity> list = this.lambdaQuery().orderByAsc(LogisticsChannelEntity::getDisabled).list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
         Collections.sort(resultList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
-
         return resultList;
+    }
+
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listWithAll(String logisticsSupplierId) {
+        List<BaseDropDownDTO.DisabledDTO> resultList = new ArrayList<>();
+        resultList.add(new BaseDropDownDTO.DisabledDTO("all", "全部", false));
+        List<LogisticsChannelEntity> list = this.lambdaQuery()
+                .eq(StringUtils.isNotBlank(logisticsSupplierId),LogisticsChannelEntity::getMainId, logisticsSupplierId)
+                .orderByAsc(LogisticsChannelEntity::getDisabled)
+                .list();
+        List<BaseDropDownDTO.DisabledDTO> disabledDTOList = LogisticsChannelConverter.INSTANCE.convertByChannelDown(list);
+        Collections.sort(disabledDTOList, Comparator.comparing(BaseDropDownDTO.DisabledDTO::getDisabled));
+        resultList.addAll(disabledDTOList);
+        return resultList;
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.BaseDTO> listChannelInfoByName(List<String> channelNames) {
+        List<LogisticsChannelEntity> logisticsChannelEntities = this.listByName(channelNames);
+        if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流渠道");
+        }
+        List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
+        List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(mainIds);
+        for (LogisticsChannelDTO.BaseDTO baseDTO : baseDTOS) {
+            baseDTO.setLogisticsSupplierId(baseDTO.getMainId());
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(baseDTO.getMainId())).findFirst().orElse(null);
+            if (Objects.nonNull(logisticsSupplierEntity)) {
+                baseDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+                baseDTO.setLogisticsSupplierShortName(logisticsSupplierEntity.getShortName());
+                baseDTO.setSupplierId(logisticsSupplierEntity.getSupplierId());
+
+            }
+        }
+        return baseDTOS;
     }
 
     @Override
@@ -1074,5 +1108,47 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Override
     public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannel(LogisticsSupplierDTO.SelectDTO dto) {
         return baseMapper.listChannel(dto);
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.ListChildTreeDTO> listChannelByPlatform(LogisticsSupplierDTO.SelectDTO dto) {
+        return baseMapper.listChannelByPlatform(dto);
+    }
+
+    @Override
+    public void checkDeliveryType(String id, String logisticsPlatform) {
+        if (StringUtils.isBlank(id) || StringUtils.isBlank(logisticsPlatform)){
+            return;
+        }
+        LogisticsAuthEntity authEntity = logisticsAuthService.getById(id);
+        if (Objects.isNull(authEntity)){
+            return;
+        }
+        List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByMainId(authEntity.getMainId());
+        //过滤为空的发货配置
+        logisticsChannelEntityList = logisticsChannelEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getDeliveryType())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(logisticsChannelEntityList)){
+            return;
+        }
+        //获取字典对应的平台发货方式配置
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Arrays.asList(TmsDictConstants.DELIVERY_TYPE,TmsDictConstants.JI_TU_DELIVERY_TYPE));
+        List<String> deliveryTypeList;
+        if (PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(logisticsPlatform)){
+            deliveryTypeList = dictBasicEntityList.stream().filter(e -> TmsDictConstants.JI_TU_DELIVERY_TYPE.equals(e.getType())).map(DictBasicEntity::getCode).collect(Collectors.toList());
+        }else {
+            deliveryTypeList = dictBasicEntityList.stream().filter(e -> TmsDictConstants.DELIVERY_TYPE.equals(e.getType())).map(DictBasicEntity::getCode).collect(Collectors.toList());
+        }
+        if (CollUtil.isEmpty(deliveryTypeList)){
+            //没有对应的字典，需要把渠道设置制空
+            logisticsChannelEntityList.forEach(e -> {
+                this.lambdaUpdate().set(LogisticsChannelEntity::getDeliveryType, "").eq(LogisticsChannelEntity::getId, e.getId()).update();
+            });
+        }
+        //如果渠道的发货方式不在字典配置的发货方式列表中，也需要把渠道设置制空
+        logisticsChannelEntityList.forEach(e -> {
+            if (!deliveryTypeList.contains(e.getDeliveryType())){
+                this.lambdaUpdate().set(LogisticsChannelEntity::getDeliveryType, "").eq(LogisticsChannelEntity::getId, e.getId()).update();
+            }
+        });
     }
 }

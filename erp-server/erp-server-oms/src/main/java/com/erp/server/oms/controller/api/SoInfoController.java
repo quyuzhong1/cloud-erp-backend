@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
@@ -25,6 +26,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.sys.dto.SysCommonDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
@@ -460,7 +462,7 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soInfoService.cancelProcess(dto.getIds());
+        Boolean result = soInfoService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result ? success() : failure();
     }
 
@@ -561,8 +563,9 @@ public class SoInfoController extends BaseController {
             menuCode = "oms:so:exportSoContractPdf",
             serviceClass = SoInfoService.class,
             keyIdName = "id")
-    public void exportSoContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-         soInfoService.exportSoContractPdf(dto.getId(),response);
+    public ApiResult<SysCommonDTO.AttachmentDTO> exportSoContractPdf(@RequestBody @Valid BaseIdDTO dto) {
+        SysCommonDTO.AttachmentDTO attachmentDTO = soInfoService.exportSoContractPdf(dto.getId());
+        return ObjectUtil.isNotEmpty(attachmentDTO) ? success(attachmentDTO) : failure();
     }
 
     /**

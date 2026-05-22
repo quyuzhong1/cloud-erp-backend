@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
@@ -32,6 +33,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售出库-销售出库单
@@ -355,7 +359,7 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.cancelProcess(dto.getIds());
+        Boolean result = soOutstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result ? success() : failure();
     }
 

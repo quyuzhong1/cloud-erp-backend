@@ -195,6 +195,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField(exist = false)
     private String trackNo;
 
+    /**
+     * 分摊来源金额
+     */
+    @TableField(exist = false)
+    private BigDecimal allocationAmount;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

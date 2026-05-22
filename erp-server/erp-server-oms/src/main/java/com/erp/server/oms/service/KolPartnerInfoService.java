@@ -98,4 +98,6 @@ public interface KolPartnerInfoService extends SuperService<KolPartnerInfoEntity
     List<KolPartnerInfoDTO.PartnerAddressDTO> partnerAddressList(KolPartnerInfoDTO.AddressSelectDTO dto);
 
     AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto);
+
+    List<AddressParseDTO.BatchParseResultDTO> batchAddressParse(List<AddressParseDTO.BatchParseRequestDTO> dtoList);
 }

@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -29,7 +30,6 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -231,7 +231,7 @@ public class TransferInController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = transferInService.cancelProcess(dto.getIds());
+        Boolean result = transferInService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return result ? success() : failure();
     }
 

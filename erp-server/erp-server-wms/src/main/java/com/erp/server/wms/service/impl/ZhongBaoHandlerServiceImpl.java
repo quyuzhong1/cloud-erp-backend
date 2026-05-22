@@ -22,14 +22,11 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
-import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.service.ZhongbaoService;
-import com.sdk.wms.zhongbao.utils.AuthUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -89,26 +86,8 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq) {
-        ProductRequest productRequest = ProductRequest.builder().commonParam(CommonRequest.builder()
-                .pageParam(PageRequest.builder().pageSize(100).pageNum(0).build()).build()).status(3).build();
-        List<ProductResponse.Product> respList = new ArrayList<>();
-        int pageNum = 1;
-        while (true) {
-         productRequest.getCommonParam().setPageParam(PageRequest.builder().pageSize(100).pageNum(pageNum).build());
-            BaseResponse<ProductResponse> response = zhongbaoService.productList(productRequest);
-            if (!response.getSuccess()) {
-                log.error(getPlatForm() +"查询产品信息异常" + response);
-                return failure(response.getMessage());
-            }
-            respList.addAll(response.getData().getList());
-            if (Integer.parseInt(response.getData().getTotalCount()) <= pageNum * 100) {
-                break;
-            }
-            pageNum++;
-        }
-        List<ThirdWarehouseSkuResp> thirdWarehouseSkuRespList = ThirdWarehouseConverter.INSTANCE.convertZhongbaoSku(respList);
-        return success(thirdWarehouseSkuRespList);
+    protected ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq)  {
+        return null;
     }
 
     /***
@@ -131,7 +110,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         return failure(getPlatForm().getName() + "不支持编辑入库单，请先取消入库单后，重新创建");
-//        OverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
+//        JituOverseasInboundCreateRequest overseasInboundCreateRequest = this.buildInboundDto(createInboundReq);
 //        BaseResponse<OverseasInboundUpdateResponse> responseBaseResponse = zhongbaoService.overseasInboundUpdate(overseasInboundCreateRequest);
 //        return responseBaseResponse.getSuccess() ? success(responseBaseResponse.getData().getOrderNo()) : failure(responseBaseResponse.getMessage());
     }
@@ -248,11 +227,25 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn(getPlatForm().getName() + "取消出库单请求:{}", JSONUtil.toJsonStr(overseasOutboundCancelRequest));
         BaseResponse<OverseasOutboundCancelResponse> response = zhongbaoService.cancelOutboundBill(overseasOutboundCancelRequest);
         log.warn(getPlatForm().getName() + "取消出库单结果:{}", JSONUtil.toJsonStr(response));
-        if (!response.getData().getResponseData().getSuccessList().isEmpty()) {
-            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
-        } else {
-            return failure(response.getData().getMessage());
+        if (Objects.isNull(response)) {
+            return failure("众包取消出库返回为空");
         }
+        if (!Boolean.TRUE.equals(response.getSuccess())) {
+            return failure(response.getMessage());
+        }
+        OverseasOutboundCancelResponse data = response.getData();
+        if (Objects.isNull(data)) {
+            return failure(CharSequenceUtil.blankToDefault(response.getMessage(), "众包取消出库返回空数据"));
+        }
+        if (Objects.nonNull(data.getSuccessQty()) && data.getSuccessQty() > 0) {
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        String failMsg = null;
+        if (CollUtil.isNotEmpty(data.getFailList())) {
+            failMsg = CharSequenceUtil.blankToDefault(data.getFailList().get(0).getMessage(), null);
+        }
+        return failure(CharSequenceUtil.blankToDefault(failMsg,
+                CharSequenceUtil.blankToDefault(response.getMessage(), "众包取消出库失败")));
     }
 
     @Override
@@ -286,19 +279,7 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if (Objects.nonNull(response.getResponseData())
                     && !response.getResponseData().getList().isEmpty()) {
                 for (OverseasOutboundQueryResponse.DataList dataList : response.getResponseData().getList()) {
-                    ThirdWarehouseQueryFbaOutboundResponse thirdWarehouseQueryFbaOutboundResponse = new ThirdWarehouseQueryFbaOutboundResponse();
-                    thirdWarehouseQueryFbaOutboundResponse.setPlatformOrderCode(dataList.getOrderNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setCode(dataList.getReferenceNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setTrackNo(dataList.getTrackingNo());
-                    thirdWarehouseQueryFbaOutboundResponse.setStatus(dataList.getStatus().toString());
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    Calendar now = Calendar.getInstance();
-                    String delievery = sdf.format(now.getTime());
-                    String isoFormatStr = delievery.replace(" ", "T");
-                    thirdWarehouseQueryFbaOutboundResponse.setDeliveryTimeStr(isoFormatStr);
-                    thirdWarehouseQueryFbaOutboundResponse.setErrorReason(dataList.getErrorReason());
-                    thirdWarehouseQueryFbaOutboundResponse.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
-                    thirdWarehouseQueryFbaOutboundResponses.add(thirdWarehouseQueryFbaOutboundResponse);
+                    thirdWarehouseQueryFbaOutboundResponses.add(buildQueryFbaOutboundResponse(dataList, false));
                 }
                 return success(thirdWarehouseQueryFbaOutboundResponses);
             } else {
@@ -309,6 +290,77 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             }
         }
         return !thirdWarehouseQueryFbaOutboundResponses.isEmpty() ? success(thirdWarehouseQueryFbaOutboundResponses) : failure(response.getMessage());
+    }
+
+    @Override
+    protected ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(ThirdWarehouseQueryFbaOutboundPageReq req) {
+        OverseasOutboundQueryRequest queryRequest = new OverseasOutboundQueryRequest();
+        queryRequest.setStartCreateTime(req.getStartCreateTime());
+        queryRequest.setEndCreateTime(req.getEndCreateTime());
+        queryRequest.setStartUpdateTime(req.getStartUpdateTime());
+        queryRequest.setEndUpdateTime(req.getEndUpdateTime());
+        queryRequest.setCommonParam(CommonRequest.builder()
+                .pageParam(PageRequest.builder()
+                        .pageNum(Objects.nonNull(req.getPageNum()) ? req.getPageNum() : 1)
+                        .pageSize(Objects.nonNull(req.getPageSize()) ? req.getPageSize() : 100)
+                        .build())
+                .build());
+        log.warn(getPlatForm().getName() + "分页查询b2b出库单请求:{}", JSONUtil.toJsonStr(queryRequest));
+        OverseasOutboundQueryResponse response = zhongbaoService.queryOutboundBill(queryRequest);
+        log.warn(getPlatForm().getName() + "分页查询b2b出库单结果:{}", JSONUtil.toJsonStr(response));
+        if (Objects.isNull(response)) {
+            return failure("众包查询B2B出库单响应为空");
+        }
+        if (!StringUtils.equals(response.getCode(), "20000") || !response.isSuccess()) {
+            return failure(response.getMessage());
+        }
+        ThirdWarehouseQueryFbaOutboundPageResponse pageResponse = new ThirdWarehouseQueryFbaOutboundPageResponse();
+        OverseasOutboundQueryResponse.ResponseData responseData = response.getResponseData();
+        if (Objects.isNull(responseData)) {
+            pageResponse.setList(Collections.emptyList());
+            return success(pageResponse);
+        }
+        pageResponse.setPageNum(responseData.getPageNum());
+        pageResponse.setPageSize(responseData.getPageSize());
+        pageResponse.setTotalCount(responseData.getTotalCount());
+        pageResponse.setTotalPage(responseData.getTotalPage());
+        List<ThirdWarehouseQueryFbaOutboundResponse> list = new ArrayList<>();
+        if (CollUtil.isNotEmpty(responseData.getList())) {
+            for (OverseasOutboundQueryResponse.DataList dataList : responseData.getList()) {
+                list.add(buildQueryFbaOutboundResponse(dataList, true));
+            }
+        }
+        pageResponse.setList(list);
+        return success(pageResponse);
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildQueryFbaOutboundResponse(OverseasOutboundQueryResponse.DataList dataList, boolean rawStatus) {
+        ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+        response.setOrderType("B2B");
+        response.setPlatformOrderCode(dataList.getOrderNo());
+        response.setSwOrderNumber(dataList.getOrderNo());
+        response.setCode(dataList.getReferenceNo());
+        response.setTrackNo(dataList.getTrackingNo());
+        response.setPlatformOriginalStatus(String.valueOf(dataList.getStatus()));
+        response.setStatus(rawStatus
+                ? String.valueOf(dataList.getStatus())
+                : ZhongBaoB2BDeliveryStatusEnum.getErpOrderStatus(String.valueOf(dataList.getStatus())));
+        response.setPlatformCreateTimeStr(dataList.getPublishTime());
+        response.setPlatformUpdateTimeStr(dataList.getOutboundTime());
+        if (Objects.nonNull(dataList.getOpenB2b())) {
+            response.setWarehouseCode(dataList.getOpenB2b().getReceiveWarehouseCode());
+        }
+        if (rawStatus) {
+            response.setDeliveryTimeStr(dataList.getOutboundTime());
+        } else {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Calendar now = Calendar.getInstance();
+            String delievery = sdf.format(now.getTime());
+            response.setDeliveryTimeStr(delievery.replace(" ", "T"));
+        }
+        response.setErrorReason(dataList.getErrorReason());
+        response.setPlatform(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode());
+        return response;
     }
 
     @Override
@@ -357,11 +409,15 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         Set<String> skuIds = new HashSet<>();
         B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.getById(createOutboundReq.getSourceId());
         if (Objects.nonNull(b2bThirdDelivery)) {
-            LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
             overseasOutboundCreateRequest.setShippingMethodCode(b2bThirdDelivery.getLogisticsChannelCode());
-            if (Objects.nonNull(logisticsChannel)) {
-                overseasOutboundCreateRequest.setIsSign(logisticsChannel.getIsApiSign() ? 1 : -1);
-                overseasOutboundCreateRequest.setIsInsure(logisticsChannel.getIsApiInsurance() ? 1 : -1);
+            overseasOutboundCreateRequest.setIsSign(-1);
+            overseasOutboundCreateRequest.setIsInsure(-1);
+            if (StringUtils.isNotBlank(b2bThirdDelivery.getLogisticsChannelId())) {
+                LogisticsChannelEntity logisticsChannel = logisticsFeign.getChannelById(b2bThirdDelivery.getLogisticsChannelId());
+                if (Objects.nonNull(logisticsChannel)) {
+                    overseasOutboundCreateRequest.setIsSign(Boolean.TRUE.equals(logisticsChannel.getIsApiSign()) ? 1 : -1);
+                    overseasOutboundCreateRequest.setIsInsure(Boolean.TRUE.equals(logisticsChannel.getIsApiInsurance()) ? 1 : -1);
+                }
             }
 
             //取订单金额和汇率（明细行取第一行汇率）换算成人民币金额，在取系统最新美元汇率换算成美元
@@ -498,8 +554,11 @@ public class ZhongBaoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<OverseasOutboundCreateRequest.AttachmentOpenDTOs> attachments = new ArrayList<>();
         if (CharSequenceUtil.isNotBlank(createOutboundReq.getFileBase64())
                 && CharSequenceUtil.isNotBlank(createOutboundReq.getFileUrl())) {
-            int lastSlashIndex = createOutboundReq.getFileUrl().lastIndexOf('/');
-            String fileName = createOutboundReq.getFileUrl().substring(lastSlashIndex + 1);
+            String fileName = createOutboundReq.getFileName();
+            if (CharSequenceUtil.isBlank(fileName)) {
+                int lastSlashIndex = createOutboundReq.getFileUrl().lastIndexOf('/');
+                fileName = createOutboundReq.getFileUrl().substring(lastSlashIndex + 1);
+            }
 
             attachments.add(OverseasOutboundCreateRequest.AttachmentOpenDTOs.builder()
                     .attachmentType("OTHER")

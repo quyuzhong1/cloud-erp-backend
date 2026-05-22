@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
@@ -1503,7 +1504,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         //根据ids查询
         List<SupplierEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -1520,6 +1522,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
             revokeDTO.setUserId(userInfo.getUid());

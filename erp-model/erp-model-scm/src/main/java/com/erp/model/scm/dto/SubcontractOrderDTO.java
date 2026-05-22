@@ -472,7 +472,6 @@ public class SubcontractOrderDTO implements Serializable {
         /**
         * 来源id
         */
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
         private String sourceId;
         /**
         * 来源类型
@@ -482,7 +481,6 @@ public class SubcontractOrderDTO implements Serializable {
         /**
         * 来源编码
         */
-        @Size(max = 50,message = "来源编码最大长度不能超过50位")
         private String sourceCode;
 
     }
@@ -770,6 +768,10 @@ public class SubcontractOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class GeneratePoAddDTO extends GeneratePoDTO{
 
+        /**
+         * 类型
+         */
+        private String type;
         /**
          * skuId
          */

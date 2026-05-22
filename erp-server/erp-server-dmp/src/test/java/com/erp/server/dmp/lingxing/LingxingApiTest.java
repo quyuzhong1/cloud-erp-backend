@@ -21,6 +21,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.third.lingxing.dto.*;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,6 +33,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
@@ -221,5 +227,56 @@ public class LingxingApiTest {
         Result<Object> result = LingxingApiUtils.postRequestDataAndRetry("pb/mp/order/v2/list", requestMap);
         System.out.println("响应报文");
         System.out.println(JSONUtil.toJsonStr(result));
+    }
+
+    @Test
+    public void shipment(){
+        TreeMap<String, Object> treeMap = new TreeMap<>();
+        treeMap.put("sid", "140,141,142,186,168,220,221,222,223,224,225,226,227,228,229,231,232,233,213,216,217,218,219,215,144,187,188,210,134,119,120,121,122,123,138,156,171,200,201,189,190,191,192,193,194,195,196,126,108,135,214,151,157,158,159,160,161,162,163,173,202,207,205,153,117,175,176,208,125,174,230,204,118,101,107,133,172,206,109,143,185,209,102,103,104,105,106,137,164,170,198,199,112,113,114,115,116,139,155,177,178,197,179,180,149,110,111,211,212,154,166,181,203,124");
+        //treeMap.put("sid","213");
+        treeMap.put("start_date", "2026-01-01");
+        treeMap.put("end_date", "2026-02-10");
+        treeMap.put("shipment_id", "FBA15LBNC9Y9");
+        Result<List<Object>> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FBA_SHIPMENT_LIST_RUI, treeMap);
+        Object data = result.getData();
+        System.out.println("结果");
+        System.out.println(data);
+        // 文件路径
+        String filePath = System.getProperty("user.home") + "/Desktop/awd.txt";
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            mapper.writeValue(new File(filePath), data);
+            System.out.println("对象已以JSON格式保存到桌面: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void shipmentId() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        //读取桌面上的 awd.txt 文件
+        String desktopPath = System.getProperty("user.home") + "/Desktop/awd.txt";
+        String content = new String(Files.readAllBytes(Paths.get(desktopPath)));
+
+        //解析 JSON
+        JsonNode rootNode = mapper.readTree(content);
+
+        //检查是否存在 "list" 数组
+        if (rootNode.has("list") && rootNode.get("list").isArray()) {
+            JsonNode listNode = rootNode.get("list");
+
+            //遍历 "list" 数组
+            for (JsonNode item : listNode) {
+                //检查 is_sta=1
+                if (item.has("is_sta") && item.get("is_sta").asInt() == 1) {
+                    //输出 shipment_id
+                    if (item.has("shipment_id")) {
+                        System.out.println(item.get("shipment_id").asText());
+                    }
+                }
+            }
+        }
     }
 }

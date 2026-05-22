@@ -3,7 +3,9 @@ package com.erp.server.plm.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.RequestPermissions;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -942,6 +944,23 @@ public class ProductDetailController extends BaseController {
         return success(true);
     }
 
+    /**
+     * excel导出产品信息（全）
+     *
+     * @param productSkuExcelDTO productSkuExcelDTO
+     * @return com.common.core.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/10/9 11:49
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息（全）")
+    @PostMapping(value = "/exportProductAll")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:exportAll", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    public ApiResult<Boolean> exportProductAll(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+        productDetailService.exportProductAll(productSkuExcelDTO, response);
+        return success(true);
+    }
+
 
     @PostMapping(value = "/taskRefSku")
     public ApiResult<List<ProductDetailEntity>> getTaskRefSku(@RequestBody @Validated BaseIdDTO dto) {
@@ -1247,7 +1266,7 @@ public class ProductDetailController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO cancelResult;
             try {
-                cancelResult = productDetailService.cancelProcess(id);
+                cancelResult = productDetailService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("产品信息撤回流程失败",e);
                 ProductDetailEntity entity = productDetailService.getById(id);

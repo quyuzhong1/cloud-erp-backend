@@ -117,15 +117,6 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         private String dictPlatform;
         private String dictPlatformName;
-        /**
-         * 所有供应商 ： true
-         */
-        private Boolean isAllSupplier = false;
-
-        /**
-         * 所有渠道 ： true
-         */
-        private Boolean isAllChannel = false;
 
         /**
          * 明细
@@ -190,7 +181,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
         * 物流渠道id
         */
-//        @NotBlank(message = "物流渠道id不能为空")
+        @NotBlank(message = "物流渠道id不能为空")
         @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
         private String logisticsChannelId;
 
@@ -218,21 +209,21 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         /**
         * 第三方物流商名称
         */
-//        @NotBlank(message = "第三方物流商名称不能为空")
-        @Size(max = 100,message = "第三方物流商名称最大长度不能超过100位")
+//        @NotBlank(message = "查询物流商(中文)不能为空")
+//        @Size(max = 100,message = "第三方物流商名称最大长度不能超过100位")
         private String thirdSupplierName;
 
         /**
         * 平台类型(TRACK123)
         */
-        @NotBlank(message = "平台类型(TRACK123)不能为空")
-        @Size(max = 50,message = "平台类型(TRACK123)最大长度不能超过50位")
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 50,message = "平台类型最大长度不能超过50位")
         private String platformType;
 
         /**
         * 物流商id
         */
-//        @NotBlank(message = "物流商id不能为空")
+        @NotBlank(message = "物流商id不能为空")
         @Size(max = 19,message = "物流商id最大长度不能超过19位")
         private String logisticsSupplierId;
 
@@ -261,7 +252,7 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
         * 推送类型:sender=发件人,receiver=收件人,orderReceiver=订单收件人,shopSender=发件人-店铺,platformSender=发件人-平台
          * LogisticsThirdChannelRefPushTypeEnum
         */
-        @NotBlank(message = "推送类型不能为空")
+//        @NotBlank(message = "推送类型不能为空")
         @Size(max = 50,message = "推送类型最大长度不能超过50位")
         private String pushType;
 
@@ -270,15 +261,6 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          */
         @NotBlank(message = "平台不能为空")
         private String dictPlatform;
-        /**
-         * 所有供应商 ： true
-         */
-        private Boolean isAllSupplier = false;
-
-        /**
-         * 所有渠道 ： true
-         */
-        private Boolean isAllChannel= false;
     }
 
 
@@ -436,5 +418,33 @@ public class LogisticsThirdChannelRefDTO implements Serializable {
          * 是否禁用
          */
         private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListByTrackNosDTO {
+        /**
+         * 主键id列表
+         */
+        private String thirdRefId;
+
+        private String logisticsBillDetailId;
+
+        private String trackNo;
+
+        /**
+         * 平台类型(TRACK123)
+         * TrackPlatformTypeEnum
+         */
+        private String platformType;
+
+        /**
+         * 第三方渠道编码
+         */
+        private String thirdChannelCode;
+        /**
+         *
+         */
+        private String thirdSupplierCode;
     }
 }

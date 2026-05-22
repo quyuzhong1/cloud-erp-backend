@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -126,7 +127,7 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
     * @param ids
     * @return
     */
-    void cancelProcess(List<String> ids);
+    void cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
 
     /**
      * 导出Excel

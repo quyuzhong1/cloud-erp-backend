@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -9,6 +10,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -22,6 +25,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FileUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -35,6 +39,8 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO;
+import com.erp.model.wms.dto.SoB2bDeliveryInterceptDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
@@ -43,10 +49,25 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
+import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
+import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.B2BDeliveryPushTypeEnum;
+import com.erp.model.wms.enums.CancelStatusEnum;
+import com.erp.model.wms.enums.HandleResultEnum;
+import com.erp.model.wms.enums.InterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2bDeliveryInterceptStatusEnum;
+import com.erp.model.wms.enums.SoB2bDeliveryInterceptSourceTypeEnum;
+import com.erp.model.wms.enums.ThirdDeliveryStatusEnum;
+import com.erp.model.wms.enums.WarehouseOperationTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.wms.resolver.B2bThirdDeliveryStatusResolver;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -124,13 +145,19 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private DmpMqFeign dmpMqFeign;
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private SoB2bDeliveryInterceptService soB2bDeliveryInterceptService;
     @Lazy
     @Resource
     private B2bThirdDeliveryService service;
+    @Lazy
+    @Resource
+    private B2bThirdDeliveryService proxyService;
     @Resource
     private CfgThirdWarehouseOperationDescriptionService cfgThirdWarehouseOperationDescriptionService;
     @Resource
     private CfgThirdWarehouseOperationDescriptionValueService cfgThirdWarehouseOperationDescriptionValueService;
+
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
 
@@ -138,6 +165,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
+    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
     @Resource
     private TransactionTemplate transactionTemplate;
@@ -183,11 +212,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
      */
     private void sendB2bThirdWarehousePushTask(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
         entity = this.getById(entity.getId());
-        if (Objects.isNull(entity.getIsApiDelivery()) || !entity.getIsApiDelivery()) {
+        if (!isApiPushDelivery(entity)) {
             return;
         }
         //推送本地消息表
         DmpPushTaskEntity pushTaskEntity = syncB2bThirdWarehouseService.syncB2bThirdWarehouse(entity, detailEntityList, operate);
+        if (Objects.isNull(pushTaskEntity)) {
+            log.info("B2B三方发货单走本地消息模式，无需发送中台任务, code={}, operate={}", entity.getCode(), operate);
+            return;
+        }
         //推送中台
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -361,7 +394,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             String warehouseOperationType = e.getWarehouseOperationType();
-            if (CharSequenceUtil.isNotBlank(warehouseOperationType)) {
+            if (CharSequenceUtil.isBlank(warehouseOperationType)) {
+                e.setWarehouseOperationTypeName(CharSequenceUtil.EMPTY);
+            } else {
                 List<String> operationTypeList = Arrays.asList(warehouseOperationType.split(","));
                 List<String> operationTypeNameList = operationTypeList.stream().map(WarehouseOperationTypeEnum::getName).collect(Collectors.toList());
                 e.setWarehouseOperationTypeName(String.join(",", operationTypeNameList));
@@ -446,26 +481,46 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "id")
     public BatchResultDTO updateStatus(String id, String status, String errorMsg, String platformOrderCode, String remark, String trackNo, LocalDateTime deliveryTime) {
         B2bThirdDeliveryEntity old = this.getById(id);
         if (Objects.isNull(old)) {
             log.warn("单据【{}】不存在", id);
             return null;
         }
-        if (status.equals(old.getStatus())) {
+        boolean statusChanged = !Objects.equals(status, old.getStatus());
+        boolean shouldGenerateOutstock = ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(status)
+                && isMissingSoOutstock(old);
+        boolean shouldClearErrorMessage = statusChanged
+                && !ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(status)
+                && CharSequenceUtil.isNotBlank(old.getErrorMessage())
+                && CharSequenceUtil.isBlank(errorMsg);
+        boolean fieldChanged = shouldClearErrorMessage
+                || isFieldValueChanged(old.getPlatformOrderCode(), platformOrderCode)
+                || isFieldValueChanged(old.getRemark(), remark)
+                || isFieldValueChanged(old.getTrackNo(), trackNo)
+                || isFieldValueChanged(old.getErrorMessage(), errorMsg)
+                || (Objects.nonNull(deliveryTime) && !Objects.equals(old.getDeliveryTime(), deliveryTime));
+        if (!statusChanged && !fieldChanged && !shouldGenerateOutstock) {
             return null;
         }
-        this.lambdaUpdate().set(B2bThirdDeliveryEntity::getStatus, status)
-                .set(CharSequenceUtil.isNotBlank(errorMsg), B2bThirdDeliveryEntity::getErrorMessage, errorMsg)
-                .set(CharSequenceUtil.isNotBlank(platformOrderCode), B2bThirdDeliveryEntity::getPlatformOrderCode, platformOrderCode)
-                .set(CharSequenceUtil.isNotBlank(remark), B2bThirdDeliveryEntity::getRemark, remark)
-                .set(CharSequenceUtil.isNotBlank(trackNo), B2bThirdDeliveryEntity::getTrackNo, trackNo)
-                .set(Objects.nonNull(deliveryTime), B2bThirdDeliveryEntity::getDeliveryTime, deliveryTime)
-                .eq(B2bThirdDeliveryEntity::getId, id).update();
-        B2bThirdDeliveryEntity newEntity = this.getById(id);
-        operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "更新操作");
+        if (statusChanged || fieldChanged) {
+            this.lambdaUpdate()
+                    .set(statusChanged, B2bThirdDeliveryEntity::getStatus, status)
+                    .set(CharSequenceUtil.isNotBlank(errorMsg), B2bThirdDeliveryEntity::getErrorMessage, errorMsg)
+                    .set(shouldClearErrorMessage, B2bThirdDeliveryEntity::getErrorMessage, CharSequenceUtil.EMPTY)
+                    .set(CharSequenceUtil.isNotBlank(platformOrderCode), B2bThirdDeliveryEntity::getPlatformOrderCode, platformOrderCode)
+                    .set(CharSequenceUtil.isNotBlank(remark), B2bThirdDeliveryEntity::getRemark, remark)
+                    .set(CharSequenceUtil.isNotBlank(trackNo), B2bThirdDeliveryEntity::getTrackNo, trackNo)
+                    .set(Objects.nonNull(deliveryTime), B2bThirdDeliveryEntity::getDeliveryTime, deliveryTime)
+                    .eq(B2bThirdDeliveryEntity::getId, id).update();
+            B2bThirdDeliveryEntity newEntity = this.getById(id);
+            operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "更新操作");
+        }
+        if (!statusChanged && !shouldGenerateOutstock) {
+            return null;
+        }
         if (ThirdDeliveryStatusEnum.FAILED.getCode().equals(status) || ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(status)) {
             //冻结库存释放
             this.rollbackFreezeVirtualInventory(old);
@@ -483,6 +538,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         return null;
+    }
+
+    private boolean isMissingSoOutstock(B2bThirdDeliveryEntity entity) {
+        return Objects.nonNull(entity)
+                && CharSequenceUtil.isNotBlank(entity.getCode())
+                && Objects.isNull(soOutstockService.getBySourceCode(entity.getCode()));
     }
 
     /**
@@ -554,21 +615,26 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "id")
     public BatchResultDTO deliveryIntercept(String id, String remark) {
         B2bThirdDeliveryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "B2B三方发货单");
         }
-        //只有待发货允许发货拦截
-        if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
+        // 只有待发货、异常订单允许发货拦截
+        if (!canStartDeliveryIntercept(entity.getStatus())) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_INTERCEPT_ONLY_WAIT_SHIPPED);
         }
-        if (entity.getIsApiDelivery()) {
-            //调三方仓
-            sendB2bThirdWarehousePushTask(entity, null, SyncOperateEnum.OPERATE_INVALID.getCode());
-            updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
+        if (isApiPushDelivery(entity)) {
+            createB2bDeliveryIntercept(entity, remark, Boolean.TRUE);
+            ThirdWarehouseCancelFbaOutboundReq cancelReq = BeanUtil.toBean(syncB2bThirdWarehouseService.newSyncDataToThirdWarehouseCancel(entity), ThirdWarehouseCancelFbaOutboundReq.class);
+            proxyService.cancelFbaOutbound(cancelReq);
+            BatchResultDTO resultDTO = buildDeliveryInterceptResult(id, entity.getCode());
+            String msg = CharSequenceUtil.format("用户【{}】同步发起发货拦截，结果：{}", UserContext.getDefaultLoginUser().getUserName(), resultDTO.getMsg());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "发货拦截");
+            return resultDTO;
         } else {
-            //直接拦截成功
+            // 手工发货类型不生成B2B拦截单，直接取消发货
             updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", "", "", "", null);
             String msg = CharSequenceUtil.format("用户【{}】提交发货拦截申请成功,拦截成功", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "发货拦截");
@@ -576,20 +642,50 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return BatchResultDTO.success(id, entity.getCode(), "提交发货拦截成功");
     }
 
+    private BatchResultDTO buildDeliveryInterceptResult(String id, String code) {
+        SoB2bDeliveryInterceptEntity interceptEntity = soB2bDeliveryInterceptService.getLatestBySourceId(id);
+        if (Objects.nonNull(interceptEntity)
+                && SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(interceptEntity.getHandleStatus())) {
+            if (HandleResultEnum.SUCCESS.getCode().equals(interceptEntity.getHandleResult())) {
+                return BatchResultDTO.success(id, code, "操作成功");
+            }
+            if (HandleResultEnum.FAILURE.getCode().equals(interceptEntity.getHandleResult())) {
+                String msg = CharSequenceUtil.blankToDefault(interceptEntity.getHandleRemark(), "发货拦截失败");
+                return BatchResultDTO.fail(id, code, msg);
+            }
+        }
+
+        B2bThirdDeliveryEntity latestEntity = this.getById(id);
+        if (Objects.nonNull(latestEntity)) {
+            if (ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(latestEntity.getStatus())) {
+                return BatchResultDTO.success(id, code, "操作成功");
+            }
+            if (ThirdDeliveryStatusEnum.INTERCEPTING.getCode().equals(latestEntity.getStatus())) {
+                String msg = Objects.nonNull(interceptEntity) && CharSequenceUtil.isNotBlank(interceptEntity.getHandleRemark())
+                        ? interceptEntity.getHandleRemark()
+                        : "操作成功，等待拦截结果";
+                return BatchResultDTO.success(id, code, msg);
+            }
+            String msg = CharSequenceUtil.blankToDefault(latestEntity.getErrorMessage(), "发货拦截失败");
+            return BatchResultDTO.fail(id, code, msg);
+        }
+        return BatchResultDTO.fail(id, code, "发货拦截失败");
+    }
+
     @Override
     public BatchResultDTO manualDelivery(B2bThirdDeliveryEntity entity) {
-        if (entity.getIsApiDelivery()) {
+        if (isApiPushDelivery(entity)) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_MANUAL_ONLY_B2B_DISABLED);
         }
         if (!ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_ONLY_WAIT_SHIPPED);
         }
         //更新状态为已发货 并生成出库单
-        BatchResultDTO resultDTO = service.updateStatus(entity.getId(), ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", "", entity.getRemark(), "", LocalDateTime.now());
+        BatchResultDTO resultDTO = proxyService.updateStatus(entity.getId(), ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", "", entity.getRemark(), "", LocalDateTime.now());
         if (Objects.nonNull(resultDTO) && resultDTO.getSuccess() && CharSequenceUtil.isNotBlank(resultDTO.getId())) {
             //提审销售出库单
             try {
-                service.submitApprove(resultDTO.getId());
+                proxyService.submitApprove(resultDTO.getId());
             } catch (Exception e) {
                 soOutstockService.updateRemarkById(resultDTO.getId(), "自动审核失败" + e.getMessage());
                 return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货成功:" + "自动审核失败" + e.getMessage());
@@ -626,48 +722,36 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         });
 
         XxlJobHelper.log("开始更新{}平台B2B三方仓发货单状态", providerCode);
-        if (OmsPlatformEnum.DA_MAI.getCode().equals(providerCode)) {
-            List<B2bThirdDeliveryEntity> list = lambdaQuery().in(B2bThirdDeliveryEntity::getCode, codeList).list();
-            if (CollUtil.isEmpty(list)) {
-                return;
+        List<B2bThirdDeliveryEntity> list = lambdaQuery().in(B2bThirdDeliveryEntity::getCode, codeList).list();
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (B2bThirdDeliveryEntity entity : list) {
+            ThirdWarehouseQueryFbaOutboundResponse response = responses.stream().filter(r -> r.getCode().equals(entity.getCode())).findFirst().orElse(null);
+            if (Objects.isNull(response)) {
+                continue;
             }
-            for (B2bThirdDeliveryEntity entity : list) {
-                ThirdWarehouseQueryFbaOutboundResponse response = responses.stream().filter(r -> r.getCode().equals(entity.getCode())).findFirst().orElse(null);
-                if (Objects.nonNull(response)) {
-                    try {
-                        this.handleResultData(entity.getId(), response);
-                    } catch (Exception e) {
-                        XxlJobHelper.log("更新B2B三方发货单状态失败,id={},code={},error={}", entity.getId(), entity.getCode(), e.getMessage(), e);
-                    }
-
-                }
+            try {
+                this.handleResultData(entity.getId(), response);
+            } catch (Exception e) {
+                XxlJobHelper.log("更新{}平台B2B三方发货单状态失败,id={},code={},error={}", providerCode, entity.getId(), entity.getCode(), e.getMessage(), e);
+                log.error("更新{}平台B2B三方发货单状态失败,id={},code={}", providerCode, entity.getId(), entity.getCode(), e);
             }
-        } else if (OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerCode)){
-            XxlJobHelper.log("执行众包更新逻辑...");
-            List<B2bThirdDeliveryEntity> list = lambdaQuery().in(B2bThirdDeliveryEntity::getCode, codeList).list();
-            if (CollUtil.isEmpty(list)) {
-                return;
-            }
-            for (B2bThirdDeliveryEntity entity : list) {
-                ThirdWarehouseQueryFbaOutboundResponse response = responses.stream().filter(r -> r.getCode().equals(entity.getCode())).findFirst().orElse(null);
-                if (Objects.nonNull(response)) {
-                    try {
-                        this.handleZhongBaoResultData(entity.getId(), response);
-                    } catch (Exception e) {
-                        XxlJobHelper.log("更新众包B2B三方发货单状态失败,id={},code={},error={}", entity.getId(), entity.getCode(), e.getMessage(), e);
-                    }
-
-                }
-            }
-
-        } else {
-            XxlJobHelper.log("不支持的三方渠道,providerCode={}", providerCode);
         }
     }
 
     @Override
     public void handleResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response) {
-        XxlJobHelper.log("处理订单状态,id={},response={},", id, JSONUtil.toJsonStr(response));
+        log.info("处理B2B三方发货单状态,id={},response={}", id, JSONUtil.toJsonStr(response));
+        B2bThirdDeliveryEntity entity = this.getById(id);
+        if (Objects.isNull(entity)) {
+            log.warn("处理B2B三方发货单状态失败，单据不存在,id={}", id);
+            return;
+        }
+        if (Objects.isNull(response) || CharSequenceUtil.isBlank(response.getStatus())) {
+            log.warn("处理B2B三方发货单状态失败，返回状态为空,id={}", id);
+            return;
+        }
         //订单已取消直接返回
         /**
          * 以下状态自动变更为取消发货，有拦截标识时清空拦截标识，记录拦截成功
@@ -676,71 +760,94 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
          * PROBLEM：问题件
          */
         String deliveryTimeStr = response.getDeliveryTimeStr();
-        LocalDateTime deliveryTime = null;
-        if (StrUtil.isNotBlank(deliveryTimeStr)) {
-            deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        }
-        if (    response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD.getCode()) ||
-                response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.PROBLEM.getCode())) {
+        LocalDateTime deliveryTime = parseDeliveryTime(deliveryTimeStr);
+        if (ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(response.getStatus())) {
+            if (!canTransitToCancelDelivery(entity.getStatus())) {
+                log.info("忽略取消发货状态回写,id={},code={},currentStatus={},thirdStatus={}", id, response.getCode(), entity.getStatus(), response.getStatus());
+                return;
+            }
             //拦截成功，更新B2B三方发货单状态 取消发货
-            service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
-        } else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.SUCCESS.getCode())) {
+            proxyService.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+            soB2bDeliveryInterceptService.handleResultBySourceId(id, HandleResultEnum.SUCCESS.getCode(), "海外仓取消出库成功", response.getTrackNo(), "");
+        } else if (ThirdDeliveryStatusEnum.SHIPPED.getCode().equals(response.getStatus())) {
+            if (!canTransitToShipped(entity.getStatus())) {
+                log.info("忽略已发货状态回写,id={},code={},currentStatus={},thirdStatus={}", id, response.getCode(), entity.getStatus(), response.getStatus());
+                return;
+            }
             //已发货，更新B2B三方发货单状态 生成销售出库单
-            BatchResultDTO resultDTO = service.updateStatus(id, ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+            BatchResultDTO resultDTO = proxyService.updateStatus(id, ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+            String soOutstockCode = "";
             if (Objects.nonNull(resultDTO) && resultDTO.getSuccess() && CharSequenceUtil.isNotBlank(resultDTO.getId())) {
                 //提审销售出库单
                 try {
-                    service.submitApprove(resultDTO.getId());
+                    proxyService.submitApprove(resultDTO.getId());
+                    SoOutstockEntity soOutstockEntity = soOutstockService.getById(resultDTO.getId());
+                    soOutstockCode = Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getCode() : "";
                 } catch (Exception e) {
                     soOutstockService.updateRemarkById(resultDTO.getId(), "自动审核失败" + e.getMessage());
                 }
             }
-        } else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.BLOCK.getCode()) ||
-                response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.DISCARD_PROCESSED.getCode())) {
+            if (ThirdDeliveryStatusEnum.INTERCEPTING.getCode().equals(entity.getStatus())) {
+                soB2bDeliveryInterceptService.handleResultBySourceId(id, HandleResultEnum.FAILURE.getCode(), "海外仓已出库，拦截失败", response.getTrackNo(), soOutstockCode);
+            }
+        } else if (ThirdDeliveryStatusEnum.INTERCEPTING.getCode().equals(response.getStatus())) {
+            if (!canTransitToIntercepting(entity.getStatus())) {
+                log.info("忽略拦截中状态回写,id={},code={},currentStatus={},thirdStatus={}", id, response.getCode(), entity.getStatus(), response.getStatus());
+                return;
+            }
             //拦截中 记录拦截标识
-            service.updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
-        }  else if (response.getStatus().equals(B2BThirdDeliveryCancelResultEnum.EXCEPTION.getCode())) {
-
-            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
+            proxyService.updateStatus(id, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+        }  else if (ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(response.getStatus())) {
+            if (!canTransitToExceptionOrder(entity.getStatus())) {
+                log.info("忽略异常订单状态回写,id={},code={},currentStatus={},thirdStatus={}", id, response.getCode(), entity.getStatus(), response.getStatus());
+                return;
+            }
+            String errorMsg = getThirdWarehouseErrorMsg(response);
+            proxyService.updateStatus(id, ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(), errorMsg, response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
+            soB2bDeliveryInterceptService.handleResultBySourceId(id, HandleResultEnum.FAILURE.getCode(), CharSequenceUtil.blankToDefault(errorMsg, "海外仓出库异常"), response.getTrackNo(), "");
+            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息:【" + errorMsg + "】", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
         } else {
-            XxlJobHelper.log("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
+            log.info("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
         }
     }
-
-
-    public void handleZhongBaoResultData(String id, ThirdWarehouseQueryFbaOutboundResponse response) {
-        XxlJobHelper.log("处理众包订单状态,id={},response={},", id, JSONUtil.toJsonStr(response));
-        String deliveryTimeStr = response.getDeliveryTimeStr();
-        LocalDateTime deliveryTime = null;
-        if (StrUtil.isNotBlank(deliveryTimeStr)) {
-            deliveryTime = LocalDateTime.parse(deliveryTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    @Override
+    @DistributeLocker(keyName = "dto.referenceNo")
+    public void syncOutboundStatus(PlatformOutboundDTO dto) {
+        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getReferenceNo())) {
+            return;
         }
-        if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.CANCEL.getCode().toString(),response.getStatus())) {
-            //-1=>已取消：数大臣自动发起拦截，走拦截逻辑接口取消订单；
-            // 如果订单已经是拦截中，则直接拦截成功，发货单变更为取消发货，订单变更为审核不通过-待配货
-            service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode().toString(),response.getStatus())){
-            //-2=>异常：数大臣单据不做状态变更，但是三方发货单需要增加操作日志记录详情：海外仓出库异常，系统应拦截，
-            // 为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息【errorReason】
-            operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息:【" + response.getErrorReason() + "】", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.OUTSTOCK.getCode().toString(),response.getStatus())){
-            //5=>已出库：数大臣自动变更B2B三方发货单和订单已发货，并生成出库单
-            BatchResultDTO resultDTO = service.updateStatus(id, ThirdDeliveryStatusEnum.SHIPPED.getCode(), "", response.getPlatformOrderCode(), "", response.getTrackNo(), deliveryTime);
-            if (Objects.nonNull(resultDTO) && resultDTO.getSuccess() && CharSequenceUtil.isNotBlank(resultDTO.getId())) {
-                //提审销售出库单
-                try {
-                    service.submitApprove(resultDTO.getId());
-                } catch (Exception e) {
-                    soOutstockService.updateRemarkById(resultDTO.getId(), "自动审核失败" + e.getMessage());
-                }
-            }
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.DRAFT.getCode().toString(),response.getStatus())
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVING.getCode().toString(),response.getStatus())
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVE.getCode().toString(),response.getStatus())
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.WAIT_OUTSTOCK.getCode().toString(),response.getStatus())){
-            //1=>草稿,2=>待审核,3=>已审核,4=>待出库：数大臣单据不做状态变更
-            XxlJobHelper.log("不操作的状态,id={},code={},status={}", id, response.getCode(), response.getStatus());
+        String referenceNo = dto.getReferenceNo();
+        if (!referenceNo.startsWith(BusinessNoConstant.SFFH)) {
+            log.warn("B2B三方仓出库状态消息忽略，referenceNo={}", referenceNo);
+            return;
         }
+        B2bThirdDeliveryEntity entity = this.getLatestByCode(referenceNo);
+        if (Objects.isNull(entity)) {
+            log.warn("未找到B2B三方发货单，referenceNo={}", referenceNo);
+            return;
+        }
+        ThirdWarehouseQueryFbaOutboundResponse response = new ThirdWarehouseQueryFbaOutboundResponse();
+        response.setCode(referenceNo);
+        String providerCode = CharSequenceUtil.blankToDefault(dto.getProvider(), dto.getPlatform());
+        response.setPlatform(providerCode);
+        response.setPlatformOrderCode(dto.getOrderCode());
+        response.setTrackNo(dto.getTrackNo());
+        response.setPlatformOriginalStatus(dto.getThirdOrderStatus());
+        response.setStatus(resolveMqSyncStatus(providerCode, dto));
+        response.setErrorType(dto.getAbnormalProblemReason());
+        response.setErrorReason(dto.getAbnormalProblemReason());
+        response.setDeliveryTimeStr(Objects.nonNull(dto.getOutBoundTime()) ? dto.getOutBoundTime().toString() : null);
+        if (CharSequenceUtil.isBlank(response.getStatus())) {
+            log.info("B2B三方仓出库状态消息忽略，ERP状态为空，referenceNo={}, provider={}, thirdOrderStatus={}",
+                    referenceNo, dto.getProvider(), dto.getThirdOrderStatus());
+            return;
+        }
+        this.handleResultData(entity.getId(), response);
+    }
+
+    private String resolveMqSyncStatus(String providerCode, PlatformOutboundDTO dto) {
+        String resolvedStatus = B2bThirdDeliveryStatusResolver.resolveErpStatus(providerCode, dto.getThirdOrderStatus());
+        return CharSequenceUtil.blankToDefault(resolvedStatus, dto.getOrderStatus());
     }
 
 
@@ -750,6 +857,17 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return Collections.emptyList();
         }
         return lambdaQuery().in(B2bThirdDeliveryEntity::getSoId, soIds).ne(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).list();
+    }
+
+    @Override
+    public B2bThirdDeliveryEntity getLatestByCode(String code) {
+        if (CharSequenceUtil.isBlank(code)) {
+            return null;
+        }
+        return lambdaQuery().eq(B2bThirdDeliveryEntity::getCode, code)
+                .orderByDesc(B2bThirdDeliveryEntity::getCreateTime)
+                .last("limit 1")
+                .one();
     }
 
     @Override
@@ -767,13 +885,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public void createFbaOutbound(ThirdWarehouseCreateFbaOutboundReq req) {
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = this.getById(sourceId);
         if (Objects.isNull(entity)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
             return;
         }
         if (!ThirdDeliveryStatusEnum.CREATING.getCode().equals(entity.getStatus())) {
@@ -795,29 +911,32 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return true;
         }).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(items)){
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), ApiError.COMMON_NO_DELIVERY_SKU.getMsg(), "", "", "", null);
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), ApiError.COMMON_NO_DELIVERY_SKU.getMsg(), "", "", "", null);
             return;
         }
         req.setItems(items);
 
-        ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
-        if (Objects.isNull(service)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
+        if (Objects.isNull(thirdWarehouseService)) {
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
         }
-        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(service, req, 0);
+        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(thirdWarehouseService, req, entity.getPlatformOrderCode(), 0);
         if (fbaOutboundBill.isSuccess()) {
             // 创建成功
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "", null);
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "", null);
             return;
         }
         // 创建失败，尝试查询是否实际已创建成功
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        if (CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode())) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(entity.getPlatformOrderCode()));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
 
-        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
+        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult = thirdWarehouseService.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
 
         if(Objects.equals(PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode(),req.getThirdWarehouseProvideCode())) {
             B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
@@ -825,7 +944,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 updateZhongBaoStatus(sourceId, queryResult.getData().get(0).getStatus(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
                 return;
             } else {
-                updateZhongBaoStatus(sourceId, ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(), fbaOutboundBill.getMsg(), "", "", "",null);
+                updateZhongBaoStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", "",null);
                 return;
             }
         }
@@ -833,10 +952,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryDTO.ConvertDTO convertDTO = convertData(queryResult);
         if (CharSequenceUtil.isNotBlank(convertDTO.getPlatformOrderCode())) {
             // 查询发现订单实际已创建成功
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", convertDTO.getPlatformOrderCode(), "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
         } else {
             // 确认创建失败
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), fbaOutboundBill.getMsg(), "", "", convertDTO.getTrackNo(), convertDTO.getDeliveryTime());
         }
     }
 
@@ -860,28 +979,18 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return null;
         }
 
-        if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.CANCEL.getCode().toString(),status)) {
+        if (Objects.equals(ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(),status)) {
             //-1=>已取消：数大臣自动发起拦截，走拦截逻辑接口取消订单；
             // 如果订单已经是拦截中，则直接拦截成功，发货单变更为取消发货，订单变更为审核不通过-待配货
-            service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", status, "", status, deliveryTime);
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.EXCEPTION.getCode().toString(),status)){
+            service.updateStatus(id, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", platformOrderCode, remark, trackNo, deliveryTime);
+        }else if (Objects.equals(ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(),status)){
             //-2=>异常：数大臣单据不做状态变更，但是三方发货单需要增加操作日志记录详情：海外仓出库异常，系统应拦截，
             // 为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息【errorReason】
             operateLogService.addModuleOperateLog("海外仓出库异常，系统应拦截，为保证发货时效运营要求不予拦截，直接海外仓后台修改提交，异常信息:【" + errorMsg + "】", ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "出库异常");
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.OUTSTOCK.getCode().toString(),status)){
+        }else if (Objects.equals(ThirdDeliveryStatusEnum.SHIPPED.getCode(),status)){
             //5=>已出库：数大臣自动变更B2B三方发货单和订单已发货，并生成出库单
-            this.lambdaUpdate().set(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.SHIPPED.getCode())
-                    .set(CharSequenceUtil.isNotBlank(errorMsg), B2bThirdDeliveryEntity::getErrorMessage, errorMsg)
-                    .set(CharSequenceUtil.isNotBlank(platformOrderCode), B2bThirdDeliveryEntity::getPlatformOrderCode, platformOrderCode)
-                    .set(CharSequenceUtil.isNotBlank(remark), B2bThirdDeliveryEntity::getRemark, remark)
-                    .set(CharSequenceUtil.isNotBlank(trackNo), B2bThirdDeliveryEntity::getTrackNo, trackNo)
-                    .set(Objects.nonNull(deliveryTime), B2bThirdDeliveryEntity::getDeliveryTime, deliveryTime)
-                    .eq(B2bThirdDeliveryEntity::getId, id).update();
-            B2bThirdDeliveryEntity newEntity = this.getById(id);
-            operateLogService.addModuleOperateLogByObj(old, newEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), id, "更新操作");
-
-            BatchResultDTO resultDTO = this.generateB2bThirdDelivery(id);
-            if (resultDTO.getSuccess()) {
+            BatchResultDTO resultDTO = service.updateStatus(id, ThirdDeliveryStatusEnum.SHIPPED.getCode(), errorMsg, platformOrderCode, remark, trackNo, deliveryTime);
+            if (Objects.nonNull(resultDTO) && resultDTO.getSuccess()) {
                 String outstockId = resultDTO.getId();
                 SoOutstockEntity soOutstockEntity = soOutstockService.getById(outstockId);
                 if (Objects.isNull(soOutstockEntity)) {
@@ -889,13 +998,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 }
                 return BatchResultDTO.success(soOutstockEntity.getId(), soOutstockEntity.getCode(), "销售出库单生成");
             }
-        }else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.DRAFT.getCode().toString(),status)
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVING.getCode().toString(),status)
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.APPROVE.getCode().toString(),status)
-                || Objects.equals(ZhongBaoB2BDeliveryStatusEnum.WAIT_OUTSTOCK.getCode().toString(),status)){
+        }else if (Objects.equals(ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),status)
+                || Objects.equals(ThirdDeliveryStatusEnum.CREATING.getCode(),status)
+                || Objects.equals(ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),status)){
             //1=>草稿,2=>待审核,3=>已审核,4=>待出库：数大臣单据不做状态变更
             return BatchResultDTO.success();
-        } else if (Objects.equals(ZhongBaoB2BDeliveryStatusEnum.CREATE_FAIR.getCode().toString(),status)){
+        } else if (Objects.equals(ThirdDeliveryStatusEnum.FAILED.getCode(),status)){
             //zhongbao创建失败
             service.updateStatus(id, ThirdDeliveryStatusEnum.FAILED.getCode(), errorMsg, "", "", "", null);
             log.warn("三方接口创建失败,id【{}】", id);
@@ -905,7 +1013,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     private LocalDateTime getDeliveryTime(ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult) {
         if (queryResult.isSuccess() && CollUtil.isNotEmpty(queryResult.getData())) {
-            return LocalDateTime.parse(queryResult.getData().get(0).getDeliveryTimeStr(), DateTimeFormatter.ISO_DATE_TIME);
+            return parseDeliveryTime(queryResult.getData().get(0).getDeliveryTimeStr());
         }
         return null;
     }
@@ -925,9 +1033,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return null;
     }
 
-    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, final int retryCount) {
+    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, String knownPlatformOrderCode, final int retryCount) {
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        if (CharSequenceUtil.isNotBlank(knownPlatformOrderCode)) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(knownPlatformOrderCode));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
         ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
@@ -937,6 +1048,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
 
         try {
+            prepareCreateFbaOutboundAttachment(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
         } catch (Exception e) {
             log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
@@ -945,7 +1057,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 try {
                     log.info("{}秒后进行第{}次重试", RETRY_DELAY_SECONDS / 1000, retryCount + 2);
                     Thread.sleep(RETRY_DELAY_SECONDS);
-                    return createFbaOutboundBill(service, req, retryCount + 1);
+                    return createFbaOutboundBill(service, req, knownPlatformOrderCode, retryCount + 1);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     return ApiResult.error(-1, "重试被中断");
@@ -957,6 +1069,60 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    private void prepareCreateFbaOutboundAttachment(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
+        if (StrUtil.isNotBlank(req.getFileId())) {
+            return;
+        }
+        if (!needUploadAttachment(req.getThirdWarehouseProvideCode())) {
+            return;
+        }
+        if (StrUtil.isBlank(req.getFileUrl()) && StrUtil.isBlank(req.getFileName()) && StrUtil.isBlank(req.getFileBase64())) {
+            return;
+        }
+        if (StrUtil.isBlank(req.getFileBase64())) {
+            throw new ServiceException("B2B三方仓附件内容为空，无法上传附件");
+        }
+
+        ThirdWarehouseUploadFileReq uploadFileReq = new ThirdWarehouseUploadFileReq();
+        uploadFileReq.setAuthId(req.getAuthId());
+        uploadFileReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+        uploadFileReq.setOrderCode(req.getReferenceNo());
+        uploadFileReq.setFileData(req.getFileBase64());
+        uploadFileReq.setFileUrl(req.getFileUrl());
+        uploadFileReq.setFileName(req.getFileName());
+        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+         || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+            uploadFileReq.setFileType(getAttachmentExtension(req));
+            uploadFileReq.setModule("order_attach");
+        } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+            uploadFileReq.setFileType(GOOD_CANG_ORDER_ATTACHMENT);
+        }
+
+        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
+        if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
+            throw new ServiceException("上传B2B三方仓附件失败:{}", uploadFileResult.getMsg());
+        }
+        req.setFileId(String.valueOf(uploadFileResult.getData().getAttachId()));
+        if (PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+                || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
+            req.setFileType(getAttachmentExtension(req));
+        }
+    }
+
+    private boolean needUploadAttachment(String providerCode) {
+        return PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(providerCode)
+                || PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(providerCode);
+    }
+
+    private String getAttachmentExtension(ThirdWarehouseCreateFbaOutboundReq req) {
+        String fileType = FileUtil.getFileExtension(req.getFileName());
+        if (StrUtil.isNotBlank(fileType)) {
+            return fileType;
+        }
+        return FileUtil.getFileExtension(req.getFileUrl());
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -964,23 +1130,97 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         String sourceId = req.getSourceId();
         B2bThirdDeliveryEntity entity = this.getById(sourceId);
         if (Objects.isNull(entity)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_NOT_EXIST_GENERIC.getMsg(), req.getSourceCode()), "", "", "", null);
+            return;
+        }
+        String fallbackStatus = CharSequenceUtil.blankToDefault(entity.getStatus(), ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode());
+
+        ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
+        if (Objects.isNull(thirdWarehouseService)) {
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
+            return;
+        }
+        ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(thirdWarehouseService, req, 0);
+        if (!fbaOutboundBill.isSuccess()) {
+            // 创建失败
+            proxyService.updateStatus(sourceId, fallbackStatus, "", "", "", "", null);
+            String msg = "三方仓拦截请求失败：" + CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败");
+            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(), msg, entity.getTrackNo(), "");
             return;
         }
 
-        ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(req.getThirdWarehouseProvideCode());
-        if (Objects.isNull(service)) {
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
+        if (B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode().equalsIgnoreCase(fbaOutboundBill.getData())) {
+            proxyService.updateStatus(sourceId, fallbackStatus, "", "", "", "", null);
+            String msg = "三方仓已返回拦截失败："
+                    + CharSequenceUtil.blankToDefault(fbaOutboundBill.getMsg(), "海外仓取消出库失败");
+            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.FAILURE.getCode(),
+                    msg, entity.getTrackNo(), "");
             return;
         }
-        ApiResult<String> fbaOutboundBill = cancelFbaOutboundBill(service, req, 0);
-        if (fbaOutboundBill.isSuccess()) {
-            // 创建成功
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
-        } else {
-            // 创建失败
-            this.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", "", "", "", null);
+
+        if (B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode().equalsIgnoreCase(fbaOutboundBill.getData())) {
+            proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode(), "", req.getOrderCode(), "", entity.getTrackNo(), null);
+            soB2bDeliveryInterceptService.handleResultBySourceId(sourceId, HandleResultEnum.SUCCESS.getCode(), "海外仓取消出库成功", entity.getTrackNo(), "");
+            return;
         }
+
+        proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.INTERCEPTING.getCode(), "", "", "", "", null);
+        tryHandleCancelFbaOutboundResult(sourceId, thirdWarehouseService, req);
+    }
+
+    private void tryHandleCancelFbaOutboundResult(String sourceId, ThirdWarehouseService thirdWarehouseService, ThirdWarehouseCancelFbaOutboundReq req) {
+        if (CharSequenceUtil.isBlank(req.getErpOrderCode())) {
+            return;
+        }
+        ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
+        queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getErpOrderCode()));
+        if (CharSequenceUtil.isNotBlank(req.getOrderCode())) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(req.getOrderCode()));
+        }
+        queryOutboundReq.setAuthId(req.getAuthId());
+        queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+
+        ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryResult;
+        try {
+            queryResult = thirdWarehouseService.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
+        } catch (Exception e) {
+            log.warn("取消B2B三方出库后立即查询状态失败,sourceId={},erpOrderCode={},msg={}", sourceId, req.getErpOrderCode(), e.getMessage());
+            markCancelAcceptedQueryFailed(sourceId, e.getMessage());
+            return;
+        }
+        if (!queryResult.isSuccess() || CollUtil.isEmpty(queryResult.getData())) {
+            String queryMsg = Objects.nonNull(queryResult) ? queryResult.getMsg() : "";
+            markCancelAcceptedQueryFailed(sourceId, queryMsg);
+            return;
+        }
+        ThirdWarehouseQueryFbaOutboundResponse response = queryResult.getData().get(0);
+        if (Objects.isNull(response) || CharSequenceUtil.isBlank(response.getStatus())) {
+            markCancelAcceptedQueryFailed(sourceId, "查询结果为空");
+            return;
+        }
+        this.handleResultData(sourceId, response);
+    }
+
+    private String getThirdWarehouseErrorMsg(ThirdWarehouseQueryFbaOutboundResponse response) {
+        if (Objects.isNull(response)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return CharSequenceUtil.blankToDefault(response.getErrorReason(), response.getErrorType());
+    }
+
+    private void markCancelAcceptedQueryFailed(String sourceId, String queryErrorMsg) {
+        SoB2bDeliveryInterceptEntity entity = soB2bDeliveryInterceptService.getLatestBySourceId(sourceId);
+        if (Objects.isNull(entity) || SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            return;
+        }
+        String msg = CANCEL_ACCEPTED_QUERY_FAILED_MSG;
+        if (CharSequenceUtil.isNotBlank(queryErrorMsg)) {
+            msg = msg + "，查询失败原因：" + queryErrorMsg;
+        }
+        entity.setHandleRemark(msg);
+        soB2bDeliveryInterceptService.updateById(entity);
+        operateLogService.addModuleOperateLog("拦截请求已提交三方仓，但立即查询状态失败，备注：" + msg,
+                ModuleTypeEnum.SO_B2B_DELIVERY_INTERCEPT.getCode(), entity.getId(), "状态查询失败");
     }
 
     @Override
@@ -1163,5 +1403,118 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             b2bThirdDeliveryEntity.setCountryId(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryId() : "");
             b2bThirdDeliveryEntity.setCountryName(CollUtil.isNotEmpty(customerAddressEntities) ? customerAddressEntities.get(0).getCountryName() : "");
         }
+    }
+
+    private boolean canStartDeliveryIntercept(String currentStatus) {
+        return isOneOf(currentStatus,
+                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+    }
+
+    private boolean canTransitToShipped(String currentStatus) {
+        return isOneOf(currentStatus,
+                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(),
+                ThirdDeliveryStatusEnum.SHIPPED.getCode());
+    }
+
+    private boolean canTransitToCancelDelivery(String currentStatus) {
+        return isOneOf(currentStatus,
+                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(),
+                ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+    }
+
+    private boolean canTransitToIntercepting(String currentStatus) {
+        return isOneOf(currentStatus,
+                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode(),
+                ThirdDeliveryStatusEnum.INTERCEPTING.getCode());
+    }
+
+    private boolean canTransitToExceptionOrder(String currentStatus) {
+        return isOneOf(currentStatus,
+                ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(),
+                ThirdDeliveryStatusEnum.INTERCEPTING.getCode(),
+                ThirdDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+    }
+
+    private boolean isOneOf(String currentStatus, String... statusList) {
+        return Arrays.stream(statusList).anyMatch(status -> Objects.equals(status, currentStatus));
+    }
+
+    private boolean isFieldValueChanged(String oldValue, String newValue) {
+        return CharSequenceUtil.isNotBlank(newValue) && !Objects.equals(oldValue, newValue);
+    }
+
+    private boolean isApiPushDelivery(B2bThirdDeliveryEntity entity) {
+        if (Objects.isNull(entity)) {
+            return false;
+        }
+        if (CharSequenceUtil.isNotBlank(entity.getPushType())) {
+            return Objects.equals(B2BDeliveryPushTypeEnum.API.getCode(), entity.getPushType());
+        }
+        return Boolean.TRUE.equals(entity.getIsApiDelivery());
+    }
+
+    private void createB2bDeliveryIntercept(B2bThirdDeliveryEntity entity, String remark, Boolean isApiType) {
+        List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        SoB2bDeliveryInterceptDTO.AddDTO addDTO = new SoB2bDeliveryInterceptDTO.AddDTO();
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setSourceType(Boolean.TRUE.equals(isApiType) ? SoB2bDeliveryInterceptSourceTypeEnum.API.getCode() : SoB2bDeliveryInterceptSourceTypeEnum.MANUAL.getCode());
+        addDTO.setSoId(entity.getSoId());
+        addDTO.setSoCode(entity.getSoCode());
+        addDTO.setBillType(OrderTypeEnum.B2B.getCode());
+        addDTO.setThirdDeliveryCode(entity.getCode());
+        addDTO.setThirdWarehouseOrderCode(entity.getPlatformOrderCode());
+        addDTO.setLogisticsChannelId(entity.getLogisticsChannelId());
+        addDTO.setLogisticsChannelName(entity.getLogisticsChannelName());
+        addDTO.setTransportNo(entity.getTrackNo());
+        addDTO.setRemark(remark);
+        if (Boolean.TRUE.equals(isApiType)) {
+            addDTO.setHandleStatus(SoB2bDeliveryInterceptStatusEnum.WAIT_HANDLE.getStatus());
+        } else {
+            addDTO.setHandleStatus(SoB2bDeliveryInterceptStatusEnum.HANDLE.getStatus());
+            addDTO.setHandleResult(HandleResultEnum.SUCCESS.getCode());
+            addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+            addDTO.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
+            addDTO.setHandleUserId(UserContext.getDefaultLoginUser().getUid());
+            addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
+            addDTO.setHandleTime(LocalDateTime.now());
+        }
+        List<SoB2bDeliveryInterceptDetailDTO.AddDTO> detailDTOList = detailEntityList.stream().map(item -> {
+            SoB2bDeliveryInterceptDetailDTO.AddDTO detailDTO = new SoB2bDeliveryInterceptDetailDTO.AddDTO();
+            detailDTO.setSkuId(item.getDeliverySkuId());
+            detailDTO.setSkuNo(item.getDeliverySkuNo());
+            detailDTO.setDeliveryQty(item.getDeliveryQty());
+            detailDTO.setWarehouseId(entity.getDeliveryWarehouseId());
+            detailDTO.setWarehouseName(entity.getDeliveryWarehouseName());
+            detailDTO.setWarehouseLocation("");
+            detailDTO.setSourceDetailId(item.getId());
+            return detailDTO;
+        }).collect(Collectors.toList());
+        addDTO.setDetailList(detailDTOList);
+        soB2bDeliveryInterceptService.add(addDTO);
+    }
+
+    private LocalDateTime parseDeliveryTime(String deliveryTimeStr) {
+        if (StrUtil.isBlank(deliveryTimeStr)) {
+            return null;
+        }
+        List<DateTimeFormatter> formatterList = Arrays.asList(
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+                DateTimeFormatter.ISO_DATE_TIME,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        );
+        for (DateTimeFormatter formatter : formatterList) {
+            try {
+                return LocalDateTime.parse(deliveryTimeStr, formatter);
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
     }
 }

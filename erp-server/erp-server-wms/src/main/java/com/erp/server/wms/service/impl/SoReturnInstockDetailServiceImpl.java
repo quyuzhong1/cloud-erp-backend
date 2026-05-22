@@ -1049,9 +1049,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> mainIds) {
-        return lambdaUpdate().set(SoReturnInstockDetailEntity::getIsDeleted, Boolean.TRUE)
-                .in(SoReturnInstockDetailEntity::getMainId, mainIds)
-                .update();
+        if (CollUtil.isNotEmpty(mainIds)){
+            return lambdaUpdate().in(SoReturnInstockDetailEntity::getMainId, mainIds).remove();
+        }
+        return Boolean.TRUE;
     }
 
     @Override

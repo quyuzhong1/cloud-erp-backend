@@ -24,9 +24,6 @@ public interface VirtualWarehouseAllocationMapper extends BaseMapper<VirtualWare
 
     IPage<VirtualWarehouseAllocationDTO.ListDTO> paging(Page query, @Param("params") VirtualWarehouseAllocationDTO.PagingParamDTO params);
 
-    List<VirtualWarehouseAllocationDTO.ListDTO> listExport(@Param("params")VirtualWarehouseAllocationDTO.ExportDTO dto);
-    Page<VirtualWarehouseAllocationDTO.ListDTO> listExport(@Param("page")Page<VirtualWarehouseAllocationDTO.ListDTO> page,@Param("params")VirtualWarehouseAllocationDTO.ExportDTO dto);
-
     Integer listCount(@Param("params")VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO);
     Integer listCountBySyncStatus(@Param("params")VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO);
     /**

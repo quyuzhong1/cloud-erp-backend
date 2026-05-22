@@ -3,6 +3,8 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 
 /**
  * @author Will
@@ -37,6 +40,16 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
         checkCfgApiAuth(dto);
         CfgApiAuthEntity entity = new CfgApiAuthEntity();
         BeanMapperUtils.copy(dto,entity);
+        LocalDateTime now = LocalDateTime.now();
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(now);
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
+        entity.setCreateTime(now);
+        entity.setCreateUserId(userId);
+        entity.setCreateUserName(userName);
         return this.save(entity);
     }
 
@@ -46,6 +59,12 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
         checkCfgApiAuth(dto);
         CfgApiAuthEntity entity = new CfgApiAuthEntity();
         BeanMapperUtils.copy(dto,entity);
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        String userId = loginUser.getUid();
+        String userName = loginUser.getUserName();
+        entity.setUpdateTime(LocalDateTime.now());
+        entity.setUpdateUserId(userId);
+        entity.setUpdateUserName(userName);
         this.updateById(entity);
     }
 

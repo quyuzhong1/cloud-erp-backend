@@ -41,6 +41,7 @@ public enum AppClientEnum  {
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
     ALI_EXPRESS_LOGISTICS("aliExpressAuthorize","logistics","AliExpress"),
     BAO_HONG_AUTHORIZE("baoHongAuthorize","logistics","baoHong"),
+    KUAIDI100_AUTHORIZE("kuaidi100Authorize","logistics","KUAIDI100"),
 
 
 

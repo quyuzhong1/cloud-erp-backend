@@ -30,6 +30,7 @@
         <module>erp-sdk-tms-shopee</module>
         <module>erp-sdk-tms-ubi</module>
         <module>erp-sdk-tms-track123</module>
+        <module>erp-sdk-tms-kuaidi100</module>
         <module>erp-sdk-tms-yanwen</module>
         <module>erp-sdk-tms-weishi</module>
         <module>erp-sdk-tms-yuntu</module>
@@ -57,6 +58,7 @@
         <module>erp-sdk-oms-pdd</module>
         <module>erp-sdk-oms-yunting-cem</module>
         <module>erp-sdk-wms-zhongbao</module>
+        <module>erp-sdk-wms-jitu</module>
     </modules>
 
     <dependencies>

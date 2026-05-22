@@ -1,5 +1,6 @@
 package com.erp.server.dmp.handler;
 
+import com.common.business.dto.WebhookResult;
 import com.erp.model.dmp.track123.WebhookRequest;
 
 import java.util.Map;
@@ -25,5 +26,5 @@ public interface WebhookHandler {
      * @param headers
      * @param serviceFlag
      */
-    String process(String data, Map<String, String> headers, String serviceFlag);
+    WebhookResult process(String data, Map<String, String> headers, String serviceFlag);
 }

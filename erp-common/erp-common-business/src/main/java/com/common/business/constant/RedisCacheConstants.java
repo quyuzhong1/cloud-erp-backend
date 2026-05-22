@@ -1,5 +1,7 @@
 package com.common.business.constant;
 
+import cn.hutool.core.util.StrUtil;
+
 /**
  * @Classname PrefixOfCacheKey
 
@@ -310,4 +312,65 @@ public interface RedisCacheConstants {
 
     String WDT_ERROR_CODE_KEY = "dmp:wdt:error:code:";
     String SO_B2C_NOT_OUTBOUND_KEY = "oms:b2c:notbound";
+
+    /**
+     * 系统通知SSE在线节点:应用端
+     */
+    String SYS_NOTICE_SSE_ONLINE_NODE = "sys:notice:sseNode:{}";
+
+    /**
+     * 系统通知SSE用户在线节点路由:应用端
+     */
+    String SYS_NOTICE_SSE_USER_NODE = "sys:notice:sseUserNode:{}";
+
+    /**
+     * 系统通知SSE用户路由锁:应用端_用户ID
+     */
+    String SYS_NOTICE_SSE_USER_LOCK = "sys:notice:sseUserLock:{}_{}";
+
+    /**
+     * 系统通知SSE节点topic:应用端_节点ID
+     */
+    String SYS_NOTICE_SSE_NODE_TOPIC = "sys:notice:sseTopic:{}_{}";
+
+    /**
+     * 系统消息分发延迟队列
+     */
+    String SYS_MESSAGE_DISPATCH_DELAY_QUEUE = "sys:message:dispatchDelay:queue";
+
+    /**
+     * 系统消息分发延迟队列去重标记
+     */
+    String SYS_MESSAGE_DISPATCH_DELAY_QUEUED = "sys:message:dispatchDelay:queued";
+
+    static String buildSysNoticeSseOnlineNodeKey(String application) {
+        return StrUtil.format(SYS_NOTICE_SSE_ONLINE_NODE, application);
+    }
+
+    static String buildSysNoticeSseUserNodeKey(String application) {
+        return StrUtil.format(SYS_NOTICE_SSE_USER_NODE, application);
+    }
+
+    static String buildSysNoticeSseUserLockKey(String application, String userId) {
+        return StrUtil.format(SYS_NOTICE_SSE_USER_LOCK, application, userId);
+    }
+
+    static String buildSysNoticeSseNodeTopic(String application, String nodeId) {
+        return StrUtil.format(SYS_NOTICE_SSE_NODE_TOPIC, application, nodeId);
+    }
+    String SO_B2C_DELIVERY_WITH_NOT_OUTBOUND_KEY = "oms:b2c:deliveryWithNotOutbound:";
+
+    /**
+     * 动态数据源 Doris 路由配置全量刷新广播 channel
+     * 由 DMP 进程在 cfg_setting(type=doris_query_cfg) 重建本地缓存后 publish；
+     * 各业务节点订阅后原子替换本地全量快照
+     */
+    String DORIS_QUERY_CFG_REFRESH_CHANNEL = "erp:doris_query_cfg:refresh";
+
+    /**
+     * 动态数据源 Doris 路由配置全量持久化 key
+     * DMP 每次广播前先写入此 Bucket（持久化全量 + version），业务节点启动时 @PostConstruct
+     * 直接读取避免冷启动空窗（与周期广播互补，遵循"先写 Bucket 再 publish"的写入顺序）
+     */
+    String DORIS_QUERY_CFG_FULL_KEY = "erp:doris_query_cfg:full";
 }

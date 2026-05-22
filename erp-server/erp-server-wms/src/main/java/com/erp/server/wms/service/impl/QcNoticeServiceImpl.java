@@ -3,14 +3,19 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.AttachDTO;
@@ -40,6 +45,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
@@ -48,6 +54,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.constant.WmsConstant;
@@ -550,17 +557,17 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
-        
+
         log.info("作废 开始修改质检通知单状态数据，id：【{}】", id);
         lambdaUpdate().eq(QcNoticeEntity::getId, id)
             .set(QcNoticeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
             .set(QcNoticeEntity::getInvalidRemark, remark)
             .update();
-        
+
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "作废操作");
-        
+
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
@@ -570,7 +577,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO cancelProcess(String id) {
+    public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
+        String id = dto.getId();
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 检查是否已作废
         if (Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
@@ -588,6 +596,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.QC_NOTICE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
@@ -646,6 +655,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //产品信息
             ProductVO.ProductPackVO productPackVO = productPactMap.get(qcNoticeDetail.getSkuId());
             BeanMapper.copy(productPackVO, qcProduct);
+            qcProduct.setBoxQty(productPackVO.getBoxQty().intValue());
             addDto.setQcProduct(qcProduct);
             //质检信息
             BeanMapper.copy(qcNoticeDetail, qcInfo);
@@ -1221,7 +1231,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 qcResult.setQcQty(qcResultView.getQcQty());
                 qcResult.setQcResult(qcResultView.getQcResult());
                 qcResult.setLotQualifiedQty(qcResultView.getLotQualifiedQty());
-
+                qcResult.setHandleModeDict(qcResultView.getHandleModeDict());
                 if (Objects.nonNull(qcResultView.getQcBadQty()) && qcResultView.getQcBadQty() >= 0
                         && Objects.nonNull(qcResultView.getQcGoodQty()) && qcResultView.getQcGoodQty() >= 0) {
 
@@ -1237,6 +1247,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
                             : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
+                    qcResult.setAllowInstockQty(qcResultView.getAllowInstockQty());
                     qcResult.setQcGoodQty(goodQty);
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
@@ -1428,6 +1439,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         // 批量预查数据
         List<QcDefectEntity> existDefectList = CollUtil.isNotEmpty(qcInfoIds) ? qcDefectService.lambdaQuery().in(QcDefectEntity::getMainId, qcInfoIds).list() : new ArrayList<>();
         Map<String, QcDefectEntity> existDefectMap = existDefectList.stream().collect(Collectors.toMap(k -> k.getMainId() + "_" + k.getDefectLevel(), v -> v, (a, b) -> a));
+        Map<String, List<QcDefectEntity>> existDefectByMainIdMap = existDefectList.stream().collect(Collectors.groupingBy(QcDefectEntity::getMainId));
         List<QcResultEntity> existQcResultList = CollUtil.isNotEmpty(qcInfoIds) ? qcResultService.getByMainIdList(qcInfoIds) : new ArrayList<>();
         Map<String, QcResultEntity> qcResultMap = existQcResultList.stream().collect(Collectors.toMap(QcResultEntity::getMainId, v -> v, (a, b) -> a));
 
@@ -1436,6 +1448,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<QcStandardRefEntity> standardRefBatchSaveList = new ArrayList<>();
         List<QcDefectEntity> defectBatchSaveList = new ArrayList<>();
         List<QcDefectEntity> defectBatchUpdateList = new ArrayList<>();
+        List<String> defectIdBatchRemoveList = new ArrayList<>();
         List<String> attachmentIdBatchRemoveList = new ArrayList<>();
         Map<String, List<AttachDTO>> attachmentBatchSaveMap = new HashMap<>();
         List<QcInfoEntity> qcInfoBatchUpdateList = new ArrayList<>();
@@ -1461,20 +1474,30 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
 
             //不良信息
-            if (CollUtil.isNotEmpty(qcInfoView.getDefectViewList())) {
+            List<QcDefectEntity> billExistDefectList = existDefectByMainIdMap.getOrDefault(qcInfoView.getQcBillId(), Collections.emptyList());
+            if (CollUtil.isEmpty(qcInfoView.getDefectViewList())) {
+                if (CollUtil.isNotEmpty(billExistDefectList)) {
+                    List<String> clearDefectIds = billExistDefectList.stream().map(QcDefectEntity::getId).collect(Collectors.toList());
+                    defectIdBatchRemoveList.addAll(clearDefectIds);
+                    attachmentIdBatchRemoveList.addAll(clearDefectIds);
+                }
+            } else {
                 List<QcNoticeDTO.DefectView> defectViewList = qcInfoView.getDefectViewList();
+                Set<String> submitDefectLevelSet = new HashSet<>();
                 for (QcNoticeDTO.DefectView defectView : defectViewList) {
                     if (StringUtils.isBlank(defectView.getDefectLevl())) {
                         continue;
                     }
+                    submitDefectLevelSet.add(defectView.getDefectLevl());
                     boolean hasDefectLevel = StringUtils.isNotBlank(defectView.getDefectLevl());
                     boolean hasDefectQty = defectView.getDefectQty() != null && defectView.getDefectQty() > 0;
                     boolean hasProblemAttribute = StringUtils.isNotBlank(defectView.getIssueProperty());
                     boolean hasDefectDesc = StringUtils.isNotBlank(defectView.getDefectDesc());
                     boolean hasDefectImage = Objects.nonNull(defectView.getBadImageViewList()) && !defectView.getBadImageViewList().isEmpty();
+                    boolean hasAnyDefectInfo = hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage;
+                    boolean hasCoreDefectInfo = hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc;
 
-                    if ((hasDefectLevel || hasDefectQty || hasProblemAttribute || hasDefectDesc || hasDefectImage)
-                            && !(hasDefectLevel && hasDefectQty && hasProblemAttribute && hasDefectDesc && hasDefectImage)) {
+                    if (hasAnyDefectInfo && !hasCoreDefectInfo) {
                         throw new ServiceException(ApiError.PO_QC_DEFECT_INFO_INCOMPLETE);
                     }
 
@@ -1502,6 +1525,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         }
                     } else {
                         // 新增操作
+                        if (!hasDefectImage) {
+                            throw new ServiceException(ApiError.PO_QC_DEFECT_INFO_INCOMPLETE);
+                        }
                         QcDefectEntity newDefect = new QcDefectEntity();
                         BeanUtils.copyProperties(defectView, newDefect);
                         newDefect.setDefectLevel(defectView.getDefectLevl());
@@ -1520,6 +1546,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                             }
                             attachmentBatchSaveMap.put(id, attachDTOs);
                         }
+                    }
+                }
+
+                // 按缺陷等级覆盖：本次未提交的等级，清理历史缺陷及附件
+                for (QcDefectEntity oldDefect : billExistDefectList) {
+                    if (!submitDefectLevelSet.contains(oldDefect.getDefectLevel())) {
+                        defectIdBatchRemoveList.add(oldDefect.getId());
+                        attachmentIdBatchRemoveList.add(oldDefect.getId());
                     }
                 }
             }
@@ -1566,10 +1600,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     BigDecimal qcBadRate = (badQty == 0) ? BigDecimal.ZERO
                             : BigDecimal.valueOf(badQty).divide(totalQty, 4, RoundingMode.HALF_UP);
 
+                    qcResult.setAllowInstockQty(qcInfoView.getAllowInstockQty());
                     qcResult.setQcGoodQty(goodQty);
                     qcResult.setQcBadQty(badQty);
                     qcResult.setQcGoodRate(qcGoodRate);
                     qcResult.setQcBadRate(qcBadRate);
+                    qcResult.setHandleModeDict(qcInfoView.getHandleModeDict());
                 } else {
                     throw new ServiceException(ApiError.PO_QC_QTY_NOT_ALLOW_LESS_THAN_ZERO);
                 }
@@ -1597,6 +1633,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(standardRefBatchSaveList)) qcStandardRefService.saveBatch(standardRefBatchSaveList);
         if (CollUtil.isNotEmpty(defectBatchSaveList)) qcDefectService.saveBatch(defectBatchSaveList);
         if (CollUtil.isNotEmpty(defectBatchUpdateList)) qcDefectService.updateBatchById(defectBatchUpdateList);
+        if (CollUtil.isNotEmpty(defectIdBatchRemoveList)) qcDefectService.removeByIds(defectIdBatchRemoveList.stream().distinct().collect(Collectors.toList()));
         if (CollUtil.isNotEmpty(attachmentIdBatchRemoveList)) wmsAttachmentService.batchRemoveAttachment(attachmentIdBatchRemoveList);
         for (Map.Entry<String, List<AttachDTO>> entry : attachmentBatchSaveMap.entrySet()) {
             wmsAttachmentService.batchSave(entry.getValue(), WmsConstant.QC_DEFECT, entry.getKey());
@@ -2092,7 +2129,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //单据状态
         data.setApproveStatusName(data.getApproveStatus().getName());
-        
+
         //质检状态
         data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
 

@@ -22,4 +22,8 @@ public class DistributeKeyConstant {
      * B2B销售订单key
      */
     public static final String SO_B2B_ORDER_KEY = "SO_B2B_ORDER_KEY";
+    /**@DistributeLocker(businessType
+     * tms 生成异步任务key
+     */
+    public static final String TMS_ASYNC_TASK_RECORD_KEY = "TMS_ASYNC_TASK_RECORD_KEY";
 }
