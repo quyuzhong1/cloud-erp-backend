@@ -52,7 +52,7 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.AfterSalePackDTO$ListDTO">
-        select t.id,
+        select distinct t.id,
         t.create_user_id as createUserId,
         t.create_user_name as createUserName,
         t.create_time as createTime,
@@ -77,6 +77,7 @@
         pt.supplier_name as supplierName
         from after_sale_pack t
         left join po_return pt on t.source_id = pt.id and pt.is_deleted = false
+        left join after_sale_pack_detail dt on t.id = dt.main_id and dt.is_deleted = false
         WHERE 1 = 1
         and t.is_deleted = false
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">

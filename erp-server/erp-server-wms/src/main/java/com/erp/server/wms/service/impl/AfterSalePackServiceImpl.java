@@ -325,7 +325,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         for (AfterSalePackDetailEntity update : updateList) {
             AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
             if (old != null) {
-                String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("【{}】 ", old.getSkuNo()) : "";
+                String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("skuNo:【{}】 ", old.getSkuNo()) : "";
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
             }
         }
