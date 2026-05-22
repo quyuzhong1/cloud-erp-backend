@@ -104,7 +104,7 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
           private String checkMonth;
 
           /**
-           * 核对仓库
+           * 核对仓库,http://172.16.100.11:3002/project/119/interface/api/39485
            */
           @NotBlank(message = "核对仓库不能为空")
           private String sourceSystem;
