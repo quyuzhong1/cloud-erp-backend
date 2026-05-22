@@ -85,54 +85,57 @@ public class SoOutstockExportExcelDTO implements Serializable {
     @ExcelProperty(value = "含税单价（本位币）", index = 22)
     private BigDecimal cnyTaxPrice;
 
-    @ExcelProperty(value = "价税合计（本位币）", index = 23)
+    @ExcelProperty(value = "价税合计", index = 23)
+    private BigDecimal taxAmount;
+
+    @ExcelProperty(value = "价税合计（本位币）", index = 24)
     private BigDecimal allAmountLocalCurrency;
 
-    @ExcelProperty(value = "应发数量", index = 24)
+    @ExcelProperty(value = "应发数量", index = 25)
     private Integer planQty;
 
-    @ExcelProperty(value = "实发数量", index = 25)
+    @ExcelProperty(value = "实发数量", index = 26)
     private Integer actualQty;
 
-    @ExcelProperty(value = "库存单位", index = 26)
+    @ExcelProperty(value = "库存单位", index = 27)
     private String unit;
 
-    @ExcelProperty(value = "出货仓库", index = 27)
+    @ExcelProperty(value = "出货仓库", index = 28)
     private String warehouseName;
 
-    @ExcelProperty(value = "虚拟仓", index = 28)
+    @ExcelProperty(value = "虚拟仓", index = 29)
     private String virtualWarehouseName;
 
-    @ExcelProperty(value = "出库日期", index = 29)
+    @ExcelProperty(value = "出库日期", index = 30)
     private LocalDate billDate;
 
-    @ExcelProperty(value = "预计发货日期", index = 30)
+    @ExcelProperty(value = "预计发货日期", index = 31)
     private LocalDate planDeliveryDate;
 
-    @ExcelProperty(value = "完成打包日期", index = 31)
+    @ExcelProperty(value = "完成打包日期", index = 32)
     private LocalDate packDate;
 
-    @ExcelProperty(value = "实际发货日期", index = 32)
+    @ExcelProperty(value = "实际发货日期", index = 33)
     private LocalDateTime actualDeliveryDate;
 
-    @ExcelProperty(value = "审核人", index = 33)
+    @ExcelProperty(value = "审核人", index = 34)
     private String approveUserName;
 
-    @ExcelProperty(value = "单据备注", index = 34)
+    @ExcelProperty(value = "单据备注", index = 35)
     private String remark;
 
-    @ExcelProperty(value = "明细备注", index = 35)
+    @ExcelProperty(value = "明细备注", index = 36)
     private String detailRemark;
 
-    @ExcelProperty(value = "客户备注", index = 36)
+    @ExcelProperty(value = "客户备注", index = 37)
     private String customerRemark;
 
-    @ExcelProperty(value = "客户PO", index = 37)
+    @ExcelProperty(value = "客户PO", index = 38)
     private String customerPO;
 
-    @ExcelProperty(value = "创建人", index = 38)
+    @ExcelProperty(value = "创建人", index = 39)
     private String createUserName;
 
-    @ExcelProperty(value = "创建时间", index = 39)
+    @ExcelProperty(value = "创建时间", index = 40)
     private LocalDateTime createTime;
 }

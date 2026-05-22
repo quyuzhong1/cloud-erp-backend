@@ -220,14 +220,17 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
 	public Boolean reCreate(ReCreateDTO dto) {
 		String checkMonth = dto.getCheckMonth();
 		checkMonth = checkMonth.replace("-", "年") + "月";
+		String sourceSystem = dto.getSourceSystem();
 		Integer count = lambdaQuery().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
+				.eq(AdsErpInventoryDiffFlowEntity::getSourceSystem, sourceSystem)
 				.eq(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing").count();
 		if(count != null && count > 0) {
 			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
 		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_excel_inventory_flow_recreate");
+		boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_flow_excel_inventory_flow_recreate");
 		if(reCreate) {
 			lambdaUpdate().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
+			.eq(AdsErpInventoryDiffFlowEntity::getSourceSystem, sourceSystem)
 			.set(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing")
 			.set(AdsErpInventoryDiffFlowEntity::getExecStatusName, "执行中")
 			.setSql(" finish_time = null ")

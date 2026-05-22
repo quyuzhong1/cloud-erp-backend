@@ -249,6 +249,12 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     private String returnType;
 
     /**
+     * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货
+     */
+    @TableField("return_detail_type")
+    private String returnDetailType;
+
+    /**
      * 采购订单的交货仓库
      */
     @TableField(exist = false)
@@ -256,7 +262,7 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    
+
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
@@ -291,6 +297,8 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     public static final String INVALID_STATUS = "invalid_status";
 
     public static final String INVALID_TIME = "invalid_time";
+
+    public static final String RETURN_DETAIL_TYPE = "return_detail_type";
 
     @Override
     public Serializable pkVal() {

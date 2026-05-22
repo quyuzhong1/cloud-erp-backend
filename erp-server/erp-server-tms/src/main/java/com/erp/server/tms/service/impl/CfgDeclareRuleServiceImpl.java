@@ -7,14 +7,18 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysAccountingCompanyDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.CfgConditionDTO;
 import com.erp.model.tms.dto.CfgDeclareRuleConditionDTO;
 import com.erp.model.tms.dto.CfgDeclareRuleDTO;
@@ -36,17 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -108,7 +102,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> dropDownList(String type, String name) {
+    public List<BaseDropDownDTO.Tree> dropDownList(String type,Boolean isShowCustomerId, String name) {
         if (SourceTypeEnum.FM_DECLARE_BILL.getCode().equals(type)) {
             return Collections.singletonList(buildDropDown(
                     type,
@@ -118,6 +112,7 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         }
 
         if (SourceTypeEnum.B2B_DECLARE_BILL.getCode().equals(type)) {
+            if(Objects.isNull(isShowCustomerId) ) isShowCustomerId = false;
             List<BaseDropDownDTO.Tree> result = new ArrayList<>(2);
             result.add(buildDropDown(
                     type,
@@ -128,11 +123,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                     type,
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getCode(),
                     CfgDeclareRuleReceiverTypeEnum.BY_CUSTOMER.getName(),
-                    Collections.emptyList()));
+                    customerChildList(isShowCustomerId,name)));
             return result;
         }
-
-        throw new ServiceException("type must be sender or receiver");
+        throw new ServiceException("type must be fmDeclareBill or b2bDeclareBill");
     }
 
     /**
@@ -699,4 +693,26 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                         .build())
                 .collect(Collectors.toList());
     }
+
+    private List<BaseDropDownDTO.ChildTree> customerChildList(Boolean isShowCustomerId , String name) {
+        if(!isShowCustomerId){
+            return  Collections.emptyList();
+        }
+        List<CustomerInfoEntity> list = FeignQuery.create(CustomerInfoEntity.class).list();
+        //如果name不为空，则进行模糊查询
+        if (StrUtil.isNotBlank(name)) {
+            list = list.stream()
+                    .filter(e -> StrUtil.contains(e.getName(), name))
+                    .collect(Collectors.toList());
+        }
+        return list.stream()
+                .sorted(Comparator.comparing(CustomerInfoEntity::getDisabled))
+                .map(e -> BaseDropDownDTO.ChildTree.builder()
+                        .code(e.getId())
+                        .value(e.getName())
+                        .disabled(e.getDisabled())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }

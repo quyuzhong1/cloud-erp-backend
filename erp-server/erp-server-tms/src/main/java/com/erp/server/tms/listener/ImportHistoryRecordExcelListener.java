@@ -90,6 +90,13 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     private int matchSuccessCount;
     private int matchFailCount;
     private String matchResultUrl = "";
+    /**
+     * processBatch 中整批次失败的次数（PG 死锁 / 服务异常等导致整个 3000 行批次写入失败）。
+     * 之前 catch 把异常吞掉只打了一条 error 日志，从外部看任务还是"正常完成"，
+     * 这里加一个累计计数 + 全量汇总日志，便于运维一眼看出"已完成"其实并不干净。
+     */
+    private int failedBatchCount;
+    private int totalBatchCount;
 
     private final ImportHistoryRecordService importHistoryRecordService = SpringUtil.getBean(ImportHistoryRecordService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
@@ -147,6 +154,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        totalBatchCount++;
         try {
             List<JSONObject> errorList2 = new ArrayList<>();
             // 批量处理，由 Service 内部负责事务控制
@@ -154,7 +162,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             writeMatchResult(errorList2);
             confirmPairList.addAll(importConfirmDTOS);
         } catch (Exception e) {
-            log.error("批量导入处理异常批次，条数：{}", successList.size(), e);
+            failedBatchCount++;
+            log.error("批量导入处理异常批次 taskId={} fileName={} 当前批次条数={} 已失败批次数={}/{}",
+                    taskId, importDTO.getFileName(), successList.size(), failedBatchCount, totalBatchCount, e);
             // 整个批次失败的处理逻辑
             String msg = e.getMessage();
             if (CharSequenceUtil.isNotBlank(msg) && msg.length() > 100) {
@@ -193,6 +203,16 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
             //添加匹配结果
             addMatchExcelResult();
+            // 汇总日志：让运维一眼看到"已完成"任务里有没有败批
+            if (failedBatchCount > 0) {
+                log.error("[导入存在败批] taskId={} fileName={} 总批次={} 失败批次={} 行级成功={} 行级失败={} 总行数={}",
+                        taskId, importDTO.getFileName(), totalBatchCount, failedBatchCount,
+                        matchSuccessCount, matchFailCount, count);
+            } else {
+                log.info("[导入完成] taskId={} fileName={} 总批次={} 行级成功={} 行级失败={} 总行数={}",
+                        taskId, importDTO.getFileName(), totalBatchCount,
+                        matchSuccessCount, matchFailCount, count);
+            }
         } finally {
             finishMatchExcelWriter();
         }

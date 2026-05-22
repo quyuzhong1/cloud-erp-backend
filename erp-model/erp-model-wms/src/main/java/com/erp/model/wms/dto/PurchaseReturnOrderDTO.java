@@ -680,6 +680,11 @@ public class PurchaseReturnOrderDTO {
         private String returnType;
 
         /**
+         * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货
+         */
+        private String returnDetailType;
+
+        /**
          * 采购员名称
          */
         private String purchaseUserName;
@@ -1246,6 +1251,11 @@ public class PurchaseReturnOrderDTO {
         private String returnWarehouseName;
 
         /**
+         * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货
+         */
+        private String returnDetailType;
+
+        /**
          * 产品数量
          */
         private Integer detailCount;
@@ -1372,6 +1382,11 @@ public class PurchaseReturnOrderDTO {
          * 退货方式名称
          */
         private String returnModeName;
+
+        /**
+         * 退货明细类型：sku 单个 SKU 退货，pack 整箱退货
+         */
+        private String returnDetailType;
 
         /**
          * skuId

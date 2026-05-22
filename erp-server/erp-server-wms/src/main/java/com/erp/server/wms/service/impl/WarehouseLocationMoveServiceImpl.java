@@ -1425,7 +1425,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
         WarehouseLocationEntity targetLocation = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, targetCode);
         if (targetLocation == null || Boolean.TRUE.equals(targetLocation.getDisabled())) {
-            throw new ServiceException(CharSequenceUtil.format("目标仓位【{}】无效/禁用", targetCode));
+            throw new ServiceException(CharSequenceUtil.format("查不到该仓位【{}】与东莞售后仓的关系", targetCode));
         }
         String orgId = warehouse.getOrgId();
 
@@ -1483,9 +1483,13 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 throw new ServiceException(CharSequenceUtil.format("箱唛号与查询结果不一致：提交【{}】查询【{}】", submittedBox.code, boxInfo.getCode()));
             }
             assertUsageStatusAllowsMove(boxInfo);
-            if (Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())) {
-                String label = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()), boxInfo.getId());
-                throw new ServiceException(CharSequenceUtil.format("箱唛【{}】已完成移仓，不支持重复移仓", label));
+            //如果箱唛信息已经被单据绑定了则报错
+            if (boxInfo.getIsUse()) {
+                throw new ServiceException(CharSequenceUtil.format("该箱码【{}】已被单据绑定，不能再移仓了", boxInfo.getCode()));
+            }
+            //如果这个箱唛没有封箱就报错
+            if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(boxInfo.getPackStatus())) {
+                throw new ServiceException(CharSequenceUtil.format("该箱码【{}】尚未封箱，不能移仓了，请尽快完成封箱", boxInfo.getCode()));
             }
             boxInfoList.add(boxInfo);
         }
@@ -1548,18 +1552,13 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             assertUsableQtyAtLocation(warehouseId, orgId, skuVO.getSkuId(), aggregate.sourceLoc, aggregate.qty, skuNo);
 
-            String remark = CharSequenceUtil.format("整箱移仓{}", aggregate.boxDisplay());
-            if (CharSequenceUtil.isNotBlank(dto.getRemark())) {
-                remark = remark + " " + CharSequenceUtil.trim(dto.getRemark());
-            }
-
             WarehouseLocationMoveDetailDTO.AddDTO detail = new WarehouseLocationMoveDetailDTO.AddDTO();
             detail.setSkuId(skuVO.getSkuId());
             detail.setSkuNo(skuNo);
             detail.setOutWarehouseLocation(aggregate.sourceLoc);
             detail.setInWarehouseLocation(aggregate.targetLoc);
             detail.setQty(aggregate.qty);
-            detail.setRemark(remark);
+            detail.setRemark(dto.getRemark());
             detailList.add(detail);
         }
 

@@ -250,7 +250,9 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             String redisKey = String.format("cache:sys:dept:getDeptByUserId::%s", userId);
             SysDepartmentUserNumberDTO cacheObject = redisService.getCacheObject(redisKey);
             if (cacheObject != null) {
-                result.add(cacheObject);
+                if (Objects.nonNull(cacheObject.getDepartmentId())) {
+                    result.add(cacheObject);
+                }
             } else {
                 missUserIds.add(userId);
             }

@@ -95,6 +95,12 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             AfterSalePackEntity afterSalePackEntity = new AfterSalePackEntity();
             afterSalePackEntity.setCode(code);
             afterSalePackEntity.setType(dto.getType());
+            afterSalePackEntity.setIsUse(Boolean.FALSE);
+            afterSalePackEntity.setIsDifference(Boolean.FALSE);
+            afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
+            afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
+            afterSalePackEntity.setSkuSpeciesQty(0);
+            afterSalePackEntity.setTotalQty(0);
             afterSalePackEntityList.add(afterSalePackEntity);
         }
         boolean save = super.saveBatch(afterSalePackEntityList);
@@ -103,7 +109,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         for (AfterSalePackEntity afterSalePackEntity : afterSalePackEntityList) {
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "售后装箱单", afterSalePackEntity.getCode());
+            String msg = StrUtil.format("用户【{}】新增【箱唛】号为【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "新增操作");
         }
         return result;
@@ -119,6 +125,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_BOX);
         afterSalePackEntity.setCode(code);
+        afterSalePackEntity.setIsUse(Boolean.FALSE);
+        afterSalePackEntity.setIsDifference(Boolean.FALSE);
+        afterSalePackEntity.setIsMoveWarehouse(Boolean.FALSE);
         // 处理装箱明细数据
         if (CollectionUtils.isNotEmpty(addDTO.getDetailList())) {
             afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.PENDING.getCode());
@@ -138,7 +147,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             }
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "售后装箱单", afterSalePackEntity.getCode());
+        String msg = StrUtil.format("用户【{}】新增【箱唛】号为【{}】", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(afterSalePackEntity.getId(), code);
     }
@@ -204,12 +213,23 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         Map<String, AfterSalePackDetailEntity> oldDetailMap = afterSalePackDetailEntityList.stream()
                 .map(item -> BeanMapperUtils.map(AfterSalePackDetailEntity.class, item))
                 .collect(Collectors.toMap(BaseEntity::getId, item -> item, (v1, v2) -> v1));
+        Set<String> oldSkuNoSet = afterSalePackDetailEntityList.stream()
+                .map(AfterSalePackDetailEntity::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
         Set<String> retainDetailIds = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
+        Set<String> newSkuNoSet = detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getSkuNo)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
         List<String> deleteDetailList = afterSalePackDetailEntityList.stream()
                 .map(AfterSalePackDetailEntity::getId)
                 .filter(Objects::nonNull)
                 .filter(id -> !retainDetailIds.contains(id))
                 .distinct()
+                .collect(Collectors.toList());
+        List<AfterSalePackDetailEntity> deleteDetailEntityList = afterSalePackDetailEntityList.stream()
+                .filter(detail -> deleteDetailList.contains(detail.getId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteDetailList) && !afterSalePackDetailService.removeByIds(deleteDetailList)) {
             throw new ServiceException("售后装箱明细删除失败");
@@ -245,16 +265,48 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (!afterSalePackDetailService.saveOrUpdateBatch(detailEntityList)) {
             throw new ServiceException("售后装箱明细保存失败");
         }
-        // 这是添加
+        // 删除明细日志
+        if (CollectionUtils.isNotEmpty(deleteDetailEntityList)) {
+            List<Pair<String, String>> removeSkuPairList = new ArrayList<>();
+            List<Pair<String, String>> removeWarehouseLocationPairList = new ArrayList<>();
+            for (AfterSalePackDetailEntity deleteDetailEntity : deleteDetailEntityList) {
+                if (!newSkuNoSet.contains(deleteDetailEntity.getSkuNo())) {
+                    removeSkuPairList.add(new Pair<>(afterSalePackEntity.getId(), deleteDetailEntity.getSkuNo()));
+                } else {
+                    removeWarehouseLocationPairList.add(new Pair<>(afterSalePackEntity.getId(), deleteDetailEntity.getSkuNo()));
+                }
+            }
+            if (CollectionUtils.isNotEmpty(removeSkuPairList)) {
+                operateLogService.batchAddModuleOperateLog("移除了一条sku;", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), removeSkuPairList, "编辑操作");
+            }
+            if (CollectionUtils.isNotEmpty(removeWarehouseLocationPairList)) {
+                operateLogService.batchAddModuleOperateLog("移除一条拣货仓位;", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), removeWarehouseLocationPairList, "编辑操作");
+            }
+        }
+        // 新增明细日志
         if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(afterSalePackEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
+            List<Pair<String, String>> addSkuPairList = new ArrayList<>();
+            List<Pair<String, String>> addWarehouseLocationPairList = new ArrayList<>();
+            for (AfterSalePackDetailEntity addDetailEntity : addList) {
+                if (oldSkuNoSet.contains(addDetailEntity.getSkuNo())) {
+                    addWarehouseLocationPairList.add(new Pair<>(afterSalePackEntity.getId(), addDetailEntity.getSkuNo()));
+                } else {
+                    addSkuPairList.add(new Pair<>(afterSalePackEntity.getId(), addDetailEntity.getSkuNo()));
+                }
+            }
+            if (CollectionUtils.isNotEmpty(addWarehouseLocationPairList)) {
+                operateLogService.batchAddModuleOperateLog("新增一条拣货仓位;", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addWarehouseLocationPairList, "编辑操作");
+            }
+            if (CollectionUtils.isNotEmpty(addSkuPairList)) {
+                operateLogService.batchAddModuleOperateLog("新增了一条sku【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addSkuPairList, "编辑操作");
+            }
         }
         // 修改的
         for (AfterSalePackDetailEntity update : updateList) {
             AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
             if (old != null) {
-                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", "");
+                String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("[{}] ", old.getSkuNo()) : "";
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
             }
         }
     }
@@ -327,6 +379,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.PENDING.getCode());
         } else {
             removeDetailByMainId(afterSalePackEntity.getId());
+            operateLogService.addModuleOperateLog("全部移除sku;", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "编辑操作");
             afterSalePackEntity.setSkuSpeciesQty(0);
             afterSalePackEntity.setTotalQty(0);
             afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.WAIT_PACKING.getCode());
@@ -337,7 +390,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         }
         // 记录主单操作日志
         log.info("编辑 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
+        String msg = "";
         operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -374,7 +427,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 记录主单操作日志
         log.info("确定提审 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
         String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
-        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "确定提审");
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "");
         return Boolean.TRUE;
     }
 
@@ -438,7 +492,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 记录主单操作日志
         log.info("确定并封箱 开始记录售后装箱单日志数据，单号：【{}】", afterSalePackEntity.getCode());
         String msg = StrUtil.format("用户【{}】确定并封箱单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后装箱单");
-        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), msg);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "确定并封箱");
+        operateLogService.addModuleOperateLogByObj(old, afterSalePackEntity, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "");
         return Boolean.TRUE;
     }
 
@@ -541,6 +596,9 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 deleteResult = BatchResultDTO.fail(id, id, "售后装箱不存在, 删除失败");
             } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
                 deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 删除失败");
+            } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
+                    || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+                deleteResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "箱唛状态等于复审中或者已封箱状态, 删除失败");
             } else {
                 // 删除数据
                 if (!this.removeById(id)) {
