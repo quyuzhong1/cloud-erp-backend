@@ -1483,10 +1483,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 throw new ServiceException(CharSequenceUtil.format("箱唛号与查询结果不一致：提交【{}】查询【{}】", submittedBox.code, boxInfo.getCode()));
             }
             assertUsageStatusAllowsMove(boxInfo);
-            if (Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())) {
-                String label = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()), boxInfo.getId());
-                throw new ServiceException(CharSequenceUtil.format("箱唛【{}】已完成移仓，不支持重复移仓", label));
-            }
             //如果箱唛信息已经被单据绑定了则报错
             if (boxInfo.getIsUse()) {
                 throw new ServiceException(CharSequenceUtil.format("该箱码【{}】已被单据绑定，不能再移仓了", boxInfo.getCode()));
