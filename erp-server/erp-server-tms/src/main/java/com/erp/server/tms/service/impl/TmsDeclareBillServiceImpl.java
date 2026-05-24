@@ -2457,17 +2457,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * <p>sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细。</p>
      */
     private void fillMultiSheetForOne(ExcelWriter excelWriter, TmsDeclareBillDTO.ExportDTO exportDTO) {
+        // 明细列表统一 forceNewRow，避免多行明细向下覆盖 footer 主表占位符行
+        FillConfig detailFillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+
         // sheet 0：报关单（与单 sheet 模板字段口径一致）
         WriteSheet sheetDeclare = EasyExcel.writerSheet(0).build();
-        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
-        excelWriter.fill(exportDTO.getProductDetailList(), fillConfig, sheetDeclare);
+        excelWriter.fill(exportDTO.getProductDetailList(), detailFillConfig, sheetDeclare);
         excelWriter.fill(exportDTO, sheetDeclare);
 
-        // sheet 1：合同
+        // sheet 1：合同（先明细后主表，明细须插入新行把 footer 整体下移）
         TmsDeclareBillDTO.ContractInfo contractInfo = exportDTO.getContractInfo();
         if (Objects.nonNull(contractInfo)) {
             WriteSheet sheetContract = EasyExcel.writerSheet(1).build();
-            excelWriter.fill(new FillWrapper("contractDetail", contractInfo.getContractDetailList()), sheetContract);
+            excelWriter.fill(new FillWrapper("contractDetail", contractInfo.getContractDetailList()), detailFillConfig, sheetContract);
             excelWriter.fill(contractInfo, sheetContract);
         }
 
@@ -2478,7 +2480,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.InvoiceInfo invoiceInfo = exportDTO.getInvoiceInfo();
         if (Objects.nonNull(invoiceInfo)) {
             WriteSheet sheetInvoice = EasyExcel.writerSheet(2).build();
-            excelWriter.fill(new FillWrapper("invoiceDetail", convertInvoiceDetailList(exportDTO.getProductDetailList())), sheetInvoice);
+            excelWriter.fill(new FillWrapper("invoiceDetail", convertInvoiceDetailList(exportDTO.getProductDetailList())), detailFillConfig, sheetInvoice);
             excelWriter.fill(new FillWrapper("invoice", Collections.singletonList(invoiceInfo)), sheetInvoice);
         }
 
@@ -2487,7 +2489,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.PackingListInfo packingListInfo = exportDTO.getPackingListInfo();
         if (Objects.nonNull(packingListInfo)) {
             WriteSheet sheetPackingList = EasyExcel.writerSheet(3).build();
-            excelWriter.fill(new FillWrapper("packingListItem", packingListInfo.getItemList()), sheetPackingList);
+            excelWriter.fill(new FillWrapper("packingListItem", packingListInfo.getItemList()), detailFillConfig, sheetPackingList);
             excelWriter.fill(new FillWrapper("packingList", Collections.singletonList(packingListInfo)), sheetPackingList);
         }
 
