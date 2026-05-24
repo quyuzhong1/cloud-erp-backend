@@ -61,6 +61,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
@@ -1221,9 +1222,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.ExportProductDetail> allExportProductDetailList = BeanUtil.copyToList(detailList,TmsDeclareBillDTO.ExportProductDetail.class);
         List<String> sourceCodeList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSourceCode).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = fmLogisticService.listByOutstcockCode(sourceCodeList);
-        List<String> orgIdList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSenderId).distinct().collect(Collectors.toList());
+
+        Set<String> orgIdSet = new HashSet<>();
+        for (TmsDeclareBillDTO.ExportDTO dto : list) {
+            orgIdSet.add(dto.getSenderId());
+            orgIdSet.add(dto.getReceiverId());
+        }
+        List<String> orgIdList =  new ArrayList<>(orgIdSet);
         List<SysAccountingCompanyEntity> allAccountingCompanyEntityList = Optional.ofNullable(sysUserFeign.listCompanyById(orgIdList))
                 .orElse(Collections.emptyList());
+        Map<String, SysAccountingCompanyEntity> allAccountingCompanyMap = allAccountingCompanyEntityList.stream().collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (o1, o2) -> o1));
+
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DECLARE_DECLARE_TYPE.getType(),
                 DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType(),
                 DictBasicEnum.DECLARE_NATURE_LEVY.getType(),
@@ -1235,8 +1244,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String,String> sourceCountryMap = sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId,DictCountryEntity::getNameCn,(v1,v2)->v1));
 
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-            SysAccountingCompanyEntity accountingCompanyEntity = allAccountingCompanyEntityList.stream().filter(v->v.getId().equals(exportDTO.getSenderId())).findFirst().orElse(new SysAccountingCompanyEntity());
-            exportDTO.setSenderName(accountingCompanyEntity.getCompanyName());
+            SysAccountingCompanyEntity senderCompanyEntity = allAccountingCompanyMap.get(exportDTO.getSenderId());
+            if(Objects.nonNull(senderCompanyEntity)){
+                exportDTO.setSenderCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+            }
+            SysAccountingCompanyEntity receiverCompanyEntity = allAccountingCompanyMap.get(exportDTO.getReceiverId());
+            if(Objects.nonNull(receiverCompanyEntity)){
+                exportDTO.setReceiverCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+            }
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(exportDTO.getSourceCode())).findFirst().orElse(new LogisticsBillEntity());
             exportDTO.setShippingMethodName(LogisticsMethodEnum.getName(logisticsBillEntity.getShippingMethod()));
@@ -1259,6 +1274,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 detail.setDeclareUnitName(unitDTO.getName());
                 detail.setSourceCountryName(sourceCountryMap.get(detail.getSourceCountry()));
                 detail.setToCountryName(exportDTO.getCountryName());
+                detail.setBusinessCode(exportDTO.getBusinessCode());
             }
             exportDTO.setTotalQty(exportProductDetailList.stream().mapToInt(TmsDeclareBillDTO.ExportProductDetail::getQty).sum());
             exportDTO.setTotalPrice(exportProductDetailList.stream().map(TmsDeclareBillDTO.ExportProductDetail::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
@@ -1866,18 +1882,40 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 //                .filter(StringUtils::isNotBlank)
 //                .distinct()
 //                .collect(Collectors.toList());
+        String type = list.stream().map(TmsDeclareBillDTO.ExportDTO::getType).filter(StringUtils::isNotBlank).findFirst().orElse("");
+        List<String> allSourceCodeList = new ArrayList<>();
 
-        List<String> allBusinessCodeList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getBusinessCode)
+        if(Objects.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())){
+            //获取头程发货单号
+            List<String> collect = list.stream()
+                    .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntities = FeignQuery.create(FirstMileDeliveryEntity.class)
+                    .in(FirstMileDeliveryEntity::getCode, collect)
+                    .eq(FirstMileDeliveryEntity::getIsDeleted,false)
+                    .list();
+            allSourceCodeList = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getSourceCode).collect(Collectors.toList());
+
+            Map<String, String> firstMileDeliveryMap = firstMileDeliveryEntities.stream().collect(Collectors.toMap(e -> e.getCode(), e -> e.getSourceCode(), (o1, o2) -> o1));
+            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+                exportDTO.setSourceCode(firstMileDeliveryMap.get(exportDTO.getSourceCode()));
+            }
+        }else {
+            allSourceCodeList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        }
+
         // sourceCode -> taskIdList，用于按 sourceCode 归集 cartonSpecView
         Map<String, List<String>> sourceCodeToTaskIdsMap = Collections.emptyMap();
         // taskId -> sourceCode，反查回填
         Map<String, String> taskIdToSourceCodeMap = Collections.emptyMap();
-        if (CollUtil.isNotEmpty(allBusinessCodeList)) {
-            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allBusinessCodeList))
+        if (CollUtil.isNotEmpty(allSourceCodeList)) {
+            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allSourceCodeList))
                     .orElse(Collections.emptyList());
             sourceCodeToTaskIdsMap = packingTaskList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceCode()) && StringUtils.isNotBlank(e.getId()))
@@ -1921,14 +1959,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             // 装箱明细 sheet：按 sourceCode -> task -> carton -> SKU 三层展开
             List<WmsCartonSpecDTO.WmsCartonSpecView> currentViewList = Collections.emptyList();
-            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getBusinessCode(), Collections.emptyList());
+            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getSourceCode(), Collections.emptyList());
             if (CollUtil.isNotEmpty(currentTaskIdList) && !taskIdToCartonViewMap.isEmpty()) {
                 currentViewList = currentTaskIdList.stream()
                         .map(taskIdToCartonViewMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
-            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getBusinessCode(), currentViewList, taskIdToSourceCodeMap));
+            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getSourceCode(), currentViewList, taskIdToSourceCodeMap));
         }
     }
 
@@ -2080,13 +2118,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.ExportProductDetail> productDetailList = exportDTO.getProductDetailList();
         contractInfo.setContractDetailList(convertContractDetailList(productDetailList));
 
-        String currencyName = resolveContractCurrency(exportDTO, productDetailList);
-        contractInfo.setCurrency(currencyName);
+        String currency = resolveContractCurrency(exportDTO, productDetailList);
+        contractInfo.setCurrency(currency);
 
         BigDecimal totalAmount = Objects.isNull(exportDTO.getTotalPrice()) ? BigDecimal.ZERO : exportDTO.getTotalPrice();
         totalAmount = totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP);
         contractInfo.setTotalAmount(totalAmount);
-        contractInfo.setTotalAmountUpper(toAmountUpper(currencyName, totalAmount));
+        contractInfo.setTotalAmountUpper(toAmountUpper(currency, totalAmount));
         return contractInfo;
     }
 
@@ -2134,9 +2172,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(productDetailList)) {
             return "";
         }
-        String firstCurrency = productDetailList.get(0).getDeclareCurrencyName();
+        String firstCurrency = productDetailList.get(0).getDeclareCurrency();
         boolean multiCurrency = productDetailList.stream()
-                .map(TmsDeclareBillDTO.ExportProductDetail::getDeclareCurrencyName)
+                .map(TmsDeclareBillDTO.ExportProductDetail::getDeclareCurrency)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .count() > 1;
@@ -2173,9 +2211,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             TmsDeclareBillDTO.ContractDetailItem item = new TmsDeclareBillDTO.ContractDetailItem();
             item.setDeclareChineseName(Objects.toString(detail.getDeclareChineseName(), ""));
             item.setQty(detail.getQty());
+            item.setDeclareUnit(Objects.toString(detail.getDeclareUnit(), ""));
             item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
             item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
-            item.setDeclareCurrency(Objects.toString(detail.getDeclareCurrencyName(), ""));
+            item.setDeclareCurrency(Objects.toString(detail.getDeclareCurrency(), ""));
             item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
             return item;
         }).collect(Collectors.toList());
@@ -2193,6 +2232,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             item.setMarkNo("N/M");
             item.setDeclareChineseName(Objects.toString(detail.getDeclareChineseName(), ""));
             item.setQty(detail.getQty());
+            item.setDeclareUnit(Objects.toString(detail.getDeclareUnit(), ""));
             item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
             item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
             item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
@@ -2315,7 +2355,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     item.setBoxNo(carton.getBoxNo());
                     item.setSkuNo(Objects.toString(detail.getSkuNo(), ""));
                     item.setPackQty(detail.getPackQty());
-                    item.setGrossWeight(Objects.isNull(detail.getGrossWeight()) ? BigDecimal.ZERO : detail.getGrossWeight());
+                    item.setGrossWeight(Objects.isNull(carton.getPackageWeight()) ? BigDecimal.ZERO : carton.getPackageWeight());
                     result.add(item);
                 }
             }

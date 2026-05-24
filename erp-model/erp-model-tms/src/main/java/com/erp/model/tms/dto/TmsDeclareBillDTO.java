@@ -692,6 +692,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private String senderName;
         /**
+         * 发货人的统一社会信用代码+海关代码
+         */
+        private String senderCode;
+        /**
          * 出境关别
          */
         private String exportCustomsName;
@@ -708,7 +712,19 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 收货人名称
          */
+        private String receiverId;
+        /**
+         * 收货人名称
+         */
         private String receiverName;
+        /**
+         * 收货人类型
+         */
+        private String receiverType;
+        /**
+         * 收货人的统一社会信用代码+海关代码
+         */
+        private String receiverCode;
 
         /**
          * 运输方式
@@ -976,6 +992,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+        /**
+         * 单位（报关单位名称）
+         */
+        private String declareUnit;
 
         /**
          * 单位（报关单位名称）
@@ -1068,6 +1088,10 @@ public class TmsDeclareBillDTO implements Serializable {
          */
         private Integer qty;
 
+        /**
+         * 单位
+         */
+        private String declareUnit;
         /**
          * 单位（报关单位名称）
          */
@@ -1243,6 +1267,14 @@ public class TmsDeclareBillDTO implements Serializable {
          * sku id
          */
         private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
 
         /**
          * 中国海关编码(商品编号)
