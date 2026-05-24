@@ -83,6 +83,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
     private TmsDeclareBillService tmsDeclareBillService;
     @Resource
     private CfgDeclareRuleService cfgDeclareRuleService;
+    @Lazy
+    @Resource
+    private DeliveryDeclareDetailMidService self;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -403,7 +406,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             log.warn("自动生成报关明细中间表失败：合并报关结果为空，sourceType={}，sourceDetailCount={}", sourceType, sourceDetailList.size());
             return Boolean.FALSE;
         }
-        return batchAddMergeDetail(mergeDeclareBillList);
+        return self.batchAddMergeDetail(mergeDeclareBillList);
     }
 
     @Override
@@ -1477,5 +1480,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         data.setLatestDeclareElement(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareElement(), ""));
         data.setLatestUnit(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnit(), ""));
         data.setLatestUnitPrice(productLogisticDTO.getPrice());
+        data.setLatestCurrency(productLogisticDTO.getDeclareCurrency());
+        data.setLatestCurrencySymbol(productLogisticDTO.getDeclareCurrencySymbol());
     }
 }

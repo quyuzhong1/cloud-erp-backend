@@ -1177,6 +1177,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 ? new HashMap<>()
                 : countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
 
+        // B2B 不合并预览：按 businessId(=so_info.id) + skuId 维度回填 so_detail 的单价/币别/币别符号，
+        // 与 TMS 按客户分发 (sixDimensionMerge) 取数口径保持一致，避免被物流产品 (foreign_product_logistics) 覆盖。
+        Map<String, SoDetailEntity> soDetailMap = loadSoDetailMapForB2bMinDeclare(sourceDetailList);
+
+        List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
+        Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList)
+                ? new HashMap<>()
+                : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName, (a, b) -> a));
+
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = new ArrayList<>();
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDetailList) {
             if (Objects.isNull(detailDTO)) {
@@ -1196,15 +1205,43 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     childDetailDTO.setBomVersion(childLogisticsDTO.getBomVersion());
                     childDetailDTO.setBomHistoryId(childLogisticsDTO.getBomHistoryId());
                     childDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (childLogisticsDTO.getChildQty() == null ? 1 : childLogisticsDTO.getChildQty()));
-                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO);
+                    // 子 SKU 在 so_detail 中无对应行，传空 map 让子件单价/币别仍取自子件 PLM，与 TMS 子件分支保持一致。
+                    fillB2bMinDeclareInfo(childDetailDTO, childLogisticsDTO, currencyMap, Collections.emptyMap());
                     result.add(childDetailDTO);
                 }
             } else {
-                fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO);
+                fillB2bMinDeclareInfo(detailDTO, productLogisticsDTO, currencyMap, soDetailMap);
                 result.add(detailDTO);
             }
         }
         return result;
+    }
+
+    /**
+     * 按 businessId(=so_info.id) 批量拉取 so_detail，并按 main_id + sku_id 维度建索引，
+     * 用于 B2B 不合并预览场景下单价/币别/币别符号的取值来源。
+     */
+    private Map<String, SoDetailEntity> loadSoDetailMapForB2bMinDeclare(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList) {
+        List<String> mainIdList = sourceDetailList.stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyMap();
+        }
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(mainIdList);
+        if (CollUtil.isEmpty(soDetailList)) {
+            return Collections.emptyMap();
+        }
+        return soDetailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getMainId()) && StringUtils.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toMap(d -> buildSoDetailKey(d.getMainId(), d.getSkuId()), d -> d, (a, b) -> a));
+    }
+
+    private String buildSoDetailKey(String mainId, String skuId) {
+        return mainId + "#" + skuId;
     }
 
     /**
@@ -1215,7 +1252,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @param productLogisticsDTO
      */
     private void fillB2bMinDeclareInfo(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
-                                       ProductDetailDTO.ProductLogisticDTO productLogisticsDTO) {
+                                       ProductDetailDTO.ProductLogisticDTO productLogisticsDTO,
+                                       Map<String, String> currencyMap,
+                                       Map<String, SoDetailEntity> soDetailMap) {
         if (Objects.isNull(detailDTO) || Objects.isNull(productLogisticsDTO)) {
             return;
         }
@@ -1223,10 +1262,22 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
-        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
-        detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
-        detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());
-        detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+        detailDTO.setUnitName(productLogisticsDTO.getDeclareUnitName());
+
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.getSkuId()));
+        if (Objects.nonNull(soDetailEntity)) {
+            // B2B 不合并预览：单价/币别/币别符号取自 so_detail，避免被物流产品 (foreign_product_logistics) 覆盖；
+            // 币别名称按命中后的 declareCurrency 在字典里反查，保证与币别一致。
+            detailDTO.setUnitPrice(soDetailEntity.getPrice());
+            detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
+            detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
+        } else {
+            detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
+            detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
+            detailDTO.setDeclareCurrencyName(productLogisticsDTO.getDeclareCurrencyName());
+            detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+        }
         detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
         detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
         detailDTO.setSourceCargo(StringUtils.defaultIfBlank(productLogisticsDTO.getSourceCargo(), "深圳特区"));
@@ -2243,6 +2294,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @throws ServiceException 自动生成失败时抛出
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean consumeDeclareAutoGenerateTask(AutoGenerateBillDTO dto) {
         if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getId())) {
             log.warn("B2B发货通知单自动生成报关明细任务参数为空");

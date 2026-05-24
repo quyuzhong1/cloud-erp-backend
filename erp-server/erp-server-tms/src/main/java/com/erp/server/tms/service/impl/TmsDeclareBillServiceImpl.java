@@ -60,6 +60,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
@@ -68,6 +69,8 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -185,6 +188,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     /**
      * 多 sheet 报关单导出模板（sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细）
@@ -1215,9 +1221,17 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.ExportProductDetail> allExportProductDetailList = BeanUtil.copyToList(detailList,TmsDeclareBillDTO.ExportProductDetail.class);
         List<String> sourceCodeList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSourceCode).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = fmLogisticService.listByOutstcockCode(sourceCodeList);
-        List<String> orgIdList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSenderId).distinct().collect(Collectors.toList());
+
+        Set<String> orgIdSet = new HashSet<>();
+        for (TmsDeclareBillDTO.ExportDTO dto : list) {
+            orgIdSet.add(dto.getSenderId());
+            orgIdSet.add(dto.getReceiverId());
+        }
+        List<String> orgIdList =  new ArrayList<>(orgIdSet);
         List<SysAccountingCompanyEntity> allAccountingCompanyEntityList = Optional.ofNullable(sysUserFeign.listCompanyById(orgIdList))
                 .orElse(Collections.emptyList());
+        Map<String, SysAccountingCompanyEntity> allAccountingCompanyMap = allAccountingCompanyEntityList.stream().collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (o1, o2) -> o1));
+
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DECLARE_DECLARE_TYPE.getType(),
                 DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType(),
                 DictBasicEnum.DECLARE_NATURE_LEVY.getType(),
@@ -1229,8 +1243,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String,String> sourceCountryMap = sourceCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId,DictCountryEntity::getNameCn,(v1,v2)->v1));
 
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-            SysAccountingCompanyEntity accountingCompanyEntity = allAccountingCompanyEntityList.stream().filter(v->v.getId().equals(exportDTO.getSenderId())).findFirst().orElse(new SysAccountingCompanyEntity());
-            exportDTO.setSenderName(accountingCompanyEntity.getCompanyName());
+            SysAccountingCompanyEntity senderCompanyEntity = allAccountingCompanyMap.get(exportDTO.getSenderId());
+            if(Objects.nonNull(senderCompanyEntity)){
+                exportDTO.setSenderCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+            }
+            SysAccountingCompanyEntity receiverCompanyEntity = allAccountingCompanyMap.get(exportDTO.getReceiverId());
+            if(Objects.nonNull(receiverCompanyEntity)){
+                exportDTO.setReceiverCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+            }
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(exportDTO.getSourceCode())).findFirst().orElse(new LogisticsBillEntity());
             exportDTO.setShippingMethodName(LogisticsMethodEnum.getName(logisticsBillEntity.getShippingMethod()));
@@ -1253,6 +1273,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 detail.setDeclareUnitName(unitDTO.getName());
                 detail.setSourceCountryName(sourceCountryMap.get(detail.getSourceCountry()));
                 detail.setToCountryName(exportDTO.getCountryName());
+                detail.setBusinessCode(exportDTO.getBusinessCode());
             }
             exportDTO.setTotalQty(exportProductDetailList.stream().mapToInt(TmsDeclareBillDTO.ExportProductDetail::getQty).sum());
             exportDTO.setTotalPrice(exportProductDetailList.stream().map(TmsDeclareBillDTO.ExportProductDetail::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
@@ -1860,18 +1881,40 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 //                .filter(StringUtils::isNotBlank)
 //                .distinct()
 //                .collect(Collectors.toList());
+        String type = list.stream().map(TmsDeclareBillDTO.ExportDTO::getType).filter(StringUtils::isNotBlank).findFirst().orElse("");
+        List<String> allSourceCodeList = new ArrayList<>();
 
-        List<String> allBusinessCodeList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getBusinessCode)
+        if(Objects.equals(type,SourceTypeEnum.FM_DECLARE_BILL.getCode())){
+            //获取头程发货单号
+            List<String> collect = list.stream()
+                    .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntities = FeignQuery.create(FirstMileDeliveryEntity.class)
+                    .in(FirstMileDeliveryEntity::getCode, collect)
+                    .eq(FirstMileDeliveryEntity::getIsDeleted,false)
+                    .list();
+            allSourceCodeList = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getSourceCode).collect(Collectors.toList());
+
+            Map<String, String> firstMileDeliveryMap = firstMileDeliveryEntities.stream().collect(Collectors.toMap(e -> e.getCode(), e -> e.getSourceCode(), (o1, o2) -> o1));
+            for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+                exportDTO.setSourceCode(firstMileDeliveryMap.get(exportDTO.getSourceCode()));
+            }
+        }else {
+            allSourceCodeList = list.stream()
+                .map(TmsDeclareBillDTO.ExportDTO::getSourceCode)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        }
+
         // sourceCode -> taskIdList，用于按 sourceCode 归集 cartonSpecView
         Map<String, List<String>> sourceCodeToTaskIdsMap = Collections.emptyMap();
         // taskId -> sourceCode，反查回填
         Map<String, String> taskIdToSourceCodeMap = Collections.emptyMap();
-        if (CollUtil.isNotEmpty(allBusinessCodeList)) {
-            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allBusinessCodeList))
+        if (CollUtil.isNotEmpty(allSourceCodeList)) {
+            List<PackingTaskEntity> packingTaskList = Optional.ofNullable(packingTaskFeign.listBySourceCodes(allSourceCodeList))
                     .orElse(Collections.emptyList());
             sourceCodeToTaskIdsMap = packingTaskList.stream()
                     .filter(e -> StringUtils.isNotBlank(e.getSourceCode()) && StringUtils.isNotBlank(e.getId()))
@@ -1915,14 +1958,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
             // 装箱明细 sheet：按 sourceCode -> task -> carton -> SKU 三层展开
             List<WmsCartonSpecDTO.WmsCartonSpecView> currentViewList = Collections.emptyList();
-            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getBusinessCode(), Collections.emptyList());
+            List<String> currentTaskIdList = sourceCodeToTaskIdsMap.getOrDefault(exportDTO.getSourceCode(), Collections.emptyList());
             if (CollUtil.isNotEmpty(currentTaskIdList) && !taskIdToCartonViewMap.isEmpty()) {
                 currentViewList = currentTaskIdList.stream()
                         .map(taskIdToCartonViewMap::get)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
             }
-            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getBusinessCode(), currentViewList, taskIdToSourceCodeMap));
+            exportDTO.setPackingDetailItemList(buildPackingDetailItemList(exportDTO.getSourceCode(), currentViewList, taskIdToSourceCodeMap));
         }
     }
 
@@ -2074,13 +2117,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<TmsDeclareBillDTO.ExportProductDetail> productDetailList = exportDTO.getProductDetailList();
         contractInfo.setContractDetailList(convertContractDetailList(productDetailList));
 
-        String currencyName = resolveContractCurrency(exportDTO, productDetailList);
-        contractInfo.setCurrency(currencyName);
+        String currency = resolveContractCurrency(exportDTO, productDetailList);
+        contractInfo.setCurrency(currency);
 
         BigDecimal totalAmount = Objects.isNull(exportDTO.getTotalPrice()) ? BigDecimal.ZERO : exportDTO.getTotalPrice();
         totalAmount = totalAmount.setScale(MathUtil.scale, RoundingMode.HALF_UP);
         contractInfo.setTotalAmount(totalAmount);
-        contractInfo.setTotalAmountUpper(toAmountUpper(currencyName, totalAmount));
+        contractInfo.setTotalAmountUpper(toAmountUpper(currency, totalAmount));
         return contractInfo;
     }
 
@@ -2128,9 +2171,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(productDetailList)) {
             return "";
         }
-        String firstCurrency = productDetailList.get(0).getDeclareCurrencyName();
+        String firstCurrency = productDetailList.get(0).getDeclareCurrency();
         boolean multiCurrency = productDetailList.stream()
-                .map(TmsDeclareBillDTO.ExportProductDetail::getDeclareCurrencyName)
+                .map(TmsDeclareBillDTO.ExportProductDetail::getDeclareCurrency)
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .count() > 1;
@@ -2167,9 +2210,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             TmsDeclareBillDTO.ContractDetailItem item = new TmsDeclareBillDTO.ContractDetailItem();
             item.setDeclareChineseName(Objects.toString(detail.getDeclareChineseName(), ""));
             item.setQty(detail.getQty());
+            item.setDeclareUnit(Objects.toString(detail.getDeclareUnit(), ""));
             item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
             item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
-            item.setDeclareCurrency(Objects.toString(detail.getDeclareCurrencyName(), ""));
+            item.setDeclareCurrency(Objects.toString(detail.getDeclareCurrency(), ""));
             item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
             return item;
         }).collect(Collectors.toList());
@@ -2187,6 +2231,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             item.setMarkNo("N/M");
             item.setDeclareChineseName(Objects.toString(detail.getDeclareChineseName(), ""));
             item.setQty(detail.getQty());
+            item.setDeclareUnit(Objects.toString(detail.getDeclareUnit(), ""));
             item.setDeclareUnitName(Objects.toString(detail.getDeclareUnitName(), ""));
             item.setPrice(Objects.isNull(detail.getPrice()) ? BigDecimal.ZERO : detail.getPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
             item.setTotalPrice(Objects.isNull(detail.getTotalPrice()) ? BigDecimal.ZERO : detail.getTotalPrice().setScale(MathUtil.scale, RoundingMode.HALF_UP));
@@ -2309,7 +2354,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     item.setBoxNo(carton.getBoxNo());
                     item.setSkuNo(Objects.toString(detail.getSkuNo(), ""));
                     item.setPackQty(detail.getPackQty());
-                    item.setGrossWeight(Objects.isNull(detail.getGrossWeight()) ? BigDecimal.ZERO : detail.getGrossWeight());
+                    item.setGrossWeight(Objects.isNull(carton.getPackageWeight()) ? BigDecimal.ZERO : carton.getPackageWeight());
                     result.add(item);
                 }
             }
@@ -2840,12 +2885,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(viewDTO.getSourceDeliveryDetailList())) {
             return Collections.emptyList();
         }
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList());
+        boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(viewDTO.getSourceDeliveryDetailList()) : includeSkuInMergeKey;
+
+        // sixDimensionMerge=true (B2B 按客户分发) 时，单价/币别/币别符号取值来源是 so_detail 的 tax_price/currency/currency_symbol，
+        // 由调用方在入参中预先填好，这里不能再用物流产品 (foreign_product_logistics) 覆盖。
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList(), sixDimensionMerge);
         if (CollUtil.isEmpty(result)) {
             return Collections.emptyList();
         }
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(result) : includeSkuInMergeKey;
         return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), sixDimensionMerge);
     }
 
@@ -2921,8 +2969,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 按产品物流补全报关要素、组合品拆行，并写入境内货源地/征免默认值。
+     *
+     * <p>sixDimensionMerge=true (B2B 按客户分发) 时，单价、报关币别、报关币别符号取值来源是
+     * 调用方写入的 so_detail.tax_price / currency / currency_symbol，本方法不再用物流产品覆盖。</p>
      */
-    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareSourceDetailsForDeclarationGeneration(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareSourceDetailsForDeclarationGeneration(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList, boolean sixDimensionMerge) {
         if (CollectionUtils.isEmpty(sourceDeliveryDetailList)) {
             return Collections.emptyList();
         }
@@ -2947,10 +2998,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String, String> countryNameMap = CollUtil.isEmpty(dictCountryList) ? new HashMap<>() : dictCountryList.stream()
                 .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
 
+        // B2B 按客户分发场景：按 so_info.id (=SourceDeliveryDetailDTO.businessId) 一次性拉取 so_detail，
+        // 按 main_id + sku_id 维度回填单价/币别/币别符号，避免再被物流产品 (foreign_product_logistics) 覆盖。
+        Map<String, SoDetailEntity> soDetailMap = sixDimensionMerge
+                ? loadSoDetailMapForSixDimensionMerge(sourceDeliveryDetailList)
+                : Collections.emptyMap();
+
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDeliveryDetailList) {
             ProductDetailDTO.ProductLogisticDTO productLogisticsDTO = logisticsMap.get(detailDTO.getSkuId());
             if (Objects.nonNull(productLogisticsDTO)) {
-                fillDeclareInfo(detailDTO, productLogisticsDTO, declareUnitNameMap, currencyMap);
+                fillDeclareInfo(detailDTO, productLogisticsDTO, declareUnitNameMap, currencyMap, sixDimensionMerge,soDetailMap);
             }
             String countryName = countryNameMap.get(detailDTO.getCountryId());
             if (StringUtils.isNotBlank(countryName)) {
@@ -2969,7 +3026,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     sourceDeliveryDetailDTO.setBomVersion(logisticDTO.getBomVersion());
                     sourceDeliveryDetailDTO.setBomHistoryId(logisticDTO.getBomHistoryId());
                     sourceDeliveryDetailDTO.setQty((detailDTO.getQty() == null ? 0 : detailDTO.getQty()) * (logisticDTO.getChildQty() == null ? 1 : logisticDTO.getChildQty()));
-                    fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
+                    // BOM 拆分场景：子 SKU 的境内货源地/征免必须按子 SKU 自己的物流产品信息取值，
+                    // 否则会通过上面的 BeanUtil.copyProperties 继承父 SKU 已被 fillDeclareInfo / applyDeclareLineDefaults
+                    // 处理过的值（fillDeclareInfo 对这两个字段是"非空才覆盖"，子 PLM 为空时会让父值泄漏到子级）。
+                    // 这里显式置空，让下面的 fillDeclareInfo + applyDeclareLineDefaults 按
+                    //   子 PLM > DeclareMergeDefaults 默认值（深圳特区 / 照章征税）
+                    // 的优先级独立取值，不依赖父 SKU。
+                    sourceDeliveryDetailDTO.setSourceCargo(null);
+                    sourceDeliveryDetailDTO.setExemption(null);
+                    fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap, sixDimensionMerge,Collections.emptyMap());
                     applyDeclareLineDefaults(sourceDeliveryDetailDTO);
                     result.add(sourceDeliveryDetailDTO);
                 }
@@ -2990,6 +3055,33 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (StringUtils.isBlank(detailDTO.getExemption())) {
             detailDTO.setExemption(DeclareMergeDefaults.DEFAULT_EXEMPTION);
         }
+    }
+
+    /**
+     * 按 so_info.id 批量拉取 so_detail，并按 main_id + sku_id 维度建索引，
+     * 用于 B2B 按客户分发场景下单价/币别/币别符号的取值来源。
+     */
+    private Map<String, SoDetailEntity> loadSoDetailMapForSixDimensionMerge(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        List<String> mainIdList = sourceDeliveryDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyMap();
+        }
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(mainIdList);
+        if (CollUtil.isEmpty(soDetailList)) {
+            return Collections.emptyMap();
+        }
+        return soDetailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getMainId()) && StringUtils.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toMap(d -> buildSoDetailKey(d.getMainId(), d.getSkuId()), d -> d, (a, b) -> a));
+    }
+
+
+    private String buildSoDetailKey(String mainId, String skuId) {
+        return mainId + "#" + skuId;
     }
 
     /**
@@ -3544,15 +3636,30 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private void fillDeclareInfo(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
                                  ProductDetailDTO.ProductLogisticDTO productLogisticsDTO,
                                  Map<String, String> declareUnitNameMap,
-                                 Map<String, String> currencyMap) {
+                                 Map<String, String> currencyMap,
+                                 boolean sixDimensionMerge,
+                                 Map<String, SoDetailEntity> soDetailMap) {
         detailDTO.setHsCode(productLogisticsDTO.getCustomsCode());
         detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
-        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
-        detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
-        detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
-        detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
+        detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
+
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(),detailDTO.getSkuId()));
+
+        if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
+            // B2B 按客户分发场景：单价/币别/币别符号已由调用方按 so_detail.tax_price / currency / currency_symbol 填好，
+            // 不允许再用物流产品覆盖；币别名称按保留的 declareCurrency 在字典里反查，保证与币别一致。
+            detailDTO.setUnitPrice(soDetailEntity.getPrice());
+            detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
+            detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
+        } else {
+            detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
+            detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
+            detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+            detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
+        }
         detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
         detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
         if (StringUtils.isNotBlank(productLogisticsDTO.getSourceCargo())) {
