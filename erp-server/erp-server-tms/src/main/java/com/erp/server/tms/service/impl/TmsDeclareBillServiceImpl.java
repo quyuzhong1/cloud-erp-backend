@@ -2372,35 +2372,34 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 单条记录写入：1 个 xlsx，多 sheet 编排
+     *
+     * <p>先在内存完成模板渲染再写 response，避免 fill/finish 阶段直接写响应流：
+     * 调试断点暂停或客户端未及时读流时，Servlet 输出缓冲区满会导致线程阻塞。</p>
      */
     private void writeMultiSheet(TmsDeclareBillDTO.ExportDTO exportDTO,
                                  HttpServletResponse response,
                                  String fileName) throws Exception {
-        OutputStream out = null;
-        BufferedOutputStream bos = null;
-        try {
-            ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
-            try (InputStream inputStream = classPathResource.getInputStream()) {
-                ExcelPrintUtils.getOutputStream(fileName, response);
-                out = response.getOutputStream();
-                bos = new BufferedOutputStream(out);
-                ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
-                registerCommonConverters(excelWriter);
-                fillMultiSheetForOne(excelWriter, exportDTO);
-                excelWriter.finish();
-            }
-        }catch (Exception e) {
+        ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
+        byte[] xlsxBytes;
+        try (InputStream inputStream = classPathResource.getInputStream();
+             ByteArrayOutputStream entryOut = new ByteArrayOutputStream()) {
+            ExcelWriter excelWriter = EasyExcel.write(entryOut).withTemplate(inputStream).build();
+            registerCommonConverters(excelWriter);
+            fillMultiSheetForOne(excelWriter, exportDTO);
+            excelWriter.finish();
+            xlsxBytes = entryOut.toByteArray();
+        } catch (Exception e) {
             log.error("多 sheet 报关单导出失败, 单号【{}】", exportDTO.getCode(), e);
             throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        } finally {
-            if (Objects.nonNull(bos)) {
-                bos.flush();
-            }
-            if (Objects.nonNull(out)) {
-                out.flush();
-                out.close();
-            }
         }
+
+        ExcelPrintUtils.getOutputStream(fileName, response);
+        try (OutputStream out = response.getOutputStream();
+             BufferedOutputStream bos = new BufferedOutputStream(out)) {
+            bos.write(xlsxBytes);
+            bos.flush();
+        }
+        response.flushBuffer();
     }
 
     /**
@@ -2456,17 +2455,19 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      * <p>sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细。</p>
      */
     private void fillMultiSheetForOne(ExcelWriter excelWriter, TmsDeclareBillDTO.ExportDTO exportDTO) {
+        // 明细列表统一 forceNewRow，避免多行明细向下覆盖 footer 主表占位符行
+        FillConfig detailFillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+
         // sheet 0：报关单（与单 sheet 模板字段口径一致）
         WriteSheet sheetDeclare = EasyExcel.writerSheet(0).build();
-        FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
-        excelWriter.fill(exportDTO.getProductDetailList(), fillConfig, sheetDeclare);
+        excelWriter.fill(exportDTO.getProductDetailList(), detailFillConfig, sheetDeclare);
         excelWriter.fill(exportDTO, sheetDeclare);
 
-        // sheet 1：合同
+        // sheet 1：合同（先明细后主表，明细须插入新行把 footer 整体下移）
         TmsDeclareBillDTO.ContractInfo contractInfo = exportDTO.getContractInfo();
         if (Objects.nonNull(contractInfo)) {
             WriteSheet sheetContract = EasyExcel.writerSheet(1).build();
-            excelWriter.fill(new FillWrapper("contractDetail", contractInfo.getContractDetailList()), sheetContract);
+            excelWriter.fill(new FillWrapper("contractDetail", contractInfo.getContractDetailList()), detailFillConfig, sheetContract);
             excelWriter.fill(contractInfo, sheetContract);
         }
 
@@ -2477,7 +2478,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.InvoiceInfo invoiceInfo = exportDTO.getInvoiceInfo();
         if (Objects.nonNull(invoiceInfo)) {
             WriteSheet sheetInvoice = EasyExcel.writerSheet(2).build();
-            excelWriter.fill(new FillWrapper("invoiceDetail", convertInvoiceDetailList(exportDTO.getProductDetailList())), sheetInvoice);
+            excelWriter.fill(new FillWrapper("invoiceDetail", convertInvoiceDetailList(exportDTO.getProductDetailList())), detailFillConfig, sheetInvoice);
             excelWriter.fill(new FillWrapper("invoice", Collections.singletonList(invoiceInfo)), sheetInvoice);
         }
 
@@ -2486,7 +2487,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.PackingListInfo packingListInfo = exportDTO.getPackingListInfo();
         if (Objects.nonNull(packingListInfo)) {
             WriteSheet sheetPackingList = EasyExcel.writerSheet(3).build();
-            excelWriter.fill(new FillWrapper("packingListItem", packingListInfo.getItemList()), sheetPackingList);
+            excelWriter.fill(new FillWrapper("packingListItem", packingListInfo.getItemList()), detailFillConfig, sheetPackingList);
             excelWriter.fill(new FillWrapper("packingList", Collections.singletonList(packingListInfo)), sheetPackingList);
         }
 
