@@ -69,6 +69,8 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -186,6 +188,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
     /**
      * 多 sheet 报关单导出模板（sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细）
@@ -2841,12 +2846,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollectionUtils.isEmpty(viewDTO.getSourceDeliveryDetailList())) {
             return Collections.emptyList();
         }
-        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList());
+        boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(viewDTO.getSourceDeliveryDetailList()) : includeSkuInMergeKey;
+
+        // sixDimensionMerge=true (B2B 按客户分发) 时，单价/币别/币别符号取值来源是 so_detail 的 tax_price/currency/currency_symbol，
+        // 由调用方在入参中预先填好，这里不能再用物流产品 (foreign_product_logistics) 覆盖。
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> result = prepareSourceDetailsForDeclarationGeneration(viewDTO.getSourceDeliveryDetailList(), sixDimensionMerge);
         if (CollUtil.isEmpty(result)) {
             return Collections.emptyList();
         }
         DeclarationGenerationService declarationGenerationService = new DeclarationGenerationService();
-        boolean sixDimensionMerge = Objects.isNull(includeSkuInMergeKey) ? isSixDimensionMerge(result) : includeSkuInMergeKey;
         return declarationGenerationService.generateMergeBillDetails(result, viewDTO.getIsMultipleMerge(), sixDimensionMerge);
     }
 
@@ -2922,8 +2930,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 按产品物流补全报关要素、组合品拆行，并写入境内货源地/征免默认值。
+     *
+     * <p>sixDimensionMerge=true (B2B 按客户分发) 时，单价、报关币别、报关币别符号取值来源是
+     * 调用方写入的 so_detail.tax_price / currency / currency_symbol，本方法不再用物流产品覆盖。</p>
      */
-    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareSourceDetailsForDeclarationGeneration(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> prepareSourceDetailsForDeclarationGeneration(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList, boolean sixDimensionMerge) {
         if (CollectionUtils.isEmpty(sourceDeliveryDetailList)) {
             return Collections.emptyList();
         }
@@ -2948,10 +2959,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String, String> countryNameMap = CollUtil.isEmpty(dictCountryList) ? new HashMap<>() : dictCountryList.stream()
                 .collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (a, b) -> a));
 
+        // B2B 按客户分发场景：按 so_info.id (=SourceDeliveryDetailDTO.businessId) 一次性拉取 so_detail，
+        // 按 main_id + sku_id 维度回填单价/币别/币别符号，避免再被物流产品 (foreign_product_logistics) 覆盖。
+        Map<String, SoDetailEntity> soDetailMap = sixDimensionMerge
+                ? loadSoDetailMapForSixDimensionMerge(sourceDeliveryDetailList)
+                : Collections.emptyMap();
+
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO : sourceDeliveryDetailList) {
             ProductDetailDTO.ProductLogisticDTO productLogisticsDTO = logisticsMap.get(detailDTO.getSkuId());
             if (Objects.nonNull(productLogisticsDTO)) {
-                fillDeclareInfo(detailDTO, productLogisticsDTO, declareUnitNameMap, currencyMap);
+                fillDeclareInfo(detailDTO, productLogisticsDTO, declareUnitNameMap, currencyMap, sixDimensionMerge,soDetailMap);
             }
             String countryName = countryNameMap.get(detailDTO.getCountryId());
             if (StringUtils.isNotBlank(countryName)) {
@@ -2978,7 +2995,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     // 的优先级独立取值，不依赖父 SKU。
                     sourceDeliveryDetailDTO.setSourceCargo(null);
                     sourceDeliveryDetailDTO.setExemption(null);
-                    fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap);
+                    fillDeclareInfo(sourceDeliveryDetailDTO, logisticDTO, declareUnitNameMap, currencyMap, sixDimensionMerge,Collections.emptyMap());
                     applyDeclareLineDefaults(sourceDeliveryDetailDTO);
                     result.add(sourceDeliveryDetailDTO);
                 }
@@ -2999,6 +3016,33 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (StringUtils.isBlank(detailDTO.getExemption())) {
             detailDTO.setExemption(DeclareMergeDefaults.DEFAULT_EXEMPTION);
         }
+    }
+
+    /**
+     * 按 so_info.id 批量拉取 so_detail，并按 main_id + sku_id 维度建索引，
+     * 用于 B2B 按客户分发场景下单价/币别/币别符号的取值来源。
+     */
+    private Map<String, SoDetailEntity> loadSoDetailMapForSixDimensionMerge(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList) {
+        List<String> mainIdList = sourceDeliveryDetailList.stream()
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyMap();
+        }
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(mainIdList);
+        if (CollUtil.isEmpty(soDetailList)) {
+            return Collections.emptyMap();
+        }
+        return soDetailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getMainId()) && StringUtils.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toMap(d -> buildSoDetailKey(d.getMainId(), d.getSkuId()), d -> d, (a, b) -> a));
+    }
+
+
+    private String buildSoDetailKey(String mainId, String skuId) {
+        return mainId + "#" + skuId;
     }
 
     /**
@@ -3553,16 +3597,30 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private void fillDeclareInfo(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO,
                                  ProductDetailDTO.ProductLogisticDTO productLogisticsDTO,
                                  Map<String, String> declareUnitNameMap,
-                                 Map<String, String> currencyMap) {
+                                 Map<String, String> currencyMap,
+                                 boolean sixDimensionMerge,
+                                 Map<String, SoDetailEntity> soDetailMap) {
         detailDTO.setHsCode(productLogisticsDTO.getCustomsCode());
         detailDTO.setProductNameCn(productLogisticsDTO.getDeclareChineseName());
         detailDTO.setDeclareElement(productLogisticsDTO.getDeclareElement());
         detailDTO.setUnit(productLogisticsDTO.getDeclareUnit());
         detailDTO.setUnitName(declareUnitNameMap.get(productLogisticsDTO.getDeclareUnit()));
-        detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
-        detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
-        detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
-        detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
+
+        SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(),detailDTO.getSkuId()));
+
+        if (sixDimensionMerge && Objects.nonNull(soDetailEntity)) {
+            // B2B 按客户分发场景：单价/币别/币别符号已由调用方按 so_detail.tax_price / currency / currency_symbol 填好，
+            // 不允许再用物流产品覆盖；币别名称按保留的 declareCurrency 在字典里反查，保证与币别一致。
+            detailDTO.setUnitPrice(soDetailEntity.getPrice());
+            detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
+            detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
+        } else {
+            detailDTO.setUnitPrice(productLogisticsDTO.getPrice());
+            detailDTO.setDeclareCurrency(productLogisticsDTO.getDeclareCurrency());
+            detailDTO.setDeclareCurrencySymbol(productLogisticsDTO.getDeclareCurrencySymbol());
+            detailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsDTO.getDeclareCurrency()));
+        }
         detailDTO.setSourceCountry(productLogisticsDTO.getSourceCountry());
         detailDTO.setSourceCountryName(productLogisticsDTO.getSourceCountryName());
         if (StringUtils.isNotBlank(productLogisticsDTO.getSourceCargo())) {

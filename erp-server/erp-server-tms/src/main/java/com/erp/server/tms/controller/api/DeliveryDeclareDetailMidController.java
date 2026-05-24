@@ -113,6 +113,7 @@ public class DeliveryDeclareDetailMidController extends BaseController {
             menuCode = "tms:deliveryDeclareDetailMid:batchAddMergeDetail",
             serviceClass = DeliveryDeclareDetailMidService.class,
             keyIdName = "ids")
+    @PostMapping("/mergePreview")
     public ApiResult<List<DeliveryDeclareDetailMidDTO.MergePreviewDTO>> mergePreview(@RequestBody BaseIdsDTO.IdsDTO dto) {
         return success(deliveryDeclareDetailMidService.mergePreview(dto.getIds()));
     }
