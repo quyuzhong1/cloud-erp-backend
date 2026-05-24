@@ -86,7 +86,7 @@ public class CfgDeclareRuleConditionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
-        @NotBlank(message = "id can not be blank")
+        @NotBlank(message = "主键id不能为空")
         private String id;
     }
 
@@ -95,29 +95,29 @@ public class CfgDeclareRuleConditionDTO implements Serializable {
     public static class CommonDTO extends SuperDTO {
         private String ruleId;
 
-        @NotBlank(message = "leftBracket can not be blank")
-        @Size(max = 10, message = "leftBracket length must be <= 10")
+        @NotBlank(message = "左括号不能为空")
+        @Size(max = 10, message = "左括号最大长度不能超过10位")
         private String leftBracket;
 
-        @NotBlank(message = "field can not be blank")
-        @Size(max = 30, message = "field length must be <= 30")
+        @NotBlank(message = "条件的字段不能为空")
+        @Size(max = 30, message = "条件的字段最大长度不能超过30位")
         private String field;
 
-        @NotBlank(message = "compare can not be blank")
-        @Size(max = 30, message = "compare length must be <= 30")
+        @NotBlank(message = "比较符不能为空")
+        @Size(max = 30, message = "比较符最大长度不能超过30位")
         private String compare;
 
-        @NotBlank(message = "value can not be blank")
+        @NotBlank(message = "值不能为空")
         private String value;
 
-        @NotBlank(message = "name can not be blank")
+        @NotBlank(message = "值对应名称不能为空")
         private String name;
 
-        @NotBlank(message = "rightBracket can not be blank")
-        @Size(max = 10, message = "rightBracket length must be <= 10")
+        @NotBlank(message = "右括号不能为空")
+        @Size(max = 10, message = "右括号最大长度不能超过10位")
         private String rightBracket;
 
-        @Size(max = 10, message = "logic length must be <= 10")
+        @Size(max = 10, message = "逻辑关系最大长度不能超过10位")
         private String logic;
 
         private Integer index;

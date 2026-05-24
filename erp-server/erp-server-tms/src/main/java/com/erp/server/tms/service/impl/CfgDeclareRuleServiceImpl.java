@@ -8,6 +8,8 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -43,6 +45,9 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * 报关规则主表服务实现
+ */
 @Slf4j
 @Service
 public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMapper, CfgDeclareRuleEntity> implements CfgDeclareRuleService {
@@ -63,6 +68,18 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     @Resource
     private SpElServer spElServer;
 
+    /**
+     * 批量保存报关规则。
+     *
+     * <p>业务规则：</p>
+     * <ul>
+     * <li>按 ruleType 全量覆盖，未出现在本次提交列表中的旧规则会被删除</li>
+     * <li>同一 ruleType 下 senderId + receiverId 不可重复</li>
+     * <li>配置为单值唯一的条件字段不可跨规则重复</li>
+     * </ul>
+     *
+     * @param dto 规则类型及规则主从数据列表
+     */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -75,8 +92,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .collect(Collectors.toMap(CfgDeclareRuleEntity::getId, item -> item, (left, right) -> left));
 
         validateBatchSaveRequest(dto.getRuleType(), saveList, existingRuleMap);
-        Set<String> uniqueConditionFields = listUniqueConditionFields(dto.getRuleType());
-        validateSaveListUniqueConditions(dto.getRuleType(), saveList, uniqueConditionFields);
+        List<CfgConditionDTO.CommonDTO> conditionConfigList = cfgConditionService.listByType(dto.getRuleType());
+        Set<String> uniqueConditionFields = listUniqueConditionFields(conditionConfigList);
+        Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap = buildConditionConfigMap(conditionConfigList);
+        validateSaveListUniqueConditions(dto.getRuleType(), saveList, uniqueConditionFields, conditionConfigMap);
 
         List<CfgDeclareRuleEntity> saveEntities = new ArrayList<>(saveList.size());
         for (int i = 0; i < saveList.size(); i++) {
@@ -96,11 +115,25 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         return Boolean.TRUE;
     }
 
+    /**
+     * 按规则类型查询报关规则，并组装为主从结构的保存 DTO。
+     *
+     * @param dto 查询参数，含 ruleType
+     */
     @Override
     public CfgDeclareRuleDTO.SaveListDTO paging(CfgDeclareRuleDTO.ListParamDTO dto) {
         return buildSaveListResult(dto.getRuleType(), this.baseMapper.paging(dto));
     }
 
+    /**
+     * 获取报关规则发件人/收件人下拉数据。
+     *
+     * <p>头程报关单返回核算公司发件人；B2B 报关单返回核算公司收件人和客户收件人两类节点。</p>
+     *
+     * @param type 单据来源类型：fmDeclareBill / b2bDeclareBill
+     * @param isShowCustomerId B2B 场景是否展示客户子节点
+     * @param name 核算公司或客户名称模糊筛选
+     */
     @Override
     public List<BaseDropDownDTO.Tree> dropDownList(String type,Boolean isShowCustomerId, String name) {
         if (SourceTypeEnum.FM_DECLARE_BILL.getCode().equals(type)) {
@@ -192,6 +225,11 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .orElse(null);
     }
 
+    /**
+     * 校验批量保存请求的基础合法性。
+     *
+     * <p>校验 ruleType 一致性、明细非空、更新单据存在性，以及 senderId + receiverId 在本次提交内不重复。</p>
+     */
     void validateBatchSaveRequest(String ruleType,
                                   List<CfgDeclareRuleDTO.SaveDTO> saveList,
                                   Map<String, CfgDeclareRuleEntity> existingRuleMap) {
@@ -220,6 +258,11 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         }
     }
 
+    /**
+     * 计算本次批量保存后需要删除的旧规则 ID。
+     *
+     * <p>不在本次提交 id 列表中的已有规则视为被前端移除，需要级联删除条件明细。</p>
+     */
     List<String> getDeleteRuleIds(Collection<CfgDeclareRuleEntity> existingRules, List<CfgDeclareRuleDTO.SaveDTO> saveList) {
         Set<String> keepIdSet = saveList.stream()
                 .map(CfgDeclareRuleDTO.SaveDTO::getId)
@@ -232,10 +275,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
     }
 
     /**
-     * 校验批量保存后的报关规则条件单值唯一。
+     * 校验批量保存后的报关规则条件组合唯一。
      *
      * <p>add 接口按本次提交列表覆盖同 ruleType 下旧规则，只校验提交后的最终规则列表，
-     * 避免待删除旧规则造成重复误判。</p>
+     * 避免待删除旧规则造成重复误判。重复判定维度：条件选项 + 比较符 + 条件值。</p>
      *
      * @param ruleType 规则类型
      * @param saveList 本次提交的规则列表
@@ -243,17 +286,19 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
      */
     private void validateSaveListUniqueConditions(String ruleType,
                                                   List<CfgDeclareRuleDTO.SaveDTO> saveList,
-                                                  Set<String> uniqueConditionFields) {
+                                                  Set<String> uniqueConditionFields,
+                                                  Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
         Set<String> uniqueKeySet = new HashSet<>();
         for (CfgDeclareRuleDTO.SaveDTO saveDTO : saveList) {
-            addDtoConditionUniqueKeys(ruleType, saveDTO.getDetailList(), uniqueConditionFields, uniqueKeySet);
+            addDtoConditionUniqueKeys(ruleType, saveDTO.getDetailList(), uniqueConditionFields, uniqueKeySet, conditionConfigMap);
         }
     }
 
     /**
-     * 校验修改后的报关规则条件单值唯一。
+     * 校验修改后的报关规则条件组合唯一。
      *
-     * <p>update 只校验当前规则新条件与其它规则是否冲突，不拦截其它历史规则之间已存在的重复数据。</p>
+     * <p>update 只校验当前规则新条件与其它规则是否冲突，不拦截其它历史规则之间已存在的重复数据。
+     * 重复判定维度：条件选项 + 比较符 + 条件值。</p>
      *
      * @param entity 当前规则主表数据
      * @param newDetails 当前规则新的条件明细
@@ -265,8 +310,10 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         if (CollUtil.isEmpty(uniqueConditionFields)) {
             return;
         }
+        List<CfgConditionDTO.CommonDTO> conditionConfigList = cfgConditionService.listByType(entity.getRuleType());
+        Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap = buildConditionConfigMap(conditionConfigList);
         Set<String> uniqueKeySet = new HashSet<>();
-        addEntityConditionUniqueKeys(entity.getRuleType(), newDetails, uniqueConditionFields, uniqueKeySet);
+        addEntityConditionUniqueKeys(entity.getRuleType(), newDetails, uniqueConditionFields, uniqueKeySet, conditionConfigMap);
 
         List<String> otherRuleIds = this.lambdaQuery()
                 .eq(CfgDeclareRuleEntity::getRuleType, entity.getRuleType())
@@ -283,47 +330,70 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .in(CfgDeclareRuleConditionEntity::getRuleId, otherRuleIds)
                 .in(CfgDeclareRuleConditionEntity::getField, uniqueConditionFields)
                 .list();
-        checkEntityConditionUniqueKeys(entity.getRuleType(), otherDetails, uniqueConditionFields, uniqueKeySet);
+        checkEntityConditionUniqueKeys(entity.getRuleType(), otherDetails, uniqueConditionFields, uniqueKeySet, conditionConfigMap);
     }
 
+    /**
+     * 将 DTO 条件明细中的单值唯一字段写入唯一键集合。
+     *
+     * <p>用于批量保存场景，发现重复时直接抛出业务异常。</p>
+     */
     private void addDtoConditionUniqueKeys(String ruleType,
                                            List<? extends CfgDeclareRuleConditionDTO.CommonDTO> detailList,
                                            Set<String> uniqueConditionFields,
-                                           Set<String> uniqueKeySet) {
+                                           Set<String> uniqueKeySet,
+                                           Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         for (CfgDeclareRuleConditionDTO.CommonDTO detail : detailList) {
-            addConditionUniqueKeys(ruleType, detail.getField(), detail.getValue(), uniqueConditionFields, uniqueKeySet);
+            addConditionUniqueKeys(ruleType, detail.getField(), detail.getCompare(), detail.getValue(),
+                    uniqueConditionFields, uniqueKeySet, conditionConfigMap);
         }
     }
 
+    /**
+     * 将实体条件明细中的单值唯一字段写入唯一键集合。
+     *
+     * <p>用于修改场景，先收集当前规则新条件，再与其它规则比对。</p>
+     */
     private void addEntityConditionUniqueKeys(String ruleType,
                                               List<CfgDeclareRuleConditionEntity> detailList,
                                               Set<String> uniqueConditionFields,
-                                              Set<String> uniqueKeySet) {
+                                              Set<String> uniqueKeySet,
+                                              Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         for (CfgDeclareRuleConditionEntity detail : detailList) {
-            addConditionUniqueKeys(ruleType, detail.getField(), detail.getValue(), uniqueConditionFields, uniqueKeySet);
+            addConditionUniqueKeys(ruleType, detail.getField(), detail.getCompare(), detail.getValue(),
+                    uniqueConditionFields, uniqueKeySet, conditionConfigMap);
         }
     }
 
+    /**
+     * 校验其它规则条件明细是否与当前唯一键集合冲突。
+     */
     private void checkEntityConditionUniqueKeys(String ruleType,
                                                 List<CfgDeclareRuleConditionEntity> detailList,
                                                 Set<String> uniqueConditionFields,
-                                                Set<String> uniqueKeySet) {
+                                                Set<String> uniqueKeySet,
+                                                Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
         for (CfgDeclareRuleConditionEntity detail : detailList) {
-            checkConditionUniqueKeys(ruleType, detail.getField(), detail.getValue(), uniqueConditionFields, uniqueKeySet);
+            checkConditionUniqueKeys(ruleType, detail.getField(), detail.getCompare(), detail.getValue(),
+                    uniqueConditionFields, uniqueKeySet, conditionConfigMap);
         }
     }
 
-    private Set<String> listUniqueConditionFields(String ruleType) {
-        List<CfgConditionDTO.CommonDTO> conditionList = cfgConditionService.listByType(ruleType);
+    /**
+     * 读取规则类型下需要校验单值唯一的条件字段集合。
+     *
+     * <p>以报关规则条件配置为唯一来源，避免字段范围在代码中写死。</p>
+     */
+    private Set<String> listUniqueConditionFields(List<CfgConditionDTO.CommonDTO> conditionList) {
         if (CollUtil.isEmpty(conditionList)) {
             return Collections.emptySet();
         }
@@ -335,32 +405,100 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
                 .collect(Collectors.toSet());
     }
 
-    private void addConditionUniqueKeys(String ruleType, String field, String value,
-                                        Set<String> uniqueConditionFields, Set<String> uniqueKeySet) {
-        handleConditionUniqueKeys(ruleType, field, value, uniqueConditionFields, uniqueKeySet, true);
+    /**
+     * 将条件配置列表转换为 conditionField -> 配置 的映射，便于后续解析展示名称。
+     */
+    private Map<String, CfgConditionDTO.CommonDTO> buildConditionConfigMap(List<CfgConditionDTO.CommonDTO> conditionList) {
+        if (CollUtil.isEmpty(conditionList)) {
+            return Collections.emptyMap();
+        }
+        return conditionList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getConditionField()))
+                .collect(Collectors.toMap(item -> item.getConditionField().trim(),
+                        item -> item,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
     }
 
-    private void checkConditionUniqueKeys(String ruleType, String field, String value,
-                                          Set<String> uniqueConditionFields, Set<String> uniqueKeySet) {
-        handleConditionUniqueKeys(ruleType, field, value, uniqueConditionFields, uniqueKeySet, false);
+    private void addConditionUniqueKeys(String ruleType, String field, String compare, String value,
+                                        Set<String> uniqueConditionFields, Set<String> uniqueKeySet,
+                                        Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+        handleConditionUniqueKeys(ruleType, field, compare, value, uniqueConditionFields, uniqueKeySet, true, conditionConfigMap);
     }
 
-    private void handleConditionUniqueKeys(String ruleType, String field, String value,
+    private void checkConditionUniqueKeys(String ruleType, String field, String compare, String value,
+                                          Set<String> uniqueConditionFields, Set<String> uniqueKeySet,
+                                          Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+        handleConditionUniqueKeys(ruleType, field, compare, value, uniqueConditionFields, uniqueKeySet, false, conditionConfigMap);
+    }
+
+    private void handleConditionUniqueKeys(String ruleType, String field, String compare, String value,
                                            Set<String> uniqueConditionFields,
-                                           Set<String> uniqueKeySet, boolean addKey) {
+                                           Set<String> uniqueKeySet, boolean addKey,
+                                           Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
         String conditionField = StringUtils.trimToEmpty(field);
         if (!uniqueConditionFields.contains(conditionField)) {
             return;
         }
+        String conditionCompare = StringUtils.trimToEmpty(compare);
         // value 支持英文逗号聚合多个取值，需要展开后按单值判断是否与其它规则交叉。
         List<String> valueList = splitMatchValues(value);
         for (String itemValue : valueList) {
-            String uniqueKey = buildConditionUniqueKey(ruleType, conditionField, itemValue);
+            String uniqueKey = buildConditionUniqueKey(ruleType, conditionField, conditionCompare, itemValue);
             boolean duplicate = addKey ? !uniqueKeySet.add(uniqueKey) : uniqueKeySet.contains(uniqueKey);
             if (duplicate) {
-                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_CONDITION_DUPLICATE, conditionField, itemValue);
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_RULE_CONDITION_DUPLICATE,
+                        resolveConditionFieldDisplayName(conditionField, conditionConfigMap),
+                        resolveConditionValueDisplayName(conditionField, itemValue));
             }
         }
+    }
+
+    private String resolveConditionFieldDisplayName(String conditionField,
+                                                    Map<String, CfgConditionDTO.CommonDTO> conditionConfigMap) {
+        CfgConditionDTO.CommonDTO config = conditionConfigMap.get(conditionField);
+        if (config != null && StrUtil.isNotBlank(config.getConditionFieldName())) {
+            return config.getConditionFieldName();
+        }
+        return conditionField;
+    }
+
+    private String resolveConditionValueDisplayName(String conditionField, String itemValue) {
+        if (StrUtil.isBlank(itemValue)) {
+            return itemValue;
+        }
+        if (StrUtil.endWithIgnoreCase(conditionField, "WarehouseId")) {
+            WarehouseEntity warehouse = FeignQuery.getById(WarehouseEntity.class, itemValue);
+            if (warehouse != null && StrUtil.isNotBlank(warehouse.getName())) {
+                return warehouse.getName();
+            }
+            return itemValue;
+        }
+        if (StrUtil.equals(conditionField, "salesOrgId")) {
+            ApiResult<List<SysAccountingCompanyDTO.ListDTO>> companyResult = sysFeign.companyList("");
+            if (companyResult != null && companyResult.isSuccess() && CollUtil.isNotEmpty(companyResult.getData())) {
+                return companyResult.getData().stream()
+                        .filter(company -> StrUtil.equals(company.getId(), itemValue))
+                        .map(SysAccountingCompanyDTO.ListDTO::getCompanyName)
+                        .filter(StrUtil::isNotBlank)
+                        .findFirst()
+                        .orElse(itemValue);
+            }
+            return itemValue;
+        }
+        if (StrUtil.equals(conditionField, "countryCode")) {
+            ApiResult<List<DictCountryDTO.ListDTO>> countryResult = sysFeign.countryList();
+            if (countryResult != null && countryResult.isSuccess() && CollUtil.isNotEmpty(countryResult.getData())) {
+                return countryResult.getData().stream()
+                        .filter(country -> StrUtil.equals(country.getId(), itemValue))
+                        .map(DictCountryDTO.ListDTO::getNameCn)
+                        .filter(StrUtil::isNotBlank)
+                        .findFirst()
+                        .orElse(itemValue);
+            }
+            return itemValue;
+        }
+        return itemValue;
     }
 
     /**
@@ -628,8 +766,8 @@ public class CfgDeclareRuleServiceImpl extends SuperServiceImpl<CfgDeclareRuleMa
         return StrUtil.join("|", ruleType, senderId, receiverId);
     }
 
-    private String buildConditionUniqueKey(String ruleType, String field, String value) {
-        return StrUtil.join("|", ruleType, field, value);
+    private String buildConditionUniqueKey(String ruleType, String field, String compare, String value) {
+        return StrUtil.join("|", ruleType, field, compare, value);
     }
 
     private void addCreateLog(CfgDeclareRuleEntity entity) {

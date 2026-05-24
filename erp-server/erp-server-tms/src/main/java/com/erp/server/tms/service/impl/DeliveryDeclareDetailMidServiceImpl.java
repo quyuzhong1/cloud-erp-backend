@@ -1480,5 +1480,7 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
         data.setLatestDeclareElement(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareElement(), ""));
         data.setLatestUnit(CharSequenceUtil.blankToDefault(productLogisticDTO.getDeclareUnit(), ""));
         data.setLatestUnitPrice(productLogisticDTO.getPrice());
+        data.setLatestCurrency(productLogisticDTO.getDeclareCurrency());
+        data.setLatestCurrencySymbol(productLogisticDTO.getDeclareCurrencySymbol());
     }
 }
