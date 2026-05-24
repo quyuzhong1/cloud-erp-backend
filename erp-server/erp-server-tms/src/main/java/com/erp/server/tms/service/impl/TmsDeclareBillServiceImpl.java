@@ -2373,35 +2373,34 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
     /**
      * 单条记录写入：1 个 xlsx，多 sheet 编排
+     *
+     * <p>先在内存完成模板渲染再写 response，避免 fill/finish 阶段直接写响应流：
+     * 调试断点暂停或客户端未及时读流时，Servlet 输出缓冲区满会导致线程阻塞。</p>
      */
     private void writeMultiSheet(TmsDeclareBillDTO.ExportDTO exportDTO,
                                  HttpServletResponse response,
                                  String fileName) throws Exception {
-        OutputStream out = null;
-        BufferedOutputStream bos = null;
-        try {
-            ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
-            try (InputStream inputStream = classPathResource.getInputStream()) {
-                ExcelPrintUtils.getOutputStream(fileName, response);
-                out = response.getOutputStream();
-                bos = new BufferedOutputStream(out);
-                ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
-                registerCommonConverters(excelWriter);
-                fillMultiSheetForOne(excelWriter, exportDTO);
-                excelWriter.finish();
-            }
-        }catch (Exception e) {
+        ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
+        byte[] xlsxBytes;
+        try (InputStream inputStream = classPathResource.getInputStream();
+             ByteArrayOutputStream entryOut = new ByteArrayOutputStream()) {
+            ExcelWriter excelWriter = EasyExcel.write(entryOut).withTemplate(inputStream).build();
+            registerCommonConverters(excelWriter);
+            fillMultiSheetForOne(excelWriter, exportDTO);
+            excelWriter.finish();
+            xlsxBytes = entryOut.toByteArray();
+        } catch (Exception e) {
             log.error("多 sheet 报关单导出失败, 单号【{}】", exportDTO.getCode(), e);
             throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        } finally {
-            if (Objects.nonNull(bos)) {
-                bos.flush();
-            }
-            if (Objects.nonNull(out)) {
-                out.flush();
-                out.close();
-            }
         }
+
+        ExcelPrintUtils.getOutputStream(fileName, response);
+        try (OutputStream out = response.getOutputStream();
+             BufferedOutputStream bos = new BufferedOutputStream(out)) {
+            bos.write(xlsxBytes);
+            bos.flush();
+        }
+        response.flushBuffer();
     }
 
     /**
