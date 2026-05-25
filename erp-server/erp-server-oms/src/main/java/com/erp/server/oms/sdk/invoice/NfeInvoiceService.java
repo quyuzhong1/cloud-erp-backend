@@ -61,7 +61,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.commons.io.IOUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -79,6 +78,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -1408,7 +1408,8 @@ public class NfeInvoiceService {
             throw new ServiceException("NF-e发票未找到pdf文件");
         }
         String attachUrl = buildFastDfsPublicUrl(attachDTO.getAttachUrl());
-        byte[] pdfBytes = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
+        String fileName = CharSequenceUtil.blankToDefault(attachDTO.getAttachName(), soB2cEntity.getCode() + ".pdf");
+        byte[] pdfBytes = getFileBytesByUrl(attachUrl);
         if (pdfBytes == null || pdfBytes.length == 0) {
             throw new ServiceException("获取pdf文件失败");
         }
@@ -1425,7 +1426,7 @@ public class NfeInvoiceService {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("order_sn", soB2cEntity.getPlatformCode())
                 .addFormDataPart("file_type", "1")
-                .addFormDataPart("file", attachUrl,
+                .addFormDataPart("file", fileName,
                         RequestBody.create(MediaType.parse("application/pdf"), pdfBytes))
                 .build();
         Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
@@ -1468,6 +1469,32 @@ public class NfeInvoiceService {
             trimAttachUrl = trimAttachUrl.substring(1);
         }
         return publicUrl + "/" + trimAttachUrl;
+    }
+
+    private byte[] getFileBytesByUrl(String fileUrl) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(fileUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5 * 1000);
+            conn.setReadTimeout(30 * 1000);
+            try (InputStream inputStream = conn.getInputStream();
+                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, len);
+                }
+                return outputStream.toByteArray();
+            }
+        } catch (Exception e) {
+            throw new ServiceException(CharSequenceUtil.format("获取pdf文件失败: {}", e.getMessage()));
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
     }
 
     private String buildShopeeUploadInvoiceUrl(CfgAppClientEntity cfgAppClientEntity, ShopAuthEntity shopAuthEntity, String accessToken, String path, long timestamp) {
