@@ -142,18 +142,6 @@ public class SkuStdCostDetailController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-    @PostMapping("/autoFetch")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "sku标准成本自动获取")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "plm:skuStdCost:autoFetch",
-            serviceClass = SkuStdCostService.class,
-            keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> autoFetch(@RequestBody @Validated SkuStdCostDTO.AutoFetchBatchDTO dto) {
-        List<BatchResultDTO> resultDTOS = skuStdCostDetailService.autoFetchBatch(dto);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
     /**
      * 获取状态统计
      *
