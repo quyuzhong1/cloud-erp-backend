@@ -1061,6 +1061,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = baseMapper.listBeforePushB2bDeclare(dto.getIds());
+        if (CollUtil.isEmpty(sourceDeliveryDetailList)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
         handleBeforeDeclareData(sourceDeliveryDetailList);
         return sourceDeliveryDetailList;
     }

@@ -209,6 +209,8 @@ public enum ApiError implements Serializable {
     COMMON_NO_SKU(98128,"SKU不存在"),
     COMMON_NOTICE_TIME_AFTER_NOW(98134,"通知时间不能早于当前时间"),
     COMMON_NOW_TYPE_NOT_ALLOW_UPDATE(98135,"立即通知不允许修改"),
+    COMMON_NOT_FOUND_PUSH_DADA(98136,"未找到可下推数据"),
+
     /**
      * AUTH 授权与登录 相关 2000 - 2200
      */
@@ -366,7 +368,7 @@ public enum ApiError implements Serializable {
     BILL_RETURN_WAIT_CONFIRM_STATUS_REQUIRED(3054,"仅退货确认状态为【待确认】时才允许操作"),
     BILL_KEEP_AT_LEAST_ONE_DETAIL_OR_DELETE(3055,"请至少保留一条明细，或选择整单删除"),
     BILL_DECLARE_STATUS_GENERATED_NOT_CHANGE_TO_NO_DECLARE(3056,"单据【{0}】报关状态非未生成，不允许修改为【无需生成】"),
-    BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS(3057,"单据【{0}】物流状态已生成，不允许修改为【无需生成】"),
+    BILL_LOGISTICS_STATUS_GENERATED_NOT_CHANGE_TO_NO_LOGISTICS(3057,"单据【{0}】物流状态非未生成，不允许修改为【无需生成】"),
     BILL_DETAIL_IS_ZERO(3058, "单据【{0}】的明细条数为0，不允许提交"),
     BILL_IN_USE_DELETE_FORBIDDEN(3059,"销售订单已被引用，无法删除"),
     BILL_IN_USE_SO_RECEIPT(3059,"销售订单已被收款单【{0}】引用，无法删除或作废"),

@@ -2608,7 +2608,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         List<FirstMileDeliveryEntity> deliveryEntities = this.listByIds(dto.getIds());
 
-        List<FirstMileDeliveryEntity> deliveryEntityLogisticsStatusList = deliveryEntities.stream().filter(req -> FmDeliveryLogisticsStatusEnum.FINISH.getCode().equals(req.getLogisticsStatus().getCode())).collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> deliveryEntityLogisticsStatusList = deliveryEntities.stream().filter(req -> !FmDeliveryLogisticsStatusEnum.WAIT.getCode().equals(req.getLogisticsStatus().getCode())).collect(Collectors.toList());
 
 
         for (String billType : dto.getBillTypes()) {
@@ -3258,6 +3258,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     @Override
     public List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> listBeforePushFmDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushFmDeclare(dto.getIds());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.COMMON_NOT_FOUND_PUSH_DADA);
+        }
         handleDeclareData(list);
         return list;
     }
