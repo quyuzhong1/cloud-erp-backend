@@ -2955,15 +2955,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             Map<String, String> finalDictValueMaps = dictValueMaps;
 
-            List<String> mainSupplierIds = list.stream()
-                    .map(ProductDetailExcelExportDTO::getMainSupplier)
-                    .filter(StringUtils::isNotBlank)
-                    .distinct()
-                    .collect(Collectors.toList());
-            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds)
-                    ? new HashMap<>()
-                    : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
-
             Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
             Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
             for(Map.Entry<String, BasicCategoryEntity> idBasicCategoryMap : idBasicCategoryMaps.entrySet()) {
