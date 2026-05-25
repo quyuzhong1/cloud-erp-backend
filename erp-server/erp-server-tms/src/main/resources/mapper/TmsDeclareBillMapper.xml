@@ -21,9 +21,9 @@
        <result column="net_weight" property="netWeight" />
        <result column="gross_weight" property="grossWeight" />
        <result column="declare_date" property="declareDate" />
-       <result column="declar_confirm_date" property="declarConfirmDate" />
-       <result column="declar_user_id" property="declarUserId" />
-       <result column="declar_user_name" property="declarUserName" />
+       <result column="declare_confirm_date" property="declareConfirmDate" />
+       <result column="declare_user_id" property="declareUserId" />
+       <result column="declare_user_name" property="declareUserName" />
        <result column="declare_type" property="declareType" />
        <result column="pre_input_no" property="preInputNo" />
        <result column="dest_customs" property="destCustoms" />
@@ -61,7 +61,7 @@
         update_time,
         version,
         is_deleted,
-        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, logistics_supplier_id, logistics_supplier_name, country, net_weight, gross_weight, declare_date, declar_confirm_date, declar_user_id, declar_user_name, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, merge_source_id
+        code, source_type,type,transport_no, source_id,source_code,declare_status, country_name, business_type, logistics_supplier_id, logistics_supplier_name, country, net_weight, gross_weight, declare_date, declare_confirm_date, declare_user_id, declare_user_name, declare_type, pre_input_no, dest_customs, sender_id, export_customs_name, export_date, receiver_name, dict_supervision_method, dict_nature_levy, license_no, trading_area, to_area, to_port, export_port, dict_pack_type, dict_transaction_method, remark, shipping_fee, insurance_fee, other_fee, box_qty, merge_source_id
     </sql>
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$TabListDTO">
         SELECT db.declare_status as tabFlag,
@@ -217,7 +217,7 @@
         )
         SELECT
             db.id,
-            db.declar_confirm_date as declareConfirmDate,
+            db.declare_confirm_date as declareConfirmDate,
             db.code,
             (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
             db.declare_status as declareStatus,
@@ -229,7 +229,7 @@
             db.gross_weight as  grossWeight,
             db.declare_date as   declareDate,
             db.declare_type as   declareType,
-            db.declar_user_name as declareUserName,
+            db.declare_user_name as declareUserName,
             db.remark,
             db.create_user_name as   createUserName,
             db.create_time as   createTime,
@@ -273,7 +273,7 @@
         )
         SELECT
             db.id,
-            db.declar_confirm_date as declareConfirmDate,
+            db.declare_confirm_date as declareConfirmDate,
             db.code,
             (select count(distinct dbd.sku_id) from tms_declare_bill_detail dbd where dbd.is_deleted = false and dbd.main_id = db.id) as goodsQty,
             db.declare_status as declareStatus,
@@ -285,7 +285,7 @@
             db.gross_weight as  grossWeight,
             db.declare_date as   declareDate,
             db.declare_type as   declareType,
-            db.declar_user_name as declareUserName,
+            db.declare_user_name as declareUserName,
             db.remark,
             db.create_user_name as   createUserName,
             db.create_time as   createTime,

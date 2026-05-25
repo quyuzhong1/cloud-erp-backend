@@ -201,9 +201,9 @@ public class TmsB2BDeclareBillController extends BaseController {
             TmsDeclareBillDTO.ConfirmDeclareStatusDTO singleDTO = new TmsDeclareBillDTO.ConfirmDeclareStatusDTO();
             singleDTO.setIds(Collections.singletonList(id));
             singleDTO.setDeclareStatus(dto.getDeclareStatus());
-            singleDTO.setDeclarConfirmDate(dto.getDeclarConfirmDate());
-            singleDTO.setDeclarUserId(dto.getDeclarUserId());
-            singleDTO.setDeclarUserName(dto.getDeclarUserName());
+            singleDTO.setDeclareConfirmDate(dto.getDeclareConfirmDate());
+            singleDTO.setDeclareUserId(dto.getDeclareUserId());
+            singleDTO.setDeclareUserName(dto.getDeclareUserName());
             resultList.add(tmsDeclareBillService.confirmDeclareStatus(singleDTO, SourceTypeEnum.B2B_DECLARE_BILL));
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
