@@ -389,4 +389,5 @@ public interface RedisCacheConstants {
     String WORKFLOW_DICT_BASIC_BY_TYPE = "cache:workflow:dict:type";
     //区域管理
     String SYS_DICT_GLOBAL_AREA_ID = "cache:sys:globalArea:id";
+    String SYS_COUNTRY_BY_ID = "cache:sys:country:id";
 }
