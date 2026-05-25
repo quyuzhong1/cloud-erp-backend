@@ -69,6 +69,22 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
          * 是否唯一字段
          */
         private Boolean isUniqueField;
+        /**
+         * 默认值下拉配置ID
+         */
+        private String queryOptionId;
+        /**
+         * 默认值静态选项
+         */
+        private String optionList;
+        /**
+         * 字段单位属性
+         */
+        private String unitType;
+        /**
+         * 标准单位
+         */
+        private String standardUnit;
     }
 
     /**
@@ -109,6 +125,22 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
          * 路径
          */
         private String path;
+        /**
+         * 默认值下拉配置ID
+         */
+        private String queryOptionId;
+        /**
+         * 默认值静态选项
+         */
+        private String optionList;
+        /**
+         * 字段单位属性
+         */
+        private String unitType;
+        /**
+         * 标准单位
+         */
+        private String standardUnit;
 
         @JsonInclude(value= JsonInclude.Include.NON_NULL)
         private List<TreeDTO> childrenList;

@@ -2,17 +2,19 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import com.common.business.dto.base.SuperDTO;
 import java.time.LocalDateTime;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 import com.common.business.dto.AdvanceQueryDTO;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * <p>
@@ -26,6 +28,49 @@ import java.util.Map;
 @NoArgsConstructor
 public class CfgLogisticsCostImportDetailDTO implements Serializable {
 
+
+    /**
+     * 字段清洗规则
+     */
+    @Data
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class EtlRuleDTO implements Serializable {
+
+        /**
+         * 清洗类型，见 CfgLogisticsCostImportEtlRuleTypeEnum
+         */
+        private String type;
+
+        /**
+         * 执行顺序（保存后回填；入参可省略）
+         */
+        private Integer index;
+
+        /**
+         * 子模式：replace 替换方式 / substring 截取模式 / fillEmpty 填充方式
+         */
+        private String mode;
+
+        private String sourceText;
+
+        private String targetText;
+
+        private String symbol;
+
+        private String symbolPosition;
+
+        private String orderDirection;
+
+        private Integer length;
+
+        private String fillValue;
+
+        /**
+         * fillEmpty 且 mode=field 时，Excel 表头名
+         */
+        private String sourceField;
+    }
 
 
      /**
@@ -90,6 +135,22 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         * 物流商明细字段
         */
         private String sourceDetailField;
+
+        /**
+        * 默认值
+        */
+        private String defaultValue;
+
+        /**
+        * 字段清洗规则
+        */
+        private List<EtlRuleDTO> etlRuleList;
+
+        /**
+        * 字段清洗规则存储值
+        */
+        @JsonIgnore
+        private String etlRuleListStorage;
 
         /**
         * 是否唯一
@@ -176,6 +237,22 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         private String sourceDetailField;
 
         /**
+        * 默认值
+        */
+        private String defaultValue;
+
+        /**
+        * 字段清洗规则
+        */
+        private List<EtlRuleDTO> etlRuleList;
+
+        /**
+        * 字段清洗规则存储值
+        */
+        @JsonIgnore
+        private String etlRuleListStorage;
+
+        /**
         * 是否唯一
         */
         private Boolean isUniqueKey;
@@ -236,7 +313,6 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         /**
         * 物流商抬头字段
         */
-        @NotBlank(message = "物流商抬头字段不能为空")
         @Size(max = 200,message = "物流商抬头字段最大长度不能超过200位")
         private String sourceField;
 
@@ -245,6 +321,23 @@ public class CfgLogisticsCostImportDetailDTO implements Serializable {
         */
         @Size(max = 200,message = "物流商明细字段最大长度不能超过200位")
         private String sourceDetailField;
+
+        /**
+        * 默认值
+        */
+        @Size(max = 200,message = "默认值最大长度不能超过200位")
+        private String defaultValue;
+
+        /**
+        * 字段清洗规则
+        */
+        private List<EtlRuleDTO> etlRuleList;
+
+        /**
+        * 字段清洗规则存储值
+        */
+        @JsonIgnore
+        private String etlRuleListStorage;
 
         /**
         * 是否唯一

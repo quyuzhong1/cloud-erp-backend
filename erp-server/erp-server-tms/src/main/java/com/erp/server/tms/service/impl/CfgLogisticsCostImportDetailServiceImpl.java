@@ -17,11 +17,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import com.erp.server.tms.mapper.CfgLogisticsCostImportDetailMapper;
+import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +33,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -45,11 +50,15 @@ import java.util.stream.Collectors;
 public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<CfgLogisticsCostImportDetailMapper, CfgLogisticsCostImportDetailEntity> implements CfgLogisticsCostImportDetailService {
     @Resource
     private OperateLogService operateLogService;
+    @Lazy
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDetailDTO.UpdateDTO addDTO) {
+        validateMainDetailList(addDTO, false);
         CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity = new CfgLogisticsCostImportDetailEntity();
         BeanMapperUtils.copy(addDTO, cfgLogisticsCostImportDetailEntity);
 
@@ -80,6 +89,10 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
     public Boolean update(CfgLogisticsCostImportDetailDTO.UpdateDTO addOrUpdateDTO) {
         CfgLogisticsCostImportDetailEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置字段配置"));
+        if (StrUtil.isBlank(addOrUpdateDTO.getMainId())) {
+            addOrUpdateDTO.setMainId(old.getMainId());
+        }
+        validateMainDetailList(addOrUpdateDTO, true);
         CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity =  BeanMapperUtils.map(CfgLogisticsCostImportDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -147,10 +160,51 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
     }
 
     /**
+     * 校验同一主单下的完整明细配置。
+     *
+     * @param currentDetail 当前明细
+     * @param update 是否修改
+     * @return 无
+     * @throws ServiceException 主单或明细配置不合法时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void validateMainDetailList(CfgLogisticsCostImportDetailDTO.UpdateDTO currentDetail, boolean update) {
+        if (StrUtil.isBlank(currentDetail.getMainId())) {
+            throw new ServiceException("主单id不能为空");
+        }
+        CfgLogisticsCostImportEntity main = cfgLogisticsCostImportService.getById(currentDetail.getMainId());
+        if (Objects.isNull(main)) {
+            throw new ServiceException("未找到物流费用导入配置主单");
+        }
+        List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList = lambdaQuery()
+                .eq(CfgLogisticsCostImportDetailEntity::getMainId, currentDetail.getMainId())
+                .list()
+                .stream()
+                .filter(detail -> !update || !Objects.equals(detail.getId(), currentDetail.getId()))
+                .map(detail -> BeanMapperUtils.map(CfgLogisticsCostImportDetailDTO.UpdateDTO.class, detail))
+                .collect(Collectors.toList());
+        detailList.add(currentDetail);
+        cfgLogisticsCostImportService.validateDetailList(main.getBusinessType(), detailList);
+    }
+
+    /**
     * 新增修改处理数据
     */
     private void handleData(CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+        cfgLogisticsCostImportDetailEntity.setIsAbsoluteValue(false);
+        List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList = cfgLogisticsCostImportDetailEntity.getEtlRuleList();
+        if (CollUtil.isEmpty(ruleList)) {
+            cfgLogisticsCostImportDetailEntity.setEtlRuleList(Collections.emptyList());
+            cfgLogisticsCostImportDetailEntity.setEtlRuleListStorage(CfgLogisticsCostImportEtlRuleHelper.EMPTY_ETL_RULE_LIST);
+            return;
+        }
+        int ruleIndex = 1;
+        for (CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO : ruleList) {
+            CfgLogisticsCostImportEtlRuleHelper.validateEtlRule(ruleDTO, 0, ruleIndex++);
+        }
+        CfgLogisticsCostImportEtlRuleHelper.normalizeIndexes(ruleList);
+        cfgLogisticsCostImportDetailEntity.setEtlRuleListStorage(CfgLogisticsCostImportEtlRuleHelper.buildStorage(ruleList));
     }
 
     @Override
@@ -167,6 +221,7 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         if (ObjectUtil.isEmpty(data)) {
           return;
         }
+        data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
     }
 
    /**
@@ -178,7 +233,7 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         }
         // 属性赋值
         for(CfgLogisticsCostImportDetailDTO.ListDTO data : list) {
-        // TODO 其他如需要显示名称的字段赋值
+            data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
         }
    }
 }
