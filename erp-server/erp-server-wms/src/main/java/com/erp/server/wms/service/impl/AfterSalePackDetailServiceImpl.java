@@ -105,7 +105,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         addWarehouseLocationMove(addOrUpdateDTO, old, afterSalePackEntity, warehouseLocationMap, moveQty);
         // 记录主单操作日志
         log.info("编辑 开始记录售后装箱明细单日志数据，id：【{}】", old.getId());
-        String msg = buildUnboxOperateLog(addOrUpdateDTO, afterSalePackEntity, moveQty);
+        String msg = buildUnboxOperateLog(addOrUpdateDTO, afterSalePackEntity, moveQty, old.getSkuNo());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getName(), afterSalePackEntity.getId(), "拆箱");
         return Boolean.TRUE;
     }
@@ -278,15 +278,16 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
 
     private String buildUnboxOperateLog(AfterSalePackDetailDTO.UpdateDTO addOrUpdateDTO,
                                         AfterSalePackEntity afterSalePackEntity,
-                                        Integer qty) {
+                                        Integer qty,
+                                        String skuNo) {
         String userName = UserContext.getDefaultLoginUser().getUserName();
         String operationName = getOperationName(addOrUpdateDTO.getOperation());
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
-            return StrUtil.format("用户【{}】执行[{}]拆箱行为：从[移出仓位：{}]移仓至[移入仓位{}]数量为[{}]，并再次封箱",
-                    userName, operationName, addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), qty);
+            return StrUtil.format("用户【{}】执行[{}]拆箱行为：将sku【{}】从[移出仓位：{}]移仓至[移入仓位{}]数量为[{}]，并再次封箱",
+                    userName, operationName, skuNo, addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), qty);
         }
-        return StrUtil.format("用户【{}】执行[{}]拆箱行为：从[拣货仓位：{}]{}数量为[{}]，并再次封箱",
-                userName, operationName, addOrUpdateDTO.getOutWarehouseLocationCode(), getQuantityAction(addOrUpdateDTO.getOperation()), qty);
+        return StrUtil.format("用户【{}】执行[{}]拆箱行为：将sku【{}】从[拣货仓位：{}]{}数量为[{}]，并再次封箱",
+                userName, operationName, skuNo, addOrUpdateDTO.getOutWarehouseLocationCode(), getQuantityAction(addOrUpdateDTO.getOperation()), qty);
     }
 
     private String getOperationName(String operation) {
