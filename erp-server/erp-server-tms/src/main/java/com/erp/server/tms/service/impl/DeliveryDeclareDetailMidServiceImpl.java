@@ -428,9 +428,12 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         validateMergeDetailSource(latestDetailList, sourceType);
-        // ERP-17278：自动生成报关单前校验 PLM 报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价），
+        //自动生成报关单前校验 PLM 报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价），
         // 任一行缺失则抛错并提示「单据【xx】SKU【xx】缺少报关信息：xx、xx」，不再生成报关单。
         tmsDeclareBillService.validateAutoMergeDeclareDetailRequired(latestDetailList);
+        //目的国为中国大陆的来源单不生成报关单，命中即整批失败，
+        // 错误信息列出所有命中的来源单号，来源单 declare_status 保持 WAIT，等使用方调整目的国后再触发。
+        tmsDeclareBillService.validateDestCountryNotMainlandChina(latestDetailList);
 
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : latestMergeList) {
