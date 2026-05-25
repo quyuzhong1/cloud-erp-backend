@@ -60,18 +60,11 @@ public class OpenApiService {
             	response = gatewayMethod(method, content);
             }
         }catch(ServiceException e){
-        	response = ApiResult.error(500, e.getMsg());
+            response = buildServiceExceptionResult(e);
         }catch(InvocationTargetException e) {
-        	Throwable targetException = e.getTargetException();
-        	if(targetException instanceof ServiceException) {
-        		ServiceException serviceException = (ServiceException) targetException;
-        		response = ApiResult.error(500, serviceException.getMsg());
-        	}else {
-        		log.error("统一对外接口处理异常{}" , e);
-                response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
-        	}
+            response = buildInvocationExceptionResult(e, "统一对外接口处理异常");
         }catch(Exception e){
-        	log.error("统一对外接口处理异常{}" , e);
+            log.error("统一对外接口处理异常", e);
             response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
         }
         return response;
@@ -91,19 +84,33 @@ public class OpenApiService {
             // 直接调用业务方法，不进行签名验证
             response = gatewayMethod(method, content);
         }catch(ServiceException e){
-            response = ApiResult.error(500, e.getMsg());
+            response = buildServiceExceptionResult(e);
         }catch(InvocationTargetException e) {
-            Throwable targetException = e.getTargetException();
-            if(targetException instanceof ServiceException) {
-                ServiceException serviceException = (ServiceException) targetException;
-                response = ApiResult.error(500, serviceException.getMsg());
-            }else {
-                log.error("新逻辑统一对外接口处理异常{}" , e);
-                response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
-            }
+            response = buildInvocationExceptionResult(e, "新逻辑统一对外接口处理异常");
         }catch(Exception e){
-            log.error("新逻辑统一对外接口处理异常{}" , e);
+            log.error("新逻辑统一对外接口处理异常", e);
             response = ApiResult.error(500, "服务器内部错误，请联系实施人员");
+        }
+        return response;
+    }
+
+    private ApiResult<Object> buildInvocationExceptionResult(InvocationTargetException e, String logPrefix) {
+        Throwable targetException = e.getTargetException();
+        if(targetException instanceof ServiceException) {
+            return buildServiceExceptionResult((ServiceException) targetException);
+        }
+        if(targetException instanceof RuntimeException && StringUtils.isNotBlank(targetException.getMessage())) {
+            log.error(logPrefix, targetException);
+            return ApiResult.error(500, targetException.getMessage());
+        }
+        log.error(logPrefix, e);
+        return ApiResult.error(500, "服务器内部错误，请联系实施人员");
+    }
+
+    private ApiResult<Object> buildServiceExceptionResult(ServiceException e) {
+        ApiResult<Object> response = ApiResult.error(e.getCode(), e.getMsg());
+        if (e.getData() != null) {
+            response.setData(e.getData());
         }
         return response;
     }
