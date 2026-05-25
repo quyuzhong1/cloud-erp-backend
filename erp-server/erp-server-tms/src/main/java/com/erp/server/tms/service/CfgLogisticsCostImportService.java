@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
+import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 
@@ -88,4 +89,16 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
     void handleImportSuccessList(List<CfgLogisticsCostExcelDTO> successList, List<String> errorNoList, List<CfgLogisticsCostExcelDTO> errorList2, String importType);
 
     void exportList(CfgLogisticsCostImportDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    /**
+     * 校验物流费用导入配置明细。
+     *
+     * @param businessType 业务类型
+     * @param detailList 明细列表
+     * @return 无
+     * @throws com.common.core.exception.ServiceException 明细配置不合法时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    void validateDetailList(String businessType, List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList);
 }

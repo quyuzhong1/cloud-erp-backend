@@ -3,12 +3,15 @@ package com.erp.model.tms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -41,6 +44,22 @@ public class CfgLogisticsCostImportDetailEntity extends BaseEntity<CfgLogisticsC
     */
     @TableField("source_detail_field")
     private String sourceDetailField;
+    /**
+    * 默认值
+    */
+    @TableField("default_value")
+    private String defaultValue;
+    /**
+    * 字段清洗规则
+    */
+    @TableField("etl_rule_list")
+    @JsonIgnore
+    private String etlRuleListStorage;
+    /**
+    * 字段清洗规则列表
+    */
+    @TableField(exist = false)
+    private List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> etlRuleList;
     /**
     * 是否唯一
     */
@@ -99,6 +118,10 @@ public class CfgLogisticsCostImportDetailEntity extends BaseEntity<CfgLogisticsC
     public static final String SOURCE_FIELD = "source_field";
 
     public static final String SOURCE_DETAIL_FIELD = "source_detail_field";
+
+    public static final String DEFAULT_VALUE = "default_value";
+
+    public static final String ETL_RULE_LIST = "etl_rule_list";
 
     public static final String IS_UNIQUE_KEY = "is_unique_key";
 
