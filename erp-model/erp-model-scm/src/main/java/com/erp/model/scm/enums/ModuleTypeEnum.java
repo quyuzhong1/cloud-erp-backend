@@ -215,6 +215,7 @@ public enum ModuleTypeEnum {
 
 
     AFTER_SALE_PACK("190", "售后装箱"),
+    FULL_BOX_TRANSFER("191", "整箱移仓"),
 
 
 

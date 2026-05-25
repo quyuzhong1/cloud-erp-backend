@@ -1528,7 +1528,32 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 .collect(Collectors.toList());
         afterSalePackService.markBoxesAsMoved(boxIds, targetLocation.getId());
 
+        addFullBoxTransferOperateLogs(boxInfoList, targetCode);
+
         return moveId;
+    }
+
+    /**
+     * 按箱唛维度记录整箱移位操作日志。
+     */
+    private void addFullBoxTransferOperateLogs(List<AfterSalePackDTO.ViewDTO> boxInfoList, String targetCode) {
+        String operationName = WarehouseLocationMoveOperateTypeEnum.FULL_BOX_TRANSFER.getName();
+        for (AfterSalePackDTO.ViewDTO boxInfo : boxInfoList) {
+            String boxCode = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()),
+                    CharSequenceUtil.trim(boxInfo.getId()));
+            StringBuilder msg = new StringBuilder();
+            msg.append(CharSequenceUtil.format("【{}】执行[{}]：", boxCode, operationName));
+            if (CollUtil.isNotEmpty(boxInfo.getDetailViewDTOList())) {
+                for (AfterSalePackDetailDTO.ViewDTO detail : boxInfo.getDetailViewDTOList()) {
+                    msg.append('\n').append(CharSequenceUtil.format("【{}】从[拣货仓位：{}]移仓至[目标仓位:{}];",
+                            CharSequenceUtil.trim(detail.getSkuNo()),
+                            CharSequenceUtil.trim(detail.getOutWarehouseLocationCode()),
+                            targetCode));
+                }
+            }
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.FULL_BOX_TRANSFER.getName(),
+                    CharSequenceUtil.trim(boxInfo.getId()), operationName);
+        }
     }
 
     /**
