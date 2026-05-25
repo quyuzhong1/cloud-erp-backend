@@ -265,12 +265,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(WmsDeliveryPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
+        Set<String> existStatusSet = list.stream().map(WmsDeliveryPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
                 list.add(new WmsDeliveryPlanDTO.TabListDTO(status, 0));
             }
-        });
+        }
         list.add(new WmsDeliveryPlanDTO.TabListDTO("all", list.stream().mapToInt(WmsDeliveryPlanDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;

@@ -212,12 +212,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SoDeliveryNoticeChangeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SoDeliveryNoticeChangeDTO.TabListDTO(status,"", 0));
+        Set<String> existStatusSet = list.stream().map(SoDeliveryNoticeChangeDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
+                list.add(new SoDeliveryNoticeChangeDTO.TabListDTO(status, "", 0));
+            }
         }
-        });
         list.forEach(v->{
             if(v.getTabFlag().equals(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
                 v.setTabFlagName("待提交");

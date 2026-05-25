@@ -178,15 +178,15 @@ public class AssetLocationServiceImpl extends SuperServiceImpl<AssetLocationMapp
         
         // 获取状态列表，确保所有状态都存在
         List<String> statusList = ApproveStatusEnum.getStatusList();
-        List<String> existStatusList = list.stream().map(AssetLocationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        
+        Set<String> existStatusSet = list.stream().map(AssetLocationDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+
         // 不存在的状态赋值为0
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
                 AssetLocationDTO.TabListDTO newTab = new AssetLocationDTO.TabListDTO(status, ApproveStatusEnum.getTableName(status), 0);
                 list.add(newTab);
             }
-        });
+        }
         
         // 按照指定顺序排序：待提交、审核中、已审核、不通过
         List<String> orderList = Arrays.asList("waitSubmit", "approveIng", "approve", "reject");

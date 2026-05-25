@@ -862,12 +862,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         List<String> instockStatus = OverseasInstockStatusEnum.getStatusList();
 
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(OverseasWarehouseInboundDTO.CountDTO::getTabFlag).collect(Collectors.toList());
-        instockStatus.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
+        Set<String> existStatusSet = list.stream().map(OverseasWarehouseInboundDTO.CountDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : instockStatus) {
+            if (!existStatusSet.contains(status)) {
                 list.add(new OverseasWarehouseInboundDTO.CountDTO(status, 0));
             }
-        });
+        }
 
         list.add(new OverseasWarehouseInboundDTO.CountDTO("all", list.stream().mapToInt(OverseasWarehouseInboundDTO.CountDTO::getCount).sum()));
         // 计算合计数量

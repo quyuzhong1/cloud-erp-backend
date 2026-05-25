@@ -302,12 +302,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 获取状态列表
         List<String> statusList = RequisitionApplicationStatusEnum.getStatusList();
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(RequisitionApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
+        Set<String> existStatusSet = list.stream().map(RequisitionApplicationDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
                 list.add(new RequisitionApplicationDTO.TabListDTO(status, 0));
             }
-        });
+        }
         list.add(new RequisitionApplicationDTO.TabListDTO("all", list.stream().mapToInt(RequisitionApplicationDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;

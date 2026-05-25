@@ -124,12 +124,12 @@ public class FmsPushMsgServiceImpl extends SuperServiceImpl<FmsPushMsgMapper, Fm
         // TODO 替换当前表Tab状态字段
         List<String> statusList = null;
         // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(FmsPushMsgDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new FmsPushMsgDTO.TabListDTO(status, 0));
+        Set<String> existStatusSet = list.stream().map(FmsPushMsgDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
+        for (String status : statusList) {
+            if (!existStatusSet.contains(status)) {
+                list.add(new FmsPushMsgDTO.TabListDTO(status, 0));
+            }
         }
-        });
         list.add(new FmsPushMsgDTO.TabListDTO("all", list.stream().mapToInt(FmsPushMsgDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;

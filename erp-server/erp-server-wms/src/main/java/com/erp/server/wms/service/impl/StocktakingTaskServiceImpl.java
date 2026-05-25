@@ -1100,11 +1100,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     return groupKey;
                 }));
         // 4. 根据分组结果构建数据并保存盘点任务
-        // 避免多线程时，只有主线程才能获取到用户信息
+        // 串行执行：避免事务在子线程中失效（@Transactional 与 UserContext 均绑定 ThreadLocal）
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
         String username = userInfo.getUserName();
-        inventoryMap.keySet().parallelStream().forEach(key -> {
+        for (String key : inventoryMap.keySet()) {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
             StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
             //盘点日期
@@ -1124,7 +1124,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
             String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
-        });
+        }
         return Boolean.TRUE;
     }
 
@@ -1162,11 +1162,11 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
                     return groupKey;
                 }));
         // 4. 根据分组结果构建数据并保存盘点任务
-        // 避免多线程时，只有主线程才能获取到用户信息
+        // 串行执行：避免事务在子线程中失效（@Transactional 与 UserContext 均绑定 ThreadLocal）
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         String uid = userInfo.getUid();
         String username = userInfo.getUserName();
-        inventoryMap.keySet().parallelStream().forEach(key -> {
+        for (String key : inventoryMap.keySet()) {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.STOCKTAKING_TASK);
             StocktakingTaskEntity insertTask = new StocktakingTaskEntity(entity, code, uid, username);
             //盘点日期
@@ -1186,7 +1186,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             stocktakingTaskDetailService.saveBatch(insertDetailList, 500);
             String msg = CharSequenceUtil.format("由盘点计划【{}】自动生成盘点任务单号为【{}】单据", planCode, code);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_TASK.getCode(), insertTask.getId(), "新增单据", uid, username);
-        });
+        }
         return Boolean.TRUE;
     }
 
