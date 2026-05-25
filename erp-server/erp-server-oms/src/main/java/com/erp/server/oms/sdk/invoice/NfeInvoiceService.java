@@ -1401,18 +1401,18 @@ public class NfeInvoiceService {
     }
 
     private void uploadShopeeBrazilInvoice(SoB2cEntity soB2cEntity) {
-        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
         if (ObjUtil.isEmpty(attachDTO)) {
-            throw new ServiceException("NF-e发票未找到pdf文件");
+            throw new ServiceException("NF-e发票未找到xml文件");
         }
         String attachUrl = buildFastDfsPublicUrl(attachDTO.getAttachUrl());
-        String fileName = CharSequenceUtil.blankToDefault(attachDTO.getAttachName(), soB2cEntity.getCode() + ".pdf");
-        byte[] pdfBytes = getFileBytesByUrl(attachUrl);
-        if (pdfBytes == null || pdfBytes.length == 0) {
-            throw new ServiceException("获取pdf文件失败");
+        String fileName = CharSequenceUtil.blankToDefault(attachDTO.getAttachName(), soB2cEntity.getCode() + ".xml");
+        byte[] fileBytes = getFileBytesByUrl(attachUrl);
+        if (fileBytes == null || fileBytes.length == 0) {
+            throw new ServiceException("获取xml文件失败");
         }
-        if (pdfBytes.length > 1024 * 1024) {
-            throw new ServiceException("Shopee上传发票PDF大小不能超过1MB");
+        if (fileBytes.length > 1024 * 1024) {
+            throw new ServiceException("Shopee上传发票文件大小不能超过1MB");
         }
         ShopAuthEntity shopAuthEntity = getShopeeShopAuth(soB2cEntity);
         CfgAppClientEntity cfgAppClientEntity = getShopeeCfgAppClient();
@@ -1423,9 +1423,9 @@ public class NfeInvoiceService {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("order_sn", soB2cEntity.getPlatformCode())
-                .addFormDataPart("file_type", "1")
+                .addFormDataPart("file_type", "4")
                 .addFormDataPart("file", fileName,
-                        RequestBody.create(MediaType.parse("application/pdf"), pdfBytes))
+                        RequestBody.create(MediaType.parse("application/xml"), fileBytes))
                 .build();
         Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
         try (Response response = new OkHttpClient().newCall(request).execute()) {
@@ -1487,7 +1487,7 @@ public class NfeInvoiceService {
                 return outputStream.toByteArray();
             }
         } catch (Exception e) {
-            throw new ServiceException(CharSequenceUtil.format("获取pdf文件失败: {}", e.getMessage()));
+            throw new ServiceException(CharSequenceUtil.format("获取文件失败: {}", e.getMessage()));
         } finally {
             if (conn != null) {
                 conn.disconnect();
