@@ -76,6 +76,26 @@ public class CfgLogisticsCostImportFieldEntity extends BaseEntity<CfgLogisticsCo
      */
     @TableField("is_unique_field")
     private Boolean isUniqueField;
+    /**
+    * 默认值下拉配置ID
+    */
+    @TableField("query_option_id")
+    private String queryOptionId;
+    /**
+    * 默认值静态选项
+    */
+    @TableField("option_list")
+    private String optionList;
+    /**
+    * 字段单位属性
+    */
+    @TableField("unit_type")
+    private String unitType;
+    /**
+    * 标准单位
+    */
+    @TableField("standard_unit")
+    private String standardUnit;
 
 
     public static final String SYS_CLASSIFY = "sys_classify";
@@ -97,6 +117,14 @@ public class CfgLogisticsCostImportFieldEntity extends BaseEntity<CfgLogisticsCo
     public static final String FIELD_TYPE = "field_type";
 
     public static final String IS_UNIQUE_FIELD = "is_unique_field";
+
+    public static final String QUERY_OPTION_ID = "query_option_id";
+
+    public static final String OPTION_LIST = "option_list";
+
+    public static final String UNIT_TYPE = "unit_type";
+
+    public static final String STANDARD_UNIT = "standard_unit";
 
     @Override
     public Serializable pkVal() {

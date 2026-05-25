@@ -99,6 +99,7 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
     List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto);
 
 
+
     /**
      * 修改
      * @param addOrUpdateDTO

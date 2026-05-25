@@ -2,6 +2,9 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,6 +23,7 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -38,6 +42,7 @@ import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.*;
+import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -97,7 +102,9 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     private TmsCfgCostService tmsCfgCostService;
 
     private final static String costItem = "费用项明细";
-
+    private final static String PAY_TYPE_FIELD = "payType";
+    private final static String CURRENCY_FIELD = "currency";
+    private final static String LOGISTICS_WEIGHT_UNIT_FIELD = "logisticsWeightUnit";
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -278,7 +285,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }
         List<CfgLogisticsCostImportDetailEntity> newDetailList = BeanMapper.copyList(detailList, CfgLogisticsCostImportDetailEntity.class);
         List<CfgLogisticsCostImportDetailEntity> oldDetailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
-        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, newDetailList, oldDetailList,Arrays.asList("sourceField","sourceDetailField"));
+        commonService.updateDetail(id,ModuleTypeEnum.CFG_LOGISTICS_COST_IMPORT.getCode(),cfgLogisticsCostImportDetailService, newDetailList, oldDetailList,Arrays.asList("targetFieldName","sourceField","sourceDetailField","defaultValue","etlRuleListStorage"));
         return Boolean.TRUE;
     }
 
@@ -301,11 +308,46 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     /**
      * 验证明细列表数据的有效性
      */
-    private void validateDetailList(String businessType,List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+    @Override
+    public void validateDetailList(String businessType,List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
         validateAtLeastOneUniqueKey(detailList);
         validateMainItemDuplicates(detailList);
         validateCostItemFields(detailList);
+        normalizeEtlRuleList(detailList);
         validateLogisticsCostImportUniqueFields(businessType,detailList);
+    }
+
+    /**
+     * 规范字段清洗规则。
+     *
+     * @param detailList 明细列表
+     * @return 无
+     * @throws ServiceException 字段清洗规则不合法时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void normalizeEtlRuleList(List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        int rowIndex = 1;
+        for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
+            List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList = updateDTO.getEtlRuleList();
+            updateDTO.setIsAbsoluteValue(false);
+            if (CollUtil.isEmpty(ruleList)) {
+                updateDTO.setEtlRuleList(Collections.emptyList());
+                updateDTO.setEtlRuleListStorage(CfgLogisticsCostImportEtlRuleHelper.EMPTY_ETL_RULE_LIST);
+                rowIndex++;
+                continue;
+            }
+            int ruleIndex = 1;
+            for (CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO : ruleList) {
+                CfgLogisticsCostImportEtlRuleHelper.validateEtlRule(ruleDTO, rowIndex, ruleIndex++);
+            }
+            CfgLogisticsCostImportEtlRuleHelper.normalizeIndexes(ruleList);
+            updateDTO.setEtlRuleListStorage(CfgLogisticsCostImportEtlRuleHelper.buildStorage(ruleList));
+            rowIndex++;
+        }
     }
 
     /**
@@ -324,6 +366,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 CfgLogisticsCostImportFieldEntity entity = map.get(targetFieldId);
 //                if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, CfgLogisticsCostImportBusinessTypeEnum.getName(businessType)+"类型第"+i+"行数大臣单据字段");
                 if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, updateDTO.getTargetFieldName()+"单据字段");
+                validateDefaultValue(updateDTO, entity, i);
+                i++;
             }
         }
 
@@ -336,6 +380,66 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 String uniqueKeyTargetFieldName = uniqueKeyTargetField.stream().map(CfgLogisticsCostImportFieldEntity::getFieldName).collect(Collectors.joining(","));
                 throw new ServiceException(ApiError.LOGISTICS_BILL_UNIQUE_FIELD_NOT_ALLOWED,uniqueKeyTargetFieldName);
             }
+        }
+    }
+
+    /**
+     * 校验默认值配置
+     */
+    private void validateDefaultValue(CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO, CfgLogisticsCostImportFieldEntity fieldEntity, int index) {
+        String field = fieldEntity.getField();
+        String fieldName = fieldEntity.getFieldName();
+        String sourceField = updateDTO.getSourceField();
+        String defaultValue = updateDTO.getDefaultValue();
+        boolean defaultValueField = isDefaultValueField(field);
+
+        if (Boolean.TRUE.equals(updateDTO.getIsUniqueKey())) {
+            // 唯一识别字段必须来自 Excel 实际抬头，避免默认值造成多行误匹配。
+            if (StringUtils.isBlank(sourceField)) {
+                throw new ServiceException("第" + index + "行唯一识别字段的物流商抬头字段不能为空");
+            }
+            if (StringUtils.isNotBlank(defaultValue)) {
+                throw new ServiceException("第" + index + "行唯一识别字段不允许配置默认值");
+            }
+        }
+
+        if (StringUtils.isBlank(sourceField)) {
+            if (!defaultValueField) {
+                throw new ServiceException("第" + index + "行【" + fieldName + "】物流商抬头字段不能为空");
+            }
+            if (StringUtils.isBlank(defaultValue)) {
+                throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不能为空");
+            }
+            validateDefaultValueCode(field, fieldName, defaultValue, index);
+            return;
+        }
+
+        if (StringUtils.isNotBlank(defaultValue)) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】已配置物流商抬头字段，不允许填写默认值");
+        }
+    }
+
+    /**
+     * 判断字段是否允许配置默认值
+     */
+    private boolean isDefaultValueField(String field) {
+        return Objects.equals(PAY_TYPE_FIELD, field)
+                || Objects.equals(CURRENCY_FIELD, field)
+                || Objects.equals(LOGISTICS_WEIGHT_UNIT_FIELD, field);
+    }
+
+    /**
+     * 校验默认值编码
+     */
+    private void validateDefaultValueCode(String field, String fieldName, String defaultValue, int index) {
+        if (Objects.equals(PAY_TYPE_FIELD, field) && Objects.isNull(logisticsPayTypeEnum.getByStatus(defaultValue))) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
+        }
+        if (Objects.equals(CURRENCY_FIELD, field) && Objects.isNull(CurrencyEnum.getByCode(defaultValue))) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
+        }
+        if (Objects.equals(LOGISTICS_WEIGHT_UNIT_FIELD, field) && !Objects.equals("KG", defaultValue) && !Objects.equals("g", defaultValue)) {
+            throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
         }
     }
 
@@ -433,6 +537,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         List<CfgLogisticsCostImportDetailEntity> detailList = cfgLogisticsCostImportDetailService.lambdaQuery().eq(CfgLogisticsCostImportDetailEntity::getMainId, id).list();
         detailList.forEach(e -> {
             e.setTargetFieldTypeName(CfgLogisticsCostImportFieldFieldTypeEnum.getName(e.getTargetFieldType()));
+            e.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(e.getEtlRuleListStorage()));
         });
         //detailList根据Integer index字段排序
         detailList.sort(Comparator.comparingInt(CfgLogisticsCostImportDetailEntity::getIndex));
@@ -528,6 +633,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             data.setDictPlatformName(dictPlatformName);
 
             data.setDisabledName(data.getDisabled() ? "停用" : "启用");
+            data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
         }
    }
 

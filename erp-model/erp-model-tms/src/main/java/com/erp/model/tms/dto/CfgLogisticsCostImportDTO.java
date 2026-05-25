@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -186,6 +187,22 @@ public class CfgLogisticsCostImportDTO implements Serializable {
          * 物流商明细字段
          */
         private String sourceDetailField;
+
+        /**
+         * 默认值
+         */
+        private String defaultValue;
+
+        /**
+         * 字段清洗规则
+         */
+        private List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> etlRuleList;
+
+        /**
+         * 字段清洗规则存储值
+         */
+        @JsonIgnore
+        private String etlRuleListStorage;
 
         /**
          * 是否唯一

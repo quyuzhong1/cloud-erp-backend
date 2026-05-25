@@ -8,6 +8,8 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -38,6 +40,8 @@ import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
+import com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -45,6 +49,7 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -74,6 +79,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -102,6 +109,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Resource
     private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
     @Resource
+    private CfgLogisticsCostImportFieldService cfgLogisticsCostImportFieldService;
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private LogisticsBillService logisticsBillService;
@@ -126,6 +135,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Resource
     @Qualifier("importHistoryRecordPool")
     private ExecutorService importHistoryRecordPool;
+
+    private static final String DETAIL_VALUE_KEY_PREFIX = "__cfgImportValue_";
+    private static final String PAY_TYPE_FIELD = "payType";
+    private static final String CURRENCY_FIELD = "currency";
+    private static final String LOGISTICS_WEIGHT_UNIT_FIELD = "logisticsWeightUnit";
+    private static final String WEIGHT_UNIT_KG = "KG";
+    private static final String WEIGHT_UNIT_G = "g";
+    private static final String STANDARD_WEIGHT_UNIT = "kg";
+    private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");
+    private static final Pattern ENGLISH_PATTERN = Pattern.compile("[A-Za-z]");
 
     // 这里只是写一条 import_history_record 的本地状态，没有跨服务/跨库写入，
     // 不需要分布式事务。原先挂 @GlobalTransactional 会被异步任务框架透传的上游 Seata XID 绑定，
@@ -326,21 +345,28 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         validateHeadersAndData(headList, successList);
         // 2. 提取唯一键配置
         List<CfgLogisticsCostImportDetailEntity> uniqueKeyList = extractUniqueKeyList(cfgImportDetailList);
-        // 3. 构建 paramMap，收集唯一键所有唯一值
-        Map<String, List<Object>> paramMap = buildParamMap(cfgImportDetailList, headMap, successList);
-        // 4. 执行所有数据库预查询
+        // 3. 统一按配置取值并执行字段清洗，后续预查询和费用项处理均使用清洗后的值。
+        prepareImportRowValues(cfgImportDetailList, headMap, successList);
+        // 4. 按字段基础数据的单位属性标准化重量字段，确保预查询和业务校验使用 kg。
+        List<JSONObject> validSuccessList = standardizeImportRowWeightValues(costImportEntity, cfgImportDetailList, successList, matchImportList, headMap);
+        if (CollUtil.isEmpty(validSuccessList)) {
+            return Collections.emptyList();
+        }
+        // 5. 构建 paramMap，收集唯一键所有唯一值
+        Map<String, List<Object>> paramMap = buildParamMap(cfgImportDetailList, headMap, validSuccessList);
+        // 6. 执行所有数据库预查询
         ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult = preQueryDbData(paramMap, costImportEntity);
-        // 5. 币别字典映射（仅未禁用，支持按 id 或 name 匹配）
+        // 7. 币别字典映射（仅未禁用，支持按 id 或 name 匹配）
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyLookupMap = buildCurrencyLookupMap(dictCurrencyList);
-        //6. 币别汇率
+        // 8. 币别汇率
         Map<String, BigDecimal> currencyRateMap = buildCurrencyRateMap(dictCurrencyList);
-        // 5. 判断纵向/横向模式
+        // 9. 判断纵向/横向模式
         boolean isVertical = isVerticalCostItem(cfgImportDetailList);
         if (isVertical) {
-            return processVerticalCostItems(uniqueKeyList, cfgImportDetailList, preQueryResult, importDTO, costImportEntity, successList, matchImportList, headList, headMap, currencyLookupMap,currencyRateMap);
+            return processVerticalCostItems(uniqueKeyList, cfgImportDetailList, preQueryResult, importDTO, costImportEntity, validSuccessList, matchImportList, headList, headMap, currencyLookupMap,currencyRateMap);
         } else {
-            return processHorizontalCostItems(uniqueKeyList, cfgImportDetailList, preQueryResult, importDTO, costImportEntity, successList, matchImportList, headList, headMap, currencyLookupMap,currencyRateMap);
+            return processHorizontalCostItems(uniqueKeyList, cfgImportDetailList, preQueryResult, importDTO, costImportEntity, validSuccessList, matchImportList, headList, headMap, currencyLookupMap,currencyRateMap);
         }
     }
 
@@ -454,18 +480,590 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return uniqueKeyList;
     }
 
+    /**
+     * 统一生成导入字段值。
+     *
+     * @param cfgImportDetailList 导入配置明细
+     * @param headMap 表头映射
+     * @param successList Excel 数据
+     * @return 无
+     * @throws ServiceException 字段清洗失败时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void prepareImportRowValues(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, Map<Integer, String> headMap, List<JSONObject> successList) {
+        Map<CfgLogisticsCostImportDetailEntity, String> detailValueKeyMap = cfgImportDetailList.stream()
+                .collect(Collectors.toMap(detail -> detail, this::getDetailValueKey, (oldValue, newValue) -> oldValue));
+        for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
+            cfgDetail.setMappingIndex(getMapKey(headMap, cfgDetail.getSourceField()));
+            cfgDetail.setEtlRuleList(parseEtlRuleList(cfgDetail));
+        }
+        for (JSONObject rowData : successList) {
+            for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
+                String value = resolveConfiguredValue(cfgDetail, rowData, headMap);
+                rowData.set(detailValueKeyMap.get(cfgDetail), value);
+                if (!CharSequenceUtil.equals("costItem", cfgDetail.getTargetField())) {
+                    rowData.set(cfgDetail.getTargetField(), value);
+                }
+            }
+        }
+    }
+
+    /**
+     * 标准化导入重量字段。
+     *
+     * @param costImportEntity 费用导入配置
+     * @param cfgImportDetailList 导入配置明细
+     * @param successList Excel 数据
+     * @param matchImportList 匹配结果数据
+     * @param headMap 表头映射
+     * @return 标准化成功的 Excel 数据
+     * @throws ServiceException 物流商重量单位或重量值非法时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private List<JSONObject> standardizeImportRowWeightValues(CfgLogisticsCostImportEntity costImportEntity,
+                                                              List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
+                                                              List<JSONObject> successList,
+                                                              List<JSONObject> matchImportList,
+                                                              Map<Integer, String> headMap) {
+        if (CollUtil.isEmpty(cfgImportDetailList) || CollUtil.isEmpty(successList)) {
+            return Collections.emptyList();
+        }
+        Map<String, CfgLogisticsCostImportFieldDTO.ListDTO> fieldMetaMap = cfgLogisticsCostImportFieldService.listByBusinessType(costImportEntity.getBusinessType())
+                .stream()
+                .filter(field -> CharSequenceUtil.isNotBlank(field.getField()))
+                .collect(Collectors.toMap(CfgLogisticsCostImportFieldDTO.ListDTO::getField, field -> field, (oldValue, newValue) -> oldValue));
+        Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField = buildDetailByTargetField(cfgImportDetailList);
+        List<CfgLogisticsCostImportDetailEntity> weightDetailList = buildWeightDetailList(cfgImportDetailList, fieldMetaMap);
+        List<JSONObject> validSuccessList = new ArrayList<>();
+        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+        Integer errorIndex = getMapKey(headMap, ERROR_MSG);
+        for (JSONObject rowData : successList) {
+            try {
+                String logisticsWeightUnit = normalizeLogisticsWeightUnit(getPreparedValueByTarget(rowData, detailByTargetField, LOGISTICS_WEIGHT_UNIT_FIELD));
+                if (fieldMetaMap.isEmpty()) {
+                    throw new ServiceException("未找到物流费用导入字段元数据，无法进行重量单位标准化");
+                }
+                setPreparedValueByTarget(rowData, detailByTargetField, LOGISTICS_WEIGHT_UNIT_FIELD, STANDARD_WEIGHT_UNIT);
+                for (CfgLogisticsCostImportDetailEntity cfgDetail : weightDetailList) {
+                    standardizeWeightValue(rowData, cfgDetail, logisticsWeightUnit);
+                }
+                validSuccessList.add(rowData);
+            } catch (ServiceException e) {
+                // 单行重量单位异常只影响当前行，避免一个物流商单位错误拖垮整批导入。
+                markImportRowFailed(rowData, matchIndex, errorIndex, e.getMessage(), matchImportList);
+            }
+        }
+        return validSuccessList;
+    }
+
+    /**
+     * 标记导入行失败。
+     *
+     * @param rowData Excel 行数据
+     * @param matchIndex 匹配结果列下标
+     * @param errorIndex 错误信息列下标
+     * @param errorMsg 错误信息
+     * @param matchImportList 匹配结果数据
+     * @return 无
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    /**
+     * 构建目标字段到导入明细的索引。
+     *
+     * @param cfgImportDetailList 导入配置明细
+     * @return 目标字段明细索引
+     * @author jack
+     * @date 2026/05/22
+     */
+    private Map<String, CfgLogisticsCostImportDetailEntity> buildDetailByTargetField(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList) {
+        if (CollUtil.isEmpty(cfgImportDetailList)) {
+            return Collections.emptyMap();
+        }
+        return cfgImportDetailList.stream()
+                .filter(detail -> CharSequenceUtil.isNotBlank(detail.getTargetField()))
+                .collect(Collectors.toMap(CfgLogisticsCostImportDetailEntity::getTargetField, detail -> detail, (oldValue, newValue) -> oldValue));
+    }
+
+    /**
+     * 筛选需要标准化为 kg 的重量字段明细。
+     *
+     * @param cfgImportDetailList 导入配置明细
+     * @param fieldMetaMap 字段元数据索引
+     * @return 重量字段明细列表
+     * @author jack
+     * @date 2026/05/22
+     */
+    private List<CfgLogisticsCostImportDetailEntity> buildWeightDetailList(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
+                                                                          Map<String, CfgLogisticsCostImportFieldDTO.ListDTO> fieldMetaMap) {
+        if (CollUtil.isEmpty(cfgImportDetailList) || CollUtil.isEmpty(fieldMetaMap)) {
+            return Collections.emptyList();
+        }
+        return cfgImportDetailList.stream()
+                .filter(cfgDetail -> {
+                    CfgLogisticsCostImportFieldDTO.ListDTO fieldMeta = fieldMetaMap.get(cfgDetail.getTargetField());
+                    if (Objects.isNull(fieldMeta) || !CharSequenceUtil.equals(CfgLogisticsCostImportFieldUnitTypeEnum.WEIGHT.getCode(), fieldMeta.getUnitType())) {
+                        return false;
+                    }
+                    String standardUnit = CharSequenceUtil.blankToDefault(fieldMeta.getStandardUnit(), STANDARD_WEIGHT_UNIT);
+                    return StrUtil.equalsIgnoreCase(STANDARD_WEIGHT_UNIT, standardUnit);
+                })
+                .collect(Collectors.toList());
+    }
+
+    private void markImportRowFailed(JSONObject rowData, Integer matchIndex, Integer errorIndex, String errorMsg, List<JSONObject> matchImportList) {
+        if (Objects.nonNull(matchIndex)) {
+            rowData.set(matchIndex.toString(), MATCH_FAIL);
+        }
+        if (Objects.nonNull(errorIndex)) {
+            rowData.set(errorIndex.toString(), errorMsg);
+        }
+        matchImportList.add(rowData);
+    }
+
+    /**
+     * 标准化物流商重量单位。
+     *
+     * @param logisticsWeightUnit 物流商重量单位
+     * @return 标准化前的受支持单位
+     * @throws ServiceException 物流商重量单位不支持时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String normalizeLogisticsWeightUnit(String logisticsWeightUnit) {
+        String unit = CharSequenceUtil.blankToDefault(logisticsWeightUnit, WEIGHT_UNIT_KG).trim();
+        if (StrUtil.equalsIgnoreCase(WEIGHT_UNIT_KG, unit)) {
+            return STANDARD_WEIGHT_UNIT;
+        }
+        if (StrUtil.equalsIgnoreCase(WEIGHT_UNIT_G, unit)) {
+            return WEIGHT_UNIT_G;
+        }
+        throw new ServiceException(CharSequenceUtil.format("物流商重量单位【{}】不支持，仅支持 KG 或 g", logisticsWeightUnit));
+    }
+
+    /**
+     * 标准化单个重量字段值。
+     *
+     * @param rowData Excel 行数据
+     * @param cfgDetail 导入配置明细
+     * @param logisticsWeightUnit 物流商重量单位
+     * @return 无
+     * @throws ServiceException 重量值无法转换为数值时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void standardizeWeightValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity cfgDetail, String logisticsWeightUnit) {
+        String value = getPreparedValue(rowData, cfgDetail);
+        if (CharSequenceUtil.isBlank(value)) {
+            return;
+        }
+        try {
+            BigDecimal weight = new BigDecimal(normalizeAmountText(value));
+            if (CharSequenceUtil.equals(WEIGHT_UNIT_G, logisticsWeightUnit)) {
+                weight = weight.divide(BigDecimal.valueOf(1000));
+            }
+            setPreparedValue(rowData, cfgDetail, weight.stripTrailingZeros().toPlainString());
+        } catch (Exception e) {
+            throw new ServiceException(CharSequenceUtil.format("字段【{}】重量值【{}】无法转换为数值", cfgDetail.getTargetFieldName(), value));
+        }
+    }
+
+    /**
+     * 解析字段清洗规则。
+     *
+     * @param cfgDetail 导入配置明细
+     * @return 字段清洗规则列表
+     * @throws ServiceException 字段清洗规则格式错误时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> parseEtlRuleList(CfgLogisticsCostImportDetailEntity cfgDetail) {
+        if (CollUtil.isNotEmpty(cfgDetail.getEtlRuleList())) {
+            return cfgDetail.getEtlRuleList().stream()
+                    .sorted(Comparator.comparing(rule -> Optional.ofNullable(rule.getIndex()).orElse(0)))
+                    .collect(Collectors.toList());
+        }
+        return CfgLogisticsCostImportEtlRuleHelper.parseStorage(cfgDetail.getEtlRuleListStorage());
+    }
+
+    /**
+     * 获取配置字段值。
+     *
+     * @param cfgDetail 导入配置明细
+     * @param rowData Excel 行数据
+     * @param headMap 表头映射
+     * @return 清洗后的字段值
+     * @throws ServiceException 字段清洗失败时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String resolveConfiguredValue(CfgLogisticsCostImportDetailEntity cfgDetail, JSONObject rowData, Map<Integer, String> headMap) {
+        String value;
+        if (ObjectUtil.isNotNull(cfgDetail.getMappingIndex())) {
+            Object rawValue = rowData.get(cfgDetail.getMappingIndex().toString());
+            value = ObjectUtil.isEmpty(rawValue) ? "" : String.valueOf(rawValue);
+        } else if (isDefaultValueField(cfgDetail.getTargetField())) {
+            value = CharSequenceUtil.blankToDefault(cfgDetail.getDefaultValue(), "");
+        } else {
+            value = "";
+        }
+        return cleanFieldValue(value, cfgDetail, rowData, headMap);
+    }
+
+    /**
+     * 执行字段清洗。
+     *
+     * @param value 字段值
+     * @param cfgDetail 导入配置明细
+     * @param rowData Excel 行数据
+     * @param headMap 表头映射
+     * @return 清洗后的字段值
+     * @throws ServiceException 字段清洗失败时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String cleanFieldValue(String value, CfgLogisticsCostImportDetailEntity cfgDetail, JSONObject rowData, Map<Integer, String> headMap) {
+        String result = value;
+        List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList = cfgDetail.getEtlRuleList();
+        if (CollUtil.isEmpty(ruleList)) {
+            return result;
+        }
+        for (CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO : ruleList) {
+            result = applyEtlRule(result, ruleDTO, rowData, headMap, cfgDetail.getTargetFieldName());
+        }
+        return result;
+    }
+
+    /**
+     * 执行单条清洗规则。
+     *
+     * @param value 字段值
+     * @param ruleDTO 清洗规则
+     * @param rowData Excel 行数据
+     * @param headMap 表头映射
+     * @param targetFieldName 目标字段名称
+     * @return 清洗后的字段值
+     * @throws ServiceException 字段清洗失败时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String applyEtlRule(String value, CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO, JSONObject rowData, Map<Integer, String> headMap, String targetFieldName) {
+        Map<String, Object> params = CfgLogisticsCostImportEtlRuleHelper.resolveParams(ruleDTO);
+        String type = ruleDTO.getType();
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(), type)) {
+            return applyReplaceRule(value, params);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.SUBSTRING.getCode(), type)) {
+            return applySubstringRule(value, params);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_POSITIVE.getCode(), type)) {
+            return convertNumberSign(value, false, targetFieldName);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.TO_NEGATIVE.getCode(), type)) {
+            return convertNumberSign(value, true, targetFieldName);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlRuleTypeEnum.FILL_EMPTY.getCode(), type)) {
+            return applyFillEmptyRule(value, params, rowData, headMap);
+        }
+        throw new ServiceException(CharSequenceUtil.format("字段【{}】清洗规则类型【{}】不支持", targetFieldName, type));
+    }
+
+    /**
+     * 执行字符替换规则。
+     *
+     * @param value 字段值
+     * @param params 规则参数
+     * @return 清洗后的字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String applyReplaceRule(String value, Map<String, Object> params) {
+        String sourceText = CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "sourceText");
+        String mode = CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "mode");
+        String targetText = CharSequenceUtil.equals(CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_EMPTY.getCode(), mode)
+                ? "" : CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "targetText");
+        return CharSequenceUtil.blankToDefault(value, "").replace(sourceText, targetText);
+    }
+
+    /**
+     * 执行字段截取规则。
+     *
+     * @param value 字段值
+     * @param params 规则参数
+     * @return 清洗后的字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String applySubstringRule(String value, Map<String, Object> params) {
+        String text = CharSequenceUtil.blankToDefault(value, "");
+        String substringMode = CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "mode");
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.BY_SYMBOL.getCode(), substringMode)) {
+            return substringBySymbol(text, params);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.BY_ORDER.getCode(), substringMode)) {
+            return substringByOrder(text, params);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.CHINESE.getCode(), substringMode)) {
+            return retainByPattern(text, CHINESE_PATTERN);
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSubstringModeEnum.ENGLISH.getCode(), substringMode)) {
+            return retainByPattern(text, ENGLISH_PATTERN);
+        }
+        return text;
+    }
+
+    /**
+     * 按符号截取字段。
+     *
+     * @param text 字段值
+     * @param params 规则参数
+     * @return 截取后的字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String substringBySymbol(String text, Map<String, Object> params) {
+        String symbol = CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "symbol");
+        int index = text.indexOf(symbol);
+        if (index < 0) {
+            return text;
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlSymbolPositionEnum.BEFORE.getCode(), CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "symbolPosition"))) {
+            return text.substring(0, index);
+        }
+        return text.substring(index + symbol.length());
+    }
+
+    /**
+     * 按顺序截取字段。
+     *
+     * @param text 字段值
+     * @param params 规则参数
+     * @return 截取后的字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String substringByOrder(String text, Map<String, Object> params) {
+        Integer length = CfgLogisticsCostImportEtlRuleHelper.getIntegerParam(params, "length");
+        if (Objects.isNull(length) || length >= text.length()) {
+            return text;
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlOrderDirectionEnum.RIGHT.getCode(), CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "orderDirection"))) {
+            return text.substring(text.length() - length);
+        }
+        return text.substring(0, length);
+    }
+
+    /**
+     * 按正则保留字符。
+     *
+     * @param text 字段值
+     * @param pattern 正则表达式
+     * @return 保留后的字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String retainByPattern(String text, Pattern pattern) {
+        Matcher matcher = pattern.matcher(text);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            result.append(matcher.group());
+        }
+        return result.toString();
+    }
+
+    /**
+     * 转换数值正负。
+     *
+     * @param value 字段值
+     * @param negative 是否转为负数
+     * @param targetFieldName 目标字段名称
+     * @return 转换后的字段值
+     * @throws ServiceException 字段值不是数值时抛出
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String convertNumberSign(String value, boolean negative, String targetFieldName) {
+        if (CharSequenceUtil.isBlank(value)) {
+            return value;
+        }
+        try {
+            BigDecimal decimal = new BigDecimal(normalizeAmountText(value)).abs();
+            return negative ? decimal.negate().toPlainString() : decimal.toPlainString();
+        } catch (Exception e) {
+            throw new ServiceException(CharSequenceUtil.format("字段【{}】无法转换为数值", targetFieldName));
+        }
+    }
+
+    /**
+     * 执行为空填充规则。
+     *
+     * @param value 字段值
+     * @param params 规则参数
+     * @param rowData Excel 行数据
+     * @param headMap 表头映射
+     * @return 清洗后的字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String applyFillEmptyRule(String value, Map<String, Object> params, JSONObject rowData, Map<Integer, String> headMap) {
+        if (CharSequenceUtil.isNotBlank(value)) {
+            return value;
+        }
+        if (CharSequenceUtil.equals(CfgLogisticsCostImportEtlFillModeEnum.CUSTOM.getCode(), CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "mode"))) {
+            return CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "fillValue");
+        }
+        Integer mappingIndex = getMapKey(headMap, CfgLogisticsCostImportEtlRuleHelper.getStringParam(params, "sourceField"));
+        if (ObjectUtil.isNull(mappingIndex) || ObjectUtil.isEmpty(rowData.get(mappingIndex.toString()))) {
+            return "";
+        }
+        return String.valueOf(rowData.get(mappingIndex.toString()));
+    }
+
+    /**
+     * 判断字段是否允许使用默认值。
+     *
+     * @param targetField 目标字段
+     * @return 是否允许使用默认值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private boolean isDefaultValueField(String targetField) {
+        return CharSequenceUtil.equals(PAY_TYPE_FIELD, targetField)
+                || CharSequenceUtil.equals(CURRENCY_FIELD, targetField)
+                || CharSequenceUtil.equals(LOGISTICS_WEIGHT_UNIT_FIELD, targetField);
+    }
+
+    /**
+     * 获取明细清洗值缓存键。
+     *
+     * @param cfgDetail 导入配置明细
+     * @return 缓存键
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String getDetailValueKey(CfgLogisticsCostImportDetailEntity cfgDetail) {
+        return DETAIL_VALUE_KEY_PREFIX + CharSequenceUtil.blankToDefault(cfgDetail.getId(), cfgDetail.getTargetField());
+    }
+
+    /**
+     * 设置清洗后的明细值。
+     *
+     * @param rowData Excel 行数据
+     * @param cfgDetail 导入配置明细
+     * @param value 清洗后的明细值
+     * @return 无
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void setPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity cfgDetail, String value) {
+        rowData.set(getDetailValueKey(cfgDetail), value);
+        if (!CharSequenceUtil.equals("costItem", cfgDetail.getTargetField())) {
+            rowData.set(cfgDetail.getTargetField(), value);
+        }
+    }
+
+    /**
+     * 获取清洗后的明细值。
+     *
+     * @param rowData Excel 行数据
+     * @param cfgDetail 导入配置明细
+     * @return 清洗后的明细值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String getPreparedValue(JSONObject rowData, CfgLogisticsCostImportDetailEntity cfgDetail) {
+        Object value = rowData.get(getDetailValueKey(cfgDetail));
+        return ObjectUtil.isEmpty(value) ? "" : String.valueOf(value);
+    }
+
+    /**
+     * 获取清洗后的目标字段值。
+     *
+     * @param rowData Excel 行数据
+     * @param cfgImportDetailList 导入配置明细
+     * @param targetField 目标字段
+     * @return 清洗后的目标字段值
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String getPreparedValueByTarget(JSONObject rowData, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, String targetField) {
+        return getPreparedValueByTarget(rowData, buildDetailByTargetField(cfgImportDetailList), targetField);
+    }
+
+    /**
+     * 按目标字段索引获取清洗后的目标字段值。
+     *
+     * @param rowData Excel 行数据
+     * @param detailByTargetField 目标字段明细索引
+     * @param targetField 目标字段
+     * @return 清洗后的目标字段值
+     * @author jack
+     * @date 2026/05/22
+     */
+    private String getPreparedValueByTarget(JSONObject rowData, Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField, String targetField) {
+        CfgLogisticsCostImportDetailEntity cfgDetail = detailByTargetField.get(targetField);
+        return ObjectUtil.isNull(cfgDetail) ? "" : getPreparedValue(rowData, cfgDetail);
+    }
+
+    /**
+     * 设置清洗后的目标字段值。
+     *
+     * @param rowData Excel 行数据
+     * @param cfgImportDetailList 导入配置明细
+     * @param targetField 目标字段
+     * @param value 清洗后的目标字段值
+     * @return 无
+     * @throws 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void setPreparedValueByTarget(JSONObject rowData, List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, String targetField, String value) {
+        setPreparedValueByTarget(rowData, buildDetailByTargetField(cfgImportDetailList), targetField, value);
+    }
+
+    /**
+     * 按目标字段索引设置清洗后的目标字段值。
+     *
+     * @param rowData Excel 行数据
+     * @param detailByTargetField 目标字段明细索引
+     * @param targetField 目标字段
+     * @param value 清洗后的目标字段值
+     * @return 无
+     * @author jack
+     * @date 2026/05/22
+     */
+    private void setPreparedValueByTarget(JSONObject rowData, Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField, String targetField, String value) {
+        CfgLogisticsCostImportDetailEntity cfgDetail = detailByTargetField.get(targetField);
+        if (Objects.nonNull(cfgDetail)) {
+            setPreparedValue(rowData, cfgDetail, value);
+        }
+    }
+
     // 构建 paramMap，收集唯一键所有唯一值
     private Map<String, List<Object>> buildParamMap(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList, Map<Integer, String> headMap, List<JSONObject> successList) {
         Map<String, List<Object>> paramMap = new HashMap<>();
         for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
-            Integer mappingIndex = getMapKey(headMap, cfgDetail.getSourceField());
-            if (ObjectUtil.isEmpty(mappingIndex)) continue;
-            cfgDetail.setMappingIndex(mappingIndex);
             if (!cfgDetail.getIsUniqueKey()) continue;
             List<Object> dataList = successList.stream()
-                    .filter(obj -> ObjectUtil.isNotEmpty(obj.get(mappingIndex.toString())))
-                    .map(obj -> obj.get(mappingIndex.toString()))
-                    .distinct().collect(Collectors.toList());
+                    .map(obj -> getPreparedValue(obj, cfgDetail))
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .map(obj -> (Object) obj)
+                    .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(dataList)) {
                 paramMap.put(cfgDetail.getTargetField(), dataList);
             }
@@ -513,14 +1111,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             Map<Integer, String> headMap,
             Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
         List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
-        List<Integer> uniqueIndexes = uniqueKeyList.stream()
-                .map(CfgLogisticsCostImportDetailEntity::getMappingIndex)
-                .filter(ObjectUtil::isNotNull)
-                .collect(Collectors.toList());
+        Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField = buildDetailByTargetField(cfgImportDetailList);
         Map<String, List<JSONObject>> map = successList.stream()
                 .collect(Collectors.groupingBy(obj ->
-                        uniqueIndexes.stream()
-                                .map(idx -> String.valueOf(obj.get(idx.toString())))
+                        uniqueKeyList.stream()
+                                .map(uniqueKey -> getPreparedValue(obj, uniqueKey))
                                 .collect(Collectors.joining("_"))
                 ));
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
@@ -541,7 +1136,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     for (JSONObject jsonObject : value) {
                         jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                         List<String> costErrorMsgList = new ArrayList<>();
-                        List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, preQueryResult.getSourceType(), preQueryResult.getDictCostAttribution(), costErrorMsgList, currencyMap, currencyLookupMap,currencyRateMap);
+                        List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, preQueryResult.getCfgCostList(), cfgImportDetailList, detailByTargetField, headList, preQueryResult.getSourceType(), preQueryResult.getDictCostAttribution(), costErrorMsgList, currencyMap, currencyLookupMap,currencyRateMap);
                         if (CollectionUtils.isNotEmpty(costErrorMsgList)) {
                             jsonObject.set(matchIndex.toString(), MATCH_FAIL);
                             jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(costErrorMsgList));
@@ -590,9 +1185,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             List<JSONObject> matchImportList,
             List<String> headList,
             Map<Integer, String> headMap,
-            Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
-        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
-        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+        Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
+    List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
+    Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField = buildDetailByTargetField(cfgImportDetailList);
+    Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
         List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
         int batchSize = 500;
@@ -603,7 +1199,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 for (JSONObject jsonObject : batch) {
                     JSONObject successJson = new JSONObject();
                     List<String> errorMsgList = new ArrayList<>();
-                    List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost(successJson, jsonObject, errorMsgList, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, preQueryResult.getDictCostAttribution(), currencyLookupMap,currencyRateMap);
+                List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost(successJson, jsonObject, errorMsgList, preQueryResult.getCfgCostList(), cfgImportDetailList, detailByTargetField, headList, preQueryResult.getDictCostAttribution(), currencyLookupMap,currencyRateMap);
                     List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateList);
                     try {
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
@@ -844,13 +1440,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @return List<UpdateDTO>
      */
     private List<TmsCostDetailDTO.UpdateDTO> lineFormatCost (JSONObject successJson,JSONObject jsonObject,List<String> errorMsgList,List<TmsCfgCostEntity> cfgCostList,
-                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String cfgAttribution,
+                                                             List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField,List<String> headList,String cfgAttribution,
                                                              Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
-        //查询币别
-        String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
-                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
-        //币别赋值
+        String currency = getPreparedValueByTarget(jsonObject, detailByTargetField, CURRENCY_FIELD);
+        // 币别校验必须基于清洗后的值，避免预处理后仍使用原始 Excel 值。
         if (ObjectUtil.isNotNull(currency)) {
             String normalizeCurrency = normalizeCurrencyByDict(currency, currencyLookupMap);
             if (CharSequenceUtil.isBlank(normalizeCurrency)) {
@@ -868,21 +1461,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //费用数据
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
         HashMap<String,String> currencyMap = new HashMap<>();
-        for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-            //字段名称
-            String field = headList.get(Integer.parseInt(entry.getKey()));
-            if (CharSequenceUtil.equals(field,ERROR_MSG)) {
-                continue;
-            }
-            if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
-                continue;
-            }
-            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(cfgDetailEntity)) {
-                log.warn("导入配置未找到字段【{}】的配置项",field);
-                continue;
-            }
-            //判断导入字段是否是费用项
+        for (CfgLogisticsCostImportDetailEntity cfgDetailEntity : cfgImportDetailList) {
+            String value = getPreparedValue(jsonObject, cfgDetailEntity);
             if ("costItem".equals(cfgDetailEntity.getTargetField())) {
                 //判断导入字段是否是费用项
                 TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), cfgAttribution)).findFirst().orElse(null);
@@ -899,11 +1479,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     currencyMap.put(tmsCfgCostEntity.getDictCostCategory(),currency);
                 }
 
-                //是否绝对值
-                Boolean isAbsoluteValue = cfgDetailEntity.getIsAbsoluteValue();
-
-                if (ObjectUtil.isNotEmpty(tmsCfgCostEntity) && ObjectUtil.isNotEmpty(entry.getValue())) {
-                    String entryAmount = normalizeAmountText(String.valueOf(entry.getValue()));
+                if (ObjectUtil.isNotEmpty(tmsCfgCostEntity) && CharSequenceUtil.isNotBlank(value)) {
+                    String entryAmount = normalizeAmountText(value);
                     //校验费用值类型
                     List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckValueDTO(entryAmount));
                     if (CollUtil.isNotEmpty(errorMsg)) {
@@ -912,7 +1489,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     }
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     //实际金额
-                    updateDTO.setCostValue(toCostValue(entryAmount, isAbsoluteValue));
+                    updateDTO.setCostValue(toCostValue(entryAmount));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
@@ -920,8 +1497,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateDTO.setCurrency(currency);
                     updateList.add(updateDTO);
                 }
+            } else {
+                successJson.set(cfgDetailEntity.getTargetField(), value);
             }
-            successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
         }
         return updateList;
     }
@@ -938,14 +1516,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @return List<UpdateDTO>
      */
     private List<TmsCostDetailDTO.UpdateDTO> rowFormatCost (JSONObject successJson,JSONObject jsonObject,List<TmsCfgCostEntity> cfgCostList,
-                                                            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,List<String> headList,String sourceType,
+                                                            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField,List<String> headList,String sourceType,
                                                             String costAttribution,List<String> errorMsgList,HashMap<String,String> currencyMap,
                                                             Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
         List<TmsCostDetailDTO.UpdateDTO> updateList = new ArrayList<>();
-        //查询币别
-        String currencyIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) && CharSequenceUtil.equals(obj.getTargetField(), "currency"))
-                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String currency = ObjectUtil.isEmpty(jsonObject.get(currencyIndex)) ? "" : String.valueOf(jsonObject.get(currencyIndex));
+        String currency = getPreparedValueByTarget(jsonObject, detailByTargetField, CURRENCY_FIELD);
         //币别赋值
         if (CharSequenceUtil.isNotBlank(currency)) {
             String normalizeCurrency = normalizeCurrencyByDict(currency, currencyLookupMap);
@@ -961,15 +1536,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
 
-        //查询实际金额
-        String actualAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "actualAmount"))
-                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String actualAmount = normalizeAmountText(ObjectUtil.isEmpty(jsonObject.get(actualAmountIndex)) ? null : String.valueOf(jsonObject.get(actualAmountIndex)));
-
-        //查询预估金额
-        String estimatedAmountIndex = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex()) &&  CharSequenceUtil.equals(obj.getTargetField(), "estimatedAmount"))
-                .map(obj -> obj.getMappingIndex().toString()).findFirst().orElse("");
-        String estimatedAmount = normalizeAmountText(ObjectUtil.isEmpty(jsonObject.get(estimatedAmountIndex)) ? null : String.valueOf(jsonObject.get(estimatedAmountIndex)));
+        String actualAmount = normalizeAmountText(getPreparedValueByTarget(jsonObject, detailByTargetField, "actualAmount"));
+        String estimatedAmount = normalizeAmountText(getPreparedValueByTarget(jsonObject, detailByTargetField, "estimatedAmount"));
 
         //校验费用值类型
         List<String> errorMsg = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckAmountDTO(actualAmount,estimatedAmount));
@@ -978,25 +1546,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             return updateList;
         }
 
-        for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
-            String field = headList.get(Integer.parseInt(entry.getKey()));
-            if (CharSequenceUtil.equals(field,ERROR_MSG)) {
-                continue;
-            }
-            if (CharSequenceUtil.equals(field,MATCH_FIELD)) {
-                continue;
-            }
-            CfgLogisticsCostImportDetailEntity cfgDetailEntity = cfgImportDetailList.stream().filter(obj -> ObjectUtil.isNotNull(obj.getMappingIndex())
-                    && obj.getMappingIndex().equals(Integer.valueOf(entry.getKey()))
-                    && ((CharSequenceUtil.equals("costItem",obj.getTargetField()) && CharSequenceUtil.equals(obj.getSourceDetailField(),ObjectUtil.defaultIfNull(entry.getValue(),"").toString()))
-                    || !CharSequenceUtil.equals("costItem",obj.getTargetField()))
-            ).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(cfgDetailEntity)) {
-                log.warn("导入配置未找到字段【{}】的配置项",field);
-                continue;
-            }
+        for (CfgLogisticsCostImportDetailEntity cfgDetailEntity : cfgImportDetailList) {
+            String value = getPreparedValue(jsonObject, cfgDetailEntity);
             //判断导入字段是否是费用项
-            if ("costItem".equals(cfgDetailEntity.getTargetField())){
+            if ("costItem".equals(cfgDetailEntity.getTargetField()) && CharSequenceUtil.equals(cfgDetailEntity.getSourceDetailField(), value)){
                 TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), cfgDetailEntity.getTargetDetailFieldName()) && CharSequenceUtil.equals(obj.getDictCostAttribution(), costAttribution)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
                     errorMsgList.add(CharSequenceUtil.format("费用管理未找到该费用名称【{}】",cfgDetailEntity.getTargetDetailFieldName()));
@@ -1014,13 +1567,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if (StrUtil.isBlank(actualAmount) && StrUtil.isBlank(estimatedAmount)) {
                     errorMsgList.add(CharSequenceUtil.format("费用项【{}】实际金额和预估金额不能同时为空",cfgDetailEntity.getTargetDetailFieldName()));
                 }
-                //是否绝对值
-                Boolean isAbsoluteValue = cfgDetailEntity.getIsAbsoluteValue();
 
                 if (StrUtil.isNotBlank(actualAmount)) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     //实际金额
-                    updateDTO.setCostValue(toCostValue(actualAmount, isAbsoluteValue));
+                    updateDTO.setCostValue(toCostValue(actualAmount));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
@@ -1031,7 +1582,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 if(StrUtil.isNotBlank(estimatedAmount)) {
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
                     //预计金额
-                    updateDTO.setCostValue(toCostValue(estimatedAmount, isAbsoluteValue));
+                    updateDTO.setCostValue(toCostValue(estimatedAmount));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setSourceType(sourceType);
@@ -1039,8 +1590,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
                     updateList.add(updateDTO);
                 }
+            } else if (!CharSequenceUtil.equals("costItem", cfgDetailEntity.getTargetField())) {
+                successJson.set(cfgDetailEntity.getTargetField(), value);
             }
-            successJson.set(cfgDetailEntity.getTargetField(),String.valueOf(entry.getValue()));
         }
         return updateList;
     }
@@ -1068,11 +1620,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 费用金额转换，支持绝对值配置。
+     * 转换费用金额。
+     *
+     * @param amount 金额文本
+     * @return 费用金额
+     * @author jack
+     * @date 2026/05/22
      */
-    private BigDecimal toCostValue(String amount, Boolean isAbsoluteValue) {
-        BigDecimal value = new BigDecimal(amount);
-        return Boolean.TRUE.equals(isAbsoluteValue) ? value.abs() : value;
+    private BigDecimal toCostValue(String amount) {
+        return new BigDecimal(amount);
     }
 
     /**
