@@ -142,82 +142,6 @@ public class TmsDeclareBillDTO implements Serializable {
         private Integer index;
     }
 
-
-    /**
-     * 更新报关状态DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class MergeDeclareDTO {
-        /**
-         * id集合
-         */
-        @NotNull(message = "id集合不能为空")
-        private List<String> ids;
-
-        /**
-         * 合同协议号
-         */
-        private String code;
-
-    }
-
-    /**
-     * 更新报关状态DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDeclareStatusDTO {
-        /**
-         * id集合
-         */
-        @NotNull(message = "id集合不能为空")
-        private List<String> ids;
-
-        /**
-         * 报关日期
-         */
-        private LocalDate date;
-
-    }
-
-    /**
-     * 报关状态详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class DeclareStatusDetailDTO {
-        /**
-         * 主键id
-         */
-        private String id;
-
-        /**
-         * 报关状态
-         */
-        private String declareStatus;
-
-        /**
-         * 报关状态名称
-         */
-        private String declareStatusName;
-
-        /**
-         * 报关确认日期
-         */
-        private LocalDate declarConfirmDate;
-
-        /**
-         * 报关确认人id
-         */
-        private String declarUserId;
-
-        /**
-         * 报关确认人
-         */
-        private String declarUserName;
-    }
-
     /**
      * 确认报关状态
      */
@@ -238,17 +162,17 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 报关确认日期
          */
-        private LocalDate declarConfirmDate;
+        private LocalDate declareConfirmDate;
 
         /**
          * 报关确认人id
          */
-        private String declarUserId;
+        private String declareUserId;
 
         /**
          * 报关确认人
          */
-        private String declarUserName;
+        private String declareUserName;
     }
 
     /**

@@ -1864,6 +1864,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_BOM_HISTORY_NOT_FOUND(13700,"来源单【{0}】箱号【{1}】子SKU【{2}】未找到BOM历史，bomHistoryId：{3}"),
     LOGISTICS_DECLARE_LATEST_PRODUCT_LOGISTIC_NOT_FOUND(13701,"未找到最新PLM产品物流资料，商品编码：{0}"),
     LOGISTICS_PACKING_DELIVERY_CHECK_DECLARE_STATUS(13701,"关联单号【{0}】已生成报关单，不能修改装箱信息"),
+    LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED(13702,"单据【{0}】SKU【{1}】缺少报关信息：{2}，请先到PLM物流产品资料完善后再生成报关单"),
 
 
     /**

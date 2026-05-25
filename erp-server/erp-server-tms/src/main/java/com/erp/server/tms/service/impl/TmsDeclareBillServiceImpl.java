@@ -206,6 +206,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private static final int DECLARE_MULTI_EXPORT_LIMIT = 100;
 
     /**
+     * ZIP 批量导出存在单条渲染失败时置 true，供前端下载完成后提示用户
+     */
+    private static final String HEADER_EXPORT_PARTIAL_FAILURE = "X-Export-Partial-Failure";
+
+    /**
+     * ZIP 批量导出渲染失败的报关单号，逗号分隔
+     */
+    private static final String HEADER_EXPORT_FAILED_CODES = "X-Export-Failed-Codes";
+
+    /**
      * 贸易国默认值（ERP-17240）。
      * 业务要求新增报关单时贸易国默认中国香港；如果后续后端有更精确的国家字典码，可以再调整。
      */
@@ -294,6 +304,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isEmpty(allProductDetailList)){
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
         }
+        //自动生成报关单前校验海关编码/报关品名/申报要素/单位/币种/单价是否完整，
+        // 缺失则提示对应来源单据 + SKU 缺哪些字段，不进入入库流程。
+        validateAutoFmDeclareProductDetails(deliveryDTO.getSourceCode(), allProductDetailList);
         List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, limitSkuNo);
         for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
             TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
@@ -956,7 +969,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         String currentStatus = entity.getDeclareStatus();
         if (DeclareStatusEnum.WAIT.getCode().equals(currentStatus) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
             validateDeclareConfirm(entity);
-            updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclarConfirmDate(), dto.getDeclarUserId(), dto.getDeclarUserName());
+            updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclareConfirmDate(), dto.getDeclareUserId(), dto.getDeclareUserName());
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
             return;
@@ -968,7 +981,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return;
         }
         if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.DECLARED.equals(targetStatus)) {
-            updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclarConfirmDate(), entity.getDeclarUserId(), entity.getDeclarUserName());
+            updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclareConfirmDate(), entity.getDeclareUserId(), entity.getDeclareUserName());
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
             return;
@@ -1010,31 +1023,31 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     private void fillDeclareConfirmUser(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
-        if (Objects.isNull(dto.getDeclarConfirmDate())) {
+        if (Objects.isNull(dto.getDeclareConfirmDate())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_CONFIRM_DATE_REQUIRED);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-        if (StringUtils.isBlank(dto.getDeclarUserId())) {
-            dto.setDeclarUserId(loginUser.getUid());
-            dto.setDeclarUserName(loginUser.getUserName());
+        if (StringUtils.isBlank(dto.getDeclareUserId())) {
+            dto.setDeclareUserId(loginUser.getUid());
+            dto.setDeclareUserName(loginUser.getUserName());
         }else {
-            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclarUserId());
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclareUserId());
             if (Objects.nonNull(userDTO)) {
-                dto.setDeclarUserName(userDTO.getUserName());
+                dto.setDeclareUserName(userDTO.getUserName());
             }
         }
-        if (StringUtils.isBlank(dto.getDeclarUserName())) {
+        if (StringUtils.isBlank(dto.getDeclareUserName())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_CONFIRM_USER_REQUIRED);
         }
     }
 
-    private void updateDeclareStatus(TmsDeclareBillEntity entity, String declareStatus, LocalDate declarConfirmDate, String declarUserId, String declarUserName) {
+    private void updateDeclareStatus(TmsDeclareBillEntity entity, String declareStatus, LocalDate declareConfirmDate, String declareUserId, String declareUserName) {
         this.lambdaUpdate()
                 .eq(TmsDeclareBillEntity::getId, entity.getId())
                 .set(TmsDeclareBillEntity::getDeclareStatus, declareStatus)
-                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? null : declarConfirmDate)
-                .set(TmsDeclareBillEntity::getDeclarUserId, Objects.isNull(declarUserId) ? "" : declarUserId)
-                .set(TmsDeclareBillEntity::getDeclarUserName, Objects.isNull(declarUserName) ? "" : declarUserName)
+                .set(TmsDeclareBillEntity::getDeclareConfirmDate, Objects.isNull(declareConfirmDate) ? null : declareConfirmDate)
+                .set(TmsDeclareBillEntity::getDeclareUserId, Objects.isNull(declareUserId) ? "" : declareUserId)
+                .set(TmsDeclareBillEntity::getDeclareUserName, Objects.isNull(declareUserName) ? "" : declareUserName)
                 .update(new TmsDeclareBillEntity());
     }
 
@@ -1213,6 +1226,11 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     private void fillExport(List<TmsDeclareBillDTO.ExportDTO> list) {
+        fillExport(list, loadDeclareExportAccountingCompanyMap(list));
+    }
+
+    private void fillExport(List<TmsDeclareBillDTO.ExportDTO> list,
+                            Map<String, SysAccountingCompanyEntity> accountingCompanyMap) {
         if(CollectionUtils.isEmpty(list)){
             return;
         }
@@ -1222,15 +1240,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         List<String> sourceCodeList = list.stream().map(TmsDeclareBillDTO.ExportDTO::getSourceCode).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = fmLogisticService.listByOutstcockCode(sourceCodeList);
 
-        Set<String> orgIdSet = new HashSet<>();
-        for (TmsDeclareBillDTO.ExportDTO dto : list) {
-            orgIdSet.add(dto.getSenderId());
-            orgIdSet.add(dto.getReceiverId());
+        Map<String, SysAccountingCompanyEntity> allAccountingCompanyMap = accountingCompanyMap;
+        if (Objects.isNull(allAccountingCompanyMap)) {
+            allAccountingCompanyMap = loadDeclareExportAccountingCompanyMap(list);
         }
-        List<String> orgIdList =  new ArrayList<>(orgIdSet);
-        List<SysAccountingCompanyEntity> allAccountingCompanyEntityList = Optional.ofNullable(sysUserFeign.listCompanyById(orgIdList))
-                .orElse(Collections.emptyList());
-        Map<String, SysAccountingCompanyEntity> allAccountingCompanyMap = allAccountingCompanyEntityList.stream().collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (o1, o2) -> o1));
 
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.DECLARE_DECLARE_TYPE.getType(),
                 DictBasicEnum.DECLARE_SUPERVISION_METHOD.getType(),
@@ -1249,7 +1262,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             }
             SysAccountingCompanyEntity receiverCompanyEntity = allAccountingCompanyMap.get(exportDTO.getReceiverId());
             if(Objects.nonNull(receiverCompanyEntity)){
-                exportDTO.setReceiverCode(senderCompanyEntity.getUsciCode()+"("+senderCompanyEntity.getCompanyHsCode()+")");
+                exportDTO.setReceiverCode(receiverCompanyEntity.getUsciCode()+"("+receiverCompanyEntity.getCompanyHsCode()+")");
             }
 
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(exportDTO.getSourceCode())).findFirst().orElse(new LogisticsBillEntity());
@@ -1279,6 +1292,31 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             exportDTO.setTotalPrice(exportProductDetailList.stream().map(TmsDeclareBillDTO.ExportProductDetail::getTotalPrice).reduce(BigDecimal.ZERO,BigDecimal::add));
             exportDTO.setProductDetailList(exportProductDetailList);
         }
+    }
+
+    /**
+     * 报关单导出：批量加载发货人 / 收货人核算公司，供 fillExport 与 fillExportMulti 共用，避免重复 Feign
+     */
+    private Map<String, SysAccountingCompanyEntity> loadDeclareExportAccountingCompanyMap(List<TmsDeclareBillDTO.ExportDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+        Set<String> orgIdSet = new HashSet<>();
+        for (TmsDeclareBillDTO.ExportDTO dto : list) {
+            if (StringUtils.isNotBlank(dto.getSenderId())) {
+                orgIdSet.add(dto.getSenderId());
+            }
+            if (StringUtils.isNotBlank(dto.getReceiverId())) {
+                orgIdSet.add(dto.getReceiverId());
+            }
+        }
+        if (orgIdSet.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return Optional.ofNullable(sysUserFeign.listCompanyById(new ArrayList<>(orgIdSet)))
+                .orElse(Collections.emptyList())
+                .stream()
+                .collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (v1, v2) -> v1));
     }
 
     @Override
@@ -1768,14 +1806,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         pagingParamDTO.setExportDeclareStatus(Arrays.asList(DeclareStatusEnum.DECLARED.getCode(), DeclareStatusEnum.WAIT.getCode(), DeclareStatusEnum.CONFIRMED.getCode()));
         List<TmsDeclareBillDTO.ExportDTO> list = baseMapper.exportDeclare(pagingParamDTO);
         if (CollectionUtils.isEmpty(list)) {
-            return;
+            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
         }
         if (list.size() > DECLARE_MULTI_EXPORT_LIMIT) {
             throw new ServiceException(ApiError.FILE_EXPORT_SIZE_EXCEED_LIMIT, DECLARE_MULTI_EXPORT_LIMIT);
         }
 
-        fillExport(list);
-        fillExportMulti(list);
+        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = loadDeclareExportAccountingCompanyMap(list);
+        fillExport(list, accountingCompanyMap);
+        fillExportMulti(list, accountingCompanyMap);
 
         String name = "报关单导出";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -1804,8 +1843,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *
      * <p>业务规则：</p>
      * <ul>
-     *   <li>卖方地址：复用 senderId 查到的核算公司 companyAddress</li>
-     *   <li>买方地址：头程按 receiverId 查 SysAccountingCompanyEntity；B2B 按中间表关联的发货通知单
+     *   <li>卖方地址：复用 fillExport 已批量加载的核算公司 companyAddress</li>
+     *   <li>买方地址：头程按 ExportDTO.receiverId 查核算公司；B2B 按中间表关联的发货通知单
      *       receive_address，为空时再取客户主数据 mail_address</li>
      *   <li>合同号 = code；合同日期 = declareDate；目的地 = countryName；付款条件 = dictTransactionMethodName</li>
      *   <li>币别取明细首行币别，多币别仅打 warn 不抛异常</li>
@@ -1814,46 +1853,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *       装箱重量取 wms_carton_detail.gross_weight（即装箱 SKU 在该箱内的预计毛重）</li>
      * </ul>
      */
-    private void fillExportMulti(List<TmsDeclareBillDTO.ExportDTO> list) {
+    private void fillExportMulti(List<TmsDeclareBillDTO.ExportDTO> list,
+                                 Map<String, SysAccountingCompanyEntity> accountingCompanyMap) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        // 卖方核算公司：senderId -> 公司主数据
-        List<String> senderIdList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getSenderId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, SysAccountingCompanyEntity> senderCompanyMap = CollectionUtils.isEmpty(senderIdList)
-                ? Collections.emptyMap()
-                : Optional.ofNullable(sysUserFeign.listCompanyById(senderIdList))
-                .orElse(Collections.emptyList())
-                .stream()
-                .collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (v1, v2) -> v1));
-
-        // 头程买方核算公司：receiverId -> 公司主数据
-        // ExportDTO 当前未输出 receiverId，从 entity 二次查询补齐，避免改动原 Mapper SQL
-        List<String> billIdList = list.stream()
-                .map(TmsDeclareBillDTO.ExportDTO::getId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, String> billIdToReceiverIdMap = Collections.emptyMap();
-        if (CollUtil.isNotEmpty(billIdList)) {
-            billIdToReceiverIdMap = super.lambdaQuery()
-                    .in(TmsDeclareBillEntity::getId, billIdList)
-                    .select(TmsDeclareBillEntity::getId, TmsDeclareBillEntity::getReceiverId)
-                    .list().stream()
-                    .filter(e -> StringUtils.isNotBlank(e.getReceiverId()))
-                    .collect(Collectors.toMap(TmsDeclareBillEntity::getId, TmsDeclareBillEntity::getReceiverId, (v1, v2) -> v1));
-        }
-        List<String> receiverIdList = billIdToReceiverIdMap.values().stream().distinct().collect(Collectors.toList());
-        Map<String, SysAccountingCompanyEntity> receiverCompanyMap = CollectionUtils.isEmpty(receiverIdList)
-                ? Collections.emptyMap()
-                : Optional.ofNullable(sysUserFeign.listCompanyById(receiverIdList))
-                .orElse(Collections.emptyList())
-                .stream()
-                .collect(Collectors.toMap(SysAccountingCompanyEntity::getId, Function.identity(), (v1, v2) -> v1));
+        Map<String, SysAccountingCompanyEntity> companyMap = Objects.isNull(accountingCompanyMap)
+                ? loadDeclareExportAccountingCompanyMap(list)
+                : accountingCompanyMap;
 
         // 装箱单 sheet 明细净重：批量拿 product_pack.net_weight
         List<String> allSkuIdList = list.stream()
@@ -1943,9 +1950,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         Map<String, String> b2bBuyerAddressByDeclareId = buildB2bMultiSheetBuyerAddressMap(list);
 
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
-            String receiverId = billIdToReceiverIdMap.get(exportDTO.getId());
-            String buyerAddress = resolveBuyerAddress(exportDTO, receiverId, receiverCompanyMap, b2bBuyerAddressByDeclareId);
-            SysAccountingCompanyEntity sellerCompany = senderCompanyMap.get(exportDTO.getSenderId());
+            String buyerAddress = resolveBuyerAddress(exportDTO, exportDTO.getReceiverId(), companyMap, b2bBuyerAddressByDeclareId);
+            SysAccountingCompanyEntity sellerCompany = companyMap.get(exportDTO.getSenderId());
             String sellerAddress = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getCompanyAddress(), "");
             String sellerMobile = Objects.isNull(sellerCompany) ? "" : Objects.toString(sellerCompany.getContactMobile(), "");
             exportDTO.setContractInfo(buildContractInfo(exportDTO, sellerAddress,sellerMobile, buyerAddress));
@@ -2407,8 +2413,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
      *
      * <p>鲁棒性策略：先在内存里逐条渲染并收集成功条目，再统一写响应，避免单条出错让浏览器收到空 ZIP。</p>
      * <ul>
-     *   <li>单条渲染失败：仅丢弃当前单号 + ERROR 日志，不影响其他条目</li>
-     *   <li>全部失败：直接抛 RuntimeException 由外层统一映射为 FILE_EXPORT_FAILED，避免写出 0 entry ZIP</li>
+     *   <li>单条渲染失败：丢弃当前单号并写入响应头 {@value #HEADER_EXPORT_FAILED_CODES}，不影响其他条目</li>
+     *   <li>全部失败：抛 FILE_EXPORT_FAILED，避免写出 0 entry ZIP</li>
      * </ul>
      */
     private void writeMultiSheetZip(List<TmsDeclareBillDTO.ExportDTO> list,
@@ -2416,7 +2422,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                                     String zipName) throws Exception {
         // 内存预渲染：单号 -> xlsx 字节内容
         Map<String, byte[]> entryMap = new LinkedHashMap<>();
+        List<String> failedCodes = new ArrayList<>();
         for (TmsDeclareBillDTO.ExportDTO exportDTO : list) {
+            String declareCode = Objects.toString(exportDTO.getCode(), "unknown");
             ClassPathResource classPathResource = new ClassPathResource(DECLARE_MULTI_EXCEL_PATH);
             try (InputStream inputStream = classPathResource.getInputStream();
                  ByteArrayOutputStream entryOut = new ByteArrayOutputStream()) {
@@ -2424,16 +2432,23 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 registerCommonConverters(excelWriter);
                 fillMultiSheetForOne(excelWriter, exportDTO);
                 excelWriter.finish();
-                entryMap.put(Objects.toString(exportDTO.getCode(), "unknown"), entryOut.toByteArray());
+                entryMap.put(declareCode, entryOut.toByteArray());
             } catch (Exception e) {
-                // 单条出错只影响当前单号，避免整批报关单的 ZIP 全部不可下载
-                log.error("多 sheet 报关单 ZIP 导出 - 单条渲染失败, 单号【{}】", exportDTO.getCode(), e);
+                failedCodes.add(declareCode);
+                log.error("多 sheet 报关单 ZIP 导出 - 单条渲染失败, 单号【{}】", declareCode, e);
             }
         }
         if (entryMap.isEmpty()) {
             // 全部失败时直接抛业务异常；此时尚未调用 getZipOutputStream，response 未被设为 octet-stream，
             // GlobalExceptionHandler 可正常回写 ApiResult JSON
             throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+
+        if (CollUtil.isNotEmpty(failedCodes)) {
+            response.setHeader(HEADER_EXPORT_PARTIAL_FAILURE, "true");
+            response.setHeader(HEADER_EXPORT_FAILED_CODES, String.join(",", failedCodes));
+            log.warn("多 sheet 报关单 ZIP 导出部分失败, 成功【{}/{}】, 失败单号【{}】",
+                    entryMap.size(), list.size(), String.join(",", failedCodes));
         }
 
         OutputStream outputStream = ExcelPrintUtils.getZipOutputStream(zipName, response);
@@ -3606,6 +3621,126 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    /**
+     * 自动生成头程报关单（addFmDeclare 非下推路径）前，按发货单维度校验报关必填信息。
+     * 任一行 SKU 缺失"海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价"中的任意字段，直接抛错并提示
+     * 「单据【发货单号】SKU【skuNo】缺少报关信息：xxx、xxx」，不再继续生成报关单。
+     */
+    private void validateAutoFmDeclareProductDetails(String sourceCode, List<TmsDeclareBillDTO.ProductDetail> productDetailList) {
+        if (CollUtil.isEmpty(productDetailList)) {
+            return;
+        }
+        for (TmsDeclareBillDTO.ProductDetail detail : productDetailList) {
+            if (Objects.isNull(detail)) {
+                continue;
+            }
+            List<String> missingFields = collectMissingDeclareFields(
+                    detail.getCustomsCode(),
+                    detail.getDeclareChineseName(),
+                    detail.getDeclareElement(),
+                    detail.getDeclareUnit(),
+                    detail.getDeclareCurrency(),
+                    detail.getPrice());
+            if (CollUtil.isNotEmpty(missingFields)) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED,
+                        CharSequenceUtil.blankToDefault(sourceCode, "-"),
+                        CharSequenceUtil.blankToDefault(detail.getSkuNo(),
+                                CharSequenceUtil.blankToDefault(detail.getSkuId(), "-")),
+                        String.join("、", missingFields));
+            }
+        }
+    }
+
+    /**
+     * 自动生成报关单（batchAddMergeDetail / 拆分保存等链路）前，按合并明细维度校验报关必填信息。
+     * 缺失字段时抛错并定位到来源单据 + SKU。
+     * <p>
+     * sourceCode 优先取该合并行 sourceDeliveryDetailList 中第一条非空 sourceCode；
+     * skuNo 优先取合并行自身 skuNo，否则退化为来源明细的 skuNo / skuId。
+     */
+    @Override
+    public void validateAutoMergeDeclareDetailRequired(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+        if (CollUtil.isEmpty(mergeDetailList)) {
+            return;
+        }
+        for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
+            if (Objects.isNull(detailDTO)) {
+                continue;
+            }
+            List<String> missingFields = collectMissingDeclareFields(
+                    detailDTO.getHsCode(),
+                    detailDTO.getProductNameCn(),
+                    detailDTO.getDeclareElement(),
+                    detailDTO.getUnit(),
+                    detailDTO.getDeclareCurrency(),
+                    detailDTO.getUnitPrice());
+            if (CollUtil.isEmpty(missingFields)) {
+                continue;
+            }
+            String sourceCode = resolveMergeDetailSourceCode(detailDTO);
+            String skuNo = resolveMergeDetailSkuNo(detailDTO);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED,
+                    sourceCode, skuNo, String.join("、", missingFields));
+        }
+    }
+
+    /**
+     * 收集缺失的报关必填字段（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
+     * <p>
+     * 单价规则：null 视为缺失（与现有 {@code requireNotNull(unitPrice, ...)} 行为一致，
+     * 不在此处增加"必须大于0"约束，避免与现有页面下推路径行为冲突）。
+     */
+    private List<String> collectMissingDeclareFields(String customsCode, String declareName, String declareElement,
+                                                     String unit, String currency, BigDecimal price) {
+        List<String> missing = new ArrayList<>(6);
+        if (StringUtils.isBlank(customsCode)) {
+            missing.add("海关编码");
+        }
+        if (StringUtils.isBlank(declareName)) {
+            missing.add("报关品名");
+        }
+        if (StringUtils.isBlank(declareElement)) {
+            missing.add("申报要素");
+        }
+        if (StringUtils.isBlank(unit)) {
+            missing.add("单位");
+        }
+        if (StringUtils.isBlank(currency)) {
+            missing.add("币种");
+        }
+        if (Objects.isNull(price)) {
+            missing.add("单价");
+        }
+        return missing;
+    }
+
+    private String resolveMergeDetailSourceCode(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
+        if (CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
+            return "-";
+        }
+        return detailDTO.getSourceDeliveryDetailList().stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("-");
+    }
+
+    private String resolveMergeDetailSkuNo(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
+        if (StringUtils.isNotBlank(detailDTO.getSkuNo())) {
+            return detailDTO.getSkuNo();
+        }
+        if (CollUtil.isNotEmpty(detailDTO.getSourceDeliveryDetailList())) {
+            return detailDTO.getSourceDeliveryDetailList().stream()
+                    .filter(Objects::nonNull)
+                    .map(s -> CharSequenceUtil.blankToDefault(s.getSkuNo(), s.getSkuId()))
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .orElse("-");
+        }
+        return "-";
+    }
+
     private void mapMergeDeclareDetailToEntity(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO, TmsDeclareBillDetailEntity detailEntity) {
         detailEntity.setSkuId(StringUtils.isNotBlank(detailDTO.getLeadSkuId()) ? detailDTO.getLeadSkuId() : null);
         detailEntity.setSkuNo(detailDTO.getSkuNo());
@@ -3919,6 +4054,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(mergeDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
+        // 先按"单据 + SKU + 缺哪些报关字段"提示缺失，便于使用方一次性看到要补哪些 PLM 资料；
+        // 之后再走 validateBatchMergeDeclareBills 的明细维度/票/箱号等校验。
+        validateAutoMergeDeclareDetailRequired(mergeDetailList);
         validateBatchMergeDeclareBills(list);
 
         Set<String> sourceKeySet = mergeDetailList.stream()

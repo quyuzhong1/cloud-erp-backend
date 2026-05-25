@@ -201,9 +201,9 @@ public class TmsB2BDeclareBillController extends BaseController {
             TmsDeclareBillDTO.ConfirmDeclareStatusDTO singleDTO = new TmsDeclareBillDTO.ConfirmDeclareStatusDTO();
             singleDTO.setIds(Collections.singletonList(id));
             singleDTO.setDeclareStatus(dto.getDeclareStatus());
-            singleDTO.setDeclarConfirmDate(dto.getDeclarConfirmDate());
-            singleDTO.setDeclarUserId(dto.getDeclarUserId());
-            singleDTO.setDeclarUserName(dto.getDeclarUserName());
+            singleDTO.setDeclareConfirmDate(dto.getDeclareConfirmDate());
+            singleDTO.setDeclareUserId(dto.getDeclareUserId());
+            singleDTO.setDeclareUserName(dto.getDeclareUserName());
             resultList.add(tmsDeclareBillService.confirmDeclareStatus(singleDTO, SourceTypeEnum.B2B_DECLARE_BILL));
         }
         return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
@@ -277,6 +277,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/batchUpdateRemark")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "更新报关单备注")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:batchUpdateRemark",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchUpdateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
