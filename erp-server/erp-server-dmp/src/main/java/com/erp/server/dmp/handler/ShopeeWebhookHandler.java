@@ -68,11 +68,6 @@ public class ShopeeWebhookHandler implements WebhookHandler{
                         ordersn, status, updateTime, platformShopId);
                 return SUCCESS;
             }
-            ThirdMappingEntity shopMapping = thirdMappingService.getShopByThirdCode(platformShopId, PlatformDictEnum.SHOPEE.getCode());
-            if (Objects.isNull(shopMapping) || StringUtils.isBlank(shopMapping.getSysId())) {
-                log.warn("虾皮webhook 未找到店铺映射，shopId={}", platformShopId);
-                return SUCCESS;
-            }
             DmpCfgInputEntity cfgInputEntity = dmpCfgInputService.lambdaQuery()
                     .eq(DmpCfgInputEntity::getCode, CFG_INPUT_CODE)
                     .eq(DmpCfgInputEntity::getDisabled, Boolean.FALSE)
@@ -84,17 +79,14 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             }
             DmpCfgInputDetailEntity detailEntity = dmpCfgInputDetailService.lambdaQuery()
                     .eq(DmpCfgInputDetailEntity::getMainId, cfgInputEntity.getId())
-                    .eq(DmpCfgInputDetailEntity::getNextLevelId, shopMapping.getSysId())
                     .eq(DmpCfgInputDetailEntity::getDisabled, Boolean.FALSE)
                     .last("limit 1")
                     .one();
             if (Objects.isNull(detailEntity)) {
-                log.warn("虾皮webhook 未找到任务明细配置，cfgInputId={}，nextLevelId={}，shopId={}",
-                        cfgInputEntity.getId(), shopMapping.getSysId(), platformShopId);
+                log.warn("虾皮webhook 未找到任务明细配置，cfgInputId={}，shopId={}",
+                        cfgInputEntity.getId(), platformShopId);
                 return SUCCESS;
             }
-            json.set("next_level_id", shopMapping.getSysId());
-            json.set("nextLevelId", shopMapping.getSysId());
             json.set("platformShopId", platformShopId);
             ThirdWarehouseContext.setData(json.toString());
             DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();

@@ -13,6 +13,7 @@ public enum WebhookServiceEnum {
     OUTBOUND("outbound", "outbound", "订单出库"),
     INBOUND("inbound", "inbound", "入库单"),
     RETURN_INSTOCK("returnInstock", "returnInstock", "退货入库单"),
+    SHOPEE("shopee", "shopee", "虾皮"),
     ;
 
     private String code;

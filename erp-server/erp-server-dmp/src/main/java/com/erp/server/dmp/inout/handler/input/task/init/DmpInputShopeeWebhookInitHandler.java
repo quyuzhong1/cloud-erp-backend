@@ -41,11 +41,8 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
         initData.set("updateTime", webhookData.getLong("update_time"));
         initData.set("deliveryTime", webhookData.getLong("update_time"));
         initData.set("shopId", payload.getStr("shop_id"));
-        initData.set(NEXT_LEVEL_ID, payload.getStr(NEXT_LEVEL_ID));
-        initData.set("next_level_id", payload.getStr("next_level_id"));
         initData.set("msgId", payload.getStr("msg_id"));
-        if (StringUtils.isAnyBlank(initData.getStr("thirdCode"), initData.getStr("platformOriginalStatus"),
-                initData.getStr(NEXT_LEVEL_ID)) || Objects.isNull(initData.getLong("deliveryTime"))) {
+        if (StringUtils.isAnyBlank(initData.getStr("thirdCode"), initData.getStr("platformOriginalStatus")) || Objects.isNull(initData.getLong("deliveryTime"))) {
             return Collections.emptyList();
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(initData.toString()));
