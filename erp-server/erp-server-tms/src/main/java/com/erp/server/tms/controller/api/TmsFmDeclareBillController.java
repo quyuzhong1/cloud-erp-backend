@@ -138,21 +138,6 @@ public class TmsFmDeclareBillController extends BaseController {
     }
 
     /**
-     * 查询符合生成条件的发货单
-     * @author lrp
-     * @date:  2024-03-27
-     * @return ApiResult
-     */
-    @GetMapping("/getCanGenerateDeliveryOrder")
-    public ApiResult<List<TmsDeclareBillDTO.DeliveryDTO>> getCanGenerateDeliveryOrder() {
-        TmsDeclareBillDTO.QuerySourceDTO querySourceDTO = TmsDeclareBillDTO.QuerySourceDTO.builder()
-                .packingStatus(PackingTaskStatusEnum.PACKED.getCode())
-                .declareStatus(WmsDeclareStatusEnum.WAIT.getCode())
-                .build();
-        return success(tmsDeclareBillService.getCanGenerateDeliveryOrder(querySourceDTO));
-    }
-
-    /**
      * 根据选中SKU查询报关表头信息
      * @author will
      * @date 2026/5/7 14:47
