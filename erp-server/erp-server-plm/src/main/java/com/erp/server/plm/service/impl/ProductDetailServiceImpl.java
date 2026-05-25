@@ -2954,6 +2954,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
             Map<String, String> finalDictValueMaps = dictValueMaps;
+
             Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
             Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
             for(Map.Entry<String, BasicCategoryEntity> idBasicCategoryMap : idBasicCategoryMaps.entrySet()) {

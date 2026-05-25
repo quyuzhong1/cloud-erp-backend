@@ -61,6 +61,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.commons.io.IOUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -79,7 +80,9 @@ import okhttp3.Response;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -1404,6 +1407,7 @@ public class NfeInvoiceService {
         if (ObjUtil.isEmpty(attachDTO)) {
             throw new ServiceException("NF-e发票未找到pdf文件");
         }
+        String attachUrl = buildFastDfsPublicUrl(attachDTO.getAttachUrl());
         byte[] pdfBytes = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
         if (pdfBytes == null || pdfBytes.length == 0) {
             throw new ServiceException("获取pdf文件失败");
@@ -1421,7 +1425,7 @@ public class NfeInvoiceService {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("order_sn", soB2cEntity.getPlatformCode())
                 .addFormDataPart("file_type", "1")
-                .addFormDataPart("file", CharSequenceUtil.blankToDefault(attachDTO.getAttachName(), soB2cEntity.getCode() + ".pdf"),
+                .addFormDataPart("file", attachUrl,
                         RequestBody.create(MediaType.parse("application/pdf"), pdfBytes))
                 .build();
         Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
@@ -1442,6 +1446,28 @@ public class NfeInvoiceService {
         } catch (Exception e) {
             throw new ServiceException(CharSequenceUtil.format("Shopee上传发票失败: {}", e.getMessage()));
         }
+    }
+
+    private String buildFastDfsPublicUrl(String attachUrl) {
+        if (CharSequenceUtil.isBlank(attachUrl)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        String trimAttachUrl = CharSequenceUtil.trim(attachUrl);
+        String lowerAttachUrl = trimAttachUrl.toLowerCase(Locale.ROOT);
+        if (lowerAttachUrl.startsWith("http://") || lowerAttachUrl.startsWith("https://")) {
+            return trimAttachUrl;
+        }
+        String publicUrl = CharSequenceUtil.nullToEmpty(FastDFSClientUtil.publicUrl);
+        if (CharSequenceUtil.isBlank(publicUrl)) {
+            throw new ServiceException("FastDFS公网地址未配置");
+        }
+        while (publicUrl.endsWith("/")) {
+            publicUrl = publicUrl.substring(0, publicUrl.length() - 1);
+        }
+        while (trimAttachUrl.startsWith("/")) {
+            trimAttachUrl = trimAttachUrl.substring(1);
+        }
+        return publicUrl + "/" + trimAttachUrl;
     }
 
     private String buildShopeeUploadInvoiceUrl(CfgAppClientEntity cfgAppClientEntity, ShopAuthEntity shopAuthEntity, String accessToken, String path, long timestamp) {
