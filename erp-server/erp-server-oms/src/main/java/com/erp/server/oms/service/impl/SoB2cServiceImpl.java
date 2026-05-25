@@ -762,8 +762,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         this.deleteById(soB2cIdList, codes);
 
-        log.info("成功删除{}条b2c销售订单，ID为: [{}]", soB2cIdList.size(),
-                soB2cIdList.stream().limit(10).collect(Collectors.joining(", ")));
+        XxlJobHelper.log("成功删除{}条b2c销售订单，ID为:{}",soB2cIdList.size(), codes);
     }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
