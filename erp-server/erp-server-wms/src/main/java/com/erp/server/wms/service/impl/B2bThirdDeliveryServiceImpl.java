@@ -365,6 +365,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        List<String> soDetailIds = records.stream()
+                .map(B2bThirdDeliveryDTO.PagingViewDTO::getSoDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         Map<String, String> salesPlatformOrderCodeMap = new HashMap<>();
         Map<String, String> customerPOMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(soIds)) {
@@ -374,13 +379,13 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                         .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
                         .collect(Collectors.toMap(SoInfoEntity::getId, item -> CharSequenceUtil.blankToDefault(item.getPlatformOrderCode(), CharSequenceUtil.EMPTY), (v1, v2) -> v1));
             }
-            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
+        }
+        if (CollectionUtils.isNotEmpty(soDetailIds)) {
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIds);
             if (CollectionUtils.isNotEmpty(soDetailList)) {
                 customerPOMap = soDetailList.stream()
-                        .filter(item -> CharSequenceUtil.isNotBlank(item.getMainId()) && CharSequenceUtil.isNotBlank(item.getCustomerPO()))
-                        .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
-                                Collectors.collectingAndThen(Collectors.mapping(SoDetailEntity::getCustomerPO, Collectors.toCollection(LinkedHashSet::new)),
-                                        item -> String.join(",", item))));
+                        .filter(item -> CharSequenceUtil.isNotBlank(item.getId()) && CharSequenceUtil.isNotBlank(item.getCustomerPO()))
+                        .collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getCustomerPO, (v1, v2) -> v1));
             }
         }
         Map<String, String> finalSalesPlatformOrderCodeMap = salesPlatformOrderCodeMap;
@@ -390,7 +395,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 e.setSalesPlatformOrderCode(finalSalesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
             }
             if (CharSequenceUtil.isBlank(e.getCustomerPO())) {
-                e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+                e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoDetailId(), CharSequenceUtil.EMPTY));
             }
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             String warehouseOperationType = e.getWarehouseOperationType();
