@@ -80,18 +80,18 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     /**
     * 报关确认日期
     */
-    @TableField(value = "declar_confirm_date")
-    private LocalDate declarConfirmDate;
+    @TableField(value = "declare_confirm_date")
+    private LocalDate declareConfirmDate;
     /**
     * 报关确认人id
     */
-    @TableField(value = "declar_user_id")
-    private String declarUserId;
+    @TableField(value = "declare_user_id")
+    private String declareUserId;
     /**
     * 报关确认人
     */
-    @TableField(value = "declar_user_name")
-    private String declarUserName;
+    @TableField(value = "declare_user_name")
+    private String declareUserName;
     /**
     * 报关类型
     */
@@ -240,11 +240,11 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
 
     public static final String DECLARE_DATE = "declare_date";
 
-    public static final String DECLAR_CONFIRM_DATE = "declar_confirm_date";
+    public static final String DECLARE_CONFIRM_DATE = "declare_confirm_date";
 
-    public static final String DECLAR_USER_ID = "declar_user_id";
+    public static final String DECLARE_USER_ID = "declare_user_id";
 
-    public static final String DECLAR_USER_NAME = "declar_user_name";
+    public static final String DECLARE_USER_NAME = "declare_user_name";
 
     public static final String DECLARE_TYPE = "declare_type";
 

@@ -970,7 +970,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         String currentStatus = entity.getDeclareStatus();
         if (DeclareStatusEnum.WAIT.getCode().equals(currentStatus) && DeclareStatusEnum.CONFIRMED.equals(targetStatus)) {
             validateDeclareConfirm(entity);
-            updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclarConfirmDate(), dto.getDeclarUserId(), dto.getDeclarUserName());
+            updateDeclareStatus(entity, targetStatus.getCode(), dto.getDeclareConfirmDate(), dto.getDeclareUserId(), dto.getDeclareUserName());
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
             return;
@@ -982,7 +982,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return;
         }
         if (DeclareStatusEnum.CONFIRMED.getCode().equals(currentStatus) && DeclareStatusEnum.DECLARED.equals(targetStatus)) {
-            updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclarConfirmDate(), entity.getDeclarUserId(), entity.getDeclarUserName());
+            updateDeclareStatus(entity, targetStatus.getCode(), entity.getDeclareConfirmDate(), entity.getDeclareUserId(), entity.getDeclareUserName());
             String declareStatusMsg = CharSequenceUtil.format("{}变更为{}", DeclareStatusEnum.getName(currentStatus), DeclareStatusEnum.getName(targetStatus.getCode()));
             operateLogService.addModuleOperateLog(declareStatusMsg, sourceTypeEnum.getCode(), entity.getId(), "更新状态操作");
             return;
@@ -1024,31 +1024,31 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     private void fillDeclareConfirmUser(TmsDeclareBillDTO.ConfirmDeclareStatusDTO dto) {
-        if (Objects.isNull(dto.getDeclarConfirmDate())) {
+        if (Objects.isNull(dto.getDeclareConfirmDate())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_CONFIRM_DATE_REQUIRED);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-        if (StringUtils.isBlank(dto.getDeclarUserId())) {
-            dto.setDeclarUserId(loginUser.getUid());
-            dto.setDeclarUserName(loginUser.getUserName());
+        if (StringUtils.isBlank(dto.getDeclareUserId())) {
+            dto.setDeclareUserId(loginUser.getUid());
+            dto.setDeclareUserName(loginUser.getUserName());
         }else {
-            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclarUserId());
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getDeclareUserId());
             if (Objects.nonNull(userDTO)) {
-                dto.setDeclarUserName(userDTO.getUserName());
+                dto.setDeclareUserName(userDTO.getUserName());
             }
         }
-        if (StringUtils.isBlank(dto.getDeclarUserName())) {
+        if (StringUtils.isBlank(dto.getDeclareUserName())) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_STATUS_CONFIRM_USER_REQUIRED);
         }
     }
 
-    private void updateDeclareStatus(TmsDeclareBillEntity entity, String declareStatus, LocalDate declarConfirmDate, String declarUserId, String declarUserName) {
+    private void updateDeclareStatus(TmsDeclareBillEntity entity, String declareStatus, LocalDate declareConfirmDate, String declareUserId, String declareUserName) {
         this.lambdaUpdate()
                 .eq(TmsDeclareBillEntity::getId, entity.getId())
                 .set(TmsDeclareBillEntity::getDeclareStatus, declareStatus)
-                .set(TmsDeclareBillEntity::getDeclarConfirmDate, Objects.isNull(declarConfirmDate) ? null : declarConfirmDate)
-                .set(TmsDeclareBillEntity::getDeclarUserId, Objects.isNull(declarUserId) ? "" : declarUserId)
-                .set(TmsDeclareBillEntity::getDeclarUserName, Objects.isNull(declarUserName) ? "" : declarUserName)
+                .set(TmsDeclareBillEntity::getDeclareConfirmDate, Objects.isNull(declareConfirmDate) ? null : declareConfirmDate)
+                .set(TmsDeclareBillEntity::getDeclareUserId, Objects.isNull(declareUserId) ? "" : declareUserId)
+                .set(TmsDeclareBillEntity::getDeclareUserName, Objects.isNull(declareUserName) ? "" : declareUserName)
                 .update(new TmsDeclareBillEntity());
     }
 
