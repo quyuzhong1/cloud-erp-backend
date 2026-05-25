@@ -219,10 +219,16 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     private static final String HEADER_EXPORT_FAILED_CODES = "X-Export-Failed-Codes";
 
     /**
-     * 贸易国默认值（ERP-17240）。
+     * 贸易国默认值。
      * 业务要求新增报关单时贸易国默认中国香港；如果后续后端有更精确的国家字典码，可以再调整。
      */
     private static final String DEFAULT_TRADING_AREA = "HK";
+
+    /**
+     * 目的国"中国大陆"字典码（与 {@code com.erp.model.sys.enums.DictValueEnum#CN} 一致）。
+     * 目的国为中国大陆的来源单不生成报关单。
+     */
+    private static final String MAINLAND_CHINA_COUNTRY_CODE = "CN";
 
 
     @Override
@@ -247,6 +253,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
             validateDeclareMergeDetails(mergeDetailList);
+            // 目的国为中国大陆的来源单不生成报关单，任一勾选行命中即整批失败、不入库，
+            // 来源单 declare_status 保持 WAIT，错误信息列出所有命中的来源单号。
+            validateDestCountryNotMainlandChina(mergeDetailList);
             Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
             validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), null);
 
@@ -260,10 +269,10 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             declareBillEntity.setInsuranceFee(Objects.isNull(declareBillEntity.getInsuranceFee()) ? BigDecimal.ZERO : declareBillEntity.getInsuranceFee());
             declareBillEntity.setOtherFee(Objects.isNull(declareBillEntity.getOtherFee()) ? BigDecimal.ZERO : declareBillEntity.getOtherFee());
             declareBillEntity.setGrossWeight(Objects.isNull(declareBillEntity.getGrossWeight()) ? BigDecimal.ZERO : declareBillEntity.getGrossWeight());
-            // ERP-17240: 复用 batchAddMergeDetail 链路里的 calculateSelectedNetWeight，
+            //  复用 batchAddMergeDetail 链路里的 calculateSelectedNetWeight，
             // 按 SKU × qty 真实累加，且已经处理了组合品 SPLIT 拆分。
             declareBillEntity.setNetWeight(calculateSelectedNetWeight(flattenMergeSourceDetails(mergeDetailList)));
-            // ERP-17240: 贸易国默认中国香港。
+            // 贸易国默认中国香港。
             applyTradingAreaDefault(declareBillEntity);
 
             List<TmsDeclareBillDetailEntity> detailEntityList = new ArrayList<>(mergeDetailList.size());
@@ -295,12 +304,26 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             return Boolean.TRUE;
         }
 
+        // fallback 路径按 deliveryDTO 维度直接生成，提前判断目的国是否为中国大陆，
+        // 命中即整批失败（同 Path A 的语义），列出所有命中的来源单号，来源单 declare_status 保持 WAIT。
+        List<String> mainlandSourceCodes = deliveryDTOList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> isMainlandChinaCountry(item.getCountry()))
+                .map(TmsDeclareBillDTO.DeliveryDTO::getSourceCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(mainlandSourceCodes)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE,
+                    String.join("、", mainlandSourceCodes));
+        }
         TmsDeclareBillEntity baseTmsDeclareBillEntity = new TmsDeclareBillEntity();
         BeanMapperUtils.copy(addDTO, baseTmsDeclareBillEntity);
         BeanMapperUtils.copy(deliveryDTO, baseTmsDeclareBillEntity);
         baseTmsDeclareBillEntity.setDeclareStatus(com.erp.model.tms.enums.DeclareStatusEnum.WAIT.getCode());
         baseTmsDeclareBillEntity.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        // ERP-17240: 贸易国默认中国香港。
+        // 贸易国默认中国香港。
         applyTradingAreaDefault(baseTmsDeclareBillEntity);
         //50个明细为一个报关单
         List<TmsDeclareBillDTO.ProductDetail> allProductDetailList = deliveryDTO.getProductDetailList();
@@ -378,7 +401,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
-     * 贸易国默认值兜底（ERP-17240）。trading_area 是 tms_declare_bill 本表列，可以保存侧赋值。
+     * 贸易国默认值兜底。trading_area 是 tms_declare_bill 本表列，可以保存侧赋值。
      */
     private void applyTradingAreaDefault(TmsDeclareBillEntity entity) {
         if (entity != null && StringUtils.isBlank(entity.getTradingArea())) {
@@ -894,7 +917,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             //物流供应商名称
             String logisticsSupplierNames = deliveryDTOList.stream().map(TmsDeclareBillDTO.SoOutDTO::getLogisticsSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.joining(";"));
             viewDTO.setLogisticsSupplierName(logisticsSupplierNames);
-            // ERP-17240: 运输方式 / 柜号同 FM，按发货通知单关联的 logistics_bill 反查回显。
+            //  运输方式 / 柜号同 FM，按发货通知单关联的 logistics_bill 反查回显。
             String shippingMethods = deliveryDTOList.stream()
                     .map(TmsDeclareBillDTO.SoOutDTO::getShippingMethod)
                     .filter(CharSequenceUtil::isNotBlank)
@@ -1410,7 +1433,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isNotEmpty(supplierIds)){
             logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
         }
-        // ERP-17240: 与 FM 端 getCanGenerateDeliveryOrder 对齐，按发货通知单关联的物流单 channel_id 批量加载渠道，
+        //  与 FM 端 getCanGenerateDeliveryOrder 对齐，按发货通知单关联的物流单 channel_id 批量加载渠道，
         // 用于装箱明细的体积重回填。
         Map<String, LogisticsChannelEntity> channelMap = loadChannelMap(logisticsBillEntityList);
         for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : deliveryDTOList) {
@@ -1754,6 +1777,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isNotEmpty(addDTO.getMergeDetailList())) {
             List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList = prepareSubmittedMergeDetailList(addDTO.getMergeDetailList(), addDTO.getIsMerge());
             validateDeclareMergeDetails(mergeDetailList);
+            // 与 FM 对齐，目的国为中国大陆则整批失败，列出命中的来源单号，来源单状态不变。
+            validateDestCountryNotMainlandChina(mergeDetailList);
             Set<String> sourceKeySet = collectSourceKeySet(mergeDetailList);
             validateSourceNotGenerated(sourceKeySet, collectSourceIdSet(mergeDetailList), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), null);
 
@@ -3752,6 +3777,71 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     /**
+     * 合并明细维度过滤"目的国 = 中国大陆 (CN)"。
+     * <p>
+     * 判定口径：合并行 {@code toCountry == "CN"} 或其任一来源行 {@code countryId == "CN"} 即命中。
+     * 命中后一次性收集所有相关来源单号（去重 + 排序）抛出，便于使用方一次看到要剔除哪些单据；
+     * 抛错前不修改任何来源单 declare_status，被过滤的单据保持 WAIT，
+     * 等使用方调整目的国后再次下推/自动生成即可。
+     */
+    @Override
+    public void validateDestCountryNotMainlandChina(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+        if (CollUtil.isEmpty(mergeDetailList)) {
+            return;
+        }
+        Set<String> mainlandSourceCodes = new TreeSet<>();
+        for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
+            if (Objects.isNull(detailDTO)) {
+                continue;
+            }
+            collectMainlandChinaSourceCodes(detailDTO, mainlandSourceCodes);
+        }
+        if (CollUtil.isEmpty(mainlandSourceCodes)) {
+            return;
+        }
+        throw new ServiceException(ApiError.LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE,
+                String.join("、", mainlandSourceCodes));
+    }
+
+    /**
+     * 收集合并行中目的国为中国大陆的来源单号，仅写入 collector，不抛错。
+     * 优先以来源行的 {@code countryId} 判定；当来源行缺失国家字段时退化为合并行的 {@code toCountry}。
+     */
+    private void collectMainlandChinaSourceCodes(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO,
+                                                 Set<String> collector) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceList = detailDTO.getSourceDeliveryDetailList();
+        if (CollUtil.isEmpty(sourceList)) {
+            if (isMainlandChinaCountry(detailDTO.getToCountry())) {
+                collector.add(CharSequenceUtil.blankToDefault(resolveMergeDetailSourceCode(detailDTO), "-"));
+            }
+            return;
+        }
+        boolean mergeLevelMainland = isMainlandChinaCountry(detailDTO.getToCountry());
+        for (TmsDeclareBillDTO.SourceDeliveryDetailDTO sourceDetail : sourceList) {
+            if (Objects.isNull(sourceDetail)) {
+                continue;
+            }
+            String countryId = sourceDetail.getCountryId();
+            boolean sourceLevelMainland = StringUtils.isBlank(countryId)
+                    ? mergeLevelMainland
+                    : isMainlandChinaCountry(countryId);
+            if (!sourceLevelMainland) {
+                continue;
+            }
+            collector.add(CharSequenceUtil.blankToDefault(sourceDetail.getSourceCode(), "-"));
+        }
+    }
+
+    /**
+     * 判断字典国家码是否为中国大陆。
+     * 兼容大小写，避免 PLM / 上游传入 "cn" 时漏判。
+     */
+    private boolean isMainlandChinaCountry(String countryCode) {
+        return StringUtils.isNotBlank(countryCode)
+                && MAINLAND_CHINA_COUNTRY_CODE.equalsIgnoreCase(countryCode);
+    }
+
+    /**
      * 收集缺失的报关必填字段（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
      * <p>
      * 单价规则：null 视为缺失（与现有 {@code requireNotNull(unitPrice, ...)} 行为一致，
@@ -4124,6 +4214,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         // 先按"单据 + SKU + 缺哪些报关字段"提示缺失，便于使用方一次性看到要补哪些 PLM 资料；
         // 之后再走 validateBatchMergeDeclareBills 的明细维度/票/箱号等校验。
         validateAutoMergeDeclareDetailRequired(mergeDetailList);
+        // 目的国为中国大陆的来源单整批失败，错误信息列出所有命中的来源单号，
+        // 不进入入库流程；来源单 declare_status 不动，仍保持 WAIT。
+        validateDestCountryNotMainlandChina(mergeDetailList);
         validateBatchMergeDeclareBills(list);
 
         Set<String> sourceKeySet = mergeDetailList.stream()
@@ -4404,7 +4497,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         declareBillEntity.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
         declareBillEntity.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
         declareBillEntity.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
-        // ERP-17240: 贸易国默认中国香港，与 addFmDeclare / addB2BDeclare 对齐。
+        // 贸易国默认中国香港，与 addFmDeclare / addB2BDeclare 对齐。
         applyTradingAreaDefault(declareBillEntity);
     }
 
