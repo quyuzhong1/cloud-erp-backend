@@ -192,6 +192,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Resource
     private SoInfoFeign soInfoFeign;
 
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+
     /**
      * 多 sheet 报关单导出模板（sheet0 报关单 / sheet1 合同 / sheet2 发票 / sheet3 装箱单 / sheet4 装箱明细）
      */
@@ -702,6 +705,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isNotEmpty(supplierIds)){
             logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
         }
+        //  装箱信息体积重量按"长*宽*高 / 渠道材积"回填，渠道取发货单关联的物流单的 channel_id。
+        // 这里改成批量查询渠道，避免每个 DTO 都走一次 getById。
+        Map<String, LogisticsChannelEntity> channelMap = loadChannelMap(logisticsBillEntityList);
         for (TmsDeclareBillDTO.DeliveryDTO deliveryDTO : deliveryDTOList) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockId().equals(deliveryDTO.getSourceId())).findFirst().orElse(new LogisticsBillEntity());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
@@ -710,8 +716,64 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             deliveryDTO.setLogisticsSupplierId(logisticsBillEntity.getLogisticsSupplierId());
             deliveryDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
             deliveryDTO.setCounterNo(logisticsBillEntity.getCounterNo());
+            fillPackingVolumeWeight(deliveryDTO.getPackingDTOList(), channelMap.get(logisticsBillEntity.getChannelId()));
         }
         return deliveryDTOList;
+    }
+
+    /**
+     * 批量加载物流单对应的渠道实体，供装箱信息体积重计算使用。
+     * @author will
+     * @date 2026/5/25 11:50
+     * @param logisticsBillList 物流单集合
+     * @return Map(channelId -> LogisticsChannelEntity)
+     */
+    private Map<String, LogisticsChannelEntity> loadChannelMap(List<LogisticsBillEntity> logisticsBillList) {
+        if (CollUtil.isEmpty(logisticsBillList)) {
+            return Collections.emptyMap();
+        }
+        List<String> channelIds = logisticsBillList.stream()
+                .map(LogisticsBillEntity::getChannelId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(channelIds)) {
+            return Collections.emptyMap();
+        }
+        List<LogisticsChannelEntity> channelList = logisticsChannelService.listByIds(channelIds);
+        if (CollUtil.isEmpty(channelList)) {
+            return Collections.emptyMap();
+        }
+        return channelList.stream()
+                .filter(Objects::nonNull)
+                .filter(item -> StringUtils.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(LogisticsChannelEntity::getId, Function.identity(), (a, b) -> a));
+    }
+
+    /**
+     * 按"长*宽*高 / 渠道材积"回填装箱明细的体积重，
+     * 公式与 TmsFirstMileLogisticServiceImpl.getCanGenerateDeliveryOrder 保持一致（保留 4 位、HALF_UP）。
+     * 渠道为空或材积设置 &lt;= 0 时跳过，不会清掉已有的 volumeWeight。
+     * @author will
+     * @date 2026/5/25 11:50
+     * @param packingDTOList 装箱明细
+     * @param channelEntity 渠道实体（来自发货单关联的物流单 channel_id）
+     */
+    private void fillPackingVolumeWeight(List<TmsDeclareBillDTO.PackingDTO> packingDTOList,
+                                         LogisticsChannelEntity channelEntity) {
+        if (CollUtil.isEmpty(packingDTOList)
+                || Objects.isNull(channelEntity)
+                || Objects.isNull(channelEntity.getVolumeSetting())
+                || channelEntity.getVolumeSetting() <= 0) {
+            return;
+        }
+        BigDecimal divisor = BigDecimal.valueOf(channelEntity.getVolumeSetting());
+        packingDTOList.forEach(packingDTO -> {
+            if (Objects.isNull(packingDTO) || Objects.isNull(packingDTO.getMultiplySize())) {
+                return;
+            }
+            packingDTO.setVolumeWeight(packingDTO.getMultiplySize().divide(divisor, 4, RoundingMode.HALF_UP));
+        });
     }
 
     @Override
@@ -1348,6 +1410,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isNotEmpty(supplierIds)){
             logisticsSupplierEntityList = logisticsSupplierService.listByIds(supplierIds);
         }
+        // ERP-17240: 与 FM 端 getCanGenerateDeliveryOrder 对齐，按发货通知单关联的物流单 channel_id 批量加载渠道，
+        // 用于装箱明细的体积重回填。
+        Map<String, LogisticsChannelEntity> channelMap = loadChannelMap(logisticsBillEntityList);
         for (TmsDeclareBillDTO.SoOutDTO deliveryDTO : deliveryDTOList) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(v->v.getOutstockId().equals(deliveryDTO.getSourceId())).findFirst().orElse(new LogisticsBillEntity());
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getId().equals(logisticsBillEntity.getLogisticsSupplierId())).findFirst().orElse(new LogisticsSupplierEntity());
@@ -1357,6 +1422,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             deliveryDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
             //  与 FM 端 getCanGenerateDeliveryOrder 对齐，柜号需要带出来用于保存到 transport_no
             deliveryDTO.setCounterNo(logisticsBillEntity.getCounterNo());
+            fillPackingVolumeWeight(deliveryDTO.getPackingDTOList(), channelMap.get(logisticsBillEntity.getChannelId()));
         }
         return deliveryDTOList;
     }
