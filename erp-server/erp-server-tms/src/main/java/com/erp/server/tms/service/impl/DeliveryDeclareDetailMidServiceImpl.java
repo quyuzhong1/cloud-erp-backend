@@ -428,6 +428,9 @@ public class DeliveryDeclareDetailMidServiceImpl extends SuperServiceImpl<Delive
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
         validateMergeDetailSource(latestDetailList, sourceType);
+        // ERP-17278：自动生成报关单前校验 PLM 报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价），
+        // 任一行缺失则抛错并提示「单据【xx】SKU【xx】缺少报关信息：xx、xx」，不再生成报关单。
+        tmsDeclareBillService.validateAutoMergeDeclareDetailRequired(latestDetailList);
 
         List<DeliveryDeclareDetailMidEntity> changedMidList = new ArrayList<>();
         for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : latestMergeList) {

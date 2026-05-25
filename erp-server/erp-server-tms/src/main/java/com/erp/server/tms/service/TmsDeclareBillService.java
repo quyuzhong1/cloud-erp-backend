@@ -195,4 +195,14 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @return java.util.List<com.erp.model.tms.dto.TmsDeclareBillDTO.MergeDeclareBillDTO>
      */
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO) ;
+
+    /**
+     * ERP-17278：自动生成报关单链路（DeliveryDeclareDetailMid 中间表自动生成、batchAddMergeDetail 等）
+     * 在入库前调用，按合并明细维度校验报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
+     * 任一行缺失即抛 {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED}，
+     * 提示对应来源单据 + SKU + 缺失字段，不再继续生成报关单。
+     *
+     * @param mergeDetailList 合并后明细列表（已展平）
+     */
+    void validateAutoMergeDeclareDetailRequired(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList);
 }

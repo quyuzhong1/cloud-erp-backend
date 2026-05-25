@@ -305,6 +305,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isEmpty(allProductDetailList)){
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_GENERATABLE_DETAIL_NOT_FOUND);
         }
+        //自动生成报关单前校验海关编码/报关品名/申报要素/单位/币种/单价是否完整，
+        // 缺失则提示对应来源单据 + SKU 缺哪些字段，不进入入库流程。
+        validateAutoFmDeclareProductDetails(deliveryDTO.getSourceCode(), allProductDetailList);
         List<List<TmsDeclareBillDTO.ProductDetail>> productDetailListList = Lists.partition(allProductDetailList, limitSkuNo);
         for(List<TmsDeclareBillDTO.ProductDetail> productDetailList : productDetailListList){
             TmsDeclareBillEntity tmsDeclareBillEntity = BeanUtil.copyProperties(baseTmsDeclareBillEntity,TmsDeclareBillEntity.class);
@@ -3619,6 +3622,126 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         }
     }
 
+    /**
+     * 自动生成头程报关单（addFmDeclare 非下推路径）前，按发货单维度校验报关必填信息。
+     * 任一行 SKU 缺失"海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价"中的任意字段，直接抛错并提示
+     * 「单据【发货单号】SKU【skuNo】缺少报关信息：xxx、xxx」，不再继续生成报关单。
+     */
+    private void validateAutoFmDeclareProductDetails(String sourceCode, List<TmsDeclareBillDTO.ProductDetail> productDetailList) {
+        if (CollUtil.isEmpty(productDetailList)) {
+            return;
+        }
+        for (TmsDeclareBillDTO.ProductDetail detail : productDetailList) {
+            if (Objects.isNull(detail)) {
+                continue;
+            }
+            List<String> missingFields = collectMissingDeclareFields(
+                    detail.getCustomsCode(),
+                    detail.getDeclareChineseName(),
+                    detail.getDeclareElement(),
+                    detail.getDeclareUnit(),
+                    detail.getDeclareCurrency(),
+                    detail.getPrice());
+            if (CollUtil.isNotEmpty(missingFields)) {
+                throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED,
+                        CharSequenceUtil.blankToDefault(sourceCode, "-"),
+                        CharSequenceUtil.blankToDefault(detail.getSkuNo(),
+                                CharSequenceUtil.blankToDefault(detail.getSkuId(), "-")),
+                        String.join("、", missingFields));
+            }
+        }
+    }
+
+    /**
+     * 自动生成报关单（batchAddMergeDetail / 拆分保存等链路）前，按合并明细维度校验报关必填信息。
+     * 缺失字段时抛错并定位到来源单据 + SKU。
+     * <p>
+     * sourceCode 优先取该合并行 sourceDeliveryDetailList 中第一条非空 sourceCode；
+     * skuNo 优先取合并行自身 skuNo，否则退化为来源明细的 skuNo / skuId。
+     */
+    @Override
+    public void validateAutoMergeDeclareDetailRequired(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList) {
+        if (CollUtil.isEmpty(mergeDetailList)) {
+            return;
+        }
+        for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDetailList) {
+            if (Objects.isNull(detailDTO)) {
+                continue;
+            }
+            List<String> missingFields = collectMissingDeclareFields(
+                    detailDTO.getHsCode(),
+                    detailDTO.getProductNameCn(),
+                    detailDTO.getDeclareElement(),
+                    detailDTO.getUnit(),
+                    detailDTO.getDeclareCurrency(),
+                    detailDTO.getUnitPrice());
+            if (CollUtil.isEmpty(missingFields)) {
+                continue;
+            }
+            String sourceCode = resolveMergeDetailSourceCode(detailDTO);
+            String skuNo = resolveMergeDetailSkuNo(detailDTO);
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED,
+                    sourceCode, skuNo, String.join("、", missingFields));
+        }
+    }
+
+    /**
+     * 收集缺失的报关必填字段（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
+     * <p>
+     * 单价规则：null 视为缺失（与现有 {@code requireNotNull(unitPrice, ...)} 行为一致，
+     * 不在此处增加"必须大于0"约束，避免与现有页面下推路径行为冲突）。
+     */
+    private List<String> collectMissingDeclareFields(String customsCode, String declareName, String declareElement,
+                                                     String unit, String currency, BigDecimal price) {
+        List<String> missing = new ArrayList<>(6);
+        if (StringUtils.isBlank(customsCode)) {
+            missing.add("海关编码");
+        }
+        if (StringUtils.isBlank(declareName)) {
+            missing.add("报关品名");
+        }
+        if (StringUtils.isBlank(declareElement)) {
+            missing.add("申报要素");
+        }
+        if (StringUtils.isBlank(unit)) {
+            missing.add("单位");
+        }
+        if (StringUtils.isBlank(currency)) {
+            missing.add("币种");
+        }
+        if (Objects.isNull(price)) {
+            missing.add("单价");
+        }
+        return missing;
+    }
+
+    private String resolveMergeDetailSourceCode(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
+        if (CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
+            return "-";
+        }
+        return detailDTO.getSourceDeliveryDetailList().stream()
+                .filter(Objects::nonNull)
+                .map(TmsDeclareBillDTO.SourceDeliveryDetailDTO::getSourceCode)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("-");
+    }
+
+    private String resolveMergeDetailSkuNo(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO) {
+        if (StringUtils.isNotBlank(detailDTO.getSkuNo())) {
+            return detailDTO.getSkuNo();
+        }
+        if (CollUtil.isNotEmpty(detailDTO.getSourceDeliveryDetailList())) {
+            return detailDTO.getSourceDeliveryDetailList().stream()
+                    .filter(Objects::nonNull)
+                    .map(s -> CharSequenceUtil.blankToDefault(s.getSkuNo(), s.getSkuId()))
+                    .filter(StringUtils::isNotBlank)
+                    .findFirst()
+                    .orElse("-");
+        }
+        return "-";
+    }
+
     private void mapMergeDeclareDetailToEntity(TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO, TmsDeclareBillDetailEntity detailEntity) {
         detailEntity.setSkuId(StringUtils.isNotBlank(detailDTO.getLeadSkuId()) ? detailDTO.getLeadSkuId() : null);
         detailEntity.setSkuNo(detailDTO.getSkuNo());
@@ -3932,6 +4055,9 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(mergeDetailList)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_DETAIL_SAVE_REQUIRED);
         }
+        // 先按"单据 + SKU + 缺哪些报关字段"提示缺失，便于使用方一次性看到要补哪些 PLM 资料；
+        // 之后再走 validateBatchMergeDeclareBills 的明细维度/票/箱号等校验。
+        validateAutoMergeDeclareDetailRequired(mergeDetailList);
         validateBatchMergeDeclareBills(list);
 
         Set<String> sourceKeySet = mergeDetailList.stream()
