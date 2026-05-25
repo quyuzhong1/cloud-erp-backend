@@ -72,7 +72,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 	
 	@Override
     @CacheEvict(
-            cacheNames = RedisCacheConstants.OMS_DICT_BASIC_BY_TYPE,
+            cacheNames = RedisCacheConstants.SCM_DICT_BASIC_BY_TYPE,
             key = "#jsonObjects[0].getString('type')"
     )
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
@@ -101,7 +101,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      */
     @Override
     @CacheEvict(
-            cacheNames = RedisCacheConstants.OMS_DICT_BASIC_BY_TYPE,
+            cacheNames = RedisCacheConstants.SCM_DICT_BASIC_BY_TYPE,
             key = "#list[0].type"
     )
     public Boolean saveOrUpdateDict(List<DictBasicDTO> list) {
