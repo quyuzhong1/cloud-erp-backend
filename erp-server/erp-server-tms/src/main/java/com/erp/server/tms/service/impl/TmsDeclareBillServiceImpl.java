@@ -2716,6 +2716,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             case SENDER_ID:
                 updateWrapper.set(fieldName, "");
                 updateWrapper.set("sender_name", "");
+                break;
             case RECEIVER_ID:
                 String str = Objects.toString(fieldValue, "");
                 if(StringUtils.isNotBlank(str)){
