@@ -455,9 +455,9 @@ public class DmpInoutController extends BaseController {
 				    						List<Predicate<? super WarehouseLocationDTO.LocationListDTO>> predicateList = new ArrayList<>();
 											predicateList.add(l -> l.getCode().equals(finalPosition));
 											predicateList.add(l -> l.getCode().startsWith("3"));
-											predicateList.add(l -> l.getCode().startsWith("2"));
 											predicateList.add(l -> l.getCode().startsWith("4"));
-											predicateList.add(l -> l.getCode().equals(""));
+											predicateList.add(l -> l.getCode().startsWith(""));
+											predicateList.add(l -> l.getCode().equals("2"));
 				    						for(Predicate<? super WarehouseLocationDTO.LocationListDTO> predicate : predicateList) {
 				    							num = this.addWdtMoveNum(num, addNumMaps, locationList, predicate);
 				    						}
