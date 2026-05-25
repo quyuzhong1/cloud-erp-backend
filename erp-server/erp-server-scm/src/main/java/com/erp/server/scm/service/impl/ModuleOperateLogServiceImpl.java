@@ -95,7 +95,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                     valuePair = setEnumValue(fieldEntity,valuePair);
                     break;
                 case TYPE_DIST :
-                    valuePair = setDistValue(fieldEntity, valuePair);
+                    valuePair = setDistValue(field, valuePair);
                     break;
                 case TYPE_USER :
                     valuePair = setUserValue(valuePair);
@@ -201,13 +201,13 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     /**
      * 设置字典值
      */
-    private Pair<String,String> setDistValue (CfgModuleOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
-        String  oldValue = getDictName(fieldEntity.getValue(), valuePair.getKey());
-        String  newValue = getDictName(fieldEntity.getValue(), valuePair.getValue());
+    private Pair<String,String> setDistValue (String field, Pair<String, String> valuePair) {
+        String  oldValue = getDictName(field, valuePair.getKey());
+        String  newValue = getDictName(field, valuePair.getValue());
         return new Pair<>(oldValue,newValue);
     }
 
-    private String getDictName(String dictType, String value) {
+    private String getDictName(String field, String value) {
         if (StringUtils.isBlank(value)) {
             return "";
         }
@@ -220,29 +220,46 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             return "";
         }
 
-        Map<String, String> nameById = dictBasicService.listByIds(valueList).stream()
-                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
-        Map<String, String> nameByValue = Collections.emptyMap();
-        if (StringUtils.isNotBlank(dictType)) {
-            nameByValue = dictBasicService.lambdaQuery()
-                    .eq(DictBasicEntity::getType, dictType)
-                    .in(DictBasicEntity::getValue, valueList)
-                    .list()
-                    .stream()
-                    .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
+        List<DictBasicEntity> dictList = new ArrayList<>();
+        List<DictBasicEntity> dictByIdList = dictBasicService.listByIds(valueList);
+        if (CollectionUtils.isNotEmpty(dictByIdList)) {
+            dictList.addAll(dictByIdList);
         }
-
-        Set<String> resultSet = new LinkedHashSet<>();
+        List<DictBasicEntity> dictByValueList = dictBasicService.lambdaQuery()
+                .in(DictBasicEntity::getValue, valueList)
+                .list();
+        if (CollectionUtils.isNotEmpty(dictByValueList)) {
+            dictList.addAll(dictByValueList);
+        }
+        if (CollectionUtils.isEmpty(dictList)) {
+            return "";
+        }
+        Map<String, String> nameById = dictList.stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getId()))
+                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
+        Map<String, List<DictBasicEntity>> dictListByValue = dictList.stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getValue()))
+                .collect(Collectors.groupingBy(DictBasicEntity::getValue));
+        List<String> resultList = new ArrayList<>();
         for (String item : valueList) {
             String name = nameById.get(item);
             if (StringUtils.isBlank(name)) {
-                name = nameByValue.get(item);
+                List<DictBasicEntity> sameValueList = dictListByValue.get(item);
+                if (CollectionUtils.isNotEmpty(sameValueList) && sameValueList.size() == 1) {
+                    name = sameValueList.get(0).getName();
+                } else if (CollectionUtils.isNotEmpty(sameValueList)) {
+                    name = sameValueList.stream()
+                            .filter(obj -> CharSequenceUtil.equals(obj.getType(), field))
+                            .map(DictBasicEntity::getName)
+                            .findFirst()
+                            .orElse("");
+                }
             }
             if (StringUtils.isNotBlank(name)) {
-                resultSet.add(name);
+                resultList.add(name);
             }
         }
-        return String.join(",", resultSet);
+        return resultList.stream().distinct().collect(Collectors.joining(","));
     }
 
     /**
