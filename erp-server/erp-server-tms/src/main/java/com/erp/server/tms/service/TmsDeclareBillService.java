@@ -197,7 +197,7 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO) ;
 
     /**
-     * ERP-17278：自动生成报关单链路（DeliveryDeclareDetailMid 中间表自动生成、batchAddMergeDetail 等）
+     * 自动生成报关单链路（DeliveryDeclareDetailMid 中间表自动生成、batchAddMergeDetail 等）
      * 在入库前调用，按合并明细维度校验报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
      * 任一行缺失即抛 {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED}，
      * 提示对应来源单据 + SKU + 缺失字段，不再继续生成报关单。
@@ -205,4 +205,15 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
      * @param mergeDetailList 合并后明细列表（已展平）
      */
     void validateAutoMergeDeclareDetailRequired(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList);
+
+    /**
+     * 自动生成 / 手动下推报关单前，按合并明细维度校验"目的国 != 中国大陆 (CN)"。
+     * 任一合并行的 toCountry 或其来源行 countryId 等于 "CN" 时，
+     * 抛 {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE}，
+     * 错误文案里一次性列出所有命中的来源单号，便于使用方反查；
+     * 被命中的来源单 declare_status 不做变更，保留 WAIT，使其后续可以重新选择/调整目的国。
+     *
+     * @param mergeDetailList 合并后明细列表（已展平）
+     */
+    void validateDestCountryNotMainlandChina(List<TmsDeclareBillDTO.MergeDeclareBillDetailDTO> mergeDetailList);
 }
