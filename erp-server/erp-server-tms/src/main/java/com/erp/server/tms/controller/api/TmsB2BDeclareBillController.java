@@ -277,6 +277,11 @@ public class TmsB2BDeclareBillController extends BaseController {
      */
     @PostMapping("/batchUpdateRemark")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "更新报关单备注")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:tmsB2BDeclareBill:batchUpdateRemark",
+            serviceClass = TmsDeclareBillService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchUpdateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
