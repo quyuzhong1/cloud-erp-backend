@@ -295,54 +295,60 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                                               Map<String, String> warehouseLocationDisplayMap) {
         Map<String, Set<String>> oldWarehouseSkuMap = buildWarehouseSkuMap(oldDetailList);
         Map<String, Set<String>> newWarehouseSkuMap = buildWarehouseSkuMap(newDetailList);
-        List<Pair<String, String>> removeSkuPairList = new ArrayList<>();
-        List<Pair<String, String>> removeWarehousePairList = new ArrayList<>();
+        List<Pair<String, String>> removePairList = new ArrayList<>();
         for (Map.Entry<String, Set<String>> oldEntry : oldWarehouseSkuMap.entrySet()) {
             String warehouseLocationId = oldEntry.getKey();
             Set<String> oldSkuSet = oldEntry.getValue();
             Set<String> newSkuSet = newWarehouseSkuMap.get(warehouseLocationId);
             String warehouseDisplay = getWarehouseLocationDisplay(warehouseLocationId, warehouseLocationDisplayMap);
-            if (newSkuSet == null) {
-                removeWarehousePairList.add(new Pair<>(mainId, buildWarehouseSkuContent(warehouseDisplay, oldSkuSet)));
-                continue;
-            }
             List<String> removeSkuList = oldSkuSet.stream()
-                    .filter(skuNo -> !newSkuSet.contains(skuNo))
+                    .filter(skuNo -> newSkuSet == null || !newSkuSet.contains(skuNo))
                     .collect(Collectors.toList());
-            for (String removeSkuNo : removeSkuList) {
-                removeSkuPairList.add(new Pair<>(mainId, buildSkuWarehouseContent(removeSkuNo, warehouseDisplay)));
+            if (CollectionUtils.isNotEmpty(removeSkuList)) {
+                removePairList.add(new Pair<>(mainId, buildWarehouseSkuContent(warehouseDisplay, new LinkedHashSet<>(removeSkuList))));
             }
         }
-        List<Pair<String, String>> addSkuPairList = new ArrayList<>();
-        List<Pair<String, String>> addWarehousePairList = new ArrayList<>();
+        List<Pair<String, String>> addPairList = new ArrayList<>();
         for (Map.Entry<String, Set<String>> newEntry : newWarehouseSkuMap.entrySet()) {
             String warehouseLocationId = newEntry.getKey();
             Set<String> newSkuSet = newEntry.getValue();
             Set<String> oldSkuSet = oldWarehouseSkuMap.get(warehouseLocationId);
             String warehouseDisplay = getWarehouseLocationDisplay(warehouseLocationId, warehouseLocationDisplayMap);
-            if (oldSkuSet == null) {
-                addWarehousePairList.add(new Pair<>(mainId, buildWarehouseSkuContent(warehouseDisplay, newSkuSet)));
+            List<String> addSkuList = newSkuSet.stream()
+                    .filter(skuNo -> oldSkuSet == null || !oldSkuSet.contains(skuNo))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(addSkuList)) {
+                addPairList.add(new Pair<>(mainId, buildWarehouseSkuContent(warehouseDisplay, new LinkedHashSet<>(addSkuList))));
+            }
+        }
+        removePairList = distinctOperateLogPairList(removePairList);
+        addPairList = distinctOperateLogPairList(addPairList);
+        if (CollectionUtils.isNotEmpty(removePairList)) {
+            operateLogService.batchAddModuleOperateLog("移除了一条仓位及其SKU明细【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), removePairList, "编辑操作");
+        }
+        if (CollectionUtils.isNotEmpty(addPairList)) {
+            operateLogService.batchAddModuleOperateLog("新增了一条仓位及其SKU明细【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addPairList, "编辑操作");
+        }
+    }
+
+    private List<Pair<String, String>> distinctOperateLogPairList(List<Pair<String, String>> pairList) {
+        if (CollectionUtils.isEmpty(pairList)) {
+            return Collections.emptyList();
+        }
+        Set<String> distinctKeySet = new LinkedHashSet<>();
+        List<Pair<String, String>> result = new ArrayList<>();
+        for (Pair<String, String> pair : pairList) {
+            if (pair == null) {
                 continue;
             }
-            List<String> addSkuList = newSkuSet.stream()
-                    .filter(skuNo -> !oldSkuSet.contains(skuNo))
-                    .collect(Collectors.toList());
-            for (String addSkuNo : addSkuList) {
-                addSkuPairList.add(new Pair<>(mainId, buildSkuWarehouseContent(addSkuNo, warehouseDisplay)));
+            String key = CharSequenceUtil.trimToEmpty(pair.getKey());
+            String value = CharSequenceUtil.trimToEmpty(pair.getValue());
+            String distinctKey = key + "#" + value;
+            if (distinctKeySet.add(distinctKey)) {
+                result.add(new Pair<>(key, value));
             }
         }
-        if (CollectionUtils.isNotEmpty(removeSkuPairList)) {
-            operateLogService.batchAddModuleOperateLog("移除了一条SKU及仓位信息【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), removeSkuPairList, "编辑操作");
-        }
-        if (CollectionUtils.isNotEmpty(removeWarehousePairList)) {
-            operateLogService.batchAddModuleOperateLog("移除了一条拣货仓位及其SKU信息【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), removeWarehousePairList, "编辑操作");
-        }
-        if (CollectionUtils.isNotEmpty(addWarehousePairList)) {
-            operateLogService.batchAddModuleOperateLog("新增了一条拣货仓位及其SKU信息【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addWarehousePairList, "编辑操作");
-        }
-        if (CollectionUtils.isNotEmpty(addSkuPairList)) {
-            operateLogService.batchAddModuleOperateLog("新增了一条SKU及仓位信息【%s】", ModuleTypeEnum.AFTER_SALE_PACK.getCode(), addSkuPairList, "编辑操作");
-        }
+        return result;
     }
 
     private Map<String, Set<String>> buildWarehouseSkuMap(List<AfterSalePackDetailEntity> detailList) {
@@ -404,10 +410,6 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
             return warehouseDisplay;
         }
         return CharSequenceUtil.emptyIfNull(warehouseLocationId);
-    }
-
-    private String buildSkuWarehouseContent(String skuNo, String warehouseDisplay) {
-        return StrUtil.format("SKU：{}，仓位：{}", CharSequenceUtil.emptyIfNull(skuNo), CharSequenceUtil.emptyIfNull(warehouseDisplay));
     }
 
     private String buildWarehouseSkuContent(String warehouseDisplay, Set<String> skuSet) {
