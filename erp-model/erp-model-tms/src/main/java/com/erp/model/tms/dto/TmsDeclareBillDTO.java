@@ -115,9 +115,13 @@ public class TmsDeclareBillDTO implements Serializable {
         private String name;
 
         /**
-         * 控件类型（input/date/select）
+         * 控件类型（input/date/select/cascader）
          */
         private String controls;
+        /**
+         *
+         */
+        private String childrenKey;
 
         /**
          * 下拉接口地址
