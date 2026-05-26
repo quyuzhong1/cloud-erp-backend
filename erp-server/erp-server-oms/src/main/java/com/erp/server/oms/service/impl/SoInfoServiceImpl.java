@@ -1380,11 +1380,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException("是否含税不能空");
         }
         Boolean isFirst = false;
+        String code = "";
         if (StringUtils.isNotBlank(id)) {
             SoInfoEntity soInfo = this.getById(id);
             if (Objects.isNull(soInfo)) {
                 throw new ServiceException(ApiError.SO_NOT_FOUND);
             }
+            code = soInfo.getCode();
         } else {
             isFirst = true;
             id = IdWorker.getIdStr();
@@ -1396,6 +1398,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoEntity draftEntity = new SoInfoEntity();
         BeanMapper.copy(dto, draftEntity);
         draftEntity.setId(id);
+        if (StringUtils.isBlank(code)) {
+            code = draftEntity.getCode();
+        }
+        if (StringUtils.isBlank(code)) {
+            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSD);
+        }
+        draftEntity.setCode(code);
         //报关费
         if (!draftEntity.getIsDeclare()) {
             draftEntity.setCustomsFee(BigDecimal.ZERO);
