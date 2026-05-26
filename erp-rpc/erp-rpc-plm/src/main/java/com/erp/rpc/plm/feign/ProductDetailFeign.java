@@ -5,6 +5,7 @@ import com.common.business.feign.BaseDataFeign;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,4 +30,7 @@ public interface ProductDetailFeign extends BaseDataFeign {
 
     @PostMapping("feign/productDetail/listBySkuNos")
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNos);
+
+    @PostMapping("feign/productDetail/listPurchaseBySkuIds")
+    List<ProductPurchaseEntity> listPurchaseBySkuIds(List<String> skuIdList);
 }
