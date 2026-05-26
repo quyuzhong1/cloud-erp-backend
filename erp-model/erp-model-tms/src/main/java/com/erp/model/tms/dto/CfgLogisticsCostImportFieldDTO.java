@@ -4,6 +4,7 @@ import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
 import com.erp.model.sys.dto.CfgQueryConditionDTO;
+import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.sys.dto.DepartmentDTO;
 import com.erp.model.sys.entity.CfgQueryOptionEntity;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -76,7 +77,7 @@ public class CfgLogisticsCostImportFieldDTO implements Serializable {
          */
         private String queryOptionId;
 
-        private CfgQueryOptionEntity queryOptionItem;
+        private CfgQueryOptionDTO.ViewDTO queryOptionItem;
         /**
          * 默认值静态选项
          */
