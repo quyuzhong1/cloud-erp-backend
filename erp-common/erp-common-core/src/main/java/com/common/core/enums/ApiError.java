@@ -1321,8 +1321,6 @@ public enum ApiError implements Serializable {
     SO_PLATFORM_ORDER_MERGE_TOO_LONG(10697,"合并后的平台订单号长度过长"),
     SO_DELIVERY_AUTO_SUBMIT_OPTION_LIMIT(10698,"仅允许选择一个物流匹配自动处理选项"),
     SO_OUTBOUND_ALREADY_GENERATED_TERMINATE_FORBIDDEN(10699,"【{0}】已生成销售出库单，不支持终止"),
-    SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED(10750,"发货单【{0}】中转调拨单未落库，不允许生成销售出库单"),
-    SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED(10751,"发货单【{0}】关联的中转调拨单【{1}】未审核通过，不允许生成销售出库单"),
     SO_PICKLIST_NOT_PROCESSED_FORBIDDEN(10700,"拣货单未处理，无法生成"),
     SO_RETURN_NOTICE_SKU_NOT_FOUND(10701,"sku【{0}】在退货通知单中不存在"),
     SO_RETURN_SIGN_SKU_NOT_FOUND(10702,"sku【{0}】在退货签收单中不存在"),
@@ -1594,6 +1592,8 @@ public enum ApiError implements Serializable {
     SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
     SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
     SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED(10750,"发货单【{0}】中转调拨单未落库，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED(10751,"发货单【{0}】关联的中转调拨单【{1}】未审核通过，不允许生成销售出库单"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */

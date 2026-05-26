@@ -2527,21 +2527,26 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         try {
             soB2cDeliveryService.pushTransferInfo(entity);
             confirmTransferInfoPersisted(entity);
+        } catch (ServiceException se) {
+            recordPushTransferInfoError(entity, se.getMessage());
+            throw se;
         } catch (Exception e) {
-            String soB2cId = entity.getSourceId();
-            String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
-            String paramJson = JSONUtil.toJsonStr(entity);
-            String message = e.getMessage();
-            log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setMainId(soB2cId);
-            addError.setMessage(message);
-            addError.setParamJson(paramJson);
-            soB2cFeign.addSoB2cError(addError);
+            recordPushTransferInfoError(entity, e.getMessage());
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    private void recordPushTransferInfoError(SoB2cDeliveryEntity entity, String message) {
+        String soB2cId = entity.getSourceId();
+        String paramJson = JSONUtil.toJsonStr(entity);
+        log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
+        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+        addError.setType(SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode());
+        addError.setMainId(soB2cId);
+        addError.setMessage(message);
+        addError.setParamJson(paramJson);
+        soB2cFeign.addSoB2cError(addError);
     }
 
 
@@ -2557,7 +2562,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
-            validateTransferInfoPersisted(entity, soB2cDeliveryDetailList);
+            validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
             return Boolean.TRUE;
         }
 
@@ -2571,7 +2576,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             //生成直接调拨单
             generateTransferInfo(entity,soB2cDeliveryDetailList,split,batchNo);
-            validateTransferInfoPersisted(entity, soB2cDeliveryDetailList);
+            transferInfoList = transferInfoService.listBySourceId(entity.getId());
+            validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
         }
         //清除异常
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
@@ -2618,14 +2624,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException("扣减虚拟冻结库存异常不支持重新出库");
         }
 
-        //生成直接调拨单（独立全局事务提交后再校验落库，避免外层事务导致 confirm 读到未提交数据）
+        // pushTransferInfoError 内调拨单已在独立全局事务中提交；本方法不再包裹事务，避免 confirm 读到未提交数据。
         if (!Boolean.TRUE.equals(soB2cDeliveryService.pushTransferInfoError(entity))) {
             throw new ServiceException(ApiError.WH_GENERATE_TRANSFER_OUT_FAILED);
         }
 
-        // 操作日志
+        // 操作日志属于非关键路径，写入失败不回滚已落库的调拨单，接受最终一致。
         String msg = CharSequenceUtil.format("用户【{}】重新出库单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "重新出库");
+        try {
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "重新出库");
+        } catch (Exception e) {
+            log.error("重新出库操作日志写入失败，发货单【{}】调拨单已生成", entity.getCode(), e);
+        }
         return BatchResultDTO.success(entity.getBatchNo(), entity.getCode(), "重新出库");
     }
 
@@ -2704,23 +2714,23 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return;
         }
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
-            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED, "发货明细");
-        }
-        validateTransferInfoPersisted(entity, soB2cDeliveryDetailList);
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
     }
 
-    private void validateTransferInfoPersisted(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+    private void validateTransferInfoPersisted(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList, List<TransferInfoEntity> transferInfoList) {
         if (CharSequenceUtil.isBlank(entity.getTransferWarehouseIds())) {
             return;
         }
         List<String> transferWarehouseIdList = StrUtil.split(entity.getTransferWarehouseIds(), ",");
-        String warehouseId = soB2cDeliveryDetailList.get(0).getWarehouseId();
+        String warehouseId = resolveDeliveryWarehouseId(entity, soB2cDeliveryDetailList);
         int expectedCount = resolveExpectedTransferCount(transferWarehouseIdList, warehouseId);
         if (expectedCount <= 0) {
             return;
         }
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        if (transferInfoList == null) {
+            transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        }
         int actualCount = CollectionUtils.isEmpty(transferInfoList) ? 0 : transferInfoList.size();
         if (actualCount < expectedCount) {
             log.error("发货单【{}】中转调拨单未落库，期望{}条，实际{}条", entity.getCode(), expectedCount, actualCount);
@@ -2735,10 +2745,31 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
     }
 
+    /**
+     * 解析发货单明细的统一发货仓库。当前 B2C 发货单明细要求同仓，与 generateTransferInfo 保持一致。
+     */
+    private String resolveDeliveryWarehouseId(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+        if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED, "发货明细");
+        }
+        String warehouseId = soB2cDeliveryDetailList.get(0).getWarehouseId();
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            throw new ServiceException(ApiError.SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
+        }
+        boolean multiWarehouse = soB2cDeliveryDetailList.stream()
+                .map(SoB2cDeliveryDetailEntity::getWarehouseId)
+                .anyMatch(id -> !CharSequenceUtil.equals(warehouseId, id));
+        if (multiWarehouse) {
+            throw new ServiceException(CharSequenceUtil.format("发货单【{}】明细存在多个发货仓库，不支持校验中转调拨单", entity.getCode()));
+        }
+        return warehouseId;
+    }
+
     private int resolveExpectedTransferCount(List<String> transferWarehouseIdList, String warehouseId) {
         if (CollectionUtils.isEmpty(transferWarehouseIdList) || CharSequenceUtil.isBlank(warehouseId)) {
             return 0;
         }
+        // 发货仓与第一个中转仓相同时，该段无需调拨，期望调拨单数量减 1
         boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(warehouseId);
         return firstWarehouseSame ? Math.max(transferWarehouseIdList.size() - 1, 0) : transferWarehouseIdList.size();
     }
