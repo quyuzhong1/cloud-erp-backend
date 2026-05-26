@@ -283,6 +283,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         List<String> soOutstockDetailIdList = thisMonthList.stream().map(KolSampleCostEntity::getSoOutstockDetailId).distinct().collect(Collectors.toList());
         bagCostParamDTO.setSoOutstockDetailIdList(soOutstockDetailIdList);
         List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO), CollUtil.newArrayList());
+        Map<String, BigDecimal> smallBagCostMap = buildSmallBagCostMap(smallBagCostDTOS);
 
         for ( KolSampleCostEntity kolSampleCostEntity : thisMonthList) {
             kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
@@ -296,32 +297,54 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 applyInventorySkuCost(kolSampleCostEntity, invSkuCostDTO);
             }
             //设置小包费用
-            smallBagCostDTOS.stream().filter(obj ->  CharSequenceUtil.equals(obj.getSoOutstockDetailId(), kolSampleCostEntity.getSoOutstockDetailId()))
-                    .forEach(obj -> {
-                        BigDecimal cost =  obj.getAllocatedAmountExchange();
-
-                        if (CharSequenceUtil.equals(AllocationFeeTypeEnum.SHIPPING_COST.getCode(),obj.getFeeType())) {
-                           kolSampleCostEntity.setShippingCost(cost);
-                           return;
-                        }
-                        if (CharSequenceUtil.equals(AllocationFeeTypeEnum.DECLARE_COST.getCode(),obj.getFeeType())) {
-                            kolSampleCostEntity.setCustomsTax(cost);
-                            return;
-                        }
-                        if (CharSequenceUtil.equals(AllocationFeeTypeEnum.OTHER_COST.getCode(),obj.getFeeType())) {
-                            kolSampleCostEntity.setOtherCost(cost);
-                        }
-                    });
-                BigDecimal totalCost = kolSampleCostEntity.getProductCost()
+            applySmallBagCost(kolSampleCostEntity, smallBagCostMap);
+            BigDecimal totalCost = kolSampleCostEntity.getProductCost()
                     .add(kolSampleCostEntity.getFirstMileShippingCost())
                     .add(kolSampleCostEntity.getClearanceCustomsTax())
                     .add(kolSampleCostEntity.getShippingCost())
                     .add(kolSampleCostEntity.getCustomsTax())
                     .add(kolSampleCostEntity.getOtherCost());
-                kolSampleCostEntity.setTotalCost(totalCost);
+            kolSampleCostEntity.setTotalCost(totalCost);
         }
         super.saveOrUpdateBatch(thisMonthList);
 
+    }
+
+    private Map<String, BigDecimal> buildSmallBagCostMap(List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS) {
+        if (CollUtil.isEmpty(smallBagCostDTOS)) {
+            return new HashMap<>();
+        }
+        Map<String, BigDecimal> smallBagCostMap = new HashMap<>();
+        for (SmallBagCostAllocationDTO.SmallBagCostDTO smallBagCostDTO : smallBagCostDTOS) {
+            if (CharSequenceUtil.isBlank(smallBagCostDTO.getSoOutstockDetailId())
+                    || CharSequenceUtil.isBlank(smallBagCostDTO.getFeeType())) {
+                continue;
+            }
+            BigDecimal cost = ObjUtil.defaultIfNull(smallBagCostDTO.getAllocatedAmountExchange(), BigDecimal.ZERO);
+            String key = buildSmallBagCostKey(smallBagCostDTO.getSoOutstockDetailId(), smallBagCostDTO.getFeeType());
+            smallBagCostMap.merge(key, cost, BigDecimal::add);
+        }
+        return smallBagCostMap;
+    }
+
+    private void applySmallBagCost(KolSampleCostEntity kolSampleCostEntity, Map<String, BigDecimal> smallBagCostMap) {
+        String soOutstockDetailId = kolSampleCostEntity.getSoOutstockDetailId();
+        BigDecimal shippingCost = smallBagCostMap.get(buildSmallBagCostKey(soOutstockDetailId, AllocationFeeTypeEnum.SHIPPING_COST.getCode()));
+        if (Objects.nonNull(shippingCost)) {
+            kolSampleCostEntity.setShippingCost(shippingCost);
+        }
+        BigDecimal customsTax = smallBagCostMap.get(buildSmallBagCostKey(soOutstockDetailId, AllocationFeeTypeEnum.DECLARE_COST.getCode()));
+        if (Objects.nonNull(customsTax)) {
+            kolSampleCostEntity.setCustomsTax(customsTax);
+        }
+        BigDecimal otherCost = smallBagCostMap.get(buildSmallBagCostKey(soOutstockDetailId, AllocationFeeTypeEnum.OTHER_COST.getCode()));
+        if (Objects.nonNull(otherCost)) {
+            kolSampleCostEntity.setOtherCost(otherCost);
+        }
+    }
+
+    private String buildSmallBagCostKey(String soOutstockDetailId, String feeType) {
+        return StrUtil.format("{}#{}", soOutstockDetailId, feeType);
     }
 
     private List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(List<String> skuIdList,
