@@ -1456,6 +1456,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 validateQty(detail.getPackQty());
                 String skuNo = CharSequenceUtil.trim(detail.getSkuNo());
                 String sourceLoc = CharSequenceUtil.trim(detail.getOutWarehouseLocationCode());
+                if (sourceLoc==null) {
+                    throw new ServiceException(CharSequenceUtil.format("箱唛【{}】SKU【{}】来源仓位code为null", boxDisplay, skuNo));
+                }
                 if (CharSequenceUtil.isBlank(skuNo)) {
                     throw new ServiceException(CharSequenceUtil.format("箱唛【{}】存在空 SKU 明细", boxDisplay));
                 }
