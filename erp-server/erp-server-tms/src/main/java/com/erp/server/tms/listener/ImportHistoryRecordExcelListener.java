@@ -157,15 +157,18 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         totalBatchCount++;
         try {
             List<JSONObject> errorList2 = new ArrayList<>();
-            // 批量处理，由 Service 内部负责事务控制
+            // 解析结果按批交给 Service：预处理只生成匹配/清洗结果，正式导入和导入确认才会进入费用新增更新链路。
             List<ImportHistoryRecordDTO.ImportConfirmDTO> importConfirmDTOS = importHistoryRecordService.handleImportSuccessList(importDTO, costImportEntity, cfgImportDetailList, successList, errorList2, headList, headMap);
             writeMatchResult(errorList2);
+            // 导入确认需要在全部批次完成后统一确认，避免单批确认成功后后续批次失败造成同文件状态不一致。
             confirmPairList.addAll(importConfirmDTOS);
         } catch (Exception e) {
             failedBatchCount++;
             log.error("批量导入处理异常批次 taskId={} fileName={} 当前批次条数={} 已失败批次数={}/{}",
                     taskId, importDTO.getFileName(), successList.size(), failedBatchCount, totalBatchCount, e);
             // 整个批次失败的处理逻辑
+            log.error("批量导入处理异常批次，条数：{}", successList.size(), e);
+            // 批次级异常说明本批无法准确定位到单行，统一写入匹配失败结果，便于用户在清洗文件中重新处理。
             String msg = e.getMessage();
             if (CharSequenceUtil.isNotBlank(msg) && msg.length() > 100) {
                 msg = msg.substring(0, 100);
@@ -177,7 +180,6 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             String matchIdxStr = matchIdx != null ? matchIdx.toString() : null;
 
             successList.forEach(jsonObject -> {
-                // 将错误信息写入匹配结果
                 if (matchIdxStr != null) jsonObject.set(matchIdxStr, MATCH_FAIL);
                 if (errorIdxStr != null) jsonObject.set(errorIdxStr, finalMsg);
             });
@@ -199,9 +201,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 successList.clear();
             }
             finishMatchExcelWriter();
-            //对所有确认数据进行批量确认
+            // confirmImport 模式才会执行确认；preprocessing/import 模式在 Service 内部直接跳过，保持三个入口动作共用同一解析链路。
             importHistoryRecordService.confirmImportData(importDTO,confirmPairList);
-            //添加匹配结果
+            // 无论本次是预处理还是正式导入，都需要记录导入历史，前端后续才能查看清洗文件或继续确认。
             addMatchExcelResult();
             // 汇总日志：让运维一眼看到"已完成"任务里有没有败批
             if (failedBatchCount > 0) {
@@ -225,13 +227,13 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     private void addMatchExcelResult() {
 
-        //添加导入历史记录表数据
+        // 导入历史记录保存原文件、清洗文件和匹配数量，是预处理后继续导入/确认的业务入口。
         ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
         addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
         addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
         addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
         addOrUpdateDTO.setFileName(importDTO.getFileName());
-        //清洗结果
+        // 清洗文件在原 Excel 后追加“匹配结果”和“错误信息”，用户可据此修正失败数据。
         String url = "";
         String fileName = importDTO.getFileName();
         if (hasMatchResult && matchResultFile != null) {
@@ -243,6 +245,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         addOrUpdateDTO.setSheetName(costImportEntity.getSheetName());
         addOrUpdateDTO.setCleanFileUrl(url);
         addOrUpdateDTO.setCleanFileName(fileName);
+        // 预处理只完成清洗和匹配，因此状态为待处理；正式导入/导入确认已经进入费用处理链路，状态为已处理。
         if (CharSequenceUtil.equals(importDTO.getProcessingType(), ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode())) {
             addOrUpdateDTO.setStatus( ImportHistoryRecordStatusEnum.WAIT_HANDLE.getStatus());
         } else {
@@ -258,6 +261,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
+        // 清洗结果需要在原始 Excel 后追加匹配结果和错误信息，用户下载后可直接定位失败行。
         List<String> headList = map.values().stream().map(obj -> CharSequenceUtil.isBlank(obj) ? "" : obj).collect(Collectors.toList());
         headList.add(MATCH_FIELD);
         headList.add(ERROR_MSG);
@@ -272,8 +276,10 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (CollectionUtils.isEmpty(batchMatchList) || headList == null) {
             return;
         }
+        // 首次写入时初始化临时 Excel，后续批次复用同一个 writer 追加清洗结果。
         initMatchExcelWriter();
         List<List<String>> rows = new ArrayList<>(batchMatchList.size());
+        // 匹配结果列用于统计成功和失败数量，最终写入导入历史记录。
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         String matchIndexStr = matchIndex == null ? null : matchIndex.toString();
         for (JSONObject map : batchMatchList) {
@@ -289,6 +295,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
                 matchFailCount++;
             }
         }
+        // 分批写入清洗结果，避免大文件一次性持有所有导出行占用过多内存。
         matchExcelWriter.write(rows, matchWriteSheet);
         hasMatchResult = true;
     }
@@ -302,6 +309,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         } catch (IOException e) {
             throw new ServiceException("创建导入结果临时文件失败");
         }
+        // EasyExcel 表头必须与追加后的 headList 一致，否则匹配结果和错误信息列会错位。
         List<List<String>> heads = headList.stream().map(Arrays::asList).collect(Collectors.toList());
         matchExcelWriter = EasyExcel.write(matchResultFile)
                 .head(heads)
