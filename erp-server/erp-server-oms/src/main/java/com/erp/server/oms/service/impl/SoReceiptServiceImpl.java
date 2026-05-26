@@ -83,6 +83,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
+    @Autowired
+    private SoReceiptService service;
+
     @Resource
     private SoReceiptDetailService soReceiptDetailService;
 
@@ -91,6 +94,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Resource
     private SyncDhtService syncDhtService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
@@ -135,6 +139,10 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SKD);
         soReceiptEntity.setCode(code);
+        // 设置默认审核状态为待提交
+        if (soReceiptEntity.getApproveStatus() == null) {
+            soReceiptEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        }
         boolean save = super.save(soReceiptEntity);
         if(!save) {
             throw new ServiceException("收款单保存失败");
@@ -165,7 +173,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                     // 检查收款单当前状态是否为待提交
                     if (ApproveStatusEnum.WAIT_SUBMIT.equals(soReceiptEntity.getApproveStatus())) {
                         // 自动提交收款单
-                        this.submit(soReceiptEntity.getId());
+                        service.submit(soReceiptEntity.getId());
                         
                         // 记录操作日志
                         operateLogService.addModuleOperateLog(
