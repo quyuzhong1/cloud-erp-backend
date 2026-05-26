@@ -306,7 +306,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String code);
     /**
-     * 根据对账单id和物流单id查询需要下推分摊的费用记录
+     * 查询需要下推分摊的费用列表
      * @author will
      * @date 2026/4/22 17:30
      * @param paramDTO
