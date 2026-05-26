@@ -25,19 +25,56 @@
        <result column="remark" property="remark" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        reconciliation_status, channel_id, logistics_bill_id, actual_weight, volume_weight, billing_weight, estimated_shipping_cost , billing_weight_logistics, actual_shipping_cost, diff_shipping_cost, currency, remark
+    <!-- 通用查询结果列（带表别名 lbc，按 LogisticsBillCostEntity 字段对齐） -->
+    <sql id="Base_Table_Column_List">
+        lbc.id,
+        lbc.create_user_id,
+        lbc.create_user_name,
+        lbc.create_time,
+        lbc.update_user_id,
+        lbc.update_user_name,
+        lbc.update_time,
+        lbc.version,
+        lbc.is_deleted,
+        lbc.reconciliation_status,
+        lbc.type,
+        lbc.channel_id,
+        lbc.logistics_bill_id,
+        lbc.logistics_bill_detail_id,
+        lbc.transport_no,
+        lbc.track_no,
+        lbc.actual_weight,
+        lbc.volume_weight,
+        lbc.billing_weight,
+        lbc.weight_unit,
+        lbc.billing_weight_logistics,
+        lbc.currency,
+        lbc.exchange_rate,
+        lbc.remark,
+        lbc.volume_weight_logistics,
+        lbc.weight_logistics,
+        lbc.shop_charge_id,
+        lbc.shop_charge_name,
+        lbc.fee_rule,
+        lbc.confirm_time,
+        lbc.confirm_user_id,
+        lbc.confirm_user_name,
+        lbc.reconciliation_id,
+        lbc.volume,
+        lbc.pay_type,
+        lbc.pay_status,
+        lbc.pay_time,
+        lbc.check_status,
+        lbc.reconciliation_month,
+        lbc.third_length,
+        lbc.third_width,
+        lbc.third_height,
+        lbc.third_actual_weight,
+        lbc.subregion_code,
+        lbc.dept_id,
+        lbc.partition_id
     </sql>
+
     <update id="updateShopChargeId">
         update logistics_bill_cost lbc
         set shop_charge_id = #{userId},shop_charge_name = #{userName},update_time = NOW()
@@ -476,6 +513,40 @@
             </if>
         </where>
     </select>
+
+    <!-- 查询需要下推分摊的物流成本列表 -->
+    <select id="listNeedPushAllocation" resultType="com.erp.model.tms.entity.LogisticsBillCostEntity">
+        select
+            <include refid="Base_Table_Column_List" />
+        from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_allocate_cost_required = true and lb.is_deleted = false
+        INNER JOIN foreign_so_outstock fso ON fso.id = lb.outstock_id AND fso.is_deleted = false
+        <where>
+             lbc.is_deleted = false
+            <if test="params.checkStatus != null and params.checkStatus != ''">
+                and lbc.check_status = #{params.checkStatus}
+            </if>
+            <if test="params.startTimeMonth != null and params.startTimeMonth != ''">
+                and lbc.reconciliation_month >= #{params.startTimeMonth}
+            </if>
+            <if test="params.endTimeMonth != null and params.endTimeMonth != ''">
+                and #{params.endTimeMonth} > lbc.reconciliation_month
+            </if>
+            <if test="params.typeList != null and params.typeList.size() > 0">
+                and lbc.type in
+                <foreach collection="params.typeList"  open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.reconciliationStatusList != null and params.reconciliationStatusList.size() > 0">
+                and lbc.reconciliation_status in
+                <foreach collection="params.reconciliationStatusList"  open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 
     <!-- 批量确认接口 -->
     <update id="batchConfirmImport">
