@@ -20,6 +20,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -170,8 +171,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                     // 检查收款单当前状态是否为待提交
                     if (ApproveStatusEnum.WAIT_SUBMIT.equals(soReceiptEntity.getApproveStatus())) {
                         // 自动提交收款单
-                        this.submit(soReceiptEntity.getId());
-                        
+                        SoReceiptServiceImpl bean = ApplicationContextUtils.getBean(SoReceiptServiceImpl.class);
+                        bean.submit(soReceiptEntity.getId());
+
                         // 记录操作日志
                         operateLogService.addModuleOperateLog(
                             StrUtil.format("收款单【{}】创建时，关联订单已提交审核或审核通过，系统自动提交收款单", soReceiptEntity.getCode()), 
@@ -949,6 +951,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void handlePlatformConsumer(PlatformReceiptDTO dto) {
         //查询是否存在
