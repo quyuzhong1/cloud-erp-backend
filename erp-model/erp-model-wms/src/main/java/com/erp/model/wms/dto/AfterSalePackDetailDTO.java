@@ -256,7 +256,7 @@ public class AfterSalePackDetailDTO implements Serializable {
          * 试产数量
          * product_purchase
          */
-        private Integer trialProductionQty;
+        private Long trialProductionQty;
 
         /**
          * EAN码
