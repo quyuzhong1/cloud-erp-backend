@@ -85,14 +85,6 @@ public class LogisticsBillCostDTO implements Serializable {
          * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
-
-        //dynamicDataSource需要重新此方法
-        public String getDynamicDataSource(){
-            if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
-                return DynamicDataSourceTypeEnum.DORIS.getCode();
-            }
-            return dynamicDataSource;
-        }
     }
 
 
