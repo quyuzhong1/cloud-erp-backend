@@ -61,6 +61,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -126,8 +127,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Qualifier("importHistoryRecordPool")
     private ExecutorService importHistoryRecordPool;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
+    // 这里只是写一条 import_history_record 的本地状态，没有跨服务/跨库写入，
+    // 不需要分布式事务。原先挂 @GlobalTransactional 会被异步任务框架透传的上游 Seata XID 绑定，
+    // 一旦上游某个批次（如 batchImportUpdate）触发 PG 40P01 死锁被标记为 rollback-only，
+    // 这条状态更新也会跟着回滚，导致"导入中心已完成 / 导入记录仍处理中"的撕裂状态。
+    // 改成本地事务 + REQUIRES_NEW，保证最终状态独立提交。
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO) {
         ImportHistoryRecordEntity importHistoryRecordEntity = new ImportHistoryRecordEntity();
