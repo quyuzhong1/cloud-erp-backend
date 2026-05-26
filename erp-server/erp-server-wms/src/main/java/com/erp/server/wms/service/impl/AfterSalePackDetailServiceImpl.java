@@ -163,7 +163,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         List<ProductPurchaseEntity> productList = Optional.ofNullable(productDetailFeign.listPurchaseBySkuIds(skuIdList)).orElse(Collections.emptyList());
         Map<String, ProductPurchaseEntity> purchaseMap = productList.stream().collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, Function.identity(), (v1, v2) -> v1));
         List<String> mainSupplierIds = productList.stream().map(ProductPurchaseEntity::getMainSupplier).distinct().collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Optional.ofNullable(supplierFeign.getSupplierSimpleInfo(mainSupplierIds)).orElse(Collections.emptyMap());
         Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMap(detailList);
         return detailList.stream()
                 .collect(Collectors.groupingBy(this::getSkuGroupKey, LinkedHashMap::new, Collectors.toList()))
@@ -402,8 +402,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
             viewDTO.setUnitName(productDetail.getUnitName());
         }
         if (purchase != null) {
-            viewDTO.setActualArrivalQty(purchase.getActualArrivalQty() + "");
+            viewDTO.setActualArrivalQty(Objects.toString(purchase.getActualArrivalQty(), ""));
             viewDTO.setArrivalState(purchase.getArrivalState());
+            viewDTO.setTrialProductionQty(purchase.getTrialProductionQty());
             viewDTO.setEan(purchase.getEan());
             viewDTO.setDeliveryCycle(purchase.getDeliveryCycle());
             viewDTO.setMainSupplier(purchase.getMainSupplier());
