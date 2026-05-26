@@ -264,16 +264,17 @@ public class DistributeLockerAspect {
      * @return             锁的key
      */
     private List<String> getLockKeys(DistributeLocker annotation, ProceedingJoinPoint pjp)  {
-        List<String> result=new ArrayList<>();
         String className = getTargetClassName(pjp);
         String methodName = getTargetMethodName(pjp);
         String prefixStr= annotation.businessType().isEmpty() ? className + "." + methodName: annotation.businessType();
 
         List<Object> keys = getValuesByParam(pjp, annotation.keyName());
-        for (Object key:keys){
-            result.add("RedissonLock:" + prefixStr +"." + key);
-        }
-        return result;
+        // 去重 + 排序：避免同一 key 重复 getLock；同时让 RedissonMultiLock 在并发时按固定顺序获取，降低交叉抢锁失败率
+        return keys.stream()
+                .map(key -> "RedissonLock:" + prefixStr + "." + key)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     /**
