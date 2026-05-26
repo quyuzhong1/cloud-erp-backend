@@ -117,8 +117,9 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
         //校验明细关联的销售订单组织跟主记录的组织是否一致
         List<String> soIds = detailList.stream().map(SoReceiptDetailDTO.AddDTO::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntityList = null;
         if(CollectionUtils.isNotEmpty(soIds)){
-            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+            soInfoEntityList = soInfoService.listByIds(soIds);
             Set<String> salesOrgIdSet = soInfoEntityList.stream().map(SoInfoEntity::getSalesOrgId).collect(Collectors.toSet());
             if(salesOrgIdSet.size() > 1 || !salesOrgIdSet.contains(soReceiptEntity.getSalesOrgId())){
                 throw new ServiceException("明细关联的销售订单组织必须跟收款单的组织一致");
@@ -153,17 +154,30 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), "新增操作");
 
         // 检查关联销售订单状态，如果订单已提交或审核通过，则自动提交收款单
-        if (CollectionUtils.isNotEmpty(soIds)) {
-            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
-
+        if (CollectionUtils.isNotEmpty(soIds) && CollectionUtils.isNotEmpty(soInfoEntityList)) {
             // 检查是否有订单已经提交审核或审核通过
             boolean hasSubmittedOrApproved = soInfoEntityList.stream()
                     .anyMatch(v -> BillApproveStatusEnum.APPROVE_ING.equals(v.getApproveStatus())
                             || BillApproveStatusEnum.APPROVE.equals(v.getApproveStatus()));
 
             if (hasSubmittedOrApproved) {
-                // 自动提交收款单
-                this.submit(soReceiptEntity.getId());
+                try {
+                    // 检查收款单当前状态是否为待提交
+                    if (ApproveStatusEnum.WAIT_SUBMIT.equals(soReceiptEntity.getApproveStatus())) {
+                        // 自动提交收款单
+                        this.submit(soReceiptEntity.getId());
+                        
+                        // 记录操作日志
+                        operateLogService.addModuleOperateLog(
+                            StrUtil.format("收款单【{}】创建时，关联订单已提交审核或审核通过，系统自动提交收款单", soReceiptEntity.getCode()), 
+                            ModuleTypeEnum.SO_RECEIPT.getCode(), 
+                            soReceiptEntity.getId(), 
+                            "系统自动提交操作"
+                        );
+                    }
+                } catch (Exception e) {
+                    log.warn("收款单【{}】自动提交失败: {}", soReceiptEntity.getCode(), e.getMessage());
+                }
             }
         }
 
