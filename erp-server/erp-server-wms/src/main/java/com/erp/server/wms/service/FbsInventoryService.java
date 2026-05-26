@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -41,4 +42,9 @@ public interface FbsInventoryService extends SuperService<FbsInventoryEntity> {
      * @return 汇总数量
      */
     FbsInventoryDTO.SummaryNumber summaryNumber(PagingDTO<FbsInventoryDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 新增或更新 FBS 库存
+     */
+    BaseResultDTO.AddDTO add(FbsInventoryDTO.AddDTO addDTO);
 }

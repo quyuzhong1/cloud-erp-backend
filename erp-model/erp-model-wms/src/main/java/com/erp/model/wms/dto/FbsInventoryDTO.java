@@ -307,4 +307,53 @@ public class FbsInventoryDTO implements Serializable {
          */
         private Integer inTransitQty;
     }
+
+    /**
+     * 新增/同步
+     */
+    @Data
+    @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class AddDTO extends CommonDTO {
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO implements Serializable {
+
+        private String shopId;
+        private String shopName;
+        private String warehouseId;
+        private String warehouseName;
+        private String platformSku;
+        private String platformProductName;
+        private String fbsSku;
+        private String specName;
+        private String skuId;
+        private String skuNo;
+        private String productName;
+        private String purchaseMode;
+        private Integer recommendedReplenishmentQty;
+        private Integer totalStockQty;
+        private Integer stockedInboundQty;
+        private Integer transferAsnInboundQty;
+        private Integer reservedQty;
+        private Integer unsellableQty;
+        private Integer inTransitQty;
+        private Integer turnoverDays;
+        private Integer warehouseInventoryCoverageDays;
+        private BigDecimal dailyAvgSalesQty;
+        private Integer last7DaysSalesQty;
+        private Integer last15DaysSalesQty;
+        private Integer last30DaysSalesQty;
+        private Integer last60DaysSalesQty;
+        private Integer last90DaysSalesQty;
+        private Integer stockAge030Qty;
+        private Integer stockAge3160Qty;
+        private Integer stockAge6190Qty;
+        private Integer stockAge91120Qty;
+        private Integer stockAge121180Qty;
+        private Integer stockAgeOver180Qty;
+        private LocalDateTime platformUpdateTime;
+    }
 }
