@@ -3,36 +3,37 @@ package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.model.dmp.entity.CfgSettingEntity;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
-import com.erp.model.dmp.enums.SettingEnum;
-import com.erp.server.dmp.query.AdsErpInventoryDiffQueryHandler;
-import com.erp.server.dmp.service.CfgSettingService;
-import com.erp.server.dmp.service.ThirdMappingService;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.dmp.service.AdsErpInventoryDiffService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
+import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
+import com.erp.server.dmp.query.AdsErpInventoryDiffQueryHandler;
+import com.erp.server.dmp.service.AdsErpInventoryDiffService;
+import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.ThirdMappingService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 平台库存差异
@@ -52,6 +53,9 @@ public class AdsErpInventoryDiffController extends BaseController {
     private CfgSettingService cfgSettingService;
     @Resource
     private ThirdMappingService thirdMappingService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
      * 获取统计
@@ -195,9 +199,8 @@ public class AdsErpInventoryDiffController extends BaseController {
     @PostMapping("/generateDiff")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成")
     public ApiResult<Boolean> generateDiff(@RequestBody @Validated AdsErpInventoryDiffDTO.GenerateDiffDTO dto) {
-        //  请求restCloud
-        Boolean result = adsErpInventoryDiffService.generateDiff(dto);
-        return ApiResult.success(result);
+        dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_INVENTORY_DIFF, dto.getCheckMonth(), "");
+        return success(Boolean.TRUE);
     }
 
 

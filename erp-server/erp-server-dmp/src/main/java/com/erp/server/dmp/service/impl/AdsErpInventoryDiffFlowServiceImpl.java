@@ -22,7 +22,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.*;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.ExpotParamDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.PagingParamDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.TotalDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
@@ -30,9 +33,9 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.listener.PlatformInitStockExcelListener;
 import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -215,30 +218,7 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
 	public TotalDTO total(PagingDTO<PagingParamDTO> dto) {
 		return baseMapper.total(dto.getParams());
 	}
-	
-	@Override
-	public Boolean reCreate(ReCreateDTO dto) {
-		String checkMonth = dto.getCheckMonth();
-		checkMonth = checkMonth.replace("-", "年") + "月";
-		String sourceSystem = dto.getSourceSystem();
-		Integer count = lambdaQuery().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
-				.eq(AdsErpInventoryDiffFlowEntity::getSourceSystem, sourceSystem)
-				.eq(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing").count();
-		if(count != null && count > 0) {
-			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-		}
-		boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_flow_excel_inventory_flow_recreate");
-		if(reCreate) {
-			lambdaUpdate().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
-			.eq(AdsErpInventoryDiffFlowEntity::getSourceSystem, sourceSystem)
-			.set(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing")
-			.set(AdsErpInventoryDiffFlowEntity::getExecStatusName, "执行中")
-			.setSql(" finish_time = null ")
-			.update();
-		}
-		return true;
-	}
-	
+
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
 		return lambdaUpdate().eq(AdsErpInventoryDiffFlowEntity::getId, dto.getId()).set(AdsErpInventoryDiffFlowEntity::getRemark, dto.getRemark()).update();

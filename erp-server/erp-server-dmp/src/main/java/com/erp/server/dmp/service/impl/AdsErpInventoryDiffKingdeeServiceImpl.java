@@ -1,38 +1,40 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.enums.FileTaskEventEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.dmp.utils.RestCloudApiUtil;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
-import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffKingdeeMapper;
-import com.erp.server.dmp.service.AdsErpInventoryDiffKingdeeService;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.dmp.service.OperateLogService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import cn.hutool.core.util.ObjectUtil;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffKingdeeEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffKingdeeMapper;
+import com.erp.server.dmp.service.AdsErpInventoryDiffKingdeeService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO;
-import javax.annotation.Resource;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -190,29 +192,4 @@ public class AdsErpInventoryDiffKingdeeServiceImpl extends SuperServiceImpl<AdsE
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE);
     }
 
-    @Override
-    public Boolean generateDiff(AdsErpInventoryDiffKingdeeDTO.GenerateDiffDTO dto) {
-        String checkMonth = dto.getCheckMonth();
-        checkMonth = checkMonth.replace("-", "年") + "月";
-        String sourceSystem = dto.getSourceSystem();
-        if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
-            throw new ServiceException("只允许重新生成上月核对任务");
-        }
-        Integer count = lambdaQuery().eq(AdsErpInventoryDiffKingdeeEntity::getCheckMonth, checkMonth)
-                .eq(AdsErpInventoryDiffKingdeeEntity::getSourceSystem, sourceSystem)
-                .eq(AdsErpInventoryDiffKingdeeEntity::getExecStatus, "doing").count();
-        if(count != null && count > 0) {
-            throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-        }
-        boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_flow_kingdee_inout_summary_recreate");
-        if(reCreate) {
-            lambdaUpdate().eq(AdsErpInventoryDiffKingdeeEntity::getCheckMonth, checkMonth)
-                    .eq(AdsErpInventoryDiffKingdeeEntity::getSourceSystem, sourceSystem)
-                    .set(AdsErpInventoryDiffKingdeeEntity::getExecStatus, "doing")
-                    .set(AdsErpInventoryDiffKingdeeEntity::getExecStatusName, "执行中")
-                    .setSql(" finish_time = null ")
-                    .update();
-        }
-        return true;
-    }
 }
