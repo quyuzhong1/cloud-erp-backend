@@ -10,6 +10,7 @@ import com.sdk.oms.mercadolocal.dto.MercadoListingDTO;
 import com.sdk.oms.mercadolocal.dto.MercadoOrderDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
+import com.sdk.oms.shopee.dto.PlatformShopeeReturnDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyListingDTO;
 import com.sdk.oms.shopify.dto.PlatformShopifyOrderDTO;
 import com.sdk.oms.tiktok.dto.TikTokListingDTO;
@@ -33,6 +34,7 @@ public enum CleanDataTableEnum {
     //虾皮
     SHOPEE_ORDER("Shopee", "third_system_Shopee_order","third_system", "order","虾皮订单数据", PlatformShopeeOrderDTO.class),
     SHOPEE_PRODUCT("Shopee", "third_system_Shopee_product","third_system", "product","虾皮产品数据", PlatformShopeeListingDTO.class),
+    SHOPEE_RETURN("Shopee", "third_system_Shopee_return","third_system", "return","虾皮售后退货数据", PlatformShopeeReturnDTO.class),
     //无忧
     ALI_EXPRESS_ORDER("AliExpress", "third_system_AliExpress_order","third_system", "order","无忧订单数据", PlatformAliExpressOrderDTO.class),
     ALI_EXPRESS_PRODUCT("AliExpress", "third_system_AliExpress_product","third_system", "product","无忧产品数据", PlatformAliExpressListingDTO.class),

@@ -48,6 +48,10 @@ public class PlatformReturnOrderDTO extends UniqueDto {
      */
     private String trackingNumber;
     /**
+     * 平台原始状态
+     */
+    private String platformStatus;
+    /**
      * 明细
      */
     private List<PlatformReturnOrderDTO.Detail> detailList;

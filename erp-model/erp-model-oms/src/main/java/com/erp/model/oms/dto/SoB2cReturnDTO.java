@@ -321,6 +321,11 @@ public class SoB2cReturnDTO implements Serializable {
         private String statusName;
 
         /**
+         * 平台原始状态
+         */
+        private String platformStatus;
+
+        /**
          * 关联入库单号
          */
         private String instockCode;
