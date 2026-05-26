@@ -1509,9 +1509,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 if (CharSequenceUtil.isBlank(skuNo)) {
                     throw new ServiceException(CharSequenceUtil.format("箱唛【{}】存在空 SKU 明细", boxDisplay));
                 }
-                if (CharSequenceUtil.isBlank(sourceLoc)) {
-                    throw new ServiceException(CharSequenceUtil.format("箱唛【{}】SKU【{}】源仓位为空", boxDisplay, skuNo));
-                }
                 String aggregateKey = skuNo + "|" + sourceLoc + "|" + targetCode;
                 FullBoxTransferAggregate aggregate = aggregateMap.computeIfAbsent(aggregateKey,
                         key -> new FullBoxTransferAggregate(skuNo, sourceLoc, targetCode));
