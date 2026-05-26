@@ -72,8 +72,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     private CfgDiffStrategyService cfgDiffStrategyService;
     @Resource
     private CfgDiffStrategyDetailService cfgDiffStrategyDetailService;
-    @Resource
-    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -240,7 +238,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	
 	@Override
 	public Boolean reCreate(ReCreateDTO dto) {
-		dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_DIFF_OUTSTOCK_SYNC, dto.getCheckMonth(), dto.getSourceSystem());
 		return true;
 	}
 	

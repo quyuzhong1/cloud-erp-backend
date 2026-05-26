@@ -27,8 +27,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.query.AdsErpDiffOutstockSyncQueryHandler;
 import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,6 +48,9 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
 
     @Resource
     private AdsErpDiffOutstockSyncService adsErpDiffOutstockSyncService;
+    
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
     * 列表查询 菜单code = dmp:adsErpDiffOutstockSync:paging
@@ -95,7 +100,8 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "ERP出库单差异表重新生成")
     @PostMapping(value = "/reCreate")
     public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.ReCreateDTO dto) {
-        return success(adsErpDiffOutstockSyncService.reCreate(dto));
+    	dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_DIFF_OUTSTOCK_SYNC, dto.getCheckMonth(), dto.getSourceSystem());
+        return success(true);
     }
 
     /**
