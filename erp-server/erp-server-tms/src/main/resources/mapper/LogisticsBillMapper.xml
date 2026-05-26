@@ -776,6 +776,8 @@
         lb.id,
         lb.shop_id as shopId,
         lb.shop_name as shopName,
+        lb.sales_platform as salesPlatform,
+        lb.logistics_supplier_id as logisticsSupplierId,
         lb.source_type as sourceType,
         lb.source_id as sourceId,
         lb.source_code as sourceCode,
