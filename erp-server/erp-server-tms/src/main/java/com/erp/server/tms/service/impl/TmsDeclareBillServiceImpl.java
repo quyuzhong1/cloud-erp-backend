@@ -18,7 +18,9 @@ import com.alibaba.excel.write.metadata.fill.FillWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.constant.RedisCacheConstants;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -233,6 +235,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean addFmDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
@@ -458,6 +466,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     /**
     * 修改
     */
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
+            keyName = "updateDTO.id",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
@@ -1758,6 +1772,13 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "addDTO.mergeDetailList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
+    @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean addB2BDeclare(TmsDeclareBillDTO.AddDTO addDTO) {
         List<String> sourceIdList = resolveAddSourceIdList(addDTO);
@@ -2812,7 +2833,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     }
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
+            keyName = "declareDTO.splitDeclareDTOList.id",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchAddSplitFmDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
@@ -2868,7 +2896,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
+            keyName = "declareDTO.splitDeclareDTOList.id",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchAddSplitB2bDetail(TmsDeclareBillDTO.AddSplitDeclareDTO declareDTO) {
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
@@ -4183,6 +4218,12 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
 
     @Override
+    @DistributeLocker(
+            businessType = DistributeKeyConstant.TMS_DECLARE_BILL_SOURCE_KEY,
+            keyName = "list.declareBillList.sourceDeliveryDetailList.sourceId",
+            maxRetries = 1,
+            unlockAfterTx = true
+    )
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean batchAddMergeDetail(String type, List<TmsDeclareBillDTO.MergeDeclareBillDTO> list) {
