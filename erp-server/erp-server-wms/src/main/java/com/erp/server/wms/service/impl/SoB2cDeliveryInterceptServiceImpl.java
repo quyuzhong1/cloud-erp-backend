@@ -503,7 +503,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
                     //生成直接调拨单
-                    Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
+                    Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
                     if (isPush) {
                         asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
                     }
@@ -781,7 +781,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
             if (isPush) {
                 asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
             }
