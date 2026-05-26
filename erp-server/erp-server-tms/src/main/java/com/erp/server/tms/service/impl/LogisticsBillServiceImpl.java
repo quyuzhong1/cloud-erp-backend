@@ -56,6 +56,7 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
@@ -323,12 +324,13 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsBillEntity.setLogisticsSupplierId(channelEntity.getMainId());
             }
         }
-        //平台订单号
-        if (CharSequenceUtil.equals(logisticsBillEntity.getSourceType(),SourceTypeEnum.SO_B2C.getCode())) {
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(logisticsBillEntity.getSourceId());
-            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
-                logisticsBillEntity.setPlatformCode(soB2cEntity.getPlatformCode());
-            }
+        // 非 B2B：平台订单号取销售出库明细 platform_code，多条英文逗号拼接
+        if (!CharSequenceUtil.equals(logisticsBillEntity.getOrderType(), OrderTypeEnum.B2B.getCode())
+                && CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())) {
+            List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                    .eq(SoOutstockDetailEntity::getMainId, logisticsBillEntity.getOutstockId())
+                    .list();
+            logisticsBillEntity.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(outstockDetailList));
         }
         if(CharSequenceUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
 
@@ -382,6 +384,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
             }
         }
+    }
+
+    private String buildLogisticsBillPlatformCodeFromOutstockDetail(List<SoOutstockDetailEntity> detailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return detailList.stream()
+                .map(SoOutstockDetailEntity::getPlatformCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(","));
     }
 
     public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
