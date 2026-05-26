@@ -131,30 +131,27 @@ public class SmallBagCostAllocationJob {
             }
             XxlJobHelper.log("====查询需要下推小包费用参数={}，返回条数={}====", JSONUtil.toJsonStr(paramDTO), list.size());
 
-            if(CollUtil.isNotEmpty(list)) {
-            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-            	for(LogisticsBillCostEntity l : list) {
-            		costAllocationPool.execute(() -> {
-            			try {
-    						logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
-    					} catch (Exception e) {
-    						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-    				        warnMsgInfo.setBizName("自动生成小包分摊");
-    				        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-    				        warnMsgInfo.setTitle("自动生成小包分摊失败，trackNo=" + l.getTrackNo());
-    				        warnMsgInfo.setTableName("logistics_bill_cost");
-    				        warnMsgInfo.setTableId(l.getId());
-    				        warnMsgInfo.setKeyInfo(e.getMessage());
-    				        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-    				        mqProducerService.sendWarnMsg(warnMsgInfo);
-    				        log.error("自动生成小包分摊失败，trackNo=" + l.getTrackNo() , e);
-    						throw e;
-    					}
-            		});
-            	}
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            for(LogisticsBillCostEntity l : list) {
+                costAllocationPool.execute(() -> {
+                    try {
+                        logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
+                    } catch (Exception e) {
+                        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+                        warnMsgInfo.setBizName("自动生成小包分摊");
+                        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+                        warnMsgInfo.setTitle("自动生成小包分摊失败，trackNo=" + l.getTrackNo());
+                        warnMsgInfo.setTableName("logistics_bill_cost");
+                        warnMsgInfo.setTableId(l.getId());
+                        warnMsgInfo.setKeyInfo(e.getMessage());
+                        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+                        mqProducerService.sendWarnMsg(warnMsgInfo);
+                        log.error("自动生成小包分摊失败，trackNo=" + l.getTrackNo() , e);
+                        throw e;
+                    }
+                });
             }
         }
-    
         XxlJobHelper.log("====结束自动生成小包费用分摊====");
         return ReturnT.SUCCESS;
     }
