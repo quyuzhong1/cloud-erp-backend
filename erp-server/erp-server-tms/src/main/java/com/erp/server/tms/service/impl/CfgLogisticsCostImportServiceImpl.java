@@ -361,6 +361,9 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         }else{
             Map<String, CfgLogisticsCostImportFieldEntity> map = list.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, Function.identity(), (o1, o2) -> o1));
             Set<String> validCurrencyKeys = buildValidCurrencyKeySet(sysUserFeign.currencyList());
+            if (validCurrencyKeys.isEmpty()) {
+                throw new ServiceException("货币字典加载失败，请稍后重试");
+            }
             int i = 1;
             for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
                 String targetFieldId = updateDTO.getTargetFieldId();
