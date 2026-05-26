@@ -632,7 +632,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<LogisticsBillCostDTO.TabCountDTO> tabCountDTOS = this.baseMapper.listCount(pagingParamDTO,attribution.getCode());
         //根据实体的三个字段拼接汇总数量
         Map<String, Integer> map = tabCountDTOS.stream().collect(Collectors.toMap(
-                tab -> tab.getType() + "_" + tab.getReconciliationStatus() + "_" + tab.getPayType(),
+                tab -> tab.getReconciliationStatus() + "_" + tab.getPayType(),
                 LogisticsBillCostDTO.TabCountDTO::getCount,
                 Integer::sum
         ));
@@ -653,21 +653,21 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private Integer getCountByMap(ReconciliationTabStatusEnum statusEnum, Map<String, Integer> map) {
         Integer count = 0;
         if (ReconciliationTabStatusEnum.PAY_CONFIRM.getCode().equals(statusEnum.getCode())) {
-            String key = statusEnum.getCode() + "_" + ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
+            String key = ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
             count = map.getOrDefault(key, 0);
         }else if (ReconciliationTabStatusEnum.PAY_CONFIRMED.getCode().equals(statusEnum.getCode())) {
-            String key1 = statusEnum.getCode() + "_" + ReconciliationStatusEnum.CONFIRMED.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
+            String key1 = ReconciliationStatusEnum.CONFIRMED.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
             Integer count1 = map.getOrDefault(key1, 0);
-            String key2 = statusEnum.getCode() + "_" + ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
+            String key2 = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
             Integer count2 = map.getOrDefault(key2, 0);
             count = count1 + count2;
         }else if (ReconciliationTabStatusEnum.REFUND_CONFIRM.getCode().equals(statusEnum.getCode())) {
-            String key = statusEnum.getCode() + "_" + ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
+            String key = ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
             count = map.getOrDefault(key, 0);
         }else if (ReconciliationTabStatusEnum.REFUND_CONFIRMED.getCode().equals(statusEnum.getCode())) {
-            String key1 = statusEnum.getCode() + "_" + ReconciliationStatusEnum.CONFIRMED.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
+            String key1 = ReconciliationStatusEnum.CONFIRMED.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
             Integer count1 = map.getOrDefault(key1, 0);
-            String key2 = statusEnum.getCode() + "_" + ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
+            String key2 = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
             Integer count2 = map.getOrDefault(key2, 0);
             count = count1 + count2;
         }
