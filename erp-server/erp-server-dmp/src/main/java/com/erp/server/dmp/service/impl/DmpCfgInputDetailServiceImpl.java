@@ -28,10 +28,13 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
@@ -73,6 +76,8 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     private DmpCfgInputService dmpCfgInputService;
     @Resource
     private DmpInputCreateFactory dmpInputCreateFactory;
+    @Resource
+    private DmpInputTaskService dmpInputTaskService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -398,4 +403,47 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         dmpInputHotfixCreateRequest.setNextExecTime(dto.getNextExecTime());
         return dmpInputHotfixCreateRequest;
     }
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
+			String sourceSystem) {
+		String code = inventoryMonthCheckEnum.getCode();
+		Map<String, DmpCfgInputEntity> dmpCfgInputEntityMap = dmpCfgInputService.lambdaQuery().eq(DmpCfgInputEntity::getCode, code).list()
+				.stream().collect(Collectors.toMap(DmpCfgInputEntity::getId, d -> d));
+		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = lambdaQuery().in(DmpCfgInputDetailEntity::getMainId, dmpCfgInputEntityMap.keySet())
+					 .eq(DmpCfgInputDetailEntity::getNextLevelId, sourceSystem)
+					 .list();
+		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
+			ServiceException.runError(sourceSystem + "账号未配置重新生成任务");
+		}
+		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpCfgInputDetailEntityList.get(0);
+		DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputEntityMap.get(dmpCfgInputDetailEntity.getMainId());
+		
+		String id = dmpCfgInputDetailEntity.getId();
+		
+		List<DmpInputTaskEntity> dmpInputTaskEntityList = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getCfgInputId, dmpCfgInputEntity.getId())
+				.eq(DmpInputTaskEntity::getNextLevelId, sourceSystem)
+				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
+				.list();
+		if(CollUtil.isNotEmpty(dmpInputTaskEntityList)) {
+			ServiceException.runError("此仓库的" + inventoryMonthCheckEnum.getName() + "在" + checkMonth + "已生成任务，正在等待执行，任务号：" 
+		+ dmpInputTaskEntityList.stream().map(DmpInputTaskEntity::getId).collect(Collectors.joining("、")));
+		}
+		
+		DmpCfgInputDetailDTO.DoTaskDTO dto = new DmpCfgInputDetailDTO.DoTaskDTO();
+		
+		dto.setIds(Arrays.asList(id));
+		dto.setStartTime(LocalDateTime.now());
+		dto.setEndTime(LocalDateTime.now().plusMinutes(1));
+		dto.setExecTimeout(3600);
+		
+		Map<String, Object> map = new HashMap<>();
+		map.put("checkMonth", checkMonth.replace("-", "年") + "月");
+		dto.setDetailExtendJson(JSON.toJSONString(map));
+		dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+		
+		return doTask(id, dto, dmpCfgInputEntity, dmpCfgInputDetailEntity);
+	}
 }

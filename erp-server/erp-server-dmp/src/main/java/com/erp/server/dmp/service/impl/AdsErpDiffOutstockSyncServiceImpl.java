@@ -40,6 +40,7 @@ import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.TotalDTO;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffOutstockSyncEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.mapper.doris.AdsErpDiffOutstockSyncMapper;
 import com.erp.server.dmp.utils.RestCloudApiUtil;
 
@@ -71,6 +72,8 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
     private CfgDiffStrategyService cfgDiffStrategyService;
     @Resource
     private CfgDiffStrategyDetailService cfgDiffStrategyDetailService;
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -237,27 +240,7 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	
 	@Override
 	public Boolean reCreate(ReCreateDTO dto) {
-		String checkMonth = dto.getCheckMonth();
-		checkMonth = checkMonth.replace("-", "年") + "月";
-		String sourceSystem = dto.getSourceSystem();
-		if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
-			throw new ServiceException("只允许重新生成上月核对任务");
-		}
-		Integer count = lambdaQuery().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
-				.eq(AdsErpDiffOutstockSyncEntity::getSourceSystem, sourceSystem)
-				.eq(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing").count();
-		if(count != null && count > 0) {
-			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-		}
-		boolean reCreate = RestCloudApiUtil.syncReCreateByWarehouse(checkMonth, sourceSystem, "ods_erp/ods_flow_outstock_diff_recreate");
-		if(reCreate) {
-			lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getCheckMonth, checkMonth)
-			.eq(AdsErpDiffOutstockSyncEntity::getSourceSystem, sourceSystem)
-			.set(AdsErpDiffOutstockSyncEntity::getExecStatus, "doing")
-			.set(AdsErpDiffOutstockSyncEntity::getExecStatusName, "执行中")
-			.setSql(" finish_time = null ")
-			.update();
-		}
+		dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_DIFF_OUTSTOCK_SYNC, dto.getCheckMonth(), dto.getSourceSystem());
 		return true;
 	}
 	
