@@ -65,6 +65,8 @@ import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -2628,11 +2630,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
         }
         log.info("导入确认批量更新完成，入参条数：{}，去重后条数：{}，更新条数：{}", confirmList.size(), distinctConfirmList.size(), updateCount);
-    }
-
-    @Override
-    public List<LogisticsBillCostEntity> listNeedPushAllocation(LogisticsBillCostDTO.NeedPushAllocationParamDTO paramDTO) {
-        return baseMapper.listNeedPushAllocation(paramDTO);
     }
 
     @Override

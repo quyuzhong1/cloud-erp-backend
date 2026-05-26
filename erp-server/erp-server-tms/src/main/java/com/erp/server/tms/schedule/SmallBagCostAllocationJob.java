@@ -10,7 +10,6 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
@@ -116,42 +115,37 @@ public class SmallBagCostAllocationJob {
                 XxlJobHelper.log("====自动生成小包费用分摊类型选择错误====");
                 return ReturnT.SUCCESS;
             }
-            //查询需要下推小包费用分摊的数据
-            LogisticsBillCostDTO.NeedPushAllocationParamDTO paramDTO= LogisticsBillCostDTO.NeedPushAllocationParamDTO.builder()
-            		.startTimeMonth( startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
-            		.endTimeMonth(endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
-                    .typeList(Arrays.asList(DictCostAttributionEnum.SELF_DELIVER.getCode() , DictCostAttributionEnum.LAST_MILE.getCode()))
-                    .checkStatus(LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
-                    .reconciliationStatusList(Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()))
-            		.build();
-            List<LogisticsBillCostEntity> list = logisticsBillCostService.listNeedPushAllocation(paramDTO);
-            if (CollUtil.isEmpty(list)) {
-                XxlJobHelper.log("====查询需要下推小包费用参数={}，无数据需要处理====", JSONUtil.toJsonStr(paramDTO));
-                return ReturnT.SUCCESS;
-            }
-            XxlJobHelper.log("====查询需要下推小包费用参数={}，返回条数={}====", JSONUtil.toJsonStr(paramDTO), list.size());
-
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-            for(LogisticsBillCostEntity l : list) {
-                costAllocationPool.execute(() -> {
-                    try {
-                        logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
-                    } catch (Exception e) {
-                        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-                        warnMsgInfo.setBizName("自动生成小包分摊");
-                        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-                        warnMsgInfo.setTitle("自动生成小包分摊失败，trackNo=" + l.getTrackNo());
-                        warnMsgInfo.setTableName("logistics_bill_cost");
-                        warnMsgInfo.setTableId(l.getId());
-                        warnMsgInfo.setKeyInfo(e.getMessage());
-                        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-                        mqProducerService.sendWarnMsg(warnMsgInfo);
-                        log.error("自动生成小包分摊失败，trackNo=" + l.getTrackNo() , e);
-                        throw e;
-                    }
-                });
+            List<LogisticsBillCostEntity> list = logisticsBillCostService.lambdaQuery()
+                .ge(LogisticsBillCostEntity::getReconciliationMonth, startTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                .lt(LogisticsBillCostEntity::getReconciliationMonth, endTime.format(DateTimeFormatter.ofPattern("yyyy-MM")))
+                .in(LogisticsBillCostEntity::getType, Arrays.asList(DictCostAttributionEnum.SELF_DELIVER.getCode() , DictCostAttributionEnum.LAST_MILE.getCode()))
+                .eq(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKING.getCode())
+                .in(LogisticsBillCostEntity::getReconciliationStatus,Arrays.asList(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode(), ReconciliationStatusEnum.CONFIRMED.getCode()))
+                .list();
+            if(CollUtil.isNotEmpty(list)) {
+            	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            	for(LogisticsBillCostEntity l : list) {
+            		costAllocationPool.execute(() -> {
+            			try {
+    						logisticsBillCostService.pushAllocation(l.getId(), StrUtil.blankToDefault(l.getReconciliationMonth(),l.getConfirmTime().format(formatter)));
+    					} catch (Exception e) {
+    						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+    				        warnMsgInfo.setBizName("自动生成小包分摊");
+    				        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
+    				        warnMsgInfo.setTitle("自动生成小包分摊失败，trackNo=" + l.getTrackNo());
+    				        warnMsgInfo.setTableName("logistics_bill_cost");
+    				        warnMsgInfo.setTableId(l.getId());
+    				        warnMsgInfo.setKeyInfo(e.getMessage());
+    				        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+    				        mqProducerService.sendWarnMsg(warnMsgInfo);
+    				        log.error("自动生成小包分摊失败，trackNo=" + l.getTrackNo() , e);
+    						throw e;
+    					}
+            		});
+            	}
             }
         }
+    
         XxlJobHelper.log("====结束自动生成小包费用分摊====");
         return ReturnT.SUCCESS;
     }

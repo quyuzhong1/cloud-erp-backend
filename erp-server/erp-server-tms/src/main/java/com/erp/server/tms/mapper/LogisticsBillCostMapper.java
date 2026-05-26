@@ -152,12 +152,4 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
                            @Param("reconciliationStatus") String reconciliationStatus,
                            @Param("confirmUserId") String confirmUserId,
                            @Param("confirmUserName") String confirmUserName);
-    /**
-     * 查询需要下推分摊的费用列表
-     * @author will
-     * @date 2026-05-26
-     * @param params 查询参数
-     * @return List<LogisticsBillCostEntity>
-     */
-    List<LogisticsBillCostEntity> listNeedPushAllocation(@Param("params") LogisticsBillCostDTO.NeedPushAllocationParamDTO params);
 }
