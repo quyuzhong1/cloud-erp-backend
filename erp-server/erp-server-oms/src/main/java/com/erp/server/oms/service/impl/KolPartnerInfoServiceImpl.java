@@ -172,7 +172,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 throw new ServiceException(ApiError.SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN);
             }
             //国家
-            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn, (o1, o2) -> o1));
             //省市区
             List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
             Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
@@ -375,7 +375,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 throw new ServiceException(ApiError.SAMPLE_PARTNER_MULTIPLE_DEFAULT_ADDRESS_FORBIDDEN);
             }
             //国家
-            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn, (o1, o2) -> o1));
             //省市区
             List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
             Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
@@ -537,10 +537,11 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
         if(CollUtil.isNotEmpty(successList)){
             // 获取数据字典
             List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.COOPERATION_TYPE.getCode(), CfgKolOptionTypeEnum.PARTNER_TYPE.getCode())).list();
-            Map<String, String> map = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId));
+            Map<String, String> partnerTypeMap = getCfgKolOptionNameMap(cfgKolOptionEntities, CfgKolOptionTypeEnum.PARTNER_TYPE);
+            Map<String, String> cooperationTypeMap = getCfgKolOptionNameMap(cfgKolOptionEntities, CfgKolOptionTypeEnum.COOPERATION_TYPE);
             // 获取语言字典
             List<DictLanguageEntity> dictLanguageEntities = dictLanguageService.list();
-            Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getId, DictLanguageEntity::getNameZh));
+            Map<String, String> languageMap = dictLanguageEntities.stream().collect(Collectors.toMap(DictLanguageEntity::getNameZh, DictLanguageEntity::getId, (o1, o2) -> o1));
             //部门
             List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
             Map<String, String> deptMap = deptList.stream().collect(Collectors.toMap(SysDepartmentDTO::getName, SysDepartmentDTO::getId,(o1,o2)->o1));
@@ -549,7 +550,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserName, FindUserDTO::getUserId,(o1,o2)->o1));
             //国家
             List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
-            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId));
+            Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId, (o1, o2) -> o1));
             //省市区
             List<DictCityEntity> dictCityEntities = sysUserFeign.listByCountryCode(DictValueEnum.CN.getCode());
             Map<String, List<DictCityEntity>> dictCityGroup = dictCityEntities.stream().filter(e -> e.getDisabled().equals(Boolean.FALSE)).collect(Collectors.groupingBy(DictCityEntity::getType));
@@ -607,14 +608,16 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 if(StringUtils.isNotBlank(typeName)){
                     String[] split = typeName.split(",");
                     for (String e : Arrays.asList(split)) {
-                        if(!map.containsKey(e)){
+                        String name = StringUtils.trim(e);
+                        if(!partnerTypeMap.containsKey(name)){
                             errorMsgList.add("达人类型不存在");
                             break;
                         }
                     }
 
                     String type = Arrays.stream(typeName.split(","))
-                            .map(map::get)
+                            .map(StringUtils::trim)
+                            .map(partnerTypeMap::get)
                             .filter(StringUtils::isNotBlank)
                             .collect(Collectors.joining(","));
                     mainInfo.setType(type);
@@ -625,14 +628,16 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 if(StringUtils.isNotBlank(cooperationTypeName)){
                     String[] split = cooperationTypeName.split(",");
                     for (String e : Arrays.asList(split)) {
-                        if(!map.containsKey(e)){
+                        String name = StringUtils.trim(e);
+                        if(!cooperationTypeMap.containsKey(name)){
                             errorMsgList.add("合作类型不存在");
                             break;
                         }
                     }
 
                     String cooperationType = Arrays.stream(split)
-                            .map(map::get)
+                            .map(StringUtils::trim)
+                            .map(cooperationTypeMap::get)
                             .filter(StringUtils::isNotBlank)
                             .collect(Collectors.joining(","));
                     mainInfo.setCooperationType(cooperationType);
@@ -808,6 +813,15 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 }
             }
         }
+    }
+
+    private Map<String, String> getCfgKolOptionNameMap(List<CfgKolOptionEntity> cfgKolOptionEntities, CfgKolOptionTypeEnum optionTypeEnum) {
+        if (CollUtil.isEmpty(cfgKolOptionEntities)) {
+            return Collections.emptyMap();
+        }
+        return cfgKolOptionEntities.stream()
+                .filter(e -> Objects.equals(e.getType(), optionTypeEnum.getCode()))
+                .collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (o1, o2) -> o1));
     }
 
 
