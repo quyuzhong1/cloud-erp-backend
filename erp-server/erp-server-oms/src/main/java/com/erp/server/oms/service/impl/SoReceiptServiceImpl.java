@@ -75,16 +75,15 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RECEIPT;
 public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoReceiptEntity> implements SoReceiptService {
     @Resource
     private OperateLogService operateLogService;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
     @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource
     private OmsAttachmentService omsAttachmentService;
-
-    @Resource
-    private SoReceiptService service;
 
     @Resource
     private SoReceiptDetailService soReceiptDetailService;
@@ -173,7 +172,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                     // 检查收款单当前状态是否为待提交
                     if (ApproveStatusEnum.WAIT_SUBMIT.equals(soReceiptEntity.getApproveStatus())) {
                         // 自动提交收款单
-                        service.submit(soReceiptEntity.getId());
+                        this.submit(soReceiptEntity.getId());
                         
                         // 记录操作日志
                         operateLogService.addModuleOperateLog(
@@ -953,6 +952,7 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void handlePlatformConsumer(PlatformReceiptDTO dto) {
         //查询是否存在
         SoReceiptEntity exist = this.getByThirdSystemAndCode(dto.getThirdSystem(), dto.getCode());
@@ -1099,11 +1099,6 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
                         || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
                     this.submit(add.getId());
-                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-                    approveOneDTO.setId(add.getId());
-                    approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                    approveOneDTO.setComment("");
-                    this.approve(approveOneDTO);
                 }
             }
         }
