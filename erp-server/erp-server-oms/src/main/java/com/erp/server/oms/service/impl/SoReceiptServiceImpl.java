@@ -73,17 +73,17 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_RECEIPT;
 @Slf4j
 @Service
 public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoReceiptEntity> implements SoReceiptService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource
     private OmsAttachmentService omsAttachmentService;
 
-    @Autowired
+    @Resource
     private SoReceiptService service;
 
     @Resource
