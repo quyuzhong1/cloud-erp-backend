@@ -23,7 +23,6 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -40,6 +39,7 @@ import com.erp.model.tms.dto.excel.CfgLogisticsCostExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
@@ -360,13 +360,14 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,"配置单据类型下费用项");
         }else{
             Map<String, CfgLogisticsCostImportFieldEntity> map = list.stream().collect(Collectors.toMap(CfgLogisticsCostImportFieldEntity::getId, Function.identity(), (o1, o2) -> o1));
+            Set<String> validCurrencyKeys = buildValidCurrencyKeySet(sysUserFeign.currencyList());
             int i = 1;
             for (CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO : detailList) {
                 String targetFieldId = updateDTO.getTargetFieldId();
                 CfgLogisticsCostImportFieldEntity entity = map.get(targetFieldId);
 //                if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, CfgLogisticsCostImportBusinessTypeEnum.getName(businessType)+"类型第"+i+"行数大臣单据字段");
                 if(Objects.isNull(entity)) throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, updateDTO.getTargetFieldName()+"单据字段");
-                validateDefaultValue(updateDTO, entity, i);
+                validateDefaultValue(updateDTO, entity, i, validCurrencyKeys);
                 i++;
             }
         }
@@ -386,7 +387,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     /**
      * 校验默认值配置
      */
-    private void validateDefaultValue(CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO, CfgLogisticsCostImportFieldEntity fieldEntity, int index) {
+    private void validateDefaultValue(CfgLogisticsCostImportDetailDTO.UpdateDTO updateDTO, CfgLogisticsCostImportFieldEntity fieldEntity, int index, Set<String> validCurrencyKeys) {
         String field = fieldEntity.getField();
         String fieldName = fieldEntity.getFieldName();
         String sourceField = updateDTO.getSourceField();
@@ -410,7 +411,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             if (StringUtils.isBlank(defaultValue)) {
                 throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不能为空");
             }
-            validateDefaultValueCode(field, fieldName, defaultValue, index);
+            validateDefaultValueCode(field, fieldName, defaultValue, index, validCurrencyKeys);
             return;
         }
 
@@ -431,16 +432,39 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     /**
      * 校验默认值编码
      */
-    private void validateDefaultValueCode(String field, String fieldName, String defaultValue, int index) {
+    private void validateDefaultValueCode(String field, String fieldName, String defaultValue, int index, Set<String> validCurrencyKeys) {
         if (Objects.equals(PAY_TYPE_FIELD, field) && Objects.isNull(logisticsPayTypeEnum.getByStatus(defaultValue))) {
             throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
         }
-        if (Objects.equals(CURRENCY_FIELD, field) && Objects.isNull(CurrencyEnum.getByCode(defaultValue))) {
+        if (Objects.equals(CURRENCY_FIELD, field) && !validCurrencyKeys.contains(normalizeCurrencyKey(defaultValue))) {
             throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
         }
         if (Objects.equals(LOGISTICS_WEIGHT_UNIT_FIELD, field) && !Objects.equals("KG", defaultValue) && !Objects.equals("g", defaultValue)) {
             throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
         }
+    }
+
+    private Set<String> buildValidCurrencyKeySet(List<DictCurrencyEntity> dictCurrencyList) {
+        if (CollUtil.isEmpty(dictCurrencyList)) {
+            return Collections.emptySet();
+        }
+        Set<String> validKeys = new HashSet<>();
+        for (DictCurrencyEntity entity : dictCurrencyList) {
+            if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getDisabled())) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(entity.getId())) {
+                validKeys.add(normalizeCurrencyKey(entity.getId()));
+            }
+            if (StringUtils.isNotBlank(entity.getName())) {
+                validKeys.add(normalizeCurrencyKey(entity.getName()));
+            }
+        }
+        return validKeys;
+    }
+
+    private String normalizeCurrencyKey(String value) {
+        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
 
     /**
