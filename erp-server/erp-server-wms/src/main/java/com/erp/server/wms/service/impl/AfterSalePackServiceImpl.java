@@ -618,7 +618,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
 
     @Override
     public AfterSalePackDTO.ViewDTO view(String id) {
-        AfterSalePackEntity afterSalePackEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到箱唛数据"));
+        AfterSalePackEntity afterSalePackEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛"));
         AfterSalePackDTO.ViewDTO data = BeanMapperUtils.map(AfterSalePackDTO.ViewDTO.class, afterSalePackEntity);
         data.setTypeName(AfterSalePackTypeEnum.getByName(data.getType()));
         data.setIsUseName(BooleanEnum.getByCode(data.getIsUse()));
@@ -725,7 +725,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .eq(AfterSalePackEntity::getCode, code)
                 .one();
         if (ObjectUtil.isEmpty(afterSalePackEntity)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "箱唛");
+            throw new ServiceException("识别箱唛失败，请核实箱唛准确性");
         }
         return this.view(afterSalePackEntity.getId());
     }

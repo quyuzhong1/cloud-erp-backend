@@ -37,6 +37,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO.PcAddDTO;
@@ -1584,10 +1585,14 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
 
     /**
-     * 按箱唛维度记录整箱移位操作日志。
+     * 按箱唛维度记录整箱移仓操作日志。
      */
     private void addFullBoxTransferOperateLogs(List<AfterSalePackDTO.ViewDTO> boxInfoList, String targetCode) {
+        if (CollUtil.isEmpty(boxInfoList)) {
+            return;
+        }
         String operationName = WarehouseLocationMoveOperateTypeEnum.FULL_BOX_TRANSFER.getName();
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>(boxInfoList.size());
         for (AfterSalePackDTO.ViewDTO boxInfo : boxInfoList) {
             String boxCode = CharSequenceUtil.blankToDefault(CharSequenceUtil.trim(boxInfo.getCode()),
                     CharSequenceUtil.trim(boxInfo.getId()));
@@ -1601,8 +1606,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                             targetCode));
                 }
             }
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.FULL_BOX_TRANSFER.getName(),
-                    CharSequenceUtil.trim(boxInfo.getId()), operationName);
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(msg.toString(),
+                    ModuleTypeEnum.FULL_BOX_TRANSFER.getCode(), CharSequenceUtil.trim(boxInfo.getId()), operationName));
+        }
+        if (CollUtil.isNotEmpty(operateLogList)) {
+            operateLogService.batchAddModuleOperateLog(operateLogList);
         }
     }
 
