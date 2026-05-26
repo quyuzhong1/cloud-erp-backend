@@ -33,7 +33,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @param pagingParamDTO
      * @return Integer
      */
-    Integer listCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO pagingParamDTO);
+    List<LogisticsBillCostDTO.TabCountDTO> listCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO pagingParamDTO,@Param("type")String type);
 
     /**
      * @description: 分页查询
