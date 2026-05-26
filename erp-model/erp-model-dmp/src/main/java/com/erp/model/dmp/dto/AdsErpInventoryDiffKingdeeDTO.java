@@ -1,22 +1,17 @@
 package com.erp.model.dmp.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.util.List;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-
-import com.common.business.dto.AdvanceQueryDTO;
-
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -272,12 +267,6 @@ public class AdsErpInventoryDiffKingdeeDTO implements Serializable {
          */
         @NotBlank(message = "核算周期不能为空")
         private String checkMonth;
-
-        /**
-         * 核对仓库
-         */
-        @NotBlank(message = "核对仓库不能为空")
-        private String sourceSystem;
 
     }
 

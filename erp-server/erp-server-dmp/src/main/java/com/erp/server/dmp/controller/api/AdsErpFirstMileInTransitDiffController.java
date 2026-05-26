@@ -18,9 +18,10 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.dmp.dto.AdsErpFirstMileInTransitDiffDTO;
 import com.erp.model.dmp.entity.doris.AdsErpFirstMileInTransitDiffEntity;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.query.AdsErpFirstMileInTransitDiffQueryHandler;
 import com.erp.server.dmp.service.AdsErpFirstMileInTransitDiffService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +45,9 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
 
     @Resource
     private AdsErpFirstMileInTransitDiffService adsErpFirstMileInTransitDiffService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
      * 列表查询
@@ -192,5 +196,20 @@ public class AdsErpFirstMileInTransitDiffController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 重新生成
+     * @author Will
+     * @date: 2026/05/26 16:19
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "平台在途报告重新生成")
+    @PostMapping(value = "/reCreate")
+    public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpFirstMileInTransitDiffDTO.ReCreateDTO dto) {
+        dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_FIRST_MILE_INTRANSIT_DIFF, dto.getCheckMonth(), "");
+        return success(Boolean.TRUE);
     }
 }

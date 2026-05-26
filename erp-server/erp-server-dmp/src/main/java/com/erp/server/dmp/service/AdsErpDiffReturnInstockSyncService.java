@@ -1,13 +1,13 @@
 package com.erp.server.dmp.service;
-import java.util.List;
-
-import javax.servlet.http.HttpServletResponse;
 
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AdsErpDiffReturnInstockSyncDTO;
 import com.erp.model.dmp.entity.doris.AdsErpDiffReturnInstockSyncEntity;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -78,8 +78,6 @@ public interface AdsErpDiffReturnInstockSyncService extends SuperService<AdsErpD
     
     AdsErpDiffReturnInstockSyncDTO.TotalDTO total(PagingDTO<AdsErpDiffReturnInstockSyncDTO.PagingParamDTO> dto);
     
-    Boolean reCreate(AdsErpDiffReturnInstockSyncDTO.ReCreateDTO dto);
-
     Boolean updateRemark(AdsErpDiffReturnInstockSyncDTO.UpdateRemarkDTO dto);
     
     Boolean exportExcel(AdsErpDiffReturnInstockSyncDTO.ExpotParamDTO dto);

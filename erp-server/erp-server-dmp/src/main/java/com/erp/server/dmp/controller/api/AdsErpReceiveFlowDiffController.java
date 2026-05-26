@@ -11,8 +11,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.query.AdsErpReceiveFlowDiffQueryHandler;
 import com.erp.server.dmp.service.AdsErpReceiveFlowDiffService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +38,9 @@ public class AdsErpReceiveFlowDiffController extends BaseController {
 
     @Resource
     private AdsErpReceiveFlowDiffService adsErpReceiveFlowDiffService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
      *  分页查询
@@ -85,7 +90,8 @@ public class AdsErpReceiveFlowDiffController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "ERP出库单差异表重新生成")
     @PostMapping(value = "/reCreate")
     public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpReceiveFlowDiffDTO.ReCreateDTO dto) {
-        return success(adsErpReceiveFlowDiffService.reCreate(dto));
+        dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_RECEIVE_FLOW_DIFF, dto.getCheckMonth(), dto.getSourceSystem());
+        return success(Boolean.TRUE);
     }
 
     
