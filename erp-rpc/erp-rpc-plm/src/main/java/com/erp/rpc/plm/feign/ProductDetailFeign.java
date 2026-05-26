@@ -32,5 +32,5 @@ public interface ProductDetailFeign extends BaseDataFeign {
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNos);
 
     @PostMapping("feign/productDetail/listPurchaseBySkuIds")
-    List<ProductPurchaseEntity> listPurchaseBySkuIds(List<String> skuIdList);
+    List<ProductPurchaseEntity> listPurchaseBySkuIds(@RequestBody List<String> skuIdList);
 }
