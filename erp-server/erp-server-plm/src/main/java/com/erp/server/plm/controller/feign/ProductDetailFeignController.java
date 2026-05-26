@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.feign;
 
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductPurchaseService;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,13 @@ public class ProductDetailFeignController {
     List<ProductDetailEntity> listBySkuNos(@RequestBody List<String> skuNos) {
         return productDetailService.lambdaQuery()
                 .in(ProductDetailEntity::getSkuNo, skuNos)
+                .list();
+    }
+
+    @PostMapping("/listPurchaseBySkuIds")
+    List<ProductPurchaseEntity> listPurchaseBySkuIds(@RequestBody List<String> skuIdList) {
+        return productPurchaseService.lambdaQuery()
+                .in(ProductPurchaseEntity::getSkuId, skuIdList)
                 .list();
     }
 }

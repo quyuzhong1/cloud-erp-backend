@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -241,6 +242,49 @@ public class AfterSalePackDetailDTO implements Serializable {
          */
         private List<AfterSalePackDTO.DetailDTO> detailDTOList;
 
+        /**
+         * 首批到货量
+         */
+        private String actualArrivalQty;
+
+        /**
+         * 首批到货状态：1.未到货 2.已到货 3.部分到货
+         */
+        private Integer arrivalState;
+
+        /**
+         * 试产数量
+         * product_purchase
+         */
+        private Integer trialProductionQty;
+
+        /**
+         * EAN码
+         * product_purchase
+         */
+        private String ean;
+
+        /**
+         * 交货周期
+         * product_purchase
+         */
+        private BigDecimal deliveryCycle;
+
+        /**
+         * 一级供应商
+         * product_purchase
+         */
+        private String mainSupplier;
+
+        /**
+         * 一级供应商名称
+         */
+        private String mainSupplierName;
+
+        /**
+         * 最小起订量
+         */
+        private Integer moq;
     }
 
     /**

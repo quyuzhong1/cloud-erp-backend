@@ -484,6 +484,8 @@
           <if test="name != null and name != ''">
               and wl.name = #{name}
           </if>
-        order by wl.create_time desc
+        order by
+            case when coalesce(wl.code, '') = '' then 0 else 1 end asc,
+            wl.create_time desc
     </select>
 </mapper>
