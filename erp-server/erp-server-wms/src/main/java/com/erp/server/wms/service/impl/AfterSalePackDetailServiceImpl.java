@@ -10,7 +10,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.AfterSalePackDTO;
 import com.erp.model.wms.dto.AfterSalePackDetailDTO;
@@ -22,6 +25,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationMoveOperateTypeEnum;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.server.wms.mapper.AfterSalePackDetailMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +74,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private SupplierFeign supplierFeign;
 
     /**
      * 修改
@@ -145,13 +152,24 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("未找到售后装箱明细数据");
         }
-        Map<String, ProductDetailEntity> productMap = getProductMap(detailList);
+        List<String> skuIdList = detailList.stream()
+                .map(AfterSalePackDetailEntity::getSkuId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        // 查询商品信息
+        Map<String, ProductDetailEntity> productMap = getProductMap(skuIdList);
+        // 查询商品采购信息
+        List<ProductPurchaseEntity> productList = Optional.ofNullable(productDetailFeign.listPurchaseBySkuIds(skuIdList)).orElse(Collections.emptyList());
+        Map<String, ProductPurchaseEntity> purchaseMap = productList.stream().collect(Collectors.toMap(ProductPurchaseEntity::getSkuId, Function.identity(), (v1, v2) -> v1));
+        List<String> mainSupplierIds = productList.stream().map(ProductPurchaseEntity::getMainSupplier).distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
         Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMap(detailList);
         return detailList.stream()
                 .collect(Collectors.groupingBy(this::getSkuGroupKey, LinkedHashMap::new, Collectors.toList()))
                 .values()
                 .stream()
-                .map(list -> buildSkuViewDTO(afterSalePackEntity, list, productMap, warehouseLocationMap))
+                .map(list -> buildSkuViewDTO(afterSalePackEntity, list, productMap, warehouseLocationMap, purchaseMap, supplierMap))
                 .collect(Collectors.toList());
     }
 
@@ -366,7 +384,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     private AfterSalePackDetailDTO.ViewDTO buildSkuViewDTO(AfterSalePackEntity afterSalePackEntity,
                                                            List<AfterSalePackDetailEntity> detailList,
                                                            Map<String, ProductDetailEntity> productMap,
-                                                           Map<String, WarehouseLocationEntity> warehouseLocationMap) {
+                                                           Map<String, WarehouseLocationEntity> warehouseLocationMap,
+                                                           Map<String, ProductPurchaseEntity> purchaseMap,
+                                                           Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap) {
         AfterSalePackDetailEntity first = detailList.get(0);
         AfterSalePackDetailDTO.ViewDTO viewDTO = BeanMapperUtils.map(AfterSalePackDetailDTO.ViewDTO.class, first);
         viewDTO.setId(StrUtil.isNotBlank(first.getSkuId()) ? first.getSkuId() : first.getId());
@@ -374,11 +394,24 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         viewDTO.setActualQty(sum(detailList, AfterSalePackDetailEntity::getActualQty));
         viewDTO.setDiffQty(sum(detailList, AfterSalePackDetailEntity::getDiffQty));
         ProductDetailEntity productDetail = productMap.get(first.getSkuId());
+        ProductPurchaseEntity purchase = purchaseMap.get(first.getSkuId());
         if (productDetail != null) {
             viewDTO.setProductName(productDetail.getName());
             viewDTO.setUnitId(productDetail.getUnitId());
             viewDTO.setUnit(productDetail.getUnitName());
             viewDTO.setUnitName(productDetail.getUnitName());
+        }
+        if (purchase != null) {
+            viewDTO.setActualArrivalQty(purchase.getActualArrivalQty() + "");
+            viewDTO.setArrivalState(purchase.getArrivalState());
+            viewDTO.setEan(purchase.getEan());
+            viewDTO.setDeliveryCycle(purchase.getDeliveryCycle());
+            viewDTO.setMainSupplier(purchase.getMainSupplier());
+            // 一级供应商名称
+            if (StrUtils.isNotEmpty(purchase.getMainSupplier()) && supplierMap.containsKey(purchase.getMainSupplier())) {
+                viewDTO.setMainSupplierName(supplierMap.get(purchase.getMainSupplier()).getName());
+            }
+            viewDTO.setMoq(purchase.getMoq());
         }
         viewDTO.setDetailDTOList(detailList.stream()
                 .map(detail -> buildBoxDetailDTO(afterSalePackEntity, detail, warehouseLocationMap))
@@ -413,12 +446,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         return detailDTO;
     }
 
-    private Map<String, ProductDetailEntity> getProductMap(List<AfterSalePackDetailEntity> detailList) {
-        List<String> skuIdList = detailList.stream()
-                .map(AfterSalePackDetailEntity::getSkuId)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
+    private Map<String, ProductDetailEntity> getProductMap(List<String> skuIdList) {
         if (CollectionUtils.isEmpty(skuIdList)) {
             return Collections.emptyMap();
         }
