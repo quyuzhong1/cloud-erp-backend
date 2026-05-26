@@ -329,6 +329,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     private void applySmallBagCost(KolSampleCostEntity kolSampleCostEntity, Map<String, BigDecimal> smallBagCostMap) {
         String soOutstockDetailId = kolSampleCostEntity.getSoOutstockDetailId();
+        // 未命中尾程分摊时保留历史值，避免覆盖导入维护的费用。
         BigDecimal shippingCost = smallBagCostMap.get(buildSmallBagCostKey(soOutstockDetailId, AllocationFeeTypeEnum.SHIPPING_COST.getCode()));
         if (Objects.nonNull(shippingCost)) {
             kolSampleCostEntity.setShippingCost(shippingCost);
