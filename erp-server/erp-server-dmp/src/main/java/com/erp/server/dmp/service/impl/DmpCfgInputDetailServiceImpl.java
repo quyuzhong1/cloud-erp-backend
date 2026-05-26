@@ -408,6 +408,9 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
 			String sourceSystem) {
+		if(sourceSystem == null) {
+			sourceSystem = "";
+		}
 		String code = inventoryMonthCheckEnum.getCode();
 		Map<String, DmpCfgInputEntity> dmpCfgInputEntityMap = dmpCfgInputService.lambdaQuery().eq(DmpCfgInputEntity::getCode, code).list()
 				.stream().collect(Collectors.toMap(DmpCfgInputEntity::getId, d -> d));
