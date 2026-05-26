@@ -111,7 +111,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
       @AllArgsConstructor
       public static class ReCreateDTO{
       	/**
-           * 核算周期
+           * 核算周期，任意月份都可以选择
            */
           @NotBlank(message = "核算周期不能为空")
           private String checkMonth;

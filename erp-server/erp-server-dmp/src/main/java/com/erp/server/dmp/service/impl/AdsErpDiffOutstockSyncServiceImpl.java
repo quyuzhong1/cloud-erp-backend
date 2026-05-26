@@ -237,12 +237,6 @@ public class AdsErpDiffOutstockSyncServiceImpl extends SuperServiceImpl<AdsErpDi
 	}
 	
 	@Override
-	public Boolean reCreate(ReCreateDTO dto) {
-		return true;
-	}
-	
-	
-	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
 		return lambdaUpdate().eq(AdsErpDiffOutstockSyncEntity::getId, dto.getId()).set(AdsErpDiffOutstockSyncEntity::getRemark, dto.getRemark()).update();
 	}
