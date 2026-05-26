@@ -152,6 +152,21 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "收款单" , soReceiptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RECEIPT.getCode(), soReceiptEntity.getId(), "新增操作");
 
+        // 检查关联销售订单状态，如果订单已提交或审核通过，则自动提交收款单
+        if (CollectionUtils.isNotEmpty(soIds)) {
+            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(soIds);
+
+            // 检查是否有订单已经提交审核或审核通过
+            boolean hasSubmittedOrApproved = soInfoEntityList.stream()
+                    .anyMatch(v -> BillApproveStatusEnum.APPROVE_ING.equals(v.getApproveStatus())
+                            || BillApproveStatusEnum.APPROVE.equals(v.getApproveStatus()));
+
+            if (hasSubmittedOrApproved) {
+                // 自动提交收款单
+                this.submit(soReceiptEntity.getId());
+            }
+        }
+
         return new BaseResultDTO.AddDTO(soReceiptEntity.getId(), code);
     }
 
@@ -1014,11 +1029,6 @@ public class SoReceiptServiceImpl extends SuperServiceImpl<SoReceiptMapper, SoRe
                 if (soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)
                         || soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)) {
                     this.submit(exist.getId());
-                    ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-                    approveOneDTO.setId(exist.getId());
-                    approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
-                    approveOneDTO.setComment("");
-                    this.approve(approveOneDTO);
                 }
             }
 
