@@ -242,13 +242,6 @@ public class CfgApproveSyncController extends BaseController {
         return success(fsService.getExternalApprovalResp(approveCode));
     }
 
-
-    @PostMapping("/cleanFeishuTest")
-    public void cleanFeishuTest() {
-//        cfgApproveSyncService.cleanFeishuTest();
-    }
-
-
     /**
      *
      * @author jack
