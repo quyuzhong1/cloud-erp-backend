@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -7,7 +8,6 @@ import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -1277,33 +1277,5 @@ public class LogisticsBillCostDTO implements Serializable {
          * 费用项更新列表
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList;
-    }
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class NeedPushAllocationParamDTO {
-        /**
-         * 开始月份
-         */
-        private String startTimeMonth;
-        /**
-         * 结束月份
-         */
-        private String endTimeMonth;
-        /**
-         * 类型
-         */
-        private List<String> typeList;
-        /**
-         * 生成状态
-         */
-        private String checkStatus;
-        /**
-         * 对账状态集合
-         */
-        private List<String> reconciliationStatusList;
-
     }
 }
