@@ -10,6 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -434,7 +435,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 //查询已提交的出库单，进行撤销
                 List<String> approveIng = soOutstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE_ING.equals(req.getApproveStatus())).map(req -> req.getId()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(approveIng)) {
-                    soOutstockService.cancelProcess(approveIng);
+                    soOutstockService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(approveIng));
                 }
 
                 //反审核后删除

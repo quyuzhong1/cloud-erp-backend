@@ -30,6 +30,7 @@
        <result column="supplier_confirm_user_name" property="supplierConfirmUserName" />
        <result column="purchase_confirm_user_id" property="purchaseConfirmUserId" />
        <result column="purchase_confirm_user_name" property="purchaseConfirmUserName" />
+       <result column="invoice_status" property="invoiceStatus" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -50,7 +51,8 @@
         pr.supplier_confirm_date as supplierConfirmDate,
         pr.purchase_confirm_date as purchaseConfirmDate,
         pr.receive_date as receiveDate,
-        pr.create_time as createTime
+        pr.create_time as createTime,
+        pr.invoice_status as invoiceStatus
     </sql>
 
     <!-- 分页查询 -->

@@ -118,6 +118,29 @@ public class FileTaskContext {
     }
 
     /**
+     *  重新触发任务
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public String reImportTask(String taskId,FileTaskDTO fileTaskDTO) {
+        // 创建文件任务
+        FileTask fileTask = FileTask.update(taskId,fileTaskDTO.getEvent(), fileTaskDTO.getFileName(), writeValueAsString(fileTaskDTO.getMetaInfo()));
+        LoginUser loginUser = UserContext.getLoginUser();
+        fileTask.setType(FileTaskTypeEnum.ASYNC_IMPORT.getCode());
+        // 保存文件任务
+        fileTaskRepository.updateById(fileTask);
+        // 创建文件任务
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                CompletableFuture.runAsync(() -> importProcess(taskId, loginUser,false), threadPoolTaskExecutor);
+                log.info("文件任务[{}]消息已投递,事务已提交", taskId);
+            }
+        });
+        return taskId;
+
+    }
+
+    /**
      * 文件任务删除
      * 基于乐观锁版本，多服务器需优化为分布式锁
      */

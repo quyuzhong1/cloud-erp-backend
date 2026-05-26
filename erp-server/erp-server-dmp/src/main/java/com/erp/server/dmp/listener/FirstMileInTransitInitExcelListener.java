@@ -59,6 +59,11 @@ public class FirstMileInTransitInitExcelListener extends AnalysisEventListener<F
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        // 兼容日期格式
+        LocalDate reportMonth = LocalDateUtil.parseCheckLocalDate(excelDTO.getReportMonth(), errorMsgList);
+        if (Objects.nonNull(reportMonth)) {
+            excelDTO.setReportMonth(reportMonth.toString());
+        }
         //校验货件单号是否存在
         List<AdsErpFirstMileInTransitDiffEntity> shipmentList = adsErpFirstMileInTransitDiffService.lambdaQuery()
                 .eq(AdsErpFirstMileInTransitDiffEntity::getShipmentCode, excelDTO.getShipmentCode())

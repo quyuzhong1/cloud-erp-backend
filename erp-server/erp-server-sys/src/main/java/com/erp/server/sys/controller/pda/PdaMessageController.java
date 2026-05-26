@@ -7,6 +7,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.MessageDTO;
 import com.erp.server.sys.service.MessageService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -89,5 +91,15 @@ public class PdaMessageController extends BaseController {
     public ApiResult closeMessageNotice() {
         Boolean flag = messageService.closeMessageNotice();
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * PDA消息单条已读
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "PDA消息单条已读")
+    @PostMapping(value = "/readMessage")
+    public ApiResult<?> readMessage(@RequestBody MessageDTO.ReadHistoryMessageDTO dto) {
+        messageService.readMessage(dto);
+        return success();
     }
 }

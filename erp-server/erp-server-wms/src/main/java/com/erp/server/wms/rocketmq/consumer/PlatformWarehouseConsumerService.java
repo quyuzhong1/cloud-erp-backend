@@ -111,7 +111,8 @@ public class PlatformWarehouseConsumerService<T extends DmpSyncTaskIdDTO> extend
         OverseasProviderWarehouseEntity dbEntity = overseasProviderWarehouseService.getByPlatform(dto.getProviderErpId(),dto.getWarehouseCode());
         OverseasProviderWarehouseEntity mqEntity = OverseasWarehouseConverter.INSTANCE.warehouseDb(dto);
         //设置国家名称
-        if (OmsPlatformEnum.ZHONG_BAO.getCode().equals(dto.getProvider()) && CharSequenceUtil.isBlank(dto.getCountryCode())){
+        if ((OmsPlatformEnum.ZHONG_BAO.getCode().equals(dto.getProvider()) || OmsPlatformEnum.JI_TU.getCode().equals(dto.getProvider()))
+                && CharSequenceUtil.isBlank(dto.getCountryCode())){
             mqEntity.setCountryName(CharSequenceUtil.EMPTY);
         }else {
             setCountryName(mqEntity);

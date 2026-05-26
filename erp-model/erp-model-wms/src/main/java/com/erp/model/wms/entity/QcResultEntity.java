@@ -49,37 +49,44 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
     private Boolean isInside;
 
     /**
-     * 质检数量
+     * 抽检数量
      */
     @TableField("qc_qty")
     private Integer qcQty;
 
     /**
-     * 质检合格数量
+     *  抽检良品数量
      */
     @TableField("qc_good_qty")
     private Integer qcGoodQty;
 
     /**
-     * 不良数量
+     * 抽检不良品数量
      */
     @TableField("qc_bad_qty")
     private Integer qcBadQty;
 
     /**
-     * 总数量
+     * 允许入库量
+     */
+    @TableField("allow_instock_qty")
+    private Integer allowInstockQty;
+
+
+    /**
+     * 送检数量
      */
     @TableField("total_qty")
     private Integer totalQty;
 
     /**
-     * 质检合格率
+     * 抽检合格率
      */
     @TableField("qc_good_rate")
     private BigDecimal qcGoodRate;
 
     /**
-     * 质检不良率
+     * 抽检不合格率
      */
     @TableField("qc_bad_rate")
     private BigDecimal qcBadRate;
@@ -129,7 +136,7 @@ public class QcResultEntity extends BaseEntity<QcResultEntity> {
     private String qcSampleResult;
 
     /**
-     * 批次合格量
+     * 检验合格总数量
      */
     @TableField("lot_qualified_qty")
     private Integer lotQualifiedQty;

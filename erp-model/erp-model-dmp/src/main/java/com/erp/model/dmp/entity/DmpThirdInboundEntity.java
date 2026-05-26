@@ -83,6 +83,12 @@ public class DmpThirdInboundEntity extends BaseEntity<DmpThirdInboundEntity> {
     @TableField("main_id")
     private String mainId;
 
+    /**
+     * 请求Id
+     */
+    @TableField("request_id")
+    private String requestId;
+
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 
     public static final String SOURCE_PLATFORM = "source_platform";

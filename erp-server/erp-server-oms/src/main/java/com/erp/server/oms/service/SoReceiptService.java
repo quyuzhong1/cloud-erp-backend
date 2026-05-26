@@ -1,4 +1,5 @@
 package com.erp.server.oms.service;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.PlatformReceiptDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReceiptEntity;
@@ -122,10 +123,10 @@ public interface SoReceiptService extends SuperService<SoReceiptEntity> {
     * 撤销
     * @author lrp
     * @date: 2025-08-28
-    * @param id
+    * @param dto
     * @return
     */
-    Boolean cancelProcess(String id);
+    Boolean cancelProcess(ApproveDTO.CancelProcessDTO dto);
 
     /**
     * 导出Excel

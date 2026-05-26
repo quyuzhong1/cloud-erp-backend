@@ -32,12 +32,10 @@ import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
@@ -46,7 +44,6 @@ import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -62,7 +59,6 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,6 +117,9 @@ public class SoB2cController extends BaseController {
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+
+    @Resource
+    private SoB2cImportService soB2cImportService;
     /**
      * 获取状态统计
      *
@@ -1348,6 +1347,10 @@ public class SoB2cController extends BaseController {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), CharSequenceUtil.format("订单状态为{},不允许操作不出库发货", SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus()))));
                 continue;
             }
+            if (soB2cEntity.getInvalidStatus()) {
+                resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "订单已作废,不允许操作不出库发货"));
+                continue;
+            }
             if (soB2cEntity.hasPlatformWarehouseOrder()) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "平台仓订单不允许操作不出库发货"));
                 continue;
@@ -1688,9 +1691,16 @@ public class SoB2cController extends BaseController {
                 resultDTOS.add(result);
                 continue;
             }
-            //订单更换发货SKU操作只能在待提交和审核不通过状态操作
-            if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
+            //订单更换发货SKU操作只能在待提交、审核不通过或已发货状态操作
+            if (!Boolean.TRUE.equals(soB2cService.allowChangeDeliverySku(entity))){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.SO_REPLACE_SKU_STATUS_INVALID.getMsg(), entity.getCode()));
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                soB2cService.checkGeneratedDeliveryForOperation(entity.getId(), "更换SKU");
+            } catch (Exception e) {
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), e.getMessage());
                 resultDTOS.add(result);
                 continue;
             }
@@ -1845,4 +1855,26 @@ public class SoB2cController extends BaseController {
         soB2cService.retryPlatformOutbound(dto.getIds());
         return success();
     }
+
+
+    /**
+     * 导入手动发货Excel数据
+     */
+    @PostMapping("/importManualDelivery")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "B2C销售订单手动发货导入Excel数据")
+    public ApiResult<Boolean> importManualDelivery(@RequestBody @Validated BaseDTO.ImportDTO dto) {
+        // 异步导入任务
+        soB2cImportService.importManualDelivery(dto);
+        return success(true);
+    }
+
+    /**
+     * 下载手动导入模板
+     */
+    @GetMapping("/downloadManualDeliveryTemplate")
+    public ApiResult<Object> downloadManualDeliveryTemplate(HttpServletResponse response) {
+        soB2cImportService.downloadManualDeliveryTemplate(response);
+        return success();
+    }
+
 }

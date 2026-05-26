@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -212,7 +213,7 @@ public class SubcontractChangeController extends BaseController {
             serviceClass = SubcontractChangeService.class,
             keyIdName = "ids")
     public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractChangeService.cancelProcess(dto.getIds());
+        subcontractChangeService.cancelProcess(new ApproveDTO.BatchCancelProcessDTO(dto.getIds()));
         return success();
     }
 

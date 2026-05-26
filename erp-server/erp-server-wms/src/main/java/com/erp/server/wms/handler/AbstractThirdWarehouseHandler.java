@@ -137,6 +137,13 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     @Override
+    public ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(ThirdWarehouseQueryFbaOutboundPageReq queryOutboundReq, String authId) {
+        String businessCode = CharSequenceUtil.blankToDefault(queryOutboundReq.getStartUpdateTime(), "") + "~"
+                + CharSequenceUtil.blankToDefault(queryOutboundReq.getEndUpdateTime(), "");
+        return handleAndRemoveContext(() -> queryFbaOutboundBillPage(queryOutboundReq), authId, SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL, businessCode);
+    }
+
+    @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq, String authId) {
         return handleAndRemoveContext(() -> getCalculateFeeBatch(calculateFeeReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CALCULATE_FEE,calculateFeeReq.getCountryCode());
     }
@@ -186,6 +193,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<String> cancelFbaOutboundBill(@Valid ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq);
     protected abstract ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq);
     protected abstract ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(@Valid ThirdWarehouseQueryFbaOutboundReq req);
+    protected ApiResult<ThirdWarehouseQueryFbaOutboundPageResponse> queryFbaOutboundBillPage(@Valid ThirdWarehouseQueryFbaOutboundPageReq req) {
+        return failure("当前平台不支持按时间分页查询B2B出库单");
+    }
 
     protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 

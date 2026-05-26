@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
@@ -310,7 +311,7 @@ public class StocktakingPlanController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = stocktakingPlanService.cancelProcess(id);
+                deleteResult = stocktakingPlanService.cancelProcess(new ApproveDTO.CancelProcessDTO(id));
             }catch (Exception e){
                 log.error("盘点计划撤回流程失败",e);
                 StocktakingPlanEntity entity = stocktakingPlanService.getById(id);

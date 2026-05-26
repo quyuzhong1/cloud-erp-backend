@@ -5,21 +5,19 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.damai.dto.request.DaMaiGetOrderRequest;
-import com.sdk.wms.damai.dto.response.DaMaiBaseResp;
-import com.sdk.wms.damai.dto.response.DaMaiGetOrderResp;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
+import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
+    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
 
     @Resource
     private GoodCangService goodCangService;
@@ -185,11 +184,23 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq){
-        GoodCangUploadFileReq goodCangUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
+        GoodCangUploadFileReq goodCangUploadFileReq = GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
+                ? ThirdWarehouseConverter.INSTANCE.reqToGoodCangB2bAttachmentUploadFileReq(uploadFileReq)
+                : ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
         if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
         }
+        if(GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
+                && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
+            goodCangUploadFileReq.setFileName(uploadFileReq.getFileName());
+            goodCangUploadFileReq.setFile(cleanB2bAttachmentBase64(goodCangUploadFileReq.getFile(), uploadFileReq.getFileName()));
+        }
+        log.warn(getPlatForm().getName() + "上传文件请求: useFor={}, fileName={}", goodCangUploadFileReq.getUseFor(), goodCangUploadFileReq.getFileName());
         GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
+        log.warn(getPlatForm().getName() + "上传文件结果:{}", JSONUtil.toJsonStr(response));
+        if (Objects.isNull(response)) {
+            return failure("谷仓上传文件响应为空");
+        }
         GoodCangUploadFileResp goodCangUploadFileResp = response.getData();
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
         return isSuccess(response.getAsk(), response.getMessage()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
@@ -222,7 +233,14 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelFbaOutboundBill(ThirdWarehouseCancelFbaOutboundReq cancelOutboundReq) {
-        return failure("ERP功能暂不支持");
+        GoodCangResponse<String> response = goodCangService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason());
+        if(Objects.isNull(response.getCancelStatus())){
+            return failure(response.getMessage());
+        }
+        if(response.getCancelStatus().equals(3)){
+            return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        }
+        return success(B2bThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
@@ -233,7 +251,72 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
-        return failure("ERP功能暂不支持");
+        List<ThirdWarehouseQueryFbaOutboundResponse> responses = new ArrayList<>();
+        String failureMsg = null;
+        if (CollUtil.isNotEmpty(req.getPlatformOrderCodeList())) {
+            GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
+                    .orderCodeArr(req.getPlatformOrderCodeList())
+                    .page(1)
+                    .pageSize(20)
+                    .build();
+
+            GoodCangResponse<List<GoodCangOutboundResp>> response = goodCangService.getOutboundBatch(goodCangGetOutBoundReq);
+            if (Objects.isNull(response)) {
+                failureMsg = "谷仓查询订单响应为空";
+            } else if(!isSuccess(response.getAsk(), response.getMessage())){
+                failureMsg = response.getMessage();
+            } else if (CollUtil.isNotEmpty(response.getData())) {
+                for (GoodCangOutboundResp goodCangOrderDTO : response.getData()) {
+                    responses.add(buildFbaOutboundResponse(goodCangOrderDTO));
+                }
+                return success(responses);
+            } else {
+                failureMsg = CharSequenceUtil.blankToDefault(response.getMessage(), "未查询到谷仓订单");
+            }
+            log.warn(getPlatForm().getName() + "按谷仓订单号未查询到B2B订单, orderCode={}, response={}", req.getPlatformOrderCodeList(), JSONUtil.toJsonStr(response));
+        }
+
+        if (CollUtil.isEmpty(req.getErpOrderCodeList())) {
+            return failure(CharSequenceUtil.blankToDefault(failureMsg, "未查询到谷仓订单"));
+        }
+        for (String referenceNo : req.getErpOrderCodeList()) {
+            GoodCangResponse<GoodCangOrderDTO> response = goodCangService.getOrderByRefCode(referenceNo);
+            if (Objects.isNull(response) || !isSuccess(response.getAsk(), response.getMessage()) || Objects.isNull(response.getData())) {
+                log.warn(getPlatForm().getName() + "按参考号未查询到B2B订单, referenceNo={}, response={}", referenceNo, JSONUtil.toJsonStr(response));
+                continue;
+            }
+            responses.add(buildFbaOutboundResponse(response.getData(), referenceNo));
+        }
+        return CollUtil.isNotEmpty(responses) ? success(responses) : failure(CharSequenceUtil.blankToDefault(failureMsg, "未查询到谷仓订单"));
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildFbaOutboundResponse(GoodCangOutboundResp goodCangOrderDTO) {
+        ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+        res.setCode(goodCangOrderDTO.getReferenceNo());
+        res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+        res.setTrackNo(goodCangOrderDTO.getTrackNo());
+        res.setDeliveryTimeStr(Objects.nonNull(goodCangOrderDTO.getOutBoundTime()) ? goodCangOrderDTO.getOutBoundTime().toString() : null);
+        res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
+        res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
+        return res;
+    }
+
+    private ThirdWarehouseQueryFbaOutboundResponse buildFbaOutboundResponse(GoodCangOrderDTO goodCangOrderDTO, String referenceNo) {
+        ThirdWarehouseQueryFbaOutboundResponse res = new ThirdWarehouseQueryFbaOutboundResponse();
+        res.setCode(CharSequenceUtil.blankToDefault(goodCangOrderDTO.getReferenceNo(), referenceNo));
+        res.setPlatformOrderCode(goodCangOrderDTO.getOrderCode());
+        res.setTrackNo(goodCangOrderDTO.getTrackingNo());
+        res.setDeliveryTimeStr(goodCangOrderDTO.getDateShipping());
+        res.setPlatformCreateTimeStr(goodCangOrderDTO.getDateCreate());
+        res.setPlatformUpdateTimeStr(goodCangOrderDTO.getDateModify());
+        res.setPlatformOriginalStatus(goodCangOrderDTO.getOrderStatus());
+        res.setStatus(GoodCangEnums.B2BOrderStatusEnum.getErpOrderStatus(goodCangOrderDTO.getOrderStatus()));
+        res.setErrorType(goodCangOrderDTO.getAbnormalProblemReason());
+        res.setSwOrderNumber(goodCangOrderDTO.getPlatformOrderCode());
+        res.setWarehouseCode(goodCangOrderDTO.getWarehouseCode());
+        res.setShippingMethod(goodCangOrderDTO.getShippingMethod());
+        res.setCarrierName(goodCangOrderDTO.getCarrierName());
+        return res;
     }
 
     @Override
@@ -287,8 +370,175 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
     @Override
     protected ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        return failure("ERP功能暂不支持");
+        GoodCangCreateB2bReq cangCreateOutboundReq = this.buildB2bOrderReq(createOutboundReq);
+        log.warn(getPlatForm().getName() + "创建B2B订单请求:{}", JSONUtil.toJsonStr(cangCreateOutboundReq));
+
+        GoodCangResponse<String> response = goodCangService.createB2bBill(cangCreateOutboundReq);
+        log.warn(getPlatForm().getName() + "创建B2B订单结果:{}", JSONUtil.toJsonStr(response));
+
+        if (!isSuccess(response.getAsk(), "")) {
+            return failure(response.getMessage());
+        }
+
+        String requestId = response.getRequestId();
+
+        // 最多重试3次查询任务状态
+        return queryTaskWithRetry(requestId, response.getData());
     }
+
+    /**
+     * 查询任务状态，支持重试机制
+     * status: 0=处理中，1=成功，2=失败
+     */
+    private ApiResult<String> queryTaskWithRetry(String requestId, String originalData) {
+        int maxRetries = 20;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            // 休眠等待异步处理（首次也等待，因为接口是异步的）
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                log.error("线程休眠异常", e);
+                Thread.currentThread().interrupt();
+                return failure("查询任务被中断");
+            }
+
+            GoodCangResponse<List<GoodCangTaskResp>> taskResp = goodCangService.taskStatusList(
+                    Collections.singletonList(requestId)
+            );
+            log.warn(getPlatForm().getName() + "查询B2B订单结果(第{}次):{}", attempt, JSONUtil.toJsonStr(taskResp));
+
+            if (Objects.isNull(taskResp)) {
+                return failure("查询订单结果响应为空");
+            }
+            if (!isSuccess(taskResp.getAsk(), "")) {
+                return failure(taskResp.getMessage());
+            }
+
+            List<GoodCangTaskResp> goodCangTaskResps = taskResp.getData();
+            if (CollUtil.isEmpty(goodCangTaskResps)) {
+                return failure("查询订单结果为空");
+            }
+            GoodCangTaskResp goodCangTaskResp = goodCangTaskResps.get(0);
+            Integer status = goodCangTaskResp.getStatus();
+
+            // status: 1=成功，直接返回
+            if (Objects.equals(status, 1)) {
+                return success(originalData);
+            }
+
+            // status: 2=失败，直接返回错误
+            if (Objects.equals(status, 2)) {
+                return failure(goodCangTaskResp.getErrorMessage());
+            }
+
+            // status: 0=处理中，继续重试（如果是最后一次，返回处理中状态）
+            if (attempt == maxRetries) {
+                log.warn("任务处理超时，requestId: {}", requestId);
+                return failure("任务处理超时，请稍后查询");
+            }
+
+            log.warn("任务处理中，第{}次查询未就绪，继续等待...", attempt);
+        }
+
+        // 理论上不会执行到这里
+        return failure("查询任务异常");
+    }
+
+    private String cleanB2bAttachmentBase64(String fileData, String fileName) {
+        if (CharSequenceUtil.isBlank(fileData) || CharSequenceUtil.isBlank(fileName)) {
+            return fileData;
+        }
+        String extension = StringUtils.substringAfterLast(fileName, ".");
+        byte[] magic = getAttachmentMagic(extension);
+        if (Objects.isNull(magic)) {
+            return fileData;
+        }
+        try {
+            byte[] bytes = Base64.getDecoder().decode(fileData);
+            int index = indexOf(bytes, magic);
+            if (index <= 0) {
+                return fileData;
+            }
+            log.warn(getPlatForm().getName() + "B2B附件存在前置脏字节，上传前已裁剪, fileName={}, offset={}", fileName, index);
+            return Base64.getEncoder().encodeToString(Arrays.copyOfRange(bytes, index, bytes.length));
+        } catch (IllegalArgumentException e) {
+            log.warn(getPlatForm().getName() + "B2B附件base64解析失败，保持原始内容上传, fileName={}", fileName, e);
+            return fileData;
+        }
+    }
+
+    private byte[] getAttachmentMagic(String extension) {
+        if ("pdf".equalsIgnoreCase(extension)) {
+            return new byte[]{'%', 'P', 'D', 'F', '-'};
+        }
+        if ("xlsx".equalsIgnoreCase(extension) || "docx".equalsIgnoreCase(extension)) {
+            return new byte[]{'P', 'K'};
+        }
+        return null;
+    }
+
+    private int indexOf(byte[] bytes, byte[] magic) {
+        if (Objects.isNull(bytes) || Objects.isNull(magic) || bytes.length < magic.length) {
+            return -1;
+        }
+        for (int i = 0; i <= bytes.length - magic.length; i++) {
+            boolean matched = true;
+            for (int j = 0; j < magic.length; j++) {
+                if (bytes[i + j] != magic[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private GoodCangCreateB2bReq buildB2bOrderReq(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
+        GoodCangCreateB2bReq goodCangCreateB2bReq = new GoodCangCreateB2bReq();
+        goodCangCreateB2bReq.setReferenceNo(createOutboundReq.getReferenceNo());
+        goodCangCreateB2bReq.setPackingType("0");
+        goodCangCreateB2bReq.setVerify(1);
+        goodCangCreateB2bReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
+        goodCangCreateB2bReq.setRecipientInfo(GoodCangCreateB2bReq.RecipientInfo.builder()
+                        .address1(createOutboundReq.getAddress1())
+                        .city(createOutboundReq.getCity())
+                        .countryCode(createOutboundReq.getReceiverCountryCode())
+                        .name(createOutboundReq.getReceiverName())
+                        .phone(createOutboundReq.getTelNumber())
+                        .province(createOutboundReq.getProvince())
+                        .zipcode(createOutboundReq.getPostCode()).build());
+        goodCangCreateB2bReq.setDeliveryService(GoodCangCreateB2bReq.DeliveryService.builder()
+                        .isInsurance(createOutboundReq.getIsInsurance()?1:0)
+                        .isSignature(createOutboundReq.getIsSignature()?1:0)
+                        .smCode(createOutboundReq.getChannelCode()).build());
+        List<GoodCangCreateB2bReq.Item> itemList = new ArrayList<>();
+        for (ThirdWarehouseCreateFbaOutboundReq.Item item : createOutboundReq.getItems()){
+            GoodCangCreateB2bReq.Item productItem = new GoodCangCreateB2bReq.Item();
+            productItem.setProductSku(item.getWarehousePlatformSku());
+            Integer quantity = item.getDeliveryQty();
+            if (Objects.isNull(quantity)) {
+                Integer boxQty = Objects.nonNull(item.getBoxQty()) ? item.getBoxQty() : 0;
+                Integer perBoxQty = Objects.nonNull(item.getPerBoxQty()) ? item.getPerBoxQty() : 0;
+                quantity = boxQty * perBoxQty;
+            }
+            productItem.setQuantity(quantity);
+            itemList.add(productItem);
+        }
+        goodCangCreateB2bReq.setWarehouseService(GoodCangCreateB2bReq.WarehouseService.builder()
+                        .boxMarkNum(0)
+                        .isChangeLabel(0)
+                        .itemList(itemList).build());
+        goodCangCreateB2bReq.setOtherInfo(GoodCangCreateB2bReq.OtherInfo.builder()
+                        .orderDesc(createOutboundReq.getRemark())
+                        .packingFileId(StringUtils.isNotBlank(createOutboundReq.getFileId())?Integer.valueOf(createOutboundReq.getFileId()):null)
+                        .build());
+        return goodCangCreateB2bReq;
+    }
+
     public boolean isSuccess(String ask, String message){
         return "Success".equals(ask) ||"success".equals(message);
     }

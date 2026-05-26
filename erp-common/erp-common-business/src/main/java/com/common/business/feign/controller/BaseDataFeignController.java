@@ -7,6 +7,7 @@ import java.util.Map;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.feign.BaseDataFeign;
 import com.common.business.mapper.BaseDataMapper;
@@ -23,6 +25,7 @@ import com.common.business.wrapper.FeignInvoke;
 import com.common.business.wrapper.QueryParam;
 import com.common.core.controller.BaseController;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -51,8 +54,20 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 	@PostMapping("/list")
 	@Override
 	public String list(FeignBuilder builder) {
-		String[] classPackeNames = builder.getClazz().getName().split("\\.");
-		ServiceImpl bean = ApplicationContextUtils.getBean(StringUtils.uncapitalize(classPackeNames[classPackeNames.length - 1].replace("Entity", "")) + "ServiceImpl" , ServiceImpl.class);
+		String name = builder.getClazz().getName();
+		String[] classPackeNames = name.split("\\.");
+		ServiceImpl bean = null;
+		try {
+			bean = ApplicationContextUtils.getBean(StringUtils.uncapitalize(classPackeNames[classPackeNames.length - 1].replace("Entity", "")) + "ServiceImpl" , ServiceImpl.class);
+		} catch (NoSuchBeanDefinitionException e) {
+			try {
+				String value = Class.forName(name).getAnnotation(TableName.class).value();
+				bean = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(value , true) + "ServiceImpl" , ServiceImpl.class);
+			} catch (ClassNotFoundException e1) {
+				log.error(name + "实体类不存在{}" , ExceptionUtil.stacktraceToString(e));
+				throw new ServiceException(name + "类不存在");
+			}
+		}
 		List list = bean.list(QueryParam.getQueryWrapper(builder.getQueryParams()));
 		return JSON.toJSONString(success(list));
 	}
@@ -105,6 +120,12 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法错误");
 		} 
 		return JSON.toJSONString(success(result));
+	}
+
+	@GetMapping("/deleteArchiveData")
+	@Override
+	public int deleteArchiveData(String tableName, String timeField, int retentionDay, int limitCount, String extSql) {
+		return baseDataMapper.deleteArchiveData(tableName, timeField, retentionDay, limitCount, extSql);
 	}
 
 	private static Object[] parseParamVarArgs(List<Object> param, Method invokeMethod) {

@@ -27,7 +27,6 @@ public class DmpAmazonFeignController implements DmpAmazonFeign {
     private CfgAppClientService cfgAppClientService;
 
 
-
     /**
      * 拉取货件
      *

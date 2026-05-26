@@ -16,6 +16,7 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -240,7 +241,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        query.setSearchCount(Boolean.FALSE);
+        Integer totalCount = this.baseMapper.pagingCount(pagingParamDTO.getParams());
         IPage<SoReturnInstockDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        pageData.setTotal(ObjectUtils.isEmpty(totalCount) ? MathUtil.ZERO : totalCount);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
@@ -996,7 +1000,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
+    public Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto) {
+        List<String> ids = dto.getIds();
         List<SoReturnInstockEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
@@ -2515,61 +2520,26 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public List<BatchResultDTO> deleteByIds(List<String> ids, boolean returnDetails) {
-        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+    public BatchResultDTO deleteByIds(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> returnDetails) {
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg());
         }
-        //待提交支持删除
-//        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
-//                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-//        ).count();
-//        if (count != entityList.size()) {
-//            throw new ServiceException(ApiError.ERROR_DELETE_ALLOWED_STATUS_ONLY);
-//        }
-
-        List<SoReturnInstockEntity> removeList=new ArrayList<>();
-        List<BatchResultDTO> resultDTOList=new ArrayList<>();
-        for (SoReturnInstockEntity entity : entityList) {
-            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) || entity.getInvalidStatus()){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY.getMsg()));
-                continue;
-            }
-            removeList.add(entity);
-            resultDTOList.add(BatchResultDTO.success(entity.getId(), entity.getCode(),"删除成功"));
-        }
-        List<String> removeIdList = removeList.stream().map(SoReturnInstockEntity::getId).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(removeIdList)){
-            return resultDTOList;
-        }
-        //获取需要推送数帝云的数据
-        List<SoReturnInstockDetailEntity> detailAllList = new ArrayList<>();
-        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(removeIdList);
-        detailAllList.addAll(soReturnInstockDetailEntityList);
-
         //发送金蝶
-        sendPushTask(removeList,SyncOperateEnum.OPERATE_DELETE.getCode());
-
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DELETE.getCode());
         //推送数帝云
-        this.syncToSdyHandler(removeList, SyncOperateEnum.OPERATE_DELETE.getCode());
-
+        this.syncToSdyHandler(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除详情表
-        soReturnInstockDetailService.delete(removeIdList);
+        soReturnInstockDetailService.delete(Collections.singletonList(entity.getId()));
         //删除主表
         // 执行批量删除
-        Boolean result = this.removeByIds(removeIdList);
+        boolean result = this.removeByIds(Collections.singletonList(entity.getId()));
         if (!result) {
             throw new ServiceException(ApiError.BILL_DELETE_FAILED);
         }
-        
         // 添加批量操作日志
-        String msg = CharSequenceUtil.format("用户【{}】批量删除了单据编号为【{}】销售退货入库单", UserContext.getDefaultLoginUser().getUserName(),removeList.stream().map(SoReturnInstockEntity::getCode).collect(Collectors.joining(",")));
-        List<Pair<String, String>> pairList = removeList.stream()
-                .map(entity -> new Pair<>(entity.getId(), entity.getCode()))
-                .collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "删除操作");
-        
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】销售退货入库单", UserContext.getDefaultLoginUser().getUserName(),entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "删除操作");
         // 返回成功结果
-        return resultDTOList;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
     }
 }

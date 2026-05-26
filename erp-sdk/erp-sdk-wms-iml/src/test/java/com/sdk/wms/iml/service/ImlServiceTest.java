@@ -4,6 +4,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.FileUtil;
@@ -163,29 +164,9 @@ public class ImlServiceTest {
 
     @Test
     public void createOutboundBill() {
-        ImlCreateOutboundReq imlCreateOutboundReq = ImlCreateOutboundReq.builder()
-                .platformOrderNo("WFHD202510290101")
-                .ecPlatformOrderNo("asn520254")
-                .logisticsCode("IML-RU")
-                .bizType("TOC")
-                .warehouseCode("ceshi")
-                .trackNumber("123456")
-                .buyerCountry("RU")
-                .buyerProvince("state")
-                .buyerCity("for")
-                .buyerAddress("address")
-                .buyerName("mark")
-                .buyerPhone("123456")
-                .buyerEmail("123")
-                .buyerPostcode("123456")
-                .detailList(Arrays.asList(
-                        ImlCreateOutboundReq.DetailListDTO.builder()
-                                .skuBarcode("ceshiB0540-80D")
-                                .skuCount(1)
-                                .build()
-                ))
-                .build();
+        String a = "{\"bizType\":\"TOB\",\"buyerAddress\":\"г.Москва, Сумская улица, 6к5, кв. 5545\",\"buyerCity\":\"Москва г\",\"buyerCountry\":\"RU\",\"buyerName\":\"Wildberries\",\"buyerPhone\":\"5573999030399\",\"buyerPostcode\":\"117342\",\"buyerProvince\":\"Москва г\",\"detailList\":[{\"skuBarcode\":\"800021\",\"skuCount\":1}],\"insuranceService\":\"N\",\"logisticsCode\":\"IML-RU\",\"platformOrderNo\":\"SFFH260421000001\",\"remark\":\"Customer PO: 112\",\"warehouseCode\":\"ceshi\"}";
 
+        ImlCreateOutboundReq imlCreateOutboundReq = JSON.parseObject(a,new TypeReference<ImlCreateOutboundReq>() {}.getType());
         ImlBaseResp<ImlOutboundResp>  resp = imlService.createOutboundBill(imlCreateOutboundReq);
         System.out.println(JSONObject.toJSONString(resp));
     }

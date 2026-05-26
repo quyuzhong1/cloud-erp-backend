@@ -47,6 +47,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
+import com.common.core.constant.DictCityConstants;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -178,11 +179,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
             Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
             Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+            Set<String> noDistrictCityIdSet = getNoDistrictCityIdSet(dictCityEntities);
 
             List<KolAddressInfoEntity> list = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
             for (KolAddressInfoEntity kolAddressInfoEntity : list) {
                 kolAddressInfoEntity.setMainId(id);
-                checkAndSetAddress(kolAddressInfoEntity, dictCountryMap, provinceMap, cityMap, districtMap);
+                checkAndSetAddress(kolAddressInfoEntity, dictCountryMap, provinceMap, cityMap, districtMap, noDistrictCityIdSet);
             }
             kolAddressInfoService.saveBatch(list);
         }
@@ -203,7 +205,7 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     }
 
     //校验并设置国家省市区
-    private static void checkAndSetAddress(KolAddressInfoEntity kolAddressInfoEntity, Map<String, String> dictCountryMap, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap) {
+    private static void checkAndSetAddress(KolAddressInfoEntity kolAddressInfoEntity, Map<String, String> dictCountryMap, Map<String, String> provinceMap, Map<String, String> cityMap, Map<String, String> districtMap, Set<String> noDistrictCityIdSet) {
         //国家
         String countryName = dictCountryMap.getOrDefault(kolAddressInfoEntity.getCountryId(), "");
         if(StringUtils.isNotBlank(countryName)){
@@ -237,6 +239,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 String district = districtMap.getOrDefault(kolAddressInfoEntity.getDistrictId(), "");
                 if(StringUtils.isNotBlank(district)){
                     kolAddressInfoEntity.setDistrict(district);
+                }else if (DictCityConstants.isNoDistrictId(kolAddressInfoEntity.getDistrictId())
+                        && noDistrictCityIdSet.contains(kolAddressInfoEntity.getCityId())) {
+                    // 前端占位 districtId（__no_district__:<cityId>）超出 district_id 列长，
+                    // 命中"无区/县"分支后置空，避免落库时触发 value too long
+                    kolAddressInfoEntity.setDistrictId(null);
+                    kolAddressInfoEntity.setDistrict(DictCityConstants.NO_DISTRICT_NAME);
                 }else {
                     throw new ServiceException("区域不存在");
                 }
@@ -253,6 +261,25 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
                 throw new ServiceException("市不能为空");
             }
         }
+    }
+
+    private static Set<String> getNoDistrictCityIdSet(List<DictCityEntity> dictCityEntities) {
+        if (CollUtil.isEmpty(dictCityEntities)) {
+            return Collections.emptySet();
+        }
+        Set<String> districtParentIdSet = dictCityEntities.stream()
+                .filter(entity -> DictCityTypeEnum.DISTRICT.getCode().equals(entity.getType()))
+                .filter(entity -> !Boolean.TRUE.equals(entity.getDisabled()))
+                .map(DictCityEntity::getParentId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        return dictCityEntities.stream()
+                .filter(entity -> DictCityTypeEnum.CITY.getCode().equals(entity.getType()))
+                .filter(entity -> !Boolean.TRUE.equals(entity.getDisabled()))
+                .map(DictCityEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .filter(cityId -> !districtParentIdSet.contains(cityId))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -355,11 +382,12 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
             Map<String,String> provinceMap = dictCityGroup.get(DictCityTypeEnum.PROVINCE.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
             Map<String,String> cityMap = dictCityGroup.get(DictCityTypeEnum.CITY.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
             Map<String,String> districtMap = dictCityGroup.get(DictCityTypeEnum.DISTRICT.getCode()).stream().collect(Collectors.toMap(DictCityEntity::getId,DictCityEntity::getName,(o1,o2)->o1));
+            Set<String> noDistrictCityIdSet = getNoDistrictCityIdSet(dictCityEntities);
 
             List<KolAddressInfoEntity> list = BeanMapperUtils.copyList(KolAddressInfoEntity.class, kolAddressInfoDTOList);
             for (KolAddressInfoEntity kolAddressInfoEntity : list) {
                 kolAddressInfoEntity.setMainId(kolPartnerInfoEntity.getId());
-                checkAndSetAddress(kolAddressInfoEntity, dictCountryMap, provinceMap, cityMap, districtMap);
+                checkAndSetAddress(kolAddressInfoEntity, dictCountryMap, provinceMap, cityMap, districtMap, noDistrictCityIdSet);
             }
             commonService.updateDetail(kolPartnerInfoEntity.getId(), ModuleTypeEnum.KOL_PARTNER_INFO.getCode(), kolAddressInfoService, list, oldKolAddressInfoEntities, "contactPerson");
         }
@@ -883,6 +911,29 @@ public class KolPartnerInfoServiceImpl extends SuperServiceImpl<KolPartnerInfoMa
     @Override
     public AddressParseDTO.ParseResultDTO addressParse(AddressParseDTO.ParseRequestDTO dto) {
         return addressParseService.parse(dto);
+    }
+
+    @Override
+    public List<AddressParseDTO.BatchParseResultDTO> batchAddressParse(List<AddressParseDTO.BatchParseRequestDTO> dtoList) {
+        List<AddressParseDTO.BatchParseResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+        List<String> specialCityList = Arrays.asList("北京", "上海", "重庆", "天津");
+        dtoList.forEach(dto -> {
+            AddressParseDTO.ParseRequestDTO requestDTO = new AddressParseDTO.ParseRequestDTO();
+            requestDTO.setFullAddress(dto.getFullAddress());
+            AddressParseDTO.ParseResultDTO resultDTO = addressParseService.parse(requestDTO);
+            AddressParseDTO.BatchParseResultDTO batchParseResultDTO = new AddressParseDTO.BatchParseResultDTO();
+            BeanMapperUtils.copy(resultDTO, batchParseResultDTO);
+            batchParseResultDTO.setId(dto.getId());
+            if (specialCityList.contains(resultDTO.getProvince())) {
+                batchParseResultDTO.setProvince(resultDTO.getProvince() + "市");
+            } else {
+                batchParseResultDTO.setProvince(resultDTO.getProvince() + "省");
+            }
+            batchParseResultDTO.setCity(resultDTO.getCity() + "市");
+            batchParseResultDTO.setDetailAddress(resultDTO.getDistrict() + resultDTO.getDetailAddress());
+            resultDTOS.add(batchParseResultDTO);
+        });
+        return resultDTOS;
     }
 
 }

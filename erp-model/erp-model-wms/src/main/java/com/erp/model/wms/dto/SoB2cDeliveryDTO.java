@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
@@ -12,6 +13,9 @@ import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -191,6 +195,7 @@ public class SoB2cDeliveryDTO implements Serializable {
         private String skuId;
 
         private String skuNo;
+        private BigDecimal price;
 
         private String platformSkuNo;
 
@@ -354,9 +359,17 @@ public class SoB2cDeliveryDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 动态数据源
+         * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+        	if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+        		return DynamicDataSourceTypeEnum.DORIS.getCode();
+        	}
+        	return dynamicDataSource;
+        }
 
     }
 

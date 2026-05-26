@@ -102,6 +102,11 @@ public class PlatformFbaShipmentDTO extends UniqueDto {
     private String pageType;
 
     /**
+     * 平台物流中心国家
+     */
+    private String fulfillmentCenterCountry;
+
+    /**
      * 物流签收信息
      */
     List<PlatformFbaShipmentReceiveDTO> receiveDTOList;
