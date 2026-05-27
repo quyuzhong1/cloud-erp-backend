@@ -23,6 +23,7 @@ import com.common.business.dto.base.*;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -625,23 +626,21 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto, DictCostAttributionEnum attribution) {
+        LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
+        pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+        List<LogisticsBillCostDTO.TabCountDTO> tabCountDTOS = this.baseMapper.listCount(pagingParamDTO,attribution.getCode());
+        //根据实体的三个字段拼接汇总数量
+        Map<String, Integer> map = tabCountDTOS.stream().collect(Collectors.toMap(
+                tab -> tab.getReconciliationStatus() + "_" + tab.getPayType(),
+                LogisticsBillCostDTO.TabCountDTO::getCount,
+                Integer::sum
+        ));
         List<LogisticsBillCostDTO.TabListDTO> resultList = new ArrayList<>();
         ReconciliationTabStatusEnum[] values = ReconciliationTabStatusEnum.values();
         for (ReconciliationTabStatusEnum statusEnum : values) {
-            LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             LogisticsBillCostDTO.TabListDTO resultDTO = new LogisticsBillCostDTO.TabListDTO();
-            //尾程费用(自发货)
-            String tabSql = logisticsBillCostQueryHandler.getTabSql(statusEnum.getCode());
-            //尾程费用
-            if (DictCostAttributionEnum.LAST_MILE.equals(attribution)) {
-                tabSql = logisticsLastMileCostQueryHandler.getTabSql(statusEnum.getCode());
-            }
-            HashMap<String,String> map = new HashMap<>();
-            map.put("default",tabSql);
-            pagingParamDTO.setSqlMap(map);
-            Integer count = this.baseMapper.listCount(pagingParamDTO);
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            Integer count = getCountByMap(statusEnum,map);
+            resultDTO.setCount(count);
             resultDTO.setTabFlag(statusEnum.getCode());
             resultDTO.setTabFlagName(statusEnum.getName());
             resultList.add(resultDTO);
@@ -650,9 +649,38 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return resultList;
     }
 
+    private Integer getCountByMap(ReconciliationTabStatusEnum statusEnum, Map<String, Integer> map) {
+        Integer count = 0;
+        if (ReconciliationTabStatusEnum.PAY_CONFIRM.getCode().equals(statusEnum.getCode())) {
+            String key = ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
+            count = map.getOrDefault(key, 0);
+        }else if (ReconciliationTabStatusEnum.PAY_CONFIRMED.getCode().equals(statusEnum.getCode())) {
+            String key1 = ReconciliationStatusEnum.CONFIRMED.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
+            Integer count1 = map.getOrDefault(key1, 0);
+            String key2 = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.PAY.getCode();
+            Integer count2 = map.getOrDefault(key2, 0);
+            count = count1 + count2;
+        }else if (ReconciliationTabStatusEnum.REFUND_CONFIRM.getCode().equals(statusEnum.getCode())) {
+            String key = ReconciliationStatusEnum.TO_BE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
+            count = map.getOrDefault(key, 0);
+        }else if (ReconciliationTabStatusEnum.REFUND_CONFIRMED.getCode().equals(statusEnum.getCode())) {
+            String key1 = ReconciliationStatusEnum.CONFIRMED.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
+            Integer count1 = map.getOrDefault(key1, 0);
+            String key2 = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode() + "_" + LogisticsBillCostPayTypeEnum.REFUND.getCode();
+            Integer count2 = map.getOrDefault(key2, 0);
+            count = count1 + count2;
+        }
+        return count;
+    }
+
     @Override
     public PagingVO<LogisticsBillCostDTO.ListDTO> paging(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> pagingDTO) {
         LogisticsBillCostDTO.PagingParamDTO params = pagingDTO.getParams();
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        if(dynamicDataSourceTypeEnum == null) {
+            dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
+        }
+        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
         params.setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<LogisticsBillCostDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
@@ -1002,7 +1030,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public void handleDataPaging( List<LogisticsBillCostDTO.ListDTO> records)  {
         //运输状态
         List<DictBasicDTO.ViewDTO> transportStatusList = dictBasicService.getByKey(DictBasicEnum.LOGISTIC_TRACK_STATUS.getType());
-
+        Map<String, String> transportStatusMap = transportStatusList.stream()
+                .collect(Collectors.toMap(DictBasicDTO.ViewDTO::getCode, DictBasicDTO.ViewDTO::getName, (first, second) -> first));
         //区域信息
         Map<String, String> regionNameMap = FeignQuery.list(DictGlobalAreaEntity.class).stream().collect(Collectors.toMap(DictGlobalAreaEntity::getId, DictGlobalAreaEntity::getRegionName));
 
@@ -1048,8 +1077,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
             listDTO.setTransportStatus(detailIdStatus.get(listDTO.getLogisticsBillDetailId()));
             //运输状态
-            String name = transportStatusList.stream().filter(obj -> obj.getCode().equals(listDTO.getTransportStatus())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            listDTO.setTransportStatusName(name);
+            listDTO.setTransportStatusName(transportStatusMap.getOrDefault(listDTO.getTransportStatus(), ""));
             //平台名称
             PlatformDictEnum platformDictEnum = PlatformDictEnum.getByCode(listDTO.getSalesPlatform());
             if (ObjectUtil.isNotEmpty(platformDictEnum)) {

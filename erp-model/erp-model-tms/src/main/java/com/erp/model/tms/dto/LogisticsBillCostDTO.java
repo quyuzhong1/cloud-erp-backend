@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -78,6 +80,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 排除的类型
          */
         private List<String> excludeOrderTypeList;
+
+        /**
+         * 动态数据源，需要重新get方法
+         */
+        private String dynamicDataSource;
     }
 
 
@@ -1277,5 +1284,15 @@ public class LogisticsBillCostDTO implements Serializable {
          * 费用项更新列表
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabCountDTO {
+        private String type;
+        private String reconciliationStatus;
+        private String payType;
+        private Integer count;
     }
 }

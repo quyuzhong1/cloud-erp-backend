@@ -1,0 +1,20 @@
+---
+description: Testing rules
+globs: ["**/src/test/**/*.java", "**/*Test.java", "**/*Tests.java"]
+alwaysApply: false
+---
+
+# Testing Rules
+
+- Place Java tests in the relevant module under `src/test/java`.
+- Prefer focused Maven validation:
+
+```powershell
+mvn -pl <module> -am test
+```
+
+- Use root-level `mvn test` only when expected runtime dependencies are available.
+- Check module POM files for `maven.test.skip=true`; tests may be skipped by configuration.
+- Document external dependencies required by tests, such as Nacos, Redis, PostgreSQL, RocketMQ, Seata, XXL-JOB, or third-party credentials.
+- Do not add tests that require live external services without making that dependency explicit.
+- If tests cannot run because of environment requirements, record the reason and the remaining risk.
