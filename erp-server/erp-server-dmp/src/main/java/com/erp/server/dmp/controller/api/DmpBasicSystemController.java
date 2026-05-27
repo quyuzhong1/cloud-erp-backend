@@ -282,4 +282,16 @@ public class DmpBasicSystemController extends BaseController {
         return success(true);
     }
 
+
+    /**
+     * 系统平台选项
+     * @author will
+     * @date:  2026-05-27
+     * @return List<BaseDropDownDTO.DictDropDownDTO>
+     */
+    @GetMapping("/selectDmpBasicSystem")
+    public ApiResult<List<BaseDropDownDTO.DictDropDownDTO>> selectDmpBasicSystem(){
+        List<BaseDropDownDTO.DictDropDownDTO> result = dmpBasicSystemService.selectDmpBasicSystem();
+        return success(result);
+    }
 }
