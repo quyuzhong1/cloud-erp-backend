@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Shopee 售后退货列表 init：按更新时间拉取 v2.returns.get_return_list，仅保留 return_solution=0。
+ * Shopee 售后列表 init：按更新时间拉取 v2.returns.get_return_list，保留 return_solution=0/1。
  */
 @Slf4j
 @Service
@@ -37,6 +37,7 @@ import java.util.List;
 public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
 
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
+    private static final int RETURN_SOLUTION_REFUND_ONLY = 1;
     private static final int MAX_RETRY = 10;
 
     @Resource
@@ -78,7 +79,7 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
             }
             for (int i = 0; i < pageReturns.size(); i++) {
                 JSONObject returnItem = pageReturns.getJSONObject(i);
-                if (isReturnAndRefund(returnItem)) {
+                if (isSupportedReturnSolution(returnItem)) {
                     returnItems.add(returnItem);
                 }
             }
@@ -91,7 +92,7 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
         return result;
     }
 
-    private boolean isReturnAndRefund(JSONObject returnItem) {
+    private boolean isSupportedReturnSolution(JSONObject returnItem) {
         if (returnItem == null) {
             return false;
         }
@@ -99,7 +100,8 @@ public class DmpInputShopeeRetrunInitHandler extends DmpInputInitHandler {
         if (returnSolution == null) {
             return false;
         }
-        return RETURN_SOLUTION_RETURN_AND_REFUND == Integer.parseInt(String.valueOf(returnSolution));
+        int solution = Integer.parseInt(String.valueOf(returnSolution));
+        return RETURN_SOLUTION_RETURN_AND_REFUND == solution || RETURN_SOLUTION_REFUND_ONLY == solution;
     }
 
     private ShopeeResponse executeWithRetry(OrderRequest orderRequest, String apiName) {

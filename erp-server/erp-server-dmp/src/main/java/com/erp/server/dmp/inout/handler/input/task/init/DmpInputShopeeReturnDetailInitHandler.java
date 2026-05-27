@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
 
-    private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
     private static final int MAX_RETRY = 10;
     private static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
 
@@ -86,10 +85,9 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             orderRequest.setOrderSns(returnSn);
             ShopeeResponse response = executeWithRetry(orderRequest, "退货明细");
             JSONObject detail = response.getResponse();
-            if (detail == null || !isReturnAndRefund(detail)) {
-                continue;
+            if (detail != null) {
+                detailList.add(detail);
             }
-            detailList.add(detail);
         }
 
         DmpInputTaskInitDTO initDTO = new DmpInputTaskInitDTO();
@@ -108,14 +106,6 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID,
                 DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
         return mongoService.findMongoData(paramDataList, parentStorageName);
-    }
-
-    private boolean isReturnAndRefund(JSONObject returnDetail) {
-        Object returnSolution = returnDetail.get("return_solution");
-        if (returnSolution == null) {
-            return false;
-        }
-        return RETURN_SOLUTION_RETURN_AND_REFUND == Integer.parseInt(String.valueOf(returnSolution));
     }
 
     private ShopeeResponse executeWithRetry(OrderRequest orderRequest, String apiName) {

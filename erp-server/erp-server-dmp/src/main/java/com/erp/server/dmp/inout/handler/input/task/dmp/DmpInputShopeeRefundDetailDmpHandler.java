@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,15 +16,15 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Shopee 售后退货明细 DMP 转换。
+ * Shopee 仅退款明细 DMP 转换：return_solution=1 且 status=CANCELLED（测试环境暂无 CLOSED 样本）。
  */
 @Service
 @Scope("prototype")
-public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandler {
+public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandler {
 
-    private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
-    private static final int REASON_MAX_LENGTH = 255;
-    private static final String PARENT_STORAGE_NAME = "dmp_so_return_info";
+    private static final int RETURN_SOLUTION_REFUND_ONLY = 1;
+    private static final String STATUS_REFUND = "CANCELLED";
+    private static final String PARENT_STORAGE_NAME = "dmp_so_refund_info";
 
     @Override
     protected DmpCfgInputConvertEntity getMainConvertId() {
@@ -38,20 +39,22 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
+        if (!isRefundOnlyClosed(dmpInputMongoEntity)) {
+            return new ArrayList<>();
+        }
         List<Map<String, Object>> itemList = parseItemList(dmpInputMongoEntity.get("item"));
         if (CollUtil.isEmpty(itemList)) {
             return new ArrayList<>();
         }
         String returnSn = String.valueOf(dmpInputMongoEntity.getOrDefault("return_sn", ""));
         String orderSn = String.valueOf(dmpInputMongoEntity.getOrDefault("order_sn", ""));
-        String textReason = String.valueOf(dmpInputMongoEntity.getOrDefault("text_reason", ""));
         List<Map<String, Object>> detailList = new ArrayList<>();
         for (Map<String, Object> item : itemList) {
             Map<String, Object> detail = new HashMap<>(item);
             detail.put("return_sn", returnSn);
             detail.put("order_sn", orderSn);
-            detail.put("text_reason", textReason);
             detail.put("return_solution", dmpInputMongoEntity.get("return_solution"));
+            detail.put("status", dmpInputMongoEntity.get("status"));
             detailList.add(detail);
         }
         return detailList;
@@ -84,9 +87,7 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = entry.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                Object returnSolution = dmpDataMap.get("return_solution");
-                if (returnSolution == null
-                        || RETURN_SOLUTION_RETURN_AND_REFUND != Integer.parseInt(String.valueOf(returnSolution))) {
+                if (!isRefundOnlyClosed(dmpDataMap)) {
                     continue;
                 }
                 String platformSku = resolvePlatformSku(dmpDataMap);
@@ -95,13 +96,13 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 }
                 Object amountObj = dmpDataMap.get("amount");
                 if (amountObj != null) {
-                    dmpDataMap.put("qty", Integer.parseInt(String.valueOf(amountObj)));
+                    int qty = Integer.parseInt(String.valueOf(amountObj));
+                    dmpDataMap.put("qty", qty);
+                    Object itemPriceObj = dmpDataMap.get("item_price");
+                    if (itemPriceObj != null) {
+                        dmpDataMap.put("amount", new BigDecimal(String.valueOf(itemPriceObj)).multiply(BigDecimal.valueOf(qty)));
+                    }
                 }
-                Object itemPriceObj = dmpDataMap.get("item_price");
-                if (itemPriceObj != null) {
-                    dmpDataMap.put("sellPrice", itemPriceObj);
-                }
-                dmpDataMap.put("solutionType", "return_and_refund");
                 Object returnSnObj = dmpDataMap.get("return_sn");
                 if (returnSnObj != null && StringUtils.isNotBlank(platformSku)) {
                     dmpDataMap.put("thirdDetailId", returnSnObj + "_" + platformSku);
@@ -111,12 +112,31 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                     dmpDataMap.put("thirdOrderCode", orderSnObj);
                     dmpDataMap.put("platformOrderCode", orderSnObj);
                 }
-                Object reasonObj = dmpDataMap.get("text_reason");
-                if (reasonObj != null) {
-                    dmpDataMap.put("reason", StringUtils.left(String.valueOf(reasonObj), REASON_MAX_LENGTH));
-                }
             }
         }
+    }
+
+    private boolean isRefundOnlyClosed(Map<String, Object> dataMap) {
+        Object returnSolution = dataMap.get("return_solution");
+        if (returnSolution == null
+                || RETURN_SOLUTION_REFUND_ONLY != Integer.parseInt(String.valueOf(returnSolution))) {
+            return false;
+        }
+        return STATUS_REFUND.equalsIgnoreCase(resolvePlatformStatus(dataMap));
+    }
+
+    private String resolvePlatformStatus(Map<String, Object> dataMap) {
+        Object platformStatus = dataMap.get("platformOriginalStatus");
+        if (platformStatus == null) {
+            platformStatus = dataMap.get("platform_original_status");
+        }
+        if (platformStatus == null) {
+            platformStatus = dataMap.get("platformStatus");
+        }
+        if (platformStatus == null) {
+            platformStatus = dataMap.get("status");
+        }
+        return String.valueOf(platformStatus == null ? "" : platformStatus);
     }
 
     private String resolvePlatformSku(Map<String, Object> item) {
