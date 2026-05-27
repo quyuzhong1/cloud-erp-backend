@@ -2832,7 +2832,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             int totalSuccess = 0;
             int totalFailed = 0;
             int batchNumber = 0;
-            SmallBagPushAllocationContext pushContext = buildSmallBagPushAllocationContext();
+            LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext = buildSmallBagPushAllocationContext();
             LocalDateTime taskStartTime = taskRecord.getStartTime();
             Integer taskExecTimeout = taskRecord.getExecTimeout();
 
@@ -2943,7 +2943,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId, String businessType,
                                              List<String> batchIds, String reportDate, int timeoutSeconds,
-                                             SmallBagPushAllocationContext pushContext) {
+                                                                  LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
 
         List<String> distinctBatchIds = batchIds.stream()
             .filter(StringUtils::isNotBlank)
@@ -3072,7 +3072,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
                                                             String reportDate, int timeoutSeconds,
-                                                            SmallBagPushAllocationContext pushContext) {
+                                                                                 LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
 
         Map<String, TmsAsyncTaskDetailEntity> executableDetailMap = new LinkedHashMap<>();
         List<TmsAsyncTaskDetailEntity> duplicateDetails = new ArrayList<>();
@@ -3173,7 +3173,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "id")
     @Override
-    public BatchResultDTO pushAllocation(String id, String reportDate, SmallBagPushAllocationContext pushContext) {
+    public BatchResultDTO pushAllocation(String id, String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
         if (pushContext == null) {
             pushContext = buildSmallBagPushAllocationContext();
         }
@@ -3588,7 +3588,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return totalCountDTO;
     }
 
-    private SmallBagPushAllocationContext buildSmallBagPushAllocationContext() {
+    private LogisticsBillCostDTO.SmallBagPushAllocationContext buildSmallBagPushAllocationContext() {
         CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
         AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
         Map<String, String> feeTypeSettingMaps = buildFeeTypeSettingMaps(allocationSettingDTO);
@@ -3598,7 +3598,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             orgIdNameMaps = accountingCompanies.stream()
                 .collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName, (o1, o2) -> o1));
         }
-        return new SmallBagPushAllocationContext(
+        return new LogisticsBillCostDTO.SmallBagPushAllocationContext(
             allocationSettingDTO,
             feeTypeSettingMaps,
             orgIdNameMaps,
@@ -3624,14 +3624,5 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return feeTypeSettingMaps;
     }
 
-    @Data
-    @AllArgsConstructor
-    static class SmallBagPushAllocationContext {
-        private AllocationSettingDTO allocationSettingDTO;
-        private Map<String, String> feeTypeSettingMaps;
-        private Map<String, String> orgIdNameMaps;
-        private String weightPackageAllocation;
-        private String packageOrgId;
-        private String packageWarehouseId;
-    }
+
 }

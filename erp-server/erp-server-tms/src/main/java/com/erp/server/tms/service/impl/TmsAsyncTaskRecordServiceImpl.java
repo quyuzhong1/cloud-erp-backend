@@ -100,14 +100,15 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public String addManualTask(String businessType, String json){
-        Integer count = lambdaQuery()
-                .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
-                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
-                .count();
-        if(count > 0){
-            LogisticsBillCostDTO.PushDTO bean = JSONUtil.toBean(json, LogisticsBillCostDTO.PushDTO.class);
-            throw new ServiceException(MessageFormat.format("【{0}】费用分摊生成中,剩余待执行任务数量【{1}】，请勿重复提交",bean.getReportDate(),count));
-
+        List<TmsAsyncTaskRecordEntity> runningTasks = lambdaQuery()
+            .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
+            .in(TmsAsyncTaskRecordEntity::getStatus,
+                Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .list();
+        if (CollUtil.isNotEmpty(runningTasks)
+            && runningTasks.stream().anyMatch(task -> isSameManualTaskDataJson(json, task.getDataJson()))) {
+            log.warn("手动异步任务参数重复，businessType: {}, json: {}", businessType, json);
+            return null;
         }
 
         TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();
@@ -120,6 +121,51 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
         return save(entity) ? entity.getId() : null;
+    }
+
+    /**
+     * 比较手动任务入参是否等价（忽略 taskId、游标等执行过程字段）
+     */
+    private boolean isSameManualTaskDataJson(String json1, String json2) {
+        return Objects.equals(normalizeManualTaskDataJson(json1), normalizeManualTaskDataJson(json2));
+    }
+
+    private String normalizeManualTaskDataJson(String json) {
+        if (StringUtils.isBlank(json)) {
+            return "";
+        }
+        try {
+            TmsAsyncTaskRecordDTO.PushParamsDTO params = JSONUtil.toBean(json, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+            params.setTaskId(null);
+            params.setLastId(null);
+            params.setBatchSize(null);
+            if (CollUtil.isNotEmpty(params.getIds())) {
+                List<String> sortedIds = params.getIds().stream()
+                    .filter(StringUtils::isNotBlank)
+                    .sorted()
+                    .collect(Collectors.toList());
+                params.setIds(sortedIds);
+            } else {
+                params.setIds(null);
+            }
+            return JSONUtil.toJsonStr(params);
+        } catch (Exception e) {
+            log.debug("手动任务参数按 PushParamsDTO 归一化失败，回退 JSON 对象比较: {}", e.getMessage());
+            cn.hutool.json.JSONObject obj = JSONUtil.parseObj(json);
+            obj.remove("taskId");
+            obj.remove("lastId");
+            obj.remove("batchSize");
+            cn.hutool.json.JSONArray idsArr = obj.getJSONArray("ids");
+            if (idsArr != null && !idsArr.isEmpty()) {
+                List<String> sortedIds = idsArr.stream()
+                    .map(String::valueOf)
+                    .filter(StringUtils::isNotBlank)
+                    .sorted()
+                    .collect(Collectors.toList());
+                obj.set("ids", sortedIds);
+            }
+            return obj.toString();
+        }
     }
 
     /**
