@@ -667,20 +667,21 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
+        boolean earlyStage = isEarlyStageDelivery(entity);
         //根据发货单状态处理
         if(SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(entity.getStatus())){
             //删除波次
             waveListDetailService.moveOut(entity.getId(), true);
         }
-        if(!isEarlyStageDelivery(entity)){
+        if (!earlyStage) {
             //新增相反冻结库存,推送旺店通
             service.addReverseInventory(entity,soB2cDeliveryInterceptEntity,interceptInventoryDTOList);
             //删除拣货单
             pickingListsService.deleteBySourceId(Collections.singletonList(entity.getId()));
 
         }
-        if (isEarlyStageDelivery(entity)) {
-            //待处理/生成波次异常：与取消发货一致，回滚实体仓+虚拟仓并更新状态
+        if (earlyStage) {
+            //待处理/生成波次异常：rollbackInventory 会将状态置为 cancelDelivery
             soB2cDeliveryService.rollbackInventory(Collections.singletonList(entity.getId()));
         } else {
             soB2cDeliveryService.addUsableVirtualInventory(Collections.singletonList(entity));
@@ -856,21 +857,19 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     /**
-     * 更新发货单状态为取消发货。
-     * updateStatus 未更新到行时，再通过 {@link #ensureDeliveryCancelled} 复核。
+     * 更新发货单状态为取消发货；终态校验由调用方统一执行 {@link #ensureDeliveryCancelled}。
+     * updateStatus 返回 false 时可能是并发幂等（已为 cancelDelivery），由后续校验兜底。
      *
      * @param entity 发货单
      */
     private void cancelDeliveryStatus(SoB2cDeliveryEntity entity) {
-        Boolean updated = soB2cDeliveryService.updateStatus(
+        soB2cDeliveryService.updateStatus(
                 Collections.singletonList(entity.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
-        if (!Boolean.TRUE.equals(updated)) {
-            ensureDeliveryCancelled(entity.getId(), entity.getCode());
-        }
     }
 
     /**
      * 校验发货单已取消发货，避免拦截单成功但发货单仍为待处理。
+     * 早期阶段依赖 {@link SoB2cDeliveryService#rollbackInventory} 将状态置为 cancelDelivery 后再校验。
      *
      * @param deliveryId   发货单 id
      * @param deliveryCode 发货单号
