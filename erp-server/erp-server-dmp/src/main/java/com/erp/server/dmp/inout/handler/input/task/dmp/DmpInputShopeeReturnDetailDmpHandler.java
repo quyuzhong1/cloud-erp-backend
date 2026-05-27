@@ -21,6 +21,7 @@ import java.util.TreeMap;
 public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandler {
 
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
+    private static final int REASON_MAX_LENGTH = 255;
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
@@ -49,12 +50,20 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
             return new ArrayList<>();
         }
         if (itemObj instanceof List) {
-            return (List<Map<String, Object>>) itemObj;
+            return castMapList((List<?>) itemObj);
         }
         if (itemObj instanceof JSONArray) {
-            return ((JSONArray) itemObj).toJavaList(Map.class);
+            return castMapList(((JSONArray) itemObj).toJavaList(Map.class));
         }
-        return JSON.parseArray(JSON.toJSONString(itemObj), Map.class);
+        return castMapList(JSON.parseArray(JSON.toJSONString(itemObj), Map.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> castMapList(List<?> rawList) {
+        if (CollUtil.isEmpty(rawList)) {
+            return new ArrayList<>();
+        }
+        return (List<Map<String, Object>>) (List<?>) rawList;
     }
 
     @Override
@@ -91,7 +100,7 @@ public class DmpInputShopeeReturnDetailDmpHandler extends DmpInputDoNextDmpHandl
                 }
                 Object reasonObj = dmpDataMap.get("text_reason");
                 if (reasonObj != null) {
-                    dmpDataMap.put("reason", reasonObj);
+                    dmpDataMap.put("reason", StringUtils.left(String.valueOf(reasonObj), REASON_MAX_LENGTH));
                 }
             }
         }

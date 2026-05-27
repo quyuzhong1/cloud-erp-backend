@@ -10,12 +10,12 @@ import lombok.Data;
 @Data
 public class PlatformShopeeReturnDTO {
 
-    @Panno(value = PannoEnum.EQ)
+    @Panno(findType = PannoEnum.EQ, field = "returnSn")
     private String returnSn;
 
-    @Panno(value = PannoEnum.EQ)
+    @Panno(findType = PannoEnum.EQ, field = "orderSn")
     private String orderSn;
 
-    @Panno(value = PannoEnum.EQ)
+    @Panno(findType = PannoEnum.EQ, field = "shopId")
     private String shopId;
 }
