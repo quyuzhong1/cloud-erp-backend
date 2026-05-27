@@ -158,6 +158,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
     private SysDictFeign sysDictFeign;
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Lazy
+    @Resource
+    private SoMultiChannelService soMultiChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -789,7 +792,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             }
         }
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
-            this.cancelProcess(entity.getId());
+            soMultiChannelService.cancelProcess(new ApproveDTO.CancelProcessDTO(entity.getId()));
         }
         this.lambdaUpdate()
                 .set(updateCreateStatusCancel, SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
