@@ -1600,42 +1600,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
-
-        List<AfterSalePackEntity> usedPackList = afterSalePackService.lambdaQuery()
-                .in(AfterSalePackEntity::getSourceId, ids)
-                .eq(AfterSalePackEntity::getSourceType, SourceTypeEnum.PO_RETURN.getCode())
-                .list();
-        if (CollectionUtils.isNotEmpty(usedPackList)) {
-            List<String> packIds = usedPackList.stream().map(AfterSalePackEntity::getId).collect(Collectors.toList());
-            List<AfterSalePackDetailEntity> packDetailList = afterSalePackDetailService.lambdaQuery()
-                    .in(AfterSalePackDetailEntity::getMainId, packIds)
-                    .list();
-            if (CollectionUtils.isNotEmpty(packDetailList)) {
-                List<AfterSalePackDetailEntity> updateDetailList = packDetailList.stream().map(detail -> {
-                    AfterSalePackDetailEntity updateEntity = new AfterSalePackDetailEntity();
-                    updateEntity.setId(detail.getId());
-                    updateEntity.setActualQty(MathUtil.ZERO);
-                    updateEntity.setDiffQty(Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO));
-                    return updateEntity;
-                }).collect(Collectors.toList());
-                if (!afterSalePackDetailService.updateBatchById(updateDetailList)) {
-                    throw new ServiceException("作废采购退货单时释放箱唛明细失败");
-                }
-            }
-            List<AfterSalePackEntity> updatePackList = usedPackList.stream().map(pack -> {
-                AfterSalePackEntity updateEntity = new AfterSalePackEntity();
-                updateEntity.setId(pack.getId());
-                updateEntity.setIsUse(Boolean.FALSE);
-                updateEntity.setIsDifference(Boolean.FALSE);
-                updateEntity.setSourceId("");
-                updateEntity.setSourceCode("");
-                updateEntity.setSourceType("");
-                return updateEntity;
-            }).collect(Collectors.toList());
-            if (!afterSalePackService.updateBatchById(updatePackList)) {
-                throw new ServiceException("作废采购退货单时释放箱唛失败");
-            }
-        }
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
 
         //修改状态为待提交
         lambdaUpdate().set(PoReturnEntity::getInvalidStatus, Boolean.TRUE)
@@ -1677,42 +1643,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (count != warehouseReceiveList.size()) {
             throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
-
-        List<AfterSalePackEntity> usedPackList = afterSalePackService.lambdaQuery()
-                .in(AfterSalePackEntity::getSourceId, ids)
-                .eq(AfterSalePackEntity::getSourceType, SourceTypeEnum.PO_RETURN.getCode())
-                .list();
-        if (CollectionUtils.isNotEmpty(usedPackList)) {
-            List<String> packIds = usedPackList.stream().map(AfterSalePackEntity::getId).collect(Collectors.toList());
-            List<AfterSalePackDetailEntity> packDetailList = afterSalePackDetailService.lambdaQuery()
-                    .in(AfterSalePackDetailEntity::getMainId, packIds)
-                    .list();
-            if (CollectionUtils.isNotEmpty(packDetailList)) {
-                List<AfterSalePackDetailEntity> updateDetailList = packDetailList.stream().map(detail -> {
-                    AfterSalePackDetailEntity updateEntity = new AfterSalePackDetailEntity();
-                    updateEntity.setId(detail.getId());
-                    updateEntity.setActualQty(MathUtil.ZERO);
-                    updateEntity.setDiffQty(Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO));
-                    return updateEntity;
-                }).collect(Collectors.toList());
-                if (!afterSalePackDetailService.updateBatchById(updateDetailList)) {
-                    throw new ServiceException("删除采购退货单时释放箱唛明细失败");
-                }
-            }
-            List<AfterSalePackEntity> updatePackList = usedPackList.stream().map(pack -> {
-                AfterSalePackEntity updateEntity = new AfterSalePackEntity();
-                updateEntity.setId(pack.getId());
-                updateEntity.setIsUse(Boolean.FALSE);
-                updateEntity.setIsDifference(Boolean.FALSE);
-                updateEntity.setSourceId("");
-                updateEntity.setSourceCode("");
-                updateEntity.setSourceType("");
-                return updateEntity;
-            }).collect(Collectors.toList());
-            if (!afterSalePackService.updateBatchById(updatePackList)) {
-                throw new ServiceException("删除采购退货单时释放箱唛失败");
-            }
-        }
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
         //删除详情表
         poReturnDetailService.delete(ids);
 
@@ -4351,6 +4283,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.BILL_VOID_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
 
         //修改状态为待提交
         lambdaUpdate().set(PoReturnEntity::getInvalidStatus, Boolean.TRUE)
@@ -4381,6 +4315,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             throw new ServiceException(ApiError.BILL_DELETE_ALLOWED_STATUS_ONLY);
         }
         List<String> ids = Collections.singletonList(entity.getId());
+        // 删除采购退货单时需要处理售后装箱的数据
+        handleAfterSalePack(ids);
         //删除详情表
         poReturnDetailService.delete(ids);
 
@@ -4392,6 +4328,44 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         } else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        }
+    }
+
+    private void handleAfterSalePack(List<String> ids) {
+        List<AfterSalePackEntity> usedPackList = afterSalePackService.lambdaQuery()
+                .in(AfterSalePackEntity::getSourceId, ids)
+                .eq(AfterSalePackEntity::getSourceType, SourceTypeEnum.PO_RETURN.getCode())
+                .list();
+        if (CollectionUtils.isNotEmpty(usedPackList)) {
+            List<String> packIds = usedPackList.stream().map(AfterSalePackEntity::getId).collect(Collectors.toList());
+            List<AfterSalePackDetailEntity> packDetailList = afterSalePackDetailService.lambdaQuery()
+                    .in(AfterSalePackDetailEntity::getMainId, packIds)
+                    .list();
+            if (CollectionUtils.isNotEmpty(packDetailList)) {
+                List<AfterSalePackDetailEntity> updateDetailList = packDetailList.stream().map(detail -> {
+                    AfterSalePackDetailEntity updateEntity = new AfterSalePackDetailEntity();
+                    updateEntity.setId(detail.getId());
+                    updateEntity.setActualQty(MathUtil.ZERO);
+                    updateEntity.setDiffQty(Optional.ofNullable(detail.getPackQty()).orElse(MathUtil.ZERO));
+                    return updateEntity;
+                }).collect(Collectors.toList());
+                if (!afterSalePackDetailService.updateBatchById(updateDetailList)) {
+                    throw new ServiceException("删除或者作废采购退货单时释放箱唛明细失败");
+                }
+            }
+            List<AfterSalePackEntity> updatePackList = usedPackList.stream().map(pack -> {
+                AfterSalePackEntity updateEntity = new AfterSalePackEntity();
+                updateEntity.setId(pack.getId());
+                updateEntity.setIsUse(Boolean.FALSE);
+                updateEntity.setIsDifference(Boolean.FALSE);
+                updateEntity.setSourceId("");
+                updateEntity.setSourceCode("");
+                updateEntity.setSourceType("");
+                return updateEntity;
+            }).collect(Collectors.toList());
+            if (!afterSalePackService.updateBatchById(updatePackList)) {
+                throw new ServiceException("删除或者作废采购退货单时释放箱唛失败");
+            }
         }
     }
 
