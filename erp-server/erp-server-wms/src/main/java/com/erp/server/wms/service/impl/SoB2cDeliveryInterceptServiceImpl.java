@@ -683,11 +683,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (earlyStage) {
             //待处理/生成波次异常：rollbackInventory 会将状态置为 cancelDelivery
             soB2cDeliveryService.rollbackInventory(Collections.singletonList(entity.getId()));
+            ensureDeliveryCancelled(entity.getId(), entity.getCode());
         } else {
             soB2cDeliveryService.addUsableVirtualInventory(Collections.singletonList(entity));
-            cancelDeliveryStatus(entity);
+            cancelDeliveryStatusAndVerify(entity);
         }
-        ensureDeliveryCancelled(entity.getId(), entity.getCode());
         //更新拦截单状态
         soB2cDeliveryInterceptEntity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
         soB2cDeliveryInterceptEntity.setHandleUserId(userInfo.getUid());
@@ -857,14 +857,19 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     /**
-     * 更新发货单状态为取消发货；终态校验由调用方统一执行 {@link #ensureDeliveryCancelled}。
-     * updateStatus 返回 false 时可能是并发幂等（已为 cancelDelivery），由后续校验兜底。
+     * 更新发货单为取消发货并校验终态，避免调用方遗漏 {@link #ensureDeliveryCancelled}。
+     * updateStatus 返回 false 时可能是并发幂等，记录 warn 后仍执行校验。
      *
      * @param entity 发货单
      */
-    private void cancelDeliveryStatus(SoB2cDeliveryEntity entity) {
-        soB2cDeliveryService.updateStatus(
+    private void cancelDeliveryStatusAndVerify(SoB2cDeliveryEntity entity) {
+        Boolean updated = soB2cDeliveryService.updateStatus(
                 Collections.singletonList(entity.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+        if (!Boolean.TRUE.equals(updated)) {
+            log.warn("cancelDeliveryStatusAndVerify: updateStatus returned false, deliveryId={}, deliveryCode={}",
+                    entity.getId(), entity.getCode());
+        }
+        ensureDeliveryCancelled(entity.getId(), entity.getCode());
     }
 
     /**
