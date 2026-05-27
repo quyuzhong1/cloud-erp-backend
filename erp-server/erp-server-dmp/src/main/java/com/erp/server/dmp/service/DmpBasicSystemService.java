@@ -125,7 +125,7 @@ public interface DmpBasicSystemService extends SuperService<DmpBasicSystemEntity
      * 系统平台选项
      * @author will
      * @date:  2026-05-27
-     * @return List<BaseDropDownDTO.DictDropDownDTO>
+     * @return List<BaseDropDownDTO.DictDropDownBasicDTO>
      */
-    List<BaseDropDownDTO.DictDropDownDTO> selectDmpBasicSystem();
+    List<BaseDropDownDTO.DictDropDownBasicDTO> selectDmpBasicSystem();
 }

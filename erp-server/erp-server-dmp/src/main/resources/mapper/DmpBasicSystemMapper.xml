@@ -97,13 +97,16 @@
 
     <!-- 下拉框查询 -->
     <select id="selectDmpBasicSystem"
-            resultType="com.common.business.dto.base.BaseDropDownDTO$DictDropDownDTO">
+            resultType="com.common.business.dto.base.BaseDropDownDTO$DictDropDownBasicDTO">
         SELECT
+            id,
+            type,
             code,
             name,
             disabled
         FROM dmp_basic_system
         WHERE is_deleted = FALSE
+        order by create_time desc
     </select>
 
 </mapper>

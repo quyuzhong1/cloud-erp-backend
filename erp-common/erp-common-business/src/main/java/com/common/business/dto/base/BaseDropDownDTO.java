@@ -267,4 +267,35 @@ public class BaseDropDownDTO implements Serializable {
          */
         private Boolean disabled;
     }
+
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class DictDropDownBasicDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
+    }
 }

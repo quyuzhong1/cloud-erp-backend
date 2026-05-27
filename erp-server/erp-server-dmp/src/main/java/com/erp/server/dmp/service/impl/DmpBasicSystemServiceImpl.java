@@ -273,7 +273,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     }
 
     @Override
-    public List<BaseDropDownDTO.DictDropDownDTO> selectDmpBasicSystem() {
+    public List<BaseDropDownDTO.DictDropDownBasicDTO> selectDmpBasicSystem() {
         return baseMapper.selectDmpBasicSystem();
     }
 }

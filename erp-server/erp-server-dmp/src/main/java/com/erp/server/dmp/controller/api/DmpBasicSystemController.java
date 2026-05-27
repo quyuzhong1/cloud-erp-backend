@@ -290,8 +290,8 @@ public class DmpBasicSystemController extends BaseController {
      * @return List<BaseDropDownDTO.DictDropDownDTO>
      */
     @GetMapping("/selectDmpBasicSystem")
-    public ApiResult<List<BaseDropDownDTO.DictDropDownDTO>> selectDmpBasicSystem(){
-        List<BaseDropDownDTO.DictDropDownDTO> result = dmpBasicSystemService.selectDmpBasicSystem();
+    public ApiResult<List<BaseDropDownDTO.DictDropDownBasicDTO>> selectDmpBasicSystem(){
+        List<BaseDropDownDTO.DictDropDownBasicDTO> result = dmpBasicSystemService.selectDmpBasicSystem();
         return success(result);
     }
 }
