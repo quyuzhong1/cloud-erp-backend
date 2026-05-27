@@ -660,6 +660,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 handleDeliveryInterceptSuccess(entity, logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode(), true, isValidate);
                 return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
             }
+            handleDeliveryIntercepting(soB2cEntity, entity.getDeliveryCode(), remark);
             return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "已发起发货拦截，当前状态拦截中");
         }
         handleDeliveryInterceptSuccess(entity, logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode(), Boolean.TRUE.equals(isCancel) && CreateStatusEnum.CANCEL.getCode().equals(entity.getCreateStatus()), isValidate);
@@ -702,6 +703,21 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         return FulfillmentOrderStatus.CANCELLED.equals(payload.getFulfillmentOrder().getFulfillmentOrderStatus());
     }
 
+    private void handleDeliveryIntercepting(SoB2cEntity soB2cEntity, String deliveryCode, String remark) {
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.TRUE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.TRUE);
+        interceptUpdateOrderDTO.setIds(Collections.singletonList(soB2cEntity.getId()));
+        interceptUpdateOrderDTO.setRemark(remark);
+        soB2cService.updateIntercept(interceptUpdateOrderDTO);
+
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = getThirdWarehouseDelivery(deliveryCode, soB2cEntity.getId());
+        if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus().equals(thirdWarehouseDelivery.getStatus())) {
+            thirdWarehouseDelivery.setStatus(SoB2cWarehouseDeliveryStatusEnum.INTERCEPTING.getStatus());
+            thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
+        }
+    }
+
     private void createWaitHandleDeliveryIntercept(String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity) {
         SoB2cDeliveryInterceptEntity interceptEntity = getLatestApiDeliveryIntercept(soB2cEntity.getId());
         if (Objects.nonNull(interceptEntity)) {
@@ -736,12 +752,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
 
     private void handleDeliveryInterceptSuccess(SoMultiChannelEntity entity, String logisticsChannelId, String logisticsChannelName, String trackNo, String remark, SoB2cEntity soB2cEntity, String deliveryCode, boolean updateCreateStatusCancel, Boolean isValidate) {
         updateMultiChannelInvalidStatus(entity, deliveryCode, updateCreateStatusCancel, isValidate);
-        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = null;
-        if (CharSequenceUtil.isNotBlank(deliveryCode)){
-            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getByCodeAndSoId(deliveryCode, soB2cEntity.getId());
-        }else {
-            thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(soB2cEntity.getId());
-        }
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = getThirdWarehouseDelivery(deliveryCode, soB2cEntity.getId());
         //发货单标记取消发货
         if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
             thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
@@ -779,6 +790,13 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             soB2cDeliveryInterceptFeign.add(addDTO);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{}", deliveryCode), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
+    }
+
+    private ThirdWarehouseDeliveryEntity getThirdWarehouseDelivery(String deliveryCode, String soId) {
+        if (CharSequenceUtil.isNotBlank(deliveryCode)){
+            return thirdWarehouseDeliveryFeign.getByCodeAndSoId(deliveryCode, soId);
+        }
+        return thirdWarehouseDeliveryFeign.getLatestBySoId(soId);
     }
 
     private void updateMultiChannelInvalidStatus(SoMultiChannelEntity entity, String deliveryCode, boolean updateCreateStatusCancel, Boolean isValidate) {
