@@ -592,11 +592,37 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
                 TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
                 taskDTO.setTaskId(entity.getId());
-                SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
-                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
-                }else {
-                    log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                boolean claimed = lambdaUpdate()
+                        .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                        .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+                        .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
+                        .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                        .update();
+                if (!claimed) {
+                    log.warn("异步任务已被其他调度认领，taskId: {}", entity.getId());
+                    continue;
+                }
+                try {
+                    SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
+                    if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                        log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                        lambdaUpdate()
+                                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                                .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
+                                .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
+                                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                                .update();
+                    }else {
+                        log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                    }
+                } catch (Exception e) {
+                    log.error("消息发送异常，taskId: {}", entity.getId(), e);
+                    lambdaUpdate()
+                            .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                            .set(TmsAsyncTaskRecordEntity::getErrorData, org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000))
+                            .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
+                            .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                            .update();
                 }
             }
         }
