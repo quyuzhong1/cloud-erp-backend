@@ -407,7 +407,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             //外验允许入库量
             Integer outAllowInstockQty = allowInstockQtyMap.getOrDefault(receiveDetailEntity.getPurchaseOrderDetailId(),MathUtil.ZERO);
             //采购订单明细下的收货数量汇总
-            Integer totalReceiveQty = totalReceiveQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
+            Integer totalReceiveQty = totalReceiveQtyMap.getOrDefault(receiveDetailEntity.getPurchaseOrderDetailId(),MathUtil.ZERO);
             //采购订单明细下收货单的待质检数量汇总（不包括本单）
             Integer totalWaitQcQty = totalWaitQcQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPodId(), receiveDetailEntity.getPurchaseOrderDetailId()) && !CharSequenceUtil.equals(obj.getDetailId(), receiveDetailEntity.getId())).map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty).reduce(MathUtil.ZERO, Integer::sum);
             //公式：当前收货单待质检量 = max(0, 累计收货量 - 外验允许入库量 - 入库质检总数量 - 前序收货单待质检量)。
@@ -463,10 +463,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             if (ObjectUtil.isEmpty(receiveDetailEntity)) {
                 throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
             }
-            //完成质检：待质检数量 = 待质检数量 - 本次质检合格数量 - 本次质检允许入库数量
+            //完成质检：待质检数量 = 待质检数量 - 本次质检合格数量
             int waitQcQty = isFinishQc
-                    ? receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalQty() - lotQualifiedQtyDTO.getAllowInstockQty()
-                    : receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalQty() + lotQualifiedQtyDTO.getAllowInstockQty();
+                    ? receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalQty()
+                    : receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalQty();
             receiveDetailEntity.setWaitQcQty(Math.max(waitQcQty, MathUtil.ZERO));
             receiveDetailList.add(receiveDetailEntity);
         }
