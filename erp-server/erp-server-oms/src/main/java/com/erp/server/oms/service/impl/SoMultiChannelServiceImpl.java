@@ -754,8 +754,8 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         updateMultiChannelInvalidStatus(entity, deliveryCode, updateCreateStatusCancel, isValidate);
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = getThirdWarehouseDelivery(deliveryCode, soB2cEntity.getId());
         //发货单标记取消发货
-        if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
-            thirdWarehouseDelivery.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+        if (Objects.nonNull(thirdWarehouseDelivery) && !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus().equals(thirdWarehouseDelivery.getStatus())) {
+            thirdWarehouseDelivery.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
             thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("发货拦截作废订单"), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
