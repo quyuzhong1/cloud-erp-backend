@@ -302,7 +302,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.UNKNOWN_UPDATE, desc = "产品信息-多规格-新增/修改")
     @PostMapping("/saveOrUpdateManySpec")
     //@RequestPermissions("plm:product:detail:saveOrUpdateManySpec")
-    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated({Default.class, PlmProductInfoWarrantyRequired.class}) ProductManySpecDTO productManySpecDTO) {
+    public ApiResult saveOrUpdateManySpec(@RequestBody @Validated(Default.class) ProductManySpecDTO productManySpecDTO) {
         Boolean flag = productDetailService.saveOrUpdateManySpec(productManySpecDTO);
         return flag == true ? this.success() : this.failure();
     }
