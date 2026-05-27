@@ -32,6 +32,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -73,6 +74,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -190,6 +193,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private MQProducerService mQProducerService;
+    @Resource
+    private RedissonClient redissonClient;
     @Autowired
     @Qualifier("costAllocationPool")
     private ExecutorService costAllocationPool;
@@ -2735,126 +2740,193 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         dto.setTaskId(taskId);
 
-        // 发送MQ消息，触发异步消费（不再一次性生成所有任务明细）
-        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
-        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-            log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "MQ消息发送失败");
-        }else {
-            log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
+        boolean claimed = asyncTaskRecordService.lambdaUpdate()
+            .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+            .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+            .update();
+        if (!claimed) {
+            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
+        }
+
+        try {
+            // 发送MQ消息，触发异步消费（不再一次性生成所有任务明细）
+            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
+                asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .update();
+            }else {
+                log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
+            }
+        } catch (Exception e) {
+            //若是手动下推发送mq异常，则直接置为完成，用户再主动下推
+            log.error("MQ消息发送异常，taskId: {}", taskId, e);
+            asyncTaskRecordService.lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000))
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .update();
+            throw e;
         }
     }
 
     @Override
     public void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         String taskId = dto.getTaskId();
-
-        CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
-        CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
-
-        // 1. 校验任务存在性
-        TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
-        if (Objects.isNull(taskRecord)) {
-            log.error("任务记录不存在，taskId: {}", taskId);
+        if (StringUtils.isBlank(taskId)) {
+            log.error("小包分摊异步任务ID为空");
             return;
         }
 
-        // 2. 初始化批次配置
-        int batchSize = StringUtils.isBlank(billBatchParamsDTO.getSmallBagBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getSmallBagBatch());
-        int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getSmallBagTimeoutSeconds()) ? 5000 : Integer.valueOf(billBatchParamsDTO.getSmallBagTimeoutSeconds());
-        String lastId = ""; // 游标起点为空
+        RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
+        boolean locked = false;
+        try {
+            // 同一 taskId 只允许一个消费者执行，避免 MQ 重投并发重复插入明细。
+            locked = taskLock.tryLock(0, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("小包分摊异步任务正在执行，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
 
-        int totalProcessed = 0;
-        int totalSuccess = 0;
-        int totalFailed = 0;
-        int batchNumber = 0;
+            CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
+            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
 
-        log.error("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
-        // 将主任务状态更新为处理中
-        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.ING.getCode(), "分批处理中");
+            // 1. 校验任务存在性和状态
+            TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
+            if (Objects.isNull(taskRecord)) {
+                log.error("任务记录不存在，taskId: {}", taskId);
+                return;
+            }
+            if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                log.warn("小包分摊异步任务已完成，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
+            if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
+                boolean claimed = asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .update();
+                if (!claimed) {
+                    log.warn("小包分摊异步任务已被其他消费者认领，taskId: {}", taskId);
+                    return;
+                }
+            } else if (!Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
+                log.warn("小包分摊异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
+                return;
+            }
 
-        // 3. 循环分批处理
-        while (true) {
-            batchNumber++;
+            // 2. 初始化批次配置
+            int batchSize = StringUtils.isBlank(billBatchParamsDTO.getSmallBagBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getSmallBagBatch());
+            int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getSmallBagTimeoutSeconds()) ? 5000 : Integer.valueOf(billBatchParamsDTO.getSmallBagTimeoutSeconds());
+            String lastId = ""; // 游标起点为空
 
-            // 3.1 检查任务是否超时
-            TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
+            int totalProcessed = 0;
+            int totalSuccess = 0;
+            int totalFailed = 0;
+            int batchNumber = 0;
+            SmallBagPushAllocationContext pushContext = buildSmallBagPushAllocationContext();
+            LocalDateTime taskStartTime = taskRecord.getStartTime();
+            Integer taskExecTimeout = taskRecord.getExecTimeout();
 
-            // 检查是否超时
-            if (currentTask.getExecTimeout() != null) {
-                long elapsedSeconds = java.time.Duration.between(currentTask.getStartTime(), LocalDateTime.now()).getSeconds();
-                if (elapsedSeconds > currentTask.getExecTimeout()) {
-                    log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
+            log.error("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
+
+            // 3. 循环分批处理
+            while (true) {
+                batchNumber++;
+
+                if (batchNumber == 1 || batchNumber % 10 == 0) {
+                    TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
+                    if (Objects.equals(currentTask.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                        log.error("循环过程中，任务状态显示已完成，taskId: {}", taskId);
+                        break;
+                    }
+                    taskExecTimeout = currentTask.getExecTimeout();
+                }
+
+                if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
+                    long elapsedSeconds = java.time.Duration.between(taskStartTime, LocalDateTime.now()).getSeconds();
+                    if (elapsedSeconds > taskExecTimeout) {
+                        log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
+                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                            "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                        break;
+                    }
+                }
+
+                // 3.2 分批查询可推送的ID
+                dto.setLastId(lastId);
+                dto.setBatchSize(batchSize);
+
+                List<String> batchIds;
+                try {
+                    batchIds = pageByCanPushAllocation(dto);
+                } catch (Exception e) {
+                    log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
                     asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                        "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                        "第" + batchNumber + "批查询失败: " + e.getMessage());
                     break;
                 }
+
+                if (CollUtil.isEmpty(batchIds)) {
+                    log.error("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
+                             taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
+                    break;
+                }
+
+                log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
+
+                // 3.3 为本批次创建任务明细并执行
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(), timeoutSeconds, pushContext);
+
+                // 3.4 累计统计
+                totalProcessed += batchIds.size();
+                totalSuccess += result.getSuccessCount();
+                totalFailed += result.getFailedCount();
+
+                // 3.5 实时更新主任务进度
+                try {
+                    asyncTaskRecordService.lambdaUpdate()
+                         .set(Objects.isNull(taskRecord.getDetailCount()) || Objects.equals(taskRecord.getDetailCount(),0)  ,TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
+                        .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
+                        .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                        .update();
+
+                    log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
+                             batchNumber, result.getSuccessCount(), result.getFailedCount(),
+                             totalSuccess, totalFailed);
+                } catch (Exception e) {
+                    log.error("更新任务进度失败，taskId: {}", taskId, e);
+                }
+
+                // 3.6 更新游标 (取本批最后一条ID)
+                lastId = batchIds.get(batchIds.size() - 1);
             }
 
-            // 3.2 分批查询可推送的ID
-            dto.setLastId(lastId);
-            dto.setBatchSize(batchSize);
-
-            List<String> batchIds;
+            // 4. 最终更新任务状态
             try {
-                batchIds = pageByCanPushAllocation(dto);
+                asyncTaskRecordService.updateTaskFinally(taskId);
+                log.error("任务最终状态更新完成，taskId: {}", taskId);
             } catch (Exception e) {
-                log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                    "第" + batchNumber + "批查询失败: " + e.getMessage());
-                break;
+                log.error("更新任务最终状态失败，taskId: {}", taskId, e);
             }
-
-            if (CollUtil.isEmpty(batchIds)) {
-                log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
-                         taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
-                break;
-            }
-
-            log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
-
-            // 3.3 为本批次创建任务明细并执行
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(),timeoutSeconds);
-
-            // 3.4 累计统计
-            totalProcessed += batchIds.size();
-            totalSuccess += result.getSuccessCount();
-            totalFailed += result.getFailedCount();
-
-            // 3.5 实时更新主任务进度
-            try {
-                asyncTaskRecordService.lambdaUpdate()
-                     .set(Objects.isNull(taskRecord.getDetailCount()) || Objects.equals(taskRecord.getDetailCount(),0)  ,TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
-                    .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
-                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                    .update();
-
-                log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
-                         batchNumber, result.getSuccessCount(), result.getFailedCount(),
-                         totalSuccess, totalFailed);
-            } catch (Exception e) {
-                log.error("更新任务进度失败，taskId: {}", taskId, e);
-            }
-
-            // 3.6 更新游标 (取本批最后一条ID)
-            lastId = batchIds.get(batchIds.size() - 1);
-
-            // 3.7 批次间短暂休眠，避免数据库压力过大
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("批次间休眠被中断", e);
-                break;
-            }
-        }
-
-        // 4. 最终更新任务状态
-        try {
-            asyncTaskRecordService.updateTaskFinally(taskId);
-            log.error("任务最终状态更新完成，taskId: {}", taskId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("小包分摊异步任务获取锁被中断，taskId: {}", taskId, e);
         } catch (Exception e) {
-            log.error("更新任务最终状态失败，taskId: {}", taskId, e);
+            log.error("小包分摊异步任务执行失败，taskId: {}", taskId, e);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000));
+        } finally {
+            if (locked && taskLock.isHeldByCurrentThread()) {
+                taskLock.unlock();
+            }
         }
     }
 
@@ -2870,14 +2942,54 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @date 2026-04-22
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId, String businessType,
-                                             List<String> batchIds, String reportDate,int timeoutSeconds) {
+                                             List<String> batchIds, String reportDate, int timeoutSeconds,
+                                             SmallBagPushAllocationContext pushContext) {
 
-        // 1. 批量查询物流费用实体
-        List<LogisticsBillCostEntity> costList = listByIds(batchIds);
-        if (CollUtil.isEmpty(costList)) {
-            log.warn("批次中无有效费用数据，batchIds: {}", batchIds);
+        List<String> distinctBatchIds = batchIds.stream()
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctBatchIds)) {
+            log.warn("批次中无有效费用ID，batchIds: {}", batchIds);
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
+
+        // 1. 批量查询物流费用实体
+        List<LogisticsBillCostEntity> costList = listByIds(distinctBatchIds);
+        if (CollUtil.isEmpty(costList)) {
+            log.warn("批次中无有效费用数据，batchIds: {}", distinctBatchIds);
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+        }
+
+        List<String> costIds = costList.stream()
+            .map(LogisticsBillCostEntity::getId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toList());
+        List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
+            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+            .in(TmsAsyncTaskDetailEntity::getBusinessId, costIds)
+            .list();
+        Set<String> existingIngBusinessIds = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        Map<String, TmsAsyncTaskDetailEntity> existingPendingByBusinessId = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .filter(d -> StringUtils.isNotBlank(d.getBusinessId()))
+            .collect(Collectors.toMap(TmsAsyncTaskDetailEntity::getBusinessId, Function.identity(), (o1, o2) -> o1));
+        Set<String> existingBusinessIds = existingDetails.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(existingIngBusinessIds)) {
+            log.warn("跳过执行中的任务明细，taskId: {}, ING数量: {}", taskId, existingIngBusinessIds.size());
+        }
+        if (CollUtil.isNotEmpty(existingPendingByBusinessId)) {
+            log.info("纳入已存在的PENDING任务明细执行，taskId: {}, 数量: {}", taskId, existingPendingByBusinessId.size());
+        }
+
+        List<TmsAsyncTaskDetailEntity> detailsToExecute = new ArrayList<>(existingPendingByBusinessId.values());
 
         // 2. 批量查询关联的物流单
         List<String> billIds = costList.stream()
@@ -2902,6 +3014,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<TmsAsyncTaskDetailEntity> details = new ArrayList<>();
 
         for (LogisticsBillCostEntity cost : costList) {
+            if (existingIngBusinessIds.contains(cost.getId())) {
+                continue;
+            }
+            if (existingBusinessIds.contains(cost.getId())) {
+                continue;
+            }
             LogisticsBillEntity bill = billMap.get(cost.getLogisticsBillId());
             TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
             detail.setMainId(taskId);
@@ -2922,22 +3040,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             details.add(detail);
         }
 
-        if (CollUtil.isEmpty(details)) {
-            log.warn("本批次无有效任务明细，跳过");
+        // 4. 批量保存任务明细
+        if (CollUtil.isNotEmpty(details)) {
+            try {
+                asyncTaskDetailRecordService.saveBatch(details);
+                log.error("本批次任务明细保存成功，数量: {}", details.size());
+                detailsToExecute.addAll(details);
+            } catch (Exception e) {
+                log.error("保存任务明细失败，批次大小: {}", details.size(), e);
+                return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, details.size());
+            }
+        }
+
+        if (CollUtil.isEmpty(detailsToExecute)) {
+            log.warn("本批次无可执行任务明细，taskId: {}", taskId);
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
 
-        // 4. 批量保存任务明细
-        try {
-            asyncTaskDetailRecordService.saveBatch(details);
-            log.debug("本批次任务明细保存成功，数量: {}", details.size());
-        } catch (Exception e) {
-            log.error("保存任务明细失败，批次大小: {}", details.size(), e);
-            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, details.size());
-        }
-
-        // 5. 并发执行本批次
-        return executeBatchWithConcurrency(details, reportDate,timeoutSeconds);
+        // 5. 并发执行本批次（含重投时已存在且仍为 PENDING 的明细）
+        return executeBatchWithConcurrency(detailsToExecute, reportDate, timeoutSeconds, pushContext);
     }
 
     /**
@@ -2950,13 +3071,38 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @date 2026-04-22
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
-                                                            String reportDate,int timeoutSeconds) {
+                                                            String reportDate, int timeoutSeconds,
+                                                            SmallBagPushAllocationContext pushContext) {
 
-        CountDownLatch latch = new CountDownLatch(batchDetails.size());
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failedCount = new AtomicInteger(0);
-
+        Map<String, TmsAsyncTaskDetailEntity> executableDetailMap = new LinkedHashMap<>();
+        List<TmsAsyncTaskDetailEntity> duplicateDetails = new ArrayList<>();
         for (TmsAsyncTaskDetailEntity detail : batchDetails) {
+            String businessId = detail.getBusinessId();
+            if (StringUtils.isBlank(businessId)) {
+                executableDetailMap.put(detail.getId(), detail);
+                continue;
+            }
+            TmsAsyncTaskDetailEntity oldDetail = executableDetailMap.putIfAbsent(businessId, detail);
+            if (Objects.nonNull(oldDetail)) {
+                duplicateDetails.add(detail);
+            }
+        }
+
+        CountDownLatch latch = new CountDownLatch(executableDetailMap.size());
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(duplicateDetails.size());
+
+        for (TmsAsyncTaskDetailEntity duplicateDetail : duplicateDetails) {
+            if (!Objects.equals(duplicateDetail.getStatus(), TmsAsyncTaskRecordStatusEnum.FAILED.getCode())) {
+                asyncTaskDetailRecordService.updateDetail(
+                    duplicateDetail.getId(),
+                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                    "同一任务下重复明细已跳过"
+                );
+            }
+        }
+
+        for (TmsAsyncTaskDetailEntity detail : executableDetailMap.values()) {
             if(Objects.equals(detail.getStatus(),TmsAsyncTaskRecordStatusEnum.FAILED.getCode())){
                 failedCount.incrementAndGet();
                 latch.countDown();
@@ -2967,26 +3113,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             costAllocationPool.execute(() -> {
                 try {
-                    // 检查任务是否仍为PENDING状态（防止重复执行）
-                    Integer pendingCount = asyncTaskDetailRecordService.lambdaQuery()
-                        .eq(TmsAsyncTaskDetailEntity::getId, taskDetailId)
-                        .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                        .count();
-
-                    if (pendingCount == 0) {
+                    if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
                         log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
                         return;
                     }
 
-                    // 更新为处理中
-                    asyncTaskDetailRecordService.updateDetail(
-                        taskDetailId,
-                        TmsAsyncTaskRecordStatusEnum.ING.getCode(),
-                        ""
-                    );
-
-                    // 执行分摊逻辑
-                    BatchResultDTO result = service.pushAllocation(businessId, reportDate);
+                    BatchResultDTO result = service.pushAllocation(businessId, reportDate, pushContext);
 
                     if (result.getSuccess()) {
                         asyncTaskDetailRecordService.updateDetail(
@@ -3036,6 +3168,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 	@Override
 	@DataIdempotent(keyIdName = "id")
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
+        return pushAllocation(id, reportDate, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "id")
+    public BatchResultDTO pushAllocation(String id, String reportDate, SmallBagPushAllocationContext pushContext) {
+        if (pushContext == null) {
+            pushContext = buildSmallBagPushAllocationContext();
+        }
 		LogisticsBillCostEntity entity = getById(id);
 		String reconciliationStatus = entity.getReconciliationStatus();
 		if(!(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
@@ -3108,24 +3249,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		List<SmallBagCostAllocationEntity> addSmallBagCostAllocationEntityList = new ArrayList<>();
 		List<SmallBagCostAllocationDetailEntity> addSmallBagCostAllocationDetailEntityList = new ArrayList<>();
 
-		CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
-		Map<String, String> feeTypeSettingMaps = new HashMap<>();
-		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
-		String weightPackageAllocation = allocationSettingDTO.getWeightPackageAllocation();
-        String packageOrgId = allocationSettingDTO.getPackageOrgId();
-        String packageWarehouseId = allocationSettingDTO.getPackageWarehouseId();
-        AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
-		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
-			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
-				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageShippingCost());
-			}else if(AllocationFeeTypeEnum.DECLARE_COST == allocationFeeTypeEnum) {
-				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageTariffFee());
-			}else if(AllocationFeeTypeEnum.OTHER_COST == allocationFeeTypeEnum) {
-				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageOtherFee());
-			}else if(AllocationFeeTypeEnum.DEDUCTIBLE_TAX == allocationFeeTypeEnum) {
-				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageDeductibleTax());
-			}
-		}
+		Map<String, String> feeTypeSettingMaps = pushContext.getFeeTypeSettingMaps();
+		String weightPackageAllocation = pushContext.getWeightPackageAllocation();
+        String packageOrgId = pushContext.getPackageOrgId();
+        String packageWarehouseId = pushContext.getPackageWarehouseId();
 
         List<String> warehouseIds1 = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CharSequenceUtil.isNotBlank(packageWarehouseId) && !warehouseIds1.contains(packageWarehouseId)){
@@ -3195,11 +3322,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		soOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
 		int i = 0;
 
-        List<BaseIdDTO> accountingCompanies = sysUserFeign.listAccountingCompany();
-        Map<String, String> orgIdNameMaps = new HashMap<>();
-        if (CollUtil.isNotEmpty(accountingCompanies)) {
-            orgIdNameMaps = accountingCompanies.stream().collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName));
-        }
+        Map<String, String> orgIdNameMaps = pushContext.getOrgIdNameMaps();
 
 		String feeRule = entity.getFeeRule();
 		if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
@@ -3463,5 +3586,52 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         BigDecimal totalBillingWeightLogistics = this.baseMapper.listTotalBillingWeightLogisticsCount(dto);
         totalCountDTO.setTotalBillingWeightLogistics(totalBillingWeightLogistics);
         return totalCountDTO;
+    }
+
+    private SmallBagPushAllocationContext buildSmallBagPushAllocationContext() {
+        CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+        AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
+        Map<String, String> feeTypeSettingMaps = buildFeeTypeSettingMaps(allocationSettingDTO);
+        Map<String, String> orgIdNameMaps = new HashMap<>();
+        List<BaseIdDTO> accountingCompanies = sysUserFeign.listAccountingCompany();
+        if (CollUtil.isNotEmpty(accountingCompanies)) {
+            orgIdNameMaps = accountingCompanies.stream()
+                .collect(Collectors.toMap(BaseIdDTO::getId, BaseIdDTO::getName, (o1, o2) -> o1));
+        }
+        return new SmallBagPushAllocationContext(
+            allocationSettingDTO,
+            feeTypeSettingMaps,
+            orgIdNameMaps,
+            allocationSettingDTO.getWeightPackageAllocation(),
+            allocationSettingDTO.getPackageOrgId(),
+            allocationSettingDTO.getPackageWarehouseId()
+        );
+    }
+
+    private Map<String, String> buildFeeTypeSettingMaps(AllocationSettingDTO allocationSettingDTO) {
+        Map<String, String> feeTypeSettingMaps = new HashMap<>();
+        for (AllocationFeeTypeEnum allocationFeeTypeEnum : AllocationFeeTypeEnum.values()) {
+            if (AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
+                feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageShippingCost());
+            } else if (AllocationFeeTypeEnum.DECLARE_COST == allocationFeeTypeEnum) {
+                feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageTariffFee());
+            } else if (AllocationFeeTypeEnum.OTHER_COST == allocationFeeTypeEnum) {
+                feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageOtherFee());
+            } else if (AllocationFeeTypeEnum.DEDUCTIBLE_TAX == allocationFeeTypeEnum) {
+                feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageDeductibleTax());
+            }
+        }
+        return feeTypeSettingMaps;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class SmallBagPushAllocationContext {
+        private AllocationSettingDTO allocationSettingDTO;
+        private Map<String, String> feeTypeSettingMaps;
+        private Map<String, String> orgIdNameMaps;
+        private String weightPackageAllocation;
+        private String packageOrgId;
+        private String packageWarehouseId;
     }
 }

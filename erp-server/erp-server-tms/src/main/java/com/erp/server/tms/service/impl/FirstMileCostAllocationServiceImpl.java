@@ -31,6 +31,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -66,6 +67,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -182,6 +185,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
     @Resource
     private MQProducerService mQProducerService;
+    @Resource
+    private RedissonClient redissonClient;
 
     @Autowired
     @Qualifier("costAllocationPool")
@@ -2207,130 +2212,183 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             .update();
 
         dto.setTaskId(taskId);
-        
-        // 4. 发送MQ消息（不再调用 addTaskDetailByFirstMileCost）
-        SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
-        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-            log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "MQ消息发送失败");
-        }else {
-            log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
+
+        boolean claimed = asyncTaskRecordService.lambdaUpdate()
+            .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+            .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+            .update();
+        if (!claimed) {
+            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
+        }
+
+        try {
+            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
+                asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .update();
+            } else {
+                log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
+            }
+        } catch (Exception e) {
+            log.error("MQ消息发送异常，taskId: {}", taskId, e);
+            asyncTaskRecordService.lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000))
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                .update();
+            throw e;
         }
     }
 
     @Override
     public void pushFirstMileCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
         String taskId = dto.getTaskId();
-
-        CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
-        CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
-
-        // 2. 初始化批次配置
-
-        
-        // 1. 校验任务存在性
-        TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
-        if (Objects.isNull(taskRecord)) {
-            log.error("任务记录不存在，taskId: {}", taskId);
+        if (StringUtils.isBlank(taskId)) {
+            log.error("头程分摊异步任务ID为空");
             return;
         }
-        
-        // 2. 初始化批次配置
-        int batchSize = StringUtils.isBlank(billBatchParamsDTO.getFirstMileBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getFirstMileBatch());
-        int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getFirstMileTimeoutSeconds()) ? 5000 :Integer.valueOf(billBatchParamsDTO.getFirstMileTimeoutSeconds());
-        String lastId = ""; // 游标起点为空
-        
-        int totalProcessed = 0;
-        int totalSuccess = 0;
-        int totalFailed = 0;
-        int batchNumber = 0;
-        
-        log.error("开始分批处理头程费用分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}",
-                 taskId, batchSize, taskRecord.getDetailCount());
 
-        // 将主任务状态更新为处理中
-        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.ING.getCode(), "分批处理中");
-        
-        // 3. 循环分批处理
-        while (true) {
-            batchNumber++;
-            
-            // 3.1 检查任务是否超时
-            TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
-            if (currentTask.getExecTimeout() != null) {
-                long elapsedSeconds = java.time.Duration.between(currentTask.getStartTime(), LocalDateTime.now()).getSeconds();
-                if (elapsedSeconds > currentTask.getExecTimeout()) {
-                    log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
+        RLock taskLock = redissonClient.getLock(DistributeKeyConstant.TMS_ASYNC_TASK_EXEC_KEY + ":" + taskId);
+        boolean locked = false;
+        try {
+            locked = taskLock.tryLock(0, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("头程分摊异步任务正在执行，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
+
+            CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
+            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+
+            TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
+            if (Objects.isNull(taskRecord)) {
+                log.error("任务记录不存在，taskId: {}", taskId);
+                return;
+            }
+            if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                log.warn("头程分摊异步任务已完成，跳过重复消费，taskId: {}", taskId);
+                return;
+            }
+            if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
+                boolean claimed = asyncTaskRecordService.lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .update();
+                if (!claimed) {
+                    log.warn("头程分摊异步任务已被其他消费者认领，taskId: {}", taskId);
+                    return;
+                }
+            } else if (!Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
+                log.warn("头程分摊异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
+                return;
+            }
+
+            int batchSize = StringUtils.isBlank(billBatchParamsDTO.getFirstMileBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getFirstMileBatch());
+            int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getFirstMileTimeoutSeconds()) ? 5000 : Integer.valueOf(billBatchParamsDTO.getFirstMileTimeoutSeconds());
+            String lastId = "";
+
+            int totalProcessed = 0;
+            int totalSuccess = 0;
+            int totalFailed = 0;
+            int batchNumber = 0;
+            LocalDateTime taskStartTime = taskRecord.getStartTime();
+            Integer taskExecTimeout = taskRecord.getExecTimeout();
+
+            log.error("开始分批处理头程费用分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}",
+                taskId, batchSize, taskRecord.getDetailCount());
+
+            while (true) {
+                batchNumber++;
+
+                if (batchNumber == 1 || batchNumber % 10 == 0) {
+                    TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
+                    if (Objects.equals(currentTask.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+                        log.error("循环过程中，任务状态显示已完成，taskId: {}", taskId);
+                        break;
+                    }
+                    taskExecTimeout = currentTask.getExecTimeout();
+                }
+
+                if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
+                    long elapsedSeconds = java.time.Duration.between(taskStartTime, LocalDateTime.now()).getSeconds();
+                    if (elapsedSeconds > taskExecTimeout) {
+                        log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
+                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                            "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                        break;
+                    }
+                }
+
+                dto.setLastId(lastId);
+                dto.setBatchSize(batchSize);
+
+                List<String> batchDeliveryIds;
+                try {
+                    batchDeliveryIds = firstMileWeightAllocationService.pageFirstMileDeliveryIds(dto);
+                } catch (Exception e) {
+                    log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
                     asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                        "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                        "第" + batchNumber + "批查询失败: " + e.getMessage());
                     break;
                 }
+
+                if (CollUtil.isEmpty(batchDeliveryIds)) {
+                    log.error("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
+                        taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
+                    break;
+                }
+
+                log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchDeliveryIds.size(), lastId);
+
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate(), timeoutSeconds);
+
+                totalProcessed += batchDeliveryIds.size();
+                totalSuccess += result.getSuccessCount();
+                totalFailed += result.getFailedCount();
+
+                try {
+                    asyncTaskRecordService.lambdaUpdate()
+                        .set(Objects.isNull(taskRecord.getDetailCount()) || Objects.equals(taskRecord.getDetailCount(), 0), TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
+                        .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
+                        .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                        .update();
+
+                    log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
+                        batchNumber, result.getSuccessCount(), result.getFailedCount(),
+                        totalSuccess, totalFailed);
+                } catch (Exception e) {
+                    log.error("更新任务进度失败，taskId: {}", taskId, e);
+                }
+
+                lastId = batchDeliveryIds.get(batchDeliveryIds.size() - 1);
             }
-            
-            // 3.2 分批查询可推送的发货单ID
-            dto.setLastId(lastId);
-            dto.setBatchSize(batchSize);
-            
-            List<String> batchDeliveryIds;
+
             try {
-                batchDeliveryIds = firstMileWeightAllocationService.pageFirstMileDeliveryIds(dto);
+                asyncTaskRecordService.updateTaskFinally(taskId);
+                log.error("任务最终状态更新完成，taskId: {}", taskId);
             } catch (Exception e) {
-                log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
-                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                    "第" + batchNumber + "批查询失败: " + e.getMessage());
-                break;
+                log.error("更新任务最终状态失败，taskId: {}", taskId, e);
             }
-            
-            if (CollUtil.isEmpty(batchDeliveryIds)) {
-                log.error("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
-                         taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
-                break;
-            }
-            
-            log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchDeliveryIds.size(), lastId);
-            
-            // 3.3 为本批次创建任务明细并执行
-            TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate(),timeoutSeconds);
-            
-            // 3.4 累计统计
-            totalProcessed += batchDeliveryIds.size();
-            totalSuccess += result.getSuccessCount();
-            totalFailed += result.getFailedCount();
-            
-            // 3.5 实时更新主任务进度
-            try {
-                asyncTaskRecordService.lambdaUpdate()
-                    .set(Objects.isNull(taskRecord.getDetailCount()) || Objects.equals(taskRecord.getDetailCount(),0)  ,TmsAsyncTaskRecordEntity::getDetailCount, totalProcessed)
-                    .set(TmsAsyncTaskRecordEntity::getErrorCount, totalFailed)
-                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                    .update();
-                
-                log.info("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}", 
-                         batchNumber, result.getSuccessCount(), result.getFailedCount(), 
-                         totalSuccess, totalFailed);
-            } catch (Exception e) {
-                log.error("更新任务进度失败，taskId: {}", taskId, e);
-            }
-            
-            // 3.6 更新游标
-            lastId = batchDeliveryIds.get(batchDeliveryIds.size() - 1);
-            
-            // 3.7 批次间短暂休眠
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("批次间休眠被中断", e);
-                break;
-            }
-        }
-        
-        // 4. 最终更新任务状态
-        try {
-            asyncTaskRecordService.updateTaskFinally(taskId);
-            log.error("任务最终状态更新完成，taskId: {}", taskId);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("头程分摊异步任务获取锁被中断，taskId: {}", taskId, e);
         } catch (Exception e) {
-            log.error("更新任务最终状态失败，taskId: {}", taskId, e);
+            log.error("头程分摊异步任务执行失败，taskId: {}", taskId, e);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000));
+        } finally {
+            if (locked && taskLock.isHeldByCurrentThread()) {
+                taskLock.unlock();
+            }
         }
     }
 
@@ -2419,28 +2477,70 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      * @author jack
      * @date 2026-04-22
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds, String reportDate,int timeoutSeconds) {
+    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds, String reportDate, int timeoutSeconds) {
         LocalDate reportPeriodMonth = LocalDate.parse(reportDate + "-01");
 
-        // 头程重量分摊-费用状态为{未分摊，部分分摊}+本期账单数据 判断是否进入头程费用分摊表
-        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(batchDeliveryIds, null);
+        List<String> distinctDeliveryIds = batchDeliveryIds.stream()
+            .filter(StringUtils::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctDeliveryIds)) {
+            log.warn("批次中无有效发货单ID，batchDeliveryIds: {}", batchDeliveryIds);
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+        }
+
+        List<FirstMileWeightAllocationEntity> list = firstMileWeightAllocationService.listBySourceIds(distinctDeliveryIds, null);
         if (CollectionUtils.isEmpty(list)) {
-            log.warn("批次中无有效重量分摊记录数据，batchDeliveryIds: {}", batchDeliveryIds);
+            log.warn("批次中无有效重量分摊记录数据，batchDeliveryIds: {}", distinctDeliveryIds);
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
-        
-        // 批量查询发货单
-        List<FirstMileDeliveryEntity> deliveryList = wmsFirstMileDeliveryFeign.listByIds(batchDeliveryIds);
+
+        List<FirstMileDeliveryEntity> deliveryList = wmsFirstMileDeliveryFeign.listByIds(distinctDeliveryIds);
         if (CollUtil.isEmpty(deliveryList)) {
-            log.warn("批次中无有效发货单数据，batchDeliveryIds: {}", batchDeliveryIds);
+            log.warn("批次中无有效发货单数据，batchDeliveryIds: {}", distinctDeliveryIds);
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
-        
-        // 构建任务明细列表
+
+        List<String> deliveryIds = deliveryList.stream()
+            .map(FirstMileDeliveryEntity::getId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toList());
+        List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
+            .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
+            .in(TmsAsyncTaskDetailEntity::getBusinessId, deliveryIds)
+            .list();
+        Set<String> existingIngBusinessIds = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        Map<String, TmsAsyncTaskDetailEntity> existingPendingByBusinessId = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .filter(d -> StringUtils.isNotBlank(d.getBusinessId()))
+            .collect(Collectors.toMap(TmsAsyncTaskDetailEntity::getBusinessId, Function.identity(), (o1, o2) -> o1));
+        Set<String> existingBusinessIds = existingDetails.stream()
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(existingIngBusinessIds)) {
+            log.warn("跳过执行中的任务明细，taskId: {}, ING数量: {}", taskId, existingIngBusinessIds.size());
+        }
+        if (CollUtil.isNotEmpty(existingPendingByBusinessId)) {
+            log.info("纳入已存在的PENDING任务明细执行，taskId: {}, 数量: {}", taskId, existingPendingByBusinessId.size());
+        }
+
+        List<TmsAsyncTaskDetailEntity> detailsToExecute = new ArrayList<>(existingPendingByBusinessId.values());
+
         LocalDateTime now = LocalDateTime.now();
         List<TmsAsyncTaskDetailEntity> details = new ArrayList<>();
-        
+
         for (FirstMileDeliveryEntity delivery : deliveryList) {
+            if (existingIngBusinessIds.contains(delivery.getId())) {
+                continue;
+            }
+            if (existingBusinessIds.contains(delivery.getId())) {
+                continue;
+            }
             TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
             detail.setMainId(taskId);
             detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
@@ -2450,23 +2550,38 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             detail.setCreateTime(now);
             details.add(detail);
         }
-        
-        if (CollUtil.isEmpty(details)) {
-            log.warn("本批次无有效任务明细，跳过");
+
+        if (CollUtil.isNotEmpty(details)) {
+            try {
+                asyncTaskDetailRecordService.saveBatch(details);
+                log.error("本批次任务明细保存成功，数量: {}", details.size());
+                detailsToExecute.addAll(details);
+            } catch (Exception e) {
+                log.error("保存任务明细失败，批次大小: {}", details.size(), e);
+                return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, details.size());
+            }
+        }
+
+        if (CollUtil.isEmpty(detailsToExecute)) {
+            log.warn("本批次无可执行任务明细，taskId: {}", taskId);
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
-        
-        //批量保存任务明细
+
+        Map<String, List<FirstMileDeliveryDetailEntity>> deliveryDetailMap = Collections.emptyMap();
         try {
-            asyncTaskDetailRecordService.saveBatch(details);
-            log.debug("本批次任务明细保存成功，数量: {}", details.size());
+            List<FirstMileDeliveryDetailEntity> batchDeliveryDetails =
+                wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
+            if (CollUtil.isNotEmpty(batchDeliveryDetails)) {
+                deliveryDetailMap = batchDeliveryDetails.stream()
+                    .filter(d -> StringUtils.isNotBlank(d.getMainId()))
+                    .collect(Collectors.groupingBy(FirstMileDeliveryDetailEntity::getMainId));
+            }
         } catch (Exception e) {
-            log.error("保存任务明细失败，批次大小: {}", details.size(), e);
-            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, details.size());
+            log.error("批量查询发货单明细失败，deliveryIds数量: {}", deliveryIds.size(), e);
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, detailsToExecute.size());
         }
-        
-        // 4. 并发执行本批次
-        return executeFirstMileBatchWithConcurrency(details, deliveryList, reportPeriodMonth,timeoutSeconds);
+
+        return executeFirstMileBatchWithConcurrency(detailsToExecute, deliveryList, deliveryDetailMap, reportPeriodMonth, timeoutSeconds);
     }
 
     /**
@@ -2481,34 +2596,56 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
                                                                                            List<FirstMileDeliveryEntity> deliveryList,
-                                                                                           LocalDate reportPeriodMonth,int timeoutSeconds) {
-        
-        // 构建Map便于快速查找
+                                                                                           Map<String, List<FirstMileDeliveryDetailEntity>> deliveryDetailMap,
+                                                                                           LocalDate reportPeriodMonth, int timeoutSeconds) {
+
         Map<String, FirstMileDeliveryEntity> deliveryMap = deliveryList.stream()
-            .collect(Collectors.toMap(FirstMileDeliveryEntity::getId, Function.identity()));
-        
-        CountDownLatch latch = new CountDownLatch(batchDetails.size());
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failedCount = new AtomicInteger(0);
-        
+            .collect(Collectors.toMap(FirstMileDeliveryEntity::getId, Function.identity(), (o1, o2) -> o1));
+
+        Map<String, TmsAsyncTaskDetailEntity> executableDetailMap = new LinkedHashMap<>();
+        List<TmsAsyncTaskDetailEntity> duplicateDetails = new ArrayList<>();
         for (TmsAsyncTaskDetailEntity detail : batchDetails) {
+            String businessId = detail.getBusinessId();
+            if (StringUtils.isBlank(businessId)) {
+                executableDetailMap.put(detail.getId(), detail);
+                continue;
+            }
+            TmsAsyncTaskDetailEntity oldDetail = executableDetailMap.putIfAbsent(businessId, detail);
+            if (Objects.nonNull(oldDetail)) {
+                duplicateDetails.add(detail);
+            }
+        }
+
+        CountDownLatch latch = new CountDownLatch(executableDetailMap.size());
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(duplicateDetails.size());
+
+        for (TmsAsyncTaskDetailEntity duplicateDetail : duplicateDetails) {
+            if (!Objects.equals(duplicateDetail.getStatus(), TmsAsyncTaskRecordStatusEnum.FAILED.getCode())) {
+                asyncTaskDetailRecordService.updateDetail(
+                    duplicateDetail.getId(),
+                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                    "同一任务下重复明细已跳过"
+                );
+            }
+        }
+
+        for (TmsAsyncTaskDetailEntity detail : executableDetailMap.values()) {
+            if (Objects.equals(detail.getStatus(), TmsAsyncTaskRecordStatusEnum.FAILED.getCode())) {
+                failedCount.incrementAndGet();
+                latch.countDown();
+                continue;
+            }
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
-            
+
             costAllocationPool.execute(() -> {
                 try {
-                    // 检查任务是否仍为PENDING状态
-                    Integer pendingCount = asyncTaskDetailRecordService.lambdaQuery()
-                        .eq(TmsAsyncTaskDetailEntity::getId, taskDetailId)
-                        .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                        .count();
-                    
-                    if (pendingCount == 0) {
+                    if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
                         log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
                         return;
                     }
-                    
-                    // 获取发货单
+
                     FirstMileDeliveryEntity deliveryEntity = deliveryMap.get(businessId);
                     if (Objects.isNull(deliveryEntity)) {
                         asyncTaskDetailRecordService.updateDetail(taskDetailId,
@@ -2516,29 +2653,22 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         failedCount.incrementAndGet();
                         return;
                     }
-                    
-                    // 查询发货单明细
-                    List<FirstMileDeliveryDetailEntity> deliveryDetails = 
-                        wmsFirstMileDeliveryFeign.listDetailByMainIds(Collections.singletonList(businessId));
-                    
+
+                    List<FirstMileDeliveryDetailEntity> deliveryDetails =
+                        deliveryDetailMap.getOrDefault(businessId, Collections.emptyList());
                     if (CollectionUtils.isEmpty(deliveryDetails)) {
                         asyncTaskDetailRecordService.updateDetail(taskDetailId,
                             TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "发货单明细记录不存在");
                         failedCount.incrementAndGet();
                         return;
                     }
-                    
-                    // 更新为处理中
-                    asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                        TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
-                    
-                    // 执行分摊计算
+
                     FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
                         .setSourceId(deliveryEntity.getId())
                         .setSourceCode(deliveryEntity.getCode())
                         .setReportPeriodMonth(reportPeriodMonth);
-                    
-                    BatchResultDTO result = calcAllocatedCost(entity, deliveryEntity, deliveryDetails);
+
+                    BatchResultDTO result = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetails);
                     
                     if (result.getSuccess()) {
                         asyncTaskDetailRecordService.updateDetail(taskDetailId,
