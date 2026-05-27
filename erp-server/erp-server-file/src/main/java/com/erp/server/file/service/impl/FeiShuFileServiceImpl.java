@@ -160,7 +160,10 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
 
         GetExportTaskResp getExportTaskResp = retryQueryTask(ticket, fileToken, client);
         ExportTask result = getExportTaskResp.getData().getResult();
-
+        //增加文件大小限制
+        if (result.getFileSize() > 1024 * 1024 * 100) {
+            throw new ServiceException(ApiError.FILE_TOO_LARGE, "100MB");
+        }
         DownloadExportTaskResp downloadExportTaskResp = downloadTask(result.getFileToken(), client);
 
         String url = FastDFSClientUtil.uploadFile(downloadExportTaskResp.getData().toByteArray(), downloadExportTaskResp.getFileName(), null);
