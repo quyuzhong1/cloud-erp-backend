@@ -614,7 +614,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                                 .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
                                 .update();
                     }else {
-                        log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                        log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
                     }
                 } catch (Exception e) {
                     log.error("消息发送异常，taskId: {}", entity.getId(), e);

@@ -2304,7 +2304,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             LocalDateTime taskStartTime = taskRecord.getStartTime();
             Integer taskExecTimeout = taskRecord.getExecTimeout();
 
-            log.error("开始分批处理头程费用分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}",
+            log.info("开始分批处理头程费用分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}",
                 taskId, batchSize, taskRecord.getDetailCount());
 
             while (true) {
@@ -2313,7 +2313,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 if (batchNumber == 1 || batchNumber % 10 == 0) {
                     TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
                     if (Objects.equals(currentTask.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-                        log.error("循环过程中，任务状态显示已完成，taskId: {}", taskId);
+                        log.warn("循环过程中，任务状态显示已完成，taskId: {}", taskId);
                         break;
                     }
                     taskExecTimeout = currentTask.getExecTimeout();
@@ -2343,12 +2343,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 }
 
                 if (CollUtil.isEmpty(batchDeliveryIds)) {
-                    log.error("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
+                    log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
                         taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
                     break;
                 }
 
-                log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchDeliveryIds.size(), lastId);
+                log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchDeliveryIds.size(), lastId);
 
                 TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate(), timeoutSeconds);
 
@@ -2363,7 +2363,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                         .update();
 
-                    log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
+                    log.info("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
                         batchNumber, result.getSuccessCount(), result.getFailedCount(),
                         totalSuccess, totalFailed);
                 } catch (Exception e) {
@@ -2375,7 +2375,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
             try {
                 asyncTaskRecordService.updateTaskFinally(taskId);
-                log.error("任务最终状态更新完成，taskId: {}", taskId);
+                log.info("任务最终状态更新完成，taskId: {}", taskId);
             } catch (Exception e) {
                 log.error("更新任务最终状态失败，taskId: {}", taskId, e);
             }
@@ -2554,7 +2554,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollUtil.isNotEmpty(details)) {
             try {
                 asyncTaskDetailRecordService.saveBatch(details);
-                log.error("本批次任务明细保存成功，数量: {}", details.size());
+                log.info("本批次任务明细保存成功，数量: {}", details.size());
                 detailsToExecute.addAll(details);
             } catch (Exception e) {
                 log.error("保存任务明细失败，批次大小: {}", details.size(), e);

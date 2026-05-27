@@ -2836,7 +2836,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LocalDateTime taskStartTime = taskRecord.getStartTime();
             Integer taskExecTimeout = taskRecord.getExecTimeout();
 
-            log.error("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
+            log.info("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
             // 3. 循环分批处理
             while (true) {
@@ -2845,7 +2845,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 if (batchNumber == 1 || batchNumber % 10 == 0) {
                     TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
                     if (Objects.equals(currentTask.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-                        log.error("循环过程中，任务状态显示已完成，taskId: {}", taskId);
+                        log.warn("循环过程中，任务状态显示已完成，taskId: {}", taskId);
                         break;
                     }
                     taskExecTimeout = currentTask.getExecTimeout();
@@ -2876,12 +2876,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
 
                 if (CollUtil.isEmpty(batchIds)) {
-                    log.error("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
+                    log.info("所有数据处理完成，taskId: {}, 总批次: {}, 总处理: {}/成功: {}/失败: {}",
                              taskId, batchNumber - 1, totalProcessed, totalSuccess, totalFailed);
                     break;
                 }
 
-                log.error("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
+                log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
 
                 // 3.3 为本批次创建任务明细并执行
                 TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(), timeoutSeconds, pushContext);
@@ -2899,7 +2899,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                         .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                         .update();
 
-                    log.error("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
+                    log.info("第{}批完成，本批成功: {}/失败: {}, 累计成功: {}/失败: {}",
                              batchNumber, result.getSuccessCount(), result.getFailedCount(),
                              totalSuccess, totalFailed);
                 } catch (Exception e) {
@@ -2913,7 +2913,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 4. 最终更新任务状态
             try {
                 asyncTaskRecordService.updateTaskFinally(taskId);
-                log.error("任务最终状态更新完成，taskId: {}", taskId);
+                log.info("任务最终状态更新完成，taskId: {}", taskId);
             } catch (Exception e) {
                 log.error("更新任务最终状态失败，taskId: {}", taskId, e);
             }
@@ -3044,7 +3044,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollUtil.isNotEmpty(details)) {
             try {
                 asyncTaskDetailRecordService.saveBatch(details);
-                log.error("本批次任务明细保存成功，数量: {}", details.size());
+                log.info("本批次任务明细保存成功，数量: {}", details.size());
                 detailsToExecute.addAll(details);
             } catch (Exception e) {
                 log.error("保存任务明细失败，批次大小: {}", details.size(), e);
@@ -3164,11 +3164,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
 
-    @Transactional(rollbackFor = Exception.class)
 	@Override
-	@DataIdempotent(keyIdName = "id")
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
-        return pushAllocation(id, reportDate, null);
+        return service.pushAllocation(id, reportDate, null);
     }
 
     @Transactional(rollbackFor = Exception.class)
