@@ -185,15 +185,19 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
     private DownloadFileResp downloadFile(String fileToken, Client client) throws Exception {
         DownloadFileReq downloadFileReq = new DownloadFileReq();
         downloadFileReq.setFileToken(fileToken);
-        DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
-        log.warn("resp:{}", JSONUtil.toJsonStr(resp));
+        try {
+            DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
+            log.warn("resp:{}", JSONUtil.toJsonStr(resp));
 
-        if (!resp.success()) {
-            String format = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
-            throw new ServiceException(format);
+            if (!resp.success()) {
+                String format = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
+                throw new ServiceException(format);
+            }
+            return resp;
+        }catch (Exception e){
+            throw new ServiceException("下载文件失败", e);
         }
-        return resp;
     }
 
     /**
@@ -214,7 +218,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         try {
             resp = client.drive().v1().exportTask().download(req);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ServiceException("下载导出任务失败", e);
         }
 
         // 处理服务端错误

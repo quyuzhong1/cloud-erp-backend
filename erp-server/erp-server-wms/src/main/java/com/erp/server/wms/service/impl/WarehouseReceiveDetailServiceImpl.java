@@ -24,6 +24,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
@@ -34,10 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -391,9 +389,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //查询采购订单下的质检批次合格数量汇总  外验数量汇总
         List<QcResultDTO.TotalLotQualifiedQtyDTO> totalAllowInstockQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
         //入库质检总数量
-        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty));
+        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream().filter(e -> QcTypeEnum.STOCK_IN.getCode().equals(e.getQcType())).collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty));
         //外验允许入库量
-        Map<String, Integer> allowInstockQtyMap = totalAllowInstockQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
+        Map<String, Integer> allowInstockQtyMap = totalAllowInstockQtyList.stream().filter(e -> QcTypeEnum.OUTSIDE_QC.getCode().equals(e.getQcType())).collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
         //查询采购订单下的 收货数量汇总
         List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);
         Map<String, Integer> totalReceiveQtyMap = totalReceiveQtyList.stream().collect(Collectors.toMap(WarehouseReceiveDetailDTO.ReceiveQtyDTO::getPodId, WarehouseReceiveDetailDTO.ReceiveQtyDTO::getTotalReceiveQty));
@@ -463,10 +461,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             if (ObjectUtil.isEmpty(receiveDetailEntity)) {
                 throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
             }
+            Integer waitQcQty1 = Objects.nonNull(receiveDetailEntity.getWaitQcQty()) ? receiveDetailEntity.getWaitQcQty() : MathUtil.ZERO;
+            Integer totalQty = Objects.nonNull(lotQualifiedQtyDTO.getTotalQty()) ? lotQualifiedQtyDTO.getTotalQty() : MathUtil.ZERO;
             //完成质检：待质检数量 = 待质检数量 - 本次质检合格数量
-            int waitQcQty = isFinishQc
-                    ? receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalQty()
-                    : receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalQty();
+            int waitQcQty = isFinishQc ? waitQcQty1 - totalQty : waitQcQty1 + totalQty;
             receiveDetailEntity.setWaitQcQty(Math.max(waitQcQty, MathUtil.ZERO));
             receiveDetailList.add(receiveDetailEntity);
         }
