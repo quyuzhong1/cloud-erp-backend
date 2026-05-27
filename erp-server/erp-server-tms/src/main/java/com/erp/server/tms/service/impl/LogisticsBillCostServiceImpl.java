@@ -186,7 +186,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Resource
     @Lazy
-    private LogisticsBillCostServiceImpl service;
+    private LogisticsBillCostService service;
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
@@ -3164,6 +3164,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
 
+    @DataIdempotent(keyIdName = "id")
 	@Override
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
         return service.pushAllocation(id, reportDate, null);
@@ -3171,6 +3172,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "id")
+    @Override
     public BatchResultDTO pushAllocation(String id, String reportDate, SmallBagPushAllocationContext pushContext) {
         if (pushContext == null) {
             pushContext = buildSmallBagPushAllocationContext();
