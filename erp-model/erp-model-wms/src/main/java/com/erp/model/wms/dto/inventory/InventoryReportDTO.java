@@ -1,7 +1,9 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -541,6 +543,13 @@ public class InventoryReportDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+            if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+                return DynamicDataSourceTypeEnum.DORIS.getCode();
+            }
+            return dynamicDataSource;
+        }
     }
 
     /**
