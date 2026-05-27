@@ -56,4 +56,11 @@ public interface DmpBasicSystemMapper extends BaseMapper<DmpBasicSystemEntity> {
      * @return
      */
     List<DmpBasicSystemDTO.TabListDTO> tabList(@Param("params") DmpBasicSystemDTO.PagingParamDTO searchParam);
+    /**
+     * 系统平台选项
+     * @author will
+     * @date:  2026-05-27
+     * @return List<BaseDropDownDTO.DictDropDownDTO>
+     */
+    List<BaseDropDownDTO.DictDropDownDTO> selectDmpBasicSystem();
 }

@@ -121,4 +121,11 @@ public interface DmpBasicSystemService extends SuperService<DmpBasicSystemEntity
      * @return 批处理对象
      */
     BatchResultDTO disable(DmpBasicSystemEntity entity);
+    /**
+     * 系统平台选项
+     * @author will
+     * @date:  2026-05-27
+     * @return List<BaseDropDownDTO.DictDropDownDTO>
+     */
+    List<BaseDropDownDTO.DictDropDownDTO> selectDmpBasicSystem();
 }

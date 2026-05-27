@@ -271,4 +271,9 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
+
+    @Override
+    public List<BaseDropDownDTO.DictDropDownDTO> selectDmpBasicSystem() {
+        return baseMapper.selectDmpBasicSystem();
+    }
 }

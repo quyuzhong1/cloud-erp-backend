@@ -428,6 +428,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 		if(sourceSystem == null) {
 			sourceSystem = "";
 		}
+		String finCheckMonth = checkMonth.replace("-", "年") + "月";
 		String code = inventoryMonthCheckEnum.getCode();
 		Map<String, DmpCfgInputEntity> dmpCfgInputEntityMap = dmpCfgInputService.lambdaQuery().eq(DmpCfgInputEntity::getCode, code).list()
 				.stream().collect(Collectors.toMap(DmpCfgInputEntity::getId, d -> d));
@@ -446,7 +447,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 				.eq(DmpInputTaskEntity::getCfgInputId, dmpCfgInputEntity.getId())
 				.eq(DmpInputTaskEntity::getNextLevelId, sourceSystem)
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
-				.list();
+				.list().stream().filter(d -> StringUtils.isNotBlank(d.getExtendJson()) && d.getExtendJson().contains(finCheckMonth)).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(dmpInputTaskEntityList)) {
 			ServiceException.runError("此仓库的" + inventoryMonthCheckEnum.getName() + "在" + checkMonth + "已生成任务，正在等待执行，任务号："
 		+ dmpInputTaskEntityList.stream().map(DmpInputTaskEntity::getId).collect(Collectors.joining("、")));
@@ -460,7 +461,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 		dto.setExecTimeout(3600);
 
 		Map<String, Object> map = new HashMap<>();
-		map.put("checkMonth", checkMonth.replace("-", "年") + "月");
+		map.put("checkMonth", finCheckMonth);
 		dto.setDetailExtendJson(JSON.toJSONString(map));
 		dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
 
