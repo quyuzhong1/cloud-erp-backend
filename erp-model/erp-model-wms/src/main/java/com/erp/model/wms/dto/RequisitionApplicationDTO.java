@@ -430,7 +430,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 附件列表
          */
-        private List<WmsAttachmentEntity> attachmentList;
+        private List<AttachDTO> attachmentList;
     }
 
     /**
