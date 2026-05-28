@@ -2006,9 +2006,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     /**
      * 三方仓入库持久化（含事务），须通过 {@link #addByThirdWarehouse} 调用，不可绕过价格补全直接调用。
+     * 包级可见以避免外部 Bean 绕过 {@link #addByThirdWarehouse} 的价格补全逻辑。
      */
     @Transactional(rollbackFor = Exception.class)
-    public void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+    void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         soReturnInstockEntity.setCode(code);
         this.save(soReturnInstockEntity);
@@ -2212,7 +2213,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void refreshPriceFields(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return;
@@ -2233,6 +2233,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         List<SoB2cDetailEntity> b2cDetailList = CollectionUtils.isEmpty(b2cSoIds) ? Collections.emptyList() : soB2cFeign.listDetailByMainIds(b2cSoIds);
+        b2cDetailList = Objects.isNull(b2cDetailList) ? Collections.emptyList() : b2cDetailList;
+        Map<String, SoB2cDetailEntity> b2cDetailMap = CollectionUtils.isEmpty(b2cDetailList) ? Collections.emptyMap()
+                : b2cDetailList.stream().collect(Collectors.toMap(
+                item -> CharSequenceUtil.format("{}-{}", item.getMainId(), item.getSkuId()),
+                Function.identity(), (a, b) -> a));
 
         List<String> soReturnIds = mainList.stream()
                 .map(SoReturnInstockEntity::getSoReturnId)
@@ -2240,6 +2245,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         List<SoReturnDetailEntity> returnDetailList = CollectionUtils.isEmpty(soReturnIds) ? Collections.emptyList() : soReturnFeign.listDetailByMainIds(soReturnIds);
+        returnDetailList = Objects.isNull(returnDetailList) ? Collections.emptyList() : returnDetailList;
         List<String> soIds = mainList.stream()
                 .filter(item -> !OrderTypeEnum.B2C.getCode().equals(item.getType()))
                 .map(SoReturnInstockEntity::getSoId)
@@ -2247,20 +2253,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = CollectionUtils.isEmpty(soIds) ? Collections.emptyList() : soInfoFeign.listSoDetailByMainIds(soIds);
+        soDetailList = Objects.isNull(soDetailList) ? Collections.emptyList() : soDetailList;
+
+        Map<String, SoReturnInstockEntity> mainMap = mainList.stream()
+                .collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity(), (a, b) -> a));
 
         for (SoReturnInstockDetailEntity detail : detailList) {
-            SoReturnInstockEntity main = mainList.stream()
-                    .filter(item -> CharSequenceUtil.equals(item.getId(), detail.getMainId()))
-                    .findFirst()
-                    .orElse(null);
+            SoReturnInstockEntity main = mainMap.get(detail.getMainId());
             if (Objects.isNull(main)) {
                 continue;
             }
             if (OrderTypeEnum.B2C.getCode().equals(main.getType())) {
-                SoB2cDetailEntity b2cDetail = b2cDetailList.stream()
-                        .filter(item -> CharSequenceUtil.equals(item.getMainId(), main.getSoId()) && CharSequenceUtil.equals(item.getSkuId(), detail.getSkuId()))
-                        .findFirst()
-                        .orElse(null);
+                SoB2cDetailEntity b2cDetail = b2cDetailMap.get(CharSequenceUtil.format("{}-{}", main.getSoId(), detail.getSkuId()));
                 BigDecimal price = Objects.nonNull(b2cDetail) ? b2cDetail.getPrice() : detail.getPrice();
                 BigDecimal exchangeRate = Objects.nonNull(b2cDetail) ? b2cDetail.getExchangeRate() : detail.getExchangeRate();
                 fillDetailPrice(detail, price, BigDecimal.ZERO, price, exchangeRate);
@@ -2276,6 +2280,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 fillDetailPrice(detail, soDetail.getPrice(), soDetail.getTaxRate(), soDetail.getTaxPrice(),
                         Objects.nonNull(detail.getExchangeRate()) ? detail.getExchangeRate() : soDetail.getExchangeRate());
             }
+        }
+        ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
+                .persistRefreshedPriceFields(detailList);
+    }
+
+    /**
+     * 与 {@link #refreshPriceFields(List)} 配套的事务写入，独立事务避免长时间持有连接。
+     * 仅在已完成 Feign 远程查询、价格补全后调用。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
         }
         soReturnInstockDetailService.updateBatchById(detailList);
     }
@@ -2303,7 +2320,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private void fillDetailPrice(SoReturnInstockDetailEntity detail, BigDecimal price, BigDecimal taxRate, BigDecimal taxPrice, BigDecimal exchangeRate) {
         BigDecimal safePrice = Objects.nonNull(price) ? price : BigDecimal.ZERO;
         BigDecimal safeTaxPrice = Objects.nonNull(taxPrice) ? taxPrice : safePrice;
-        BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
+        BigDecimal safeExchangeRate = exchangeRate;
+        if (Objects.isNull(safeExchangeRate)) {
+            log.warn("退货入库价格补全汇率为空，fallback 到 1，detailId={}, skuId={}", detail.getId(), detail.getSkuId());
+            safeExchangeRate = BigDecimal.ONE;
+        }
         BigDecimal realQty = BigDecimal.valueOf(defaultRealQty(detail));
         detail.setPrice(safePrice);
         detail.setTaxRate(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO);

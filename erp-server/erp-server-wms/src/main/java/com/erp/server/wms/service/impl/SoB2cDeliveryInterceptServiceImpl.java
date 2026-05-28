@@ -508,12 +508,24 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
                     //生成直接调拨单
-                    Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
-                    if (isPush) {
-                        asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                    try {
+                        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
+                        if (isPush) {
+                            asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                        }
+                    } catch (ServiceException se) {
+                        if (ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED.getCode().equals(se.getCode())) {
+                            log.warn("pushTransferInfo 多仓库校验跳过，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
+                        } else {
+                            throw se;
+                        }
+                    } finally {
+                        try {
+                            soOutstockService.updateRemarkBySoId(soB2cEntity.getId(), "发货拦截失败");
+                        } catch (Exception e) {
+                            log.error("更新发货拦截备注失败, soId={}", soB2cEntity.getId(), e);
+                        }
                     }
-                    //更新备注
-                    soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
 
                     if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
                         // 调用第三方平台SDK标记发货(独立事务)
@@ -652,7 +664,20 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         entity.setHandleTime(LocalDateTime.now());
         entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
         entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
-        this.updateById(entity);
+        boolean updated = this.lambdaUpdate()
+                .set(SoB2cDeliveryInterceptEntity::getHandleResult, HandleResultEnum.SUCCESS.getCode())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
+                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, remark)
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, entity.getHandleTime())
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                .set(SoB2cDeliveryInterceptEntity::getCancelStatus, CancelStatusEnum.SUCCESS.getCode())
+                .eq(SoB2cDeliveryInterceptEntity::getId, entity.getId())
+                .eq(SoB2cDeliveryInterceptEntity::getVersion, entity.getVersion())
+                .update();
+        if (!updated) {
+            throw new ServiceException("并发操作，请刷新后重试");
+        }
         operateLogService.addModuleOperateLog("API拦截成功，备注：" + (CharSequenceUtil.isBlank(remark) ? "" : remark), ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "拦截成功");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
     }
@@ -816,12 +841,24 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
-            if (isPush) {
-                asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+            try {
+                Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
+                if (isPush) {
+                    asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                }
+            } catch (ServiceException se) {
+                if (ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED.getCode().equals(se.getCode())) {
+                    log.warn("pushTransferInfo 多仓库校验跳过，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
+                } else {
+                    throw se;
+                }
+            } finally {
+                try {
+                    soOutstockService.updateRemarkBySoId(soB2cEntity.getId(), "发货拦截失败");
+                } catch (Exception e) {
+                    log.error("更新发货拦截备注失败, soId={}", soB2cEntity.getId(), e);
+                }
             }
-            //更新备注
-            soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
 
             if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
                 // 调用第三方平台SDK标记发货(独立事务)

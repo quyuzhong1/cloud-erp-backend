@@ -87,6 +87,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -103,6 +104,37 @@ public class NfeInvoiceService {
     private static final Logger log = LoggerFactory.getLogger(NfeInvoiceService.class);
     private static final String SHOPEE_BR_DEDUCT_ERROR_MSG = "虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例";
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
+
+    private static class ShopeeBrazilOrderContext {
+        private final boolean brazilOrder;
+        private final SoB2cReceiverEntity receiverEntity;
+        private OrderDetail orderDetail;
+
+        private ShopeeBrazilOrderContext(boolean brazilOrder, SoB2cReceiverEntity receiverEntity) {
+            this.brazilOrder = brazilOrder;
+            this.receiverEntity = receiverEntity;
+        }
+
+        private boolean isBrazilOrder() {
+            return brazilOrder;
+        }
+
+        private SoB2cReceiverEntity getReceiverEntity() {
+            return receiverEntity;
+        }
+
+        private OrderDetail getOrderDetail() {
+            return orderDetail;
+        }
+
+        private void setOrderDetail(OrderDetail orderDetail) {
+            this.orderDetail = orderDetail;
+        }
+    }
 
     @Resource
     private SoB2cDetailService soB2cDetailService;
@@ -191,6 +223,7 @@ public class NfeInvoiceService {
             return Boolean.FALSE;
         }
         NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
+        ShopeeBrazilOrderContext shopeeBrazilOrderContext = buildShopeeBrazilOrderContext(soB2cEntity);
         String invoiceAddress = "";
         String sellerTaxNo = "";
         String companyName = "";
@@ -199,13 +232,13 @@ public class NfeInvoiceService {
             sellerTaxNo = invoiceSetting.getLeiCode();
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
-            NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail);
+            NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity,invoiceSettingDetail, shopeeBrazilOrderContext);
             nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
             invoiceAddress = nfeClienteDTO.getRua();
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！销售订单：{}nfeClienteDTO:{}", soB2cEntity.getCode(),JSONUtil.toJsonStr(nfeClienteDTO));
             //税务信息
-            getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO,dictInvoiceRule, ratio);
+            getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO,dictInvoiceRule, ratio, shopeeBrazilOrderContext);
             log.warn("税务信息已查询完成！");
             //token
             createDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
@@ -315,7 +348,7 @@ public class NfeInvoiceService {
         uploadFile(invoiceInfoEntity.getId(),resultDTO.getLink_xml(),resultDTO.getLink_nota());
 
         //是否自动上传发票
-        if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail)) {
+        if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext)) {
             invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
         }
         return Boolean.TRUE;
@@ -362,13 +395,14 @@ public class NfeInvoiceService {
         String sellerTaxNo = "";
         String companyName = "";
         CreateInvoiceResponseDTO.CreateInvoiceDataDTO responseData = null;
+        ShopeeBrazilOrderContext shopeeBrazilOrderContext = buildShopeeBrazilOrderContext(soB2cEntity);
         
         try {
             companyName = invoiceSetting.getCompanyName();
             sellerTaxNo = invoiceSetting.getLeiCode();
-            CreateInvoiceDTO createInvoiceDTO = buildCreateInvoiceDTO(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio);
-            NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity, invoiceSettingDetail);
-            invoiceAddress = nfeClienteDTO.getRua();
+            CreateInvoiceDTO createInvoiceDTO = buildCreateInvoiceDTO(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio, shopeeBrazilOrderContext);
+            CreateInvoiceDTO.ClienteDTO clienteDTO = createInvoiceDTO.getCliente();
+            invoiceAddress = ObjUtil.isEmpty(clienteDTO) ? CharSequenceUtil.EMPTY : clienteDTO.getEndereco();
             log.warn("开具发票（新接口V2）请求参数, 销售订单：{}", soB2cEntity.getCode());
             String companyToken = invoiceSettingDetail.getToken();
             if (CharSequenceUtil.isBlank(companyToken)) {
@@ -450,7 +484,7 @@ public class NfeInvoiceService {
                 generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), responseData.getUuid(), invoiceSettingDetail.getToken());
             }
             
-            if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail)) {
+            if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext)) {
                 invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
             }
             return Boolean.TRUE;
@@ -508,6 +542,10 @@ public class NfeInvoiceService {
      * 构建开具发票DTO（新接口）
      */
     private CreateInvoiceDTO buildCreateInvoiceDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, CfgInvoiceSettingEntity invoiceSetting, String dictInvoiceRule, BigDecimal ratio) {
+        return buildCreateInvoiceDTO(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private CreateInvoiceDTO buildCreateInvoiceDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, CfgInvoiceSettingEntity invoiceSetting, String dictInvoiceRule, BigDecimal ratio, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
         CreateInvoiceDTO dto = new CreateInvoiceDTO();
         // 使用销售单号code生成15位唯一值，避免ID截取导致的重复问题
         String invoiceId = generateUniqueInvoiceId(soB2cEntity.getCode());
@@ -521,14 +559,18 @@ public class NfeInvoiceService {
         dto.setIssuanceType("1");
         dto.setAmbiente(getAmbiente());
         // total_discount_amount：根据API规范不传，故不设置
-        dto.setCliente(buildClienteDTO(soB2cEntity, invoiceSettingDetail));
-        dto.setProducts(buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio));
-        dto.setTransportation(buildTransportationDTO(soB2cEntity, invoiceSettingDetail));
+        dto.setCliente(buildClienteDTO(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext));
+        dto.setProducts(buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio, shopeeBrazilOrderContext));
+        dto.setTransportation(buildTransportationDTO(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext));
         return dto;
     }
     
     private CreateInvoiceDTO.ClienteDTO buildClienteDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
-        NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity, invoiceSettingDetail);
+        return buildClienteDTO(soB2cEntity, invoiceSettingDetail, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private CreateInvoiceDTO.ClienteDTO buildClienteDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext);
         CreateInvoiceDTO.ClienteDTO clienteDTO = new CreateInvoiceDTO.ClienteDTO();
         clienteDTO.setName(nfeClienteDTO.getName());
         String cpfCnpj = cleanTaxNo(nfeClienteDTO.getCpfCnpj());
@@ -585,10 +627,14 @@ public class NfeInvoiceService {
     }
     
     private List<CreateInvoiceDTO.ProductDTO> buildProductDTOList(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, CfgInvoiceSettingEntity invoiceSetting, String dictInvoiceRule, BigDecimal ratio) {
+        return buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private List<CreateInvoiceDTO.ProductDTO> buildProductDTOList(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, CfgInvoiceSettingEntity invoiceSetting, String dictInvoiceRule, BigDecimal ratio, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
         List<CreateInvoiceDTO.ProductDTO> products = new ArrayList<>();
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollUtil.isEmpty(detailList)) throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
-        Map<String, OrderItemDetail> shopeeOrderItemMap = getShopeeBrazilOrderItemMap(soB2cEntity);
+        Map<String, OrderItemDetail> shopeeOrderItemMap = getShopeeBrazilOrderItemMap(soB2cEntity, shopeeBrazilOrderContext);
         List<String> platformSkuNoList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
@@ -613,7 +659,7 @@ public class NfeInvoiceService {
             productDTO.setNcm(invoiceTaxEntity.getInvoiceHsCode());
             productDTO.setCount(String.valueOf(detailEntity.getQty()));
             productDTO.setUnit("UN");
-            BigDecimal unitPrice = getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, shopeeOrderItemMap);
+            BigDecimal unitPrice = getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, shopeeOrderItemMap, shopeeBrazilOrderContext);
             productDTO.setUnitPrice(unitPrice);
             productDTO.setTotalPrice(MathUtil.multiplyWithTwo(unitPrice, detailEntity.getQty()));
             // discount_price字段：根据API规范，当值为0或null时不传，所以不设置该字段
@@ -629,9 +675,13 @@ public class NfeInvoiceService {
     }
     
     private CreateInvoiceDTO.TransportationDTO buildTransportationDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        return buildTransportationDTO(soB2cEntity, invoiceSettingDetail, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private CreateInvoiceDTO.TransportationDTO buildTransportationDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
         CreateInvoiceDTO.TransportationDTO transportationDTO = new CreateInvoiceDTO.TransportationDTO();
         transportationDTO.setTransportMode("0");
-        transportationDTO.setFreightAmount(getShipCost(soB2cEntity, invoiceSettingDetail));
+        transportationDTO.setFreightAmount(getShipCost(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext));
         return transportationDTO;
     }
     
@@ -814,7 +864,11 @@ public class NfeInvoiceService {
      * @return BigDecimal
      */
     private BigDecimal getShipCost(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
-        if (isShopeeBrazilOrder(soB2cEntity)) {
+        return getShipCost(soB2cEntity, invoiceSettingDetail, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private BigDecimal getShipCost(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        if (shopeeBrazilOrderContext.isBrazilOrder()) {
             if (ObjUtil.isNotEmpty(invoiceSettingDetail) && Boolean.TRUE.equals(invoiceSettingDetail.getIsContainShipFee())) {
                 throw new ServiceException(SHOPEE_BR_FREIGHT_ERROR_MSG);
             }
@@ -865,6 +919,10 @@ public class NfeInvoiceService {
      * @date 2025/4/11 15:22
      */
     private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        return getNfeClienteDTO(soB2cEntity, invoiceSettingDetail, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
         String dictVerifyType = invoiceSettingDetail.getDictVerifyType();
         //查询亚马逊财务配送报告
         List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList = FeignQuery.create(DmpSoBillDetailEntity.class)
@@ -872,7 +930,10 @@ public class NfeInvoiceService {
                 .eq(DmpSoBillDetailEntity::getShopId,soB2cEntity.getShopId())
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
                 .list();
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        SoB2cReceiverEntity receiverEntity = shopeeBrazilOrderContext.getReceiverEntity();
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        }
         if (ObjUtil.isEmpty(receiverEntity)) {
             throw new ServiceException("B2C买家信息记录不存在");
         }
@@ -905,7 +966,7 @@ public class NfeInvoiceService {
             }
         }
         fillReceiverFallbackClientInfo(nfeClienteDTO, receiverEntity);
-        nfeClienteDTO = enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO);
+        nfeClienteDTO = enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO, shopeeBrazilOrderContext);
         nfeClienteDTO.setCpfCnpj(cleanTaxNo(nfeClienteDTO.getCpfCnpj()));
         fillProvinceInfo(nfeClienteDTO);
         nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
@@ -1018,8 +1079,12 @@ public class NfeInvoiceService {
      * @date 2025/4/11 16:21
      */
     private void getNfeItensDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, NfeInvoiceDTO.NfeCreateDTO createDTO, String dictInvoiceRule, BigDecimal ratio) {
+        getNfeItensDTO(soB2cEntity, invoiceSettingDetail, createDTO, dictInvoiceRule, ratio, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private void getNfeItensDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, NfeInvoiceDTO.NfeCreateDTO createDTO, String dictInvoiceRule, BigDecimal ratio, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
         List<NfeInvoiceDTO.NfeItensDTO> itens = new ArrayList<>();
-        Map<String, OrderItemDetail> shopeeOrderItemMap = getShopeeBrazilOrderItemMap(soB2cEntity);
+        Map<String, OrderItemDetail> shopeeOrderItemMap = getShopeeBrazilOrderItemMap(soB2cEntity, shopeeBrazilOrderContext);
 
         //财务信息
         SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
@@ -1075,13 +1140,13 @@ public class NfeInvoiceService {
             nfeItensDTO.setCoPedClienteApi(soB2cEntity.getCode());
 
             //产品金额
-            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,dictInvoiceRule,ratio, shopeeOrderItemMap));
+            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,dictInvoiceRule,ratio, shopeeOrderItemMap, shopeeBrazilOrderContext));
             itens.add(nfeItensDTO);
             valorTotal = MathUtil.add(valorTotal,MathUtil.multiplyWithTwo(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
         createDTO.setItens(itens);
         //查询运费
-        BigDecimal shipCost = getShipCost(soB2cEntity, invoiceSettingDetail);
+        BigDecimal shipCost = getShipCost(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext);
         BigDecimal total = MathUtil.add(valorTotal, shipCost);
         createDTO.setValorTotal(total);
         createDTO.setFinalTotal(total);
@@ -1103,7 +1168,11 @@ public class NfeInvoiceService {
     }
 
     private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, String dictInvoiceRule, BigDecimal ratio, Map<String, OrderItemDetail> shopeeOrderItemMap) {
-        if (isShopeeBrazilOrder(soB2cEntity)) {
+        return getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, shopeeOrderItemMap, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, String dictInvoiceRule, BigDecimal ratio, Map<String, OrderItemDetail> shopeeOrderItemMap, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        if (shopeeBrazilOrderContext.isBrazilOrder()) {
             return getShopeeBrazilUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, shopeeOrderItemMap);
         }
         BigDecimal price = detailEntity.getPrice();
@@ -1123,10 +1192,14 @@ public class NfeInvoiceService {
     }
 
     private boolean shouldAutoUploadInvoice(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        return shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private boolean shouldAutoUploadInvoice(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
         return ObjUtil.isNotEmpty(invoiceSettingDetail)
                 && Boolean.TRUE.equals(invoiceSettingDetail.getIsAutoUpload())
                 && (isMercadoLocalOrder(soB2cEntity)
-                || isShopeeBrazilOrder(soB2cEntity));
+                || shopeeBrazilOrderContext.isBrazilOrder());
     }
 
     private boolean isMercadoLocalOrder(SoB2cEntity soB2cEntity) {
@@ -1135,14 +1208,19 @@ public class NfeInvoiceService {
     }
 
     private boolean isShopeeBrazilOrder(SoB2cEntity soB2cEntity) {
+        return buildShopeeBrazilOrderContext(soB2cEntity).isBrazilOrder();
+    }
+
+    private ShopeeBrazilOrderContext buildShopeeBrazilOrderContext(SoB2cEntity soB2cEntity) {
         if (ObjUtil.isEmpty(soB2cEntity)
                 || CharSequenceUtil.isBlank(soB2cEntity.getId())
                 || !CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.SHOPEE.getCode(), soB2cEntity.getDictPlatform())) {
-            return false;
+            return new ShopeeBrazilOrderContext(false, null);
         }
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
-        return ObjUtil.isNotEmpty(receiverEntity)
+        boolean isBrazilOrder = ObjUtil.isNotEmpty(receiverEntity)
                 && CharSequenceUtil.equalsIgnoreCase(receiverEntity.getCountry(), "BR");
+        return new ShopeeBrazilOrderContext(isBrazilOrder, receiverEntity);
     }
 
     private void fillReceiverFallbackClientInfo(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, SoB2cReceiverEntity receiverEntity) {
@@ -1191,10 +1269,14 @@ public class NfeInvoiceService {
     }
 
     private NfeInvoiceDTO.NfeClienteDTO enrichShopeeBrazilClientDTO(SoB2cEntity soB2cEntity, NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO) {
-        if (!isShopeeBrazilOrder(soB2cEntity)) {
+        return enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private NfeInvoiceDTO.NfeClienteDTO enrichShopeeBrazilClientDTO(SoB2cEntity soB2cEntity, NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        if (!shopeeBrazilOrderContext.isBrazilOrder()) {
             return nfeClienteDTO;
         }
-        OrderDetail orderDetail = getShopeeBrazilOrderDetail(soB2cEntity);
+        OrderDetail orderDetail = getShopeeBrazilOrderDetail(soB2cEntity, shopeeBrazilOrderContext);
         RecipientAddress recipientAddress = orderDetail.getRecipientAddress();
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getName())) {
             nfeClienteDTO.setName(CharSequenceUtil.isNotBlank(orderDetail.getBuyerUsername()) ? orderDetail.getBuyerUsername() : ObjUtil.isEmpty(recipientAddress) ? CharSequenceUtil.EMPTY : recipientAddress.getName());
@@ -1281,10 +1363,14 @@ public class NfeInvoiceService {
     }
 
     private Map<String, OrderItemDetail> getShopeeBrazilOrderItemMap(SoB2cEntity soB2cEntity) {
-        if (!isShopeeBrazilOrder(soB2cEntity)) {
+        return getShopeeBrazilOrderItemMap(soB2cEntity, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private Map<String, OrderItemDetail> getShopeeBrazilOrderItemMap(SoB2cEntity soB2cEntity, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        if (!shopeeBrazilOrderContext.isBrazilOrder()) {
             return Collections.emptyMap();
         }
-        OrderDetail orderDetail = getShopeeBrazilOrderDetail(soB2cEntity);
+        OrderDetail orderDetail = getShopeeBrazilOrderDetail(soB2cEntity, shopeeBrazilOrderContext);
         if (ObjUtil.isEmpty(orderDetail) || CollUtil.isEmpty(orderDetail.getItemList())) {
             throw new ServiceException("Shopee订单明细不存在");
         }
@@ -1310,16 +1396,23 @@ public class NfeInvoiceService {
     }
 
     private OrderDetail getShopeeBrazilOrderDetail(SoB2cEntity soB2cEntity) {
-        if (!isShopeeBrazilOrder(soB2cEntity)) {
+        return getShopeeBrazilOrderDetail(soB2cEntity, buildShopeeBrazilOrderContext(soB2cEntity));
+    }
+
+    private OrderDetail getShopeeBrazilOrderDetail(SoB2cEntity soB2cEntity, ShopeeBrazilOrderContext shopeeBrazilOrderContext) {
+        if (!shopeeBrazilOrderContext.isBrazilOrder()) {
             return null;
+        }
+        if (ObjUtil.isNotEmpty(shopeeBrazilOrderContext.getOrderDetail())) {
+            return shopeeBrazilOrderContext.getOrderDetail();
         }
         ShopAuthEntity shopAuthEntity = getShopeeShopAuth(soB2cEntity);
         CfgAppClientEntity cfgAppClientEntity = getShopeeCfgAppClient();
         OrderRequest orderRequest = OrderRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
                 .token(getShopeeAccessToken(shopAuthEntity))
-                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+                .shopId(parseShopeeLong(shopAuthEntity.getShopeeId(), "Shopee店铺授权shopee_id格式不合法，应为纯数字"))
+                .partnerId(parseShopeeLong(cfgAppClientEntity.getClientId(), "Shopee基础配置partner_id格式不合法，应为纯数字"))
                 .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
                 .orderSns(soB2cEntity.getPlatformCode())
                 .build();
@@ -1337,7 +1430,9 @@ public class NfeInvoiceService {
         if (ObjUtil.isEmpty(orderList) || orderList.isEmpty()) {
             throw new ServiceException("Shopee订单详情不存在");
         }
-        return orderList.getJSONObject(0).toBean(OrderDetail.class);
+        OrderDetail orderDetail = orderList.getJSONObject(0).toBean(OrderDetail.class);
+        shopeeBrazilOrderContext.setOrderDetail(orderDetail);
+        return orderDetail;
     }
 
     private ShopAuthEntity getShopeeShopAuth(SoB2cEntity soB2cEntity) {
@@ -1430,7 +1525,7 @@ public class NfeInvoiceService {
                         RequestBody.create(MediaType.parse("application/xml"), fileBytes))
                 .build();
         Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
-        try (Response response = new OkHttpClient().newCall(request).execute()) {
+        try (Response response = OK_HTTP_CLIENT.newCall(request).execute()) {
             String responseBody = response.body() == null ? CharSequenceUtil.EMPTY : response.body().string();
             if (!response.isSuccessful()) {
                 throw new ServiceException(CharSequenceUtil.format("Shopee上传发票失败,httpStatus:{}, body:{}", response.code(), responseBody));
@@ -1503,8 +1598,20 @@ public class NfeInvoiceService {
         urlParamMap.put("timestamp", timestamp);
         urlParamMap.put("access_token", accessToken);
         urlParamMap.put("shop_id", shopAuthEntity.getShopeeId());
-        urlParamMap.put("sign", ShopeeApiUtils.getOrderSign(path, accessToken, Long.parseLong(cfgAppClientEntity.getClientId()), cfgAppClientEntity.getClientSecret(), Long.parseLong(shopAuthEntity.getShopeeId()), timestamp));
+        urlParamMap.put("sign", ShopeeApiUtils.getOrderSign(path, accessToken,
+                parseShopeeLong(cfgAppClientEntity.getClientId(), "Shopee基础配置partner_id格式不合法，应为纯数字"),
+                cfgAppClientEntity.getClientSecret(),
+                parseShopeeLong(shopAuthEntity.getShopeeId(), "Shopee店铺授权shopee_id格式不合法，应为纯数字"),
+                timestamp));
         return ShopeeApiUtils.buildUrl(cfgAppClientEntity.getUrl() + path, urlParamMap);
+    }
+
+    private long parseShopeeLong(String value, String errorMessage) {
+        try {
+            return Long.parseLong(CharSequenceUtil.trim(value));
+        } catch (Exception e) {
+            throw new ServiceException(errorMessage);
+        }
     }
 
     private BigDecimal convertToBrl(SoB2cEntity soB2cEntity, BigDecimal price, String currency, BigDecimal exchangeRate) {
@@ -1817,6 +1924,7 @@ public class NfeInvoiceService {
             CfgInvoiceSettingDetailEntity invoiceSettingDetail,
             CfgInvoiceSettingEntity invoiceSetting) {
         ReturnInvoiceDTO.ReturnDetailDTO returnDetailDTO = new ReturnInvoiceDTO.ReturnDetailDTO();
+        ShopeeBrazilOrderContext shopeeBrazilOrderContext = buildShopeeBrazilOrderContext(soB2cEntity);
         
         // 基础字段
         // 使用销售单号code生成15位唯一值，避免ID截取导致的重复问题
@@ -1829,7 +1937,7 @@ public class NfeInvoiceService {
         returnDetailDTO.setTotalDiscountAmount(BigDecimal.ZERO);
         
         // 客户信息（和开具发票保持一致）
-        CreateInvoiceDTO.ClienteDTO clienteDTO = buildClienteDTO(soB2cEntity, invoiceSettingDetail);
+        CreateInvoiceDTO.ClienteDTO clienteDTO = buildClienteDTO(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext);
         returnDetailDTO.setCliente(clienteDTO);
         
         // 商品列表（需要获取订单明细，但可能需要调整数量和价格）
@@ -1843,11 +1951,11 @@ public class NfeInvoiceService {
         String dictInvoiceRule = invoiceSettingDetail.getDictInvoiceRule();
         BigDecimal ratio = invoiceSettingDetail.getRatio();
         
-        List<CreateInvoiceDTO.ProductDTO> products = buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio);
+        List<CreateInvoiceDTO.ProductDTO> products = buildProductDTOList(soB2cEntity, invoiceSettingDetail, invoiceSetting, dictInvoiceRule, ratio, shopeeBrazilOrderContext);
         returnDetailDTO.setProducts(products);
         
         // 运输信息
-        CreateInvoiceDTO.TransportationDTO transportationDTO = buildTransportationDTO(soB2cEntity, invoiceSettingDetail);
+        CreateInvoiceDTO.TransportationDTO transportationDTO = buildTransportationDTO(soB2cEntity, invoiceSettingDetail, shopeeBrazilOrderContext);
         returnDetailDTO.setTransportation(transportationDTO);
         
         return returnDetailDTO;
