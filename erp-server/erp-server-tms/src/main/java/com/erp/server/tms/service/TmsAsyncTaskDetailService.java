@@ -16,5 +16,10 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
 
     void updateDetail(String taskDetailId, String status, String msg);
 
+    /**
+     * PENDING 认领为 ING，防止重复执行
+     */
+    boolean tryClaimDetailForExecution(String taskDetailId);
+
     List<TmsAsyncTaskDetailEntity> listErrorDetail(String mainId);
 }

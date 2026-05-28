@@ -192,6 +192,8 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
 
     void handleB2cDetailData(List<SoOutstockDetailEntity> detailList,SoOutstockEntity entity);
 
+    void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity);
+
     /**
      * 根据skuId查询Doris最新出库时间
      * @author Jim

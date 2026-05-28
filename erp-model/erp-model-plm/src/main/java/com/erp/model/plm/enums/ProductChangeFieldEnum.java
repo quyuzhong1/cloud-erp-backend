@@ -41,6 +41,7 @@ public enum ProductChangeFieldEnum implements EnumMessage {
     R_D_TEAM("研发团队（产线）", "product_info", "rdtTeamId", String.class),
     BRAND("品牌", "product_info", "brandId", String.class),
     PRODUCT_GRADE("产品等级", "product_info", "gradeId", String.class),
+    WARRANTY_PERIOD("产品质保期", "product_info", "warrantyPeriod", String.class),
     SALE_CHANNEL("销售渠道", "product_info", "salesChannel", String.class),
     IS_CUSTOMIZED("是否客户定制", "product_info", "isCustomized", Integer.class, s -> "是".equals(s) ? 1 : ("否".equals(s) ? 0 : Integer.parseInt(s))),
     HAS_INFRINGEMENT_RISK("存在侵权风险", "product_info", "pirateRisk", Integer.class,s -> "有风险".equals(s) ? 1 : ("无风险".equals(s) ? 2 : Integer.parseInt(s))),

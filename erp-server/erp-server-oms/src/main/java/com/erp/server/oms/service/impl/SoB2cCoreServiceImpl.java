@@ -406,6 +406,25 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         return Boolean.TRUE;
     }
 
+    @Override
+    public Map<String, CfgSettingDTO.PayMethodDTO> listPayMethodSettingMap() {
+        List<CfgSettingEntity> cfgSettingList = cfgSettingService.listSettingByKey(CfgSettingEnum.PAY_METHOD.getCode());
+        if (CollUtil.isEmpty(cfgSettingList)) {
+            return Collections.emptyMap();
+        }
+        List<CfgSettingDTO.PayMethodDTO> list = cfgSettingList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getValue()))
+                .map(obj -> JSONUtil.toBean(obj.getValue(), CfgSettingDTO.PayMethodDTO.class))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+        return list.stream().collect(Collectors.toMap(
+                obj -> CharSequenceUtil.format("{}-{}", obj.getPlatform(), obj.getPayMethod()),
+                Function.identity(),
+                (a, b) -> a));
+    }
+
     /**
      * 付款信息验证
      * @author will

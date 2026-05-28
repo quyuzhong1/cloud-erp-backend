@@ -670,6 +670,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("price", boxPrice);
             map.put("taxPrice", boxTaxPrice);
             map.put("amount", boxAmount);
+            map.put("taxAmount", detailEntity.getTaxAmount());
+            map.put("allAmountLocalCurrency", detailEntity.getAllAmountLocalCurrency());
             map.put("isGift", soDetailEntity.getIsGift());
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
@@ -884,6 +886,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //含税单价
             map.put("taxPrice", taxPrice);
             map.put("amount", detailEntity.getAmount());
+            map.put("taxAmount", detailEntity.getTaxAmount());
+            map.put("allAmountLocalCurrency", detailEntity.getAllAmountLocalCurrency());
             map.put("isGift", Boolean.FALSE);
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
@@ -1126,6 +1130,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //含税单价
             map.put("taxPrice", taxPrice);
             map.put("amount", detailEntity.getAmount());
+            map.put("taxAmount", detailEntity.getTaxAmount());
+            map.put("allAmountLocalCurrency", detailEntity.getAllAmountLocalCurrency());
             map.put("isGift", Boolean.FALSE);
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);

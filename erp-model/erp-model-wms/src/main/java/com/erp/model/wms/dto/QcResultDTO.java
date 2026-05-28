@@ -596,6 +596,11 @@ public class QcResultDTO {
          *  总数量
          */
         private Integer totalQty;
+        /**
+         * 质检类型
+         * QcTypeEnum
+         */
+        private String qcType;
 
     }
 

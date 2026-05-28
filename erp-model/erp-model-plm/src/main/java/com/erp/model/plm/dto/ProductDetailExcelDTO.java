@@ -98,7 +98,7 @@ public class ProductDetailExcelDTO {
     /**
      * 研发团队（产线）
      */
-    @FieldValid(fieldName = "研发团队（产线）", maxLength = 50)
+    @FieldValid(fieldName = "研发团队（产线）", isNotBlank = true, maxLength = 50)
     private String rdtTeamName;
 
     /**
@@ -174,6 +174,12 @@ public class ProductDetailExcelDTO {
      */
     @FieldValid(fieldName = "单位", isNotBlank = true)
     private String unitName;
+
+    /**
+     * 产品质保期
+     */
+    @FieldValid(fieldName = "产品质保期", isNotBlank = true)
+    private String warrantyPeriod;
 
     /**
      * 主要材质
@@ -533,4 +539,5 @@ public class ProductDetailExcelDTO {
      * 报关产品属性Id
      */
     private String productPropertyId;
+
 }

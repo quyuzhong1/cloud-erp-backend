@@ -1413,6 +1413,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (CollUtil.isEmpty(supplierList)) {
             return Maps.newHashMap();
         }
+        List<String> keyList = new ArrayList<>(5);
+        keyList.add(DictBasicEnum.CERTIFICATE.getType());
+        //根据 key list 获取到对应数据
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
+
         Map<String, SupplierEntity> supplierEntityMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity()));
 
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = Maps.newHashMapWithExpectedSize(supplierEntityMap.size());
@@ -1422,6 +1427,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierSimpleDTO.setCode(sup.getCode());
             supplierSimpleDTO.setName(sup.getName());
             supplierSimpleDTO.setDisabled(sup.getDisabled());
+            supplierSimpleDTO.setCertificateJson(sup.getCertificateJson());
+            //体系认证名称
+            String certificateJson = sup.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+            supplierSimpleDTO.setCertificateNames(certificateJson);
             supplierMap.put(id, supplierSimpleDTO);
         });
         return supplierMap;
@@ -2428,6 +2437,16 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                     return map;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public SupplierDTO.SupplierBaseInfoDTO getBaseInfo(String id) {
+        SupplierEntity supplier = this.getById(id);
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+        }
+        SupplierDTO.SupplierBaseInfoDTO result = BeanUtil.toBean(supplier, SupplierDTO.SupplierBaseInfoDTO.class);
+        return result;
     }
 
 

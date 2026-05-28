@@ -15,6 +15,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -33,6 +36,13 @@ import com.common.core.utils.Md5Util;
 import com.erp.model.oms.entity.CfgSettingEntity;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
+import com.sdk.oms.shopee.dto.base.ShopeeResponse;
+import com.sdk.oms.shopee.dto.order.request.OrderRequest;
+import com.sdk.oms.shopee.dto.order.response.OrderDetail;
+import com.sdk.oms.shopee.dto.order.response.OrderItemDetail;
+import com.sdk.oms.shopee.dto.order.response.RecipientAddress;
+import com.sdk.oms.shopee.service.ShopeeOrderService;
+import com.sdk.oms.shopee.utils.ShopeeApiUtils;
 import com.sdk.third.tf.TfFiscalService;
 import com.sdk.third.tf.dto.CancelInvoiceDTO;
 import com.sdk.third.tf.dto.CancelInvoiceResponseDTO;
@@ -60,10 +70,19 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -82,6 +101,8 @@ import static com.common.core.utils.MathUtil.removeSignAndSpace;
 public class NfeInvoiceService {
 
     private static final Logger log = LoggerFactory.getLogger(NfeInvoiceService.class);
+    private static final String SHOPEE_BR_DEDUCT_ERROR_MSG = "虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例";
+    private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
 
     @Resource
     private SoB2cDetailService soB2cDetailService;
@@ -130,6 +151,10 @@ public class NfeInvoiceService {
     private CfgSettingService cfgSettingService;
     @Resource
     private CfgRuleInvoiceAmountService cfgRuleInvoiceAmountService;
+    @Resource
+    private ShopAuthService shopAuthService;
+    @Resource
+    private ShopeeOrderService shopeeOrderService;
 
     @Transactional(rollbackFor = Exception.class)
     @Deprecated
@@ -290,7 +315,7 @@ public class NfeInvoiceService {
         uploadFile(invoiceInfoEntity.getId(),resultDTO.getLink_xml(),resultDTO.getLink_nota());
 
         //是否自动上传发票
-        if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
+        if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail)) {
             invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
         }
         return Boolean.TRUE;
@@ -425,7 +450,7 @@ public class NfeInvoiceService {
                 generateAndUploadPdfFromDanfe(invoiceInfoEntity.getId(), responseData.getUuid(), invoiceSettingDetail.getToken());
             }
             
-            if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
+            if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail)) {
                 invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
             }
             return Boolean.TRUE;
@@ -506,7 +531,7 @@ public class NfeInvoiceService {
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity, invoiceSettingDetail);
         CreateInvoiceDTO.ClienteDTO clienteDTO = new CreateInvoiceDTO.ClienteDTO();
         clienteDTO.setName(nfeClienteDTO.getName());
-        String cpfCnpj = nfeClienteDTO.getCpfCnpj();
+        String cpfCnpj = cleanTaxNo(nfeClienteDTO.getCpfCnpj());
         if (CharSequenceUtil.isNotBlank(cpfCnpj)) {
             if (cpfCnpj.length() <= 11) clienteDTO.setCpf(cpfCnpj);
             else clienteDTO.setCnpj(cpfCnpj);
@@ -525,7 +550,11 @@ public class NfeInvoiceService {
         clienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return clienteDTO;
     }
-    
+
+    private String cleanTaxNo(String taxNo) {
+        return CharSequenceUtil.isBlank(taxNo) ? CharSequenceUtil.EMPTY : taxNo.replaceAll("[^0-9]", "");
+    }
+
     /**
      * 从数据源获取城市信息
      * 优先从账单地址接口（DmpSoBillDetailEntity）获取，否则从订单接口（SoB2cReceiverEntity）获取
@@ -559,6 +588,7 @@ public class NfeInvoiceService {
         List<CreateInvoiceDTO.ProductDTO> products = new ArrayList<>();
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollUtil.isEmpty(detailList)) throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
+        Map<String, OrderItemDetail> shopeeOrderItemMap = getShopeeBrazilOrderItemMap(soB2cEntity);
         List<String> platformSkuNoList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
@@ -583,7 +613,7 @@ public class NfeInvoiceService {
             productDTO.setNcm(invoiceTaxEntity.getInvoiceHsCode());
             productDTO.setCount(String.valueOf(detailEntity.getQty()));
             productDTO.setUnit("UN");
-            BigDecimal unitPrice = getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio);
+            BigDecimal unitPrice = getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, shopeeOrderItemMap);
             productDTO.setUnitPrice(unitPrice);
             productDTO.setTotalPrice(MathUtil.multiplyWithTwo(unitPrice, detailEntity.getQty()));
             // discount_price字段：根据API规范，当值为0或null时不传，所以不设置该字段
@@ -740,6 +770,15 @@ public class NfeInvoiceService {
      * @return void
      */
     public void uploadNfeInvoice (SoB2cEntity soB2cEntity) {
+        if (isShopeeBrazilOrder(soB2cEntity)) {
+            uploadShopeeBrazilInvoice(soB2cEntity);
+            return;
+        }
+        if (!isMercadoLocalOrder(soB2cEntity)) {
+            throw new ServiceException(CharSequenceUtil.format("当前平台不支持上传NF-e发票，订单平台：{}，订单号：{}",
+                    ObjUtil.isEmpty(soB2cEntity) ? CharSequenceUtil.EMPTY : soB2cEntity.getDictPlatform(),
+                    ObjUtil.isEmpty(soB2cEntity) ? CharSequenceUtil.EMPTY : soB2cEntity.getCode()));
+        }
         //上传到平台
         MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
         mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
@@ -775,10 +814,16 @@ public class NfeInvoiceService {
      * @return BigDecimal
      */
     private BigDecimal getShipCost(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        if (isShopeeBrazilOrder(soB2cEntity)) {
+            if (ObjUtil.isNotEmpty(invoiceSettingDetail) && Boolean.TRUE.equals(invoiceSettingDetail.getIsContainShipFee())) {
+                throw new ServiceException(SHOPEE_BR_FREIGHT_ERROR_MSG);
+            }
+            return BigDecimal.ZERO;
+        }
         if (!CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
             return BigDecimal.ZERO;
         }
-        if (ObjUtil.isEmpty(invoiceSettingDetail) || !invoiceSettingDetail.getIsContainShipFee()){
+        if (ObjUtil.isEmpty(invoiceSettingDetail) || !Boolean.TRUE.equals(invoiceSettingDetail.getIsContainShipFee())){
             return BigDecimal.ZERO;
         }
         SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
@@ -831,43 +876,36 @@ public class NfeInvoiceService {
         if (ObjUtil.isEmpty(receiverEntity)) {
             throw new ServiceException("B2C买家信息记录不存在");
         }
+        NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO;
         if (CollUtil.isEmpty(allDmpSoBillDetailEntityList)) {
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
                     || (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform()))){
                 throw new ServiceException("开票地址信息不能为空");
             }
            //按照销售信息赋值
-            return getNfeClienteDTOBySoB2c(receiverEntity,dictVerifyType);
+            nfeClienteDTO = getNfeClienteDTOBySoB2c(soB2cEntity, receiverEntity,dictVerifyType);
+        } else {
+            DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
+            if (CharSequenceUtil.isNotBlank(receiverEntity.getIeNo())){
+                dmpSoBillDetailEntity.setRegistrationNo(receiverEntity.getIeNo());
+            }
+            if (InvoiceVerifyTypeEnum.IE.getCode().equals(dictVerifyType) && CharSequenceUtil.isBlank(dmpSoBillDetailEntity.getRegistrationNo())){
+                throw new ServiceException("公司买家IE号不允许为空");
+            }
+            nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
+            String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
+            nfeClienteDTO.setCep(newCep);
+            nfeClienteDTO.setBairro(getBairroStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua(),nfeClienteDTO.getBairro()));
+            if (CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())){
+                nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
+            }else {
+                nfeClienteDTO.setRua(getRuaStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua()));
+            }
         }
-        DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
-        if (CharSequenceUtil.isNotBlank(receiverEntity.getIeNo())){
-            dmpSoBillDetailEntity.setRegistrationNo(receiverEntity.getIeNo());
-        }
-        if (InvoiceVerifyTypeEnum.IE.getCode().equals(dictVerifyType) && CharSequenceUtil.isBlank(dmpSoBillDetailEntity.getRegistrationNo())){
-            throw new ServiceException("公司买家IE号不允许为空");
-        }
-        NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
-        String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
-        nfeClienteDTO.setCep(newCep);
-        // 巴西开票要求买家税号(CPF/CNPJ)只保留数字，去除".-/"等特殊符号；订单数据不变
-        nfeClienteDTO.setCpfCnpj(sanitizeCpfCnpj(nfeClienteDTO.getCpfCnpj()));
-        nfeClienteDTO.setBairro(getBairroStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua(),nfeClienteDTO.getBairro()));
-        if (CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())){
-            nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
-        }else {
-            nfeClienteDTO.setRua(getRuaStr(soB2cEntity.getDictPlatform(), nfeClienteDTO.getRua()));
-        }
-        //州（省份）二字码缩写
-        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
-                .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
-                .eq(DictCityEntity::getType,"province")
-                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
-                .list();
-        if (CollUtil.isEmpty(dictCityList)) {
-            throw new ServiceException("开票省份/州二字码未找到");
-        }
-        nfeClienteDTO.setUf(dictCityList.get(0).getCode());
-        nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        fillReceiverFallbackClientInfo(nfeClienteDTO, receiverEntity);
+        nfeClienteDTO = enrichShopeeBrazilClientDTO(soB2cEntity, nfeClienteDTO);
+        nfeClienteDTO.setCpfCnpj(cleanTaxNo(nfeClienteDTO.getCpfCnpj()));
+        fillProvinceInfo(nfeClienteDTO);
         nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
     }
@@ -943,7 +981,7 @@ public class NfeInvoiceService {
         return bairro;
     }
 
-    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cReceiverEntity receiverEntity, String dictVerifyType) {
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cEntity soB2cEntity, SoB2cReceiverEntity receiverEntity, String dictVerifyType) {
         if (InvoiceVerifyTypeEnum.IE.getCode().equals(dictVerifyType) && CharSequenceUtil.isBlank(receiverEntity.getIeNo())){
             throw new ServiceException("公司买家IE号不允许为空");
         }
@@ -951,7 +989,7 @@ public class NfeInvoiceService {
         // 巴西开票要求买家税号(CPF/CNPJ)只保留数字，去除".-/"等特殊符号；订单数据不变
         nfeClienteDTO.setCpfCnpj(sanitizeCpfCnpj(nfeClienteDTO.getCpfCnpj()));
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
-            nfeClienteDTO.setBairro(receiverEntity.getFirstAddress() );
+            nfeClienteDTO.setBairro(getBairroFallback(receiverEntity));
         }
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())){
             nfeClienteDTO.setMobile(receiverEntity.getReceiverTelNumber());
@@ -959,17 +997,9 @@ public class NfeInvoiceService {
         if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())){
             nfeClienteDTO.setRua(receiverEntity.getSecondAddress() + receiverEntity.getFullAddress());
         }
-        //州（省份）二字码缩写
-        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
-                .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
-                .eq(DictCityEntity::getType,"province")
-                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "' or code = '"+ nfeClienteDTO.getState() + "')")
-                .list();
-        if (CollUtil.isEmpty(dictCityList)) {
-            throw new ServiceException("开票省份/州二字码未找到");
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua()) && CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())) {
+            nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
         }
-        nfeClienteDTO.setUf(dictCityList.get(0).getCode());
-        nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
         nfeClienteDTO.setEmail(CharSequenceUtil.EMPTY);
         return nfeClienteDTO;
     }
@@ -987,6 +1017,7 @@ public class NfeInvoiceService {
      */
     private void getNfeItensDTO(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail, NfeInvoiceDTO.NfeCreateDTO createDTO, String dictInvoiceRule, BigDecimal ratio) {
         List<NfeInvoiceDTO.NfeItensDTO> itens = new ArrayList<>();
+        Map<String, OrderItemDetail> shopeeOrderItemMap = getShopeeBrazilOrderItemMap(soB2cEntity);
 
         //财务信息
         SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
@@ -1042,7 +1073,7 @@ public class NfeInvoiceService {
             nfeItensDTO.setCoPedClienteApi(soB2cEntity.getCode());
 
             //产品金额
-            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,dictInvoiceRule,ratio));
+            nfeItensDTO.setUnitPrice(getUnitPrice(soB2cEntity,detailEntity,dictInvoiceRule,ratio, shopeeOrderItemMap));
             itens.add(nfeItensDTO);
             valorTotal = MathUtil.add(valorTotal,MathUtil.multiplyWithTwo(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
@@ -1066,6 +1097,13 @@ public class NfeInvoiceService {
      * @date 2025/4/14 14:42
      */
     private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, String dictInvoiceRule, BigDecimal ratio) {
+        return getUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, Collections.emptyMap());
+    }
+
+    private BigDecimal getUnitPrice (SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, String dictInvoiceRule, BigDecimal ratio, Map<String, OrderItemDetail> shopeeOrderItemMap) {
+        if (isShopeeBrazilOrder(soB2cEntity)) {
+            return getShopeeBrazilUnitPrice(soB2cEntity, detailEntity, dictInvoiceRule, ratio, shopeeOrderItemMap);
+        }
         BigDecimal price = detailEntity.getPrice();
         if (CharSequenceUtil.isEmpty(dictInvoiceRule)) {
             price = detailEntity.getPrice();
@@ -1079,17 +1117,414 @@ public class NfeInvoiceService {
         if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.DEDUCT.getCode())) {
             price = MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
         }
-        String currency = detailEntity.getCurrency();
-        if(CurrencyEnum.BRL.getCurrencyCode().equals(currency)){
+        return convertToBrl(soB2cEntity, price, detailEntity.getCurrency(), detailEntity.getExchangeRate());
+    }
+
+    private boolean shouldAutoUploadInvoice(SoB2cEntity soB2cEntity, CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+        return ObjUtil.isNotEmpty(invoiceSettingDetail)
+                && Boolean.TRUE.equals(invoiceSettingDetail.getIsAutoUpload())
+                && (isMercadoLocalOrder(soB2cEntity)
+                || isShopeeBrazilOrder(soB2cEntity));
+    }
+
+    private boolean isMercadoLocalOrder(SoB2cEntity soB2cEntity) {
+        return ObjUtil.isNotEmpty(soB2cEntity)
+                && CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform());
+    }
+
+    private boolean isShopeeBrazilOrder(SoB2cEntity soB2cEntity) {
+        if (ObjUtil.isEmpty(soB2cEntity)
+                || CharSequenceUtil.isBlank(soB2cEntity.getId())
+                || !CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.SHOPEE.getCode(), soB2cEntity.getDictPlatform())) {
+            return false;
+        }
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        return ObjUtil.isNotEmpty(receiverEntity)
+                && CharSequenceUtil.equalsIgnoreCase(receiverEntity.getCountry(), "BR");
+    }
+
+    private void fillReceiverFallbackClientInfo(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, SoB2cReceiverEntity receiverEntity) {
+        if (ObjUtil.isEmpty(nfeClienteDTO) || ObjUtil.isEmpty(receiverEntity)) {
+            return;
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getName())) {
+            nfeClienteDTO.setName(CharSequenceUtil.isNotBlank(receiverEntity.getReceiverName()) ? receiverEntity.getReceiverName() : receiverEntity.getName());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getCpfCnpj()) && CharSequenceUtil.isNotBlank(receiverEntity.getReceiverTaxNo())) {
+            nfeClienteDTO.setCpfCnpj(cleanTaxNo(receiverEntity.getReceiverTaxNo()));
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getIeRg()) && CharSequenceUtil.isNotBlank(receiverEntity.getIeNo())) {
+            nfeClienteDTO.setIeRg(receiverEntity.getIeNo());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())) {
+            nfeClienteDTO.setMobile(CharSequenceUtil.isNotBlank(receiverEntity.getReceiverTelNumber()) ? receiverEntity.getReceiverTelNumber() : receiverEntity.getTelNumber());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getCityId())) {
+            nfeClienteDTO.setCityId(receiverEntity.getCityName());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getState())) {
+            nfeClienteDTO.setState(receiverEntity.getProvinceName());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())) {
+            nfeClienteDTO.setBairro(getBairroFallback(receiverEntity));
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())) {
+            if (CharSequenceUtil.isNotBlank(receiverEntity.getInvoiceAddress())) {
+                nfeClienteDTO.setRua(receiverEntity.getInvoiceAddress());
+            } else {
+                nfeClienteDTO.setRua(CharSequenceUtil.nullToEmpty(receiverEntity.getSecondAddress()) + CharSequenceUtil.nullToEmpty(receiverEntity.getFullAddress()));
+            }
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getNumero()) || CharSequenceUtil.equalsIgnoreCase(nfeClienteDTO.getNumero(), "S/N")) {
+            nfeClienteDTO.setNumero(CharSequenceUtil.isNotBlank(receiverEntity.getHouseNumber()) ? receiverEntity.getHouseNumber() : "S/N");
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getCep())) {
+            nfeClienteDTO.setCep(sanitizeCep(receiverEntity.getPostCode()));
+        } else {
+            nfeClienteDTO.setCep(sanitizeCep(nfeClienteDTO.getCep()));
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getCountry())) {
+            nfeClienteDTO.setCountry(receiverEntity.getCountry());
+        }
+    }
+
+    private NfeInvoiceDTO.NfeClienteDTO enrichShopeeBrazilClientDTO(SoB2cEntity soB2cEntity, NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO) {
+        if (!isShopeeBrazilOrder(soB2cEntity)) {
+            return nfeClienteDTO;
+        }
+        OrderDetail orderDetail = getShopeeBrazilOrderDetail(soB2cEntity);
+        RecipientAddress recipientAddress = orderDetail.getRecipientAddress();
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getName())) {
+            nfeClienteDTO.setName(CharSequenceUtil.isNotBlank(orderDetail.getBuyerUsername()) ? orderDetail.getBuyerUsername() : ObjUtil.isEmpty(recipientAddress) ? CharSequenceUtil.EMPTY : recipientAddress.getName());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getCpfCnpj()) && CharSequenceUtil.isNotBlank(orderDetail.getBuyerCpfId())) {
+            nfeClienteDTO.setCpfCnpj(cleanTaxNo(orderDetail.getBuyerCpfId()));
+        }
+        if (ObjUtil.isNotEmpty(recipientAddress)) {
+            if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())) {
+                nfeClienteDTO.setRua(recipientAddress.getFullAddress());
+            }
+            if (CharSequenceUtil.isNotBlank(recipientAddress.getDistrict())) {
+                nfeClienteDTO.setBairro(recipientAddress.getDistrict());
+            } else if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())) {
+                nfeClienteDTO.setBairro(recipientAddress.getFullAddress());
+            }
+            if (CharSequenceUtil.isBlank(nfeClienteDTO.getCityId())) {
+                nfeClienteDTO.setCityId(recipientAddress.getCity());
+            }
+            if (CharSequenceUtil.isBlank(nfeClienteDTO.getState())) {
+                nfeClienteDTO.setState(recipientAddress.getState());
+            }
+            if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())) {
+                nfeClienteDTO.setMobile(recipientAddress.getPhone());
+            }
+            if (CharSequenceUtil.isBlank(nfeClienteDTO.getCep())) {
+                nfeClienteDTO.setCep(sanitizeCep(recipientAddress.getZipcode()));
+            }
+            if (CharSequenceUtil.isBlank(nfeClienteDTO.getCountry())) {
+                nfeClienteDTO.setCountry(recipientAddress.getRegion());
+            }
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getNumero())) {
+            nfeClienteDTO.setNumero("S/N");
+        }
+        return nfeClienteDTO;
+    }
+
+    private String getBairroFallback(SoB2cReceiverEntity receiverEntity) {
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return CharSequenceUtil.isNotBlank(receiverEntity.getDistrictName()) ? receiverEntity.getDistrictName() : receiverEntity.getFirstAddress();
+    }
+
+    private void fillProvinceInfo(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO) {
+        if (ObjUtil.isEmpty(nfeClienteDTO) || CharSequenceUtil.isBlank(nfeClienteDTO.getState())) {
+            throw new ServiceException("开票省份/州二字码未找到");
+        }
+        String state = CharSequenceUtil.trim(nfeClienteDTO.getState());
+        if (CharSequenceUtil.isBlank(state)) {
+            throw new ServiceException("开票省份/州二字码未找到");
+        }
+        if (state.length() <= 2) {
+            nfeClienteDTO.setUf(state.toUpperCase(Locale.ROOT));
+            nfeClienteDTO.setState(state.toUpperCase(Locale.ROOT));
+            return;
+        }
+        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
+                .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
+                .eq(DictCityEntity::getType,"province")
+                .list();
+        Optional<DictCityEntity> cityOptional = dictCityList.stream()
+                .filter(city -> equalsIgnoreCaseAny(state, city.getCode(), city.getCodeEn(), city.getCodePt(), city.getName()))
+                .findFirst();
+        if (!cityOptional.isPresent()) {
+            throw new ServiceException("开票省份/州二字码未找到");
+        }
+        DictCityEntity dictCityEntity = cityOptional.get();
+        nfeClienteDTO.setUf(CharSequenceUtil.blankToDefault(dictCityEntity.getCode(), state).toUpperCase(Locale.ROOT));
+        nfeClienteDTO.setState(CharSequenceUtil.isNotBlank(dictCityEntity.getCodePt()) ? dictCityEntity.getCodePt() : nfeClienteDTO.getUf());
+    }
+
+    private boolean equalsIgnoreCaseAny(String source, String... targetArr) {
+        if (CharSequenceUtil.isBlank(source) || targetArr == null) {
+            return false;
+        }
+        for (String target : targetArr) {
+            if (CharSequenceUtil.isNotBlank(target) && CharSequenceUtil.equalsIgnoreCase(source, target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Map<String, OrderItemDetail> getShopeeBrazilOrderItemMap(SoB2cEntity soB2cEntity) {
+        if (!isShopeeBrazilOrder(soB2cEntity)) {
+            return Collections.emptyMap();
+        }
+        OrderDetail orderDetail = getShopeeBrazilOrderDetail(soB2cEntity);
+        if (ObjUtil.isEmpty(orderDetail) || CollUtil.isEmpty(orderDetail.getItemList())) {
+            throw new ServiceException("Shopee订单明细不存在");
+        }
+        Map<String, OrderItemDetail> itemMap = new HashMap<>();
+        for (OrderItemDetail orderItemDetail : orderDetail.getItemList()) {
+            if (CharSequenceUtil.isNotBlank(orderItemDetail.getModelSku())) {
+                itemMap.put(orderItemDetail.getModelSku(), orderItemDetail);
+            }
+            if (CharSequenceUtil.isNotBlank(orderItemDetail.getItemSku())) {
+                itemMap.put(orderItemDetail.getItemSku(), orderItemDetail);
+            }
+            if (ObjUtil.isNotEmpty(orderItemDetail.getModelId())) {
+                itemMap.put(String.valueOf(orderItemDetail.getModelId()), orderItemDetail);
+            }
+            if (ObjUtil.isNotEmpty(orderItemDetail.getItemId())) {
+                itemMap.put(String.valueOf(orderItemDetail.getItemId()), orderItemDetail);
+            }
+            if (ObjUtil.isNotEmpty(orderItemDetail.getOrderItemId())) {
+                itemMap.put(String.valueOf(orderItemDetail.getOrderItemId()), orderItemDetail);
+            }
+        }
+        return itemMap;
+    }
+
+    private OrderDetail getShopeeBrazilOrderDetail(SoB2cEntity soB2cEntity) {
+        if (!isShopeeBrazilOrder(soB2cEntity)) {
+            return null;
+        }
+        ShopAuthEntity shopAuthEntity = getShopeeShopAuth(soB2cEntity);
+        CfgAppClientEntity cfgAppClientEntity = getShopeeCfgAppClient();
+        OrderRequest orderRequest = OrderRequest.builder()
+                .host(cfgAppClientEntity.getUrl())
+                .token(getShopeeAccessToken(shopAuthEntity))
+                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
+                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+                .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
+                .orderSns(soB2cEntity.getPlatformCode())
+                .build();
+        ShopeeResponse shopeeResponse = shopeeOrderService.getOrderDetail(orderRequest);
+        if (ObjUtil.isEmpty(shopeeResponse)) {
+            throw new ServiceException("Shopee订单详情接口返回为空");
+        }
+        if (CharSequenceUtil.isNotBlank(shopeeResponse.getError())) {
+            throw new ServiceException(CharSequenceUtil.blankToDefault(shopeeResponse.getMessage(), shopeeResponse.getError()));
+        }
+        if (ObjUtil.isEmpty(shopeeResponse.getResponse())) {
+            throw new ServiceException("Shopee订单详情数据为空");
+        }
+        JSONArray orderList = shopeeResponse.getResponse().getJSONArray("order_list");
+        if (ObjUtil.isEmpty(orderList) || orderList.isEmpty()) {
+            throw new ServiceException("Shopee订单详情不存在");
+        }
+        return orderList.getJSONObject(0).toBean(OrderDetail.class);
+    }
+
+    private ShopAuthEntity getShopeeShopAuth(SoB2cEntity soB2cEntity) {
+        ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(shopAuthEntity) || CharSequenceUtil.isBlank(shopAuthEntity.getShopeeId())) {
+            throw new ServiceException("Shopee店铺授权信息不存在");
+        }
+        return shopAuthEntity;
+    }
+
+    private String getShopeeAccessToken(ShopAuthEntity shopAuthEntity) {
+        String accessToken = CharSequenceUtil.isNotBlank(shopAuthEntity.getAccessToken()) ? shopAuthEntity.getAccessToken() : shopAuthEntity.getToken();
+        if (CharSequenceUtil.isBlank(accessToken)) {
+            throw new ServiceException("Shopee access_token不存在");
+        }
+        return accessToken;
+    }
+
+    private CfgAppClientEntity getShopeeCfgAppClient() {
+        CfgAppClientEntity cfgAppClientEntity = dmpTaskFeign.getCfgAppClient(CfgAppClientDTO.FindDTO.init(AppClientEnum.SHOPEE_ACCESS_TOKEN));
+        if (ObjUtil.isEmpty(cfgAppClientEntity)) {
+            throw new ServiceException("Shopee基础配置未找到");
+        }
+        if (CharSequenceUtil.isBlank(cfgAppClientEntity.getUrl())
+                || CharSequenceUtil.isBlank(cfgAppClientEntity.getClientId())
+                || CharSequenceUtil.isBlank(cfgAppClientEntity.getClientSecret())) {
+            throw new ServiceException("Shopee基础配置不完整");
+        }
+        return cfgAppClientEntity;
+    }
+
+    private BigDecimal getShopeeBrazilUnitPrice(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, String dictInvoiceRule, BigDecimal ratio, Map<String, OrderItemDetail> shopeeOrderItemMap) {
+        if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.DEDUCT.getCode())) {
+            throw new ServiceException(SHOPEE_BR_DEDUCT_ERROR_MSG);
+        }
+        OrderItemDetail orderItemDetail = matchShopeeBrazilOrderItem(detailEntity, shopeeOrderItemMap);
+        BigDecimal price = BigDecimal.valueOf(orderItemDetail.getModelOriginalPrice());
+        if (CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.CUSTOM.getCode())) {
+            price = MathUtil.divide(MathUtil.multiplyWithTwo(price, ratio), MathUtil.BigDecimal_100);
+        }
+        return convertToBrl(soB2cEntity, price, detailEntity.getCurrency(), detailEntity.getExchangeRate());
+    }
+
+    private OrderItemDetail matchShopeeBrazilOrderItem(SoB2cDetailEntity detailEntity, Map<String, OrderItemDetail> shopeeOrderItemMap) {
+        if (CollUtil.isEmpty(shopeeOrderItemMap)) {
+            throw new ServiceException("Shopee订单明细不存在");
+        }
+        List<String> matchKeyList = Arrays.asList(
+                detailEntity.getPlatformSkuNo(),
+                detailEntity.getPlatformSkuId(),
+                detailEntity.getThirdDetailId(),
+                detailEntity.getSourceDetailId()
+        );
+        for (String matchKey : matchKeyList) {
+            if (CharSequenceUtil.isNotBlank(matchKey) && ObjUtil.isNotEmpty(shopeeOrderItemMap.get(matchKey))) {
+                return shopeeOrderItemMap.get(matchKey);
+            }
+        }
+        if (shopeeOrderItemMap.size() == 1) {
+            return shopeeOrderItemMap.values().iterator().next();
+        }
+        throw new ServiceException(CharSequenceUtil.format("Shopee订单明细未匹配到SKU，平台SKU：{}", detailEntity.getPlatformSkuNo()));
+    }
+
+    private void uploadShopeeBrazilInvoice(SoB2cEntity soB2cEntity) {
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
+        if (ObjUtil.isEmpty(attachDTO)) {
+            throw new ServiceException("NF-e发票未找到xml文件");
+        }
+        String attachUrl = buildFastDfsPublicUrl(attachDTO.getAttachUrl());
+        String fileName = CharSequenceUtil.blankToDefault(attachDTO.getAttachName(), soB2cEntity.getCode() + ".xml");
+        byte[] fileBytes = getFileBytesByUrl(attachUrl);
+        if (fileBytes == null || fileBytes.length == 0) {
+            throw new ServiceException("获取xml文件失败");
+        }
+        if (fileBytes.length > 1024 * 1024) {
+            throw new ServiceException("Shopee上传发票文件大小不能超过1MB");
+        }
+        ShopAuthEntity shopAuthEntity = getShopeeShopAuth(soB2cEntity);
+        CfgAppClientEntity cfgAppClientEntity = getShopeeCfgAppClient();
+        long timestamp = System.currentTimeMillis() / 1000L;
+        String accessToken = getShopeeAccessToken(shopAuthEntity);
+        String path = "/api/v2/order/upload_invoice_doc";
+        String uploadUrl = buildShopeeUploadInvoiceUrl(cfgAppClientEntity, shopAuthEntity, accessToken, path, timestamp);
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("order_sn", soB2cEntity.getPlatformCode())
+                .addFormDataPart("file_type", "4")
+                .addFormDataPart("file", fileName,
+                        RequestBody.create(MediaType.parse("application/xml"), fileBytes))
+                .build();
+        Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
+        try (Response response = new OkHttpClient().newCall(request).execute()) {
+            String responseBody = response.body() == null ? CharSequenceUtil.EMPTY : response.body().string();
+            if (!response.isSuccessful()) {
+                throw new ServiceException(CharSequenceUtil.format("Shopee上传发票失败,httpStatus:{}, body:{}", response.code(), responseBody));
+            }
+            ShopeeResponse shopeeResponse = JSONUtil.toBean(responseBody, ShopeeResponse.class);
+            if (ObjUtil.isEmpty(shopeeResponse)) {
+                throw new ServiceException("Shopee上传发票返回为空");
+            }
+            if (CharSequenceUtil.isNotBlank(shopeeResponse.getError())) {
+                throw new ServiceException(CharSequenceUtil.blankToDefault(shopeeResponse.getMessage(), shopeeResponse.getError()));
+            }
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ServiceException(CharSequenceUtil.format("Shopee上传发票失败: {}", e.getMessage()));
+        }
+    }
+
+    private String buildFastDfsPublicUrl(String attachUrl) {
+        if (CharSequenceUtil.isBlank(attachUrl)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        String trimAttachUrl = CharSequenceUtil.trim(attachUrl);
+        String lowerAttachUrl = trimAttachUrl.toLowerCase(Locale.ROOT);
+        if (lowerAttachUrl.startsWith("http://") || lowerAttachUrl.startsWith("https://")) {
+            return trimAttachUrl;
+        }
+        String publicUrl = CharSequenceUtil.nullToEmpty(FastDFSClientUtil.publicUrl);
+        if (CharSequenceUtil.isBlank(publicUrl)) {
+            throw new ServiceException("FastDFS公网地址未配置");
+        }
+        while (publicUrl.endsWith("/")) {
+            publicUrl = publicUrl.substring(0, publicUrl.length() - 1);
+        }
+        while (trimAttachUrl.startsWith("/")) {
+            trimAttachUrl = trimAttachUrl.substring(1);
+        }
+        return publicUrl + "/" + trimAttachUrl;
+    }
+
+    private byte[] getFileBytesByUrl(String fileUrl) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(fileUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5 * 1000);
+            conn.setReadTimeout(30 * 1000);
+            try (InputStream inputStream = conn.getInputStream();
+                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, len);
+                }
+                return outputStream.toByteArray();
+            }
+        } catch (Exception e) {
+            throw new ServiceException(CharSequenceUtil.format("获取文件失败: {}", e.getMessage()));
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
+    private String buildShopeeUploadInvoiceUrl(CfgAppClientEntity cfgAppClientEntity, ShopAuthEntity shopAuthEntity, String accessToken, String path, long timestamp) {
+        Map<String, Object> urlParamMap = new LinkedHashMap<>();
+        urlParamMap.put("partner_id", cfgAppClientEntity.getClientId());
+        urlParamMap.put("timestamp", timestamp);
+        urlParamMap.put("access_token", accessToken);
+        urlParamMap.put("shop_id", shopAuthEntity.getShopeeId());
+        urlParamMap.put("sign", ShopeeApiUtils.getOrderSign(path, accessToken, Long.parseLong(cfgAppClientEntity.getClientId()), cfgAppClientEntity.getClientSecret(), Long.parseLong(shopAuthEntity.getShopeeId()), timestamp));
+        return ShopeeApiUtils.buildUrl(cfgAppClientEntity.getUrl() + path, urlParamMap);
+    }
+
+    private BigDecimal convertToBrl(SoB2cEntity soB2cEntity, BigDecimal price, String currency, BigDecimal exchangeRate) {
+        if (Objects.isNull(price)) {
+            return BigDecimal.ZERO;
+        }
+        if (CharSequenceUtil.isBlank(currency) || CurrencyEnum.BRL.getCurrencyCode().equals(currency)) {
             return price;
         }
-        BigDecimal exchangeRate = detailEntity.getExchangeRate();
+        if (Objects.isNull(exchangeRate)) {
+            throw new ServiceException("订单明细汇率为空，请维护汇率后再提交");
+        }
         try {
             BigDecimal rate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.BRL.getCurrencyCode());
             return MathUtil.divide(MathUtil.multiplyWithFour(exchangeRate,price), rate);
         }catch (Exception e){
             throw new ServiceException( CurrencyEnum.BRL.getCurrencyName() + "汇率为空，请维护汇率后再提交");
         }
+    }
+
+    private String sanitizeCep(String cep) {
+        return CharSequenceUtil.isBlank(cep) ? CharSequenceUtil.EMPTY : removeSignAndSpace(cep);
     }
 
     /**
@@ -1205,7 +1640,7 @@ public class NfeInvoiceService {
             }
 
             // 重新上传至平台（如果配置了自动上传）
-            if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), soB2cEntity.getDictPlatform())) {
+            if (shouldAutoUploadInvoice(soB2cEntity, invoiceSettingDetail)) {
                 try {
                     invoiceInfoService.uploadNfeInvoice(soB2cEntity, invoiceInfoEntity.getId());
                 } catch (Exception e) {

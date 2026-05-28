@@ -482,9 +482,15 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String soId;
 
         /**
+         * 销售订单平台订单编号
+         */
+        private String salesPlatformOrderCode;
+
+        /**
          * 销售订单编码
          */
         private String soCode;
+
         /**
          * 收货人
          */
@@ -514,7 +520,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String warehouseOrgName;
 
         /**
-         * 平台订单编号
+         * 三方仓订单号
          */
         private String platformOrderCode;
 
@@ -527,6 +533,11 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 发货仓库名称[可排序]
          */
         private String deliveryWarehouseName;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
 
         /**
          * 仓库操作类型[可排序]
@@ -554,6 +565,10 @@ public class B2bThirdDeliveryDTO implements Serializable {
          * 明细id
          */
         private String  detailId;
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
 
         /**
          * 产品id

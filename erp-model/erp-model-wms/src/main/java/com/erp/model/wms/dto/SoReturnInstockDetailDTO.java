@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import lombok.AllArgsConstructor;
@@ -331,6 +332,21 @@ public class SoReturnInstockDetailDTO {
          *汇率
          */
         private BigDecimal exchangeRate;
+
+        /**
+         *单价
+         */
+        private BigDecimal price;
+
+        /**
+         *税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         *含税单价
+         */
+        private BigDecimal taxPrice;
 
     }
 }

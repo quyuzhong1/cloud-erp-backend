@@ -207,6 +207,9 @@
         FROM so_return sr
         WHERE sr.is_deleted = FALSE
         AND sr.approve_status = #{approveStatus}
+        <if test="params != null and params.keyword != null and params.keyword != ''">
+            AND sr.code ILIKE concat(#{params.keyword}::text, '%')
+        </if>
         <!--权限-->
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}

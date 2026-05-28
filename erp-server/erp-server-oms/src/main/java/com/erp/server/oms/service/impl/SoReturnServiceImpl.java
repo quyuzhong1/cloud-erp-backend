@@ -1308,9 +1308,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    public List<SoReturnEntity> listSoReturnByApproveStatus() {
+    public PagingVO<SoReturnEntity> listSoReturnByApproveStatus(PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
         String permissionSql = authDataFeign.getWarehousePermissionSql("sr.warehouse_id");
-        return baseMapper.listSoReturnByApproveStatus(ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<SoReturnEntity> pageData = baseMapper.listSoReturnByApproveStatus(query, dto.getParams(), ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
+        return new PagingVO<>(pageData);
     }
 
     @Override

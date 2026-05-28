@@ -12,7 +12,6 @@ import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -227,6 +226,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     BatchResultDTO pushAllocation(String id , String reportDate);
+
+    BatchResultDTO pushAllocation(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
 
     /**
      * 删除没有物流单的物流费用
