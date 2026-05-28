@@ -2546,9 +2546,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         try {
             locked = lock.tryLock(30, 180, TimeUnit.SECONDS);
             if (!locked) {
-                // waitTime(30s) 不再覆盖整个 GlobalTransactional(120s) 窗口：拿不到锁可能是持锁线程仍在执行业务/XA 提交，
-                // 也可能是持锁线程进程异常退出依赖 leaseTime(180s) 自动释放。两种情况都写入错误记录保留可观测性，
-                // 并返回 FALSE 供调用方走既有重试 / 报错路径（addSoB2cError + 组包 MQ delay-level 重试）。
+                // waitTime(30s) 不再覆盖整个 GlobalTransactional(120s) 窗口：拿不到锁可能是
+                //  a) 持锁线程仍在执行业务 / XA 提交（合法慢事务，30–120s 内）；
+                //  b) 持锁线程进程异常退出，依赖 leaseTime(180s) 自动释放。
+                // 为避免把场景 a 误判为失败（持锁线程随后正常提交、transfer_info 已写入，却让调用方走错误路径
+                // 重复生成调拨单），这里先做一次幂等读：transfer_info 已存在即认为前序线程已成功，直接返回 TRUE。
+                List<TransferInfoEntity> existing = transferInfoService.listBySourceId(entity.getId());
+                if (CollectionUtils.isNotEmpty(existing)) {
+                    log.warn("发货单【{}】生成直接调拨单获取锁超时(30s)，但 transfer_info 已存在，视为前序线程已完成", entity.getCode());
+                    return Boolean.TRUE;
+                }
                 String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时(30s)，等待重试或补偿", entity.getCode());
                 log.warn(msg);
                 recordPushTransferInfoError(entity, msg);
