@@ -271,8 +271,6 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
             }
             SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityMap.get(pagingViewDTO.getSoId());
             if (Objects.nonNull(soB2cLogisticsEntity)) {
-                pagingViewDTO.setTransportNo(soB2cLogisticsEntity.getCode());
-                pagingViewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
                 pagingViewDTO.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
                 pagingViewDTO.setChannelName(soB2cLogisticsEntity.getLogisticsChannelName());
             }
