@@ -197,6 +197,13 @@ public interface RedisCacheConstants {
     String MERGE_PACKAGE_RETRY_COUNT_KEY = "wms:mergePackage:retryCount:{}";
 
     /**
+     * B2C 发货单生成直接调拨单互斥锁:{发货单id}
+     * 多个并发入口（组包 MQ、重新出库、intercept、async 等）调用 pushTransferInfoError 时按发货单串行，
+     * 防止 check-then-act + Seata XA 提交窗口内并发导致重复生成 transfer_info
+     */
+    String SO_B2C_DELIVERY_PUSH_TRANSFER_INFO_LOCK = "wms:soB2cDelivery:pushTransferInfo:{}";
+
+    /**
      * 中台拉取track123海运标记
      */
     String DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO = "dmp:track123:ocean:trackNo";
