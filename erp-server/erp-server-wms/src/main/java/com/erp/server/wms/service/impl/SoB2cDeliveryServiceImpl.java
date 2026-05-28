@@ -2529,8 +2529,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
         try {
             soB2cDeliveryService.pushTransferInfo(entity);
-            List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-            confirmTransferInfoPersisted(entity, soB2cDeliveryDetailList);
+            confirmTransferInfoPersisted(entity);
         } catch (ServiceException se) {
             recordPushTransferInfoError(entity, se.getMessage());
             throw se;
@@ -2730,10 +2729,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     /**
      * 全局事务提交后再次确认中转调拨单已落库，避免调拨回滚后仍继续生成出库单。
      */
-    private void confirmTransferInfoPersisted(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+    private void confirmTransferInfoPersisted(SoB2cDeliveryEntity entity) {
         if (CharSequenceUtil.isBlank(entity.getTransferWarehouseIds())) {
             return;
         }
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
         validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
     }

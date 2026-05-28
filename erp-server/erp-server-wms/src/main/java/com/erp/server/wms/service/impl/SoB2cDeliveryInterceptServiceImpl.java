@@ -509,7 +509,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                             asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
                         }
                     } catch (ServiceException se) {
-                        log.warn("pushTransferInfo 校验失败，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
+                        if (ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED.getCode().equals(se.getCode())) {
+                            log.warn("pushTransferInfo 多仓库校验跳过，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
+                        } else {
+                            throw se;
+                        }
                     }
                     //更新备注
                     soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
@@ -795,7 +799,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
                 }
             } catch (ServiceException se) {
-                log.warn("pushTransferInfo 校验失败，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
+                if (ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED.getCode().equals(se.getCode())) {
+                    log.warn("pushTransferInfo 多仓库校验跳过，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
+                } else {
+                    throw se;
+                }
             }
             //更新备注
             soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
