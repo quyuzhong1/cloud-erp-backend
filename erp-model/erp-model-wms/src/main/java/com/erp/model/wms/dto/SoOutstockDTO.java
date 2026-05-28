@@ -2082,6 +2082,16 @@ public class SoOutstockDTO implements Serializable {
         private String soOutstockCode;
 
         /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelName;
+
+        /**
          * 销售组织id
          */
         private String salesOrgId;
@@ -2134,8 +2144,15 @@ public class SoOutstockDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateOutstockDateDTO {
 
+        @NotBlank(message = "销售出库单id不能为空")
         private String id;
 
+        @NotNull(message = "出库日期不能为空")
         private LocalDate outDate;
+
+        /**
+         * 客户端版本号，用于乐观锁校验，避免并发覆盖
+         */
+        private Integer version;
     }
 }

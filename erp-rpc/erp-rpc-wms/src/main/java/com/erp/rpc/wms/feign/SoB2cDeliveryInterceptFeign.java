@@ -80,6 +80,12 @@ public interface SoB2cDeliveryInterceptFeign {
     BatchResultDTO apiHandleSuccess(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark);
 
     /**
+     * API拦截失败
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/apiHandleFailure")
+    BatchResultDTO apiHandleFailure(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark);
+
+    /**
      * 发货拦截结果确认
      * @Author Luo_WG
      * @Date 2024/1/16 18:56

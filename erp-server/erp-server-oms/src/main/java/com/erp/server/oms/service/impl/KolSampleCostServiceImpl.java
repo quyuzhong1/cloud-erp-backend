@@ -34,11 +34,13 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.listener.KolSampleCostExcelListener;
@@ -91,6 +93,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Resource
     private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private FileFeign fileFeign;
@@ -285,10 +290,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         bagCostParamDTO.setSoOutstockDetailIdList(soOutstockDetailIdList);
         List<SmallBagCostAllocationDTO.SmallBagCostDTO> smallBagCostDTOS = ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listSmallBagCost(bagCostParamDTO), CollUtil.newArrayList());
         Map<String, BigDecimal> smallBagCostMap = buildSmallBagCostMap(smallBagCostDTOS);
+        Map<String, LogisticsChannelDTO.BaseDTO> logisticsChannelMap = buildLogisticsChannelMap(thisMonthList);
 
         for ( KolSampleCostEntity kolSampleCostEntity : thisMonthList) {
             kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             kolSampleCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
+            fillLogisticsInfo(kolSampleCostEntity, logisticsChannelMap);
             // 优先按 销售组织+SKU+仓库 匹配，未命中再按 SKU+仓库 降级匹配，均取最近创建的SKU成本
             InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
             if (ObjUtil.isEmpty(invSkuCostDTO)) {
@@ -341,6 +348,43 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     private String buildSmallBagCostKey(String soOutstockDetailId, String feeType) {
         return StrUtil.format("{}#{}", soOutstockDetailId, feeType);
+    }
+
+    private Map<String, LogisticsChannelDTO.BaseDTO> buildLogisticsChannelMap(List<KolSampleCostEntity> thisMonthList) {
+        List<String> logisticsChannelIdList = thisMonthList.stream()
+                .map(KolSampleCostEntity::getLogisticsChannelId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(logisticsChannelIdList)) {
+            return new HashMap<>();
+        }
+        List<LogisticsChannelDTO.BaseDTO> logisticsChannelList = ObjUtil.defaultIfNull(logisticsFeign.listChannelInfoById(logisticsChannelIdList), CollUtil.newArrayList());
+        return logisticsChannelList.stream()
+                .filter(obj -> ObjUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getId()))
+                .collect(Collectors.toMap(LogisticsChannelDTO.BaseDTO::getId, obj -> obj, (v1, v2) -> v1));
+    }
+
+    private void fillLogisticsInfo(KolSampleCostEntity kolSampleCostEntity,
+                                   Map<String, LogisticsChannelDTO.BaseDTO> logisticsChannelMap) {
+        if (CharSequenceUtil.isBlank(kolSampleCostEntity.getLogisticsChannelId()) || logisticsChannelMap.isEmpty()) {
+            return;
+        }
+        LogisticsChannelDTO.BaseDTO channelDTO = logisticsChannelMap.get(kolSampleCostEntity.getLogisticsChannelId());
+        if (ObjUtil.isEmpty(channelDTO)) {
+            return;
+        }
+        String supplierId = CharSequenceUtil.blankToDefault(channelDTO.getLogisticsSupplierId(),
+                CharSequenceUtil.blankToDefault(channelDTO.getMainId(), channelDTO.getSupplierId()));
+        if (CharSequenceUtil.isNotBlank(supplierId)) {
+            kolSampleCostEntity.setLogisticsSupplierId(supplierId);
+        }
+        if (CharSequenceUtil.isNotBlank(channelDTO.getLogisticsSupplierName())) {
+            kolSampleCostEntity.setLogisticsSupplierName(channelDTO.getLogisticsSupplierName());
+        }
+        if (CharSequenceUtil.isBlank(kolSampleCostEntity.getLogisticsChannelName()) && CharSequenceUtil.isNotBlank(channelDTO.getName())) {
+            kolSampleCostEntity.setLogisticsChannelName(channelDTO.getName());
+        }
     }
 
     private List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(List<String> skuIdList,
@@ -565,6 +609,10 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         costEntity.setExchangeRate(oldEntity.getExchangeRate());
         costEntity.setCurrency(CharSequenceUtil.blankToDefault(oldEntity.getCurrency(), CurrencyEnum.CNY.getCurrencyCode()));
         costEntity.setCurrencySymbol(CharSequenceUtil.blankToDefault(oldEntity.getCurrencySymbol(), CurrencyEnum.CNY.getCurrencySymbol()));
+        costEntity.setLogisticsSupplierId(oldEntity.getLogisticsSupplierId());
+        costEntity.setLogisticsSupplierName(oldEntity.getLogisticsSupplierName());
+        costEntity.setLogisticsChannelId(CharSequenceUtil.blankToDefault(costEntity.getLogisticsChannelId(), oldEntity.getLogisticsChannelId()));
+        costEntity.setLogisticsChannelName(CharSequenceUtil.blankToDefault(costEntity.getLogisticsChannelName(), oldEntity.getLogisticsChannelName()));
     }
 
     private boolean isWdtKolSoOutstock(SoOutstockDTO.KolSoOutstockDTO dto) {

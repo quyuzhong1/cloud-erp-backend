@@ -375,7 +375,14 @@ public class SoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/listSoReturnByApproveStatus")
-    public ApiResult<PagingVO<SoReturnEntity>> listSoReturnByApproveStatus(@RequestBody @Validated PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
+            menuCode = "oms:soReturn:paging",
+            tableAlias = "sr"
+    )
+    @WebAdvanceQuery(handler = SoReturnQueryHandler.class)
+    public ApiResult<PagingVO<SoReturnDTO.SoReturnListVO>> listSoReturnByApproveStatus(@RequestBody @Validated PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
         return success(soReturnService.listSoReturnByApproveStatus(dto));
     }
 

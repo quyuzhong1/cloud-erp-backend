@@ -846,16 +846,31 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date: 2023/11/1 15:27
      */
     private void handleDetailData(List<SoOutstockDetailEntity> detailList) {
+        handleDetailData(detailList, null, null);
+    }
+
+    private void handleDetailData(List<SoOutstockDetailEntity> detailList, SoInfoEntity prefetchedSoInfoEntity, List<SoDetailEntity> prefetchedSoDetailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
+        boolean usePrefetchedDetailList = Objects.nonNull(prefetchedSoDetailList);
+        List<SoDetailEntity> allSoDetailList = usePrefetchedDetailList ? prefetchedSoDetailList : null;
+        List<SoDetailEntity> soDetailList = Objects.nonNull(allSoDetailList)
+                ? allSoDetailList.stream().filter(item -> soDetailIdList.contains(item.getId())).collect(Collectors.toList())
+                : soInfoFeign.listSoDetailByIds(soDetailIdList);
+        soDetailList = Objects.isNull(soDetailList) ? Collections.emptyList() : soDetailList;
 
         //销售订单主表信息
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
-        List<SoDetailEntity> allSoDetailList = CollectionUtils.isNotEmpty(soIdList) ? soInfoFeign.listSoDetailByMainIds(soIdList) : Collections.emptyList();
+        List<SoInfoEntity> soInfoList = Objects.nonNull(prefetchedSoInfoEntity)
+                ? Collections.singletonList(prefetchedSoInfoEntity)
+                : usePrefetchedDetailList ? Collections.emptyList() : soInfoFeign.listSoInfoByIds(soIdList);
+        soInfoList = Objects.isNull(soInfoList) ? Collections.emptyList() : soInfoList;
+        allSoDetailList = Objects.nonNull(allSoDetailList)
+                ? allSoDetailList
+                : CollectionUtils.isNotEmpty(soIdList) ? soInfoFeign.listSoDetailByMainIds(soIdList) : Collections.emptyList();
+        allSoDetailList = Objects.isNull(allSoDetailList) ? Collections.emptyList() : allSoDetailList;
         Map<String, BigDecimal> orderWeightMap = allSoDetailList.stream()
                 .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
                         Collectors.mapping(this::calculateB2bDetailWeight,
@@ -942,15 +957,23 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if(StringUtils.isBlank(entity.getSoId())){
             return;
         }
-        List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
         if(Objects.isNull(soB2cEntity)){
             return;
         }
         List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(entity.getSoId()));
-        if(CollectionUtils.isEmpty(soDetailList)){
+        handleB2cDetailDataInternal(detailList, entity, soB2cEntity, soDetailList);
+    }
+
+    /**
+     * 批量入口：复用调用方预取的 SoB2cEntity / SoB2cDetail 列表，避免每个出库单各自走 Feign 远程查询
+     */
+    private void handleB2cDetailDataInternal(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity,
+                                             SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soDetailList) {
+        if (CollectionUtils.isEmpty(detailList) || Objects.isNull(soB2cEntity) || CollectionUtils.isEmpty(soDetailList)) {
             return;
         }
+        List<String> outSkuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<String> currencyIdList = soDetailList.stream().map(SoB2cDetailEntity::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = CollectionUtils.isNotEmpty(currencyIdList) ? sysUserFeign.listByCurrency(currencyIdList) : Collections.emptyList();
         List<String> skuIds = soDetailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
@@ -1044,10 +1067,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     List<BomChildrenSkuDTO> sameBomChildrenSkuDTOList = listOutBomChildren(bomChildrenSkuDTOS, bomChildrenSkuDTO.getParentSkuId(), outSkuIds);
                     if (!sameBomChildrenSkuDTOList.isEmpty()) {
 
-                        BigDecimal detailAmount =  soDetailEntity.getPrice().multiply(BigDecimal.valueOf(soDetailEntity.getQty()));
-                        if(allDetailAmount.compareTo(BigDecimal.ZERO)!=0){
-                            taxPrice = soB2cEntity.getAmount().multiply(detailAmount.divide(allDetailAmount,4, RoundingMode.HALF_UP)).divide(BigDecimal.valueOf(soDetailEntity.getQty()),4,RoundingMode.HALF_UP);
-                        }
+                        taxPrice = calcDetailTaxUnitPrice(soB2cEntity, soDetailEntity, allDetailAmount);
 
                         // 有其他子件 将单价分摊
                         price = allocateB2cComboChildUnitAmount(soDetailEntity.getPrice(), detailEntity, bomChildrenSkuDTO, sameBomChildrenSkuDTOList, detailList);
@@ -1055,17 +1075,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                     }
                 }else{
                     price = soDetailEntity.getPrice();
-                    BigDecimal detailAmount =  soDetailEntity.getPrice().multiply(BigDecimal.valueOf(soDetailEntity.getQty()));
-                    if(allDetailAmount.compareTo(BigDecimal.ZERO)!=0){
-                        taxPrice = soB2cEntity.getAmount().multiply(detailAmount.divide(allDetailAmount,4, RoundingMode.HALF_UP)).divide(BigDecimal.valueOf(soDetailEntity.getQty()),4,RoundingMode.HALF_UP);
-                    }
+                    taxPrice = calcDetailTaxUnitPrice(soB2cEntity, soDetailEntity, allDetailAmount);
                 }
             }else{
                 price = soDetailEntity.getPrice();
-                BigDecimal detailAmount =  soDetailEntity.getPrice().multiply(BigDecimal.valueOf(soDetailEntity.getQty()));
-                if(allDetailAmount.compareTo(BigDecimal.ZERO)!=0){
-                    taxPrice = soB2cEntity.getAmount().multiply(detailAmount.divide(allDetailAmount,4, RoundingMode.HALF_UP)).divide(BigDecimal.valueOf(soDetailEntity.getQty()),4,RoundingMode.HALF_UP);
-                }
+                taxPrice = calcDetailTaxUnitPrice(soB2cEntity, soDetailEntity, allDetailAmount);
                 if(!detailEntity.getSkuId().equals(soDetailEntity.getSkuId())){
                     //不是组合品直接取单价
                     String soSkuId = soDetailEntity.getSkuId();
@@ -1131,6 +1145,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (MathUtil.compareTo(totalQuantity, BigDecimal.ZERO) == 0 || MathUtil.compareTo(childQty, BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
+        // 无成本/零售价分摊数据时的兜底：父单价按子件总数均分到每个子件单位上
+        // 数学等价于 parentUnitAmount / totalQuantity；保留 childQty / childQty 写法
+        // 是为了与有 allocationAmount 时的 (currentCost / totalCost) 分摊公式结构对称、便于对照阅读
         return MathUtil.nvl(parentUnitAmount, BigDecimal.ZERO)
                 .multiply(childQty.divide(totalQuantity, 4, RoundingMode.HALF_UP))
                 .divide(childQty, 4, RoundingMode.HALF_UP);
@@ -1149,6 +1166,24 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 .map(SoOutstockDetailEntity::getAllocationAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * 计算 B2C 明细按整单金额分摊后的含税单价；所有空值/零值场景均回退到 0，避免 NPE 与除零。
+     */
+    private BigDecimal calcDetailTaxUnitPrice(SoB2cEntity soB2cEntity, SoB2cDetailEntity soDetailEntity, BigDecimal allDetailAmount) {
+        if (Objects.isNull(soB2cEntity) || Objects.isNull(soDetailEntity)) {
+            return BigDecimal.ZERO;
+        }
+        Integer qty = soDetailEntity.getQty();
+        if (qty == null || qty == 0 || Objects.isNull(allDetailAmount) || allDetailAmount.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal detailAmount = MathUtil.nvl(soDetailEntity.getPrice(), BigDecimal.ZERO)
+                .multiply(BigDecimal.valueOf(qty));
+        return MathUtil.nvl(soB2cEntity.getAmount(), BigDecimal.ZERO)
+                .multiply(detailAmount.divide(allDetailAmount, 4, RoundingMode.HALF_UP))
+                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.HALF_UP);
     }
 
     private BigDecimal calculateB2cTaxAmount(SoB2cEntity soB2cEntity, SoB2cDetailEntity soDetailEntity,
@@ -1227,6 +1262,35 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             handleB2cDetailData(detailList, entity);
         } else {
             handleDetailData(detailList);
+        }
+    }
+
+    @Override
+    public void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity,
+                                    SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailList) {
+        if (CollectionUtils.isEmpty(detailList) || Objects.isNull(entity)) {
+            return;
+        }
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+            if (StringUtils.isBlank(entity.getSoId())) {
+                return;
+            }
+            handleB2cDetailDataInternal(detailList, entity, soB2cEntity, soB2cDetailList);
+        } else {
+            handleDetailData(detailList);
+        }
+    }
+
+    @Override
+    public void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity,
+                                    SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailList) {
+        if (CollectionUtils.isEmpty(detailList) || Objects.isNull(entity)) {
+            return;
+        }
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+            handleB2cDetailData(detailList, entity);
+        } else {
+            handleDetailData(detailList, soInfoEntity, soDetailList);
         }
     }
 
