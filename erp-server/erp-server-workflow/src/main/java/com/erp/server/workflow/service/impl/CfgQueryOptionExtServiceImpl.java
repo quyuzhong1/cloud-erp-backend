@@ -191,6 +191,9 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
         Gson gson = new Gson();
         CfgQueryOptionExtDTO.ClassDTO classDTO = gson.fromJson(dataJson, CfgQueryOptionExtDTO.ClassDTO.class);
         try {
+            if(StringUtils.isBlank(map.get(cfgQueryOptionId))){
+                return;
+            }
             List<String> keyList = Arrays.asList(map.get(cfgQueryOptionId).split(","));
             Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
             List<BaseEntity> baseEntityList;
