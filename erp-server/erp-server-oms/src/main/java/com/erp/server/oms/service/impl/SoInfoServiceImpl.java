@@ -820,6 +820,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.FilterCalculateDTO.DetailDTO> filterCalculate(SoInfoDTO.FilterCalculateDTO dto) {
+        // 该接口只按入参SKU查询PLM属性并回填布尔打标结果，不读取或返回销售订单数据，无订单维度数据权限条件。
         if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getDetailList())) {
             return Collections.emptyList();
         }

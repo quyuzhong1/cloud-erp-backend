@@ -163,6 +163,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * SKU过滤计算打标
+     * 仅根据入参SKU计算过滤标识并返回当前明细，不修改订单或其他业务数据，无需记录操作日志。
      *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.FilterCalculateDTO.DetailDTO>>
