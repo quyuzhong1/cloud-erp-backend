@@ -47,6 +47,7 @@ import com.erp.model.dmp.enums.InventorySyncModeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
@@ -2043,7 +2044,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
             return;
         }
-        Map<String, SoB2cReturnDetailEntity> returnDetailMap = loadSoB2cReturnDetailMap(main.getSoReturnId());
+        Map<String, SoB2cReturnDetailDTO.ViewDTO> returnDetailMap = loadSoB2cReturnDetailMap(main.getSoReturnId());
         for (SoReturnInstockDetailEntity detail : detailEntityList) {
             if (Objects.nonNull(detail.getPrice()) && detail.getPrice().compareTo(BigDecimal.ZERO) > 0) {
                 continue;
@@ -2059,22 +2060,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
     }
 
-    private Map<String, SoB2cReturnDetailEntity> loadSoB2cReturnDetailMap(String soReturnId) {
+    private Map<String, SoB2cReturnDetailDTO.ViewDTO> loadSoB2cReturnDetailMap(String soReturnId) {
         if (CharSequenceUtil.isBlank(soReturnId)) {
             return Collections.emptyMap();
         }
-        List<SoB2cReturnDetailEntity> returnDetailList = soB2cReturnFeign.listDetailByMainIds(Collections.singletonList(soReturnId));
+        List<SoB2cReturnDetailDTO.ViewDTO> returnDetailList = soB2cReturnFeign.listDetailByMainIds(Collections.singletonList(soReturnId));
         if (CollectionUtils.isEmpty(returnDetailList)) {
             return Collections.emptyMap();
         }
         return returnDetailList.stream()
-                .collect(Collectors.toMap(SoB2cReturnDetailEntity::getId, Function.identity(), (left, right) -> left));
+                .collect(Collectors.toMap(SoB2cReturnDetailDTO.ViewDTO::getId, Function.identity(), (left, right) -> left));
     }
 
     private SoB2cDetailEntity resolveSoB2cDetail(SoReturnInstockDetailEntity detail, List<SoB2cDetailEntity> soB2cDetailList,
-                                                 Map<String, SoB2cReturnDetailEntity> returnDetailMap) {
+                                                 Map<String, SoB2cReturnDetailDTO.ViewDTO> returnDetailMap) {
         if (CharSequenceUtil.isNotBlank(detail.getSoReturnDetailId())) {
-            SoB2cReturnDetailEntity returnDetail = returnDetailMap.get(detail.getSoReturnDetailId());
+            SoB2cReturnDetailDTO.ViewDTO returnDetail = returnDetailMap.get(detail.getSoReturnDetailId());
             if (Objects.nonNull(returnDetail) && CharSequenceUtil.isNotBlank(returnDetail.getSoDetailId())) {
                 SoB2cDetailEntity matched = soB2cDetailList.stream()
                         .filter(item -> CharSequenceUtil.equals(item.getId(), returnDetail.getSoDetailId()))
@@ -2457,7 +2458,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList) {
+    public BatchResultDTO returnInstockSave(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailDTO.ViewDTO> detailEntityList, List<SoB2cReturnDTO.ReturnInstockDTO> returnInstockDTOS, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> b2cDetailEntityList) {
         SoB2cReturnDTO.ReturnInstockDTO instockDTO = returnInstockDTOS.get(0);
         WarehouseEntity warehouseEntity = warehouseService.getById(instockDTO.getWarehouseId());
         if (Objects.isNull(warehouseEntity)) {

@@ -36,6 +36,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -212,17 +213,15 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
-            fillB2cReturnNoticePrice(detailDto, detailEntity, soB2cReturnDetailEntity, soB2cDetailEntityList);
+            fillB2cReturnNoticePrice(detailDto, detailEntity, soB2cReturnDetailEntity, soB2cDetailEntityList, returnNoticeQty, noticeDetailEntities);
             list.add(detailEntity);
         }
         return this.saveBatch(list);
     }
 
     private void fillB2cReturnNoticePrice(SoReturnNoticeDetailDTO.Add detailDto, SoReturnNoticeDetailEntity detailEntity,
-                                          SoB2cReturnDetailEntity soB2cReturnDetailEntity, List<SoB2cDetailEntity> soB2cDetailEntityList) {
-        if (Objects.isNull(soB2cReturnDetailEntity)) {
-            return;
-        }
+                                          SoB2cReturnDetailEntity soB2cReturnDetailEntity, List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                          Integer returnNoticeQty, List<SoReturnNoticeDetailEntity> noticeDetailEntities) {
         if (Objects.nonNull(detailDto.getReturnAmount())) {
             detailEntity.setReturnAmount(detailDto.getReturnAmount());
             detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
@@ -236,7 +235,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(soB2cDetailEntity)) {
-            return;
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
         detailEntity.setExchangeRate(exchangeRate);
@@ -249,6 +248,9 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         BigDecimal returnAmount;
         if (Objects.equals(returnQty, detailDto.getReturnQty())) {
             returnAmount = lineReturnAmount;
+        } else if (returnNoticeQty > 0 && Objects.equals(returnQty, returnNoticeQty + detailDto.getReturnQty())) {
+            returnAmount = subtractPushedReturnAmount(lineReturnAmount, detailDto.getSourceDetailId(), noticeDetailEntities,
+                    SoReturnNoticeDetailEntity::getReturnAmount);
         } else {
             returnAmount = calReturnAmount(lineReturnAmount, returnQty, detailDto.getReturnQty());
         }
@@ -257,14 +259,40 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         if (Objects.isNull(exchangeRate)) {
             throw new ServiceException(ApiError.SO_RETURN_EXCHANGE_RATE_REQUIRED, soB2cDetailEntity.getId());
         }
-        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
-        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
+        BigDecimal lineReturnAmountLocalCurrency = MathUtil.multiplyWithFour(lineReturnAmount, exchangeRate);
+        BigDecimal returnAmountLocalCurrency;
+        BigDecimal taxReturnAmountLocalCurrency;
+        if (returnNoticeQty > 0 && Objects.equals(returnQty, returnNoticeQty + detailDto.getReturnQty())) {
+            returnAmountLocalCurrency = subtractPushedReturnAmount(lineReturnAmountLocalCurrency, detailDto.getSourceDetailId(), noticeDetailEntities,
+                    SoReturnNoticeDetailEntity::getReturnAmountLocalCurrency);
+            taxReturnAmountLocalCurrency = subtractPushedReturnAmount(lineReturnAmountLocalCurrency, detailDto.getSourceDetailId(), noticeDetailEntities,
+                    SoReturnNoticeDetailEntity::getTaxReturnAmountLocalCurrency);
+        } else {
+            returnAmountLocalCurrency = MathUtil.multiplyWithFour(returnAmount, exchangeRate);
+            taxReturnAmountLocalCurrency = MathUtil.multiplyWithFour(returnAmount, exchangeRate);
+        }
+        detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+        detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+    }
+
+    private BigDecimal subtractPushedReturnAmount(BigDecimal totalAmount, String sourceDetailId,
+                                                  List<SoReturnNoticeDetailEntity> noticeDetailEntities,
+                                                  Function<SoReturnNoticeDetailEntity, BigDecimal> amountGetter) {
+        BigDecimal remainAmount = totalAmount;
+        for (SoReturnNoticeDetailEntity noticeDetail : noticeDetailEntities) {
+            if (!CharSequenceUtil.equals(sourceDetailId, noticeDetail.getSourceDetailId())) {
+                continue;
+            }
+            BigDecimal pushedAmount = amountGetter.apply(noticeDetail);
+            remainAmount = remainAmount.subtract(ObjectUtil.defaultIfNull(pushedAmount, BigDecimal.ZERO));
+        }
+        return remainAmount;
     }
 
     /**
      * 按退货数量比例拆分单行金额（amount / qty * returnQty）。
      * 使用 {@link RoundingMode#DOWN} 截断，与 {@link com.erp.server.wms.service.impl.SoReturnNoticeServiceImpl#calReturnAmount} 保持一致；
-     * 同一退货明细多次分批下推时，各行累计金额可能略小于原行金额（尾差），属项目既有约定，不做最后一行吸收。
+     * 最后一批下推时的尾差由 {@link #fillB2cReturnNoticePrice} 按“原行金额减已下推累计”吸收。
      */
     private BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty) {
         if (Objects.isNull(amount) || Objects.isNull(qty) || qty <= 0 || Objects.isNull(returnQty)) {
