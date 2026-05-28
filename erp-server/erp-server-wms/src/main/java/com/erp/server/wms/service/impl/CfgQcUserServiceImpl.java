@@ -104,11 +104,11 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         checkSupplierWarehouseUnique(supplierId, addDTO.getWarehouseId(), supplier.getName(), warehouse.getName(), null);
 
         validateAtLeastOneQcUser(addDTO);
+        validateQcUsersInOrg(warehouse, addDTO);
 
         // 保存主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
         BeanMapper.copy(addDTO, cfgQcUserEntity);
-        // DTO字段名是stockIn，数据库是stockin，需要手动设置
         cfgQcUserEntity.setStockinQcUserId(addDTO.getStockInQcUserId());
         cfgQcUserEntity.setStockinQcUserName(addDTO.getStockInQcUserName());
         cfgQcUserEntity.setStockoutQcUserId(addDTO.getStockOutQcUserId());
@@ -150,6 +150,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         checkSupplierWarehouseUnique(supplierId, updateDTO.getWarehouseId(), supplierName, warehouse.getName(), updateDTO.getId());
 
         validateAtLeastOneQcUser(updateDTO);
+        validateQcUsersInOrg(warehouse, updateDTO);
 
         // 更新主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
@@ -226,6 +227,48 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             return;
         }
         throw new ServiceException(ApiError.CFG_QC_USER_QC_USER_AT_LEAST_ONE);
+    }
+
+    /**
+     * 校验已选质检员均在业务员管理（type=ZJY）中，且属于质检仓库对应组织
+     */
+    private void validateQcUsersInOrg(WarehouseEntity warehouse, CfgQcUserDTO.CommonDTO dto) {
+        Set<String> validUserIds = loadQcUserIdsByOrgId(warehouse.getOrgId());
+        Set<String> invalidUsers = new LinkedHashSet<>();
+        collectInvalidQcUser(validUserIds, dto.getStockInQcUserId(), dto.getStockInQcUserName(), invalidUsers);
+        collectInvalidQcUser(validUserIds, dto.getStockOutQcUserId(), dto.getStockOutQcUserName(), invalidUsers);
+        collectInvalidQcUser(validUserIds, dto.getOutsideQcUserId(), dto.getOutsideQcUserName(), invalidUsers);
+        collectInvalidQcUser(validUserIds, dto.getInsideQcUserId(), dto.getInsideQcUserName(), invalidUsers);
+        collectInvalidQcUser(validUserIds, dto.getNewProductStockInQcUserId(), dto.getNewProductStockInQcUserName(), invalidUsers);
+        collectInvalidQcUser(validUserIds, dto.getB2bOutsideQcUserId(), dto.getB2bOutsideQcUserName(), invalidUsers);
+        collectInvalidQcUser(validUserIds, dto.getReturnQcUserId(), dto.getReturnQcUserName(), invalidUsers);
+        if (CollUtil.isNotEmpty(invalidUsers)) {
+            throw new ServiceException(ApiError.CFG_QC_USER_IMPORT_USER_NOT_IN_ORG, String.join(",", invalidUsers));
+        }
+    }
+
+    private void collectInvalidQcUser(Set<String> validUserIds, String userId, String userName, Set<String> invalidUsers) {
+        if (StrUtil.isBlank(userId)) {
+            return;
+        }
+        if (validUserIds.contains(userId)) {
+            return;
+        }
+        invalidUsers.add(StrUtil.isNotBlank(userName) ? userName : userId);
+    }
+
+    private Set<String> loadQcUserIdsByOrgId(String orgId) {
+        KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO listDTO = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
+        listDTO.setOrgId(orgId);
+        listDTO.setType("ZJY");
+        ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult = kingdeeFeign.listKingdeeUser(listDTO);
+        if (apiResult == null || !apiResult.isSuccess() || CollUtil.isEmpty(apiResult.getData())) {
+            return Collections.emptySet();
+        }
+        return apiResult.getData().stream()
+                .map(UserInfoDTO.BusinessOperationUserDTO::getUserId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toSet());
     }
 
     @Override
