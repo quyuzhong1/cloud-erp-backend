@@ -148,6 +148,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO;
 @Slf4j
 public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEntity> implements SoInfoService {
 
+    /**
+     * SKU属性为费用或服务时，不参与销售订单金额合计计算。
+     */
+    private static final List<String> FILTER_CALCULATE_SKU_PROPERTY_NAMES = Arrays.asList("费用", "服务");
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -794,7 +798,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<String> productAndDeliverySkuIds = detailList.stream().flatMap(obj -> Stream.of(obj.getSkuId(), obj.getDeliverySkuId()))
                 .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(productAndDeliverySkuIds);
+        List<SkuVO> skuList = listSkuProductByIds(productAndDeliverySkuIds);
         //查询第三方SKU信息
         List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingService.listByErpSkuIdAndType(skuIds,"",soInfo.getWarehouseId(),"");
         for (SoDetailDTO.ViewDTO viewDTO : detailList) {
@@ -803,14 +807,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                 viewDTO.setUnitName(skuVO.getUnitName());
             }
-            boolean filterCalculate = skuList.stream()
-                    .filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), viewDTO.getSkuId())
-                            || CharSequenceUtil.equals(obj.getSkuId(), viewDTO.getDeliverySkuId()))
-                    .map(SkuVO::getPropertyName)
-                    .anyMatch(propertyName -> "费用".equalsIgnoreCase(propertyName) || "服务".equalsIgnoreCase(propertyName));
-            if (filterCalculate) {
-                viewDTO.setFilterCalculate(true);
-            }
+            viewDTO.setFilterCalculate(isFilterCalculate(viewDTO.getSkuId(), viewDTO.getDeliverySkuId(), skuList));
             ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingWithSkuMappingDTOList.stream().filter(v->v.getProductSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
             viewDTO.setThirdWarehouseSku(listingInfoWithSkuMappingDTO.getPlatformSkuNo());
         }
@@ -819,6 +816,49 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoReceiptDTO.SoViewDTO> soViewDTOS = soReceiptService.getSoViewDTO(soInfo);
         view.setSoReceiptDTOList(soViewDTOS);
         return view;
+    }
+
+    @Override
+    public List<SoInfoDTO.FilterCalculateDTO.DetailDTO> filterCalculate(SoInfoDTO.FilterCalculateDTO dto) {
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getDetailList())) {
+            return Collections.emptyList();
+        }
+        List<SoInfoDTO.FilterCalculateDTO.DetailDTO> detailList = dto.getDetailList();
+        List<String> skuIds = detailList.stream()
+                .filter(Objects::nonNull)
+                .flatMap(obj -> Stream.of(obj.getSkuId(), obj.getDeliverySkuId()))
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuList = listSkuProductByIds(skuIds);
+        for (SoInfoDTO.FilterCalculateDTO.DetailDTO detailDTO : detailList) {
+            if (Objects.isNull(detailDTO)) {
+                continue;
+            }
+            detailDTO.setFilterCalculate(isFilterCalculate(detailDTO.getSkuId(), detailDTO.getDeliverySkuId(), skuList));
+        }
+        return detailList;
+    }
+
+    private List<SkuVO> listSkuProductByIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        return CollectionUtils.isEmpty(skuList) ? Collections.emptyList() : skuList;
+    }
+
+    private boolean isFilterCalculate(String skuId, String deliverySkuId, List<SkuVO> skuList) {
+        if (CollectionUtils.isEmpty(skuList)) {
+            return false;
+        }
+        return skuList.stream()
+                .filter(Objects::nonNull)
+                .filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId)
+                        || CharSequenceUtil.equals(obj.getSkuId(), deliverySkuId))
+                .map(SkuVO::getPropertyName)
+                .anyMatch(propertyName -> FILTER_CALCULATE_SKU_PROPERTY_NAMES.stream()
+                        .anyMatch(filterCalculatePropertyName -> filterCalculatePropertyName.equalsIgnoreCase(propertyName)));
     }
 
     /**
