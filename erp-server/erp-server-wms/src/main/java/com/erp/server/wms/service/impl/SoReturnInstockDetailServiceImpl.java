@@ -35,11 +35,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,6 +51,7 @@ import java.util.stream.Collectors;
  * @author Luo_WG
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnInstockDetailMapper, SoReturnInstockDetailEntity> implements SoReturnInstockDetailService {
     @Resource
@@ -81,6 +84,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Resource
     private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private SoReturnNoticeService soReturnNoticeService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -133,6 +139,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 throw new ServiceException(ApiError.SO_RETURN_INBOUND_DETAIL_REQUIRED);
             }
             Map<String , Integer> returnDetailIdMap = new HashMap<>();
+            List<SoReturnReceiveDetailEntity> receivePushDetailList = isReceivePushInstock(dto.getSourceType())
+                    ? soReturnReceiveDetailService.listDetailByMainIds(Collections.singletonList(dto.getSourceId()))
+                    : Collections.emptyList();
             for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
                 //获取平台sku
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
@@ -167,8 +176,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setWarehouseId(detailDto.getWarehouseId());
                     detailEntity.setWarehouseName(updateDTO.getName());
                 }
-                fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
-                        detailDto.getRealQty(), detailDto.getExchangeRate(), soReturnDetailEntities, soDetailEntityList);
+                fillDetailPriceForAdd(detailEntity, dto, detailDto, receivePushDetailList,
+                        soReturnDetailEntities, soDetailEntityList, Collections.emptyList());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
 
@@ -256,6 +265,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
 
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
+            List<SoReturnReceiveDetailEntity> receivePushDetailList = isReceivePushInstock(dto.getSourceType())
+                    ? soReturnReceiveDetailService.listDetailByMainIds(Collections.singletonList(dto.getSourceId()))
+                    : Collections.emptyList();
             for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
@@ -264,7 +276,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSkuNo(detailDto.getSkuNo());
                 detailEntity.setMustQty(detailDto.getMustQty());
                 detailEntity.setRealQty(detailDto.getRealQty());
-                fillB2cPrice(detailEntity, detailDto.getSkuId(), detailDto.getRealQty(), detailDto.getExchangeRate(), soB2cDetailEntityList);
+                fillDetailPriceForAdd(detailEntity, dto, detailDto, receivePushDetailList,
+                        soReturnDetailEntities, Collections.emptyList(), soB2cDetailEntityList);
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
@@ -437,17 +450,25 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             }
             detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
-            detailEntity.setReturnAmount(detailDto.getReturnAmount());
-            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
-            detailEntity.setPrice(detailDto.getPrice());
-            detailEntity.setTaxPrice(detailDto.getTaxPrice());
-            detailEntity.setTaxRate(detailDto.getTaxRate());
-            if(null == detailDto.getExchangeRate()){
-                detailEntity.setExchangeRate(dto.getExchangeRate());
-            }else{
-                detailEntity.setExchangeRate(detailDto.getExchangeRate());
+            if (isReceivePushInstock(dto.getSourceType()) && CharSequenceUtil.isNotBlank(detailDto.getSourceDetailId())) {
+                if (Objects.isNull(soReturnReceiveDetailEntity)) {
+                    throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, skuVO.getSkuNo());
+                }
+                fillPriceFromReceiveDetail(detailEntity, soReturnReceiveDetailEntity, detailDto.getRealQty(),
+                        detailDto.getExchangeRate(), dto.getExchangeRate(), !"B2C".equals(dto.getType()), skuVO.getSkuNo());
+            } else {
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                detailEntity.setPrice(detailDto.getPrice());
+                detailEntity.setTaxPrice(detailDto.getTaxPrice());
+                detailEntity.setTaxRate(detailDto.getTaxRate());
+                if (null == detailDto.getExchangeRate()) {
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
+                } else {
+                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
+                }
             }
             list.add(detailEntity);
         }
@@ -519,6 +540,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             if(CollUtil.isEmpty(detailList)) {
                 throw new ServiceException(ApiError.SO_RETURN_INBOUND_DETAIL_REQUIRED);
             }
+            List<SoReturnReceiveDetailEntity> receivePushDetailList = isReceivePushInstock(dto.getSourceType())
+                    ? soReturnReceiveDetailService.listDetailByMainIds(Collections.singletonList(dto.getSourceId()))
+                    : Collections.emptyList();
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
@@ -568,6 +592,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 }
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                boolean receiveTailAmountApplied = false;
                 if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) //子sku不做数量校验
                         && StringUtils.isNotBlank(detailDto.getSourceDetailId())
                         && StringUtils.isNotBlank(detailDto.getSoReturnDetailId())
@@ -613,6 +638,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         detailEntity.setTaxReturnAmount(taxReturnAmount);
                         detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
                         detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+                        receiveTailAmountApplied = true;
                     }
                 }else if(Boolean.FALSE.equals(detailDto.getIsChildSkuNo()) //子sku不做数量校验
                         && StringUtils.isNotBlank(detailDto.getSoReturnDetailId())){
@@ -665,8 +691,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     }
                 }
                 if (!hasDetailPriceFromRequest(detailDto)) {
-                    fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
-                            detailDto.getRealQty(), detailEntity.getExchangeRate(), soReturnDetailEntities, soDetailEntityList);
+                    if (receiveTailAmountApplied) {
+                        applyDerivedUnitPriceAndTaxRate(detailEntity, detailDto.getRealQty(), !"B2C".equals(dto.getType()));
+                    } else {
+                        fillDetailPriceForUpdate(detailEntity, dto, detailDto, receivePushDetailList,
+                                soReturnDetailEntities, soDetailEntityList, Collections.emptyList());
+                    }
                 }
                 list.add(detailEntity);
                 //修改操作日志
@@ -721,6 +751,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             warehouseIds.add(dto.getWarehouseId());
             //获取仓库信息
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
+            List<SoReturnReceiveDetailEntity> receivePushDetailList = isReceivePushInstock(dto.getSourceType())
+                    ? soReturnReceiveDetailService.listDetailByMainIds(Collections.singletonList(dto.getSourceId()))
+                    : Collections.emptyList();
 
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
@@ -746,12 +779,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-                if (hasDetailPriceFromRequest(detailDto)) {
-                    applyUpdateDetailPriceFromRequest(detailEntity, detailDto, dto.getExchangeRate(), detailDto.getRealQty());
-                } else {
-                    fillB2cPrice(detailEntity, detailDto.getSkuId(), detailDto.getRealQty(),
-                            resolveExchangeRate(detailDto, dto), soB2cDetailEntityList);
-                }
+                fillDetailPriceForUpdate(detailEntity, dto, detailDto, receivePushDetailList,
+                        soReturnDetailEntities, Collections.emptyList(), soB2cDetailEntityList);
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
                     if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
@@ -805,6 +834,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "编辑操作");
                 this.removeByIds(deleteIds);
             }
+            List<SoReturnReceiveDetailEntity> receivePushDetailList = isReceivePushInstock(dto.getSourceType())
+                    ? soReturnReceiveDetailService.listDetailByMainIds(Collections.singletonList(dto.getSourceId()))
+                    : Collections.emptyList();
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
 
@@ -829,9 +861,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-                if (hasDetailPriceFromRequest(detailDto)) {
-                    applyUpdateDetailPriceFromRequest(detailEntity, detailDto, dto.getExchangeRate(), detailDto.getRealQty());
-                }
+                fillDetailPriceForUpdate(detailEntity, dto, detailDto, receivePushDetailList,
+                        Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
@@ -992,10 +1023,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         return Objects.nonNull(detailDto.getPrice());
     }
 
+    /**
+     * B2C 退货入库明细汇率：优先明细级；明细为空时回退主单汇率（历史数据兼容，属业务约定）。
+     */
     private BigDecimal resolveExchangeRate(SoReturnInstockDetailDTO.Common detailDto, SoReturnInstockDTO.Update dto) {
         if (Objects.nonNull(detailDto.getExchangeRate())) {
+            log.debug("resolveExchangeRate: 使用明细汇率, platformSkuNo={}, mainId={}",
+                    detailDto.getPlatformSkuNo(), dto.getId());
             return detailDto.getExchangeRate();
         }
+        log.debug("resolveExchangeRate: 明细汇率为空，回退主单汇率, platformSkuNo={}, mainId={}, mainExchangeRate={}",
+                detailDto.getPlatformSkuNo(), dto.getId(), dto.getExchangeRate());
         return dto.getExchangeRate();
     }
 
@@ -1018,6 +1056,134 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         } else {
             setPriceAndAmount(detailEntity, detailEntity.getPrice(), detailEntity.getTaxRate(),
                     detailEntity.getTaxPrice(), exchangeRate, realQty);
+        }
+    }
+
+    private boolean isReceivePushInstock(String sourceType) {
+        return SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceType);
+    }
+
+    private void fillDetailPriceForAdd(SoReturnInstockDetailEntity detailEntity,
+                                       SoReturnInstockDTO.Add dto,
+                                       SoReturnInstockDetailDTO.Add detailDto,
+                                       List<SoReturnReceiveDetailEntity> receivePushDetailList,
+                                       List<SoReturnDetailEntity> returnDetailList,
+                                       List<SoDetailEntity> soDetailList,
+                                       List<SoB2cDetailEntity> soB2cDetailList) {
+        if (isReceivePushInstock(dto.getSourceType()) && CharSequenceUtil.isNotBlank(detailDto.getSourceDetailId())) {
+            SoReturnReceiveDetailEntity receiveDetail = receivePushDetailList.stream()
+                    .filter(item -> CharSequenceUtil.equals(item.getId(), detailDto.getSourceDetailId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(receiveDetail)) {
+                throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, detailDto.getSkuNo());
+            }
+            fillPriceFromReceiveDetail(detailEntity, receiveDetail, detailDto.getRealQty(),
+                    detailDto.getExchangeRate(), dto.getExchangeRate(), !"B2C".equals(dto.getType()), detailDto.getSkuNo());
+            return;
+        }
+        if ("B2C".equals(dto.getType())) {
+            fillB2cPrice(detailEntity, detailDto.getSkuId(), detailDto.getRealQty(), detailDto.getExchangeRate(), soB2cDetailList);
+        } else {
+            fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
+                    detailDto.getRealQty(), detailDto.getExchangeRate(), returnDetailList, soDetailList);
+        }
+    }
+
+    private void fillDetailPriceForUpdate(SoReturnInstockDetailEntity detailEntity,
+                                        SoReturnInstockDTO.Update dto,
+                                        SoReturnInstockDetailDTO.Update detailDto,
+                                        List<SoReturnReceiveDetailEntity> receivePushDetailList,
+                                        List<SoReturnDetailEntity> returnDetailList,
+                                        List<SoDetailEntity> soDetailList,
+                                        List<SoB2cDetailEntity> soB2cDetailList) {
+        if (hasDetailPriceFromRequest(detailDto)) {
+            applyUpdateDetailPriceFromRequest(detailEntity, detailDto, dto.getExchangeRate(), detailDto.getRealQty());
+            return;
+        }
+        if (isReceivePushInstock(dto.getSourceType()) && CharSequenceUtil.isNotBlank(detailDto.getSourceDetailId())) {
+            SoReturnReceiveDetailEntity receiveDetail = receivePushDetailList.stream()
+                    .filter(item -> CharSequenceUtil.equals(item.getId(), detailDto.getSourceDetailId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(receiveDetail)) {
+                throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, detailDto.getSkuNo());
+            }
+            fillPriceFromReceiveDetail(detailEntity, receiveDetail, detailDto.getRealQty(),
+                    detailDto.getExchangeRate(), dto.getExchangeRate(), !"B2C".equals(dto.getType()), detailDto.getSkuNo());
+            return;
+        }
+        if ("B2C".equals(dto.getType())) {
+            fillB2cPrice(detailEntity, detailDto.getSkuId(), detailDto.getRealQty(),
+                    resolveExchangeRate(detailDto, dto), soB2cDetailList);
+        } else {
+            fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
+                    detailDto.getRealQty(), detailEntity.getExchangeRate(), returnDetailList, soDetailList);
+        }
+    }
+
+    private void fillPriceFromReceiveDetail(SoReturnInstockDetailEntity detailEntity,
+                                            SoReturnReceiveDetailEntity receiveDetail,
+                                            Integer realQty,
+                                            BigDecimal detailExchangeRate,
+                                            BigDecimal mainExchangeRate,
+                                            boolean b2b,
+                                            String skuNo) {
+        BigDecimal exchangeRate = Objects.nonNull(detailExchangeRate) ? detailExchangeRate : receiveDetail.getExchangeRate();
+        if (Objects.isNull(exchangeRate)) {
+            exchangeRate = mainExchangeRate;
+        }
+        detailEntity.setExchangeRate(exchangeRate);
+        Integer receiveQty = receiveDetail.getReceiveQty();
+        if (Objects.isNull(receiveQty) || receiveQty <= 0 || Objects.isNull(realQty) || realQty <= 0) {
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, skuNo);
+        }
+        if (Objects.equals(receiveQty, realQty)) {
+            detailEntity.setReturnAmount(receiveDetail.getReturnAmount());
+            detailEntity.setTaxReturnAmount(receiveDetail.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(receiveDetail.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(receiveDetail.getTaxReturnAmountLocalCurrency());
+        } else {
+            BigDecimal returnAmount = calReceiveReturnAmount(receiveDetail.getReturnAmount(), receiveQty, realQty, skuNo);
+            BigDecimal taxReturnAmount = calReceiveReturnAmount(receiveDetail.getTaxReturnAmount(), receiveQty, realQty, skuNo);
+            detailEntity.setReturnAmount(returnAmount);
+            detailEntity.setTaxReturnAmount(taxReturnAmount);
+            detailEntity.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(exchangeRate, returnAmount));
+            detailEntity.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(exchangeRate, taxReturnAmount));
+        }
+        applyDerivedUnitPriceAndTaxRate(detailEntity, realQty, b2b);
+    }
+
+    private BigDecimal calReceiveReturnAmount(BigDecimal amount, Integer qty, Integer returnQty, String skuNo) {
+        if (Objects.isNull(amount)) {
+            throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, skuNo);
+        }
+        return soReturnNoticeService.calReturnAmount(amount, qty, returnQty);
+    }
+
+    private void applyDerivedUnitPriceAndTaxRate(SoReturnInstockDetailEntity detailEntity, Integer realQty, boolean b2b) {
+        if (Objects.isNull(realQty) || realQty <= 0) {
+            return;
+        }
+        BigDecimal qty = BigDecimal.valueOf(realQty);
+        if (Objects.nonNull(detailEntity.getReturnAmount())) {
+            detailEntity.setPrice(detailEntity.getReturnAmount().divide(qty, 4, RoundingMode.DOWN));
+        }
+        if (Objects.nonNull(detailEntity.getTaxReturnAmount())) {
+            detailEntity.setTaxPrice(detailEntity.getTaxReturnAmount().divide(qty, 4, RoundingMode.DOWN));
+        } else if (Objects.nonNull(detailEntity.getPrice())) {
+            detailEntity.setTaxPrice(detailEntity.getPrice());
+        }
+        BigDecimal price = detailEntity.getPrice();
+        BigDecimal taxPrice = detailEntity.getTaxPrice();
+        if (b2b && Objects.nonNull(price) && price.compareTo(BigDecimal.ZERO) > 0 && Objects.nonNull(taxPrice)) {
+            if (taxPrice.compareTo(price) == 0) {
+                detailEntity.setTaxRate(BigDecimal.ZERO);
+            } else {
+                detailEntity.setTaxRate(taxPrice.subtract(price).divide(price, 4, RoundingMode.DOWN));
+            }
+        } else {
+            detailEntity.setTaxRate(BigDecimal.ZERO);
         }
     }
 
