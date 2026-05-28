@@ -252,8 +252,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         detailEntity.setReturnAmount(returnAmount);
         detailEntity.setTaxReturnAmount(returnAmount);
         if (Objects.isNull(exchangeRate)) {
-            log.warn("fillB2cReturnNoticePrice: soDetailId={} 汇率为空，跳过本位币金额填充", soB2cDetailEntity.getId());
-            return;
+            throw new ServiceException(ApiError.SO_RETURN_EXCHANGE_RATE_REQUIRED, soB2cDetailEntity.getId());
         }
         detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
         detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
