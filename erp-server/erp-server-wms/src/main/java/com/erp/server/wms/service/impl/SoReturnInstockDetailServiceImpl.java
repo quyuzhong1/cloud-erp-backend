@@ -861,8 +861,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-                fillDetailPriceForUpdate(detailEntity, dto, detailDto, receivePushDetailList,
-                        Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                if (hasDetailPriceFromRequest(detailDto)) {
+                    applyUpdateDetailPriceFromRequest(detailEntity, detailDto, dto.getExchangeRate(), detailDto.getRealQty());
+                } else if (isReceivePushInstock(dto.getSourceType()) && CharSequenceUtil.isNotBlank(detailDto.getSourceDetailId())) {
+                    fillDetailPriceForUpdate(detailEntity, dto, detailDto, receivePushDetailList,
+                            Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                }
 
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
@@ -1028,12 +1032,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
      */
     private BigDecimal resolveExchangeRate(SoReturnInstockDetailDTO.Common detailDto, SoReturnInstockDTO.Update dto) {
         if (Objects.nonNull(detailDto.getExchangeRate())) {
-            log.debug("resolveExchangeRate: 使用明细汇率, platformSkuNo={}, mainId={}",
-                    detailDto.getPlatformSkuNo(), dto.getId());
             return detailDto.getExchangeRate();
         }
-        log.debug("resolveExchangeRate: 明细汇率为空，回退主单汇率, platformSkuNo={}, mainId={}, mainExchangeRate={}",
-                detailDto.getPlatformSkuNo(), dto.getId(), dto.getExchangeRate());
         return dto.getExchangeRate();
     }
 
@@ -1136,7 +1136,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         detailEntity.setExchangeRate(exchangeRate);
         Integer receiveQty = receiveDetail.getReceiveQty();
         if (Objects.isNull(receiveQty) || receiveQty <= 0 || Objects.isNull(realQty) || realQty <= 0) {
-            throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, skuNo);
+            throw new ServiceException(ApiError.SO_RETURN_RECEIVE_QTY_INVALID, skuNo, receiveQty);
         }
         if (Objects.equals(receiveQty, realQty)) {
             detailEntity.setReturnAmount(receiveDetail.getReturnAmount());
@@ -1156,7 +1156,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     private BigDecimal calReceiveReturnAmount(BigDecimal amount, Integer qty, Integer returnQty, String skuNo) {
         if (Objects.isNull(amount)) {
-            throw new ServiceException(ApiError.SO_RETURN_SIGN_SKU_NOT_FOUND, skuNo);
+            throw new ServiceException(ApiError.SO_RETURN_RECEIVE_AMOUNT_MISSING, skuNo);
         }
         return soReturnNoticeService.calReturnAmount(amount, qty, returnQty);
     }
@@ -1167,10 +1167,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         }
         BigDecimal qty = BigDecimal.valueOf(realQty);
         if (Objects.nonNull(detailEntity.getReturnAmount())) {
-            detailEntity.setPrice(detailEntity.getReturnAmount().divide(qty, 4, RoundingMode.DOWN));
+            detailEntity.setPrice(detailEntity.getReturnAmount().divide(qty, 4, RoundingMode.HALF_UP));
         }
         if (Objects.nonNull(detailEntity.getTaxReturnAmount())) {
-            detailEntity.setTaxPrice(detailEntity.getTaxReturnAmount().divide(qty, 4, RoundingMode.DOWN));
+            detailEntity.setTaxPrice(detailEntity.getTaxReturnAmount().divide(qty, 4, RoundingMode.HALF_UP));
         } else if (Objects.nonNull(detailEntity.getPrice())) {
             detailEntity.setTaxPrice(detailEntity.getPrice());
         }
@@ -1180,7 +1180,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             if (taxPrice.compareTo(price) == 0) {
                 detailEntity.setTaxRate(BigDecimal.ZERO);
             } else {
-                detailEntity.setTaxRate(taxPrice.subtract(price).divide(price, 4, RoundingMode.DOWN));
+                detailEntity.setTaxRate(taxPrice.subtract(price).divide(price, 4, RoundingMode.HALF_UP));
             }
         } else {
             detailEntity.setTaxRate(BigDecimal.ZERO);
