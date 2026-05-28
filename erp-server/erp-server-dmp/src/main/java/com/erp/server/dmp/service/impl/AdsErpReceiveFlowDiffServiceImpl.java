@@ -16,7 +16,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO;
-import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO.*;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO.ExportParamDTO;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO.PagingParamDTO;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO.TotalDTO;
+import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.dto.AdsErpReceiveFlowDiffDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpReceiveFlowDiffEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -24,7 +27,6 @@ import com.erp.server.dmp.mapper.doris.AdsErpReceiveFlowDiffMapper;
 import com.erp.server.dmp.service.AdsErpReceiveFlowDiffService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,10 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -182,57 +182,7 @@ public class AdsErpReceiveFlowDiffServiceImpl extends SuperServiceImpl<AdsErpRec
 	public TotalDTO total(PagingDTO<PagingParamDTO> dto) {
 		return baseMapper.total(dto.getParams());
 	}
-	
-	@Override
-	public Boolean reCreate(ReCreateDTO dto) {
-		String checkMonth = dto.getCheckMonth();
-		checkMonth = checkMonth.replace("-", "年") + "月";
-		if(!cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月").equals(checkMonth)) {
-			throw new ServiceException("只允许重新生成上月核对任务");
-		}
-		Integer count = lambdaQuery().eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, checkMonth)
-				.eq(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing").count();
-		if(count != null && count > 0) {
-			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_receive_flow_diff_recreate");
-		if(reCreate) {
-			lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, checkMonth)
-			.set(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing")
-			.set(AdsErpReceiveFlowDiffEntity::getExecStatusName, "执行中")
-			.setSql(" finish_time = null ")
-			.update();
-		}
-		return true;
-	}
-	
-	@Override
-	public Boolean updateErp(UpdateErpDTO dto) {
-		String querySql = dto.getSqlMap().get("default");
-		String permissionSql = dto.getPermissionSql();
-		List<AdsErpReceiveFlowDiffEntity> list = lambdaQuery().eq(AdsErpReceiveFlowDiffEntity::getIsDeleted, false)
-				.eq(AdsErpReceiveFlowDiffEntity::getCheckMonth, cn.hutool.core.date.DateUtil.format(cn.hutool.core.date.DateUtil.offsetMonth(new Date(), -1), "yyyy年MM月"))
-		.select(AdsErpReceiveFlowDiffEntity::getSourceSystem , AdsErpReceiveFlowDiffEntity::getAccountCode , AdsErpReceiveFlowDiffEntity::getCheckMonth)
-		.last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql) + " group by source_system,account_code,check_month ")
-		.list();
-		if(CollUtil.isNotEmpty(list)) {
-			Integer count = lambdaQuery().in(AdsErpReceiveFlowDiffEntity::getCheckMonth, list.stream().map(AdsErpReceiveFlowDiffEntity::getCheckMonth).collect(Collectors.toSet()))
-					.eq(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing").count();
-			if(count != null && count > 0) {
-				throw new ServiceException(list.stream().map(AdsErpReceiveFlowDiffEntity::getCheckMonth).distinct().collect(Collectors.joining("、")) + "中有核对任务正在执行中");
-			}
-			boolean reCreate = RestCloudApiUtil.syncReCreate("", "ods_erp/ods_receive_flow_diff_update");
-			if(reCreate) {
-				lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getIsDeleted, false).last(" and " + querySql + " " + (permissionSql == null ? "" : permissionSql))
-				.set(AdsErpReceiveFlowDiffEntity::getExecStatus, "doing")
-				.set(AdsErpReceiveFlowDiffEntity::getExecStatusName, "执行中")
-				.setSql(" finish_time = null ")
-				.update();
-			}
-		}
-		return true;
-	}
-	
+
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
 		return lambdaUpdate().eq(AdsErpReceiveFlowDiffEntity::getId, dto.getId()).set(AdsErpReceiveFlowDiffEntity::getRemark, dto.getRemark()).update();

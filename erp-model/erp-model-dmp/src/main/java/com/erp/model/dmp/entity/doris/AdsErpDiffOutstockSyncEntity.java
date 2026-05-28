@@ -177,6 +177,13 @@ public class AdsErpDiffOutstockSyncEntity extends BaseEntity<AdsErpDiffOutstockS
     */
     @TableField("platform_bill_date")
     private Date platformBillDate;
+
+    /**
+     * 平台跟踪号
+     */
+    @TableField("platform_track_no")
+    private String platformTrackNo;
+
     /**
     * ERP单据名称
     */
@@ -237,6 +244,12 @@ public class AdsErpDiffOutstockSyncEntity extends BaseEntity<AdsErpDiffOutstockS
     */
     @TableField("bill_date")
     private Date billDate;
+
+    /**
+     * ERP跟踪号
+     */
+    @TableField("track_no")
+    private String trackNo;
     /**
     * 差异数量
     */
