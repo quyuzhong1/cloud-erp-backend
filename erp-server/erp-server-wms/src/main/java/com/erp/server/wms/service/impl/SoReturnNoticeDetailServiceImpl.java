@@ -9,6 +9,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -172,6 +174,9 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
 
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoB2cReturnDetailEntity> soReturnDetailEntities = FeignQuery.create(SoB2cReturnDetailEntity.class).in(SoB2cReturnDetailEntity::getId,returnDetailIds).list();
+        List<String> soDetailIds = soReturnDetailEntities.stream().map(SoB2cReturnDetailEntity::getSoDetailId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = CollectionUtils.isEmpty(soDetailIds) ? Collections.emptyList()
+                : FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getId, soDetailIds).list();
         List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
         List<SoReturnNoticeDetailEntity> list = new ArrayList<>();
 
@@ -207,9 +212,53 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            fillB2cReturnNoticePrice(detailDto, detailEntity, soB2cReturnDetailEntity, soB2cDetailEntityList);
             list.add(detailEntity);
         }
         return this.saveBatch(list);
+    }
+
+    private void fillB2cReturnNoticePrice(SoReturnNoticeDetailDTO.Add detailDto, SoReturnNoticeDetailEntity detailEntity,
+                                          SoB2cReturnDetailEntity soB2cReturnDetailEntity, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+        if (Objects.nonNull(detailDto.getReturnAmount())) {
+            detailEntity.setReturnAmount(detailDto.getReturnAmount());
+            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            detailEntity.setExchangeRate(Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : detailEntity.getExchangeRate());
+            return;
+        }
+        SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+                .filter(req -> CharSequenceUtil.equals(req.getId(), soB2cReturnDetailEntity.getSoDetailId()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(soB2cDetailEntity)) {
+            return;
+        }
+        BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
+        detailEntity.setExchangeRate(exchangeRate);
+        BigDecimal price = Objects.nonNull(soB2cDetailEntity.getPrice()) ? soB2cDetailEntity.getPrice() : BigDecimal.ZERO;
+        BigDecimal lineReturnAmount = MathUtil.multiplyWithFour(price, BigDecimal.valueOf(soB2cReturnDetailEntity.getReturnQty()));
+        BigDecimal returnAmount;
+        if (Objects.equals(soB2cReturnDetailEntity.getReturnQty(), detailDto.getReturnQty())) {
+            returnAmount = lineReturnAmount;
+        } else {
+            returnAmount = calReturnAmount(lineReturnAmount, soB2cReturnDetailEntity.getReturnQty(), detailDto.getReturnQty());
+        }
+        detailEntity.setReturnAmount(returnAmount);
+        detailEntity.setTaxReturnAmount(returnAmount);
+        BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
+        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, safeExchangeRate));
+        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, safeExchangeRate));
+    }
+
+    private BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty) {
+        if (Objects.isNull(amount) || Objects.isNull(qty) || qty <= 0 || Objects.isNull(returnQty)) {
+            return BigDecimal.ZERO;
+        }
+        return amount.divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
+                .multiply(BigDecimal.valueOf(returnQty))
+                .stripTrailingZeros();
     }
 
     @Override
