@@ -2,12 +2,15 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.AfterSalesWarehouseLocationSuggestDto;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.entity.WmsMoveCartonDetailEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.server.wms.mapper.WmsMoveCartonDetailMapper;
+import com.erp.server.wms.service.WarehouseLocationMoveService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WmsMoveCartonDetailService;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,9 @@ public class WmsMoveCartonDetailServiceImpl
     @Resource
     private WarehouseLocationService warehouseLocationService;
 
+    @Resource
+    private WarehouseLocationMoveService warehouseLocationMoveService;
+
     @Override
     public List<AfterSalesWarehouseLocationSuggestDto.BoxMoveDetailListDto> listBoxMoveDetail(String mainId) {
         List<WmsMoveCartonDetailEntity> entityList = lambdaQuery()
@@ -39,6 +45,13 @@ public class WmsMoveCartonDetailServiceImpl
         if (CollUtil.isEmpty(entityList)) {
             return Collections.emptyList();
         }
+
+        // 从主单获取仓库id，用于精确匹配仓位
+        WarehouseLocationMoveEntity moveMain = warehouseLocationMoveService.getById(mainId);
+        if (moveMain == null || moveMain.getWarehouseId() == null) {
+            throw new ServiceException("仓位移动主单不存在或仓库信息缺失，mainId: " + mainId);
+        }
+        String warehouseId = moveMain.getWarehouseId();
 
         // 提取所有移出和移入仓位编码
         Set<String> locationCodes = entityList.stream()
@@ -52,9 +65,10 @@ public class WmsMoveCartonDetailServiceImpl
 
         Map<String, String> locationNameMap = Collections.emptyMap();
         if (CollUtil.isNotEmpty(locationCodes)) {
-            // 根据仓位编码列表查库，并带上 type='location'
+            // 根据仓位编码列表查库，并带上 type='location' 及仓库id以精确匹配
             List<WarehouseLocationEntity> locations = warehouseLocationService.lambdaQuery()
                     .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
+                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
                     //这个in内容不会很大，所以此处使用in查询
                     .in(WarehouseLocationEntity::getCode, locationCodes)
                     .list();
