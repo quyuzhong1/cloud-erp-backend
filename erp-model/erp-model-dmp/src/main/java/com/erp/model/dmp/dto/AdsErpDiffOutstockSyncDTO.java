@@ -1,22 +1,19 @@
 package com.erp.model.dmp.dto;
 
-import java.util.Date;
-
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import com.common.business.dto.AdvanceQueryDTO;
-
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -222,7 +219,7 @@ public class AdsErpDiffOutstockSyncDTO implements Serializable {
         /**
          * 平台ERP_SKU
          */
-        private String platformSku;
+        private String platformSkuNo;
 
         /**
          * 平台ERP_SKU数量
