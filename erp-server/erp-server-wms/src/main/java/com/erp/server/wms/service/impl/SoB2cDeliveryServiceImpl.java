@@ -2539,11 +2539,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         try {
             locked = lock.tryLock(125, 180, TimeUnit.SECONDS);
             if (!locked) {
-                // 锁超时意味着持锁线程正处于「查 transfer_info -> 生成」的 check-then-act 阶段，
-                // 极大概率会成功提交。这里若调用 recordPushTransferInfoError 写入错误记录，会与对端
-                // 成功提交后的状态产生冲突（误导性「生成失败」、触发额外重试/报警）。
-                // 因此仅打 warn 日志并返回 FALSE，交由上游重试逻辑（MQ 重投 / 调度兜底等）处理。
-                log.warn("发货单【{}】生成直接调拨单获取锁超时，跳过本次执行，等待上游重试", entity.getCode());
+                // waitTime(125s) 已覆盖 GlobalTransactional(120s) 超时窗口，持锁线程正常提交或 XA 回滚都会
+                // 在 finally 释放锁。能走到这里几乎只剩「持锁线程进程异常退出、依赖 leaseTime(180s) 才会
+                // 自动释放」一类情况，持锁线程自身也来不及写错误记录。部分调用方（如 afreshOutFreezeVirtualInventory）
+                // 会忽略本方法的返回值直接返回 TRUE，若此处不写错误记录，故障将完全静默。
+                // 因此写入一条语义明确的「锁超时」错误记录保留可观测性，并返回 FALSE 供显式判断返回值的
+                // 调用方走重试 / 报错路径。
+                String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时，疑似持锁线程异常，等待补偿", entity.getCode());
+                log.warn(msg);
+                recordPushTransferInfoError(entity, msg);
                 return Boolean.FALSE;
             }
             soB2cDeliveryService.pushTransferInfo(entity);
