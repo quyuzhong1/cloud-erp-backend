@@ -60,7 +60,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             //下推头程对账单
             tmsFirstMileReconciliationDetailService.pushFirstMileReconciliation(dto);
         }
-
         //报关对账
         else if(Objects.equals(businessType,SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
             //创建任务明细等相关内容
