@@ -16,9 +16,9 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
@@ -521,7 +521,7 @@ public class SoReturnInstockController extends BaseController {
         }
         List<String> ids = dtos.stream().map(SoB2cReturnDTO.ReturnInstockDTO::getId).distinct().collect(Collectors.toList());
         List<SoB2cReturnEntity> returnEntityList = soB2cReturnFeign.listByIds(ids);
-        List<SoB2cReturnDetailEntity> returnDetailEntityList = soB2cReturnFeign.listDetailByMainIds(ids);
+        List<SoB2cReturnDetailDTO.ViewDTO> returnDetailEntityList = soB2cReturnFeign.listDetailByMainIds(ids);
         List<String> soIds = returnEntityList.stream().map(SoB2cReturnEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
@@ -534,7 +534,7 @@ public class SoReturnInstockController extends BaseController {
                 continue;
             }
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equals(soB2cReturnEntity.getSoId())).findFirst().orElse(null);
-            List<SoB2cReturnDetailEntity> detailEntityList = returnDetailEntityList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
+            List<SoB2cReturnDetailDTO.ViewDTO> detailEntityList = returnDetailEntityList.stream().filter(e -> e.getMainId().equals(id)).collect(Collectors.toList());
             List<SoB2cDetailEntity> b2cDetailEntityList = soB2cDetailEntityList.stream().filter(e -> e.getMainId().equals(soB2cReturnEntity.getSoId())).collect(Collectors.toList());
             try {
                 resultDTOS.add(soReturnInstockService.returnInstockSave(soB2cReturnEntity,detailEntityList,returnInstockDTOS,soB2cEntity,b2cDetailEntityList));

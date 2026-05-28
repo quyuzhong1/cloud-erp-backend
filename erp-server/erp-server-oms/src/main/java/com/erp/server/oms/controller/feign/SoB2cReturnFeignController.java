@@ -1,9 +1,10 @@
 package com.erp.server.oms.controller.feign;
 
+import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.server.oms.service.SoB2cReturnDetailService;
 import com.erp.server.oms.service.SoB2cReturnService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -13,6 +14,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("feign/soB2cReturn")
@@ -58,8 +60,16 @@ public class SoB2cReturnFeignController {
      * @return java.lang.Boolean
      **/
     @PostMapping("/listDetailByMainIds")
-    public List<SoB2cReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
-        return soB2cReturnDetailService.listByMainIds(mainIds);
+    public List<SoB2cReturnDetailDTO.ViewDTO> listDetailByMainIds(@RequestBody List<String> mainIds) {
+        List<SoB2cReturnDetailEntity> detailList = soB2cReturnDetailService.listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        return detailList.stream().map(entity -> {
+            SoB2cReturnDetailDTO.ViewDTO viewDTO = new SoB2cReturnDetailDTO.ViewDTO();
+            BeanMapper.copy(entity, viewDTO);
+            return viewDTO;
+        }).collect(Collectors.toList());
     }
 
 
