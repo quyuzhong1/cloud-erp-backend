@@ -2063,9 +2063,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CharSequenceUtil.isBlank(soReturnId)) {
             return Collections.emptyMap();
         }
-        List<SoB2cReturnDetailEntity> returnDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
-                .eq(SoB2cReturnDetailEntity::getMainId, soReturnId)
-                .list();
+        List<SoB2cReturnDetailEntity> returnDetailList = soB2cReturnFeign.listDetailByMainIds(Collections.singletonList(soReturnId));
         if (CollectionUtils.isEmpty(returnDetailList)) {
             return Collections.emptyMap();
         }
