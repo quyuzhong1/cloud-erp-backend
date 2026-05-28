@@ -35,7 +35,6 @@ import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.ReconciliationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.TmsAsyncTaskRecordMapper;
-import com.erp.server.tms.service.AsyncService;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.TmsAsyncTaskRecordService;
@@ -47,6 +46,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -101,11 +101,14 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public String addManualTask(String businessType, String json){
-        Integer count = lambdaQuery()
-                .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
-                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
-                .count();
-        if(count > 0){
+        List<TmsAsyncTaskRecordEntity> runningTasks = lambdaQuery()
+            .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
+            .in(TmsAsyncTaskRecordEntity::getStatus,
+                Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+            .list();
+        if (CollUtil.isNotEmpty(runningTasks)
+            && runningTasks.stream().anyMatch(task -> isSameManualTaskDataJson(json, task.getDataJson()))) {
+            log.warn("手动异步任务参数重复，businessType: {}", businessType);
             return null;
         }
 
@@ -119,6 +122,56 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
         return save(entity) ? entity.getId() : null;
+    }
+
+    /**
+     * 比较手动任务入参是否等价（忽略 taskId、游标等执行过程字段）
+     */
+    private boolean isSameManualTaskDataJson(String json1, String json2) {
+        try {
+            return Objects.equals(normalizeManualTaskDataJson(json1), normalizeManualTaskDataJson(json2));
+        } catch (Exception e) {
+            log.warn("任务参数归一化比较失败，保守策略：允许创建任务, err={}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String normalizeManualTaskDataJson(String json) {
+        if (StringUtils.isBlank(json)) {
+            return "";
+        }
+        try {
+            TmsAsyncTaskRecordDTO.PushParamsDTO params = JSONUtil.toBean(json, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+            params.setTaskId(null);
+            params.setLastId(null);
+            params.setBatchSize(null);
+            if (CollUtil.isNotEmpty(params.getIds())) {
+                List<String> sortedIds = params.getIds().stream()
+                    .filter(StringUtils::isNotBlank)
+                    .sorted()
+                    .collect(Collectors.toList());
+                params.setIds(sortedIds);
+            } else {
+                params.setIds(null);
+            }
+            return JSONUtil.toJsonStr(params);
+        } catch (Exception e) {
+            log.debug("手动任务参数按 PushParamsDTO 归一化失败，回退 JSON 对象比较: {}", e.getMessage());
+            cn.hutool.json.JSONObject obj = JSONUtil.parseObj(json);
+            obj.remove("taskId");
+            obj.remove("lastId");
+            obj.remove("batchSize");
+            cn.hutool.json.JSONArray idsArr = obj.getJSONArray("ids");
+            if (idsArr != null && !idsArr.isEmpty()) {
+                List<String> sortedIds = idsArr.stream()
+                    .map(String::valueOf)
+                    .filter(StringUtils::isNotBlank)
+                    .sorted()
+                    .collect(Collectors.toList());
+                obj.set("ids", sortedIds);
+            }
+            return obj.toString();
+        }
     }
 
     /**
@@ -543,7 +596,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * 启动任务
      * 中止超时任务
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void startTask(){
         LocalDate today = LocalDate.now();
@@ -584,21 +636,53 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .collect(Collectors.toList());
         if(CollUtil.isNotEmpty(pendingList)){
             for (TmsAsyncTaskRecordEntity entity : pendingList) {
-                String dataJson = entity.getDataJson();
-                if(StringUtils.isBlank(dataJson) || Objects.equals(dataJson,"{}")){
-                    selfServer.updateTask(entity.getId(),TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"dataJson为空直接结束任务");
-                    continue;
-                }
-
-                TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
-                taskDTO.setTaskId(entity.getId());
-                SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
-                if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
-                }else {
-                    log.error("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
-                }
+                selfServer.claimAndDispatch(entity);
             }
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @Override
+    public void claimAndDispatch(TmsAsyncTaskRecordEntity entity) {
+        String dataJson = entity.getDataJson();
+        if (StringUtils.isBlank(dataJson) || Objects.equals(dataJson, "{}")) {
+            selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "dataJson为空直接结束任务");
+            return;
+        }
+
+        TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+        taskDTO.setTaskId(entity.getId());
+        boolean claimed = lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+                .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                .update();
+        if (!claimed) {
+            log.warn("异步任务已被其他调度认领，taskId: {}", entity.getId());
+            return;
+        }
+        try {
+            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
+            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                lambdaUpdate()
+                        .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                        .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
+                        .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
+                        .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                        .update();
+            } else {
+                log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+            }
+        } catch (Exception e) {
+            log.error("消息发送异常，taskId: {}", entity.getId(), e);
+            lambdaUpdate()
+                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, StringUtils.substring(e.getMessage(), 0, 1000))
+                    .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
+                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                    .update();
         }
     }
 

@@ -1,11 +1,14 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffDTO;
+import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffEntity;
+
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -88,10 +91,4 @@ public interface AdsErpInventoryDiffService extends SuperService<AdsErpInventory
      */
     List<AdsErpInventoryDiffDTO.WarehouseListDTO> getCanDiffWarehouseList();
 
-    /**
-     * 重新生成差异数据
-     * @param dto
-     * @return
-     */
-    Boolean generateDiff(AdsErpInventoryDiffDTO.GenerateDiffDTO dto);
 }

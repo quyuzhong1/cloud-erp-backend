@@ -1590,6 +1590,9 @@ public enum ApiError implements Serializable {
     SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
     SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
     SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED(10750,"发货单【{0}】中转调拨单未落库，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED(10751,"发货单【{0}】关联的中转调拨单【{1}】未审核通过，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED(10752,"发货单【{0}】明细存在多个发货仓库，不支持校验中转调拨单"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */

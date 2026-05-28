@@ -82,10 +82,4 @@ public interface AdsErpInventoryDiffKingdeeService extends SuperService<AdsErpIn
      */
     BatchResultDTO updateRemark(String id,String remark);
 
-    /**
-     * 重新生成
-     * @param dto
-     * @return
-     */
-    Boolean generateDiff(AdsErpInventoryDiffKingdeeDTO.GenerateDiffDTO dto);
 }
