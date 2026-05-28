@@ -50,6 +50,10 @@ public class ShopeeApiUtils {
 
     public static String getOrderSign(String path, String access_token, long partner_id, String tmp_partner_key, long shop_id) {
         long timest = System.currentTimeMillis() / 1000L;
+        return getOrderSign(path, access_token, partner_id, tmp_partner_key, shop_id, timest);
+    }
+
+    public static String getOrderSign(String path, String access_token, long partner_id, String tmp_partner_key, long shop_id, long timest) {
         String tmp_base_string = String.format("%s%s%s%s%s", partner_id, path, timest, access_token, shop_id);
         byte[] partner_key;
         byte[] base_string;

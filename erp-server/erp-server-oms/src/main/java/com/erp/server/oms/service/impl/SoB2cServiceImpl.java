@@ -62,6 +62,7 @@ import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.SoB2cDTO.PagingParamDTO;
@@ -635,15 +636,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if (SoB2cTabEnum.ENUM_PAYMENT == item) {
             	count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode())
             				&& !l.getInvalidStatus();
             	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
             }
             //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
             if (SoB2cTabEnum.ENUM_PENDING == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
-            				&& (l.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || l.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& (l.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || l.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
             				&& !l.getInvalidStatus()
             				&& !l.getIsFrozen()
             				&& !l.getBillStatus().equals("frozen");
@@ -652,8 +653,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //待审核
             if (SoB2cTabEnum.ENUM_APPROVE_ING == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
-            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
             				&& !l.getInvalidStatus()
             				&& !l.getIsFrozen()
             				&& !l.getBillStatus().equals("frozen");
@@ -662,17 +663,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //配货中
             if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
-            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
-            				&& (l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) || l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+            				&& (l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) || l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode()))
             				&& !l.getInvalidStatus();
             	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
             }
             //待发货
             if (SoB2cTabEnum.ENUM_WAIT_SHIPPED == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
-            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
             				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode())
             				&& !l.getInvalidStatus();
             	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
@@ -680,8 +681,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //已发货
             if (SoB2cTabEnum.ENUM_SHIPPED == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
-            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
+            				&& l.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
             				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
             				&& !l.getInvalidStatus();
             	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
@@ -689,7 +690,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //冻结中
             if (SoB2cTabEnum.ENUM_FROZEN == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
             				&& l.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode())
             				&& !l.getInvalidStatus();
             	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
@@ -697,7 +698,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //已作废
             if (SoB2cTabEnum.ENUM_INVALID == item) {
                 count = listCount.stream().filter(l -> {
-            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()) 
+            		return l.getPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode())
             				&& l.getInvalidStatus();
             	}).map(ListCountDto::getCount).reduce(Integer::sum).orElse(0);
             }
@@ -783,6 +784,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return add.getCode();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteB2cSoJob() {
+        List<SoB2cEntity> soB2cList = this.lambdaQuery()
+                .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
+                .eq(SoB2cEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .eq(SoB2cEntity::getPayStatus,SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) //待付款
+                .eq(SoB2cEntity::getInvalidStatus,InvalidStatusEnum.NOT_VOIDED.getStatus()) //未作废
+                .eq(SoB2cEntity::getBillStatus,SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode()) //待配货
+                .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+
+        //非货到付款（批量预取支付方式配置，避免循环内重复查库）
+        Map<String, CfgSettingDTO.PayMethodDTO> payMethodSettingMap = soB2cCoreService.listPayMethodSettingMap();
+        List<SoB2cEntity> toDeleteList = soB2cList.stream()
+                .filter(entity -> !payMethodSettingMap.containsKey(
+                        CharSequenceUtil.format("{}-{}", entity.getDictPlatform(), entity.getDictPayMethod())))
+                .collect(Collectors.toList());
+
+        if (CollUtil.isEmpty(toDeleteList)) {
+            return;
+        }
+
+        List<String> soB2cIdList = toDeleteList.stream()
+                .map(SoB2cEntity::getId)
+                .collect(Collectors.toList());
+        String codes = toDeleteList.stream()
+                .map(SoB2cEntity::getCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.joining(","));
+
+        this.deleteById(soB2cIdList, codes);
+
+        XxlJobHelper.log("成功删除{}条b2c销售订单，ID为:{}",soB2cIdList.size(), codes);
+    }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
         LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
@@ -2683,7 +2719,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
         try {
-            List<BatchResultDTO> batchResultDTOS = this.autoOrderForecast(Collections.singletonList(id));
+            List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id));
             //在提交发货中，清除异常订单报错
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
             if (CollUtil.isNotEmpty(batchResultDTOS) && !batchResultDTOS.get(0).getSuccess()){
@@ -9587,7 +9623,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NEVER)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&

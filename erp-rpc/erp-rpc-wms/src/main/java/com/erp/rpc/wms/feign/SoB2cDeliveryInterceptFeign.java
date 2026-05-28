@@ -74,6 +74,18 @@ public interface SoB2cDeliveryInterceptFeign {
     Boolean updateHandleStatus(@RequestParam("sourceIds") List<String> sourceIds, @RequestParam("status") String status);
 
     /**
+     * API拦截成功
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/apiHandleSuccess")
+    BatchResultDTO apiHandleSuccess(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark);
+
+    /**
+     * API拦截失败
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/apiHandleFailure")
+    BatchResultDTO apiHandleFailure(@RequestParam("id") String id, @RequestParam(value = "remark", required = false) String remark);
+
+    /**
      * 发货拦截结果确认
      * @Author Luo_WG
      * @Date 2024/1/16 18:56

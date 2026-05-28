@@ -1350,6 +1350,9 @@ public enum ApiError implements Serializable {
     PO_RECONCILIATION_DETAIL_ALREADY_IN_RECONCILIATION(94109,"单号【{0}】SKU【{1}】已加入对账单，不允许重复添加"),
     PO_RECONCILIATION_REMARK_REQUIRED(96009,"对账单备注不能为空"),
     SO_B2C_GET_EXCHANGE_RATE_FAILED(10718,"获取汇率异常-汇率获取失败，请重新获取"),
+    SO_RETURN_EXCHANGE_RATE_REQUIRED(10719,"销售订单明细【{0}】汇率为空，无法计算本位币金额"),
+    SO_RETURN_RECEIVE_QTY_INVALID(10720,"sku【{0}】签收数量异常，实际值：{1}"),
+    SO_RETURN_RECEIVE_AMOUNT_MISSING(10721,"sku【{0}】签收金额数据缺失"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
 
     /**
@@ -1587,6 +1590,9 @@ public enum ApiError implements Serializable {
     SAMPLE_USER_ID_CHINESE_QUERY_FAILED(10746,"领用人【{0}】查询失败，请传入正确的用户ID或用户名称"),
     SAMPLE_USE_USER_ID_CHINESE_NOT_FOUND(10747,"使用方【{0}】不存在，请传入正确的使用方ID或使用方名称"),
     SAMPLE_USE_USER_ID_CHINESE_QUERY_FAILED(10748,"使用方【{0}】查询失败，请传入正确的使用方ID或使用方名称"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED(10750,"发货单【{0}】中转调拨单未落库，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED(10751,"发货单【{0}】关联的中转调拨单【{1}】未审核通过，不允许生成销售出库单"),
+    SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED(10752,"发货单【{0}】明细存在多个发货仓库，不支持校验中转调拨单"),
     /**
      * 虚拟仓 错误 信息 12500-13000
      */

@@ -95,7 +95,7 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
                     valuePair = setEnumValue(fieldEntity,valuePair);
                     break;
                 case TYPE_DIST :
-                    valuePair = setDistValue(valuePair);
+                    valuePair = setDistValue(field, valuePair);
                     break;
                 case TYPE_USER :
                     valuePair = setUserValue(valuePair);
@@ -201,18 +201,65 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
     /**
      * 设置字典值
      */
-    private Pair<String,String> setDistValue (Pair<String, String> valuePair) {
-        String  oldValue = "";
-        String  newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
-        if (CollectionUtils.isNotEmpty(oldList)) {
-            oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-        }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
-        if (CollectionUtils.isNotEmpty(newList)) {
-            newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-        }
+    private Pair<String,String> setDistValue (String field, Pair<String, String> valuePair) {
+        String  oldValue = getDictName(field, valuePair.getKey());
+        String  newValue = getDictName(field, valuePair.getValue());
         return new Pair<>(oldValue,newValue);
+    }
+
+    private String getDictName(String field, String value) {
+        if (StringUtils.isBlank(value)) {
+            return "";
+        }
+        List<String> valueList = Arrays.stream(value.split(","))
+                .map(StringUtils::trim)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(valueList)) {
+            return "";
+        }
+
+        List<DictBasicEntity> dictList = new ArrayList<>();
+        List<DictBasicEntity> dictByIdList = dictBasicService.listByIds(valueList);
+        if (CollectionUtils.isNotEmpty(dictByIdList)) {
+            dictList.addAll(dictByIdList);
+        }
+        List<DictBasicEntity> dictByValueList = dictBasicService.lambdaQuery()
+                .in(DictBasicEntity::getValue, valueList)
+                .list();
+        if (CollectionUtils.isNotEmpty(dictByValueList)) {
+            dictList.addAll(dictByValueList);
+        }
+        if (CollectionUtils.isEmpty(dictList)) {
+            return "";
+        }
+        Map<String, String> nameById = dictList.stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getId()))
+                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
+        Map<String, List<DictBasicEntity>> dictListByValue = dictList.stream()
+                .filter(obj -> StringUtils.isNotBlank(obj.getValue()))
+                .collect(Collectors.groupingBy(DictBasicEntity::getValue));
+        List<String> resultList = new ArrayList<>();
+        for (String item : valueList) {
+            String name = nameById.get(item);
+            if (StringUtils.isBlank(name)) {
+                List<DictBasicEntity> sameValueList = dictListByValue.get(item);
+                if (CollectionUtils.isNotEmpty(sameValueList) && sameValueList.size() == 1) {
+                    name = sameValueList.get(0).getName();
+                } else if (CollectionUtils.isNotEmpty(sameValueList)) {
+                    name = sameValueList.stream()
+                            .filter(obj -> CharSequenceUtil.equals(obj.getType(), field))
+                            .map(DictBasicEntity::getName)
+                            .findFirst()
+                            .orElse("");
+                }
+            }
+            if (StringUtils.isNotBlank(name)) {
+                resultList.add(name);
+            }
+        }
+        return resultList.stream().distinct().collect(Collectors.joining(","));
     }
 
     /**

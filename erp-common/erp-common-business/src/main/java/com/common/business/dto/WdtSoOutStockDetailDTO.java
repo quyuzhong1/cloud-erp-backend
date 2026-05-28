@@ -85,6 +85,11 @@ public class WdtSoOutStockDetailDTO implements Serializable {
     private BigDecimal allAmountLocalCurrency;
 
     /**
+     * 价税合计
+     */
+    private BigDecimal taxAmount;
+
+    /**
      * 汇率
      */
     private BigDecimal exchangeRate;

@@ -23,6 +23,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -100,6 +101,10 @@ public class DmpInputShopeeReceiverDoChildDmpHandler extends DmpInputDoChildDmpH
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				dmpInputMongoChild.put("buyerId", dmpInputMongoChild.get("buyer_user_id"));
 				dmpInputMongoChild.put("buyerName", dmpInputMongoChild.get("buyer_username"));
+				String receiverTaxNo = cleanTaxNo(dmpInputMongoChild.get("buyer_cpf_id"));
+				if (CharSequenceUtil.isNotBlank(receiverTaxNo)) {
+					dmpInputMongoChild.put("receiverTaxNo", receiverTaxNo);
+				}
 				Object recipient_address = dmpInputMongoChild.get("recipient_address");
 				if(recipient_address != null) {
 					Map<String, Object> recipientAddress = (Map<String, Object>)recipient_address;
@@ -126,6 +131,10 @@ public class DmpInputShopeeReceiverDoChildDmpHandler extends DmpInputDoChildDmpH
 			}
 		}
 		return resultList;
+	}
+
+	private String cleanTaxNo(Object taxNo) {
+		return taxNo == null ? "" : taxNo.toString().replaceAll("[^0-9]", "");
 	}
 	
 	@Override

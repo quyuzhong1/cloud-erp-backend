@@ -82,6 +82,7 @@
     <select id="getTotalLotQualifiedQtyByPodId"
             resultType="com.erp.model.wms.dto.QcResultDTO$TotalLotQualifiedQtyDTO">
         select
+        qr.qc_type,
         qr.purchase_order_detail_id,
         sum(qr.lot_qualified_qty) as totalLotQualifiedQty,
         sum(qr.allow_instock_qty) as totalAllowInstockQty,
@@ -93,7 +94,7 @@
         <foreach collection="podIdList" item="podId" open="(" separator="," close=")">
             #{podId}
         </foreach>
-        group by qr.purchase_order_detail_id
+        group by qr.purchase_order_detail_id,qr.qc_type
     </select>
 
     <!-- 根据来源单id查询合格数量汇总 -->

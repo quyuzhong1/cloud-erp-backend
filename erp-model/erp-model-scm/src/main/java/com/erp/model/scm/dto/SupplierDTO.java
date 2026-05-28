@@ -320,6 +320,46 @@ public class SupplierDTO implements Serializable {
 
 
     /**
+     * 供应商基础信息
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class SupplierBaseInfoDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * true 禁用
+         * false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 供应商属性集合,字典property类型
+         */
+        private JSONArray propertyJson;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 等级id
+         */
+        private String gradeId;
+
+        /**
+         * 等级名称
+         * 日志会用到
+         */
+        private String gradeName;
+    }
+
+    /**
      * 供应商详情
      */
     @Data
@@ -1278,6 +1318,18 @@ public class SupplierDTO implements Serializable {
          * 禁用状态
          */
         private Boolean disabled;
+
+        /**
+         * 体系认证集合，字典certificate类型
+         */
+        private JSONArray certificateJson;
+
+        /**
+         * 体系认证名称
+         */
+        private String certificateNames;
+
+
     }
 
     @Data
