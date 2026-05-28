@@ -449,6 +449,16 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
 				.list().stream().filter(d -> StringUtils.isNotBlank(d.getExtendJson()) && d.getExtendJson().contains(finCheckMonth)).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(dmpInputTaskEntityList)) {
+			for(DmpInputTaskEntity dmpInputTaskEntity : dmpInputTaskEntityList) {
+				if(DmpInputTaskStatusEnum.ERROR.getCode().equals(dmpInputTaskEntity.getStatus())) {
+					dmpInputTaskService.lambdaUpdate()
+					.set(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.INIT.getCode())
+					.set(DmpInputTaskEntity::getErrorCount, 0)
+					.eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
+					.update();
+					return BatchResultDTO.success(dmpInputTaskEntity.getId(), dmpInputTaskEntity.getId());
+				}
+			}
 			ServiceException.runError("此仓库的" + inventoryMonthCheckEnum.getName() + "在" + checkMonth + "已生成任务，正在等待执行，任务号："
 		+ dmpInputTaskEntityList.stream().map(DmpInputTaskEntity::getId).collect(Collectors.joining("、")));
 		}
