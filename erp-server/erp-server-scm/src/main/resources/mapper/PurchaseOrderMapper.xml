@@ -162,6 +162,8 @@
             pos.supplier_name as supplierName,
             po.approve_status as approveStatus,
             po.invalid_status as invalidStatus,
+            po.purchase_org_id as purchaseOrgId,
+            po.purchase_org_name as purchaseOrgName,
             pod.execution_status as executionStatus,
             pod.confirm_remark as confirmRemark,
             pod.sku_id as skuId,
