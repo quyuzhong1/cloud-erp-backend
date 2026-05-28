@@ -888,11 +888,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             soMultiChannelService.cancelProcess(new ApproveDTO.CancelProcessDTO(entity.getId()));
         }
+        boolean updateInvalidStatus = Boolean.TRUE.equals(isValidate);
+        if (!updateCreateStatusCancel && !updateInvalidStatus) {
+            return;
+        }
         this.lambdaUpdate()
                 .set(updateCreateStatusCancel, SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
-                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
-                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
-                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
+                .set(updateInvalidStatus, SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .set(updateInvalidStatus, SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
+                .set(updateInvalidStatus, SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
                 .eq(SoMultiChannelEntity::getId, entity.getId()).update();
     }
 
