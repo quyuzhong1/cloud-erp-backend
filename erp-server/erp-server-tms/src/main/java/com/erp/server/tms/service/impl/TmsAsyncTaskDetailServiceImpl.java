@@ -7,6 +7,7 @@ import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import groovy.util.logging.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +36,7 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
                 .update();
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean tryClaimDetailForExecution(String taskDetailId) {
         return lambdaUpdate()

@@ -3164,7 +3164,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 
 
-    @DataIdempotent(keyIdName = "id")
 	@Override
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
         return service.pushAllocation(id, reportDate, null);
@@ -3590,6 +3589,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     private LogisticsBillCostDTO.SmallBagPushAllocationContext buildSmallBagPushAllocationContext() {
         CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+        if (byKey == null || byKey.getDataJson() == null) {
+            throw new ServiceException("分摊配置不存在，请检查系统配置");
+        }
         AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
         Map<String, String> feeTypeSettingMaps = buildFeeTypeSettingMaps(allocationSettingDTO);
         Map<String, String> orgIdNameMaps = new HashMap<>();
