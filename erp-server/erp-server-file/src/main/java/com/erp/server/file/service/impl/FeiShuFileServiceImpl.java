@@ -103,6 +103,8 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         if (handler != null) {
             try {
                 return handler.handle(fileToken, sheet, view, client);
+            }catch (ServiceException e){
+              throw e;
             } catch (Exception e) {
                 log.error("文件下载失败", e);
                 throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, e.getMessage());
@@ -129,7 +131,9 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         GetNodeSpaceResp getNodeSpaceResp = getNode(fileToken, client);
         String objToken = getNodeSpaceResp.getData().getNode().getObjToken();
         String objType = getNodeSpaceResp.getData().getNode().getObjType();
-
+        if ("file".equals(objType)){
+            return handleFile(objToken, sheet, view, client);
+        }
         return processExportTask(objToken, objType, client, sheet);
     }
 
@@ -185,17 +189,23 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
     private DownloadFileResp downloadFile(String fileToken, Client client) throws Exception {
         DownloadFileReq downloadFileReq = new DownloadFileReq();
         downloadFileReq.setFileToken(fileToken);
-        DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
-        log.warn("resp:{}", JSONUtil.toJsonStr(resp));
-
-        if (!resp.success()) {
-            String format = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
-            throw new ServiceException(format);
+        try {
+            DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
+            if (!resp.success()) {
+                log.error("下载失败 - Code: {}, Message: {}, Request ID: {}",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId());
+                throw new ServiceException(String.format("下载失败 - Code: %s, Message: %s",
+                        resp.getCode(), resp.getMsg()));
+            }
+            return resp;
+        } catch (OutOfMemoryError e) {
+            log.error("下载文件时发生内存不足错误: {}", fileToken, e);
+            throw new ServiceException("文件下载失败，内存不足", e);
+        } catch (Exception e) {
+            log.error("下载文件时发生异常: {}", fileToken, e);
+            throw new ServiceException("文件下载失败", e.getMessage());
         }
-        return resp;
     }
-
     /**
      * 下载导出任务
      * @param fileToken
@@ -214,7 +224,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         try {
             resp = client.drive().v1().exportTask().download(req);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ServiceException("下载导出任务失败", e);
         }
 
         // 处理服务端错误
@@ -349,7 +359,7 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
             throw new ServiceException(format);
         }
-        log.warn("获取知识空间节点信息成功：{}", JSONUtil.toJsonStr(resp));
+        log.warn("获取知识空间节点信息成功：{}", JSONUtil.toJsonStr(req));
         return resp;
     }
 
