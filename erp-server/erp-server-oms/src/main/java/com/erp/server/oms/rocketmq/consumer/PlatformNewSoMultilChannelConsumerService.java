@@ -132,6 +132,8 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
         updateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateOrderDTO.setIsIntercept(Boolean.FALSE);
         updateOrderDTO.setIsFrozen(Boolean.FALSE);
+        // updateIntercept 内部已通过 batchAddModuleOperateLog 记录"状态变更"审计日志（SoB2cServiceImpl#updateIntercept），
+        // 不需要在此处重复写 operateLog。
         soB2cService.updateIntercept(updateOrderDTO);
     }
 
