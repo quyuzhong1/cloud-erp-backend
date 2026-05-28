@@ -55,10 +55,6 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      */
     void startTask();
 
-    /**
-     * 实现类需使用独立事务领取并派发任务。
-     */
-    void claimAndDispatch(TmsAsyncTaskRecordEntity entity);
 
     void genAutoTask();
 }
