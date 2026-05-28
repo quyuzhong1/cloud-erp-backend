@@ -689,6 +689,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (!SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
             throw new ServiceException("发货拦截单来源类型错误");
         }
+        if (SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(entity.getHandleStatus())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "拦截单已取消，不可操作");
+        }
         if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
             if (HandleResultEnum.FAILURE.getCode().equals(entity.getHandleResult())) {
                 return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");

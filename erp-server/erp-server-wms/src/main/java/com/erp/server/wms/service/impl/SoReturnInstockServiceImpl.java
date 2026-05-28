@@ -103,8 +103,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -162,6 +164,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoReturnInstockDetailService soReturnInstockDetailService;
+
+    @Resource
+    private PlatformTransactionManager transactionManager;
 
     @Resource
     private SoReturnReceiveService soReturnReceiveService;
@@ -2005,15 +2010,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         fillThirdWarehouseDetailPrice(soReturnInstockEntity, detailEntityList);
-        selfService.persistByThirdWarehouse(soReturnInstockEntity, detailEntityList);
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(status -> persistByThirdWarehouse(soReturnInstockEntity, detailEntityList));
     }
 
     /**
-     * 三方仓入库持久化（含事务），须通过 {@link #addByThirdWarehouse} 调用，不可绕过价格补全直接调用。
+     * 三方仓入库持久化，须通过 {@link #addByThirdWarehouse} 调用，不可绕过价格补全直接调用。
      */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+    private void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         soReturnInstockEntity.setCode(code);
         this.save(soReturnInstockEntity);

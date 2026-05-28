@@ -145,9 +145,13 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
                 .filter(intercept -> !SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(intercept.getHandleStatus()))
                 .filter(intercept -> !SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(intercept.getHandleStatus()))
                 .forEach(intercept -> {
-                    BatchResultDTO resultDTO = soB2cDeliveryInterceptFeign.apiHandleFailure(intercept.getId(), "多渠道订单已发货，拦截失败");
-                    if (Objects.isNull(resultDTO) || !Boolean.TRUE.equals(resultDTO.getSuccess())) {
-                        log.warn("多渠道订单已发货处理拦截失败回写失败，拦截单id={}, 结果={}", intercept.getId(), resultDTO);
+                    try {
+                        BatchResultDTO resultDTO = soB2cDeliveryInterceptFeign.apiHandleFailure(intercept.getId(), "多渠道订单已发货，拦截失败");
+                        if (Objects.isNull(resultDTO) || !Boolean.TRUE.equals(resultDTO.getSuccess())) {
+                            log.warn("多渠道订单已发货处理拦截失败回写失败，拦截单id={}, 结果={}", intercept.getId(), resultDTO);
+                        }
+                    } catch (Exception e) {
+                        log.warn("多渠道订单已发货处理拦截失败回写异常，拦截单id={}", intercept.getId(), e);
                     }
                 });
     }

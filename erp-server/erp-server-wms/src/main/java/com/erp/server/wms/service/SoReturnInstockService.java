@@ -346,11 +346,6 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
 
     void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
 
-    /**
-     * 三方仓退货入库持久化入口，由实现类通过自身代理调用。
-     */
-    void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
-
     List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
     /**
      * 重算销售退货入库单价格字段，不重新推送金蝶。
