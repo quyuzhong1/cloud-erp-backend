@@ -1359,6 +1359,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(attachmentIdList)) {
+            // PlmAttachmentEntity.isDeleted 已配置 @TableLogic，removeByIds 实为逻辑删除
             plmAttachmentService.removeByIds(attachmentIdList);
         }
         for (PlmAttachmentEntity entity : attachmentList) {
