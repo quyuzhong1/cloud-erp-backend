@@ -2059,9 +2059,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     /**
      * 三方仓入库持久化（含事务），须通过 {@link #addByThirdWarehouse} 调用，不可绕过价格补全直接调用。
+     * 包级可见以避免外部 Bean 绕过 {@link #addByThirdWarehouse} 的价格补全逻辑。
      */
     @Transactional(rollbackFor = Exception.class)
-    public void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+    void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         soReturnInstockEntity.setCode(code);
         this.save(soReturnInstockEntity);
@@ -2264,7 +2265,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void refreshPriceFields(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return;
@@ -2300,11 +2300,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = CollectionUtils.isEmpty(soIds) ? Collections.emptyList() : soInfoFeign.listSoDetailByMainIds(soIds);
 
+        Map<String, SoReturnInstockEntity> mainMap = mainList.stream()
+                .collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity(), (a, b) -> a));
+
         for (SoReturnInstockDetailEntity detail : detailList) {
-            SoReturnInstockEntity main = mainList.stream()
-                    .filter(item -> CharSequenceUtil.equals(item.getId(), detail.getMainId()))
-                    .findFirst()
-                    .orElse(null);
+            SoReturnInstockEntity main = mainMap.get(detail.getMainId());
             if (Objects.isNull(main)) {
                 continue;
             }
@@ -2328,6 +2328,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 fillDetailPrice(detail, soDetail.getPrice(), soDetail.getTaxRate(), soDetail.getTaxPrice(),
                         Objects.nonNull(detail.getExchangeRate()) ? detail.getExchangeRate() : soDetail.getExchangeRate());
             }
+        }
+        ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
+                .persistRefreshedPriceFields(detailList);
+    }
+
+    /**
+     * 与 {@link #refreshPriceFields(List)} 配套的事务写入，独立事务避免长时间持有连接。
+     * 仅在已完成 Feign 远程查询、价格补全后调用。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
         }
         soReturnInstockDetailService.updateBatchById(detailList);
     }

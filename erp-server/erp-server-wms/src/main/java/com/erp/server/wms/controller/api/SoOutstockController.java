@@ -572,6 +572,12 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("/updateOutstockDate")
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新出库日期")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "wms:so:outstock:updateOutstockDate",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
     public ApiResult<List<BatchResultDTO>> updateOutstockDate(@RequestBody @Valid List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTOList) {
         List<BatchResultDTO> batchResultDTOList = soOutstockService.updateOutstockDate(updateOutstockDateDTOList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);

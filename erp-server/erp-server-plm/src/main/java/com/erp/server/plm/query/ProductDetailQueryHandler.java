@@ -127,8 +127,15 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
 
         if("firstCertificateJson".equals(field)){
             List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
-            String arrayValue = valueList.stream()
-                    .map(v -> "'" + v.replace("'", "''") + "'")
+            // 严格白名单：仅允许字母、数字、下划线、连字符，防止 SQL 注入
+            List<String> safeValueList = valueList.stream()
+                    .filter(v -> v != null && v.matches("[A-Za-z0-9_\\-]+"))
+                    .collect(Collectors.toList());
+            if (safeValueList.size() != valueList.size()) {
+                throw new com.common.core.exception.ServiceException("证书查询条件包含非法字符");
+            }
+            String arrayValue = safeValueList.stream()
+                    .map(v -> "'" + v + "'")
                     .collect(Collectors.joining(","));
 
 

@@ -4301,11 +4301,37 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return;
         }
         List<SoOutstockDetailEntity> detailList = soOutstockDetailService.listByMainIds(ids);
+        // 批量预取 B2C 主表/明细，避免每个出库单各自走 Feign 远程查询
+        List<String> b2cSoIds = soOutstockEntityList.stream()
+                .filter(e -> OrderTypeEnum.B2C.getCode().equals(e.getOrderType()))
+                .map(SoOutstockEntity::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SoB2cEntity> soB2cEntityMap;
+        Map<String, List<SoB2cDetailEntity>> soB2cDetailMap;
+        if (CollectionUtils.isNotEmpty(b2cSoIds)) {
+            List<SoB2cEntity> b2cEntities = soB2cFeign.listByIds(b2cSoIds);
+            soB2cEntityMap = CollectionUtils.isEmpty(b2cEntities) ? Collections.emptyMap()
+                    : b2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (a, b) -> a));
+            List<SoB2cDetailEntity> b2cDetails = soB2cFeign.listDetailByMainIds(b2cSoIds);
+            soB2cDetailMap = CollectionUtils.isEmpty(b2cDetails) ? Collections.emptyMap()
+                    : b2cDetails.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
+        } else {
+            soB2cEntityMap = Collections.emptyMap();
+            soB2cDetailMap = Collections.emptyMap();
+        }
         for (SoOutstockEntity entity : soOutstockEntityList) {
             List<SoOutstockDetailEntity> currentDetailList = detailList.stream()
                     .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), entity.getId()))
                     .collect(Collectors.toList());
-            soOutstockDetailService.refreshAmountFields(currentDetailList, entity);
+            if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+                SoB2cEntity soB2cEntity = soB2cEntityMap.get(entity.getSoId());
+                List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailMap.getOrDefault(entity.getSoId(), Collections.emptyList());
+                soOutstockDetailService.refreshAmountFields(currentDetailList, entity, soB2cEntity, soB2cDetailList);
+            } else {
+                soOutstockDetailService.refreshAmountFields(currentDetailList, entity);
+            }
         }
         if (CollectionUtils.isNotEmpty(detailList)) {
             soOutstockDetailService.updateBatchById(detailList);
@@ -5012,6 +5038,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
                         "只允许选择待提交、审核不通过销售出库单更新出库日期"));
+            } else if (Objects.nonNull(dto.getVersion()) && !dto.getVersion().equals(entity.getVersion())) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
+                        "数据已被他人修改，请刷新后重试"));
             } else {
                 entity.setBillDate(dto.getOutDate());
                 updateList.add(entity);
