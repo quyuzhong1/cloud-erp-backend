@@ -5000,17 +5000,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .collect(Collectors.toMap(SoOutstockEntity::getId, v -> v));
 
         // 2. 分离可更新和不可更新的记录
-        List<SoOutstockDTO.UpdateOutstockDateDTO> validUpdates = new ArrayList<>();
         List<SoOutstockEntity> updateList = new ArrayList<>();
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         updateOutstockDateDTO.forEach(dto -> {
             SoOutstockEntity entity = entityMap.get(dto.getId());
             if (entity == null) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), null, "出库单不存在"));
-            } else if (!ApproveStatusEnum.WAIT_SUBMIT.getCode()
-                    .equalsIgnoreCase(entity.getApproveStatus().getCode())) {
+            } else if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
-                        "只有待提交状态的出库单才允许修改出库日期"));
+                        "已作废的销售出库单不允许修改出库日期"));
+            } else if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
+                        "只允许选择待提交、审核不通过销售出库单更新出库日期"));
             } else {
                 entity.setBillDate(dto.getOutDate());
                 updateList.add(entity);
@@ -5020,7 +5021,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         entity.getId(),
                         "修改出库日期"
                 ));
-                validUpdates.add(dto);
             }
         });
         if(CollectionUtils.isNotEmpty(updateList)){
