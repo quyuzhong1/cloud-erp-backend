@@ -683,6 +683,9 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         try {
             ApiResponse<CancelFulfillmentOrderResponse> cancelResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
             log.warn("亚马逊发货拦截取消订单，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelResponse));
+            if (Objects.isNull(cancelResponse) || cancelResponse.getStatusCode() < 200 || cancelResponse.getStatusCode() >= 300) {
+                cancelErrorMessage = "亚马逊取消发货失败，请稍后重试";
+            }
         } catch (ApiException e) {
             log.warn("亚马逊发货拦截取消订单异常，订单号：{}", entity.getDeliveryCode(), e);
             cancelErrorMessage = getAmazonCancelErrorMessage(e);
@@ -810,7 +813,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         addDTO.setTransportNo(trackNo);
         addDTO.setSourceType(SoB2cDeliveryInterceptSourceTypeEnum.API.getCode());
         addDTO.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode());
-        soB2cDeliveryInterceptFeign.add(addDTO);
+        checkDeliveryInterceptAddResult(soB2cDeliveryInterceptFeign.add(addDTO));
     }
 
     private SoB2cDeliveryInterceptEntity getLatestApiDeliveryIntercept(String soId) {
@@ -847,7 +850,10 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         }
         SoB2cDeliveryInterceptEntity interceptEntity = getLatestApiDeliveryIntercept(soB2cEntity.getId());
         if (Objects.nonNull(interceptEntity)) {
-            soB2cDeliveryInterceptFeign.apiHandleSuccess(interceptEntity.getId(), remark);
+            BatchResultDTO resultDTO = soB2cDeliveryInterceptFeign.apiHandleSuccess(interceptEntity.getId(), remark);
+            if (Objects.isNull(resultDTO) || !Boolean.TRUE.equals(resultDTO.getSuccess())) {
+                throw new ServiceException(Objects.isNull(resultDTO) ? "API发货拦截处理成功回写失败" : resultDTO.getMsg());
+            }
         } else if (Objects.nonNull(soB2cEntity)) {
             SoB2cDeliveryInterceptDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertIntercept(soB2cEntity);
             addDTO.setBillType(OrderTypeEnum.B2C.getCode());
@@ -863,9 +869,15 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             addDTO.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
             addDTO.setHandleUserName(UserContext.getDefaultLoginUser().getUserName());
             addDTO.setHandleTime(LocalDateTime.now());
-            soB2cDeliveryInterceptFeign.add(addDTO);
+            checkDeliveryInterceptAddResult(soB2cDeliveryInterceptFeign.add(addDTO));
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("亚马逊发货拦截成功，订单号：{}", deliveryCode), ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), soB2cEntity.getId(), "多渠道订单发货拦截");
+    }
+
+    private void checkDeliveryInterceptAddResult(BaseResultDTO.AddDTO addResult) {
+        if (Objects.isNull(addResult) || CharSequenceUtil.isBlank(addResult.getId())) {
+            throw new ServiceException("发货拦截单创建失败");
+        }
     }
 
     private ThirdWarehouseDeliveryEntity getThirdWarehouseDelivery(String deliveryCode, String soId) {
@@ -888,12 +900,21 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
         if (ApproveStatusEnum.APPROVE_ING.equals(entity.getApproveStatus())) {
             soMultiChannelService.cancelProcess(new ApproveDTO.CancelProcessDTO(entity.getId()));
         }
-        this.lambdaUpdate()
+        boolean updateInvalidStatus = Boolean.TRUE.equals(isValidate);
+        if (!updateCreateStatusCancel && !updateInvalidStatus) {
+            return;
+        }
+        boolean updated = this.lambdaUpdate()
                 .set(updateCreateStatusCancel, SoMultiChannelEntity::getCreateStatus, CreateStatusEnum.CANCEL.getCode())
-                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
-                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
-                .set(Boolean.TRUE.equals(isValidate), SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
-                .eq(SoMultiChannelEntity::getId, entity.getId()).update();
+                .set(updateInvalidStatus, SoMultiChannelEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT)
+                .set(updateInvalidStatus, SoMultiChannelEntity::getInvalidStatus, Boolean.TRUE)
+                .set(updateInvalidStatus, SoMultiChannelEntity::getInvalidRemark, "发货拦截作废")
+                .eq(SoMultiChannelEntity::getId, entity.getId())
+                .eq(SoMultiChannelEntity::getVersion, entity.getVersion())
+                .update();
+        if (!updated) {
+            throw new ServiceException("多渠道订单已被其他操作修改，请刷新后重试");
+        }
     }
 
     @Override

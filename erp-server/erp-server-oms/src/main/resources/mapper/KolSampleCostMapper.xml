@@ -25,6 +25,10 @@
        <result column="so_org_name" property="soOrgName" />
        <result column="so_outstock_id" property="soOutstockId" />
        <result column="so_outstock_code" property="soOutstockCode" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
+       <result column="logistics_channel_id" property="logisticsChannelId" />
+       <result column="logistics_channel_name" property="logisticsChannelName" />
        <result column="so_outstock_date" property="soOutstockDate" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="warehouse_name" property="warehouseName" />
@@ -71,6 +75,10 @@
           so_outstock_id as soOutstockId,
           so_outstock_detail_id as soOutstockDetailId,
           so_outstock_code as soOutstockCode,
+          logistics_supplier_id as logisticsSupplierId,
+          logistics_supplier_name as logisticsSupplierName,
+          logistics_channel_id as logisticsChannelId,
+          logistics_channel_name as logisticsChannelName,
           so_outstock_date as soOutstockDate,
           warehouse_id as warehouseId,
           warehouse_name as warehouseName,

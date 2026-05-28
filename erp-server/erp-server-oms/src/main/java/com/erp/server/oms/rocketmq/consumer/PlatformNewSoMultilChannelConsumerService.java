@@ -11,14 +11,19 @@ import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.oms.enums.OutstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptSourceTypeEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
 import com.erp.model.wms.enums.SoB2cWarehouseDeliveryStatusEnum;
+import com.erp.rpc.wms.feign.SoB2cDeliveryInterceptFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
 import com.erp.server.oms.service.OperateLogService;
@@ -59,6 +64,8 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
     private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
     @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
+    @Resource
+    private SoB2cDeliveryInterceptFeign soB2cDeliveryInterceptFeign;
 
     @Override
     public String getBizName() {
@@ -87,10 +94,9 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
             updateSoMultiChannelDetail(detailEntityList, detailList);
             if (CharSequenceUtil.isNotBlank(soMultiChannelEntity.getSoId()) && "SHIPPED".equalsIgnoreCase(bean.getDeliveryStatus())) {
                 SoB2cEntity entity = soB2cService.getById(soMultiChannelEntity.getSoId());
-                if (Objects.nonNull(entity) && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
-                    operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新销售订单发货状态:【{}】改为【{}】", SoB2cBillStatusEnum.getName(soMultiChannelEntity.getDeliveryStatus()), SoB2cBillStatusEnum.ENUM_SHIPPED.getName()), ModuleTypeEnum.SO_B2C.getCode(), soMultiChannelEntity.getSoId(), "更新亚马逊多渠道订单");
-                    soB2cService.lambdaUpdate().set(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()).eq(SoB2cEntity::getId, entity.getId()).update();
-
+                if (Objects.nonNull(entity)) {
+                    updateB2cShippedAndClearIntercept(entity);
+                    handleApiDeliveryInterceptFailure(entity.getId());
                 }
                 //第三方发货单更新状态
                 ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(soMultiChannelEntity.getSoId());
@@ -99,7 +105,7 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
                     thirdWarehouseDeliveryFeign.update(thirdWarehouseDelivery);
                 }
                 //调用第三方平台SDK声明发货
-                if (soB2cService.checkPlatformShipOrder(entity.getId())){
+                if (Objects.nonNull(entity) && soB2cService.checkPlatformShipOrder(entity.getId())){
                     try {
                         PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
                         platformShipOrderDTO.setSoB2cId(entity.getId());
@@ -113,6 +119,41 @@ public class PlatformNewSoMultilChannelConsumerService extends AbstractNewPlatfo
                 }
             }
         }
+    }
+
+    private void updateB2cShippedAndClearIntercept(SoB2cEntity entity) {
+        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())
+                && !Boolean.TRUE.equals(entity.getIsIntercept())
+                && !Boolean.TRUE.equals(entity.getIsFrozen())) {
+            return;
+        }
+        SoB2cDTO.InterceptUpdateOrderDTO updateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        updateOrderDTO.setIds(Collections.singletonList(entity.getId()));
+        updateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+        updateOrderDTO.setIsIntercept(Boolean.FALSE);
+        updateOrderDTO.setIsFrozen(Boolean.FALSE);
+        soB2cService.updateIntercept(updateOrderDTO);
+    }
+
+    private void handleApiDeliveryInterceptFailure(String soId) {
+        List<SoB2cDeliveryInterceptEntity> interceptList = soB2cDeliveryInterceptFeign.listBySourceIds(Collections.singletonList(soId));
+        if (CollUtil.isEmpty(interceptList)) {
+            return;
+        }
+        interceptList.stream()
+                .filter(intercept -> SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(intercept.getSourceType()))
+                .filter(intercept -> !SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(intercept.getHandleStatus()))
+                .filter(intercept -> !SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(intercept.getHandleStatus()))
+                .forEach(intercept -> {
+                    try {
+                        BatchResultDTO resultDTO = soB2cDeliveryInterceptFeign.apiHandleFailure(intercept.getId(), "多渠道订单已发货，拦截失败");
+                        if (Objects.isNull(resultDTO) || !Boolean.TRUE.equals(resultDTO.getSuccess())) {
+                            log.warn("多渠道订单已发货处理拦截失败回写失败，拦截单id={}, 结果={}", intercept.getId(), resultDTO);
+                        }
+                    } catch (Exception e) {
+                        log.warn("多渠道订单已发货处理拦截失败回写异常，拦截单id={}", intercept.getId(), e);
+                    }
+                });
     }
 
     private void updateSoMultiChannelDetail(List<SoMultiChannelDetailEntity> detailEntityList, List<PlatformFulfillOrderDetailDTO> detailList) {
