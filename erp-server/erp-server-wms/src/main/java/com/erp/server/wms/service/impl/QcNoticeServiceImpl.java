@@ -173,6 +173,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @Resource
     private CfgQueryOptionFeign cfgQueryOptionFeign;
 
+    @Resource
+    private CfgQcUserService cfgQcUserService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -192,8 +195,145 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "质检通知单", qcNoticeEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), "新增操作");
 
+        // 自动分配质检员
+        autoAssignQcUser(addDTO, qcNoticeEntity.getId());
+        
         qcNoticeDetailService.add(addDTO, qcNoticeEntity.getId());
         return new BaseResultDTO.AddDTO(qcNoticeEntity.getId(), code);
+    }
+
+    /**
+     * 自动分配质检员
+     * 根据供应商+质检类型匹配质检员配置
+     */
+    private void autoAssignQcUser(QcNoticeDTO.AddDTO addDTO, String qcNoticeId) {
+        if (CollUtil.isEmpty(addDTO.getDetailList())) {
+            return;
+        }
+        
+        String qcType = addDTO.getQcType();
+        String warehouseId = addDTO.getQcWarehouseId();
+        
+        for (QcNoticeDetailDTO.AddDTO detail : addDTO.getDetailList()) {
+            String supplierId = detail.getSupplierId();
+            if (StrUtil.isBlank(supplierId)) {
+                continue;
+            }
+            
+            // 根据供应商查询质检员配置
+            CfgQcUserEntity cfgQcUser = cfgQcUserService.getBySupplierId(supplierId);
+            if (cfgQcUser == null) {
+                continue;
+            }
+            
+            // 根据质检类型设置对应的质检员
+            String qcUserId = null;
+            String qcUserName = null;
+            
+            if (QcTypeEnum.STOCK_IN.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getStockinQcUserId();
+                qcUserName = cfgQcUser.getStockinQcUserName();
+            } else if (QcTypeEnum.STOCK_OUT.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getStockoutQcUserId();
+                qcUserName = cfgQcUser.getStockoutQcUserName();
+            } else if (QcTypeEnum.OUTSIDE_QC.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getOutsideQcUserId();
+                qcUserName = cfgQcUser.getOutsideQcUserName();
+            } else if (QcTypeEnum.INSIDE_QC.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getInsideQcUserId();
+                qcUserName = cfgQcUser.getInsideQcUserName();
+            } else if (QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getNewProductStockinQcUserId();
+                qcUserName = cfgQcUser.getNewProductStockinQcUserName();
+            } else if (QcTypeEnum.B2B_OUTSIDE_QC.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getB2bOutsideQcUserId();
+                qcUserName = cfgQcUser.getB2bOutsideQcUserName();
+            } else if (QcTypeEnum.RETURN_QC.getCode().equals(qcType)) {
+                qcUserId = cfgQcUser.getReturnQcUserId();
+                qcUserName = cfgQcUser.getReturnQcUserName();
+            }
+            
+            // 如果配置了质检员，设置到明细中
+            if (StrUtil.isNotBlank(qcUserId)) {
+                detail.setQcUserId(qcUserId);
+                detail.setQcUserName(qcUserName);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchUpdateQcUser(QcNoticeDTO.UpdateQcUserDTO dto) {
+        List<String> detailIds = dto.getDetailIds();
+        String qcUserId = dto.getQcUserId();
+        String qcUserName = dto.getQcUserName();
+        
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        
+        // 查询所有选中的明细
+        List<QcNoticeDetailEntity> detailList = qcNoticeDetailService.listByIds(detailIds);
+        Map<String, QcNoticeDetailEntity> detailMap = detailList.stream()
+                .collect(Collectors.toMap(QcNoticeDetailEntity::getId, e -> e));
+        
+        for (String detailId : detailIds) {
+            QcNoticeDetailEntity detail = detailMap.get(detailId);
+            if (detail == null) {
+                resultList.add(BatchResultDTO.fail(detailId, detailId, "明细不存在"));
+                continue;
+            }
+            
+            // 检查质检通知单状态
+            QcNoticeEntity notice = this.getById(detail.getId());
+            if (notice == null) {
+                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), "质检通知单不存在"));
+                continue;
+            }
+            
+            // 只有待质检状态的才能更新质检员
+            if (!QcNoticeStatusEnum.WAIT.getCode().equals(notice.getQcStatus())) {
+                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), "只能更新待质检状态的通知单"));
+                continue;
+            }
+            
+            try {
+                // 更新通知单明细的质检员
+                qcNoticeDetailService.lambdaUpdate()
+                        .set(QcNoticeDetailEntity::getQcUserId, qcUserId)
+                        .set(QcNoticeDetailEntity::getQcUserName, qcUserName)
+                        .eq(QcNoticeDetailEntity::getId, detailId)
+                        .update();
+                
+                // 如果有下游质检单，同步更新质检单的质检员
+                updateQcInfoQcUser(detailId, qcUserId, qcUserName);
+                
+                resultList.add(BatchResultDTO.success(detailId, detail.getSkuNo()));
+            } catch (Exception e) {
+                log.error("更新质检员失败", e);
+                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), e.getMessage()));
+            }
+        }
+        
+        return resultList;
+    }
+
+    /**
+     * 更新下游质检单的质检员
+     */
+    private void updateQcInfoQcUser(String detailId, String qcUserId, String qcUserName) {
+        // 查询该明细关联的质检单
+        List<QcInfoEntity> qcInfoList = qcInfoService.lambdaQuery()
+                .eq(QcInfoEntity::getSourceDetailId, detailId)
+                .list();
+        
+        if (CollUtil.isNotEmpty(qcInfoList)) {
+            for (QcInfoEntity qcInfo : qcInfoList) {
+                qcInfoService.lambdaUpdate()
+                        .set(QcInfoEntity::getQcUserId, qcUserId)
+                        .set(QcInfoEntity::getQcUserName, qcUserName)
+                        .eq(QcInfoEntity::getId, qcInfo.getId())
+                        .update();
+            }
+        }
     }
 
     /**
@@ -383,6 +523,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
         if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
+            //外验质检类型审核通过时，计划质检日期必填，且只能选择当前及以后的日期
+            if (Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(), entity.getQcType())
+                    || Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(), entity.getQcType())) {
+                if (ObjectUtil.isEmpty(dto.getPlanQcDate())) {
+                    throw new ServiceException("外验质检类型审核通过时，计划质检日期不能为空");
+                }
+                if (dto.getPlanQcDate().isBefore(LocalDate.now())) {
+                    throw new ServiceException("计划质检日期只能选择当前及以后的日期");
+                }
+                //保存计划质检日期到实体
+                entity.setPlanQcDate(dto.getPlanQcDate());
+                super.updateById(entity);
+            }
+            
             if (!Objects.equals(QcTypeEnum.STOCK_IN.getCode(),entity.getQcType())
                     && !Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(),entity.getQcType())
                     && !Objects.equals(QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode(),entity.getQcType())
@@ -855,22 +1009,34 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public List<QcNoticeDTO.QcInfoFullView> generateQcInfoFullView(QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
-        QcNoticeEntity qcNotice = this.lambdaQuery()
-                .eq(QcNoticeEntity::getCode, qcNoticeParamDTO.getQcNoticeCode())
-                .one();
-        if (Objects.isNull(qcNotice)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检通知单");
-        }
+        List<QcNoticeDTO.QcInfoFullView> qcInfoViews;
 
-        if (!Objects.equals(qcNotice.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
-            throw new ServiceException( ApiError.PO_QC_NOTICE_APPROVE_REQUIRED);
-        }
+        // 如果有勾选明细，则按明细ID查询
+        if (CollUtil.isNotEmpty(qcNoticeParamDTO.getDetailIds())) {
+            qcInfoViews = baseMapper.listQcInfoViewByDetailIds(qcNoticeParamDTO.getDetailIds());
+            if (qcInfoViews.isEmpty()) {
+                throw new ServiceException("未找到待质检的明细数据");
+            }
+        } else if (StrUtil.isNotBlank(qcNoticeParamDTO.getQcNoticeCode())) {
+            // 如果有通知单号，则按通知单号查询
+            QcNoticeEntity qcNotice = this.lambdaQuery()
+                    .eq(QcNoticeEntity::getCode, qcNoticeParamDTO.getQcNoticeCode())
+                    .one();
+            if (Objects.isNull(qcNotice)) {
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检通知单");
+            }
 
-        List<QcNoticeDTO.QcInfoFullView> qcInfoViews = baseMapper.
-                listQcInfoViewByCode(qcNoticeParamDTO.getQcNoticeCode());
+            if (!Objects.equals(qcNotice.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
+                throw new ServiceException(ApiError.PO_QC_NOTICE_APPROVE_REQUIRED);
+            }
 
-        if (qcInfoViews.isEmpty()) {
-            throw new ServiceException(ApiError.PO_QC_NOTICE_FINISH,qcNoticeParamDTO.getQcNoticeCode());
+            qcInfoViews = baseMapper.listQcInfoViewByCode(qcNoticeParamDTO.getQcNoticeCode());
+
+            if (qcInfoViews.isEmpty()) {
+                throw new ServiceException(ApiError.PO_QC_NOTICE_FINISH, qcNoticeParamDTO.getQcNoticeCode());
+            }
+        } else {
+            throw new ServiceException("请输入质检通知单号或选择明细");
         }
 
         //产品信息

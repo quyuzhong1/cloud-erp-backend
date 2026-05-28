@@ -21,6 +21,7 @@
        <result column="approve_time" property="approveTime" />
        <result column="qc_type" property="qcType" />
        <result column="warehouse_id" property="warehouseId" />
+       <result column="expect_qc_date" property="expectQcDate" />
        <result column="plan_qc_date" property="planQcDate" />
        <result column="remark" property="remark" />
     </resultMap>
@@ -46,6 +47,7 @@
       qa.approve_time as approveTime,
       qa.qc_type as qcType,
       qa.warehouse_id as warehouseId,
+      qa.expect_qc_date as expectQcDate,
       qa.plan_qc_date as planQcDate,
       qa.remark
     </sql>

@@ -186,4 +186,13 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
      * @return  List<QcNoticeEntity>
      */
     List<QcNoticeEntity> listBySourceId(String sourceId);
+
+    /**
+    * 批量更新质检员
+    * @author wtr
+    * @date: 2026-05-28
+    * @param dto
+    * @return
+    */
+    List<BatchResultDTO> batchUpdateQcUser(QcNoticeDTO.UpdateQcUserDTO dto);
 }

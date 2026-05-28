@@ -1,14 +1,8 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.validator.AddGroup;
-import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -44,94 +38,6 @@ public class QcProductDTO {
          * sku
          */
         private String skuNo;
-
-
-        /**
-         * 产品长
-         */
-        @NotNull(message = "产品尺寸长不能为空", groups = {AddGroup.class,UpdateGroup.class})
-        @DecimalMin(value = "0.0001", message = "产品尺寸长最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal productLength;
-
-        /**
-         * 产品宽
-         */
-        @NotNull(message = "产品尺寸宽不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "产品尺寸宽最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal productWidth;
-
-        /**
-         * 产品高
-         */
-        @NotNull(message = "产品尺寸高不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "产品尺寸高最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal productHeight;
-
-        /**
-         * 箱长
-         */
-        @NotNull(message = "外箱尺寸长不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "外箱尺寸长最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal boxLength;
-
-        /**
-         * 箱宽
-         */
-        @NotNull(message = "外箱尺寸宽不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "外箱尺寸宽最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal boxWidth;
-
-        /**
-         * 箱高
-         */
-        @NotNull(message = "外箱尺寸高不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "外箱尺寸高最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal boxHeight;
-
-        /**
-         * 产品净重
-         */
-        @NotNull(message = "产品净重不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "产品净重最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal productNetWeight;
-
-        /**
-         * 外箱重量
-         */
-        @NotNull(message = "外箱重量不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @DecimalMin(value = "0.0001", message = "外箱重量最小值必须大于0",groups = {AddGroup.class,UpdateGroup.class})
-        private BigDecimal boxWeight;
-
-        /**
-         * 整箱数量
-         */
-        @NotNull(message = "整箱数量不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @Min(value = 1, message = "整箱数量最小值为1" , groups = {UpdateGroup.class, AddGroup.class})
-        @Max(value = 999999999, message = "整箱数量最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
-        private Integer boxQty;
-
-        /**
-         * 外箱图片地址集合
-         */
-        private List<String> boxImageUrlList;
-
-        /**
-         * 外箱图片名称集合
-         */
-        private List<String> boxImageNameList;
-
-
-        /**
-         * 产品图片地址集合
-         */
-        private List<String> productImageUrlList;
-
-        /**
-         * 产品名称地址集合
-         */
-        private List<String> productImageNameList;
-
-
 
     }
 

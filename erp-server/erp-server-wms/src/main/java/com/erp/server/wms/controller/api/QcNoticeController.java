@@ -93,6 +93,19 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
+    * 批量更新质检员
+    * @author wtr
+    * @date: 2026-05-28
+    * @param dto
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/updateQcUser")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
+    public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(@RequestBody @Validated QcNoticeDTO.UpdateQcUserDTO dto) {
+        return success(qcNoticeService.batchUpdateQcUser(dto));
+    }
+
+    /**
     * 获取状态统计
     * @return
     */
@@ -217,7 +230,12 @@ public class QcNoticeController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = qcNoticeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(id);
+                approveOneDTO.setType(dto.getType());
+                approveOneDTO.setComment(dto.getComment());
+                approveOneDTO.setPlanQcDate(dto.getPlanQcDate());
+                approveResult = qcNoticeService.approve(approveOneDTO);
             }catch (Exception e){
                 log.error("质检通知单审核失败",e);
                 QcNoticeEntity entity = idEntityMap.get(id);
@@ -434,7 +452,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:generateQcInfoFullView",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody @Validated QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
+    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
         return success(qcNoticeService.generateQcInfoFullView(qcNoticeParamDTO));
     }
 

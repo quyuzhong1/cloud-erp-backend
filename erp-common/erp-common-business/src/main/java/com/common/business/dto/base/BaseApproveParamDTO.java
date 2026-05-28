@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -51,4 +52,9 @@ public class BaseApproveParamDTO extends PermissionsDTO {
      *发货日期
      */
     private LocalDate deliveryDate;
+
+    /**
+     * 期望质检日期(外验质检类型质检通知单审核)
+     */
+    private LocalDate planQcDate;
 }

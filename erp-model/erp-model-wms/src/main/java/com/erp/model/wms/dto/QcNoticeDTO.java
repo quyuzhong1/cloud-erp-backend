@@ -256,6 +256,11 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 期望质检日期
          */
+        private LocalDate expectQcDate;
+
+        /**
+         * 计划质检日期
+         */
         private LocalDate planQcDate;
 
         /**
@@ -733,8 +738,12 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 质检通知单号
          */
-        @NotBlank(message = "质检通知单号不允许为空")
         private String qcNoticeCode;
+
+        /**
+         * 明细ID列表（勾选的明细）
+         */
+        private List<String> detailIds;
 
     }
 
@@ -781,6 +790,11 @@ public class QcNoticeDTO implements Serializable {
 
         /**
          * 期望质检日期
+         */
+        private LocalDate expectQcDate;
+
+        /**
+         * 计划质检日期
          */
         private LocalDate planQcDate;
 
@@ -1044,6 +1058,21 @@ public class QcNoticeDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 供应商ID
+         */
+        private String supplierId;
+
+        /**
+         * 供应商编码
+         */
+        private String supplierCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
          * EAN码
          */
         private String ean;
@@ -1158,5 +1187,30 @@ public class QcNoticeDTO implements Serializable {
          */
         private List<QcInspectItemView>  detailList;
 
+    }
+
+    /**
+    * 更新质检员DTO
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateQcUserDTO {
+
+        /**
+        * 明细id列表
+        */
+        @NotEmpty(message = "明细id列表不能为空")
+        private List<String> detailIds;
+
+        /**
+        * 质检员id
+        */
+        @NotBlank(message = "质检员id不能为空")
+        private String qcUserId;
+
+        /**
+        * 质检员名称
+        */
+        private String qcUserName;
     }
 }
