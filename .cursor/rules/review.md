@@ -37,13 +37,10 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 - Entity = 数据层对象；DTO = 入参；VO = 出参；系统间传递用 VO
 - 版本号 `version` 字段做乐观锁，禁止物理删除（`is_deleted` 软删）
 
-公共注解（漏用即为问题）：
-- `@DataPermission`：数据权限，写操作、列表查询必须标注
-- `@WebAdvanceQuery(handler = XxxQueryHandler.class)`：高级搜索入口
-- `@Idempotent` / `@DataIdempotent`：接口幂等
-- `@DistributeLocker`：分布式锁
+公共注解（在Controller层校验 漏用即为问题）：
+- `@DataPermission`：数据权限，在分页查询查询必须标注
+- `@WebAdvanceQuery(handler = XxxQueryHandler.class)`：高级搜索入口 在分页查询和导出必须标注
 - `@LogAction` + `@LogSystemModule`：操作日志
-- `@Transactional`：单服务事务；`@GlobalTransactional`：Seata 跨服务分布式事务
 
 ---
 
