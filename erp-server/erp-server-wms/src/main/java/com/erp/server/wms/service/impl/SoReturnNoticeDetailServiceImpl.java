@@ -219,6 +219,12 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         return this.saveBatch(list);
     }
 
+    /**
+     * 填充 B2C 退货通知单明细金额。
+     * <p>
+     * 仅由 {@link #addB2c} 在单张单据 {@code @Transactional} 保存流程中调用；同循环内数量校验等异常亦直接抛出，
+     * 不属于 {@code BatchResultDTO} 逐条容错场景。关联不到 B2C 销售订单明细时不允许跳过，否则会产生无金额明细。
+     */
     private void fillB2cReturnNoticePrice(SoReturnNoticeDetailDTO.Add detailDto, SoReturnNoticeDetailEntity detailEntity,
                                           SoB2cReturnDetailEntity soB2cReturnDetailEntity, List<SoB2cDetailEntity> soB2cDetailEntityList,
                                           Integer returnNoticeQty, List<SoReturnNoticeDetailEntity> noticeDetailEntities) {
@@ -231,13 +237,15 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             return;
         }
         if (Objects.isNull(soB2cReturnDetailEntity)) {
-            return;
+            throw new ServiceException(ApiError.SO_DELIVERY_RETURN_ORDER_SKU_NOT_FOUND, detailDto.getSourceDetailId());
         }
         SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
                 .filter(req -> CharSequenceUtil.equals(req.getId(), soB2cReturnDetailEntity.getSoDetailId()))
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(soB2cDetailEntity)) {
+            log.warn("B2C销售订单明细不存在，sourceDetailId={}，soDetailId={}，skuNo={}",
+                    detailDto.getSourceDetailId(), soB2cReturnDetailEntity.getSoDetailId(), soB2cReturnDetailEntity.getSkuNo());
             throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
