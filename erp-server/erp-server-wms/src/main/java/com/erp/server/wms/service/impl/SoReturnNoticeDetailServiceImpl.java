@@ -230,12 +230,17 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setExchangeRate(Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : detailEntity.getExchangeRate());
             return;
         }
+        if (Objects.isNull(soB2cReturnDetailEntity)) {
+            return;
+        }
         SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
                 .filter(req -> CharSequenceUtil.equals(req.getId(), soB2cReturnDetailEntity.getSoDetailId()))
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(soB2cDetailEntity)) {
-            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
+            log.warn("B2C销售订单明细不存在，跳过金额填充，sourceDetailId={}，soDetailId={}",
+                    detailDto.getSourceDetailId(), soB2cReturnDetailEntity.getSoDetailId());
+            return;
         }
         BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
         detailEntity.setExchangeRate(exchangeRate);
@@ -244,11 +249,13 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         if (returnQty <= 0) {
             return;
         }
+        int pushedNoticeQty = ObjectUtil.defaultIfNull(returnNoticeQty, 0);
+        boolean isLastBatch = pushedNoticeQty > 0 && Objects.equals(returnQty, pushedNoticeQty + detailDto.getReturnQty());
         BigDecimal lineReturnAmount = MathUtil.multiplyWithFour(price, BigDecimal.valueOf(returnQty));
         BigDecimal returnAmount;
         if (Objects.equals(returnQty, detailDto.getReturnQty())) {
             returnAmount = lineReturnAmount;
-        } else if (returnNoticeQty > 0 && Objects.equals(returnQty, returnNoticeQty + detailDto.getReturnQty())) {
+        } else if (isLastBatch) {
             returnAmount = subtractPushedReturnAmount(lineReturnAmount, detailDto.getSourceDetailId(), noticeDetailEntities,
                     SoReturnNoticeDetailEntity::getReturnAmount);
         } else {
@@ -262,7 +269,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         BigDecimal lineReturnAmountLocalCurrency = MathUtil.multiplyWithFour(lineReturnAmount, exchangeRate);
         BigDecimal returnAmountLocalCurrency;
         BigDecimal taxReturnAmountLocalCurrency;
-        if (returnNoticeQty > 0 && Objects.equals(returnQty, returnNoticeQty + detailDto.getReturnQty())) {
+        if (isLastBatch) {
             returnAmountLocalCurrency = subtractPushedReturnAmount(lineReturnAmountLocalCurrency, detailDto.getSourceDetailId(), noticeDetailEntities,
                     SoReturnNoticeDetailEntity::getReturnAmountLocalCurrency);
             taxReturnAmountLocalCurrency = subtractPushedReturnAmount(lineReturnAmountLocalCurrency, detailDto.getSourceDetailId(), noticeDetailEntities,
@@ -278,6 +285,9 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     private BigDecimal subtractPushedReturnAmount(BigDecimal totalAmount, String sourceDetailId,
                                                   List<SoReturnNoticeDetailEntity> noticeDetailEntities,
                                                   Function<SoReturnNoticeDetailEntity, BigDecimal> amountGetter) {
+        if (Objects.isNull(totalAmount)) {
+            return BigDecimal.ZERO;
+        }
         BigDecimal remainAmount = totalAmount;
         for (SoReturnNoticeDetailEntity noticeDetail : noticeDetailEntities) {
             if (!CharSequenceUtil.equals(sourceDetailId, noticeDetail.getSourceDetailId())) {
