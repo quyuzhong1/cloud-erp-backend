@@ -660,6 +660,14 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             view.setTaxReturnAmount(taxReturnAmount);
             view.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
             view.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getSourceDetailId())) {
+                SoDetailEntity soDetailEntity = soDetailService.getById(soReturnDetailEntity.getSourceDetailId());
+                if (null != soDetailEntity) {
+                    view.setPrice(soDetailEntity.getPrice());
+                    view.setTaxPrice(soDetailEntity.getTaxPrice());
+                    view.setTaxRate(soDetailEntity.getTaxRate());
+                }
+            }
         }
     }
     @Override
@@ -771,6 +779,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 view.setTaxReturnAmount(taxReturnAmount);
                 view.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
                 view.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+                view.setPrice(soDetailEntity.getPrice());
+                view.setTaxPrice(soDetailEntity.getTaxPrice());
+                view.setTaxRate(soDetailEntity.getTaxRate());
             }else{
                 view.setReturnAmount(BigDecimal.ZERO);
                 view.setTaxReturnAmount(BigDecimal.ZERO);
