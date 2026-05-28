@@ -18,6 +18,7 @@ import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.wms.dto.CfgQcUserDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.CfgQcUserEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
@@ -153,7 +154,17 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                     continue;
                 }
 
-                Map<String, String> qcUserMap = getQcUserNameToIdMap(warehouse.getOrgId());
+                SupplierEntity supplier = suppliers.get(0);
+                CfgQcUserEntity exists = cfgQcUserMapper.selectBySupplierIdAndWarehouseId(supplier.getId(), warehouse.getId());
+
+                String orgId;
+                if (Objects.nonNull(exists)) {
+                    orgId = resolveOrgIdByWarehouseId(exists.getWarehouseId());
+                } else {
+                    orgId = warehouse.getOrgId();
+                }
+
+                Map<String, String> qcUserMap = getQcUserNameToIdMap(orgId);
                 List<String> notFoundUsers = new ArrayList<>();
                 String stockInId = resolveQcUserId(qcUserMap, dto.getStockInQcUserName(), notFoundUsers);
                 String stockOutId = resolveQcUserId(qcUserMap, dto.getStockOutQcUserName(), notFoundUsers);
@@ -175,9 +186,6 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                     errorList.add(dto);
                     continue;
                 }
-
-                SupplierEntity supplier = suppliers.get(0);
-                CfgQcUserEntity exists = cfgQcUserMapper.selectBySupplierIdAndWarehouseId(supplier.getId(), warehouse.getId());
 
                 if (Objects.nonNull(exists)) {
                     CfgQcUserDTO.UpdateDTO updateDTO = new CfgQcUserDTO.UpdateDTO();
@@ -231,6 +239,14 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
             return null;
         }
         return warehouse;
+    }
+
+    private String resolveOrgIdByWarehouseId(String warehouseId) {
+        if (StrUtil.isBlank(warehouseId)) {
+            return null;
+        }
+        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+        return warehouse == null ? null : warehouse.getOrgId();
     }
 
     private Map<String, String> getQcUserNameToIdMap(String orgId) {

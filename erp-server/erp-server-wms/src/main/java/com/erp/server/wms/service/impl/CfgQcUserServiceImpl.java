@@ -39,6 +39,8 @@ import com.erp.server.wms.mapper.CfgQcUserMapper;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,21 +92,9 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgQcUserDTO.AddDTO addDTO) {
-        String supplierId = addDTO.getSupplierId();
-
-        // 获取供应商信息
-        SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
-        if (Objects.isNull(supplier)) {
-            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
-        }
-
-        WarehouseEntity warehouse = validateWarehouse(addDTO.getWarehouseId());
-
-        // 唯一性校验：同一供应商 + 同一仓库 不允许重复配置
-        checkSupplierWarehouseUnique(supplierId, addDTO.getWarehouseId(), supplier.getName(), warehouse.getName(), null);
-
-        validateAtLeastOneQcUser(addDTO);
-        validateQcUsersInOrg(warehouse, addDTO);
+        // 公共校验
+        HandleDataResult ctx = handleData(addDTO, null);
+        SupplierEntity supplier = ctx.getSupplier();
 
         // 保存主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
@@ -139,23 +129,18 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         CfgQcUserEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.CFG_QC_USER_NOT_EXIST));
 
-        // 修改时供应商信息不允许编辑，直接使用原供应商ID
-        String supplierId = old.getSupplierId();
-        SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
-        String supplierName = supplier != null ? supplier.getName() : "";
-
-        WarehouseEntity warehouse = validateWarehouse(updateDTO.getWarehouseId());
-
-        // 唯一性校验：同一供应商 + 同一仓库 不允许重复配置（排除自身）
-        checkSupplierWarehouseUnique(supplierId, updateDTO.getWarehouseId(), supplierName, warehouse.getName(), updateDTO.getId());
-
-        validateAtLeastOneQcUser(updateDTO);
-        validateQcUsersInOrg(warehouse, updateDTO);
+        // 公共校验
+        HandleDataResult ctx = handleData(updateDTO, old);
+        String supplierId = ctx.getSupplierId();
+        String warehouseId = ctx.getWarehouseId();
+        SupplierEntity supplier = ctx.getSupplier();
+        String supplierName = supplier.getName();
 
         // 更新主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
         BeanMapper.copy(updateDTO, cfgQcUserEntity);
         cfgQcUserEntity.setSupplierId(supplierId);
+        cfgQcUserEntity.setWarehouseId(warehouseId);
         cfgQcUserEntity.setStockinQcUserId(updateDTO.getStockInQcUserId());
         cfgQcUserEntity.setStockinQcUserName(updateDTO.getStockInQcUserName());
         cfgQcUserEntity.setStockoutQcUserId(updateDTO.getStockOutQcUserId());
@@ -198,6 +183,73 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
                 StrUtil.isNotBlank(warehouseName) ? warehouseName : warehouseId);
     }
 
+    /**
+     * 新增/修改公共校验：供应商、仓库、唯一性、质检员数量及组织归属
+     *
+     * @param dto  入参（新增为 AddDTO，修改为 UpdateDTO）
+     * @param old  原记录；新增时传 null
+     */
+    private HandleDataResult handleData(CfgQcUserDTO.CommonDTO dto, CfgQcUserEntity old) {
+        boolean isUpdate = old != null;
+        String supplierId;
+        String warehouseId;
+        SupplierEntity supplier;
+
+        if (isUpdate) {
+            // 修改时不允许变更供应商或仓库，入参与原记录不一致则抛异常
+            validateUpdateKeyNotModifiable(old, (CfgQcUserDTO.UpdateDTO) dto);
+            // 修改时供应商、仓库不允许编辑，直接使用原值
+            supplierId = old.getSupplierId();
+            warehouseId = old.getWarehouseId();
+            supplier = supplierFeign.getSupplierById(supplierId);
+        } else {
+            supplierId = dto.getSupplierId();
+            warehouseId = dto.getWarehouseId();
+            supplier = supplierFeign.getSupplierById(supplierId);
+        }
+        if (Objects.isNull(supplier)) {
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+        }
+
+        // 校验仓库是否存在且已审核启用
+        WarehouseEntity warehouse = validateWarehouse(warehouseId);
+
+        if (!isUpdate) {
+            // 唯一性校验：同一供应商 + 同一仓库不允许重复配置
+            checkSupplierWarehouseUnique(supplierId, warehouseId, supplier.getName(), warehouse.getName(), null);
+        }
+
+        // 入库/出库/外验/在库/新品入库/B2B外检/退货质检员至少配置一名
+        validateAtLeastOneQcUser(dto);
+        // 校验已选质检员均在仓库对应组织的业务员管理（ZJY）中
+        validateQcUsersInOrg(warehouse, dto);
+
+        return new HandleDataResult(supplier, warehouse, supplierId, warehouseId);
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class HandleDataResult {
+        private final SupplierEntity supplier;
+        private final WarehouseEntity warehouse;
+        private final String supplierId;
+        private final String warehouseId;
+    }
+
+    /**
+     * 修改时不允许变更供应商或仓库
+     */
+    private void validateUpdateKeyNotModifiable(CfgQcUserEntity old, CfgQcUserDTO.UpdateDTO updateDTO) {
+        if (StrUtil.isNotBlank(updateDTO.getSupplierId())
+                && !Objects.equals(old.getSupplierId(), updateDTO.getSupplierId())) {
+            throw new ServiceException(ApiError.CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE);
+        }
+        if (StrUtil.isNotBlank(updateDTO.getWarehouseId())
+                && !Objects.equals(old.getWarehouseId(), updateDTO.getWarehouseId())) {
+            throw new ServiceException(ApiError.CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE);
+        }
+    }
+
     private WarehouseEntity validateWarehouse(String warehouseId) {
         if (StrUtil.isBlank(warehouseId)) {
             throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_REQUIRED);
@@ -207,6 +259,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_NOT_FOUND, warehouseId);
         }
         if (Boolean.TRUE.equals(warehouse.getDisabled())
+                || warehouse.getApproveStatus() == null
                 || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_NOT_FOUND, warehouse.getName());
         }
