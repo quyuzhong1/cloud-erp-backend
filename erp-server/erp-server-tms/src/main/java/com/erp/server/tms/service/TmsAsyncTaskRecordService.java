@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -53,6 +54,9 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     @Transactional(rollbackFor = Exception.class)
     void startTask();
+
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    void claimAndDispatch(TmsAsyncTaskRecordEntity entity);
 
     void genAutoTask();
 }

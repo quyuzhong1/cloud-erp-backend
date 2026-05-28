@@ -8,6 +8,7 @@ import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,15 @@ public class PushAllocationCostConsumerService implements RocketMQListener<TmsAs
         }
         String taskId = dto.getTaskId();
         String businessType = dto.getBusinessType();
+        if(StringUtils.isBlank(taskId)){
+            log.warn("下推分摊MQ消息的taskId为空，跳过消费");
+            return;
+        }
+        if(StringUtils.isBlank(businessType)){
+            log.warn("下推分摊MQ消息的businessType为空，跳过消费");
+            return;
+        }
+
         log.info("开始消费下推分摊任务，taskId: {}, businessType: {}", taskId, businessType);
         if (Objects.equals(businessType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())) {
             firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
