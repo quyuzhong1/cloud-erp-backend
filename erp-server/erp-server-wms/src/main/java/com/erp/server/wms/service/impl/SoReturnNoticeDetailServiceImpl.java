@@ -238,18 +238,25 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
         detailEntity.setExchangeRate(exchangeRate);
         BigDecimal price = Objects.nonNull(soB2cDetailEntity.getPrice()) ? soB2cDetailEntity.getPrice() : BigDecimal.ZERO;
-        BigDecimal lineReturnAmount = MathUtil.multiplyWithFour(price, BigDecimal.valueOf(soB2cReturnDetailEntity.getReturnQty()));
+        Integer returnQty = ObjectUtil.defaultIfNull(soB2cReturnDetailEntity.getReturnQty(), 0);
+        if (returnQty <= 0) {
+            return;
+        }
+        BigDecimal lineReturnAmount = MathUtil.multiplyWithFour(price, BigDecimal.valueOf(returnQty));
         BigDecimal returnAmount;
-        if (Objects.equals(soB2cReturnDetailEntity.getReturnQty(), detailDto.getReturnQty())) {
+        if (Objects.equals(returnQty, detailDto.getReturnQty())) {
             returnAmount = lineReturnAmount;
         } else {
-            returnAmount = calReturnAmount(lineReturnAmount, soB2cReturnDetailEntity.getReturnQty(), detailDto.getReturnQty());
+            returnAmount = calReturnAmount(lineReturnAmount, returnQty, detailDto.getReturnQty());
         }
         detailEntity.setReturnAmount(returnAmount);
         detailEntity.setTaxReturnAmount(returnAmount);
-        BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
-        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, safeExchangeRate));
-        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, safeExchangeRate));
+        if (Objects.isNull(exchangeRate)) {
+            log.warn("fillB2cReturnNoticePrice: soDetailId={} 汇率为空，跳过本位币金额填充", soB2cDetailEntity.getId());
+            return;
+        }
+        detailEntity.setReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
+        detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
     }
 
     private BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty) {

@@ -35,6 +35,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
  * @author Luo_WG
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnInstockDetailMapper, SoReturnInstockDetailEntity> implements SoReturnInstockDetailService {
     @Resource
@@ -992,10 +994,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         return Objects.nonNull(detailDto.getPrice());
     }
 
+    /**
+     * B2C 退货入库明细汇率：优先明细级；明细为空时回退主单汇率（历史数据兼容，属业务约定）。
+     */
     private BigDecimal resolveExchangeRate(SoReturnInstockDetailDTO.Common detailDto, SoReturnInstockDTO.Update dto) {
         if (Objects.nonNull(detailDto.getExchangeRate())) {
+            log.debug("resolveExchangeRate: 使用明细汇率, platformSkuNo={}, mainId={}",
+                    detailDto.getPlatformSkuNo(), dto.getId());
             return detailDto.getExchangeRate();
         }
+        log.debug("resolveExchangeRate: 明细汇率为空，回退主单汇率, platformSkuNo={}, mainId={}, mainExchangeRate={}",
+                detailDto.getPlatformSkuNo(), dto.getId(), dto.getExchangeRate());
         return dto.getExchangeRate();
     }
 

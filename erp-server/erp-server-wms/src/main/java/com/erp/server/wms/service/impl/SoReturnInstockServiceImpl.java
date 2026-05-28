@@ -2050,9 +2050,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         return lambdaQuery().eq(SoReturnInstockEntity::getSourceId,sourceId).last("limit 1").one();
     }
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         fillThirdWarehouseDetailPrice(soReturnInstockEntity, detailEntityList);
+        ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
+                .persistByThirdWarehouse(soReturnInstockEntity, detailEntityList);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         soReturnInstockEntity.setCode(code);
         this.save(soReturnInstockEntity);
@@ -2077,6 +2082,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     /**
      * 三方仓拉取退货入库时，平台侧通常不带单价/汇率，需关联销售订单明细补全。
+     * 含 Feign 远程调用，须在 {@link #addByThirdWarehouse} 事务开启前执行。
      */
     private void fillThirdWarehouseDetailPrice(SoReturnInstockEntity main, List<SoReturnInstockDetailEntity> detailEntityList) {
         if (CollectionUtils.isEmpty(detailEntityList) || !OrderTypeEnum.B2C.getCode().equals(main.getType())
