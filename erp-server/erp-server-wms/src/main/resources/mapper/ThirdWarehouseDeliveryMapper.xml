@@ -48,7 +48,7 @@
             twd.platform_code as platformOrderCode,
             sb.shipping_order_no as thirdCode,
             twd.status,
-            sbl.code as transportNo,
+            twd.track_no as transportNo,
             twd.track_no as trackNo,
             sbl.logistics_channel_id as channelId,
             sbl.logistics_channel_name as channelName,
