@@ -156,6 +156,8 @@
             bill_date,
             warehouse_id,
             warehouse_name,
+            logistics_channel_id,
+            logistics_channel_name,
             customer_id
         from so_outstock
         where is_deleted = false
@@ -174,6 +176,8 @@
             sod.platform_code as platformCode,
             so.source_type as sourceType,
             so.source_code as sourceCode,
+            so.logistics_channel_id as logisticsChannelId,
+            so.logistics_channel_name as logisticsChannelName,
             so.sales_org_id as salesOrgId,
             so.sales_org_name as salesOrgName,
             so.bill_date as soOutstockDate,
@@ -198,6 +202,8 @@
             sod.platform_code as platformCode,
             so.source_type as sourceType,
             so.source_code as sourceCode,
+            so.logistics_channel_id as logisticsChannelId,
+            so.logistics_channel_name as logisticsChannelName,
             so.sales_org_id as salesOrgId,
             so.sales_org_name as salesOrgName,
             so.bill_date as soOutstockDate,
@@ -225,6 +231,8 @@
             sod.platform_code as platformCode,
             so.source_type as sourceType,
             so.source_code as sourceCode,
+            so.logistics_channel_id as logisticsChannelId,
+            so.logistics_channel_name as logisticsChannelName,
             so.sales_org_id as salesOrgId,
             so.sales_org_name as salesOrgName,
             so.bill_date as soOutstockDate,
