@@ -1130,6 +1130,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (MathUtil.compareTo(totalQuantity, BigDecimal.ZERO) == 0 || MathUtil.compareTo(childQty, BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
+        // 无成本/零售价分摊数据时的兜底：父单价按子件总数均分到每个子件单位上
+        // 数学等价于 parentUnitAmount / totalQuantity；保留 childQty / childQty 写法
+        // 是为了与有 allocationAmount 时的 (currentCost / totalCost) 分摊公式结构对称、便于对照阅读
         return MathUtil.nvl(parentUnitAmount, BigDecimal.ZERO)
                 .multiply(childQty.divide(totalQuantity, 4, RoundingMode.HALF_UP))
                 .divide(childQty, 4, RoundingMode.HALF_UP);
