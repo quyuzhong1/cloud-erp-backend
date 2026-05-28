@@ -36,6 +36,16 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
     }
 
     @Override
+    public boolean tryClaimDetailForExecution(String taskDetailId) {
+        return lambdaUpdate()
+            .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+            .set(TmsAsyncTaskDetailEntity::getErrorData, "")
+            .eq(TmsAsyncTaskDetailEntity::getId, taskDetailId)
+            .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+            .update();
+    }
+
+    @Override
     public List<TmsAsyncTaskDetailEntity> listErrorDetail(String mainId){
         return lambdaQuery()
                 .eq(TmsAsyncTaskDetailEntity::getMainId,mainId)
