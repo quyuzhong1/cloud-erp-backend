@@ -82,16 +82,16 @@ public class B2bThirdWarehouseDeliveryQueryHandler extends AbstractQueryHandler 
     private String buildCustomerPOQuerySql(Object value, String compareCodeSplicingValueSql) {
         QueryConditionEnum compareCode = AdvanceQueryContext.getCompareCode();
         if (QueryConditionEnum.IS_NULL.equals(compareCode)) {
-            return " not exists (select 1 from so_detail sd where sd.main_id = btd.so_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '') ";
+            return " not exists (select 1 from so_detail sd where sd.id = btdd.so_detail_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '') ";
         }
         if (QueryConditionEnum.NOT_NULL.equals(compareCode)) {
-            return " exists (select 1 from so_detail sd where sd.main_id = btd.so_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '') ";
+            return " exists (select 1 from so_detail sd where sd.id = btdd.so_detail_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '') ";
         }
         if (isNegativeCompare(compareCode)) {
-            return " not exists (select 1 from so_detail sd where sd.main_id = btd.so_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '' and sd.customer_po "
+            return " not exists (select 1 from so_detail sd where sd.id = btdd.so_detail_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '' and sd.customer_po "
                     + buildPositiveCompareSql(value, compareCode) + ")";
         }
-        return " exists (select 1 from so_detail sd where sd.main_id = btd.so_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '' and sd.customer_po "
+        return " exists (select 1 from so_detail sd where sd.id = btdd.so_detail_id and sd.is_deleted = false and coalesce(sd.customer_po, '') != '' and sd.customer_po "
                 + compareCodeSplicingValueSql + ")";
     }
 
