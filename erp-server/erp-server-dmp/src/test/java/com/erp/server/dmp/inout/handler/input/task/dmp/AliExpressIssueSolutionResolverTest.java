@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class AliExpressIssueSolutionResolverTest {
     }
 
     @Test
-    public void shouldTreatRefundRejectAsRefundEvenIfSellerCreatedReturnAndRefundSolution() {
+    public void shouldNotTreatRefundRejectAsRefundEvenIfSellerCreatedReturnAndRefundSolution() {
         Map<String, Object> issueDetail = new HashMap<>();
         issueDetail.put("reverse_detail_status", "refund_reject");
         issueDetail.put("buyer_solution_list",
@@ -60,9 +61,23 @@ public class AliExpressIssueSolutionResolverTest {
         AliExpressIssueSolutionResolver.ResolvedIssueSolution resolved = AliExpressIssueSolutionResolver.resolve(issueDetail);
 
         assertFalse(resolved.isMatchedReturn());
-        assertTrue(resolved.isMatchedRefund());
-        assertNotNull(resolved.getEffectiveSolution());
-        assertEquals(AliExpressIssueSolutionResolver.SOLUTION_REFUND, resolved.getEffectiveSolution().getSolutionType());
+        assertFalse(resolved.isMatchedRefund());
+        assertNull(resolved.getEffectiveSolution());
+    }
+
+    @Test
+    public void shouldNotTreatProcessingRefundSolutionAsRefund() {
+        Map<String, Object> issueDetail = new HashMap<>();
+        issueDetail.put("issue_status", "processing");
+        issueDetail.put("reverse_detail_status", "wait_for_AE_feedback");
+        issueDetail.put("buyer_solution_list",
+                solutionList(solution("refund", "138.78", "PEN", true, "wait_seller_accept", "6014855219364413")));
+
+        AliExpressIssueSolutionResolver.ResolvedIssueSolution resolved = AliExpressIssueSolutionResolver.resolve(issueDetail);
+
+        assertFalse(resolved.isMatchedReturn());
+        assertFalse(resolved.isMatchedRefund());
+        assertNull(resolved.getEffectiveSolution());
     }
 
     @Test
@@ -97,6 +112,7 @@ public class AliExpressIssueSolutionResolverTest {
         assertEquals("1", AliExpressIssueSolutionResolver.resolveRefundStatus("refund_success", "finish"));
         assertEquals("2", AliExpressIssueSolutionResolver.resolveRefundStatus("refund_reject", "finish"));
         assertEquals("3", AliExpressIssueSolutionResolver.resolveRefundStatus("processing", "canceled_issue"));
+        assertEquals("", AliExpressIssueSolutionResolver.resolveRefundStatus("wait_for_AE_feedback", "processing"));
     }
 
     private Map<String, Object> solutionList(Map<String, Object>... solutions) {
