@@ -47,6 +47,7 @@
             twd.so_code as soCode,
             twd.platform_code as platformOrderCode,
             twd.status,
+            twd.track_no as transportNo,
             twd.track_no as trackNo,
             twdd.sku_no as skuNo,
             twdd.platform_sku_no as platformSkuNo,
