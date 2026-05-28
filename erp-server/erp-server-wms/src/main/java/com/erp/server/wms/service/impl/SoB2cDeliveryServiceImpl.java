@@ -2529,7 +2529,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
         try {
             soB2cDeliveryService.pushTransferInfo(entity);
-            confirmTransferInfoPersisted(entity);
+            List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            confirmTransferInfoPersisted(entity, soB2cDeliveryDetailList);
         } catch (ServiceException se) {
             recordPushTransferInfoError(entity, se.getMessage());
             throw se;
@@ -2729,11 +2730,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     /**
      * 全局事务提交后再次确认中转调拨单已落库，避免调拨回滚后仍继续生成出库单。
      */
-    private void confirmTransferInfoPersisted(SoB2cDeliveryEntity entity) {
+    private void confirmTransferInfoPersisted(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
         if (CharSequenceUtil.isBlank(entity.getTransferWarehouseIds())) {
             return;
         }
-        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
         validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
     }
@@ -2747,9 +2747,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         int expectedCount = resolveExpectedTransferCount(transferWarehouseIdList, warehouseId);
         if (expectedCount <= 0) {
             return;
-        }
-        if (transferInfoList == null) {
-            transferInfoList = transferInfoService.listBySourceId(entity.getId());
         }
         int actualCount = CollectionUtils.isEmpty(transferInfoList) ? 0 : transferInfoList.size();
         if (actualCount < expectedCount) {
@@ -2780,7 +2777,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .map(SoB2cDeliveryDetailEntity::getWarehouseId)
                 .anyMatch(id -> !CharSequenceUtil.equals(warehouseId, id));
         if (multiWarehouse) {
-            throw new ServiceException(CharSequenceUtil.format("发货单【{}】明细存在多个发货仓库，不支持校验中转调拨单", entity.getCode()));
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED, entity.getCode());
         }
         return warehouseId;
     }
