@@ -2532,20 +2532,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // check-then-act，外层是 @GlobalTransactional(Seata XA, 120s)。多个并发入口（组包 MQ 多线程重投、重新出库、
         // intercept、async 等）同时进入时，第二个线程在第一个线程的 XA 提交前读不到已写入的 transfer_info，
         // 会重复生成直接调拨单。这里用 Redisson 把锁放到 @GlobalTransactional 外侧，覆盖整个事务提交窗口。
-        // waitTime 必须 >= GlobalTransactional 超时，让排队线程在前者提交后再进入即可命中已存在记录直接返回 TRUE。
+        //
+        // waitTime 选 30s 而非 >= XA 超时(120s) 的权衡：
+        // 1) 组包 MQ 消费线程池 consumeThreadNumber=10，若热点发货单短时间触发多条 MQ，125s 的等待会迅速把消费线程占满，
+        //    其他正常单据消费被阻塞；HTTP 上游网关一般 30–60s 也会先断连但线程仍挂在 tryLock。
+        // 2) 30s 上限可保证任何调用路径最坏阻塞 30s，MQ 线程池与 HTTP 线程不会因单点热度被耗尽。
+        // 3) 单发货单维度的并发恰好挤在同一次 XA 提交窗口内的概率极低；即便锁超时拿不到，会落入下方写错误记录 + 返回 FALSE
+        //    路径，由 soB2cFeign.addSoB2cError 与上游既有的重试机制（组包 MQ 的 delay-level、重新出库重试）兜底，
+        //    不会出现数据错乱。
         String lockKey = CharSequenceUtil.format(RedisCacheConstants.SO_B2C_DELIVERY_PUSH_TRANSFER_INFO_LOCK, entity.getId());
         RLock lock = redissonClient.getLock(lockKey);
         boolean locked = false;
         try {
-            locked = lock.tryLock(125, 180, TimeUnit.SECONDS);
+            locked = lock.tryLock(30, 180, TimeUnit.SECONDS);
             if (!locked) {
-                // waitTime(125s) 已覆盖 GlobalTransactional(120s) 超时窗口，持锁线程正常提交或 XA 回滚都会
-                // 在 finally 释放锁。能走到这里几乎只剩「持锁线程进程异常退出、依赖 leaseTime(180s) 才会
-                // 自动释放」一类情况，持锁线程自身也来不及写错误记录。部分调用方（如 afreshOutFreezeVirtualInventory）
-                // 会忽略本方法的返回值直接返回 TRUE，若此处不写错误记录，故障将完全静默。
-                // 因此写入一条语义明确的「锁超时」错误记录保留可观测性，并返回 FALSE 供显式判断返回值的
-                // 调用方走重试 / 报错路径。
-                String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时，疑似持锁线程异常，等待补偿", entity.getCode());
+                // waitTime(30s) 不再覆盖整个 GlobalTransactional(120s) 窗口：拿不到锁可能是持锁线程仍在执行业务/XA 提交，
+                // 也可能是持锁线程进程异常退出依赖 leaseTime(180s) 自动释放。两种情况都写入错误记录保留可观测性，
+                // 并返回 FALSE 供调用方走既有重试 / 报错路径（addSoB2cError + 组包 MQ delay-level 重试）。
+                String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时(30s)，等待重试或补偿", entity.getCode());
                 log.warn(msg);
                 recordPushTransferInfoError(entity, msg);
                 return Boolean.FALSE;
