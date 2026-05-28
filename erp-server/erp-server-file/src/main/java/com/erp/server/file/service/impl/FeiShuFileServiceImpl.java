@@ -187,19 +187,21 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         downloadFileReq.setFileToken(fileToken);
         try {
             DownloadFileResp resp = client.drive().v1().file().download(downloadFileReq);
-            log.warn("resp:{}", JSONUtil.toJsonStr(resp));
-
             if (!resp.success()) {
-                String format = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
-                throw new ServiceException(format);
+                log.error("下载失败 - Code: {}, Message: {}, Request ID: {}",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId());
+                throw new ServiceException(String.format("下载失败 - Code: %s, Message: %s",
+                        resp.getCode(), resp.getMsg()));
             }
             return resp;
-        }catch (Exception e){
-            throw new ServiceException("下载文件失败", e);
+        } catch (OutOfMemoryError e) {
+            log.error("下载文件时发生内存不足错误: {}", fileToken, e);
+            throw new ServiceException("文件下载失败，内存不足", e);
+        } catch (Exception e) {
+            log.error("下载文件时发生异常: {}", fileToken, e);
+            throw new ServiceException("文件下载失败", e);
         }
     }
-
     /**
      * 下载导出任务
      * @param fileToken
