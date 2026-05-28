@@ -30,6 +30,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.ReturnDetailTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -165,7 +166,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             
             for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
                 // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
-                if ("pack".equals(dto.getReturnDetailType()) && addDTO.getReturnQty() == 0 && addDTO.getDeductAmountQty() == 0) {
+                if (ReturnDetailTypeEnum.PACK.getCode().equals(dto.getReturnDetailType()) && addDTO.getReturnQty() == 0 && addDTO.getDeductAmountQty() == 0) {
                     continue;
                 }
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
@@ -277,7 +278,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
             // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
-            if ("pack".equals(dto.getReturnDetailType()) && addDTO.getReturnQty() == 0 && addDTO.getDeductAmountQty() == 0) {
+            if (ReturnDetailTypeEnum.PACK.getCode().equals(dto.getReturnDetailType()) && addDTO.getReturnQty() == 0 && addDTO.getDeductAmountQty() == 0) {
                 continue;
             }
             PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
@@ -370,7 +371,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
                 // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
-                if ("pack".equals(dto.getReturnDetailType()) && updateDTO.getReturnQty() == 0 && updateDTO.getDeductAmountQty() == 0) {
+                if (ReturnDetailTypeEnum.PACK.getCode().equals(dto.getReturnDetailType()) && updateDTO.getReturnQty() == 0 && updateDTO.getDeductAmountQty() == 0) {
                     continue;
                 }
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
@@ -483,7 +484,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
 
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
             // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
-            if ("pack".equals(dto.getReturnDetailType()) && updateDTO.getReturnQty() == 0 && updateDTO.getDeductAmountQty() == 0) {
+            if (ReturnDetailTypeEnum.PACK.getCode().equals(dto.getReturnDetailType()) && updateDTO.getReturnQty() == 0 && updateDTO.getDeductAmountQty() == 0) {
                 continue;
             }
             PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();

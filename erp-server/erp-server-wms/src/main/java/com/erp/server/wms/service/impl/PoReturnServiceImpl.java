@@ -111,9 +111,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_RE
 @RefreshScope
 public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoReturnEntity> implements PoReturnService {
 
-    private static final String RETURN_DETAIL_TYPE_SKU = "sku";
-    private static final String RETURN_DETAIL_TYPE_PACK = "pack";
-
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
@@ -436,21 +433,21 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto) {
         PoReturnEntity oldEntity = this.getById(dto.getId());
         boolean oldPackReturnDetail = CollectionUtils.isNotEmpty(listUsedAfterSalePack(dto.getId()));
-        String oldReturnDetailType = (CharSequenceUtil.equals(oldEntity.getReturnDetailType(), RETURN_DETAIL_TYPE_PACK) || oldPackReturnDetail)
-                ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU;
+        String oldReturnDetailType = (CharSequenceUtil.equals(oldEntity.getReturnDetailType(), ReturnDetailTypeEnum.PACK.getCode()) || oldPackReturnDetail)
+                ? ReturnDetailTypeEnum.PACK.getCode() : ReturnDetailTypeEnum.SKU.getCode();
         String newReturnDetailType = resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto));
         if (!CharSequenceUtil.equals(oldReturnDetailType, newReturnDetailType)) {
-            if (CharSequenceUtil.equals(oldReturnDetailType, RETURN_DETAIL_TYPE_PACK)
-                    && CharSequenceUtil.equals(newReturnDetailType, RETURN_DETAIL_TYPE_SKU)) {
+            if (CharSequenceUtil.equals(oldReturnDetailType, ReturnDetailTypeEnum.PACK.getCode())
+                    && CharSequenceUtil.equals(newReturnDetailType, ReturnDetailTypeEnum.SKU.getCode())) {
                 throw new ServiceException("整箱退货单不允许修改为单个SKU退货");
             }
-            if (CharSequenceUtil.equals(oldReturnDetailType, RETURN_DETAIL_TYPE_SKU)
-                    && CharSequenceUtil.equals(newReturnDetailType, RETURN_DETAIL_TYPE_PACK)) {
+            if (CharSequenceUtil.equals(oldReturnDetailType, ReturnDetailTypeEnum.SKU.getCode())
+                    && CharSequenceUtil.equals(newReturnDetailType, ReturnDetailTypeEnum.PACK.getCode())) {
                 throw new ServiceException("单个SKU退货单不允许修改为整箱退货");
             }
             throw new ServiceException("退货明细类型不允许修改");
         }
-        boolean packReturnDetail = CharSequenceUtil.equals(newReturnDetailType, RETURN_DETAIL_TYPE_PACK);
+        boolean packReturnDetail = CharSequenceUtil.equals(newReturnDetailType, ReturnDetailTypeEnum.PACK.getCode());
         List<AfterSalePackDTO.DetailDTO> oldAfterSalePackDetailList = packReturnDetail
                 ? getAfterSalePackDetailMap(dto.getId()).values().stream().flatMap(List::stream).collect(Collectors.toList())
                 : Collections.emptyList();
@@ -642,7 +639,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Collections.singletonList(poReturnEntity.getReturnWarehouseId()));
         Map<String, List<AfterSalePackDTO.DetailDTO>> afterSalePackDetailMap = getAfterSalePackDetailMap(id);
-        viewDTO.setReturnDetailType(CharSequenceUtil.blankToDefault(poReturnEntity.getReturnDetailType(), afterSalePackDetailMap.isEmpty() ? RETURN_DETAIL_TYPE_SKU : RETURN_DETAIL_TYPE_PACK));
+        viewDTO.setReturnDetailType(CharSequenceUtil.blankToDefault(poReturnEntity.getReturnDetailType(), afterSalePackDetailMap.isEmpty() ? ReturnDetailTypeEnum.SKU.getCode() : ReturnDetailTypeEnum.PACK.getCode()));
 
         for (PoReturnDetailEntity poReturnDetailEntity : detail) {
             Integer stockInQty = stockInDetailEntityList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(poReturnDetailEntity.getPurchaseOrderDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1821,24 +1818,24 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     private void checkReturnDetailType(String returnDetailType, boolean hasPackDetail, boolean hasSkuDetail) {
-        String detailType = CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU);
-        if (!CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_SKU) && !CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_PACK)) {
+        String detailType = CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? ReturnDetailTypeEnum.PACK.getCode() : ReturnDetailTypeEnum.SKU.getCode());
+        if (!CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.SKU.getCode()) && !CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.PACK.getCode())) {
             throw new ServiceException("退货明细类型错误");
         }
         if (hasPackDetail && hasSkuDetail) {
             throw new ServiceException("同一个采购退货单不能同时存在单个SKU退货和整箱退货");
         }
-        if (CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_PACK) && !hasPackDetail) {
+        if (CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.PACK.getCode()) && !hasPackDetail) {
             throw new ServiceException("整箱退货必须包含箱唛明细");
         }
-        if (CharSequenceUtil.equals(detailType, RETURN_DETAIL_TYPE_SKU) && hasPackDetail) {
+        if (CharSequenceUtil.equals(detailType, ReturnDetailTypeEnum.SKU.getCode()) && hasPackDetail) {
             throw new ServiceException("单个SKU退货不能包含箱唛明细");
         }
     }
 
     private void checkSkuReturnQtyForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
         if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
-                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), RETURN_DETAIL_TYPE_PACK)) {
+                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
             return;
         }
         List<String> skuNos = dto.getPurchasePriceDetailList().stream()
@@ -1853,7 +1850,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     private void checkSkuReturnQtyForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
         if (dto == null || CollectionUtils.isEmpty(dto.getPurchasePriceDetailList())
-                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), RETURN_DETAIL_TYPE_PACK)) {
+                || CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
             return;
         }
         List<String> skuNos = dto.getPurchasePriceDetailList().stream()
@@ -1867,17 +1864,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     private String resolveReturnDetailType(String returnDetailType, boolean hasPackDetail) {
-        return CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? RETURN_DETAIL_TYPE_PACK : RETURN_DETAIL_TYPE_SKU);
-    }
-
-    private boolean isPackReturnDetail(PurchaseReturnOrderDTO.AddDTO dto) {
-        return dto != null && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
-                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), RETURN_DETAIL_TYPE_PACK);
-    }
-
-    private boolean isPackReturnDetail(PurchaseReturnOrderDTO.UpdateDTO dto) {
-        return dto != null && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
-                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), RETURN_DETAIL_TYPE_PACK);
+        return CharSequenceUtil.blankToDefault(returnDetailType, hasPackDetail ? ReturnDetailTypeEnum.PACK.getCode() : ReturnDetailTypeEnum.SKU.getCode());
     }
 
     private boolean hasAfterSalePackDetailsForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
@@ -3126,10 +3113,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
-        if (isPackReturnDetail(dto)) {
-            PoReturnEntity entity = this.add(dto);
-            return entity.getId();
-        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
@@ -3179,6 +3162,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         addSkuDTO.setReplenishQty(addDTO.getReplenishQty());
                         addSkuDTO.setDeductAmountQty(addDTO.getDeductAmountQty());
                         addSkuDTO.setSkuNo(addDTO.getSkuNo());
+                        addSkuDTO.setAfterSalePackDetailList(addDTO.getAfterSalePackDetailList());
                         if (returnQty > (stockInQty - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
                             returnQty = returnQty - (stockInQty - alreadyReturnQty);
                             addSkuDTO.setReturnQty(stockInQty - alreadyReturnQty);
@@ -3203,9 +3187,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
-        if (isPackReturnDetail(dto)) {
-            return this.update(dto);
-        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
@@ -3253,6 +3234,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         updateSkuDTO.setReplenishQty(updateDTO.getReplenishQty());
                         updateSkuDTO.setDeductAmountQty(updateDTO.getDeductAmountQty());
                         updateSkuDTO.setSkuNo(updateDTO.getSkuNo());
+                        updateSkuDTO.setAfterSalePackDetailList(updateDTO.getAfterSalePackDetailList());
                         if (returnQty > (stockInQty - alreadyReturnQty) && !detailEntityList.get(detailEntityList.size()-1).getId().equals(entity.getId())) {
                             returnQty = returnQty - (stockInQty - alreadyReturnQty);
                             updateSkuDTO.setReturnQty(stockInQty - alreadyReturnQty);
