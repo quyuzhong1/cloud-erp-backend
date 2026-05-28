@@ -657,8 +657,12 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), "订单状态已作废，不能发货拦截");
         }
         if (needAmazonCancelConfirm(entity, isCancel)) {
+            AmazonCancelConfirmResult cancelConfirmResult = cancelAndConfirmAmazonOrder(entity);
+            if (!cancelConfirmResult.isCancelSubmitted()) {
+                return BatchResultDTO.fail(entity.getId(), entity.getDeliveryCode(), cancelConfirmResult.getMessage());
+            }
             createWaitHandleDeliveryIntercept(logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity);
-            if (cancelAndConfirmAmazonOrder(entity)) {
+            if (cancelConfirmResult.isInterceptSuccess()) {
                 handleDeliveryInterceptSuccess(entity, logisticsChannelId, logisticsChannelName, trackNo, remark, soB2cEntity, entity.getDeliveryCode(), true, isValidate);
                 return BatchResultDTO.success(entity.getId(), entity.getDeliveryCode(), "发货拦截作废成功");
             }
@@ -674,23 +678,63 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 || CreateStatusEnum.SUCCESS.getCode().equals(entity.getCreateStatus()));
     }
 
-    private boolean cancelAndConfirmAmazonOrder(SoMultiChannelEntity entity) {
+    private AmazonCancelConfirmResult cancelAndConfirmAmazonOrder(SoMultiChannelEntity entity) {
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(entity.getDeliveryShopId());
         FbaOutboundApi api = AmazonSpApiInitUtils.create(FbaOutboundApi.class, shopInfoDTO, false);
+        String cancelErrorMessage = null;
         try {
             ApiResponse<CancelFulfillmentOrderResponse> cancelResponse = api.cancelFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
             log.warn("亚马逊发货拦截取消订单，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(cancelResponse));
-        } catch (ApiException | LWAException e) {
+        } catch (ApiException e) {
             log.warn("亚马逊发货拦截取消订单异常，订单号：{}", entity.getDeliveryCode(), e);
+            cancelErrorMessage = getAmazonCancelErrorMessage(e);
+        } catch (LWAException e) {
+            log.warn("亚马逊发货拦截取消订单异常，订单号：{}", entity.getDeliveryCode(), e);
+            cancelErrorMessage = getAmazonCancelErrorMessage(e);
         }
+        // 取消接口可能因订单处理中拒绝请求，先查状态，避免失败时误把本地订单锁成拦截中。
         try {
             ApiResponse<GetFulfillmentOrderResponse> fulfillmentOrderResponse = api.getFulfillmentOrderWithHttpInfo(entity.getDeliveryCode());
             log.warn("亚马逊发货拦截查询订单状态，订单号：{},接口返回：{}", entity.getDeliveryCode(), JSONObject.toJSONString(fulfillmentOrderResponse));
-            return isAmazonDeliveryInterceptSuccess(fulfillmentOrderResponse);
+            boolean interceptSuccess = isAmazonDeliveryInterceptSuccess(fulfillmentOrderResponse);
+            if (StringUtils.isNotBlank(cancelErrorMessage) && !interceptSuccess) {
+                return AmazonCancelConfirmResult.cancelFailed(cancelErrorMessage);
+            }
+            return AmazonCancelConfirmResult.cancelSubmitted(interceptSuccess);
         } catch (ApiException | LWAException e) {
             log.warn("亚马逊发货拦截查询订单状态异常，订单号：{}", entity.getDeliveryCode(), e);
-            return false;
+            if (StringUtils.isNotBlank(cancelErrorMessage)) {
+                return AmazonCancelConfirmResult.cancelFailed(cancelErrorMessage);
+            }
+            return AmazonCancelConfirmResult.cancelSubmitted(false);
         }
+    }
+
+    private String getAmazonCancelErrorMessage(ApiException e) {
+        if (StringUtils.isBlank(e.getResponseBody())) {
+            return "亚马逊取消发货失败，请稍后重试";
+        }
+        try {
+            JSONObject responseJson = JSONObject.parseObject(e.getResponseBody());
+            com.alibaba.fastjson.JSONArray errors = responseJson.getJSONArray("errors");
+            if (CollUtil.isNotEmpty(errors)) {
+                JSONObject error = errors.getJSONObject(0);
+                String message = error.getString("message");
+                if (StringUtils.isNotBlank(message)) {
+                    return CharSequenceUtil.format("亚马逊取消发货失败：{}", message);
+                }
+            }
+        } catch (Exception parseException) {
+            log.warn("解析亚马逊取消发货错误响应失败，响应：{}", e.getResponseBody(), parseException);
+        }
+        return CharSequenceUtil.format("亚马逊取消发货失败：{}", e.getResponseBody());
+    }
+
+    private String getAmazonCancelErrorMessage(LWAException e) {
+        if (StringUtils.isNotBlank(e.getErrorMessage())) {
+            return CharSequenceUtil.format("亚马逊取消发货失败：{}", e.getErrorMessage());
+        }
+        return "亚马逊取消发货失败，请稍后重试";
     }
 
     private boolean isAmazonDeliveryInterceptSuccess(ApiResponse<GetFulfillmentOrderResponse> fulfillmentOrderResponse) {
@@ -703,6 +747,38 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             return false;
         }
         return FulfillmentOrderStatus.CANCELLED.equals(payload.getFulfillmentOrder().getFulfillmentOrderStatus());
+    }
+
+    private static class AmazonCancelConfirmResult {
+        private final boolean cancelSubmitted;
+        private final boolean interceptSuccess;
+        private final String message;
+
+        private AmazonCancelConfirmResult(boolean cancelSubmitted, boolean interceptSuccess, String message) {
+            this.cancelSubmitted = cancelSubmitted;
+            this.interceptSuccess = interceptSuccess;
+            this.message = message;
+        }
+
+        private static AmazonCancelConfirmResult cancelFailed(String message) {
+            return new AmazonCancelConfirmResult(false, false, message);
+        }
+
+        private static AmazonCancelConfirmResult cancelSubmitted(boolean interceptSuccess) {
+            return new AmazonCancelConfirmResult(true, interceptSuccess, "");
+        }
+
+        private boolean isCancelSubmitted() {
+            return cancelSubmitted;
+        }
+
+        private boolean isInterceptSuccess() {
+            return interceptSuccess;
+        }
+
+        private String getMessage() {
+            return message;
+        }
     }
 
     private void handleDeliveryIntercepting(SoB2cEntity soB2cEntity, String deliveryCode, String remark) {
