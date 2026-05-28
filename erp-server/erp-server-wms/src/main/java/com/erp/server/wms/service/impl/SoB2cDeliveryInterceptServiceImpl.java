@@ -515,7 +515,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                             throw se;
                         }
                     } finally {
-                        soOutstockService.updateRemarkBySoId(soB2cEntity.getId(), "发货拦截失败");
+                        try {
+                            soOutstockService.updateRemarkBySoId(soB2cEntity.getId(), "发货拦截失败");
+                        } catch (Exception e) {
+                            log.error("更新发货拦截备注失败, soId={}", soB2cEntity.getId(), e);
+                        }
                     }
 
                     if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
@@ -805,7 +809,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     throw se;
                 }
             } finally {
-                soOutstockService.updateRemarkBySoId(soB2cEntity.getId(), "发货拦截失败");
+                try {
+                    soOutstockService.updateRemarkBySoId(soB2cEntity.getId(), "发货拦截失败");
+                } catch (Exception e) {
+                    log.error("更新发货拦截备注失败, soId={}", soB2cEntity.getId(), e);
+                }
             }
 
             if (!soB2cEntity.getIsCancel() && soB2cFeign.checkPlatformShipOrder(soB2cEntity.getId())) {
