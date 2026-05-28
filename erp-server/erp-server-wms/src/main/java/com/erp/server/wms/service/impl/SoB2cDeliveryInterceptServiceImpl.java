@@ -503,9 +503,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
                     //生成直接调拨单
-                    Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
-                    if (isPush) {
-                        asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                    try {
+                        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
+                        if (isPush) {
+                            asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                        }
+                    } catch (ServiceException se) {
+                        log.warn("pushTransferInfo 校验失败，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
                     }
                     //更新备注
                     soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
@@ -785,9 +789,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
-            if (isPush) {
-                asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+            try {
+                Boolean isPush = soB2cDeliveryService.pushTransferInfoError(soB2cDelivery);
+                if (isPush) {
+                    asyncService.asyncGenerateB2cSoOutstock(soB2cEntity.getId());
+                }
+            } catch (ServiceException se) {
+                log.warn("pushTransferInfo 校验失败，发货单[{}]: {}", soB2cDelivery.getCode(), se.getMessage());
             }
             //更新备注
             soOutstockService.updateRemarkBySoId(soB2cEntity.getId(),"发货拦截失败");
