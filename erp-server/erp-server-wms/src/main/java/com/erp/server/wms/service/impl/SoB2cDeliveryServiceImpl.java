@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -2527,15 +2528,44 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
+        // 同一发货单的 pushTransferInfo 必须串行：pushTransferInfo 内部是「查 transfer_info 是否已存在 -> 否则生成」的
+        // check-then-act，外层是 @GlobalTransactional(Seata XA, 120s)。多个并发入口（组包 MQ 多线程重投、重新出库、
+        // intercept、async 等）同时进入时，第二个线程在第一个线程的 XA 提交前读不到已写入的 transfer_info，
+        // 会重复生成直接调拨单。这里用 Redisson 把锁放到 @GlobalTransactional 外侧，覆盖整个事务提交窗口。
+        // waitTime 必须 >= GlobalTransactional 超时，让排队线程在前者提交后再进入即可命中已存在记录直接返回 TRUE。
+        String lockKey = CharSequenceUtil.format(RedisCacheConstants.SO_B2C_DELIVERY_PUSH_TRANSFER_INFO_LOCK, entity.getId());
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean locked = false;
         try {
+            locked = lock.tryLock(125, 180, TimeUnit.SECONDS);
+            if (!locked) {
+                // waitTime(125s) 已覆盖 GlobalTransactional(120s) 超时窗口，持锁线程正常提交或 XA 回滚都会
+                // 在 finally 释放锁。能走到这里几乎只剩「持锁线程进程异常退出、依赖 leaseTime(180s) 才会
+                // 自动释放」一类情况，持锁线程自身也来不及写错误记录。部分调用方（如 afreshOutFreezeVirtualInventory）
+                // 会忽略本方法的返回值直接返回 TRUE，若此处不写错误记录，故障将完全静默。
+                // 因此写入一条语义明确的「锁超时」错误记录保留可观测性，并返回 FALSE 供显式判断返回值的
+                // 调用方走重试 / 报错路径。
+                String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时，疑似持锁线程异常，等待补偿", entity.getCode());
+                log.warn(msg);
+                recordPushTransferInfoError(entity, msg);
+                return Boolean.FALSE;
+            }
             soB2cDeliveryService.pushTransferInfo(entity);
             confirmTransferInfoPersisted(entity);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            recordPushTransferInfoError(entity, "生成直接调拨单等待锁被中断");
+            return Boolean.FALSE;
         } catch (ServiceException se) {
             recordPushTransferInfoError(entity, se.getMessage());
             throw se;
         } catch (Exception e) {
             recordPushTransferInfoError(entity, e.getMessage());
             return Boolean.FALSE;
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
         return Boolean.TRUE;
     }
