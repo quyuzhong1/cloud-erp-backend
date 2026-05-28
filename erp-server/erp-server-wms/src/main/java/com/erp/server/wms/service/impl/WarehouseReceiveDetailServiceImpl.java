@@ -461,10 +461,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             if (ObjectUtil.isEmpty(receiveDetailEntity)) {
                 throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
             }
-            Integer waitQcQty1 = Objects.nonNull(receiveDetailEntity.getWaitQcQty()) ? receiveDetailEntity.getWaitQcQty() : MathUtil.ZERO;
+            Integer currentWaitQcQty = Objects.nonNull(receiveDetailEntity.getWaitQcQty()) ? receiveDetailEntity.getWaitQcQty() : MathUtil.ZERO;
             Integer totalQty = Objects.nonNull(lotQualifiedQtyDTO.getTotalQty()) ? lotQualifiedQtyDTO.getTotalQty() : MathUtil.ZERO;
             //完成质检：待质检数量 = 待质检数量 - 本次质检合格数量
-            int waitQcQty = isFinishQc ? waitQcQty1 - totalQty : waitQcQty1 + totalQty;
+            int waitQcQty = isFinishQc ? currentWaitQcQty  - totalQty : currentWaitQcQty  + totalQty;
             receiveDetailEntity.setWaitQcQty(Math.max(waitQcQty, MathUtil.ZERO));
             receiveDetailList.add(receiveDetailEntity);
         }
