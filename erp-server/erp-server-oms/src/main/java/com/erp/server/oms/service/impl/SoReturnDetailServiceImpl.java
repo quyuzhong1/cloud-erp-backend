@@ -604,6 +604,28 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     public List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmountInNotice(SoReturnDTO.SkuParamDTO dto) {
         List<SoReturnDTO.SoReturnAmoutDTO> result = new ArrayList<>();
+        // 批量预加载，避免循环内逐条 getById 造成 N+1：
+        //   1) 按 returnDetailId 一次性取出所有 SoReturnDetailEntity；
+        //   2) 收集其 sourceDetailId，再一次性取出所有 SoDetailEntity；
+        // 循环内统一从 Map 中查表，不再发起单条 DB 查询。
+        List<String> returnDetailIds = dto.getSkuDTOList().stream()
+                .map(SoReturnDTO.ReturnSkuDTO::getReturnDetailId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SoReturnDetailEntity> returnDetailMap = returnDetailIds.isEmpty()
+                ? Collections.emptyMap()
+                : soReturnDetailService.listByIds(returnDetailIds).stream()
+                        .collect(Collectors.toMap(SoReturnDetailEntity::getId, e -> e, (a, b) -> a));
+        List<String> sourceDetailIds = returnDetailMap.values().stream()
+                .map(SoReturnDetailEntity::getSourceDetailId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SoDetailEntity> soDetailMap = sourceDetailIds.isEmpty()
+                ? Collections.emptyMap()
+                : soDetailService.listByIds(sourceDetailIds).stream()
+                        .collect(Collectors.toMap(SoDetailEntity::getId, e -> e, (a, b) -> a));
         for (SoReturnDTO.ReturnSkuDTO skuDTO : dto.getSkuDTOList()) {
             SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
             view.setSkuId(skuDTO.getSkuId());
@@ -611,7 +633,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if(skuDTO.getReturnQty() != null){
                 if(StringUtils.isNotBlank(skuDTO.getReturnDetailId())){
                     //有销售订单情况
-                    getReturnAmountBySoReturn(skuDTO, view);
+                    getReturnAmountBySoReturn(skuDTO, view, returnDetailMap, soDetailMap);
                 }else {
                     //无销售订单情况
                     getReturnAmoutByCustomer(skuDTO, view);
@@ -623,9 +645,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     //有退货订单订单情况
-    private void getReturnAmountBySoReturn(SoReturnDTO.ReturnSkuDTO dto, SoReturnDTO.SoReturnAmoutDTO view) {
-        String returnDetailId = dto.getReturnDetailId();
-        SoReturnDetailEntity soReturnDetailEntity = soReturnDetailService.getById(returnDetailId);
+    private void getReturnAmountBySoReturn(SoReturnDTO.ReturnSkuDTO dto, SoReturnDTO.SoReturnAmoutDTO view,
+                                           Map<String, SoReturnDetailEntity> returnDetailMap,
+                                           Map<String, SoDetailEntity> soDetailMap) {
+        SoReturnDetailEntity soReturnDetailEntity = returnDetailMap.get(dto.getReturnDetailId());
         if (null != soReturnDetailEntity) {
             //退货金额
             BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
@@ -661,7 +684,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             view.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
             view.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
             if (StringUtils.isNotBlank(soReturnDetailEntity.getSourceDetailId())) {
-                SoDetailEntity soDetailEntity = soDetailService.getById(soReturnDetailEntity.getSourceDetailId());
+                SoDetailEntity soDetailEntity = soDetailMap.get(soReturnDetailEntity.getSourceDetailId());
                 if (null != soDetailEntity) {
                     view.setPrice(soDetailEntity.getPrice());
                     view.setTaxPrice(soDetailEntity.getTaxPrice());
