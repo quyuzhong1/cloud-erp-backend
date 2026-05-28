@@ -103,6 +103,8 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         // 唯一性校验：同一供应商 + 同一仓库 不允许重复配置
         checkSupplierWarehouseUnique(supplierId, addDTO.getWarehouseId(), supplier.getName(), warehouse.getName(), null);
 
+        validateAtLeastOneQcUser(addDTO);
+
         // 保存主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
         BeanMapper.copy(addDTO, cfgQcUserEntity);
@@ -147,12 +149,12 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         // 唯一性校验：同一供应商 + 同一仓库 不允许重复配置（排除自身）
         checkSupplierWarehouseUnique(supplierId, updateDTO.getWarehouseId(), supplierName, warehouse.getName(), updateDTO.getId());
 
+        validateAtLeastOneQcUser(updateDTO);
+
         // 更新主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
         BeanMapper.copy(updateDTO, cfgQcUserEntity);
-        cfgQcUserEntity.setId(updateDTO.getId());
         cfgQcUserEntity.setSupplierId(supplierId);
-        // DTO字段名是stockIn，数据库是stockin，需要手动设置
         cfgQcUserEntity.setStockinQcUserId(updateDTO.getStockInQcUserId());
         cfgQcUserEntity.setStockinQcUserName(updateDTO.getStockInQcUserName());
         cfgQcUserEntity.setStockoutQcUserId(updateDTO.getStockOutQcUserId());
@@ -208,6 +210,22 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_NOT_FOUND, warehouse.getName());
         }
         return warehouse;
+    }
+
+    /**
+     * 入库/出库/外验/在库/新品入库/B2B外检/退货质检员至少配置一名
+     */
+    private void validateAtLeastOneQcUser(CfgQcUserDTO.CommonDTO dto) {
+        if (StrUtil.isNotBlank(dto.getStockInQcUserId())
+                || StrUtil.isNotBlank(dto.getStockOutQcUserId())
+                || StrUtil.isNotBlank(dto.getOutsideQcUserId())
+                || StrUtil.isNotBlank(dto.getInsideQcUserId())
+                || StrUtil.isNotBlank(dto.getNewProductStockInQcUserId())
+                || StrUtil.isNotBlank(dto.getB2bOutsideQcUserId())
+                || StrUtil.isNotBlank(dto.getReturnQcUserId())) {
+            return;
+        }
+        throw new ServiceException(ApiError.CFG_QC_USER_QC_USER_AT_LEAST_ONE);
     }
 
     @Override
@@ -284,7 +302,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
         CfgQcUserDTO.ViewDTO data = new CfgQcUserDTO.ViewDTO();
         BeanMapper.copy(cfgQcUserEntity, data);
-        // 数据库字段是stockin，DTO是stockIn，需要手动设置
         data.setStockInQcUserId(cfgQcUserEntity.getStockinQcUserId());
         data.setStockInQcUserName(cfgQcUserEntity.getStockinQcUserName());
         data.setStockOutQcUserId(cfgQcUserEntity.getStockoutQcUserId());

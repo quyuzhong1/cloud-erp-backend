@@ -170,6 +170,12 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                     continue;
                 }
 
+                if (!hasAnyQcUserId(stockInId, stockOutId, outsideId, insideId, newProductStockInId, b2bOutsideId, returnId)) {
+                    dto.setErrorMsg(ApiError.CFG_QC_USER_QC_USER_AT_LEAST_ONE.getMsg());
+                    errorList.add(dto);
+                    continue;
+                }
+
                 SupplierEntity supplier = suppliers.get(0);
                 CfgQcUserEntity exists = cfgQcUserMapper.selectBySupplierIdAndWarehouseId(supplier.getId(), warehouse.getId());
 
@@ -267,6 +273,18 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
             return null;
         }
         return userId;
+    }
+
+    private boolean hasAnyQcUserId(String... userIds) {
+        if (userIds == null) {
+            return false;
+        }
+        for (String userId : userIds) {
+            if (StrUtil.isNotBlank(userId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void convertImportToCommonDTO(CfgQcUserDTO.ImportExcelDTO importDTO, CfgQcUserDTO.CommonDTO commonDTO,
