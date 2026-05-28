@@ -54,9 +54,13 @@ public class PurchaseOrderDTO implements Serializable {
         private String confirmType;
         private String confirmTypeName;
         /**
-         * 客户 【可排序】
+         * 采购组织名称 【可排序】
          */
         private String purchaseOrgName;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
 
         /**
          * 单据类型 【可排序】

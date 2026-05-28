@@ -232,6 +232,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private WmsCartonService wmsCartonService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -254,6 +256,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 新增明细
         requisitionApplicationDetailService.add(addDTO, requisitionApplicationEntity.getId());
+        //新增附件
+        wmsAttachmentService.batchSave(addDTO.getAttachmentList(), ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId());
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请" , requisitionApplicationEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId(), "新增操作");
@@ -291,6 +295,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         // 修改明细数据（包含增删改）
         requisitionApplicationDetailService.update(updateDTO, requisitionApplicationEntity.getId());
+        //更新附件
+        wmsAttachmentService.batchSave(updateDTO.getAttachmentList(), ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), requisitionApplicationEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -345,6 +351,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(id));
         // 数据填充处理
         fillOne(data, requisitionApplicationDetailEntities);
+        //附件
+        data.setAttachmentList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode()));
         return data;
     }
 

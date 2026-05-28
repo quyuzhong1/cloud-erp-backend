@@ -1,9 +1,11 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -425,6 +427,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 详情
          */
         private List<RequisitionApplicationDetailDTO.ViewDTO> detailList;
+        /**
+         * 附件列表
+         */
+        private List<WmsAttachmentEntity> attachmentList;
     }
 
     /**
@@ -433,7 +439,10 @@ public class RequisitionApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        /**
+         * 附件列表
+         */
+        private List<AttachDTO> attachmentList;
         /**
          * 详情
          */
@@ -453,7 +462,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        /**
+         * 附件列表
+         */
+        private List<AttachDTO> attachmentList;
         /**
          * 详情
          */
