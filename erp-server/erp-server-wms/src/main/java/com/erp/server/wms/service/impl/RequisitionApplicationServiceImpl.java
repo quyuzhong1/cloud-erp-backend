@@ -82,6 +82,7 @@ import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
+import com.erp.server.wms.convert.WmsAttachmentConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
@@ -352,7 +353,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 数据填充处理
         fillOne(data, requisitionApplicationDetailEntities);
         //附件
-        data.setAttachmentList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode()));
+        data.setAttachmentList(WmsAttachmentConverter.INSTANCE.entity2DTOList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode())));
         return data;
     }
 
