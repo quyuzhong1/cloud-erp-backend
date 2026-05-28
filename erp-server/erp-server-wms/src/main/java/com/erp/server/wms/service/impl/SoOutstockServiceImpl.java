@@ -1744,7 +1744,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     SoOutstockDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
             dynamicExcelDTO.setHeaders(fieldMap);
             for (SoOutstockDTO.PagingViewDTO pagingViewDTO : paging.getList()) {
-                LinkedHashMap<String, Object> excelMap = BeanUtil.beanToMap(pagingViewDTO, new LinkedHashMap<>(), false, false);
+                Map<String, Object> excelMap = BeanUtil.beanToMap(pagingViewDTO);
                 LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
                 for (String fieldCode : fieldCodeList) {
                     exportMap.put(fieldCode, excelMap.get(fieldCode));
