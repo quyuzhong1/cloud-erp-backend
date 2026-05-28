@@ -66,6 +66,9 @@ public class SoB2cReturnFeignController {
         return detailList.stream().map(this::toViewDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Entity 与 ViewDTO 业务字段一一对应（无单价/金额字段，金额由 WMS 侧关联 {@code SoB2cDetailEntity} 计算）。
+     */
     private SoB2cReturnDetailDTO.ViewDTO toViewDTO(SoB2cReturnDetailEntity entity) {
         SoB2cReturnDetailDTO.ViewDTO viewDTO = new SoB2cReturnDetailDTO.ViewDTO();
         viewDTO.setId(entity.getId());

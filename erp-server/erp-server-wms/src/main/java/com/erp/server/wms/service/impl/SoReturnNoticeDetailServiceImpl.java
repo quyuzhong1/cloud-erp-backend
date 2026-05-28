@@ -238,9 +238,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(soB2cDetailEntity)) {
-            log.warn("B2C销售订单明细不存在，跳过金额填充，sourceDetailId={}，soDetailId={}",
-                    detailDto.getSourceDetailId(), soB2cReturnDetailEntity.getSoDetailId());
-            return;
+            throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
         }
         BigDecimal exchangeRate = Objects.nonNull(detailDto.getExchangeRate()) ? detailDto.getExchangeRate() : soB2cDetailEntity.getExchangeRate();
         detailEntity.setExchangeRate(exchangeRate);
@@ -286,6 +284,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                                                   List<SoReturnNoticeDetailEntity> noticeDetailEntities,
                                                   Function<SoReturnNoticeDetailEntity, BigDecimal> amountGetter) {
         if (Objects.isNull(totalAmount)) {
+            log.warn("尾差吸收计算时总金额为 null，sourceDetailId={}，按 0 处理", sourceDetailId);
             return BigDecimal.ZERO;
         }
         BigDecimal remainAmount = totalAmount;
