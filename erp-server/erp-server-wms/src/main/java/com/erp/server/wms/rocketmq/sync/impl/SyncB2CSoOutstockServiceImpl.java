@@ -528,10 +528,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     				totalAllAmountLocalCurrency = totalAllAmountLocalCurrency.add(wdtSoOutStockDetailDTO.getAllAmountLocalCurrency());
     				totalAmount = totalAmount.add(wdtSoOutStockDetailDTO.getAmount());
     			}
-    			if(totalStd.compareTo(BigDecimal.ZERO) != 0) {
+    		if(totalStd.compareTo(BigDecimal.ZERO) != 0) {
+    				BigDecimal totalTaxAmount = wdtSoOutStockDetailDTOList.stream()
+    						.map(WdtSoOutStockDetailDTO::getTaxAmount)
+    						.filter(Objects::nonNull)
+    						.reduce(BigDecimal.ZERO, BigDecimal::add);
     				int index = 0;
     				BigDecimal currTotalAllAmountLocalCurrency = BigDecimal.ZERO;
     				BigDecimal currTotalAmount = BigDecimal.ZERO;
+    				BigDecimal currTotalTaxAmount = BigDecimal.ZERO;
     				for(WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO : wdtSoOutStockDetailDTOList) {
     					index = index + 1;
     					if(index != wdtSoOutStockDetailDTOList.size()) {
@@ -540,7 +545,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
         							.divide(totalStd , 4 , RoundingMode.DOWN);
     						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
-                            wdtSoOutStockDetailDTO.setTaxAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            BigDecimal taxAmount = totalTaxAmount
+                                    .multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
+                                    .multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
+                                    .divide(totalStd , 4 , RoundingMode.DOWN);
+                            currTotalTaxAmount = currTotalTaxAmount.add(taxAmount);
+                            wdtSoOutStockDetailDTO.setTaxAmount(taxAmount);
                             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
 
         					BigDecimal amount = totalAmount
@@ -551,7 +561,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 							wdtSoOutStockDetailDTO.setAmount(amount);
     					}else {
     						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAllAmountLocalCurrency.subtract(currTotalAllAmountLocalCurrency));
-                            wdtSoOutStockDetailDTO.setTaxAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            wdtSoOutStockDetailDTO.setTaxAmount(totalTaxAmount.subtract(currTotalTaxAmount));
                             wdtSoOutStockDetailDTO.setAmount(totalAmount.subtract(currTotalAmount));
     					}
     					wdtSoOutStockDetailDTO.setPrice(wdtSoOutStockDetailDTO.getAmount().divide(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty()), 4, RoundingMode.HALF_UP));

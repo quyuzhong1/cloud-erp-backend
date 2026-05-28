@@ -2731,9 +2731,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (expectedCount <= 0) {
             return;
         }
-        if (transferInfoList == null) {
-            transferInfoList = transferInfoService.listBySourceId(entity.getId());
-        }
         int actualCount = CollectionUtils.isEmpty(transferInfoList) ? 0 : transferInfoList.size();
         if (actualCount < expectedCount) {
             log.error("发货单【{}】中转调拨单未落库，期望{}条，实际{}条", entity.getCode(), expectedCount, actualCount);
@@ -2763,7 +2760,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .map(SoB2cDeliveryDetailEntity::getWarehouseId)
                 .anyMatch(id -> !CharSequenceUtil.equals(warehouseId, id));
         if (multiWarehouse) {
-            throw new ServiceException(CharSequenceUtil.format("发货单【{}】明细存在多个发货仓库，不支持校验中转调拨单", entity.getCode()));
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED, entity.getCode());
         }
         return warehouseId;
     }

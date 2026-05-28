@@ -372,13 +372,6 @@ public class ProductDetailExcelExportDTO {
     @MenuCode("plm:product:detail:listProductPurchase")
     private String firstCertificateNames;
 
-//
-//    /**
-//     * 二级供应商
-//     */
-//    @ExcelProperty("二级供应商")
-//    @MenuCode("plm:product:detail:listProductPurchase")
-//    private String secondSupplier;
     /**
      * 一级供应商
      */

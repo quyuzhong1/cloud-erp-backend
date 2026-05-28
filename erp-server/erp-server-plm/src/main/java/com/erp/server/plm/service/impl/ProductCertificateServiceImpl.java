@@ -331,7 +331,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         List<PlmAttachmentEntity> removeFileList = attachmentList.stream().filter(obj -> removeFileIdList.contains(obj.getId())).collect(Collectors.toList());
         //删除附件表数据
-        plmAttachmentService.removeByIds(removeFileIdList);
+        softDeleteAttachmentByIds(removeFileIdList);
         for (PlmAttachmentEntity entity : removeFileList) {
             //fastdfs删除附件
             fileFeign.deleteFile(entity.getAttachUrl());
@@ -407,7 +407,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         if (CollectionUtils.isNotEmpty(attachmentList)) {
             //删除附件表数据
             List<String> attachmentIdList = attachmentList.stream().map(PlmAttachmentEntity::getId).collect(Collectors.toList());
-            plmAttachmentService.removeByIds(attachmentIdList);
+            softDeleteAttachmentByIds(attachmentIdList);
             for (PlmAttachmentEntity entity : attachmentList) {
                 //fastdfs删除附件
                 fileFeign.deleteFile(entity.getAttachUrl());
@@ -1103,9 +1103,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return;
         }
         Map<String, ProductCertificateEntity> existedCertificateMap = existedCertificateList.stream()
+                .filter(e -> !isBlank(buildCertificateUniqueKey(e)))
                 .collect(Collectors.toMap(this::buildCertificateUniqueKey, Function.identity(), (oldValue, newValue) -> newValue));
         overwriteList.forEach(entity -> {
-            ProductCertificateEntity existedCertificate = existedCertificateMap.get(buildCertificateUniqueKey(entity));
+            String key = buildCertificateUniqueKey(entity);
+            if (isBlank(key)) {
+                return;
+            }
+            ProductCertificateEntity existedCertificate = existedCertificateMap.get(key);
             if (ObjectUtils.isEmpty(existedCertificate)) {
                 return;
             }
@@ -1118,6 +1123,16 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
             return "";
         }
         return entity.getSkuId().concat(":").concat(entity.getDictProject());
+    }
+
+    private void softDeleteAttachmentByIds(List<String> attachmentIds) {
+        if (CollectionUtils.isEmpty(attachmentIds)) {
+            return;
+        }
+        plmAttachmentService.lambdaUpdate()
+                .set(PlmAttachmentEntity::getIsDeleted, Boolean.TRUE)
+                .in(PlmAttachmentEntity::getId, attachmentIds)
+                .update();
     }
 
     private boolean isOverwriteCertificateType(ProductCertificateEntity entity) {
@@ -1354,7 +1369,7 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(attachmentIdList)) {
-            plmAttachmentService.removeByIds(attachmentIdList);
+            softDeleteAttachmentByIds(attachmentIdList);
         }
         for (PlmAttachmentEntity entity : attachmentList) {
             if (StringUtils.isNotBlank(entity.getAttachUrl())) {

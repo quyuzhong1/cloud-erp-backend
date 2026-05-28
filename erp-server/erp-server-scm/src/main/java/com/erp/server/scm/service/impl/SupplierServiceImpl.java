@@ -1423,7 +1423,13 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             supplierSimpleDTO.setDisabled(sup.getDisabled());
             supplierSimpleDTO.setCertificateJson(sup.getCertificateJson());
             //体系认证名称
-            String certificateJson = sup.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+            String certificateJson = CollUtil.emptyIfNull(sup.getCertificateJson()).stream()
+                    .map(obj -> dictBasicList.stream()
+                            .filter(e -> CharSequenceUtil.equals(obj.toString(), e.getValue())
+                                    && CharSequenceUtil.equals(e.getType(), DictBasicEnum.CERTIFICATE.getType()))
+                            .map(DictBasicEntity::getName)
+                            .findFirst().orElse(""))
+                    .collect(Collectors.joining(","));
             supplierSimpleDTO.setCertificateNames(certificateJson);
             supplierMap.put(id, supplierSimpleDTO);
         });
