@@ -62,6 +62,7 @@ import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.SoB2cDTO.PagingParamDTO;
@@ -794,9 +795,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
-        //非货到付款
+        //非货到付款（批量预取支付方式配置，避免循环内重复查库）
+        Map<String, CfgSettingDTO.PayMethodDTO> payMethodSettingMap = soB2cCoreService.listPayMethodSettingMap();
         List<SoB2cEntity> toDeleteList = soB2cList.stream()
-                .filter(entity -> !Boolean.TRUE.equals(soB2cCoreService.listPayMethodSetting(entity)))
+                .filter(entity -> !payMethodSettingMap.containsKey(
+                        CharSequenceUtil.format("{}-{}", entity.getDictPlatform(), entity.getDictPayMethod())))
                 .collect(Collectors.toList());
 
         if (CollUtil.isEmpty(toDeleteList)) {
