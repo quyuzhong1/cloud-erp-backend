@@ -174,6 +174,12 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("price_allocation_source")
     private String priceAllocationSource = "";
 
+    /**
+     * 价税合计
+     */
+    @TableField("tax_amount")
+    private BigDecimal taxAmount;
+
     @TableField(exist = false)
     private String approveStatus;
 

@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -2533,15 +2534,55 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
+        // 同一发货单的 pushTransferInfo 必须串行：pushTransferInfo 内部是「查 transfer_info 是否已存在 -> 否则生成」的
+        // check-then-act，外层是 @GlobalTransactional(Seata XA, 120s)。多个并发入口（组包 MQ 多线程重投、重新出库、
+        // intercept、async 等）同时进入时，第二个线程在第一个线程的 XA 提交前读不到已写入的 transfer_info，
+        // 会重复生成直接调拨单。这里用 Redisson 把锁放到 @GlobalTransactional 外侧，覆盖整个事务提交窗口。
+        //
+        // waitTime 选 30s 而非 >= XA 超时(120s) 的权衡：
+        // 1) 组包 MQ 消费线程池 consumeThreadNumber=10，若热点发货单短时间触发多条 MQ，125s 的等待会迅速把消费线程占满，
+        //    其他正常单据消费被阻塞；HTTP 上游网关一般 30–60s 也会先断连但线程仍挂在 tryLock。
+        // 2) 30s 上限可保证任何调用路径最坏阻塞 30s，MQ 线程池与 HTTP 线程不会因单点热度被耗尽。
+        // 3) 单发货单维度的并发恰好挤在同一次 XA 提交窗口内的概率极低；即便锁超时拿不到，会落入下方写错误记录 + 返回 FALSE
+        //    路径，由 soB2cFeign.addSoB2cError 与上游既有的重试机制（组包 MQ 的 delay-level、重新出库重试）兜底，
+        //    不会出现数据错乱。
+        String lockKey = CharSequenceUtil.format(RedisCacheConstants.SO_B2C_DELIVERY_PUSH_TRANSFER_INFO_LOCK, entity.getId());
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean locked = false;
         try {
+            locked = lock.tryLock(30, 180, TimeUnit.SECONDS);
+            if (!locked) {
+                // waitTime(30s) 不再覆盖整个 GlobalTransactional(120s) 窗口：拿不到锁可能是
+                //  a) 持锁线程仍在执行业务 / XA 提交（合法慢事务，30–120s 内）；
+                //  b) 持锁线程进程异常退出，依赖 leaseTime(180s) 自动释放。
+                // 为避免把场景 a 误判为失败（持锁线程随后正常提交、transfer_info 已写入，却让调用方走错误路径
+                // 重复生成调拨单），这里先做一次幂等读：transfer_info 已存在即认为前序线程已成功，直接返回 TRUE。
+                List<TransferInfoEntity> existing = transferInfoService.listBySourceId(entity.getId());
+                if (CollectionUtils.isNotEmpty(existing)) {
+                    log.warn("发货单【{}】生成直接调拨单获取锁超时(30s)，但 transfer_info 已存在，视为前序线程已完成", entity.getCode());
+                    return Boolean.TRUE;
+                }
+                String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时(30s)，等待重试或补偿", entity.getCode());
+                log.warn(msg);
+                recordPushTransferInfoError(entity, msg);
+                return Boolean.FALSE;
+            }
             soB2cDeliveryService.pushTransferInfo(entity);
             confirmTransferInfoPersisted(entity);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            recordPushTransferInfoError(entity, "生成直接调拨单等待锁被中断");
+            return Boolean.FALSE;
         } catch (ServiceException se) {
             recordPushTransferInfoError(entity, se.getMessage());
             throw se;
         } catch (Exception e) {
             recordPushTransferInfoError(entity, e.getMessage());
             return Boolean.FALSE;
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
         return Boolean.TRUE;
     }

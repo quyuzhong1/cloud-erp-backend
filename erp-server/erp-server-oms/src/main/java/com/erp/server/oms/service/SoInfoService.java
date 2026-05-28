@@ -78,6 +78,9 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @date 2023-05-16 15:01
      */
     SoInfoDTO.ViewDTO view(String id);
+
+    List<SoInfoDTO.FilterCalculateDTO.DetailDTO> filterCalculate(SoInfoDTO.FilterCalculateDTO dto);
+
     /**
      * 打印拣货单
      *

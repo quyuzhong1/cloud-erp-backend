@@ -37,6 +37,18 @@ public class SoReturnDTO {
     }
 
     /**
+     * 已审核退货单分页查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ApproveStatusPagingParam {
+        /**
+         * 退货单号，右模糊
+         */
+        private String keyword;
+    }
+
+    /**
      * 分页信息
      */
     @Data

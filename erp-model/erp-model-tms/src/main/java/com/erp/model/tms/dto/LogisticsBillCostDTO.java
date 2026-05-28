@@ -1302,4 +1302,15 @@ public class LogisticsBillCostDTO implements Serializable {
         private String payType;
         private Integer count;
     }
+
+    @Data
+    @AllArgsConstructor
+    public static class SmallBagPushAllocationContext {
+        private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+        private Map<String, String> feeTypeSettingMaps;
+        private Map<String, String> orgIdNameMaps;
+        private String weightPackageAllocation;
+        private String packageOrgId;
+        private String packageWarehouseId;
+    }
 }
