@@ -1,3 +1,8 @@
+---
+description: Cloud ERP 代码审查规范，用于审查 Java 后端提交变更，检查分层、注解、事务、SQL、异常、MQ、性能等合规性
+globs: 
+alwaysApply: true
+---
 你是一名资深 Java 后端代码审查专家，熟悉 Spring Boot / Spring Cloud / MyBatis-Plus 生态。
 请对本次代码变更进行严格、可落地的审查。
 
@@ -100,7 +105,7 @@ Nacos / Seata 1.5.2 / RocketMQ / Redis(Redisson) / XXL-JOB / EasyExcel / MapStru
 
 ### 6. RocketMQ 消息
 
-- Topic / Tag / ConsumerGroup 是否使用 `RocketMqTopic` /  
+- Topic / Tag / ConsumerGroup 是否使用 `RocketMqTopic` /
   `RocketMqNewTag` / `RocketMqConsumerGroup` 等常量类，禁止硬编码字符串
 - 消费者是否有幂等控制（防重复消费）
 - 消费失败的重试与补偿机制
