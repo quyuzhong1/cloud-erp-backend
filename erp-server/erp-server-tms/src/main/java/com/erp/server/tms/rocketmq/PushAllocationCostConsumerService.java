@@ -1,41 +1,19 @@
 package com.erp.server.tms.rocketmq;
 
-
-import cn.hutool.core.collection.CollUtil;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.core.enums.ApiError;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
-import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.*;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.server.tms.mapper.ReportPeriodMonthMapper;
+import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.concurrent.CountDownLatch;
+import java.util.Objects;
 
 /**
  *
@@ -52,17 +30,28 @@ public class PushAllocationCostConsumerService implements RocketMQListener<TmsAs
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private TmsAsyncTaskRecordService asyncTaskRecordService;
 
     @Override
     public void onMessage(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        String businessType = dto.getBusinessType();
-        if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-            //下推费用分摊
-            firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
-        }else {
-            //下推小包费用分摊
-            logisticsBillCostService.pushSmallBagCostAllocation(dto);
+        if (Objects.isNull(dto)) {
+            log.warn("下推分摊MQ消息为空，跳过消费");
+            return;
         }
+        String taskId = dto.getTaskId();
+        String businessType = dto.getBusinessType();
+        log.info("开始消费下推分摊任务，taskId: {}, businessType: {}", taskId, businessType);
+        if (Objects.equals(businessType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())) {
+            firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
+        } else if (Objects.equals(businessType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())) {
+            logisticsBillCostService.pushSmallBagCostAllocation(dto);
+        } else {
+            log.warn("下推分摊MQ业务类型不支持，跳过消费，taskId: {}, businessType: {}", taskId, businessType);
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"下推分摊MQ业务类型不支持，跳过消费");
+            return;
+        }
+        log.info("下推分摊任务消费完成，taskId: {}, businessType: {}", taskId, businessType);
     }
 
 

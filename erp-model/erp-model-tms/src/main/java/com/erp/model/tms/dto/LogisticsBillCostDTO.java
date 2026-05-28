@@ -85,6 +85,13 @@ public class LogisticsBillCostDTO implements Serializable {
          * 动态数据源，需要重新get方法
          */
         private String dynamicDataSource;
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+            if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+                return DynamicDataSourceTypeEnum.DORIS.getCode();
+            }
+            return dynamicDataSource;
+        }
     }
 
 
@@ -1294,5 +1301,16 @@ public class LogisticsBillCostDTO implements Serializable {
         private String reconciliationStatus;
         private String payType;
         private Integer count;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class SmallBagPushAllocationContext {
+        private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+        private Map<String, String> feeTypeSettingMaps;
+        private Map<String, String> orgIdNameMaps;
+        private String weightPackageAllocation;
+        private String packageOrgId;
+        private String packageWarehouseId;
     }
 }

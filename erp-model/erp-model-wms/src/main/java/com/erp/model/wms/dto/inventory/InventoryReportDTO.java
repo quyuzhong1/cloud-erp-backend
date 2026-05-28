@@ -2,9 +2,11 @@ package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -518,7 +520,7 @@ public class InventoryReportDTO implements Serializable {
          * 是否过滤0实际库存，默认前端页面勾上不显示0库存
          */
         private Boolean hideZeroInventory;
-        
+
         /**
          * sku编号集合
          *
@@ -541,6 +543,13 @@ public class InventoryReportDTO implements Serializable {
          * 动态数据源
          */
         private String dynamicDataSource;
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+            if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+                return DynamicDataSourceTypeEnum.DORIS.getCode();
+            }
+            return dynamicDataSource;
+        }
     }
 
     /**

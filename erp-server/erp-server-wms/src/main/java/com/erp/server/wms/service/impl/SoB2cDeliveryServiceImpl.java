@@ -1216,6 +1216,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
 
+    /**
+     * 取消发货并回滚库存，执行完成后发货单状态应为 {@link SoB2cDeliveryStatusEnum#CANCEL_DELIVERY}。
+     */
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)

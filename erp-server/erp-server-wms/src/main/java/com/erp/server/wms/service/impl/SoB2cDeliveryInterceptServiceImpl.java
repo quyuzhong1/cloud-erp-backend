@@ -667,23 +667,27 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
 
+        boolean earlyStage = isEarlyStageDelivery(entity);
         //根据发货单状态处理
         if(SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(entity.getStatus())){
             //删除波次
             waveListDetailService.moveOut(entity.getId(), true);
         }
-        if(!SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())
-            && !(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus()) &&  AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause()))){
+        if (!earlyStage) {
             //新增相反冻结库存,推送旺店通
             service.addReverseInventory(entity,soB2cDeliveryInterceptEntity,interceptInventoryDTOList);
             //删除拣货单
             pickingListsService.deleteBySourceId(Collections.singletonList(entity.getId()));
 
         }
-        //释放虚拟库存
-        soB2cDeliveryService.addUsableVirtualInventory(Collections.singletonList(entity));
-        //更新发货单状态
-        soB2cDeliveryService.updateStatus(Collections.singletonList(entity.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+        if (earlyStage) {
+            //待处理/生成波次异常：rollbackInventory 会将状态置为 cancelDelivery
+            soB2cDeliveryService.rollbackInventory(Collections.singletonList(entity.getId()));
+            ensureDeliveryCancelled(entity.getId(), entity.getCode());
+        } else {
+            soB2cDeliveryService.addUsableVirtualInventory(Collections.singletonList(entity));
+            cancelDeliveryStatusAndVerify(entity);
+        }
         //更新拦截单状态
         soB2cDeliveryInterceptEntity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
         soB2cDeliveryInterceptEntity.setHandleUserId(userInfo.getUid());
@@ -837,6 +841,52 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
         operateLogService.addModuleOperateLog("操作拦截失败，备注："+remark, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), entity.getId(), "拦截失败");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"成功");
+    }
+
+    /**
+     * 是否为早期阶段发货单（待处理、生成波次异常）。
+     * 该阶段尚未进入拣货/出库，拦截成功需走完整取消发货流程。
+     *
+     * @param entity 发货单
+     * @return 是否早期阶段发货单
+     */
+    private boolean isEarlyStageDelivery(SoB2cDeliveryEntity entity) {
+        return SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())
+                || (SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())
+                && AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause()));
+    }
+
+    /**
+     * 更新发货单为取消发货并校验终态，避免调用方遗漏 {@link #ensureDeliveryCancelled}。
+     * updateStatus 返回 false 时可能是并发幂等，记录 warn 后仍执行校验。
+     *
+     * @param entity 发货单
+     */
+    private void cancelDeliveryStatusAndVerify(SoB2cDeliveryEntity entity) {
+        Boolean updated = soB2cDeliveryService.updateStatus(
+                Collections.singletonList(entity.getId()), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
+        if (!Boolean.TRUE.equals(updated)) {
+            log.warn("cancelDeliveryStatusAndVerify: updateStatus returned false, deliveryId={}, deliveryCode={}",
+                    entity.getId(), entity.getCode());
+        }
+        ensureDeliveryCancelled(entity.getId(), entity.getCode());
+    }
+
+    /**
+     * 校验发货单已取消发货，避免拦截单成功但发货单仍为待处理。
+     * 早期阶段依赖 {@link SoB2cDeliveryService#rollbackInventory} 将状态置为 cancelDelivery 后再校验。
+     *
+     * @param deliveryId   发货单 id
+     * @param deliveryCode 发货单号
+     */
+    private void ensureDeliveryCancelled(String deliveryId, String deliveryCode) {
+        SoB2cDeliveryEntity latestDelivery = soB2cDeliveryService.getById(deliveryId);
+        if (ObjectUtil.isEmpty(latestDelivery)
+                || !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(latestDelivery.getStatus())) {
+            String statusName = ObjectUtil.isEmpty(latestDelivery) ? "不存在"
+                    : SoB2cDeliveryStatusEnum.getName(latestDelivery.getStatus());
+            throw new ServiceException(CharSequenceUtil.format("发货单【{}】取消发货失败，当前状态【{}】", deliveryCode, statusName));
+        }
     }
 
     /**
