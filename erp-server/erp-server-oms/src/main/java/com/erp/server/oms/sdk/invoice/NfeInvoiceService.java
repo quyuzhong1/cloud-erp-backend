@@ -87,6 +87,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -103,17 +104,27 @@ public class NfeInvoiceService {
     private static final Logger log = LoggerFactory.getLogger(NfeInvoiceService.class);
     private static final String SHOPEE_BR_DEDUCT_ERROR_MSG = "虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例";
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
 
     private static class ShopeeBrazilOrderContext {
         private final boolean brazilOrder;
+        private final SoB2cReceiverEntity receiverEntity;
         private OrderDetail orderDetail;
 
-        private ShopeeBrazilOrderContext(boolean brazilOrder) {
+        private ShopeeBrazilOrderContext(boolean brazilOrder, SoB2cReceiverEntity receiverEntity) {
             this.brazilOrder = brazilOrder;
+            this.receiverEntity = receiverEntity;
         }
 
         private boolean isBrazilOrder() {
             return brazilOrder;
+        }
+
+        private SoB2cReceiverEntity getReceiverEntity() {
+            return receiverEntity;
         }
 
         private OrderDetail getOrderDetail() {
@@ -919,7 +930,10 @@ public class NfeInvoiceService {
                 .eq(DmpSoBillDetailEntity::getShopId,soB2cEntity.getShopId())
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
                 .list();
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        SoB2cReceiverEntity receiverEntity = shopeeBrazilOrderContext.getReceiverEntity();
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        }
         if (ObjUtil.isEmpty(receiverEntity)) {
             throw new ServiceException("B2C买家信息记录不存在");
         }
@@ -1199,12 +1213,12 @@ public class NfeInvoiceService {
         if (ObjUtil.isEmpty(soB2cEntity)
                 || CharSequenceUtil.isBlank(soB2cEntity.getId())
                 || !CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.SHOPEE.getCode(), soB2cEntity.getDictPlatform())) {
-            return new ShopeeBrazilOrderContext(false);
+            return new ShopeeBrazilOrderContext(false, null);
         }
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
         boolean isBrazilOrder = ObjUtil.isNotEmpty(receiverEntity)
                 && CharSequenceUtil.equalsIgnoreCase(receiverEntity.getCountry(), "BR");
-        return new ShopeeBrazilOrderContext(isBrazilOrder);
+        return new ShopeeBrazilOrderContext(isBrazilOrder, receiverEntity);
     }
 
     private void fillReceiverFallbackClientInfo(NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO, SoB2cReceiverEntity receiverEntity) {
@@ -1395,8 +1409,8 @@ public class NfeInvoiceService {
         OrderRequest orderRequest = OrderRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
                 .token(getShopeeAccessToken(shopAuthEntity))
-                .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
+                .shopId(parseShopeeLong(shopAuthEntity.getShopeeId(), "Shopee店铺授权shopee_id格式不合法，应为纯数字"))
+                .partnerId(parseShopeeLong(cfgAppClientEntity.getClientId(), "Shopee基础配置partner_id格式不合法，应为纯数字"))
                 .tmpPartnerKey(cfgAppClientEntity.getClientSecret())
                 .orderSns(soB2cEntity.getPlatformCode())
                 .build();
@@ -1509,7 +1523,7 @@ public class NfeInvoiceService {
                         RequestBody.create(MediaType.parse("application/xml"), fileBytes))
                 .build();
         Request request = new Request.Builder().url(uploadUrl).post(requestBody).build();
-        try (Response response = new OkHttpClient().newCall(request).execute()) {
+        try (Response response = OK_HTTP_CLIENT.newCall(request).execute()) {
             String responseBody = response.body() == null ? CharSequenceUtil.EMPTY : response.body().string();
             if (!response.isSuccessful()) {
                 throw new ServiceException(CharSequenceUtil.format("Shopee上传发票失败,httpStatus:{}, body:{}", response.code(), responseBody));
@@ -1582,8 +1596,20 @@ public class NfeInvoiceService {
         urlParamMap.put("timestamp", timestamp);
         urlParamMap.put("access_token", accessToken);
         urlParamMap.put("shop_id", shopAuthEntity.getShopeeId());
-        urlParamMap.put("sign", ShopeeApiUtils.getOrderSign(path, accessToken, Long.parseLong(cfgAppClientEntity.getClientId()), cfgAppClientEntity.getClientSecret(), Long.parseLong(shopAuthEntity.getShopeeId()), timestamp));
+        urlParamMap.put("sign", ShopeeApiUtils.getOrderSign(path, accessToken,
+                parseShopeeLong(cfgAppClientEntity.getClientId(), "Shopee基础配置partner_id格式不合法，应为纯数字"),
+                cfgAppClientEntity.getClientSecret(),
+                parseShopeeLong(shopAuthEntity.getShopeeId(), "Shopee店铺授权shopee_id格式不合法，应为纯数字"),
+                timestamp));
         return ShopeeApiUtils.buildUrl(cfgAppClientEntity.getUrl() + path, urlParamMap);
+    }
+
+    private long parseShopeeLong(String value, String errorMessage) {
+        try {
+            return Long.parseLong(CharSequenceUtil.trim(value));
+        } catch (Exception e) {
+            throw new ServiceException(errorMessage);
+        }
     }
 
     private BigDecimal convertToBrl(SoB2cEntity soB2cEntity, BigDecimal price, String currency, BigDecimal exchangeRate) {

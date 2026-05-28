@@ -846,16 +846,31 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date: 2023/11/1 15:27
      */
     private void handleDetailData(List<SoOutstockDetailEntity> detailList) {
+        handleDetailData(detailList, null, null);
+    }
+
+    private void handleDetailData(List<SoOutstockDetailEntity> detailList, SoInfoEntity prefetchedSoInfoEntity, List<SoDetailEntity> prefetchedSoDetailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         List<String> soDetailIdList = detailList.stream().map(SoOutstockDetailEntity::getSoDetailId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIdList);
+        boolean usePrefetchedDetailList = Objects.nonNull(prefetchedSoDetailList);
+        List<SoDetailEntity> allSoDetailList = usePrefetchedDetailList ? prefetchedSoDetailList : null;
+        List<SoDetailEntity> soDetailList = Objects.nonNull(allSoDetailList)
+                ? allSoDetailList.stream().filter(item -> soDetailIdList.contains(item.getId())).collect(Collectors.toList())
+                : soInfoFeign.listSoDetailByIds(soDetailIdList);
+        soDetailList = Objects.isNull(soDetailList) ? Collections.emptyList() : soDetailList;
 
         //销售订单主表信息
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIdList);
-        List<SoDetailEntity> allSoDetailList = CollectionUtils.isNotEmpty(soIdList) ? soInfoFeign.listSoDetailByMainIds(soIdList) : Collections.emptyList();
+        List<SoInfoEntity> soInfoList = Objects.nonNull(prefetchedSoInfoEntity)
+                ? Collections.singletonList(prefetchedSoInfoEntity)
+                : usePrefetchedDetailList ? Collections.emptyList() : soInfoFeign.listSoInfoByIds(soIdList);
+        soInfoList = Objects.isNull(soInfoList) ? Collections.emptyList() : soInfoList;
+        allSoDetailList = Objects.nonNull(allSoDetailList)
+                ? allSoDetailList
+                : CollectionUtils.isNotEmpty(soIdList) ? soInfoFeign.listSoDetailByMainIds(soIdList) : Collections.emptyList();
+        allSoDetailList = Objects.isNull(allSoDetailList) ? Collections.emptyList() : allSoDetailList;
         Map<String, BigDecimal> orderWeightMap = allSoDetailList.stream()
                 .collect(Collectors.groupingBy(SoDetailEntity::getMainId,
                         Collectors.mapping(this::calculateB2bDetailWeight,
@@ -1263,6 +1278,19 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             handleB2cDetailDataInternal(detailList, entity, soB2cEntity, soB2cDetailList);
         } else {
             handleDetailData(detailList);
+        }
+    }
+
+    @Override
+    public void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity,
+                                    SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailList) {
+        if (CollectionUtils.isEmpty(detailList) || Objects.isNull(entity)) {
+            return;
+        }
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+            handleB2cDetailData(detailList, entity);
+        } else {
+            handleDetailData(detailList, soInfoEntity, soDetailList);
         }
     }
 

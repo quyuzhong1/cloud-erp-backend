@@ -1744,7 +1744,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     SoOutstockDTO.ExportField::getFieldName, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
             dynamicExcelDTO.setHeaders(fieldMap);
             for (SoOutstockDTO.PagingViewDTO pagingViewDTO : paging.getList()) {
-                LinkedHashMap<String, Object> excelMap = (LinkedHashMap<String, Object>) BeanUtil.beanToMap(pagingViewDTO);
+                LinkedHashMap<String, Object> excelMap = BeanUtil.beanToMap(pagingViewDTO, new LinkedHashMap<>(), false, false);
                 LinkedHashMap<String, Object> exportMap = new LinkedHashMap<>();
                 for (String fieldCode : fieldCodeList) {
                     exportMap.put(fieldCode, excelMap.get(fieldCode));
@@ -4321,6 +4321,25 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soB2cEntityMap = Collections.emptyMap();
             soB2cDetailMap = Collections.emptyMap();
         }
+        List<String> b2bSoIds = soOutstockEntityList.stream()
+                .filter(e -> !OrderTypeEnum.B2C.getCode().equals(e.getOrderType()))
+                .map(SoOutstockEntity::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SoInfoEntity> soInfoMap;
+        Map<String, List<SoDetailEntity>> soDetailMap;
+        if (CollectionUtils.isNotEmpty(b2bSoIds)) {
+            List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(b2bSoIds);
+            soInfoMap = CollectionUtils.isEmpty(soInfoList) ? Collections.emptyMap()
+                    : soInfoList.stream().collect(Collectors.toMap(SoInfoEntity::getId, Function.identity(), (a, b) -> a));
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(b2bSoIds);
+            soDetailMap = CollectionUtils.isEmpty(soDetailList) ? Collections.emptyMap()
+                    : soDetailList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
+        } else {
+            soInfoMap = Collections.emptyMap();
+            soDetailMap = Collections.emptyMap();
+        }
         for (SoOutstockEntity entity : soOutstockEntityList) {
             List<SoOutstockDetailEntity> currentDetailList = detailList.stream()
                     .filter(detail -> CharSequenceUtil.equals(detail.getMainId(), entity.getId()))
@@ -4330,7 +4349,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailMap.getOrDefault(entity.getSoId(), Collections.emptyList());
                 soOutstockDetailService.refreshAmountFields(currentDetailList, entity, soB2cEntity, soB2cDetailList);
             } else {
-                soOutstockDetailService.refreshAmountFields(currentDetailList, entity);
+                SoInfoEntity soInfoEntity = soInfoMap.get(entity.getSoId());
+                List<SoDetailEntity> soDetailList = soDetailMap.getOrDefault(entity.getSoId(), Collections.emptyList());
+                soOutstockDetailService.refreshAmountFields(currentDetailList, entity, soInfoEntity, soDetailList);
             }
         }
         if (CollectionUtils.isNotEmpty(detailList)) {
@@ -5038,7 +5059,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
                         "只允许选择待提交、审核不通过销售出库单更新出库日期"));
-            } else if (Objects.nonNull(dto.getVersion()) && !dto.getVersion().equals(entity.getVersion())) {
+            } else if (Objects.isNull(dto.getVersion())) {
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
+                        "版本号不能为空，请刷新后重试"));
+            } else if (!dto.getVersion().equals(entity.getVersion())) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
                         "数据已被他人修改，请刷新后重试"));
             } else {

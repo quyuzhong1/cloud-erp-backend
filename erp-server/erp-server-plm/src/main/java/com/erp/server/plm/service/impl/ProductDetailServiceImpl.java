@@ -408,8 +408,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = bomChangeService.getBySourceId(sourceIds);
         List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
-        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
         //是否存在资产属性
         List<String> moldCodeList = list.stream().map(ProductDetailShowDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -898,15 +898,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
 
         List<String> supplierIds = Lists.newArrayList();
-        List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(mainSupplierIds)) {
             supplierIds.addAll(mainSupplierIds);
         }
-        List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(secondSupplierIds)) {
             supplierIds.addAll(secondSupplierIds);
         }
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
 
         purchaseShowDTOList.forEach(req -> {
             ProductDetailEntity entity = list.stream().filter(v -> v.getId().equals(req.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -5048,11 +5048,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Integer state = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         dto.setStatus(state);
         List<SkuVO> skuVOS = baseMapper.pdaSearchSku(dto);
-        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).distinct().collect(Collectors.toList());
-        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).distinct().collect(Collectors.toList());
+        List<String> mainSupplierIds = skuVOS.stream().map(SkuVO::getMainSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = skuVOS.stream().map(SkuVO::getSecondSupplier).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         mainSupplierIds.addAll(secondSupplierIds);
         List<String> supplierIds = mainSupplierIds.stream().distinct().collect(Collectors.toList());
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
         skuVOS.forEach(req -> {
             // 一级供应商名称
             if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
@@ -5101,7 +5101,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             view.setSpuName("");
         }
 
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()));
+        List<String> supplierIds = Arrays.asList(view.getMainSupplier(), view.getSecondSupplier()).stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap() : supplierFeign.getSupplierSimpleInfo(supplierIds);
         // 一级供应商名称
         if (StrUtils.isNotEmpty(view.getMainSupplier()) && supplierMap.containsKey(view.getMainSupplier())) {
             view.setMainSupplierName(supplierMap.get(view.getMainSupplier()).getName());

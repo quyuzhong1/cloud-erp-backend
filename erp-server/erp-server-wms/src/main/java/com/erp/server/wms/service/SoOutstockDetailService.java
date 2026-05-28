@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -199,6 +200,12 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      */
     void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity,
                              SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailList);
+
+    /**
+     * 批量重算金额字段，复用调用方预取的 B2B 主表/明细，避免每个出库单各自走 Feign 远程查询
+     */
+    void refreshAmountFields(List<SoOutstockDetailEntity> detailList, SoOutstockEntity entity,
+                             SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailList);
 
     /**
      * 根据skuId查询Doris最新出库时间

@@ -98,6 +98,11 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
         if("pi.application_category_id".equals(field)){
 
             List<String> valueList = com.common.business.utils.CollectionUtils.convertStrClzToList(value);
+            boolean hasUnsafeValue = valueList.stream()
+                    .anyMatch(v -> v == null || !v.matches("[A-Za-z0-9_\\-]+"));
+            if (hasUnsafeValue) {
+                throw new com.common.core.exception.ServiceException("应用类目查询条件包含非法字符");
+            }
             StringBuilder sb = new StringBuilder();
             //是否是第一个，否则需要加连接符
             boolean isFirst = true;
@@ -133,6 +138,10 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
                     .collect(Collectors.toList());
             if (safeValueList.size() != valueList.size()) {
                 throw new com.common.core.exception.ServiceException("证书查询条件包含非法字符");
+            }
+            if (CollectionUtils.isEmpty(safeValueList)) {
+                return (queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST))
+                        ? this.getQueryAllSql() : this.getQueryEmptySql();
             }
             String arrayValue = safeValueList.stream()
                     .map(v -> "'" + v + "'")

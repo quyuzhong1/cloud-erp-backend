@@ -1204,7 +1204,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         SoDetailEntity soDetailEntity = findSoDetail(skuId, sourceDetailId, soReturnDetailId, returnDetailList, soDetailList);
         if (Objects.isNull(soDetailEntity)) {
             log.warn("B2B退货入库找不到源销售订单明细，skuId={}, sourceDetailId={}, soReturnDetailId={}", skuId, sourceDetailId, soReturnDetailId);
-            return;
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         setPriceAndAmount(detailEntity, soDetailEntity.getPrice(), soDetailEntity.getTaxRate(), soDetailEntity.getTaxPrice(),
                 Objects.nonNull(exchangeRate) ? exchangeRate : soDetailEntity.getExchangeRate(), realQty);
@@ -1218,7 +1218,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 .orElse(null);
         if (Objects.isNull(soB2cDetailEntity)) {
             log.warn("B2C退货入库找不到源销售订单明细，skuId={}", skuId);
-            return;
+            throw new ServiceException(ApiError.SO_DETAIL_NOT_FOUND);
         }
         setPriceAndAmount(detailEntity, soB2cDetailEntity.getPrice(), BigDecimal.ZERO, soB2cDetailEntity.getPrice(),
                 Objects.nonNull(exchangeRate) ? exchangeRate : soB2cDetailEntity.getExchangeRate(), realQty);

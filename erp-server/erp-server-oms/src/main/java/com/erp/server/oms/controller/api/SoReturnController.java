@@ -381,7 +381,7 @@ public class SoReturnController extends BaseController {
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoReturnQueryHandler.class)
     public ApiResult<PagingVO<SoReturnDTO.SoReturnListVO>> listSoReturnByApproveStatus(@RequestBody @Validated PagingDTO<SoReturnDTO.ApproveStatusPagingParam> dto) {
         return success(soReturnService.listSoReturnByApproveStatus(dto));
     }

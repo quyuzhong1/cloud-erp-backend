@@ -2285,6 +2285,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         List<SoB2cDetailEntity> b2cDetailList = CollectionUtils.isEmpty(b2cSoIds) ? Collections.emptyList() : soB2cFeign.listDetailByMainIds(b2cSoIds);
+        b2cDetailList = Objects.isNull(b2cDetailList) ? Collections.emptyList() : b2cDetailList;
+        Map<String, SoB2cDetailEntity> b2cDetailMap = CollectionUtils.isEmpty(b2cDetailList) ? Collections.emptyMap()
+                : b2cDetailList.stream().collect(Collectors.toMap(
+                item -> CharSequenceUtil.format("{}-{}", item.getMainId(), item.getSkuId()),
+                Function.identity(), (a, b) -> a));
 
         List<String> soReturnIds = mainList.stream()
                 .map(SoReturnInstockEntity::getSoReturnId)
@@ -2292,6 +2297,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         List<SoReturnDetailEntity> returnDetailList = CollectionUtils.isEmpty(soReturnIds) ? Collections.emptyList() : soReturnFeign.listDetailByMainIds(soReturnIds);
+        returnDetailList = Objects.isNull(returnDetailList) ? Collections.emptyList() : returnDetailList;
         List<String> soIds = mainList.stream()
                 .filter(item -> !OrderTypeEnum.B2C.getCode().equals(item.getType()))
                 .map(SoReturnInstockEntity::getSoId)
@@ -2299,6 +2305,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .distinct()
                 .collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = CollectionUtils.isEmpty(soIds) ? Collections.emptyList() : soInfoFeign.listSoDetailByMainIds(soIds);
+        soDetailList = Objects.isNull(soDetailList) ? Collections.emptyList() : soDetailList;
 
         Map<String, SoReturnInstockEntity> mainMap = mainList.stream()
                 .collect(Collectors.toMap(SoReturnInstockEntity::getId, Function.identity(), (a, b) -> a));
@@ -2309,10 +2316,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 continue;
             }
             if (OrderTypeEnum.B2C.getCode().equals(main.getType())) {
-                SoB2cDetailEntity b2cDetail = b2cDetailList.stream()
-                        .filter(item -> CharSequenceUtil.equals(item.getMainId(), main.getSoId()) && CharSequenceUtil.equals(item.getSkuId(), detail.getSkuId()))
-                        .findFirst()
-                        .orElse(null);
+                SoB2cDetailEntity b2cDetail = b2cDetailMap.get(CharSequenceUtil.format("{}-{}", main.getSoId(), detail.getSkuId()));
                 BigDecimal price = Objects.nonNull(b2cDetail) ? b2cDetail.getPrice() : detail.getPrice();
                 BigDecimal exchangeRate = Objects.nonNull(b2cDetail) ? b2cDetail.getExchangeRate() : detail.getExchangeRate();
                 fillDetailPrice(detail, price, BigDecimal.ZERO, price, exchangeRate);
@@ -2368,7 +2372,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private void fillDetailPrice(SoReturnInstockDetailEntity detail, BigDecimal price, BigDecimal taxRate, BigDecimal taxPrice, BigDecimal exchangeRate) {
         BigDecimal safePrice = Objects.nonNull(price) ? price : BigDecimal.ZERO;
         BigDecimal safeTaxPrice = Objects.nonNull(taxPrice) ? taxPrice : safePrice;
-        BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
+        BigDecimal safeExchangeRate = exchangeRate;
+        if (Objects.isNull(safeExchangeRate)) {
+            log.warn("退货入库价格补全汇率为空，fallback 到 1，detailId={}, skuId={}", detail.getId(), detail.getSkuId());
+            safeExchangeRate = BigDecimal.ONE;
+        }
         BigDecimal realQty = BigDecimal.valueOf(defaultRealQty(detail));
         detail.setPrice(safePrice);
         detail.setTaxRate(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO);
