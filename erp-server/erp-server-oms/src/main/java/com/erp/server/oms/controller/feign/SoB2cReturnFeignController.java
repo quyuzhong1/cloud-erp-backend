@@ -1,9 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
-import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
-import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.server.oms.service.SoB2cReturnDetailService;
 import com.erp.server.oms.service.SoB2cReturnService;
@@ -65,11 +63,21 @@ public class SoB2cReturnFeignController {
         if (CollectionUtils.isEmpty(detailList)) {
             return Collections.emptyList();
         }
-        return detailList.stream().map(entity -> {
-            SoB2cReturnDetailDTO.ViewDTO viewDTO = new SoB2cReturnDetailDTO.ViewDTO();
-            BeanMapper.copy(entity, viewDTO);
-            return viewDTO;
-        }).collect(Collectors.toList());
+        return detailList.stream().map(this::toViewDTO).collect(Collectors.toList());
+    }
+
+    private SoB2cReturnDetailDTO.ViewDTO toViewDTO(SoB2cReturnDetailEntity entity) {
+        SoB2cReturnDetailDTO.ViewDTO viewDTO = new SoB2cReturnDetailDTO.ViewDTO();
+        viewDTO.setId(entity.getId());
+        viewDTO.setMainId(entity.getMainId());
+        viewDTO.setSkuId(entity.getSkuId());
+        viewDTO.setSkuNo(entity.getSkuNo());
+        viewDTO.setPlatformSkuNo(entity.getPlatformSkuNo());
+        viewDTO.setSaleQty(entity.getSaleQty());
+        viewDTO.setReturnQty(entity.getReturnQty());
+        viewDTO.setRemark(entity.getRemark());
+        viewDTO.setSoDetailId(entity.getSoDetailId());
+        return viewDTO;
     }
 
 
