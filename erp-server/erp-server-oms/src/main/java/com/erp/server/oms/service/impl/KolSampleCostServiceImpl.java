@@ -29,6 +29,7 @@ import com.erp.model.oms.dto.KolSampleCostDTO;
 import com.erp.model.oms.dto.excel.KolSampleCostImportExcelDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.KolSampleCostEntity;
+import com.erp.model.oms.enums.KolSampleCostImportFeeTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictPartitionEntity;
@@ -298,13 +299,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             }
             //设置小包费用
             applySmallBagCost(kolSampleCostEntity, smallBagCostMap);
-            BigDecimal totalCost = kolSampleCostEntity.getProductCost()
-                    .add(kolSampleCostEntity.getFirstMileShippingCost())
-                    .add(kolSampleCostEntity.getClearanceCustomsTax())
-                    .add(kolSampleCostEntity.getShippingCost())
-                    .add(kolSampleCostEntity.getCustomsTax())
-                    .add(kolSampleCostEntity.getOtherCost());
-            kolSampleCostEntity.setTotalCost(totalCost);
+            kolSampleCostEntity.setTotalCost(calculateTotalCost(kolSampleCostEntity));
         }
         super.saveOrUpdateBatch(thisMonthList);
 
@@ -615,9 +610,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         List<String> soCodeList = successList.stream().map(KolSampleCostImportExcelDTO::getSoCode).distinct().collect(Collectors.toList());
         List<KolSampleCostEntity> kolSampleCostList = listBySoCodeList(soCodeList);
         for (KolSampleCostImportExcelDTO importExcelDTO : successList) {
-                if (!CharSequenceUtil.equals(importExcelDTO.getFeeType(), "物流费")
-                        && !CharSequenceUtil.equals(importExcelDTO.getFeeType(), "订单费用")) {
-                    importExcelDTO.setErrorMsg("费用项仅支持【物流费】或【订单费用】");
+                KolSampleCostImportFeeTypeEnum feeTypeEnum = KolSampleCostImportFeeTypeEnum.getByName(importExcelDTO.getFeeType());
+                if (feeTypeEnum == null) {
+                    importExcelDTO.setErrorMsg("费用项仅支持" + KolSampleCostImportFeeTypeEnum.getSupportedNameTips());
                     errorList.add(importExcelDTO);
                     continue;
                 }
@@ -638,8 +633,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     continue;
                 }
             //计算总数量
-            Integer totalQty = costList.stream().map(KolSampleCostEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (totalQty == null || totalQty <= 0) {
+            Integer totalQty = costList.stream()
+                    .map(KolSampleCostEntity::getQty)
+                    .map(qty -> ObjUtil.defaultIfNull(qty, MathUtil.ZERO))
+                    .filter(qty -> qty > 0)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            if (totalQty <= 0) {
                 importExcelDTO.setErrorMsg("销售订单号【" + importExcelDTO.getSoCode() + "】对应实发数量总和必须大于0");
                 errorList.add(importExcelDTO);
                 continue;
@@ -649,41 +648,48 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             BigDecimal importLocalAmount = importAmount.multiply(exchangeRate).setScale(IMPORT_ALLOCATION_SCALE, RoundingMode.HALF_UP);
             BigDecimal totalQtyDecimal = MathUtil.valueOf(totalQty);
             BigDecimal allocatedAmount = BigDecimal.ZERO;
+            int lastPositiveQtyIndex = findLastPositiveQtyIndex(costList);
             for (int index = 0; index < costList.size(); index++) {
                 KolSampleCostEntity entity = costList.get(index);
                 BigDecimal cost;
-                if (index == costList.size() - 1) {
-                    // 最后一行吸收尾差，保证同销售单本次导入增量合计严格等于导入金额*汇率
+                Integer qty = ObjUtil.defaultIfNull(entity.getQty(), MathUtil.ZERO);
+                if (qty <= 0) {
+                    cost = BigDecimal.ZERO;
+                } else if (index == lastPositiveQtyIndex) {
+                    // 最后一条有实发数量的SKU吸收尾差，避免尾差落到0数量行。
                     cost = importLocalAmount.subtract(allocatedAmount);
                 } else {
-                    cost = MathUtil.valueOf(entity.getQty())
+                    cost = MathUtil.valueOf(qty)
                             .multiply(importLocalAmount)
                             .divide(totalQtyDecimal, IMPORT_ALLOCATION_SCALE, RoundingMode.HALF_UP);
                     allocatedAmount = allocatedAmount.add(cost);
                 }
                 BigDecimal historyShippingCost = ObjUtil.defaultIfNull(entity.getShippingCost(), BigDecimal.ZERO);
+                BigDecimal historyCustomsTax = ObjUtil.defaultIfNull(entity.getCustomsTax(), BigDecimal.ZERO);
                 BigDecimal historyOtherCost = ObjUtil.defaultIfNull(entity.getOtherCost(), BigDecimal.ZERO);
-                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"物流费")) {
-                    //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史SKU“尾程-运费”
-                    entity.setShippingCost(historyShippingCost.add(cost));
+                switch (feeTypeEnum) {
+                    case LOGISTICS_FEE:
+                        //“尾程-运费”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史SKU“尾程-运费”
+                        entity.setShippingCost(historyShippingCost.add(cost));
+                        break;
+                    case CUSTOMS_TAX:
+                        //“尾程-关税”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-关税”
+                        entity.setCustomsTax(historyCustomsTax.add(cost));
+                        break;
+                    case ORDER_FEE:
+                        //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-其他费用”
+                        entity.setOtherCost(historyOtherCost.add(cost));
+                        break;
+                    default:
+                        throw new ServiceException("不支持的费用项：" + importExcelDTO.getFeeType());
                 }
-                if (CharSequenceUtil.equals(importExcelDTO.getFeeType(),"订单费用")) {
-                    //“尾程-其他费用”=当前行SKU实发数量/同一销售单号所有SKU实发数量*原币金额*汇率+历史“尾程-其他费用”
-                    entity.setOtherCost(historyOtherCost.add(cost));
-                }
-                BigDecimal totalCost = entity.getProductCost()
-                        .add(entity.getFirstMileShippingCost())
-                        .add(entity.getClearanceCustomsTax())
-                        .add(entity.getShippingCost())
-                        .add(entity.getCustomsTax())
-                        .add(entity.getOtherCost());
-                entity.setTotalCost(totalCost);
+                entity.setTotalCost(calculateTotalCost(entity));
             }
                 super.updateBatchById(costList);
 
                 //操作日志
             List<Pair<String, String>> pairList = costList.stream().map(obj -> new Pair<>(obj.getId(), obj.getSoCode())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("费用项【{}】，原币金额【{}】，汇率【{}】",importExcelDTO.getFeeType(),importExcelDTO.getAmountStr(),importExcelDTO.getExchangeRateStr()), ModuleTypeEnum.KOL_KOL_SAMPLE_COST.getCode(),pairList ,"尾程费用导入");
+            operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("费用项【{}】，寄样成本字段【{}】，原币金额【{}】，汇率【{}】",importExcelDTO.getFeeType(),feeTypeEnum.getCostFieldName(),importExcelDTO.getAmountStr(),importExcelDTO.getExchangeRateStr()), ModuleTypeEnum.KOL_KOL_SAMPLE_COST.getCode(),pairList ,"尾程费用导入");
         }
     }
 
@@ -699,6 +705,25 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             return CollUtil.newArrayList();
         }
         return lambdaQuery().in(KolSampleCostEntity::getSoCode, soCodeList).list();
+    }
+
+    private int findLastPositiveQtyIndex(List<KolSampleCostEntity> costList) {
+        for (int index = costList.size() - 1; index >= 0; index--) {
+            Integer qty = ObjUtil.defaultIfNull(costList.get(index).getQty(), MathUtil.ZERO);
+            if (qty > 0) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private BigDecimal calculateTotalCost(KolSampleCostEntity entity) {
+        return ObjUtil.defaultIfNull(entity.getProductCost(), BigDecimal.ZERO)
+                .add(ObjUtil.defaultIfNull(entity.getFirstMileShippingCost(), BigDecimal.ZERO))
+                .add(ObjUtil.defaultIfNull(entity.getClearanceCustomsTax(), BigDecimal.ZERO))
+                .add(ObjUtil.defaultIfNull(entity.getShippingCost(), BigDecimal.ZERO))
+                .add(ObjUtil.defaultIfNull(entity.getCustomsTax(), BigDecimal.ZERO))
+                .add(ObjUtil.defaultIfNull(entity.getOtherCost(), BigDecimal.ZERO));
     }
 
     /**

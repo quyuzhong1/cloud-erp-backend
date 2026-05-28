@@ -1999,6 +1999,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+        fillThirdWarehouseDetailPrice(soReturnInstockEntity, detailEntityList);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         soReturnInstockEntity.setCode(code);
         this.save(soReturnInstockEntity);
@@ -2019,6 +2020,80 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         //审核
         this.approve(soReturnInstockEntity, ApproveTypeEnum.PASS.getStatus(), "三方仓新增自动审核通过", false);
+    }
+
+    /**
+     * 三方仓拉取退货入库时，平台侧通常不带单价/汇率，需关联销售订单明细补全。
+     */
+    private void fillThirdWarehouseDetailPrice(SoReturnInstockEntity main, List<SoReturnInstockDetailEntity> detailEntityList) {
+        if (CollectionUtils.isEmpty(detailEntityList) || !OrderTypeEnum.B2C.getCode().equals(main.getType())
+                || CharSequenceUtil.isBlank(main.getSoId())) {
+            return;
+        }
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(main.getSoId()));
+        if (CollectionUtils.isEmpty(soB2cDetailList)) {
+            return;
+        }
+        Map<String, SoB2cReturnDetailEntity> returnDetailMap = loadSoB2cReturnDetailMap(main.getSoReturnId());
+        for (SoReturnInstockDetailEntity detail : detailEntityList) {
+            if (Objects.nonNull(detail.getPrice()) && detail.getPrice().compareTo(BigDecimal.ZERO) > 0) {
+                continue;
+            }
+            SoB2cDetailEntity b2cDetail = resolveSoB2cDetail(detail, soB2cDetailList, returnDetailMap);
+            if (Objects.isNull(b2cDetail)) {
+                continue;
+            }
+            fillDetailPrice(detail, b2cDetail.getPrice(), BigDecimal.ZERO, b2cDetail.getPrice(), b2cDetail.getExchangeRate());
+        }
+        if (CharSequenceUtil.isNotBlank(main.getCurrency()) && CharSequenceUtil.isBlank(main.getCurrencySymbol())) {
+            main.setCurrencySymbol(CurrencyEnum.getSymbolByCode(main.getCurrency()));
+        }
+    }
+
+    private Map<String, SoB2cReturnDetailEntity> loadSoB2cReturnDetailMap(String soReturnId) {
+        if (CharSequenceUtil.isBlank(soReturnId)) {
+            return Collections.emptyMap();
+        }
+        List<SoB2cReturnDetailEntity> returnDetailList = FeignQuery.create(SoB2cReturnDetailEntity.class)
+                .eq(SoB2cReturnDetailEntity::getMainId, soReturnId)
+                .list();
+        if (CollectionUtils.isEmpty(returnDetailList)) {
+            return Collections.emptyMap();
+        }
+        return returnDetailList.stream()
+                .collect(Collectors.toMap(SoB2cReturnDetailEntity::getId, Function.identity(), (left, right) -> left));
+    }
+
+    private SoB2cDetailEntity resolveSoB2cDetail(SoReturnInstockDetailEntity detail, List<SoB2cDetailEntity> soB2cDetailList,
+                                                 Map<String, SoB2cReturnDetailEntity> returnDetailMap) {
+        if (CharSequenceUtil.isNotBlank(detail.getSoReturnDetailId())) {
+            SoB2cReturnDetailEntity returnDetail = returnDetailMap.get(detail.getSoReturnDetailId());
+            if (Objects.nonNull(returnDetail) && CharSequenceUtil.isNotBlank(returnDetail.getSoDetailId())) {
+                SoB2cDetailEntity matched = soB2cDetailList.stream()
+                        .filter(item -> CharSequenceUtil.equals(item.getId(), returnDetail.getSoDetailId()))
+                        .findFirst()
+                        .orElse(null);
+                if (Objects.nonNull(matched)) {
+                    return matched;
+                }
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(detail.getSkuId())) {
+            SoB2cDetailEntity matched = soB2cDetailList.stream()
+                    .filter(item -> CharSequenceUtil.equals(item.getSkuId(), detail.getSkuId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(matched)) {
+                return matched;
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(detail.getPlatformSkuNo())) {
+            return soB2cDetailList.stream()
+                    .filter(item -> CharSequenceUtil.equals(item.getPlatformSkuNo(), detail.getPlatformSkuNo()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
     }
 
     @Override

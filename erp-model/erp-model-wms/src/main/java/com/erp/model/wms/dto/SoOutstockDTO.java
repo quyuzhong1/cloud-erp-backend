@@ -2187,7 +2187,7 @@ public class SoOutstockDTO implements Serializable {
 
 
     /**
-     * kol寄样费用查询出库DTO
+     * 更新出库日期
      */
     @Data
     @NoArgsConstructor
