@@ -220,6 +220,9 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
 
     private void fillB2cReturnNoticePrice(SoReturnNoticeDetailDTO.Add detailDto, SoReturnNoticeDetailEntity detailEntity,
                                           SoB2cReturnDetailEntity soB2cReturnDetailEntity, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+        if (Objects.isNull(soB2cReturnDetailEntity)) {
+            return;
+        }
         if (Objects.nonNull(detailDto.getReturnAmount())) {
             detailEntity.setReturnAmount(detailDto.getReturnAmount());
             detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
@@ -258,6 +261,11 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         detailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithFour(returnAmount, exchangeRate));
     }
 
+    /**
+     * 按退货数量比例拆分单行金额（amount / qty * returnQty）。
+     * 使用 {@link RoundingMode#DOWN} 截断，与 {@link com.erp.server.wms.service.impl.SoReturnNoticeServiceImpl#calReturnAmount} 保持一致；
+     * 同一退货明细多次分批下推时，各行累计金额可能略小于原行金额（尾差），属项目既有约定，不做最后一行吸收。
+     */
     private BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty) {
         if (Objects.isNull(amount) || Objects.isNull(qty) || qty <= 0 || Objects.isNull(returnQty)) {
             return BigDecimal.ZERO;

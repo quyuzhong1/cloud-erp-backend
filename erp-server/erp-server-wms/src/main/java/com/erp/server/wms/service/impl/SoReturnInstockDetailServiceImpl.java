@@ -1037,6 +1037,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         return dto.getExchangeRate();
     }
 
+    /**
+     * 前端手工改价时回填明细单价/金额；B2C 场景前端通常只传不含税单价，含税单价默认同价（税率为 0）。
+     */
     private void applyUpdateDetailPriceFromRequest(SoReturnInstockDetailEntity detailEntity,
                                                    SoReturnInstockDetailDTO.Common detailDto,
                                                    BigDecimal mainExchangeRate,
