@@ -99,6 +99,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -131,6 +132,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_I
 @Slf4j
 @Service
 public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstockMapper, SoReturnInstockEntity> implements SoReturnInstockService {
+    @Lazy
+    @Resource
+    private SoReturnInstockService selfService;
+
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
@@ -2234,10 +2239,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .collect(Collectors.toList());
         List<SoB2cDetailEntity> b2cDetailList = CollectionUtils.isEmpty(b2cSoIds) ? Collections.emptyList() : soB2cFeign.listDetailByMainIds(b2cSoIds);
         b2cDetailList = Objects.isNull(b2cDetailList) ? Collections.emptyList() : b2cDetailList;
-        Map<String, SoB2cDetailEntity> b2cDetailMap = CollectionUtils.isEmpty(b2cDetailList) ? Collections.emptyMap()
-                : b2cDetailList.stream().collect(Collectors.toMap(
-                item -> CharSequenceUtil.format("{}-{}", item.getMainId(), item.getSkuId()),
-                Function.identity(), (a, b) -> a));
+        Map<String, Map<String, List<SoB2cDetailEntity>>> b2cDetailMap = CollectionUtils.isEmpty(b2cDetailList) ? Collections.emptyMap()
+                : b2cDetailList.stream()
+                .filter(item -> CharSequenceUtil.isNotBlank(item.getMainId()) && CharSequenceUtil.isNotBlank(item.getSkuId()))
+                .collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId,
+                Collectors.groupingBy(SoB2cDetailEntity::getSkuId)));
 
         List<String> soReturnIds = mainList.stream()
                 .map(SoReturnInstockEntity::getSoReturnId)
@@ -2264,7 +2270,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 continue;
             }
             if (OrderTypeEnum.B2C.getCode().equals(main.getType())) {
-                SoB2cDetailEntity b2cDetail = b2cDetailMap.get(CharSequenceUtil.format("{}-{}", main.getSoId(), detail.getSkuId()));
+                SoB2cDetailEntity b2cDetail = findB2cDetail(b2cDetailMap, main.getSoId(), detail.getSkuId());
                 BigDecimal price = Objects.nonNull(b2cDetail) ? b2cDetail.getPrice() : detail.getPrice();
                 BigDecimal exchangeRate = Objects.nonNull(b2cDetail) ? b2cDetail.getExchangeRate() : detail.getExchangeRate();
                 fillDetailPrice(detail, price, BigDecimal.ZERO, price, exchangeRate);
@@ -2281,8 +2287,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         Objects.nonNull(detail.getExchangeRate()) ? detail.getExchangeRate() : soDetail.getExchangeRate());
             }
         }
-        ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
-                .persistRefreshedPriceFields(detailList);
+        selfService.persistRefreshedPriceFields(detailList);
     }
 
     /**
@@ -2290,11 +2295,28 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * 仅在已完成 Feign 远程查询、价格补全后调用。
      */
     @Transactional(rollbackFor = Exception.class)
-    void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList) {
+    @Override
+    public void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
         soReturnInstockDetailService.updateBatchById(detailList);
+    }
+
+    private SoB2cDetailEntity findB2cDetail(Map<String, Map<String, List<SoB2cDetailEntity>>> b2cDetailMap, String soId, String skuId) {
+        Map<String, List<SoB2cDetailEntity>> detailMap = b2cDetailMap.get(soId);
+        if (CollectionUtils.isEmpty(detailMap)) {
+            return null;
+        }
+        List<SoB2cDetailEntity> detailList = detailMap.get(skuId);
+        if (CollectionUtils.isEmpty(detailList)) {
+            return null;
+        }
+        if (detailList.size() > 1) {
+            log.warn("B2C退货入库价格补全匹配到同一销售订单下重复SKU明细，soId={}, skuId={}, count={}，默认取第一条",
+                    soId, skuId, detailList.size());
+        }
+        return detailList.get(0);
     }
 
     private SoDetailEntity findSourceSoDetail(SoReturnInstockDetailEntity detail, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList) {

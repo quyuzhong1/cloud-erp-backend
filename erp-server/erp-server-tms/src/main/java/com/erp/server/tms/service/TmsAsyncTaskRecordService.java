@@ -6,8 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -52,9 +50,14 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     void updateTaskDetailFailure(String taskDetailId, Exception e);
 
+    /**
+     * 实现类需保证事务边界。
+     */
     void startTask();
 
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    /**
+     * 实现类需使用独立事务领取并派发任务。
+     */
     void claimAndDispatch(TmsAsyncTaskRecordEntity entity);
 
     void genAutoTask();

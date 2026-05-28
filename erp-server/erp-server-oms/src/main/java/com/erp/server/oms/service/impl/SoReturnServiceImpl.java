@@ -1316,7 +1316,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         String permissionSql = authDataFeign.getWarehousePermissionSql("sr.warehouse_id");
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<SoReturnEntity> pageData = baseMapper.listSoReturnByApproveStatus(query, params, ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
-        List<SoReturnDTO.SoReturnListVO> records = BeanUtil.copyToList(pageData.getRecords(), SoReturnDTO.SoReturnListVO.class);
+        List<SoReturnDTO.SoReturnListVO> records = pageData.getRecords().stream()
+                .map(SoReturnConverter.INSTANCE::toListVO)
+                .collect(Collectors.toList());
         return new PagingVO<>(records, (int) pageData.getTotal(), (int) pageData.getSize(), (int) pageData.getCurrent());
     }
 

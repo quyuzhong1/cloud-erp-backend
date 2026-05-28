@@ -351,6 +351,11 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * 重算销售退货入库单价格字段，不重新推送金蝶。
      */
     void refreshPriceFields(List<String> ids);
+
+    /**
+     * 刷新价格字段后的事务写入入口，由实现类通过自身代理调用。
+     */
+    void persistRefreshedPriceFields(List<SoReturnInstockDetailEntity> detailList);
     /**
      * 下载模板
      * @author will
