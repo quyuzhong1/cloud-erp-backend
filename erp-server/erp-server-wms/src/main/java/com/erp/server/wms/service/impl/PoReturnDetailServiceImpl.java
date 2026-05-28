@@ -164,6 +164,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             }
             
             for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
+                // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
+                if ("pack".equals(dto.getReturnDetailType()) && addDTO.getReturnQty() == 0 && addDTO.getDeductAmountQty() == 0) {
+                    continue;
+                }
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
                 poReturnDetailEntity.setMainId(id);
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(addDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
@@ -272,6 +276,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         List<String> collect = dto.getPurchasePriceDetailList().stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
         for (PurchaseReturnOrderDetailDTO.AddDTO addDTO : detailList) {
+            // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
+            if ("pack".equals(dto.getReturnDetailType()) && addDTO.getReturnQty() == 0 && addDTO.getDeductAmountQty() == 0) {
+                continue;
+            }
             PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
             BeanMapperUtils.copy(addDTO, poReturnDetailEntity);
             if (CollectionUtils.isNotEmpty(currency)) {
@@ -361,6 +369,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             }
             
             for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
+                // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
+                if ("pack".equals(dto.getReturnDetailType()) && updateDTO.getReturnQty() == 0 && updateDTO.getDeductAmountQty() == 0) {
+                    continue;
+                }
                 PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
                 BeanMapperUtils.copy(updateDTO, poReturnDetailEntity);
                 //退货补货
@@ -470,7 +482,10 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         List<CurrencyDTO.ViewDTO> currency = sysUserFeign.listByCurrency(collect);
 
         for (PurchaseReturnOrderDetailDTO.UpdateDTO updateDTO : detailList) {
-
+            // 整箱退货类型，并且退款单价和扣款数量都为0，则不处理
+            if ("pack".equals(dto.getReturnDetailType()) && updateDTO.getReturnQty() == 0 && updateDTO.getDeductAmountQty() == 0) {
+                continue;
+            }
             PoReturnDetailEntity poReturnDetailEntity = new PoReturnDetailEntity();
             BeanMapperUtils.copy(updateDTO, poReturnDetailEntity);
             //退货补货
