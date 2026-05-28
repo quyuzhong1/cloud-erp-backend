@@ -82,7 +82,9 @@
         LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         left join (
-            select distinct on (listing_id) *
+            select distinct on (listing_id)
+                listing_id, invoice_product_name, invoice_hs_code, unit,
+                diff_state_tax_code, same_state_tax_code, dict_origin
             from invoice_tax
             where is_deleted = false
             order by listing_id, create_time desc
@@ -144,7 +146,9 @@
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         left join (
-            select distinct on (listing_id) *
+            select distinct on (listing_id)
+                listing_id, invoice_product_name, invoice_hs_code, unit,
+                diff_state_tax_code, same_state_tax_code, dict_origin
             from invoice_tax
             where is_deleted = false
             order by listing_id, create_time desc

@@ -517,6 +517,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     			return detailList;
     		}
 
+    		// 此处 skuPriceMap.get(skuNo) 不会为 null：上方 506–518 行已保证
+    		// suiteSkuSet 中的所有 SKU 都存在于 skuPriceMap，缺失时直接 sendWarnMsg + return。
     		for(Map.Entry<String, List<WdtSoOutStockDetailDTO>> suiteInfo : suiteMap.entrySet()) {
     			List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOList = suiteInfo.getValue();
     			BigDecimal totalStd = BigDecimal.ZERO;
