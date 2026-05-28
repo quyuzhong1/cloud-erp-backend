@@ -1,27 +1,37 @@
 package com.erp.server.wms.controller.api;
 
-
 import cn.hutool.core.util.ObjectUtil;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.CfgQcUserService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.CfgQcUserDTO;
 import com.erp.model.wms.entity.CfgQcUserEntity;
+import com.erp.server.wms.service.CfgQcUserService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -61,11 +71,11 @@ public class CfgQcUserController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改质检员配置")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:cfgQcUser:update",
-        serviceClass = CfgQcUserService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:cfgQcUser:update",
+            serviceClass = CfgQcUserService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgQcUserDTO.UpdateDTO dto) {
         cfgQcUserService.update(dto);
         return success();
@@ -82,12 +92,11 @@ public class CfgQcUserController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:cfgQcUser:paging",
-            tableAlias = ""
+            tableAlias = "cqu"
     )
     public ApiResult<PagingVO<CfgQcUserDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgQcUserDTO.PagingParamDTO> dto) {
         return success(cfgQcUserService.paging(dto));
     }
-
 
     /**
     * 详情
@@ -108,6 +117,51 @@ public class CfgQcUserController extends BaseController {
     }
 
     /**
+     * 导入Excel数据
+     * @author wtr
+     * @date:  2026-05-27
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入质检员配置")
+    @PostMapping("/importFile")
+    public ApiResult importFile(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = cfgQcUserService.importFile(dto);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载模板
+     * @author wtr
+     * @date: 2026-05-28
+     * @param request
+     * @param response
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载质检员配置模板")
+    @GetMapping("/exportTemplate")
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/cfgQcUserTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
+        return success();
+    }
+
+    /**
     * 导出Excel数据
     * @author wtr
     * @date:  2026-05-27
@@ -119,25 +173,12 @@ public class CfgQcUserController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:cfgQcUser:export",
-            tableAlias = ""
+            tableAlias = "cqu"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检员配置")
-    public void exportList(@RequestBody @Validated CfgQcUserDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated CfgQcUserDTO.ExportDTO dto, HttpServletResponse response) {
         cfgQcUserService.exportList(dto, response);
-    }
-
-    /**
-    * 导入Excel数据
-    * @author wtr
-    * @date:  2026-05-27
-    * @param dto
-    * @return
-    */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入质检员配置")
-    @PostMapping("/importFile")
-    public ApiResult importFile(@RequestBody BaseDTO.ImportDTO dto) {
-        Boolean result = cfgQcUserService.importFile(dto);
-        return result ? success() : failure();
+        return success();
     }
 
     /**
@@ -175,8 +216,8 @@ public class CfgQcUserController extends BaseController {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = cfgQcUserService.delete(id);
-            }catch (Exception e){
-                log.error("删除失败",e);
+            } catch (Exception e) {
+                log.error("删除失败", e);
                 CfgQcUserEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "不存在, 删除失败");

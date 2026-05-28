@@ -1860,6 +1860,16 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
+    CFG_QC_USER_NOT_EXIST(16011,"未找到质检员配置"),
+    CFG_QC_USER_SUPPLIER_DUPLICATE(16012,"供应商【{0}】仓库【{1}】已配置质检员，不允许重复添加"),
+    CFG_QC_USER_SUPPLIER_REQUIRED(16013,"供应商编码不能为空"),
+    CFG_QC_USER_SUPPLIER_NOT_FOUND(16014,"供应商编码【{0}】不存在"),
+    CFG_QC_USER_IMPORT_USER_NOT_IN_ORG(16015,"质检员【{0}】在仓库对应组织下不存在业务员任岗明细"),
+    CFG_QC_USER_WAREHOUSE_REQUIRED(16016,"仓库不能为空"),
+    CFG_QC_USER_WAREHOUSE_NOT_FOUND(16017,"仓库【{0}】不存在"),
+    CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE(16018,"仓库名称【{0}】存在多条记录，请使用唯一仓库名称"),
+    PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED(16019,"外验质检类型审核通过时，计划质检日期不能为空"),
+    PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW(16020,"计划质检日期只能选择当前及以后的日期"),
 
     ;
     @Getter

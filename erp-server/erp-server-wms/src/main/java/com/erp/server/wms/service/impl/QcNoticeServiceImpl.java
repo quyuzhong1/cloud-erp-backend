@@ -204,32 +204,35 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     /**
      * 自动分配质检员
-     * 根据供应商+质检类型匹配质检员配置
+     * 严格按"供应商 + 仓库 + 质检类型"匹配质检员配置，匹配不到的明细 qcUserId/Name 保持为空。
      */
     private void autoAssignQcUser(QcNoticeDTO.AddDTO addDTO, String qcNoticeId) {
         if (CollUtil.isEmpty(addDTO.getDetailList())) {
             return;
         }
-        
+
         String qcType = addDTO.getQcType();
         String warehouseId = addDTO.getQcWarehouseId();
-        
+
+        // 同一通知单内多明细可能复用相同供应商，缓存避免重复查询
+        Map<String, CfgQcUserEntity> cfgCache = new HashMap<>();
         for (QcNoticeDetailDTO.AddDTO detail : addDTO.getDetailList()) {
             String supplierId = detail.getSupplierId();
             if (StrUtil.isBlank(supplierId)) {
                 continue;
             }
-            
-            // 根据供应商查询质检员配置
-            CfgQcUserEntity cfgQcUser = cfgQcUserService.getBySupplierId(supplierId);
+
+            // 按"供应商 + 仓库"严格精确匹配，匹配不到则不分配
+            CfgQcUserEntity cfgQcUser = cfgCache.computeIfAbsent(supplierId,
+                    sid -> cfgQcUserService.getBySupplierIdAndWarehouseId(sid, warehouseId));
             if (cfgQcUser == null) {
                 continue;
             }
-            
+
             // 根据质检类型设置对应的质检员
             String qcUserId = null;
             String qcUserName = null;
-            
+
             if (QcTypeEnum.STOCK_IN.getCode().equals(qcType)) {
                 qcUserId = cfgQcUser.getStockinQcUserId();
                 qcUserName = cfgQcUser.getStockinQcUserName();
@@ -283,7 +286,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             
             // 检查质检通知单状态
-            QcNoticeEntity notice = this.getById(detail.getId());
+            QcNoticeEntity notice = this.getById(detail.getMainId());
             if (notice == null) {
                 resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), "质检通知单不存在"));
                 continue;
@@ -527,10 +530,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(), entity.getQcType())
                     || Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(), entity.getQcType())) {
                 if (ObjectUtil.isEmpty(dto.getPlanQcDate())) {
-                    throw new ServiceException("外验质检类型审核通过时，计划质检日期不能为空");
+                    throw new ServiceException(ApiError.PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED);
                 }
                 if (dto.getPlanQcDate().isBefore(LocalDate.now())) {
-                    throw new ServiceException("计划质检日期只能选择当前及以后的日期");
+                    throw new ServiceException(ApiError.PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW);
                 }
                 //保存计划质检日期到实体
                 entity.setPlanQcDate(dto.getPlanQcDate());
@@ -809,7 +812,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //产品信息
             ProductVO.ProductPackVO productPackVO = productPactMap.get(qcNoticeDetail.getSkuId());
             BeanMapper.copy(productPackVO, qcProduct);
-            qcProduct.setBoxQty(productPackVO.getBoxQty().intValue());
             addDto.setQcProduct(qcProduct);
             //质检信息
             BeanMapper.copy(qcNoticeDetail, qcInfo);

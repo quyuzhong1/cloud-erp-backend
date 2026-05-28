@@ -9,6 +9,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.FileTaskStatusEnum;
@@ -18,15 +19,14 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.CfgQcUserDTO;
 import com.erp.model.wms.entity.CfgQcUserEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -51,6 +51,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_CFG_QC_USER;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_CFG_QC_USER;
 
 /**
@@ -90,15 +91,17 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     @Override
     public BaseResultDTO.AddDTO add(CfgQcUserDTO.AddDTO addDTO) {
         String supplierId = addDTO.getSupplierId();
-        
-        // 校验供应商是否已存在
-        checkSupplierExists(supplierId);
-        
+
         // 获取供应商信息
         SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
         if (Objects.isNull(supplier)) {
-            throw new ServiceException("供应商不存在");
+            throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
         }
+
+        WarehouseEntity warehouse = validateWarehouse(addDTO.getWarehouseId());
+
+        // 唯一性校验：同一供应商 + 同一仓库 不允许重复配置
+        checkSupplierWarehouseUnique(supplierId, addDTO.getWarehouseId(), supplier.getName(), warehouse.getName(), null);
 
         // 保存主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
@@ -110,14 +113,14 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         cfgQcUserEntity.setStockoutQcUserName(addDTO.getStockOutQcUserName());
         cfgQcUserEntity.setNewProductStockinQcUserId(addDTO.getNewProductStockInQcUserId());
         cfgQcUserEntity.setNewProductStockinQcUserName(addDTO.getNewProductStockInQcUserName());
-        
+
         boolean save = super.save(cfgQcUserEntity);
         if (!save) {
-            throw new ServiceException("保存失败");
+            throw new ServiceException(ApiError.BILL_SAVE_FAILED);
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增质检员配置，供应商【{}】", 
+        String msg = StrUtil.format("用户【{}】新增质检员配置，供应商【{}】",
                 UserContext.getDefaultLoginUser().getUserName(), supplier.getName());
         operateLogService.addModuleOperateLog(msg, null, cfgQcUserEntity.getId(), "新增质检员配置");
 
@@ -127,15 +130,22 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     /**
     * 修改
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    @DistributeLocker(keyName = "updateDTO.getId()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgQcUserDTO.UpdateDTO updateDTO) {
         CfgQcUserEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "质检员配置"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.CFG_QC_USER_NOT_EXIST));
 
         // 修改时供应商信息不允许编辑，直接使用原供应商ID
         String supplierId = old.getSupplierId();
+        SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
+        String supplierName = supplier != null ? supplier.getName() : "";
+
+        WarehouseEntity warehouse = validateWarehouse(updateDTO.getWarehouseId());
+
+        // 唯一性校验：同一供应商 + 同一仓库 不允许重复配置（排除自身）
+        checkSupplierWarehouseUnique(supplierId, updateDTO.getWarehouseId(), supplierName, warehouse.getName(), updateDTO.getId());
 
         // 更新主表
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
@@ -152,31 +162,56 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
         boolean update = super.updateById(cfgQcUserEntity);
         if (!update) {
-            throw new ServiceException("更新失败");
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
 
         // 记录操作日志
-        SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
-        String supplierName = supplier != null ? supplier.getName() : "";
-        String msg = StrUtil.format("用户【{}】编辑质检员配置，供应商【{}】", 
+        String msg = StrUtil.format("用户【{}】编辑质检员配置，供应商【{}】",
                 UserContext.getDefaultLoginUser().getUserName(), supplierName);
         operateLogService.addModuleOperateLog(msg, null, updateDTO.getId(), "编辑质检员配置");
-        
+
         return Boolean.TRUE;
     }
 
     /**
-    * 校验供应商是否已存在配置
+    * 唯一性校验：同一供应商 + 同一仓库不允许重复配置
+    *
+    * @param supplierId   供应商ID
+    * @param warehouseId  仓库ID（可空，空表示全仓库通用配置）
+    * @param supplierName 供应商名称（用于错误提示，可为 null）
+    * @param excludeId    需要排除的记录主键（编辑场景排除自身；新增时传 null）
     */
-    private void checkSupplierExists(String supplierId) {
-        CfgQcUserEntity exists = baseMapper.selectBySupplierId(supplierId);
-        if (ObjectUtil.isNotEmpty(exists)) {
-            throw new ServiceException("该供应商已配置质检员，不允许重复添加");
+    private void checkSupplierWarehouseUnique(String supplierId, String warehouseId,
+                                              String supplierName, String warehouseName, String excludeId) {
+        CfgQcUserEntity exists = baseMapper.selectBySupplierIdAndWarehouseId(supplierId, warehouseId);
+        if (ObjectUtil.isEmpty(exists)) {
+            return;
         }
+        if (StrUtil.isNotBlank(excludeId) && Objects.equals(exists.getId(), excludeId)) {
+            return;
+        }
+        throw new ServiceException(ApiError.CFG_QC_USER_SUPPLIER_DUPLICATE,
+                StrUtil.isNotBlank(supplierName) ? supplierName : supplierId,
+                StrUtil.isNotBlank(warehouseName) ? warehouseName : warehouseId);
+    }
+
+    private WarehouseEntity validateWarehouse(String warehouseId) {
+        if (StrUtil.isBlank(warehouseId)) {
+            throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_REQUIRED);
+        }
+        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+        if (ObjectUtil.isEmpty(warehouse) || Boolean.TRUE.equals(warehouse.getIsDeleted())) {
+            throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_NOT_FOUND, warehouseId);
+        }
+        if (Boolean.TRUE.equals(warehouse.getDisabled())
+                || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatus().getStatus())) {
+            throw new ServiceException(ApiError.CFG_QC_USER_WAREHOUSE_NOT_FOUND, warehouse.getName());
+        }
+        return warehouse;
     }
 
     @Override
-    public PagingVO<CfgQcUserDTO.ListDTO> paging(PagingDTO<CfgQcUserDTO.PagingParamDTO> pagingParamDTO) {
+    public PagingVO<CfgQcUserDTO.ListDTO> paging(PagingDTO<? extends CfgQcUserDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<CfgQcUserDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
@@ -190,24 +225,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
     @Override
     public void exportList(CfgQcUserDTO.ExportDTO param, HttpServletResponse response) {
-        List<CfgQcUserDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/cfgQcUser.xlsx";
-        String name = "质检员配置";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
-        }
+        downloadTaskFeign.saveDownloadTask("质检员配置导出", EXPORT_WMS_CFG_QC_USER.getCode(), param);
     }
 
     @Override
@@ -262,8 +280,8 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
     @Override
     public CfgQcUserDTO.ViewDTO view(String id) {
-        CfgQcUserEntity cfgQcUserEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检员配置"));
-        
+        CfgQcUserEntity cfgQcUserEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.CFG_QC_USER_NOT_EXIST));
+
         CfgQcUserDTO.ViewDTO data = new CfgQcUserDTO.ViewDTO();
         BeanMapper.copy(cfgQcUserEntity, data);
         // 数据库字段是stockin，DTO是stockIn，需要手动设置
@@ -281,13 +299,25 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             data.setSupplierName(supplier.getName());
         }
 
+        if (StrUtil.isNotBlank(cfgQcUserEntity.getWarehouseId())) {
+            WarehouseEntity warehouse = warehouseService.getById(cfgQcUserEntity.getWarehouseId());
+            if (ObjectUtil.isNotEmpty(warehouse)) {
+                data.setWarehouseName(warehouse.getName());
+            }
+        }
+
         return data;
     }
 
     @Override
     public BatchResultDTO delete(String id) {
-        CfgQcUserEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检员配置"));
+        CfgQcUserEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.CFG_QC_USER_NOT_EXIST));
         String supplierId = entity.getSupplierId();
+        String supplierCode = supplierId;
+        SupplierEntity supplier = supplierFeign.getSupplierById(supplierId);
+        if (ObjectUtil.isNotEmpty(supplier)) {
+            supplierCode = supplier.getCode();
+        }
         
         // 删除主表数据
         super.removeById(id);
@@ -297,7 +327,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
                 UserContext.getDefaultLoginUser().getUserName(), id);
         operateLogService.addModuleOperateLog(msg, null, id, "删除质检员配置");
         
-        return BatchResultDTO.success(id, supplierId);
+        return BatchResultDTO.success(id, supplierCode);
     }
 
     @Override
@@ -330,7 +360,6 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         for (UserInfoDTO.BusinessOperationUserDTO user : qcUserList) {
             CfgQcUserDTO.QcUserSelectDTO dto = new CfgQcUserDTO.QcUserSelectDTO();
             dto.setId(user.getUserId());
-            // 使用realName或者userName作为名称
             dto.setName(StrUtil.isNotBlank(user.getRealName()) ? user.getRealName() : user.getUserName());
             result.add(dto);
         }
@@ -346,6 +375,14 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
                 .one();
     }
 
+    @Override
+    public CfgQcUserEntity getBySupplierIdAndWarehouseId(String supplierId, String warehouseId) {
+        if (StrUtil.isBlank(supplierId)) {
+            return null;
+        }
+        return baseMapper.selectBySupplierIdAndWarehouseId(supplierId, warehouseId);
+    }
+
     /**
     * 分页查询、导出 数据处理
     */
@@ -356,9 +393,23 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         
         // 获取所有供应商ID
         List<String> supplierIds = list.stream().map(CfgQcUserDTO.ListDTO::getSupplierId).collect(Collectors.toList());
+        List<String> warehouseIds = list.stream()
+                .map(CfgQcUserDTO.ListDTO::getWarehouseId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
         
         // 批量获取供应商信息
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        Map<String, String> warehouseNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(warehouseIds)) {
+            List<com.erp.model.wms.dto.WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseNameByIds(warehouseIds);
+            if (CollUtil.isNotEmpty(warehouseList)) {
+                warehouseNameMap = warehouseList.stream()
+                        .collect(Collectors.toMap(com.erp.model.wms.dto.WarehouseDTO.UpdateDTO::getId,
+                                com.erp.model.wms.dto.WarehouseDTO.UpdateDTO::getName, (a, b) -> a));
+            }
+        }
         
         for (CfgQcUserDTO.ListDTO data : list) {
             // 填充供应商信息
@@ -366,6 +417,9 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             if (ObjectUtil.isNotEmpty(supplier)) {
                 data.setSupplierCode(supplier.getCode());
                 data.setSupplierName(supplier.getName());
+            }
+            if (StrUtil.isNotBlank(data.getWarehouseId())) {
+                data.setWarehouseName(warehouseNameMap.get(data.getWarehouseId()));
             }
         }
     }

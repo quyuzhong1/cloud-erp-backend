@@ -143,6 +143,9 @@ public class ExportWmsFeignController {
     @Resource
     private QcStandardService qcStandardService;
 
+    @Resource
+    private CfgQcUserService cfgQcUserService;
+
 
     @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
@@ -1327,5 +1330,17 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcApplicationQueryHandler.class)
     public PagingVO<QcApplicationDTO.ListDTO> exportQcApplication(@RequestBody @Validated PagingDTO<QcApplicationDTO.PagingParamDTO> dto) {
         return qcApplicationService.paging(dto);
+    }
+
+    /**
+     * 导出质检员配置
+     */
+    @PostMapping("/exportCfgQcUser")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:cfgQcUser:export",
+            tableAlias = "cqu")
+    public PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody @Validated PagingDTO<CfgQcUserDTO.ExportDTO> dto) {
+        return cfgQcUserService.paging(dto);
     }
 }

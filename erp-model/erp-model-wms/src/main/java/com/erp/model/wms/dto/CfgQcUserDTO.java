@@ -1,5 +1,8 @@
 package com.erp.model.wms.dto;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.core.anno.FieldValid;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 import lombok.Data;
@@ -92,72 +95,112 @@ public class CfgQcUserDTO implements Serializable {
         private String supplierId;
 
         /**
-        * 仓库id
-        */
-        private String warehouseId;
-
-        /**
         * 供应商编码
         */
         private String supplierCode;
 
         /**
-        * 供应商名称
+        * 供应商名称【可排序】
         */
         private String supplierName;
 
         /**
-        * 入库质检员
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称【可排序】
+         */
+        private String warehouseName;
+
+        /**
+        * 入库质检员id
+        */
+        private String stockInQcUserId;
+
+        /**
+        * 入库质检员【可排序】
         */
         private String stockInQcUserName;
 
         /**
-        * 出库质检员
+        * 出库质检员id
+        */
+        private String stockOutQcUserId;
+
+        /**
+        * 出库质检员【可排序】
         */
         private String stockOutQcUserName;
 
         /**
-        * 外检质检员
+        * 外检质检员id
+        */
+        private String outsideQcUserId;
+
+        /**
+        * 外检质检员【可排序】
         */
         private String outsideQcUserName;
 
         /**
-        * 在库质检员
+        * 在库质检员id
+        */
+        private String insideQcUserId;
+
+        /**
+        * 在库质检员【可排序】
         */
         private String insideQcUserName;
 
         /**
-        * 新品入库质检员
+        * 新品入库质检员id
+        */
+        private String newProductStockInQcUserId;
+
+        /**
+        * 新品入库质检员【可排序】
         */
         private String newProductStockInQcUserName;
 
         /**
-        * B2B外检质检员
+        * B2B外检质检员id
+        */
+        private String b2bOutsideQcUserId;
+
+        /**
+        * B2B外检质检员【可排序】
         */
         private String b2bOutsideQcUserName;
 
         /**
-        * 退货质检员
+        * 退货质检员id
+        */
+        private String returnQcUserId;
+
+        /**
+        * 退货质检员【可排序】
         */
         private String returnQcUserName;
 
         /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
+        * 创建人名称【可排序】
         */
         private String createUserName;
 
         /**
-        * 更新时间
+        * 更新时间【可排序】
         */
         private LocalDateTime updateTime;
 
         /**
-        * 更新人名称
+        * 更新人名称【可排序】
         */
         private String updateUserName;
 
@@ -197,6 +240,11 @@ public class CfgQcUserDTO implements Serializable {
         * 仓库id
         */
         private String warehouseId;
+
+        /**
+        * 仓库名称
+        */
+        private String warehouseName;
 
         /**
         * 供应商编码
@@ -320,6 +368,8 @@ public class CfgQcUserDTO implements Serializable {
         * 仓库id
          * /warehouse/list
         */
+        @NotBlank(message = "仓库id不能为空")
+        @Size(max = 64, message = "仓库id最大长度不能超过64位")
         private String warehouseId;
 
         /**
@@ -438,10 +488,11 @@ public class CfgQcUserDTO implements Serializable {
     }
 
     /**
-    * 导入Excel DTO
+    * 导入Excel DTO（列定义同时作为导出/下载模板的表头依据）
     */
     @Data
     @NoArgsConstructor
+    @ColumnWidth(20)
     public static class ImportExcelDTO {
 
         /**
@@ -452,51 +503,68 @@ public class CfgQcUserDTO implements Serializable {
         /**
         * 供应商编码
         */
+        @ExcelProperty(value = "*供应商编码")
         private String supplierCode;
 
         /**
         * 供应商名称
         */
+        @ExcelProperty(value = "供应商名称")
         private String supplierName;
+
+        /**
+        * 仓库名称
+        */
+        @ExcelProperty(value = "*仓库")
+        @FieldValid(fieldName = "仓库", isNotBlank = true, maxLength = 50)
+        private String warehouseName;
 
         /**
         * 入库质检员
         */
+        @ExcelProperty(value = "入库质检员")
         private String stockInQcUserName;
 
         /**
         * 出库质检员
         */
+        @ExcelProperty(value = "出库质检员")
         private String stockOutQcUserName;
 
         /**
-        * 外检质检员
+        * 外验质检员
         */
+        @ExcelProperty(value = "外验质检员")
         private String outsideQcUserName;
 
         /**
         * 在库质检员
         */
+        @ExcelProperty(value = "在库质检员")
         private String insideQcUserName;
 
         /**
         * 新品入库质检员
         */
+        @ExcelProperty(value = "新品入库质检员")
         private String newProductStockInQcUserName;
 
         /**
         * B2B外检质检员
         */
+        @ExcelProperty(value = "B2B外检质检员")
         private String b2bOutsideQcUserName;
 
         /**
         * 退货质检员
         */
+        @ExcelProperty(value = "退货质检员")
         private String returnQcUserName;
 
         /**
         * 错误信息
         */
+        @ExcelProperty(value = "错误信息")
         private String errorMsg;
 
     }

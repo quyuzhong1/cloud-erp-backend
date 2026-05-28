@@ -651,8 +651,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId, bill.getCode());
             }
-            //新品首批回填SKU的尺寸信息
-            updateProductPack(Collections.singletonList(billId));
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
@@ -1293,9 +1291,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
-
-            //新品首批回填SKU的尺寸信息
-            updateProductPack(ids);
 
             //累加质检合格量(结果：合格)
             if (Objects.nonNull(qcResult)) {

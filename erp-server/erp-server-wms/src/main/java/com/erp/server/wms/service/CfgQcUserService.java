@@ -44,7 +44,7 @@ public interface CfgQcUserService extends SuperService<CfgQcUserEntity> {
     * @param pagingParamDTO
     * @return PagingVO<CfgQcUserDTO.ListDTO>>
     */
-    PagingVO<CfgQcUserDTO.ListDTO> paging(PagingDTO<CfgQcUserDTO.PagingParamDTO> pagingParamDTO);
+    PagingVO<CfgQcUserDTO.ListDTO> paging(PagingDTO<? extends CfgQcUserDTO.PagingParamDTO> pagingParamDTO);
 
     /**
     * 详情
@@ -109,5 +109,14 @@ public interface CfgQcUserService extends SuperService<CfgQcUserEntity> {
     * @return
     */
     CfgQcUserEntity getBySupplierId(String supplierId);
+
+    /**
+     * 根据供应商ID和仓库ID查询质检员配置
+     *
+     * @param supplierId  供应商ID
+     * @param warehouseId 仓库ID
+     * @return 质检员配置
+     */
+    CfgQcUserEntity getBySupplierIdAndWarehouseId(String supplierId, String warehouseId);
 
 }
