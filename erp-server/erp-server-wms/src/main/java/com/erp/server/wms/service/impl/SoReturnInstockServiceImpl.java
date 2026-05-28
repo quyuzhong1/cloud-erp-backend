@@ -2005,16 +2005,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         fillThirdWarehouseDetailPrice(soReturnInstockEntity, detailEntityList);
-        ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
-                .persistByThirdWarehouse(soReturnInstockEntity, detailEntityList);
+        selfService.persistByThirdWarehouse(soReturnInstockEntity, detailEntityList);
     }
 
     /**
      * 三方仓入库持久化（含事务），须通过 {@link #addByThirdWarehouse} 调用，不可绕过价格补全直接调用。
-     * 包级可见以避免外部 Bean 绕过 {@link #addByThirdWarehouse} 的价格补全逻辑。
      */
     @Transactional(rollbackFor = Exception.class)
-    void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+    @Override
+    public void persistByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         soReturnInstockEntity.setCode(code);
         this.save(soReturnInstockEntity);
@@ -2305,7 +2304,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     private SoB2cDetailEntity findB2cDetail(Map<String, Map<String, List<SoB2cDetailEntity>>> b2cDetailMap, String soId, String skuId) {
         Map<String, List<SoB2cDetailEntity>> detailMap = b2cDetailMap.get(soId);
-        if (CollectionUtils.isEmpty(detailMap)) {
+        if (Objects.isNull(detailMap) || detailMap.isEmpty()) {
             return null;
         }
         List<SoB2cDetailEntity> detailList = detailMap.get(skuId);
