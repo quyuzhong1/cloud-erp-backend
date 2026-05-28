@@ -21,6 +21,9 @@ public class MarehouseMoveInfoQueryHandler extends AbstractQueryHandler {
         if ("sourceType".equals(field)) {
             return " EXISTS (select id from picking_lists where is_deleted = false and id = wlmi.source_id and source_type "+compareCodeSplicingValueSql+")";
         }
+        if ("cartonCode".equals(field) || "carton_code".equals(field)) {
+            return " EXISTS (select 1 from wms_move_carton_detail wmcd where wmcd.is_deleted = false and wmcd.main_id = wlmi.id and wmcd.carton_code " + compareCodeSplicingValueSql + ")";
+        }
         return null;
     }
 

@@ -500,8 +500,14 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         /** 移出仓位编码（取货仓位） */
         private String outWarehouseLocation;
 
+        /** 移出仓位名称（取货仓位名称） */
+        private String outWarehouseLocationName;
+
         /** 移入仓位编码（上架仓位） */
         private String inWarehouseLocation;
+
+        /** 移入仓位名称（上架仓位名称） */
+        private String inWarehouseLocationName;
 
         /** 移动数量 */
         private Integer qty;

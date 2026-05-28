@@ -837,20 +837,8 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (StringUtils.isBlank(targetWarehouseLocationId)) {
             throw new ServiceException("移入仓位不能为空");
         }
-        // 重新从库查询最新状态，防止前序步骤查询到落库之间存在并发窗口（卡顿/重复提交）
-        List<AfterSalePackEntity> latestList = this.listByIds(ids);
-        List<String> alreadyMovedCodes = latestList.stream()
-                .filter(e -> Boolean.TRUE.equals(e.getIsMoveWarehouse()))
-                .map(e -> StringUtils.isNotBlank(e.getCode()) ? e.getCode() : e.getId())
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(alreadyMovedCodes)) {
-            throw new ServiceException("以下箱唛已完成移仓，请勿重复提交：" + String.join(",", alreadyMovedCodes));
-        }
-        // 条件更新：WHERE is_move_warehouse = false，即使并发请求同时通过了上方校验，
-        // 数据库层面只有一个事务能成功更新，另一个因条件不满足而更新0行
         this.lambdaUpdate()
                 .in(AfterSalePackEntity::getId, ids)
-                .eq(AfterSalePackEntity::getIsMoveWarehouse, false)
                 .set(AfterSalePackEntity::getIsMoveWarehouse, true)
                 .update();
         afterSalePackDetailService.lambdaUpdate()
