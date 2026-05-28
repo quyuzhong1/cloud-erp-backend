@@ -679,6 +679,40 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO apiHandleFailure(String id, String remark) {
+        SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException("拦截单为空"));
+        if (!SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
+            throw new ServiceException("发货拦截单来源类型错误");
+        }
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            if (HandleResultEnum.FAILURE.getCode().equals(entity.getHandleResult())) {
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "已处理不可重复操作");
+        }
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LocalDateTime handleTime = LocalDateTime.now();
+        boolean updated = this.lambdaUpdate()
+                .set(SoB2cDeliveryInterceptEntity::getHandleResult, HandleResultEnum.FAILURE.getCode())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
+                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, remark)
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, handleTime)
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                .set(SoB2cDeliveryInterceptEntity::getCancelStatus, CancelStatusEnum.FAILURE.getCode())
+                .set(SoB2cDeliveryInterceptEntity::getInterceptStatus, InterceptStatusEnum.FAILURE.getCode())
+                .eq(SoB2cDeliveryInterceptEntity::getId, entity.getId())
+                .eq(SoB2cDeliveryInterceptEntity::getVersion, entity.getVersion())
+                .update();
+        if (!updated) {
+            throw new ServiceException("并发操作，请刷新后重试");
+        }
+        operateLogService.addModuleOperateLog("API拦截失败，备注：" + (CharSequenceUtil.isBlank(remark) ? "" : remark), ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "拦截失败");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO handleSuccess(SoB2cDeliveryEntity entity, String interceptId, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark) {
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(interceptId);
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
