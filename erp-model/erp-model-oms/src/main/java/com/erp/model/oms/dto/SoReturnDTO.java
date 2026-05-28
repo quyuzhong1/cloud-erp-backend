@@ -967,6 +967,18 @@ public class SoReturnDTO {
          *含税退货金额（本位币）
          */
         private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
     }
 
 
