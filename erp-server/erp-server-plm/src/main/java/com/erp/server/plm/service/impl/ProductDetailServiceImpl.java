@@ -475,6 +475,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             // 一级供应商名称
             if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
                 item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+                item.setCertificateJson(supplierMap.get(item.getMainSupplier()).getCertificateJson());
+                item.setCertificateNames(supplierMap.get(item.getMainSupplier()).getCertificateNames());
             }
 
             //模具档案
@@ -529,6 +531,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setBuId(productRefBuEntity.getBuId());
             noSpecDetailById.setBuName(productRefBuEntity.getBuName());
         }
+        //客户定制附件
+        List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_CUSTOMIZED);
+        if(CollUtil.isNotEmpty(productCustomizedList)){
+            noSpecDetailById.setCustomizedAttachmentList(productCustomizedList.stream().map(a -> {
+                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+                BeanUtils.copyProperties(a, dto);
+                return dto;
+            }).collect(Collectors.toList()));
+        }
+        //产品说明书附件
+        List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_INSTRUCTION);
+        if(CollUtil.isNotEmpty(productInstructionList)){
+            noSpecDetailById.setInstructionAttachmentList(productInstructionList.stream().map(a -> {
+                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+                BeanUtils.copyProperties(a, dto);
+                return dto;
+            }).collect(Collectors.toList()));
+        }
+
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
@@ -658,6 +679,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setBuId(productRefBuEntity.getBuId());
             noSpecDetailById.setBuName(productRefBuEntity.getBuName());
         }
+        //客户定制附件
+        List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_CUSTOMIZED);
+        if(CollUtil.isNotEmpty(productCustomizedList)){
+            noSpecDetailById.setCustomizedAttachmentList(productCustomizedList.stream().map(a -> {
+                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+                BeanUtils.copyProperties(a, dto);
+                return dto;
+            }).collect(Collectors.toList()));
+        }
+        //产品说明书附件
+        List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_INSTRUCTION);
+        if(CollUtil.isNotEmpty(productInstructionList)){
+            noSpecDetailById.setInstructionAttachmentList(productInstructionList.stream().map(a -> {
+                AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+                BeanUtils.copyProperties(a, dto);
+                return dto;
+            }).collect(Collectors.toList()));
+        }
+
         if (ObjectUtils.isNotEmpty(noSpecDetailById)) {
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
@@ -854,7 +894,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     manySpecDetailById.setApplicationCategoryNameList(applicationCategoryNameList);
                 }
             }
+            //客户定制附件
+            List<PlmAttachmentEntity> productCustomizedList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_CUSTOMIZED);
+            if(CollUtil.isNotEmpty(productCustomizedList)){
+                manySpecDetailById.setCustomizedAttachmentList(productCustomizedList.stream().map(a -> {
+                    AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+                    BeanUtils.copyProperties(a, dto);
+                    return dto;
+                }).collect(Collectors.toList()));
+            }
+            //产品说明书附件
+            List<PlmAttachmentEntity> productInstructionList = plmAttachmentService.listByBusinessIdAndType(productId,ProductConstant.PRODUCT_INSTRUCTION);
+            if(CollUtil.isNotEmpty(productInstructionList)){
+                manySpecDetailById.setInstructionAttachmentList(productInstructionList.stream().map(a -> {
+                    AttachmentDTO.AttachDTO dto = new AttachmentDTO.AttachDTO();
+                    BeanUtils.copyProperties(a, dto);
+                    return dto;
+                }).collect(Collectors.toList()));
+            }
+
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
+
         }
         //多规格产品明细信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -1149,6 +1209,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return detailEntity.getId();
     }
 
+    private BasicDictEntity getBasicDictByNameOrValue(List<BasicDictEntity> basicDictList, BasicDictTypeEnum typeEnum, String dictText) {
+        if (CollectionUtils.isEmpty(basicDictList) || ObjectUtils.isEmpty(typeEnum) || StringUtils.isBlank(dictText)) {
+            return null;
+        }
+        String text = dictText.trim();
+        return basicDictList.stream()
+                .filter(b -> typeEnum.getCode().equals(b.getType())
+                        && (text.equals(StringUtils.trim(b.getValue())) || text.equals(StringUtils.trim(b.getName()))))
+                .findFirst()
+                .orElse(null);
+    }
+
     /**
      * @param productDetailList 新增产品无规格sku信息请求参数
      * @return java.lang.Boolean
@@ -1423,9 +1495,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productRefBuService.addOrUpdate(productSkuBaseInfoDTO.getId(),id,basicProductBuEntity.getId());
         }
 
+        //客户定制附件
+        List<AttachmentDTO.AttachDTO> customizedAttachmentList = productSpuBaseInfoDTO.getCustomizedAttachmentList();
+        AttachmentDTO.EditDTO editDTO = new AttachmentDTO.EditDTO();
+        editDTO.setBusinessId(id);
+        editDTO.setType(ProductConstant.PRODUCT_CUSTOMIZED);
+        editDTO.setAttachDTOS(customizedAttachmentList);
+        plmAttachmentService.edit(editDTO);
+
+        //产品说明书附件
+        List<AttachmentDTO.AttachDTO> instructionAttachmentList = productSpuBaseInfoDTO.getInstructionAttachmentList();
+        editDTO.setBusinessId(id);
+        editDTO.setType(ProductConstant.PRODUCT_INSTRUCTION);
+        editDTO.setAttachDTOS(instructionAttachmentList);
+        plmAttachmentService.edit(editDTO);
+
         //2.修改/新增 sku信息
-
-
         productSkuBaseInfoDTO.setProductId(id);
 
         //SKU修改操作日志
@@ -1855,6 +1940,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             productRefBuService.addOrUpdate("",id,basicProductBuEntity.getId());
         }
+        //客户定制附件
+        List<AttachmentDTO.AttachDTO> customizedAttachmentList = productManySpecDTO.getProductInfoDTO().getCustomizedAttachmentList();
+        AttachmentDTO.EditDTO editDTO = new AttachmentDTO.EditDTO();
+        editDTO.setBusinessId(id);
+        editDTO.setType(ProductConstant.PRODUCT_CUSTOMIZED);
+        editDTO.setAttachDTOS(customizedAttachmentList);
+        plmAttachmentService.edit(editDTO);
+
+        //产品说明书附件
+        List<AttachmentDTO.AttachDTO> instructionAttachmentList = productManySpecDTO.getProductInfoDTO().getInstructionAttachmentList();
+        editDTO.setBusinessId(id);
+        editDTO.setType(ProductConstant.PRODUCT_INSTRUCTION);
+        editDTO.setAttachDTOS(instructionAttachmentList);
+        plmAttachmentService.edit(editDTO);
 
         //2.修改/新增 sku信息
         List<ProductDetailDTO> productDetailLists = productManySpecDTO.getProductDetailList();
@@ -2786,6 +2885,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
             List<String> productIds = list.stream().map(ProductDetailExcelExportDTO::getProductId).distinct().collect(Collectors.toList());
             List<ProductRefBuEntity> productRefBuEntities = productRefBuService.listByProductIds(productIds);
+
+            List<String> mainSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getMainSupplier).distinct().collect(Collectors.toList());
+            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
             for(ProductDetailExcelExportDTO l : list) {
                 ProductRefBuEntity productRefBuEntity = productRefBuEntities.stream()
                         .filter(prb -> prb.getProductId().equals(l.getProductId()))
@@ -2822,6 +2925,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if(StringUtils.isNotBlank(l.getInsuranceProperty())){
                     l.setInsuranceProperty(String.join(",", productLogisticsService.getInsurancePropertyList(l.getInsuranceProperty(), insurancePropertyMap)));
                 }
+
+                // 一级供应商名称
+                if (StrUtils.isNotEmpty(l.getMainSupplier()) && supplierMap.containsKey(l.getMainSupplier())) {
+                    l.setFirstCertificateNames(supplierMap.get(l.getMainSupplier()).getCertificateNames());
+                }
+
             }
 
             Map<String, String> chargeIdNameMaps = new HashMap<>();
@@ -2845,15 +2954,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
             Map<String, String> finalDictValueMaps = dictValueMaps;
-
-            List<String> mainSupplierIds = list.stream()
-                    .map(ProductDetailExcelExportDTO::getMainSupplier)
-                    .filter(StringUtils::isNotBlank)
-                    .distinct()
-                    .collect(Collectors.toList());
-            Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = CollUtil.isEmpty(mainSupplierIds)
-                    ? new HashMap<>()
-                    : supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
             Map<String, BasicCategoryEntity> idBasicCategoryMaps = basicCategoryService.list().stream().collect(Collectors.toMap(BasicCategoryEntity::getId, b -> b));
             Map<String, List<BasicCategoryEntity>> idParentBasicCategoryListMaps = new HashMap<>();
@@ -5501,6 +5601,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
 
+                //产品质保期
+                BasicDictEntity warrantyPeriod = null;
+                if(StringUtils.isNotBlank(dto.getWarrantyPeriod())){
+                    warrantyPeriod = getBasicDictByNameOrValue(basicDictList, BasicDictTypeEnum.WARRANTY_PERIOD, dto.getWarrantyPeriod());
+                    if (ObjectUtils.isEmpty(warrantyPeriod)) {
+                        errorMsgList.add("产品质保期在系统中未找到");
+                    }else {
+                        productInfoDTO.setWarrantyPeriod(warrantyPeriod.getValue());
+                    }
+                }
+
                 ProductUnitEntity productUnitEntity = new ProductUnitEntity();
                 if (StringUtils.isNotBlank(dto.getUnitName())) {
                     productUnitEntity = unitEntityList.stream().filter(req -> req.getName().equals(dto.getUnitName())).findFirst().orElse(null);
@@ -6403,6 +6514,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             if (ObjectUtils.isEmpty(productProperty)) {
                 errorMsgList.add("产品属性在系统中未找到");
+            }
+            BasicDictEntity warrantyPeriod = getBasicDictByNameOrValue(basicDictList, BasicDictTypeEnum.WARRANTY_PERIOD, dto.getWarrantyPeriod());
+
+            if (ObjectUtils.isEmpty(warrantyPeriod)) {
+                errorMsgList.add("产品质保期在系统中未找到");
+            } else {
+                productInfoDTO.setWarrantyPeriod(warrantyPeriod.getValue());
             }
             //产品等级
             BasicDictEntity productGrade = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_GRADE.getCode().equals(b.getType()) && b.getValue().

@@ -204,6 +204,12 @@ public class ProductDetailImprotUpdateExcelDTO {
     private String unitName;
 
     /**
+     * 产品质保期
+     */
+    @ExcelProperty("产品质保期")
+    private String warrantyPeriod;
+
+    /**
      * 主要材质
      */
     @ExcelProperty("主要材质")

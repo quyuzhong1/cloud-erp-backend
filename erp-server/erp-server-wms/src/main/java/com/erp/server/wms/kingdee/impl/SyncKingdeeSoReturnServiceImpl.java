@@ -376,20 +376,22 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //退货数量
             map.put("returnQty", detailEntity.getRealQty());
             map.put("salesQty", soDetailEntity.getQty());
-            //单价 = 退货金额（本位币）/ 退货数量
             Integer realQty = detailEntity.getRealQty();
             if(Objects.isNull(realQty) || realQty <= 0){
                 realQty = 1;
             }
-            BigDecimal returnAmountLocalCurrency = detailEntity.getReturnAmountLocalCurrency();
-            BigDecimal price = MathUtil.divide(returnAmountLocalCurrency, BigDecimal.valueOf(realQty));
+            BigDecimal price = Objects.nonNull(detailEntity.getPrice())
+                    ? detailEntity.getPrice()
+                    : MathUtil.divide(detailEntity.getReturnAmount(), BigDecimal.valueOf(realQty));
             map.put("price", price);
-
-            //含税单价 = 含税退货金额（本位币）/ 退货数量
-            BigDecimal taxReturnAmountLocalCurrency = detailEntity.getTaxReturnAmountLocalCurrency();
-            BigDecimal taxPrice = MathUtil.divide(taxReturnAmountLocalCurrency, BigDecimal.valueOf(realQty));
+            map.put("taxRate", Objects.nonNull(detailEntity.getTaxRate()) ? detailEntity.getTaxRate() : BigDecimal.ZERO);
+            BigDecimal taxPrice = Objects.nonNull(detailEntity.getTaxPrice())
+                    ? detailEntity.getTaxPrice()
+                    : MathUtil.divide(detailEntity.getTaxReturnAmount(), BigDecimal.valueOf(realQty));
             //含税单价
             map.put("taxPrice", taxPrice);
+            map.put("returnAmount", detailEntity.getReturnAmount());
+            map.put("taxReturnAmount", detailEntity.getTaxReturnAmount());
 
             //是否赠品
             map.put("isGift", soDetailEntity.getIsGift());
