@@ -374,8 +374,10 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         if (ObjUtil.isEmpty(channelDTO)) {
             return;
         }
-        String supplierId = CharSequenceUtil.blankToDefault(channelDTO.getLogisticsSupplierId(),
-                CharSequenceUtil.blankToDefault(channelDTO.getMainId(), channelDTO.getSupplierId()));
+        // LogisticsChannelDTO.BaseDTO.mainId 语义是渠道父主体 ID，不是物流商 ID，
+        // 不能作为 logisticsSupplierId 的回退，否则会污染 logistics_supplier_id 字段。
+        // 仅在 logisticsSupplierId 为空时回退到明确的 supplierId 字段。
+        String supplierId = CharSequenceUtil.blankToDefault(channelDTO.getLogisticsSupplierId(), channelDTO.getSupplierId());
         if (CharSequenceUtil.isNotBlank(supplierId)) {
             kolSampleCostEntity.setLogisticsSupplierId(supplierId);
         }
