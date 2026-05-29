@@ -312,7 +312,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<QcNoticeDetailEntity> detailUpdates = validDetails.stream().map(detail -> {
             QcNoticeDetailEntity e = new QcNoticeDetailEntity();
             e.setId(detail.getId());
-            e.setVersion(detail.getVersion());
             e.setQcUserId(qcUserId);
             e.setQcUserName(qcUserName);
             return e;
@@ -347,7 +346,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<QcInfoEntity> updateList = qcInfoList.stream().map(qcInfo -> {
             QcInfoEntity entity = new QcInfoEntity();
             entity.setId(qcInfo.getId());
-            entity.setVersion(qcInfo.getVersion());
             entity.setQcUserId(qcUserId);
             entity.setQcUserName(qcUserName);
             return entity;
