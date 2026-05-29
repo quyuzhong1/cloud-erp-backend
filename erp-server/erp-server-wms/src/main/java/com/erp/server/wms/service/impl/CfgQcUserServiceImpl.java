@@ -423,6 +423,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         CfgQcUserEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.CFG_QC_USER_NOT_EXIST));
         String supplierId = entity.getSupplierId();
