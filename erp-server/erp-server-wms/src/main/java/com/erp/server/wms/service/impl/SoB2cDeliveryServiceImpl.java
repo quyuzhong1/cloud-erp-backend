@@ -2553,13 +2553,20 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             locked = lock.tryLock(30, 180, TimeUnit.SECONDS);
             if (!locked) {
                 // waitTime(30s) 不再覆盖整个 GlobalTransactional(120s) 窗口：拿不到锁可能是
-                //  a) 持锁线程仍在执行业务 / XA 提交（合法慢事务，30–120s 内）；
-                //  b) 持锁线程进程异常退出，依赖 leaseTime(180s) 自动释放。
-                // 为避免把场景 a 误判为失败（持锁线程随后正常提交、transfer_info 已写入，却让调用方走错误路径
-                // 重复生成调拨单），这里先做一次幂等读：transfer_info 已存在即认为前序线程已成功，直接返回 TRUE。
+                //  a) 持锁线程仍在执行业务 / XA 提交（合法慢事务，30–120s 内，PostgreSQL READ_COMMITTED 下读不到）；
+                //  b) 持锁线程已提交但锁释放瞬间被本线程错过（此时已可读到 transfer_info）；
+                //  c) 持锁线程进程异常退出，依赖 leaseTime(180s) 自动释放。
+                // 注：本方法不追求覆盖全部并发场景。30s 上限是为了避免 MQ 消费线程池（consumeThreadNumber=10）
+                // 被热点单据撑满；场景 a 会落入下方 recordPushTransferInfoError + 返回 FALSE 路径，
+                // 由 addSoB2cError 异常表 + 组包 MQ delay-level 重试做补偿。这里仅针对场景 b 做幂等收敛，
+                // 避免把"前序线程刚提交成功"误判为"生成失败"。
+                // 与 validateTransferInfoPersisted 对齐：必须存在已审批通过的记录才能视为成功，
+                // 防止前序线程写入 transfer_info 后、审批完成前异常退出导致状态不一致被静默吞掉。
                 List<TransferInfoEntity> existing = transferInfoService.listBySourceId(entity.getId());
-                if (CollectionUtils.isNotEmpty(existing)) {
-                    log.warn("发货单【{}】生成直接调拨单获取锁超时(30s)，但 transfer_info 已存在，视为前序线程已完成", entity.getCode());
+                boolean hasApproved = CollectionUtils.isNotEmpty(existing) && existing.stream()
+                        .anyMatch(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()));
+                if (hasApproved) {
+                    log.warn("发货单【{}】生成直接调拨单获取锁超时(30s)，但 transfer_info 已存在且已审批，视为前序线程已完成", entity.getCode());
                     return Boolean.TRUE;
                 }
                 String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时(30s)，等待重试或补偿", entity.getCode());
