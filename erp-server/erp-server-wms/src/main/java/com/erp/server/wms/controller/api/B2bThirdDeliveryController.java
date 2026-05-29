@@ -1,4 +1,4 @@
-package com.erp.server.wms.controller.api;
+﻿package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
@@ -20,10 +20,15 @@ import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
+import com.erp.model.wms.dto.B2bCustomerPackingDTO;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -281,6 +286,29 @@ public class B2bThirdDeliveryController extends BaseController {
     @PostMapping(value = "/listWarehouseOperationDescription")
     public ApiResult<List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO>> listWarehouseOperationDescription(@RequestBody B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO) {
         return success(b2bThirdDeliveryService.listWarehouseOperationDescription(thirdWarehousePlatformDTO));
+    }
+
+    /**
+     * 下载装箱明细导入模板
+     */
+    @GetMapping("/downloadPackingTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱明细导入模板")
+    public ApiResult<Object> downloadPackingTemplate(HttpServletResponse response) {
+        b2bThirdDeliveryService.downloadPackingTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入装箱明细（不落库，返回解析结果供页面填充）
+     */
+    @PostMapping("/importPackingDetail")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱明细")
+    public ApiResult<B2bCustomerPackingDTO.ImportDTO> importPackingDetail(
+            @ModelAttribute @Validated B2bCustomerPackingDTO.ExcelImportDTO excelImportDTO) {
+        return success(b2bThirdDeliveryService.importPackingDetail(
+                excelImportDTO.getExcelFile(),
+                excelImportDTO.getPackingType(),
+                excelImportDTO.getDetailList()));
     }
 
 }

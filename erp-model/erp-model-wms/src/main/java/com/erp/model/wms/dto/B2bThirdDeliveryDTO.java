@@ -1,4 +1,4 @@
-package com.erp.model.wms.dto;
+﻿package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -216,6 +216,23 @@ public class B2bThirdDeliveryDTO implements Serializable {
          */
         private List<B2bThirdDeliveryDetailDTO.ViewDTO> detailList;
         /**
+         * 装箱明细
+         */
+        private List<B2bCustomerPackingDTO.ViewDTO> packingDetailList;
+        /**
+         * 装箱类型
+         */
+        private String packingType;
+        private String packingTypeName;
+        /**
+         * 每箱张贴货件标签数
+         */
+        private Integer labelsPerBox;
+        /**
+         * 是否展示装箱明细（谷仓仓）
+         */
+        private Boolean showPackingDetail;
+        /**
          * 附件
          */
         private List<WmsAttachmentDTO.UpdateDTO> attachList;
@@ -423,6 +440,21 @@ public class B2bThirdDeliveryDTO implements Serializable {
         */
 //        @NotNull(message = "是否API发货不能为空")
         private Boolean isApiDelivery;
+
+        /**
+         * 装箱类型 B2bPackingTypeEnum，默认0
+         */
+        private String packingType;
+
+        /**
+         * 每箱张贴货件标签数 0/1/2/4
+         */
+        private Integer labelsPerBox;
+
+        /**
+         * 装箱明细（谷仓仓）
+         */
+        private List<B2bCustomerPackingDTO.AddDTO> packingDetailList;
 
     }
 

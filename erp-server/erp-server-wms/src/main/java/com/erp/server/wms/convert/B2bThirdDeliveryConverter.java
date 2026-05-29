@@ -1,4 +1,4 @@
-package com.erp.server.wms.convert;
+﻿package com.erp.server.wms.convert;
 
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.wms.entity.B2bCustomerPackingEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.damai.dto.request.DaMaiCreateFbaOrderRequest;
 import com.sdk.wms.damai.dto.response.DaMaiGetFbaOrderResp;
@@ -24,10 +25,15 @@ public interface B2bThirdDeliveryConverter {
     B2bThirdDeliveryConverter INSTANCE = Mappers.getMapper(B2bThirdDeliveryConverter.class);
 
     @Mapping(target = "attachList", ignore = true)
+    @Mapping(target = "packingDetailList", ignore = true)
+    @Mapping(target = "packingTypeName", ignore = true)
+    @Mapping(target = "showPackingDetail", ignore = true)
     @Mapping(target = "statusName", expression = "java(com.erp.model.wms.enums.ThirdDeliveryStatusEnum.getName(entity.getStatus()))")
     @Mapping(target = "deliveryMethodName", expression = "java(com.erp.model.oms.enums.DeliveryModeEnum.getName(entity.getDeliveryMethod()))")
     @Mapping(target = "detailList", source = "detailEntityList")
     B2bThirdDeliveryDTO.ViewDTO toB2bThirdDeliveryViewDTO(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
+
+    B2bCustomerPackingDTO.ViewDTO toPackingViewDTO(B2bCustomerPackingEntity entity);
     B2bThirdDeliveryDetailDTO.ViewDTO toB2bThirdDeliveryDetailViewDTO(B2bThirdDeliveryDetailEntity deliveryDetail);
 
     List<B2bThirdDeliveryDetailEntity> toB2bThirdDeliveryDetail(List<B2bThirdDeliveryDetailDTO.AddDTO> detailList);
@@ -61,6 +67,9 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "address2", source = "entity.address2")
     @Mapping(target = "address1", source = "entity.receiveAddress")
     @Mapping(target = "customerName", source = "entity.customerName")
+    @Mapping(target = "packingType", source = "entity.packingType")
+    @Mapping(target = "labelsPerBox", source = "entity.labelsPerBox")
+    @Mapping(target = "packingDetailList", ignore = true)
     ThirdWarehouseCreateFbaOutboundReq toCreateFbaOutboundReq(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
 
     @Mapping(target = "deliveryQty", source = "deliveryQty")
