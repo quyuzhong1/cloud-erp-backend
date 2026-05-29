@@ -32,6 +32,8 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
@@ -61,15 +63,16 @@ import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
 import com.google.common.base.Stopwatch;
 import groovy.lang.Lazy;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -97,6 +100,8 @@ import static com.erp.server.tms.listener.ImportHistoryRecordExcelListener.*;
 @Slf4j
 @Service
 public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHistoryRecordMapper, ImportHistoryRecordEntity> implements ImportHistoryRecordService {
+    @Resource
+    private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -143,12 +148,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");
     private static final Pattern ENGLISH_PATTERN = Pattern.compile("[A-Za-z]");
 
-    // 这里只是写一条 import_history_record 的本地状态，没有跨服务/跨库写入，
-    // 不需要分布式事务。原先挂 @GlobalTransactional 会被异步任务框架透传的上游 Seata XID 绑定，
-    // 一旦上游某个批次（如 batchImportUpdate）触发 PG 40P01 死锁被标记为 rollback-only，
-    // 这条状态更新也会跟着回滚，导致"导入中心已完成 / 导入记录仍处理中"的撕裂状态。
-    // 改成本地事务 + REQUIRES_NEW，保证最终状态独立提交。
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO addOrUpdate(ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO) {
         ImportHistoryRecordEntity importHistoryRecordEntity = new ImportHistoryRecordEntity();
@@ -608,7 +609,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @date 2026/05/22
      */
     private List<CfgLogisticsCostImportDetailEntity> buildWeightDetailList(List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-                                                                          Map<String, CfgLogisticsCostImportFieldDTO.ListDTO> fieldMetaMap) {
+                                                                           Map<String, CfgLogisticsCostImportFieldDTO.ListDTO> fieldMetaMap) {
         if (CollUtil.isEmpty(cfgImportDetailList) || CollUtil.isEmpty(fieldMetaMap)) {
             return Collections.emptyList();
         }
@@ -1088,7 +1089,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 DictCostAttributionEnum.SELF_DELIVER.getCode() : DictCostAttributionEnum.LAST_MILE.getCode();
         //来源类型
         String sourceType = CharSequenceUtil.equals(costImportEntity.getBusinessType(),CfgLogisticsCostImportBusinessTypeEnum.LOGISTICS_BILL_COST.getCode()) ?
-                SourceTypeEnum.LOGISTICS_BILL_COST.getCode() : SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode();
+                SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode() : SourceTypeEnum.LOGISTICS_BILL_COST.getCode();
 
         // 按业务类型限定费用归属，避免自发货费用和尾程费用模板互相匹配费用项。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(costAttribution);
@@ -1112,7 +1113,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * 按导入配置来源过滤物流单，避免相同识别号跨物流商或跨平台误匹配。
      */
     private List<LogisticsBillDTO.LogisticsBillVo> filterLogisticsBillByImportSource(CfgLogisticsCostImportEntity costImportEntity,
-                                                                                    List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos) {
+                                                                                     List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos) {
         if (CollUtil.isEmpty(logisticsBillVos) || ObjectUtil.isNull(costImportEntity)
                 || CharSequenceUtil.isBlank(costImportEntity.getCfgType())
                 || CharSequenceUtil.isBlank(costImportEntity.getDictPlatform())) {
@@ -1237,10 +1238,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             List<JSONObject> matchImportList,
             List<String> headList,
             Map<Integer, String> headMap,
-        Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
-    List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
-    Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField = buildDetailByTargetField(cfgImportDetailList);
-    Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
+            Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
+        List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
+        Map<String, CfgLogisticsCostImportDetailEntity> detailByTargetField = buildDetailByTargetField(cfgImportDetailList);
+        Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
         // 横向模板同一行包含多个费用列，但同一识别号仍可能出现多行，需要先按唯一键聚合。
         Map<String, List<JSONObject>> map = successList.stream()
@@ -1610,7 +1611,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
-                    updateDTO.setSourceType(sourceType);
+                    updateDTO.setSourceType(SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode());
                     updateDTO.setCurrency(currency);
                     updateList.add(updateDTO);
                 }
@@ -1952,7 +1953,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param dtoList
      * @return void
      */
-    private void getLogisticsBillCostAddData(LogisticsBillCostDTO.ImportDataDTO importDataDTO,LogisticsBillCostEntity logisticsBillCostEntity,List<LogisticsBillCostDTO.AddDataDTO> dtoList,String sourceType) {
+    private void getLogisticsBillCostAddData(LogisticsBillCostDTO.ImportDataDTO importDataDTO,LogisticsBillCostEntity logisticsBillCostEntity,List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
         //物流费用
         List<LogisticsBillCostDTO.AddDTO> addBillCostList  = new ArrayList<>();
         //费用项新增列表
@@ -2024,7 +2025,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 add.setCfgCostId(detailDTO.getCfgCostId());
                 add.setCostValue(detailDTO.getCostValue());
                 add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-                add.setSourceType(sourceType);
+                add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
                 add.setCurrency(detailDTO.getCurrency());
                 addCfgCostList.add(add);
 
@@ -2035,7 +2036,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     add.setCfgCostId(detailDTO.getCfgCostId());
                     add.setCostValue(estimatedValue);
                     add.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
-                    add.setSourceType(sourceType);
+                    add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
                     add.setCurrency(detailDTO.getEstimatedCurrency());
                     addCfgCostList.add(add);
                 }
