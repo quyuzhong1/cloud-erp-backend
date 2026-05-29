@@ -40,7 +40,7 @@ public class ExportWmsCfgQcUserHandler extends AbstractPageFileEventHandler<CfgQ
 
     @Override
     protected String getExcelPath() {
-        return "excel/cfgQcUser.xlsx";
+        return "excel/wms/cfgQcUserExport.xlsx";
     }
 
     @Override

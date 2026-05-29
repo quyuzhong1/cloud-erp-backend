@@ -1340,6 +1340,7 @@ public class ExportWmsFeignController {
             tableField = "create_user_id",
             menuCode = "wms:cfgQcUser:export",
             tableAlias = "cqu")
+    @WebAdvanceQuery(handler = CfgQcUserQueryHandler.class)
     public PagingVO<CfgQcUserDTO.ListDTO> exportCfgQcUser(@RequestBody @Validated PagingDTO<CfgQcUserDTO.ExportDTO> dto) {
         return cfgQcUserService.paging(dto);
     }
