@@ -56,6 +56,7 @@ import com.erp.server.plm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,7 +66,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -106,6 +106,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private LogisticsFeign logisticsFeign;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Lazy
+    @Resource
+    private SkuStdCostDetailService self;
 
     private static final String CLASSPATH = String.valueOf(SkuStdCostDetailEntity.class);
 
@@ -263,13 +267,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
     @Override
     public List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<SkuStdCostEntity> mainEntityList = skuStdCostService.lambdaQuery()
-                .in(SkuStdCostEntity::getId, ids)
-                .list();
-        Map<String, SkuStdCostEntity> mainEntityMap = mainEntityList.stream()
-                .collect(Collectors.toMap(SkuStdCostEntity::getId, Function.identity(), (a, b) -> a));
+        //page分页的id指的是sku_std_cost_detail的id
+        List<String> detailId = dto.getIds();
+        List<SkuStdCostDetailEntity> skuStdCostDetailEntities = listByIds(detailId);
+        if(CollUtil.isEmpty(skuStdCostDetailEntities)){
+            throw new ServiceException("sku标准成本主信息不存在, 自动获取失败");
+        }
+
+        Map<String, SkuStdCostDetailEntity> detailMap = skuStdCostDetailEntities.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, Function.identity()));
 
         SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(dto.getOrgId());
         if (ObjectUtil.isEmpty(companyEntity)) {
@@ -281,18 +286,14 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("仓库不存在");
         }
 
-        List<String> mainIds = mainEntityList.stream()
-                .map(SkuStdCostEntity::getId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Map<String, List<SkuStdCostDetailEntity>> detailMap = CollectionUtils.isEmpty(mainIds)
-                ? Collections.emptyMap()
-                : lambdaQuery()
-                .in(SkuStdCostDetailEntity::getMainId, mainIds)
-                .list()
-                .stream()
-                .collect(Collectors.groupingBy(SkuStdCostDetailEntity::getMainId));
+        //获取主表ids
+        List<String> ids = skuStdCostDetailEntities.stream().map(SkuStdCostDetailEntity::getMainId).collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SkuStdCostEntity> mainEntityList = skuStdCostService.lambdaQuery()
+                .in(SkuStdCostEntity::getId, ids)
+                .list();
+        Map<String, SkuStdCostEntity> mainEntityMap = mainEntityList.stream()
+                .collect(Collectors.toMap(SkuStdCostEntity::getId, Function.identity(), (a, b) -> a));
 
         List<String> skuIds = mainEntityList.stream()
                 .map(SkuStdCostEntity::getSkuId)
@@ -314,10 +315,16 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             }
         }
 
-        SkuStdCostDetailServiceImpl bean = ApplicationContextUtils.getBean(SkuStdCostDetailServiceImpl.class);
         for (String id : ids) {
             BatchResultDTO resultItem;
-            SkuStdCostEntity mainEntity = mainEntityMap.get(id);
+            SkuStdCostDetailEntity skuStdCostDetailEntity = detailMap.get(id);
+            if(Objects.isNull(skuStdCostDetailEntity)){
+                resultItem = BatchResultDTO.fail(id, id, "sku标准成本明细信息不存在, 自动获取失败");
+                resultDTOS.add(resultItem);
+                continue;
+            }
+
+            SkuStdCostEntity mainEntity = mainEntityMap.get(skuStdCostDetailEntity.getMainId());
             if (ObjectUtil.isEmpty(mainEntity)) {
                 resultItem = BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 自动获取失败");
                 resultDTOS.add(resultItem);
@@ -329,7 +336,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 continue;
             }
             try {
-                bean.autoFetchWithContext(mainEntity, detailMap.get(id), skuCostMap.get(mainEntity.getSkuId()));
+                self.autoFetchWithContext(mainEntity, skuStdCostDetailEntity, skuCostMap.get(mainEntity.getSkuId()));
                 resultItem = BatchResultDTO.success(mainEntity.getId(), mainEntity.getSkuNo(), "sku标准成本自动获取成功");
             } catch (Exception e) {
                 log.error("sku标准成本自动获取失败", e);
@@ -341,10 +348,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public Boolean autoFetchWithContext(SkuStdCostEntity mainEntity,
-                                        List<SkuStdCostDetailEntity> detailList,
+                                        SkuStdCostDetailEntity detailEntity,
                                         List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
         if (ObjectUtil.isEmpty(mainEntity)) {
             throw new ServiceException("SKU标准成本主数据不存在");
@@ -352,8 +359,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (StringUtils.isBlank(mainEntity.getSkuId())) {
             throw new ServiceException("SKU标准成本主数据未关联SKU");
         }
-
-        SkuStdCostDetailEntity detailEntity = resolveAutoFetchDetail(detailList);
+        //校验明细是否符合条件
+        checkDetail(detailEntity);
         InventorySkuCostDTO.SkuCostCNYDTO skuCost = resolveAutoFetchSkuCost(skuCostList);
 
         SkuStdCostDetailEntity oldEntity = new SkuStdCostDetailEntity();
@@ -375,25 +382,21 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("SKU标准成本自动获取日志记录失败");
         }
 
-        submitEntity(detailEntity, mainEntity);
+        self.submitEntity(detailEntity, mainEntity);
         return Boolean.TRUE;
     }
 
-    SkuStdCostDetailEntity resolveAutoFetchDetail(List<SkuStdCostDetailEntity> detailList) {
-        if (CollectionUtils.isEmpty(detailList)) {
+    private void checkDetail(SkuStdCostDetailEntity detailEntity) {
+        if (Objects.isNull(detailEntity)) {
             throw new ServiceException("仅支持待提交且标准成本为空或为0的明细自动获取");
         }
-        List<SkuStdCostDetailEntity> enableDetailList = detailList.stream()
-                .filter(detail -> Objects.equals(detail.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT))
-                .filter(detail -> detail.getStdCostPrice() == null || BigDecimal.ZERO.compareTo(detail.getStdCostPrice()) == 0)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(enableDetailList)) {
-            throw new ServiceException("仅支持待提交且标准成本为空或为0的明细自动获取");
+
+        if(!Objects.equals(detailEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT)){
+            throw new ServiceException("仅支持待提交的明细自动获取");
         }
-        if (enableDetailList.size() > 1) {
-            throw new ServiceException("存在多条可自动获取的SKU标准成本明细");
+        if (detailEntity.getStdCostPrice() != null  || BigDecimal.ZERO.compareTo(detailEntity.getStdCostPrice()) != 0) {
+            throw new ServiceException("仅支持标准成本为空或为0的明细自动获取");
         }
-        return enableDetailList.get(0);
     }
 
     private InventorySkuCostDTO.SkuCostCNYDTO getAutoFetchSkuCost(String skuId, String orgId, String warehouseId) {
