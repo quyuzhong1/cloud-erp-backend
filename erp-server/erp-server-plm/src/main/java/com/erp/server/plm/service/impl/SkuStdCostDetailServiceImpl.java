@@ -17,7 +17,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -108,7 +107,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private WmsTaskFeign wmsTaskFeign;
 
     @Lazy
-    @Resource
+    @Autowired
     private SkuStdCostDetailService self;
 
     private static final String CLASSPATH = String.valueOf(SkuStdCostDetailEntity.class);
@@ -199,6 +198,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeCommonDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
         // 数据校验
         validateChangeParams(addDTO, listDTO, lastListDTO);
+        // 同 SKU 同年月下，已存在待提交/审核中/已审核的记录禁止重复变更
+        checkDuplicateByMonth(listDTO.getMainId(), null, addDTO.getEffectiveDate(),
+                Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE));
         // 构建实体
         SkuStdCostDetailEntity newDetailEntity = buildChangeEntity(addDTO, listDTO.getMainId());
 
@@ -245,6 +247,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
         // 设置值（只有新增时才会走到这里）
         if (old.getEffectiveDate() == null) {
+            // 同 SKU 同年月下不允许同时存在多条待提交/审核中/已审核记录
+            checkDuplicateByMonth(old.getMainId(), old.getId(), addOrUpdateDTO.getEffectiveDate(),
+                    Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE));
             newEntity.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
         }
         return newEntity;
@@ -268,10 +273,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Override
     public List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto) {
         //page分页的id指的是sku_std_cost_detail的id
-        List<String> detailId = dto.getIds();
-        List<SkuStdCostDetailEntity> skuStdCostDetailEntities = listByIds(detailId);
+        List<String> detailIds = dto.getIds();
+        List<SkuStdCostDetailEntity> skuStdCostDetailEntities = listByIds(detailIds);
         if(CollUtil.isEmpty(skuStdCostDetailEntities)){
-            throw new ServiceException("sku标准成本主信息不存在, 自动获取失败");
+            throw new ServiceException("sku标准成本明细信息不存在, 自动获取失败");
         }
 
         Map<String, SkuStdCostDetailEntity> detailMap = skuStdCostDetailEntities.stream().collect(Collectors.toMap(SkuStdCostDetailEntity::getId, Function.identity()));
@@ -315,18 +320,18 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             }
         }
 
-        for (String id : ids) {
+        for (String detailId : detailIds) {
             BatchResultDTO resultItem;
-            SkuStdCostDetailEntity skuStdCostDetailEntity = detailMap.get(id);
+            SkuStdCostDetailEntity skuStdCostDetailEntity = detailMap.get(detailId);
             if(Objects.isNull(skuStdCostDetailEntity)){
-                resultItem = BatchResultDTO.fail(id, id, "sku标准成本明细信息不存在, 自动获取失败");
+                resultItem = BatchResultDTO.fail(detailId, detailId, "sku标准成本明细信息不存在, 自动获取失败");
                 resultDTOS.add(resultItem);
                 continue;
             }
 
             SkuStdCostEntity mainEntity = mainEntityMap.get(skuStdCostDetailEntity.getMainId());
             if (ObjectUtil.isEmpty(mainEntity)) {
-                resultItem = BatchResultDTO.fail(id, id, "sku标准成本主信息不存在, 自动获取失败");
+                resultItem = BatchResultDTO.fail(detailId, detailId, "sku标准成本主信息不存在, 自动获取失败");
                 resultDTOS.add(resultItem);
                 continue;
             }
@@ -376,13 +381,13 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("SKU标准成本自动获取保存失败");
         }
 
+        submitEntity(detailEntity, mainEntity);
+
         String msg = CharSequenceUtil.format("SKU[{}]标准成本自动获取", mainEntity.getSkuNo());
         Boolean logResult = operateLogService.addSysLogByUpdate(oldEntity, detailEntity, CLASSPATH, detailEntity.getId(), mainEntity.getSkuId(), msg);
         if (!Boolean.TRUE.equals(logResult)) {
             throw new ServiceException("SKU标准成本自动获取日志记录失败");
         }
-
-        self.submitEntity(detailEntity, mainEntity);
         return Boolean.TRUE;
     }
 
@@ -394,7 +399,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if(!Objects.equals(detailEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT)){
             throw new ServiceException("仅支持待提交的明细自动获取");
         }
-        if (detailEntity.getStdCostPrice() != null  || BigDecimal.ZERO.compareTo(detailEntity.getStdCostPrice()) != 0) {
+        if (detailEntity.getStdCostPrice() != null  && BigDecimal.ZERO.compareTo(detailEntity.getStdCostPrice()) != 0) {
             throw new ServiceException("仅支持标准成本为空或为0的明细自动获取");
         }
     }
@@ -853,7 +858,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
     /**
-     * 分页查询、导出 数据处理
+     * 提交前校验：状态合法性 + 明细字段完整性 + 同年月唯一性
      */
     private void validateSubmit(SkuStdCostDetailEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
@@ -861,6 +866,34 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         validateDetail(entity);
+        // 同 SKU 同年月下，已存在审核中或已审核的记录禁止重复提交
+        checkDuplicateByMonth(entity.getMainId(), entity.getId(), entity.getEffectiveDate(),
+                Arrays.asList(ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE));
+    }
+
+    /**
+     * 校验同一 SKU（mainId）同年月下是否已存在指定状态的明细，防止重复提交。
+     * 阻断状态由调用方决定：提交时拦截 APPROVE_ING/APPROVE；编辑设日期时拦截全部非拒绝状态。
+     */
+    private void checkDuplicateByMonth(String mainId, String excludeId, LocalDate effectiveDate,
+                                       List<ApproveStatusEnum> blockedStatuses) {
+        if (effectiveDate == null) {
+            return;
+        }
+        LocalDate monthStart = effectiveDate.withDayOfMonth(1);
+        LocalDate monthEnd = monthStart.plusMonths(1);
+        long count = lambdaQuery()
+                .eq(SkuStdCostDetailEntity::getMainId, mainId)
+                .ne(StringUtils.isNotBlank(excludeId), SkuStdCostDetailEntity::getId, excludeId)
+                .ge(SkuStdCostDetailEntity::getEffectiveDate, monthStart)
+                .lt(SkuStdCostDetailEntity::getEffectiveDate, monthEnd)
+                .in(SkuStdCostDetailEntity::getApproveStatus, blockedStatuses)
+                .count();
+        if (count > 0) {
+            throw new ServiceException(StrUtil.format(
+                    "{}年{}月已存在提交或已审核的SKU标准成本记录，禁止重复提交",
+                    effectiveDate.getYear(), effectiveDate.getMonthValue()));
+        }
     }
 
     /**
