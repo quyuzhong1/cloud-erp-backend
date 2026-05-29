@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -64,4 +65,11 @@ public interface SkuStdCostDetailMapper extends BaseMapper<SkuStdCostDetailEntit
     List<SkuStdCostDetailDTO.ListDTO> lastList(@Param("skuIds")List<String> skuIds, @Param("approveStatus") String approveStatus);
 
     IPage<SkuStdCostDetailDTO.ListDTO> historyPaging(Page query, @Param("params") SkuStdCostDetailDTO.HistoryPagingParamDTO params);
+
+    /**
+     * 对 sku_std_cost 主行加排他锁，序列化同一 SKU 的并发写入，防止先查后写竞态。
+     * 必须在事务内调用，锁随事务结束自动释放。
+     */
+    @Select("SELECT id FROM sku_std_cost WHERE id = #{mainId} FOR UPDATE")
+    String lockSkuStdCostForUpdate(@Param("mainId") String mainId);
 }

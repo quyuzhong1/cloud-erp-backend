@@ -200,7 +200,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         validateChangeParams(addDTO, listDTO, lastListDTO);
         // 同 SKU 同年月下，已存在待提交/审核中/已审核的记录禁止重复变更
         checkDuplicateByMonth(listDTO.getMainId(), null, addDTO.getEffectiveDate(),
-                Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE));
+                Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE), "变更新增");
         // 构建实体
         SkuStdCostDetailEntity newDetailEntity = buildChangeEntity(addDTO, listDTO.getMainId());
 
@@ -249,7 +249,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         if (old.getEffectiveDate() == null) {
             // 同 SKU 同年月下不允许同时存在多条待提交/审核中/已审核记录
             checkDuplicateByMonth(old.getMainId(), old.getId(), addOrUpdateDTO.getEffectiveDate(),
-                    Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE));
+                    Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE), "编辑设日期");
             newEntity.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
         }
         return newEntity;
@@ -381,13 +381,16 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("SKU标准成本自动获取保存失败");
         }
 
-        submitEntity(detailEntity, mainEntity);
-
+        // 先记录日志（此时 detailEntity 反映的是自动获取操作的字段变更，审批状态尚未变更）
         String msg = CharSequenceUtil.format("SKU[{}]标准成本自动获取", mainEntity.getSkuNo());
         Boolean logResult = operateLogService.addSysLogByUpdate(oldEntity, detailEntity, CLASSPATH, detailEntity.getId(), mainEntity.getSkuId(), msg);
         if (!Boolean.TRUE.equals(logResult)) {
             throw new ServiceException("SKU标准成本自动获取日志记录失败");
         }
+
+        // 日志写入后再提交审核，避免 submitEntity 修改 detailEntity 状态字段导致日志语义失真
+        submitEntity(detailEntity, mainEntity);
+
         return Boolean.TRUE;
     }
 
@@ -868,18 +871,23 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         validateDetail(entity);
         // 同 SKU 同年月下，已存在审核中或已审核的记录禁止重复提交
         checkDuplicateByMonth(entity.getMainId(), entity.getId(), entity.getEffectiveDate(),
-                Arrays.asList(ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE));
+                Arrays.asList(ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE), "提交");
     }
 
     /**
-     * 校验同一 SKU（mainId）同年月下是否已存在指定状态的明细，防止重复提交。
-     * 阻断状态由调用方决定：提交时拦截 APPROVE_ING/APPROVE；编辑设日期时拦截全部非拒绝状态。
+     * 校验同一 SKU（mainId）同年月下是否已存在指定状态的明细。
+     * - 阻断状态由调用方决定：提交时拦截 APPROVE_ING/APPROVE；编辑设日期时拦截全部非拒绝状态
+     * - conflictAction：描述当前操作场景，拼入错误提示，如"提交"/"变更新增"/"编辑设日期"
+     * - 先对 sku_std_cost 主行加排他锁，序列化同 SKU 并发请求，消除先查后写竞态；
+     *   DB 层应同步添加 (main_id, DATE_TRUNC('month', effective_date)) 唯一索引作为兜底
      */
     private void checkDuplicateByMonth(String mainId, String excludeId, LocalDate effectiveDate,
-                                       List<ApproveStatusEnum> blockedStatuses) {
-        if (effectiveDate == null) {
+                                       List<ApproveStatusEnum> blockedStatuses, String conflictAction) {
+        if (effectiveDate == null || CollectionUtils.isEmpty(blockedStatuses)) {
             return;
         }
+        // 对主行加排他锁，防止相同 SKU 的并发请求同时通过下方 COUNT 检查
+        baseMapper.lockSkuStdCostForUpdate(mainId);
         LocalDate monthStart = effectiveDate.withDayOfMonth(1);
         LocalDate monthEnd = monthStart.plusMonths(1);
         long count = lambdaQuery()
@@ -891,8 +899,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 .count();
         if (count > 0) {
             throw new ServiceException(StrUtil.format(
-                    "{}年{}月已存在提交或已审核的SKU标准成本记录，禁止重复提交",
-                    effectiveDate.getYear(), effectiveDate.getMonthValue()));
+                    "{}年{}月已存在相同SKU标准成本记录，{}失败",
+                    effectiveDate.getYear(), effectiveDate.getMonthValue(), conflictAction));
         }
     }
 
