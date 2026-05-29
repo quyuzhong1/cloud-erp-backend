@@ -114,7 +114,15 @@ public class FeiShuFileServiceImpl implements FeiShuFileService {
         throw new ServiceException(ApiError.FILE_UNSUPPORTED_TYPE, fileType);
     }
 
-    // 处理普通文件
+    /**
+     * 处理普通文件（如图片、PDF等）
+     * @param fileToken
+     * @param sheet
+     * @param view
+     * @param client
+     * @return
+     * @throws Exception
+     */
     private SysCommonDTO.AttachmentDTO handleFile(String fileToken, String sheet, String view, Client client) throws Exception {
         DownloadFileResp resp = downloadFile(fileToken, client);
         String url = FastDFSClientUtil.uploadFile(resp.getData().toByteArray(), resp.getFileName(), null);
