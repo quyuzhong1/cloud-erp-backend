@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 @Service
 public abstract class AbstractThirdWarehouseHandler extends BaseController implements ThirdWarehouseService {
 
+    private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "第三方仓接口返回为空";
+
     @Resource
     private OverseasProviderService overseasProviderService;
 
@@ -205,6 +207,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             handleAuthInfo(authId);
             //执行逻辑
             ApiResult<T> result = handler.handle();
+            if (isRetryableOutboundResult(result, businessType)) {
+                result = ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), getRetryableOutboundMessage(result.getMsg()));
+            }
             ThirdWarehouseContext.setMsg(result.getMsg());
             //记录日志
             pushOperateLog(businessType,result.getCode(),erpBusinessCode, false);
@@ -221,13 +226,82 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     private String getThirdWarehouseExceptionMessage(Exception e, SourceTypeEnum businessType) {
-        if ((businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
-                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL)
-                && e instanceof NullPointerException
-                && CharSequenceUtil.isBlank(e.getMessage())) {
-            return "第三方仓接口返回为空";
+        if (isOutboundBusiness(businessType) && isTimeoutException(e)) {
+            return CharSequenceUtil.blankToDefault(e.getMessage(), "第三方仓接口请求超时");
+        }
+        if (isOutboundBusiness(businessType) && isEmptyResponseException(e)) {
+            return THIRD_WAREHOUSE_EMPTY_RESPONSE;
         }
         return e.getMessage();
+    }
+
+    private boolean isRetryableOutboundResult(ApiResult<?> result, SourceTypeEnum businessType) {
+        return isOutboundBusiness(businessType)
+                && ObjectUtil.isNotEmpty(result)
+                && !result.isSuccess()
+                && (isTimeoutMessage(result.getMsg()) || isEmptyResponseMessage(result.getMsg()));
+    }
+
+    private String getRetryableOutboundMessage(String message) {
+        return isEmptyResponseMessage(message) ? THIRD_WAREHOUSE_EMPTY_RESPONSE : message;
+    }
+
+    private boolean isOutboundBusiness(SourceTypeEnum businessType) {
+        return businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
+                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL;
+    }
+
+    private boolean isEmptyResponseException(Exception e) {
+        return e instanceof NullPointerException && CharSequenceUtil.isBlank(e.getMessage())
+                || isEmptyResponseMessage(e.getMessage());
+    }
+
+    private boolean isTimeoutException(Throwable throwable) {
+        Throwable current = throwable;
+        while (Objects.nonNull(current)) {
+            if (current instanceof java.net.SocketTimeoutException || isTimeoutMessage(current.getMessage())) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private boolean isEmptyResponseMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        return message.contains("返回为空")
+                || message.contains("响应为空")
+                || message.contains("返回数据为空")
+                || message.contains("返回结果为空")
+                || message.contains("响应结果为空")
+                || message.contains("接口返回为空")
+                || isBlankOriginalJsonParseError(message);
+    }
+
+    private boolean isTimeoutMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("timeout")
+                || lowerMessage.contains("timed out")
+                || lowerMessage.contains("sockettimeoutexception")
+                || message.contains("超时");
+    }
+
+    private boolean isBlankOriginalJsonParseError(String message) {
+        if (!CharSequenceUtil.containsIgnoreCase(message, "json 解析失败") || !message.contains("原始值：")) {
+            return false;
+        }
+        int originalValueStart = message.indexOf("原始值：") + "原始值：".length();
+        int originalValueEnd = message.indexOf("，异常", originalValueStart);
+        if (originalValueEnd < 0) {
+            return false;
+        }
+        String originalValue = message.substring(originalValueStart, originalValueEnd);
+        return CharSequenceUtil.isBlank(originalValue) || "null".equalsIgnoreCase(originalValue.trim());
     }
 
     @FunctionalInterface

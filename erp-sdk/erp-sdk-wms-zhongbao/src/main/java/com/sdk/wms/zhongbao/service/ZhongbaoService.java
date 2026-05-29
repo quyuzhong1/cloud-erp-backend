@@ -522,8 +522,12 @@ public class ZhongbaoService {
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
             ThirdWarehouseContext.setResponseJson(bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCreateResponse>>() {
+            BaseResponse<OutboundB2cCreateResponse> resp = JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCreateResponse>>() {
             }.getType());
+            if (resp == null) {
+                throw new ServiceException("众包创建B2C出库单接口返回为空");
+            }
+            return resp;
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             ThirdWarehouseContext.setResponseJson("请求失败,异常: {}" + e.getMessage());

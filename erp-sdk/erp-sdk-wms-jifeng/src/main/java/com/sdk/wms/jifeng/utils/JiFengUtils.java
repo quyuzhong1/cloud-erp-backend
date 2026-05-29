@@ -1,5 +1,6 @@
 package com.sdk.wms.jifeng.utils;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
@@ -47,7 +48,11 @@ public class JiFengUtils {
      */
     public static <T> JiFengBaseResp<T> parseToJiFengResp(String jsonStr, Class<T> clazz) {
         try {
-            return JSON.parseObject(jsonStr, new TypeReference<JiFengBaseResp<T>>(clazz) {});
+            if (CharSequenceUtil.isBlank(jsonStr)) {
+                return JiFengBaseResp.error("极风接口返回为空");
+            }
+            JiFengBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<JiFengBaseResp<T>>(clazz) {});
+            return resp == null ? JiFengBaseResp.error("极风接口返回为空") : resp;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return JiFengBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -62,7 +67,11 @@ public class JiFengUtils {
      */
     public static <T> JiFengBaseResp<T> parseToJiFengResp(String jsonStr, TypeReference<JiFengBaseResp<T>> typeRef) {
         try {
-            return JSON.parseObject(jsonStr, typeRef);
+            if (CharSequenceUtil.isBlank(jsonStr)) {
+                return JiFengBaseResp.error("极风接口返回为空");
+            }
+            JiFengBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
+            return resp == null ? JiFengBaseResp.error("极风接口返回为空") : resp;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return JiFengBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
