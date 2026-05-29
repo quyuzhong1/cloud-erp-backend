@@ -400,7 +400,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         @Size(max = 19, message = "仓库id最大长度不能超过19位")
         private String warehouseId;
 
-        @NotBlank(message = "目标仓位不能为空")
+        @NotNull(message = "目标仓位不能为null")
         @Size(max = 50, message = "目标仓位编码最大长度不能超过50位")
         private String targetWarehouseLocationCode;
 
