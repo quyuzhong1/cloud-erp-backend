@@ -1426,7 +1426,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
         WarehouseLocationEntity targetLocation = warehouseLocationService.findByWarehouseIdAndCode(warehouseId, targetCode);
         if (targetLocation == null || Boolean.TRUE.equals(targetLocation.getDisabled())) {
-            throw new ServiceException(CharSequenceUtil.format("查不到该仓位【{}】与东莞售后仓的关系", targetCode));
+            throw new ServiceException(CharSequenceUtil.format("查不到该仓位code【{}】与东莞售后仓的关系", targetCode));
         }
         String orgId = warehouse.getOrgId();
 
