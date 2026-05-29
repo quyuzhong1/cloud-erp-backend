@@ -994,17 +994,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             }
             detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
-            detailEntity.setReturnAmount(detailDto.getReturnAmount());
-            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            applyUpdateDetailPriceFromRequest(detailEntity, detailDto, dto.getExchangeRate(), detailDto.getRealQty());
+            applyDetailCurrency(detailEntity, dto.getCurrency());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
-            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
-            if(null == detailDto.getExchangeRate()){
-                detailEntity.setExchangeRate(dto.getExchangeRate());
-            }else{
-                detailEntity.setExchangeRate(detailDto.getExchangeRate());
-            }
             list.add(detailEntity);
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
@@ -1030,6 +1023,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<String> oldIds = oldList.stream().map(SoReturnInstockDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    private void applyDetailCurrency(SoReturnInstockDetailEntity detailEntity, String currency) {
+        if (CharSequenceUtil.isNotBlank(currency)) {
+            detailEntity.setCurrency(currency);
+        }
     }
 
     private boolean hasDetailPriceFromRequest(SoReturnInstockDetailDTO.Common detailDto) {
