@@ -417,7 +417,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         msg = msg+","+skuMsg;
         //操作日志
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
-
+        // 整箱退货：单独记录箱唛新增日志，与修改时 addAfterSalePackUpdateLog 保持一致
+        boolean packReturnDetail = CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode());
+        if (packReturnDetail) {
+            addAfterSalePackAddLog(dto, poReturnEntity);
+        }
         return poReturnEntity;
     }
 
@@ -2236,6 +2240,55 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         return detailList.stream()
                 .map(detail -> buildAfterSalePackDetailDTO(detail, packMap.get(detail.getMainId()), warehouseLocationMap))
                 .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getSkuId, LinkedHashMap::new, Collectors.toList()));
+    }
+
+    /**
+     * 新增采购退货单时记录整箱退货的箱唛操作日志：
+     * 按箱唛分组，每个箱唛输出一条「扫码箱唛【code】，新增了N条sku【...】」。
+     * 仅记录 actualQty > 0 的明细，与修改时的箱唛日志规则保持一致。
+     */
+    private void addAfterSalePackAddLog(PurchaseReturnOrderDTO.AddDTO dto, PoReturnEntity poReturnEntity) {
+        List<AfterSalePackDTO.DetailDTO> newDetailList = getAfterSalePackDetailsForAdd(dto);
+        if (CollectionUtils.isEmpty(newDetailList)) {
+            return;
+        }
+
+        Set<String> packIds = newDetailList.stream()
+                .map(AfterSalePackDTO.DetailDTO::getMainId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (CollectionUtils.isEmpty(packIds)) {
+            return;
+        }
+        Map<String, AfterSalePackEntity> packMap = afterSalePackService.listByIds(packIds).stream()
+                .collect(Collectors.toMap(AfterSalePackEntity::getId, Function.identity(), (v1, v2) -> v1));
+        Map<String, List<AfterSalePackDTO.DetailDTO>> newPackMap = newDetailList.stream()
+                .filter(detail -> CharSequenceUtil.isNotBlank(detail.getMainId()))
+                .collect(Collectors.groupingBy(AfterSalePackDTO.DetailDTO::getMainId, LinkedHashMap::new, Collectors.toList()));
+
+        List<String> logList = new ArrayList<>();
+        for (String packId : packIds) {
+            String packCode = Optional.ofNullable(packMap.get(packId)).map(AfterSalePackEntity::getCode)
+                    .orElseGet(() -> newPackMap.getOrDefault(packId, Collections.emptyList()).stream()
+                            .map(AfterSalePackDTO.DetailDTO::getCode)
+                            .filter(CharSequenceUtil::isNotBlank)
+                            .findFirst()
+                            .orElse(""));
+            List<String> skuNoList = newPackMap.getOrDefault(packId, Collections.emptyList()).stream()
+                    .filter(detail -> getAfterSalePackActualQty(detail) > MathUtil.ZERO)
+                    .map(AfterSalePackDTO.DetailDTO::getSkuNo)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .map(skuNo -> "sku【" + skuNo + "】")
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuNoList)) {
+                logList.add(CharSequenceUtil.format("扫码箱唛【{}】，新增了{}条{}", packCode, skuNoList.size(), String.join("，", skuNoList)));
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(logList)) {
+            operateLogService.addModuleOperateLog(String.join("；", logList), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
+        }
     }
 
     private void addAfterSalePackUpdateLog(PurchaseReturnOrderDTO.UpdateDTO dto,
