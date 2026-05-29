@@ -15,7 +15,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
@@ -67,8 +66,6 @@ import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -273,7 +270,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 						dto.setCostValue(tmsCostDetailEntity.getCostValue());
 						dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
 						dto.setCfgCostId(tmsCostDetailEntity.getCfgCostId());
-						dto.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+
+                        //预估金额导入确认时，新增的费用明细来源类型区分自发货和尾程
+                        if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())) {
+                            dto.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                        } else {
+                            dto.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
+                        }
 						costDetailList.add(dto);
 						continue;
 					}
