@@ -98,18 +98,29 @@
     <select id="listFeedbackQtyBySourceDetailIdList"
             resultType="com.erp.model.oms.dto.KolFeedbackDTO$FeedbackQtyDTO">
         select
-        kf.source_detail_id,
+        kfu.source_detail_id,
         count(0) as feedbackQty,
-        sum(case when kf.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
-        "max"(kf.url) as feedbackUrl
-        from kol_feedback kf
+        sum(case when kfu.feedback_status = 'completed' then 1 else 0 end) as captureFeedbackQty,
+        array_to_string(array_agg(kfu.url order by kfu.sort, kfu.create_time, kfu.id), ',') as feedbackUrl
+        from (
+            select distinct on (source_detail_id, url_hash)
+                source_detail_id,
+                url,
+                feedback_status,
+                sort,
+                create_time,
+                id
+            from kol_sample_cost_ref_feedback_url
+            where is_deleted = false
+            order by source_detail_id, url_hash, sort, create_time, id
+        ) kfu
         <where>
-            kf.is_deleted = false and kf.source_detail_id in
+            kfu.source_detail_id in
             <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </where>
-        group by kf.source_detail_id
+        group by kfu.source_detail_id
     </select>
 
 </mapper>

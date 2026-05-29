@@ -43,6 +43,7 @@ import com.erp.server.oms.listener.KolFeedbackExcelListener;
 import com.erp.server.oms.mapper.KolFeedbackMapper;
 import com.erp.server.oms.service.KolFeedbackService;
 import com.erp.server.oms.service.KolPartnerInfoService;
+import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import com.erp.server.oms.service.KolSocialMediaService;
 import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -107,6 +108,9 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     @Autowired
     private KolSocialMediaService kolSocialMediaService;
 
+    @Autowired
+    private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
+
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -128,6 +132,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "KOL回片列单" , kolFeedbackEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_FEEDBACK.getCode(), kolFeedbackEntity.getId(), "新增操作");
+        kolSampleCostFeedbackUrlService.syncByFeedback(kolFeedbackEntity);
 
         return new BaseResultDTO.AddDTO(kolFeedbackEntity.getId(), kolFeedbackEntity.getId());
     }
@@ -190,6 +195,10 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         log.info("编辑 开始记录KOL回片列单日志数据，id：【{}】", kolFeedbackEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kolFeedbackEntity.getId(), "KOL回片列单");
         operateLogService.addModuleOperateLogByObj(old, kolFeedbackEntity,  ModuleTypeEnum.KOL_FEEDBACK.getCode(), kolFeedbackEntity.getId(), msg);
+        if (!sameFeedbackUrlKey(old, kolFeedbackEntity)) {
+            kolSampleCostFeedbackUrlService.removeByFeedback(old, hasSameActiveFeedback(old, Collections.singleton(old.getId())));
+        }
+        kolSampleCostFeedbackUrlService.syncByFeedback(kolFeedbackEntity);
         return Boolean.TRUE;
     }
 
@@ -224,11 +233,19 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             }
         }
         
+        Set<String> deleteIdSet = new HashSet<>(dto.getIds());
+        Map<String, Boolean> sameFeedbackMap = list.stream().collect(Collectors.toMap(
+                KolFeedbackEntity::getId,
+                entity -> hasSameActiveFeedback(entity, deleteIdSet),
+                (v1, v2) -> v1
+        ));
+
         // 执行批量删除
         boolean remove = super.removeByIds(dto.getIds());
         if (!remove) {
             throw new ServiceException("批量删除失败");
         }
+        list.forEach(entity -> kolSampleCostFeedbackUrlService.removeByFeedback(entity, sameFeedbackMap.getOrDefault(entity.getId(), false)));
     }
 
     @Override
@@ -243,11 +260,14 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             throw new ServiceException("已回片状态不允许删除");
         }
         
+        boolean hasSameActiveFeedback = hasSameActiveFeedback(entity, Collections.singleton(id));
+
         // 执行删除
         boolean remove = super.removeById(id);
         if (!remove) {
             throw new ServiceException("删除失败");
         }
+        kolSampleCostFeedbackUrlService.removeByFeedback(entity, hasSameActiveFeedback);
         
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode());
     }
@@ -473,6 +493,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 if (!save) {
                     excelDTO.setErrorMsg("保存失败");
                     errorList2.add(excelDTO);
+                } else {
+                    kolSampleCostFeedbackUrlService.syncByFeedback(entity);
                 }
             } catch (Exception e) {
                 log.error("导入KOL回片列表数据失败", e);
@@ -682,6 +704,28 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
             }
         }
+    }
+
+    private boolean sameFeedbackUrlKey(KolFeedbackEntity oldEntity, KolFeedbackEntity newEntity) {
+        return Objects.equals(oldEntity.getSourceType(), newEntity.getSourceType())
+                && Objects.equals(oldEntity.getSourceDetailId(), newEntity.getSourceDetailId())
+                && Objects.equals(oldEntity.getUrlHash(), newEntity.getUrlHash());
+    }
+
+    private boolean hasSameActiveFeedback(KolFeedbackEntity entity, Collection<String> excludeIds) {
+        if (entity == null
+                || StrUtil.isBlank(entity.getSourceType())
+                || StrUtil.isBlank(entity.getSourceDetailId())
+                || StrUtil.isBlank(entity.getUrlHash())) {
+            return false;
+        }
+        return lambdaQuery()
+                .eq(KolFeedbackEntity::getSourceType, entity.getSourceType())
+                .eq(KolFeedbackEntity::getSourceDetailId, entity.getSourceDetailId())
+                .eq(KolFeedbackEntity::getUrlHash, entity.getUrlHash())
+                .eq(KolFeedbackEntity::getIsDeleted, false)
+                .notIn(CollUtil.isNotEmpty(excludeIds), KolFeedbackEntity::getId, excludeIds)
+                .count() > 0;
     }
 
     /**

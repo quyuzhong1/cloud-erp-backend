@@ -664,6 +664,11 @@ public class InventorySkuCostDTO implements Serializable {
         private BigDecimal clearanceCustomsTax;
 
         /**
+         * 核算月份
+         */
+        private LocalDate accountingMonth;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
