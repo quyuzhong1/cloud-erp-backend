@@ -157,6 +157,17 @@ public class DmpFeignController extends BaseController {
     public BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode) {
         return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
     }
+
+    /**
+     * 批量获取汇率
+     *
+     * @param listRateParamDTO rateKeys 协议见 BiSettlementExchangeRateDTO.ListRateParamDTO
+     * @return key 与入参 rateKey 一致，value 为汇率
+     */
+    @PostMapping("/listRate")
+    public Map<String, BigDecimal> listRate(@RequestBody  @Valid BiSettlementExchangeRateDTO.ListRateParamDTO listRateParamDTO) {
+        return biSettlementExchangeRateService.listRate(listRateParamDTO);
+    }
     
     /**
      * 获取月度汇率

@@ -122,4 +122,9 @@ public interface BiSettlementExchangeRateService extends IService<BiSettlementEx
      * @return com.erp.model.bi.entity.BiSettlementExchangeRateEntity
      */
     BiSettlementExchangeRateEntity getByExchangeParamUnique(BiSettlementExchangeRateDTO.ExchangeParamDTO exchangeParamDTO);
+
+    /**
+     * 按 rateKey 批量查询汇率，协议见 {@link BiSettlementExchangeRateDTO.ListRateParamDTO}
+     */
+    Map<String, BigDecimal> listRate(BiSettlementExchangeRateDTO.ListRateParamDTO listRateParamDTO);
 }

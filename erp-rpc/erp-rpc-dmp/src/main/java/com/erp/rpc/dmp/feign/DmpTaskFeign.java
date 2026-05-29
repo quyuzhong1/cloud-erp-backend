@@ -78,6 +78,15 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getRate")
     BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
+
+    /**
+     * 批量获取汇率
+     *
+     * @param listRateParamDTO rateKeys 协议见 {@link com.erp.model.dmp.dto.BiSettlementExchangeRateDTO.ListRateParamDTO}
+     * @return key 与入参 rateKey 一致，value 为对 CNY 的直接汇率
+     */
+    @PostMapping("feign/listRate")
+    Map<String, BigDecimal> listRate(@RequestBody BiSettlementExchangeRateDTO.ListRateParamDTO listRateParamDTO);
     
     /**
      * 获取月份汇率

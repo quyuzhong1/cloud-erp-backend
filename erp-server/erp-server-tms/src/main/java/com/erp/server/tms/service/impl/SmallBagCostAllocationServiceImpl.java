@@ -8,10 +8,12 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortParamDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -22,6 +24,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.dmp.dto.BiSettlementExchangeRateDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
@@ -46,6 +49,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -58,6 +63,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBagCostAllocationMapper, SmallBagCostAllocationEntity> implements SmallBagCostAllocationService {
+
+    private static final Map<String, Pattern> PAGING_JOIN_ALIAS_PATTERNS;
+
+    static {
+        Map<String, Pattern> patterns = new HashMap<>(4);
+        for (String alias : Arrays.asList("j", "k", "l", "n")) {
+            // j.% 形式：别名 + 点 + 列名，避免子串 contains 误判
+            patterns.put(alias, Pattern.compile("(?i)(?:^|[^a-zA-Z0-9_])" + alias + "\\.[a-zA-Z_][a-zA-Z0-9_]*"));
+        }
+        PAGING_JOIN_ALIAS_PATTERNS = Collections.unmodifiableMap(patterns);
+    }
+
     @Autowired
     private OperateLogService operateLogService;
     
@@ -71,6 +88,10 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private LogisticsBillService logisticsBillService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
@@ -160,31 +181,174 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
 		PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        fillPagingJoinFlags(params);
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<ListDTO> pageData = this.baseMapper.paging(query, params);
         List<ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
         }
-        //数据赋值处理
+        // 物流展示字段后置补查，分页 SQL 不再固定 JOIN j/k/l
+        enrichLogisticsFields(records);
         handleDataPaging(records);
         return new PagingVO(pageData);
 	}
 
-	private void handleDataPaging(List<ListDTO> records) {
-		List<String> skuIds = records.stream().map(ListDTO::getSkuId).collect(Collectors.toList());
-		List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, 
-				skuIds).list();
-		Map<String, String> skuIdNameMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
-		
-		Map<String, LogisticsChannelEntity> channelIdMaps = logisticsChannelService.listByIds(records.stream().map(ListDTO::getChannelId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
-		List<String> supplierIds = channelIdMaps.values().stream().map(LogisticsChannelEntity::getMainId).collect(Collectors.toList());
-		Map<String, String> supplierIdNameMap = new HashMap<>();
-		if(CollUtil.isNotEmpty(supplierIds)) {
-			supplierIdNameMap = logisticsSupplierService.listByIds(supplierIds).stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getShortName));
+	/**
+	 * 根据高级查询、排序、权限 SQL 判断分页是否需要 JOIN 物流/字典表，避免默认关联千万级大表
+	 */
+	private void fillPagingJoinFlags(PagingParamDTO params) {
+		boolean needJoinJ = false;
+		boolean needJoinK = false;
+		boolean needJoinL = false;
+		boolean needJoinN = false;
+		if (CollUtil.isNotEmpty(params.getAdvanceQueryDTOList())) {
+			for (AdvanceQueryDTO queryDTO : params.getAdvanceQueryDTOList()) {
+				if (queryDTO == null || CharSequenceUtil.isBlank(queryDTO.getField())) {
+					continue;
+				}
+				needJoinJ |= containsAlias(queryDTO.getField(), "j");
+				needJoinK |= containsAlias(queryDTO.getField(), "k");
+				needJoinL |= containsAlias(queryDTO.getField(), "l");
+				needJoinN |= containsAlias(queryDTO.getField(), "n");
+			}
 		}
-		
-		Map<String, BigDecimal> rateMap = new HashMap<>();
+		if (CollUtil.isNotEmpty(params.getSortList())) {
+			for (SortParamDTO sortParam : params.getSortList()) {
+				if (sortParam == null || CharSequenceUtil.isBlank(sortParam.getField())) {
+					continue;
+				}
+				needJoinJ |= containsAlias(sortParam.getField(), "j");
+				needJoinK |= containsAlias(sortParam.getField(), "k");
+				needJoinL |= containsAlias(sortParam.getField(), "l");
+				needJoinN |= containsAlias(sortParam.getField(), "n");
+			}
+		}
+		needJoinJ |= containsAlias(params.getPermissionSql(), "j");
+		needJoinK |= containsAlias(params.getPermissionSql(), "k");
+		needJoinL |= containsAlias(params.getPermissionSql(), "l");
+		needJoinN |= containsAlias(params.getPermissionSql(), "n");
+		if (params.getSqlMap() != null) {
+			for (String sql : params.getSqlMap().values()) {
+				needJoinJ |= containsAlias(sql, "j");
+				needJoinK |= containsAlias(sql, "k");
+				needJoinL |= containsAlias(sql, "l");
+				needJoinN |= containsAlias(sql, "n");
+			}
+		}
+		// l -> k -> j 存在外键依赖，子表 JOIN 时必须带上父表
+		if (needJoinL) {
+			needJoinK = true;
+		}
+		if (needJoinK) {
+			needJoinJ = true;
+		}
+		params.setNeedJoinJ(needJoinJ);
+		params.setNeedJoinK(needJoinK);
+		params.setNeedJoinL(needJoinL);
+		params.setNeedJoinN(needJoinN);
+	}
+
+	private boolean containsAlias(String text, String alias) {
+		if (CharSequenceUtil.isBlank(text) || CharSequenceUtil.isBlank(alias)) {
+			return false;
+		}
+		Pattern pattern = PAGING_JOIN_ALIAS_PATTERNS.get(alias.toLowerCase());
+		return pattern != null && pattern.matcher(text).find();
+	}
+
+	/**
+	 * 按当前页 costId 批量补全物流字段，替代 SQL 固定 JOIN j/k/l
+	 */
+	private void enrichLogisticsFields(List<ListDTO> records) {
+		List<String> costIds = records.stream().map(ListDTO::getCostId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+		if (CollUtil.isEmpty(costIds)) {
+			return;
+		}
+		Map<String, LogisticsBillCostEntity> costMap = logisticsBillCostService.listByIds(costIds).stream()
+				.collect(Collectors.toMap(LogisticsBillCostEntity::getId, e -> e, (a, b) -> a));
+		List<String> billIds = costMap.values().stream().map(LogisticsBillCostEntity::getLogisticsBillId)
+				.filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+		List<String> billDetailIds = costMap.values().stream().map(LogisticsBillCostEntity::getLogisticsBillDetailId)
+				.filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+
+		// bill / detail 查询互不依赖，并行发起减少串行 IO
+		CompletableFuture<Map<String, LogisticsBillEntity>> billFuture = CollUtil.isEmpty(billIds)
+				? CompletableFuture.completedFuture(Collections.emptyMap())
+				: CompletableFuture.supplyAsync(() -> logisticsBillService.listByIds(billIds).stream()
+						.collect(Collectors.toMap(LogisticsBillEntity::getId, e -> e, (a, b) -> a)));
+		CompletableFuture<Map<String, LogisticsBillDetailEntity>> detailByIdFuture = CollUtil.isEmpty(billDetailIds)
+				? CompletableFuture.completedFuture(Collections.emptyMap())
+				: CompletableFuture.supplyAsync(() -> logisticsBillDetailService.listByIds(billDetailIds).stream()
+						.collect(Collectors.toMap(LogisticsBillDetailEntity::getId, e -> e, (a, b) -> a)));
+		CompletableFuture<Map<String, LogisticsBillDetailEntity>> detailByBillIdFuture = CollUtil.isEmpty(billIds)
+				? CompletableFuture.completedFuture(Collections.emptyMap())
+				: CompletableFuture.supplyAsync(() -> logisticsBillDetailService.listByMainIds(billIds).stream()
+						.collect(Collectors.toMap(LogisticsBillDetailEntity::getMainId, e -> e, (a, b) -> a)));
+
+		Map<String, LogisticsBillEntity> billMap = billFuture.join();
+		Map<String, LogisticsBillDetailEntity> detailByIdMap = detailByIdFuture.join();
+		Map<String, LogisticsBillDetailEntity> detailByBillIdMap = detailByBillIdFuture.join();
+
+		for (ListDTO record : records) {
+			LogisticsBillCostEntity cost = costMap.get(record.getCostId());
+			if (cost == null) {
+				continue;
+			}
+			record.setReconciliationStatus(cost.getReconciliationStatus());
+			record.setChannelId(cost.getChannelId());
+			record.setTransportNo(cost.getTransportNo());
+			record.setTrackNo(cost.getTrackNo());
+			record.setConfirmTime(cost.getConfirmTime());
+			record.setPayType(cost.getPayType());
+			if (cost.getBillingWeightLogistics() != null) {
+				record.setBillingWeightLogistics(cost.getBillingWeightLogistics().toPlainString());
+			}
+			LogisticsBillEntity bill = billMap.get(cost.getLogisticsBillId());
+			if (bill != null) {
+				record.setOutstockCode(bill.getOutstockCode());
+				record.setDeliveryTime(bill.getDeliveryTime());
+				record.setShopName(bill.getShopName());
+				record.setToCountry(bill.getToCountry());
+				record.setPlatformCode(bill.getPlatformCode());
+			}
+			LogisticsBillDetailEntity detail = detailByIdMap.get(cost.getLogisticsBillDetailId());
+			// detailId 缺失时按 billId 兜底，与原 SQL l.main_id JOIN 逻辑一致
+			if (detail == null && CharSequenceUtil.isNotBlank(cost.getLogisticsBillId())) {
+				detail = detailByBillIdMap.get(cost.getLogisticsBillId());
+			}
+			if (detail != null) {
+				record.setSignTime(detail.getSignTime());
+				record.setTrackStatus(detail.getTrackStatus());
+			}
+		}
+	}
+
+	private void handleDataPaging(List<ListDTO> records) {
+		// 去空去重，避免 IN 查询带入 null 或重复 ID
+		List<String> skuIds = records.stream().map(ListDTO::getSkuId)
+				.filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+		Map<String, String> skuIdNameMap = Collections.emptyMap();
+		if (CollUtil.isNotEmpty(skuIds)) {
+			List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class)
+					.in(ProductDetailEntity::getId, skuIds).list();
+			skuIdNameMap = productDetailEntityList.stream()
+					.collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+		}
+
+		// channelId 由 enrichLogisticsFields 回填，空值不参与 listByIds
+		List<String> channelIds = records.stream().map(ListDTO::getChannelId)
+				.filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+		Map<String, LogisticsChannelEntity> channelIdMaps = CollUtil.isEmpty(channelIds) ? Collections.emptyMap()
+				: logisticsChannelService.listByIds(channelIds).stream()
+						.collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
+		List<String> supplierIds = channelIdMaps.values().stream().map(LogisticsChannelEntity::getMainId)
+				.filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+		Map<String, String> supplierIdNameMap = CollUtil.isEmpty(supplierIds) ? Collections.emptyMap()
+				: logisticsSupplierService.listByIds(supplierIds).stream()
+						.collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getShortName));
+
+		Map<String, BigDecimal> rateMap = prefetchExchangeRates(records);
 		DecimalFormat df2 = new DecimalFormat("0.00");
 		DecimalFormat df4 = new DecimalFormat("0.0000");
 		DecimalFormat df6 = new DecimalFormat("0.000000");
@@ -205,15 +369,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			if(unitCost != null) {
 				String unitCurrency = dto.getUnitCurrency();
 				if(StringUtils.isNotBlank(unitCurrency) && !"CNY".equals(unitCurrency)) {
+					// 与 prefetchExchangeRates / listRate 共用 rateKey：reportDate_currency
 					String key = reportDate + "_" + unitCurrency;
 					BigDecimal rate = rateMap.get(key);
-					if(rate == null) {
-						rate = dmpTaskFeign.getRate(reportDate + "-01", unitCurrency);
-						if(ObjectUtil.isEmpty(rate)){
-				            log.error("币别【{}】,汇率为空，请维护汇率后再查询",unitCurrency);
-				            throw new ServiceException("汇率为空，请维护汇率后再查询");
-				        }
-						rateMap.put(key, rate);
+					if (ObjectUtil.isEmpty(rate)) {
+						log.error("币别【{}】,汇率为空，请维护汇率后再查询", unitCurrency);
+						throw new ServiceException("汇率为空，请维护汇率后再查询");
 					}
 					unitCost = unitCost.multiply(rate).setScale(6);
 				}
@@ -252,6 +413,42 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				dto.setProductAllocatedAmount(df6.format(new BigDecimal(productAllocatedAmount).multiply(refund).setScale(6, RoundingMode.HALF_UP)));
 			}
 		}
+	}
+
+	/**
+	 * 批量预取汇率；构造的 rateKey 须符合 {@link BiSettlementExchangeRateDTO.ListRateParamDTO} 协议。
+	 *
+	 * @param records 分页记录，reportDate 与 unitCurrency 拼为 {@code reportDate_currency}（如 {@code 2024-01_USD}）
+	 * @return key 与 DMP listRate 入参/出参 rateKey 一致
+	 */
+	private Map<String, BigDecimal> prefetchExchangeRates(List<ListDTO> records) {
+		Set<String> rateKeys = records.stream()
+				.filter(dto -> StringUtils.isNotBlank(dto.getUnitCurrency()) && !"CNY".equals(dto.getUnitCurrency()))
+				.filter(dto -> StringUtils.isNotBlank(dto.getReportDate()))
+				// rateKey = reportDate + "_" + unitCurrency，reportDate 勿含 '_'，币种勿含 '_'
+				.map(dto -> dto.getReportDate() + "_" + dto.getUnitCurrency())
+				.collect(Collectors.toSet());
+		if (CollUtil.isEmpty(rateKeys)) {
+			return Collections.emptyMap();
+		}
+		// 构建汇率查询参数并调用远程服务批量获取汇率
+		BiSettlementExchangeRateDTO.ListRateParamDTO listRateParamDTO = new BiSettlementExchangeRateDTO.ListRateParamDTO();
+		listRateParamDTO.setRateKeys(rateKeys);
+		Map<String, BigDecimal> rateMap = dmpTaskFeign.listRate(listRateParamDTO);
+		if (rateMap == null) {
+			rateMap = Collections.emptyMap();
+		}
+		// 校验所有请求的汇率数据是否完整，存在缺失则记录错误并抛出异常
+		for (String key : rateKeys) {
+			BigDecimal rate = rateMap.get(key);
+			if (ObjectUtil.isEmpty(rate)) {
+				int sep = key.indexOf('_');
+				String unitCurrency = key.substring(sep + 1);
+				log.error("币别【{}】,汇率为空，请维护汇率后再查询", unitCurrency);
+				throw new ServiceException("汇率为空，请维护汇率后再查询");
+			}
+		}
+		return rateMap;
 	}
 	
 	@Override

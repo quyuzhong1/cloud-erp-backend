@@ -411,6 +411,26 @@ public class SmallBagCostAllocationDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 分页按需 JOIN：筛选/排序/权限引用 j 别名时为 true
+         */
+        private Boolean needJoinJ;
+
+        /**
+         * 分页按需 JOIN：筛选/排序/权限引用 k 别名时为 true
+         */
+        private Boolean needJoinK;
+
+        /**
+         * 分页按需 JOIN：筛选/排序/权限引用 l 别名时为 true（一对多，默认不 JOIN）
+         */
+        private Boolean needJoinL;
+
+        /**
+         * 分页按需 JOIN：筛选/排序/权限引用 n 别名时为 true
+         */
+        private Boolean needJoinN;
+
     }
 
     /**
