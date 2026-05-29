@@ -2114,7 +2114,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         for (String packId : newPackIds) {
             AfterSalePackEntity pack = packMap.get(packId);
             if (pack == null) {
-                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
+                throw new ServiceException("箱唛已被删除，不可使用");
             }
             if (Boolean.TRUE.equals(pack.getIsUse()) && !CharSequenceUtil.equals(pack.getSourceId(), poReturnEntity.getId())) {
                 throw new ServiceException("箱唛【" + pack.getCode() + "】已被其它单据使用，不可重复使用");
@@ -2123,7 +2123,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException("箱唛【" + pack.getCode() + "】状态不等于已封箱，不可使用");
             }
             if (Boolean.FALSE.equals(pack.getIsMoveWarehouse())) {
-                throw new ServiceException("箱唛【" + pack.getCode() + "】未识别移仓记录，不可使用");
+                throw new ServiceException("箱唛【" + pack.getCode() + "】未进行移仓，请完成移仓动作");
             }
         }
     }
