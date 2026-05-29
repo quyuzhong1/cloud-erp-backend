@@ -60,52 +60,44 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.CfgQcUserDTO$ListDTO">
-        SELECT 
-            id,
-            supplier_id,
-            warehouse_id,
-            stockin_qc_user_id AS stockInQcUserId,
-            stockin_qc_user_name AS stockInQcUserName,
-            stockout_qc_user_id AS stockOutQcUserId,
-            stockout_qc_user_name AS stockOutQcUserName,
-            outside_qc_user_id AS outsideQcUserId,
-            outside_qc_user_name AS outsideQcUserName,
-            inside_qc_user_id AS insideQcUserId,
-            inside_qc_user_name AS insideQcUserName,
-            new_product_stockin_qc_user_id AS newProductStockInQcUserId,
-            new_product_stockin_qc_user_name AS newProductStockInQcUserName,
-            b2b_outside_qc_user_id AS b2bOutsideQcUserId,
-            b2b_outside_qc_user_name AS b2bOutsideQcUserName,
-            return_qc_user_id AS returnQcUserId,
-            return_qc_user_name AS returnQcUserName,
-            create_time,
-            create_user_name,
-            update_time,
-            update_user_name
+        SELECT
+            cqu.id,
+            cqu.supplier_id,
+            cqu.warehouse_id,
+            cqu.stockin_qc_user_id AS stockInQcUserId,
+            cqu.stockin_qc_user_name AS stockInQcUserName,
+            cqu.stockout_qc_user_id AS stockOutQcUserId,
+            cqu.stockout_qc_user_name AS stockOutQcUserName,
+            cqu.outside_qc_user_id AS outsideQcUserId,
+            cqu.outside_qc_user_name AS outsideQcUserName,
+            cqu.inside_qc_user_id AS insideQcUserId,
+            cqu.inside_qc_user_name AS insideQcUserName,
+            cqu.new_product_stockin_qc_user_id AS newProductStockInQcUserId,
+            cqu.new_product_stockin_qc_user_name AS newProductStockInQcUserName,
+            cqu.b2b_outside_qc_user_id AS b2bOutsideQcUserId,
+            cqu.b2b_outside_qc_user_name AS b2bOutsideQcUserName,
+            cqu.return_qc_user_id AS returnQcUserId,
+            cqu.return_qc_user_name AS returnQcUserName,
+            cqu.create_time,
+            cqu.create_user_id,
+            cqu.create_user_name,
+            cqu.update_time,
+            cqu.update_user_id,
+            cqu.update_user_name
         FROM cfg_qc_user cqu
         WHERE
         ${params.sqlMap.default}
-        and is_deleted = FALSE
+        and cqu.is_deleted = false
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        <if test="params.ids != null and params.ids.size() > 0">
-            AND cqu.id IN
-            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                #{id}
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY
-        <choose>
-            <when test="params.sortList != null and params.sortList.size > 0">
-                <foreach collection="params.sortList" item="item" separator=",">
-                    ${item.field} ${item.sort}
-                </foreach>
-            </when>
-            <otherwise>
-                cqu.create_time DESC
-            </otherwise>
-        </choose>
+        cqu.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

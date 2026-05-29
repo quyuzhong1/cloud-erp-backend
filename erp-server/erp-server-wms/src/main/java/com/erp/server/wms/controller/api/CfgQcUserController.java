@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.CfgQcUserDTO;
 import com.erp.model.wms.entity.CfgQcUserEntity;
+import com.erp.server.wms.query.CfgQcUserQueryHandler;
 import com.erp.server.wms.service.CfgQcUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -94,6 +96,7 @@ public class CfgQcUserController extends BaseController {
             menuCode = "wms:cfgQcUser:paging",
             tableAlias = "cqu"
     )
+    @WebAdvanceQuery(handler = CfgQcUserQueryHandler.class)
     public ApiResult<PagingVO<CfgQcUserDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgQcUserDTO.PagingParamDTO> dto) {
         return success(cfgQcUserService.paging(dto));
     }
