@@ -3113,6 +3113,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
+        // 如果是整箱退货，需要将采购订单id设置为null
+        if (CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            dto.setPurchaseOrderId(null);
+        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
@@ -3187,6 +3192,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
+        // 如果是整箱退货，需要将采购订单id设置为null
+        if (CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            dto.setPurchaseOrderId(null);
+        }
         if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
