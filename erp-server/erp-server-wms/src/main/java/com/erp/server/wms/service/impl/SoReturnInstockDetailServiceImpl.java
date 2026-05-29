@@ -536,6 +536,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             //原明细数据
             List<SoReturnInstockDetailEntity> oldList = this.listDetailByMainId(dto.getId());
+            Map<String, SoReturnInstockDetailEntity> oldDetailMap = oldList.stream()
+                    .collect(Collectors.toMap(SoReturnInstockDetailEntity::getId, obj -> obj, (oldValue, newValue) -> oldValue));
             List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 List<SoReturnInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -709,8 +711,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 list.add(detailEntity);
                 //修改操作日志
                 if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
-                    SoReturnInstockDetailEntity old = this.getById(detailEntity.getId());
-                    operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+                    SoReturnInstockDetailEntity old = oldDetailMap.get(detailEntity.getId());
+                    if (Objects.nonNull(old)) {
+                        operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+                    }
                 }
             }
             //添加操作日志
@@ -935,6 +939,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
         //原明细数据
         List<SoReturnInstockDetailEntity> oldList = this.listDetailByMainId(dto.getId());
+        Map<String, SoReturnInstockDetailEntity> oldDetailMap = oldList.stream()
+                .collect(Collectors.toMap(SoReturnInstockDetailEntity::getId, obj -> obj, (oldValue, newValue) -> oldValue));
         List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SoReturnInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -1001,8 +1007,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             list.add(detailEntity);
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
-                SoReturnInstockDetailEntity old = this.getById(detailEntity.getId());
-                operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+                SoReturnInstockDetailEntity old = oldDetailMap.get(detailEntity.getId());
+                if (Objects.nonNull(old)) {
+                    operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+                }
             }
         }
         //添加操作日志
