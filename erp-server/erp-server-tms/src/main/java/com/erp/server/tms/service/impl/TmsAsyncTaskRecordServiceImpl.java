@@ -633,14 +633,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .collect(Collectors.toList());
         if(CollUtil.isNotEmpty(pendingList)){
             for (TmsAsyncTaskRecordEntity entity : pendingList) {
-                selfServer.claimAndDispatch(entity);
+                claimAndDispatch(entity);
             }
         }
     }
 
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @Override
-    public void claimAndDispatch(TmsAsyncTaskRecordEntity entity) {
+    private void claimAndDispatch(TmsAsyncTaskRecordEntity entity) {
         String dataJson = entity.getDataJson();
         if (StringUtils.isBlank(dataJson) || Objects.equals(dataJson, "{}")) {
             selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "dataJson为空直接结束任务");

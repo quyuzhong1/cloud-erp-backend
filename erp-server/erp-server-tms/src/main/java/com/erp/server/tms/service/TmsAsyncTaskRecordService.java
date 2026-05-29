@@ -54,6 +54,5 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      */
     void startTask();
 
-
     void genAutoTask();
 }
