@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +51,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 /**
@@ -96,6 +98,10 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+	@Resource
+	@Qualifier("costAllocationPool")
+	private ThreadPoolExecutor costAllocationPool;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -276,15 +282,15 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		CompletableFuture<Map<String, LogisticsBillEntity>> billFuture = CollUtil.isEmpty(billIds)
 				? CompletableFuture.completedFuture(Collections.emptyMap())
 				: CompletableFuture.supplyAsync(() -> logisticsBillService.listByIds(billIds).stream()
-						.collect(Collectors.toMap(LogisticsBillEntity::getId, e -> e, (a, b) -> a)));
+						.collect(Collectors.toMap(LogisticsBillEntity::getId, e -> e, (a, b) -> a)),costAllocationPool);
 		CompletableFuture<Map<String, LogisticsBillDetailEntity>> detailByIdFuture = CollUtil.isEmpty(billDetailIds)
 				? CompletableFuture.completedFuture(Collections.emptyMap())
 				: CompletableFuture.supplyAsync(() -> logisticsBillDetailService.listByIds(billDetailIds).stream()
-						.collect(Collectors.toMap(LogisticsBillDetailEntity::getId, e -> e, (a, b) -> a)));
+						.collect(Collectors.toMap(LogisticsBillDetailEntity::getId, e -> e, (a, b) -> a)),costAllocationPool);
 		CompletableFuture<Map<String, LogisticsBillDetailEntity>> detailByBillIdFuture = CollUtil.isEmpty(billIds)
 				? CompletableFuture.completedFuture(Collections.emptyMap())
 				: CompletableFuture.supplyAsync(() -> logisticsBillDetailService.listByMainIds(billIds).stream()
-						.collect(Collectors.toMap(LogisticsBillDetailEntity::getMainId, e -> e, (a, b) -> a)));
+						.collect(Collectors.toMap(LogisticsBillDetailEntity::getMainId, e -> e, (a, b) -> a)),costAllocationPool);
 
 		Map<String, LogisticsBillEntity> billMap = billFuture.join();
 		Map<String, LogisticsBillDetailEntity> detailByIdMap = detailByIdFuture.join();
