@@ -9,10 +9,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
