@@ -1451,7 +1451,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 }
             }
             String detailKey = mainId + "|" + CharSequenceUtil.trim(line.getSkuNo()) + "|"
-                    + CharSequenceUtil.trim(line.getOutWarehouseLocationCode());
+                    + CharSequenceUtil.trim(line.getOutWarehouseLocationName());
             if (!submittedDetailKeys.add(detailKey)) {
                 throw new ServiceException("箱唛明细重复，请勿重复提交同一箱唛");
             }
@@ -1505,7 +1505,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             for (AfterSalePackDetailDTO.ViewDTO detail : boxInfo.getDetailViewDTOList()) {
                 validateQty(detail.getPackQty());
                 String skuNo = CharSequenceUtil.trim(detail.getSkuNo());
-                String sourceLoc = CharSequenceUtil.trim(detail.getOutWarehouseLocationCode());
+                // 已移仓的箱唛，货物当前位置是上次移仓的移入仓位，而非原始拣货仓位
+                String sourceLoc = Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())
+                        ? CharSequenceUtil.trim(detail.getInWarehouseLocationCode())
+                        : CharSequenceUtil.trim(detail.getOutWarehouseLocationCode());
                 if (sourceLoc==null) {
                     throw new ServiceException(CharSequenceUtil.format("箱唛【{}】SKU【{}】来源仓位code为null", boxDisplay, skuNo));
                 }
@@ -1579,7 +1582,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 .collect(Collectors.toList());
         afterSalePackService.markBoxesAsMoved(boxIds, targetLocation.getId());
 
-        addFullBoxTransferOperateLogs(boxInfoList, targetCode);
+        addFullBoxTransferOperateLogs(boxInfoList, targetLocation.getName());
 
         return moveId;
     }
@@ -1587,7 +1590,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     /**
      * 按箱唛维度记录整箱移仓操作日志。
      */
-    private void addFullBoxTransferOperateLogs(List<AfterSalePackDTO.ViewDTO> boxInfoList, String targetCode) {
+    private void addFullBoxTransferOperateLogs(List<AfterSalePackDTO.ViewDTO> boxInfoList, String targetName) {
         if (CollUtil.isEmpty(boxInfoList)) {
             return;
         }
@@ -1600,10 +1603,13 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             msg.append(CharSequenceUtil.format("【{}】执行[{}]：", boxCode, operationName));
             if (CollUtil.isNotEmpty(boxInfo.getDetailViewDTOList())) {
                 for (AfterSalePackDetailDTO.ViewDTO detail : boxInfo.getDetailViewDTOList()) {
+                    String fromLocName = Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())
+                            ? CharSequenceUtil.trim(detail.getInWarehouseLocationName())
+                            : CharSequenceUtil.trim(detail.getOutWarehouseLocationName());
                     msg.append('\n').append(CharSequenceUtil.format("【{}】从[拣货仓位：{}]移仓至[目标仓位:{}];",
                             CharSequenceUtil.trim(detail.getSkuNo()),
-                            CharSequenceUtil.trim(detail.getOutWarehouseLocationCode()),
-                            targetCode));
+                            fromLocName,
+                            targetName));
                 }
             }
             operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(msg.toString(),

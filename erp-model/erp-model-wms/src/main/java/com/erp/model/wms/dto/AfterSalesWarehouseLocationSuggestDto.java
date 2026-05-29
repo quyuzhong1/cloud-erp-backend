@@ -455,11 +455,11 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         private String skuId;
 
         /**
-         * 源仓位编码，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getOutWarehouseLocationCode()} 相同。
+         * 源仓位名称，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getOutWarehouseLocationName()} 相同。
          */
         @NotBlank(message = "源仓位不能为空")
-        @Size(max = 50, message = "源仓位编码最大长度不能超过50位")
-        private String outWarehouseLocationCode;
+        @Size(max = 100, message = "源仓位名称最大长度不能超过100位")
+        private String outWarehouseLocationName;
 
         /**
          * 本行移动数量，与装箱明细 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getPackQty()} 相同。
