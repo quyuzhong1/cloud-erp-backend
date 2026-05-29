@@ -132,7 +132,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
                 .eq(AfterSalePackEntity::getCode, code)
                 .one();
         if (afterSalePackEntity == null) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
+            throw new ServiceException("识别失败，请输入/扫描正确箱唛");
         }
         // 箱唛已经被使用，不可操作
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
