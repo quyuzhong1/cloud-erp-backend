@@ -7,11 +7,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author lei.nie
@@ -31,6 +33,30 @@ public class BiSettlementExchangeRateDTO {
          * 币别集合
          */
         private List<String> currencyList;
+    }
+
+
+    /**
+     * 批量汇率查询入参。
+     * <p>
+     * <b>rateKey 协议（调用方与 listRate 实现必须一致）：</b>
+     * <ul>
+     *   <li>格式：{@code {reportDate}_{sourceCurrencyCode}}，仅使用<b>第一个</b>下划线 {@code _} 分隔</li>
+     *   <li>{@code reportDate}：会计期间/报表日期，推荐 {@code yyyy-MM}（如 {@code 2024-01}），勿含 {@code _}；
+     *       若为 7 位 {@code yyyy-MM}，服务端查汇率时补全为当月 1 日 {@code yyyy-MM-01}；也支持 {@code yyyy-MM-dd}</li>
+     *   <li>{@code sourceCurrencyCode}：原币别代码（如 {@code USD}、{@code EUR}），目标币别固定为 CNY，<b>不得包含 {@code _}</b></li>
+     *   <li>示例：{@code 2024-01_USD}、{@code 2024-01-15_EUR}</li>
+     *   <li>返回 Map 的 key 与入参 rateKey 字符串完全一致；CNY 原币别按 1 处理</li>
+     * </ul>
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListRateParamDTO {
+        /**
+         * 汇率查询键集合，每项须符合上述 rateKey 协议
+         */
+        @NotEmpty(message = "汇率查询键不能为空")
+        private Set<String> rateKeys;
     }
 
     @Data

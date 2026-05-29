@@ -75,6 +75,92 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return exchangeRate;
     }
 
+    /**
+     * 按 rateKey 批量解析并匹配汇率。
+     * <p>
+     * rateKey 规范见 {@link BiSettlementExchangeRateDTO.ListRateParamDTO}：第一个 {@code _} 左侧为 reportDate，
+     * 右侧为原币别；格式非法的 key 跳过，不进入返回结果。
+     * </p>
+     */
+    @Override
+    public Map<String, BigDecimal> listRate(BiSettlementExchangeRateDTO.ListRateParamDTO listRateParamDTO) {
+        if (listRateParamDTO == null || CollectionUtils.isEmpty(listRateParamDTO.getRateKeys())) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, String> rateKeyCurrencyMap = new HashMap<>(listRateParamDTO.getRateKeys().size());
+        List<String> currencyList = new ArrayList<>();
+        for (String rateKey : listRateParamDTO.getRateKeys()) {
+            if (StrUtil.isBlank(rateKey)) {
+                continue;
+            }
+            int sep = rateKey.indexOf('_');
+            if (sep <= 0) {
+                continue;
+            }
+            String reportDate = rateKey.substring(0, sep);
+            String currency = rateKey.substring(sep + 1);
+            if (StrUtil.isBlank(reportDate) || StrUtil.isBlank(currency)) {
+                continue;
+            }
+            rateKeyCurrencyMap.put(rateKey, currency);
+            if (!StrUtil.equals(CurrencyEnum.CNY.getCurrencyCode(), currency)) {
+                currencyList.add(currency);
+            }
+        }
+        if (rateKeyCurrencyMap.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, List<BiSettlementExchangeRateEntity>> rateListMap = Collections.emptyMap();
+        List<String> distinctCurrencyList = currencyList.stream().distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(distinctCurrencyList)) {
+            // 批量查询候选汇率，避免小包分摊列表按 rateKey 循环访问数据库
+            rateListMap = baseMapper.listByCurrencyCodes(CurrencyEnum.CNY.getCurrencyCode(), distinctCurrencyList)
+                    .stream()
+                    .collect(Collectors.groupingBy(BiSettlementExchangeRateEntity::getSourceCurrencyCode));
+        }
+
+        Map<String, BigDecimal> rateMap = new HashMap<>(rateKeyCurrencyMap.size());
+        for (Map.Entry<String, String> entry : rateKeyCurrencyMap.entrySet()) {
+            String rateKey = entry.getKey();
+            String currency = entry.getValue();
+            if (StrUtil.equals(CurrencyEnum.CNY.getCurrencyCode(), currency)) {
+                rateMap.put(rateKey, BigDecimal.ONE);
+                continue;
+            }
+            BigDecimal rate = matchExchangeRate(rateListMap.get(currency), parseRateKeyDate(rateKey));
+            if (rate != null) {
+                rateMap.put(rateKey, rate);
+            }
+        }
+        return rateMap;
+    }
+
+    /**
+     * 从 rateKey 解析查询日期（取第一个 {@code _} 之前为 reportDate，规则同 ListRateParamDTO）
+     */
+    private LocalDate parseRateKeyDate(String rateKey) {
+        String reportDate = rateKey.substring(0, rateKey.indexOf('_'));
+        if (reportDate.length() == 7) {
+            reportDate = reportDate + "-01";
+        }
+        return LocalDateUtil.parseStrToLocalDate(reportDate);
+    }
+
+    private BigDecimal matchExchangeRate(List<BiSettlementExchangeRateEntity> rateList, LocalDate localDate) {
+        if (CollectionUtils.isEmpty(rateList)) {
+            return null;
+        }
+        return rateList.stream()
+                .filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
+                        || obj.getSettlementDateEnd().isEqual(localDate)
+                        || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
+                .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
+                .map(BiSettlementExchangeRateEntity::getExchangeRate)
+                .findFirst().orElse(null);
+    }
+
     @Override
     public BigDecimal findByCurrencyAndMonth(String date, String sourceCurrencyCode) {
         String targetCurrencyCode = CurrencyEnum.CNY.getCurrencyCode();
