@@ -1606,7 +1606,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                     String fromLocName = Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())
                             ? CharSequenceUtil.trim(detail.getInWarehouseLocationName())
                             : CharSequenceUtil.trim(detail.getOutWarehouseLocationName());
-                    msg.append('\n').append(CharSequenceUtil.format("【{}】从[拣货仓位：{}]移仓至[目标仓位:{}];",
+                    msg.append('\n').append(CharSequenceUtil.format("【{}】从[当前仓位：{}]移仓至[目标仓位:{}];",
                             CharSequenceUtil.trim(detail.getSkuNo()),
                             fromLocName,
                             targetName));
@@ -1651,7 +1651,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             for (AfterSalePackDetailDTO.ViewDTO detail : boxInfo.getDetailViewDTOList()) {
                 String skuNo = CharSequenceUtil.trimToEmpty(detail.getSkuNo());
-                String sourceLoc = CharSequenceUtil.trimToEmpty(detail.getOutWarehouseLocationCode());
+                String sourceLoc = Boolean.TRUE.equals(boxInfo.getIsMoveWarehouse())
+                        ? CharSequenceUtil.trimToEmpty(detail.getInWarehouseLocationCode())
+                        : CharSequenceUtil.trimToEmpty(detail.getOutWarehouseLocationCode());
                 String detailId = detailIdByKey.get(skuNo + "|" + sourceLoc + "|" + targetCode);
                 SkuVO skuVO = skuByNo.get(skuNo);
                 String skuId = skuVO != null ? skuVO.getSkuId()
