@@ -1,7 +1,6 @@
 package com.common.business.health;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.EventListener;
@@ -13,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 仅维护本进程 readiness 状态，外部依赖检查由探针按需触发。
  */
 @Component
-@ConditionalOnMissingBean(ReadinessState.class)
 @ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class ReadinessState {
 

@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.core.env.Environment;
@@ -31,7 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Slf4j
 @Component
-@ConditionalOnMissingBean(NacosSelfRegistrationChecker.class)
 @ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class NacosSelfRegistrationChecker {
 
