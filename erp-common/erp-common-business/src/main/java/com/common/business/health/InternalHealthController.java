@@ -1,7 +1,6 @@
 package com.common.business.health;
 
 import com.common.core.controller.BaseController;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/internal")
 @ConditionalOnWebApplication
-@ConditionalOnMissingBean(InternalHealthController.class)
 @ConditionalOnProperty(prefix = "erp.internal-health", name = "enabled", havingValue = "true")
 public class InternalHealthController extends BaseController {
 
