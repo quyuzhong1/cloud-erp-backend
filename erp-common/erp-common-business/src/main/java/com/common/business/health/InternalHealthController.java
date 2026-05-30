@@ -68,8 +68,10 @@ public class InternalHealthController extends BaseController {
                     "pre-stop only accepts loopback requests");
         }
         readinessState.markPreStopping();
+        boolean disabled = nacosSelfRegistrationChecker.setSelfEnabled(false);
         boolean deregistered = nacosSelfRegistrationChecker.deregisterSelf();
         Map<String, Object> body = body(STATUS_PRE_STOPPING, REASON_PRE_STOPPING, "application is pre-stopping");
+        body.put("nacosDisabled", disabled);
         body.put("nacosDeregistered", deregistered);
         return ResponseEntity.ok(body);
     }
