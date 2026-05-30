@@ -13,6 +13,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
@@ -88,6 +92,20 @@ public class NacosSelfRegistrationChecker {
         return success;
     }
 
+    public boolean setSelfEnabled(boolean enabled) {
+        RegistrationInfo registrationInfo = resolveRegistrationInfo();
+        if (!registrationInfo.hasRequiredInfo()) {
+            log.warn("Skip updating Nacos instance enabled status, local registration info is incomplete: {}",
+                    registrationInfo);
+            return false;
+        }
+        Boolean success = executeWithTimeout(() -> updateInstanceEnabled(registrationInfo, enabled), Boolean.FALSE);
+        if (!success) {
+            log.warn("Failed to update Nacos instance enabled={} : {}", enabled, registrationInfo);
+        }
+        return success;
+    }
+
     @PreDestroy
     public void destroy() {
         queryExecutor.shutdownNow();
@@ -113,6 +131,59 @@ public class NacosSelfRegistrationChecker {
             return CheckResult.ready();
         }
         return CheckResult.notReady(REASON_NACOS_NOT_REGISTERED, "current ip and port not found in nacos");
+    }
+
+    private boolean updateInstanceEnabled(RegistrationInfo registrationInfo, boolean enabled) throws IOException {
+        String serverAddr = resolveNacosServerAddr();
+        if (StringUtils.isBlank(serverAddr)) {
+            log.warn("Skip updating Nacos instance enabled status, nacos server address is blank");
+            return false;
+        }
+        String requestUrl = buildUpdateInstanceUrl(serverAddr, registrationInfo, enabled);
+        HttpURLConnection connection = (HttpURLConnection) new URL(requestUrl).openConnection();
+        connection.setRequestMethod("PUT");
+        connection.setConnectTimeout((int) nacosCheckTimeoutMs);
+        connection.setReadTimeout((int) nacosCheckTimeoutMs);
+        connection.setDoOutput(true);
+        int responseCode = connection.getResponseCode();
+        connection.disconnect();
+        return responseCode >= 200 && responseCode < 300;
+    }
+
+    private String resolveNacosServerAddr() {
+        String serverAddr = StringUtils.defaultIfBlank(discoveryProperties.getServerAddr(),
+                environment.getProperty("spring.cloud.nacos.discovery.server-addr"));
+        if (StringUtils.isBlank(serverAddr)) {
+            return null;
+        }
+        String firstServerAddr = StringUtils.substringBefore(serverAddr, ",");
+        if (StringUtils.startsWithIgnoreCase(firstServerAddr, "http://")
+                || StringUtils.startsWithIgnoreCase(firstServerAddr, "https://")) {
+            return firstServerAddr;
+        }
+        return "http://" + firstServerAddr;
+    }
+
+    private String buildUpdateInstanceUrl(String serverAddr, RegistrationInfo registrationInfo, boolean enabled)
+            throws IOException {
+        StringBuilder builder = new StringBuilder(serverAddr);
+        if (!serverAddr.endsWith("/")) {
+            builder.append('/');
+        }
+        builder.append("nacos/v1/ns/instance")
+                .append("?serviceName=").append(encode(registrationInfo.getServiceName()))
+                .append("&groupName=").append(encode(registrationInfo.getGroupName()))
+                .append("&ip=").append(encode(registrationInfo.getIp()))
+                .append("&port=").append(registrationInfo.getPort())
+                .append("&enabled=").append(enabled);
+        if (StringUtils.isNotBlank(registrationInfo.getNamespace())) {
+            builder.append("&namespaceId=").append(encode(registrationInfo.getNamespace()));
+        }
+        return builder.toString();
+    }
+
+    private String encode(String value) throws IOException {
+        return URLEncoder.encode(value, "UTF-8");
     }
 
     private boolean isCurrentInstance(Instance instance, RegistrationInfo registrationInfo) {
