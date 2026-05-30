@@ -610,6 +610,7 @@ public enum RocketMqTagEnum {
     ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
     /**
      * 异步更新物流获取记录
+     * 注意：原 Track123 专用，现快递100 小包/海运拉取也复用此 tag 推进 update_time 游标（仅刷新时间，与轨迹数据回写无关）
      */
     ASYNC_GET_TRACK123_LOGISTICS_TRACK(10002, RocketMqTagEnum.SYNC_TMS, "async_get_logistics_track"),
     /**
