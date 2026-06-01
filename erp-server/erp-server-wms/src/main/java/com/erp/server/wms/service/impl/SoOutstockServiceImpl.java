@@ -1929,7 +1929,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(Objects.nonNull(isExport) && isExport){
             //查询是否有拦截单
             List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-            soB2cEntities = soB2cFeign.listByIds(soIds);
+            soB2cEntities = soB2cFeign.listIdAndInterceptByIds(soIds);
         }
         //销售平台字典表数据
         Map<String, String> salesPlatformMap = new HashMap<>();
@@ -1976,7 +1976,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //查询审核流程
         List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> listApiResult = workflowFeign.curApproverSimple(dtoList);
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
@@ -2087,7 +2087,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && CharSequenceUtil.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && CharSequenceUtil.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveSimpleDTO::getCurApproveName).collect(Collectors.joining(","));
                 item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
             }
         }
