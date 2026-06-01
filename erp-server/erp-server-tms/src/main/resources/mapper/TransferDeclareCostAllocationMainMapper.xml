@@ -67,4 +67,25 @@
         </if>
     </select>
 
+    <select id="pageMainIdsForReAllocation" resultType="java.lang.String">
+        SELECT tdcam.id
+        FROM transfer_declare_cost_allocation_main tdcam
+        WHERE tdcam.is_deleted = false
+          AND tdcam.report_date = #{reportPeriodStr}
+          AND tdcam.report_status = #{reportStatus}
+        <if test="lastId != null and lastId != ''">
+            AND tdcam.id &gt; #{lastId}
+        </if>
+        ORDER BY tdcam.id ASC
+        LIMIT #{batchSize}
+    </select>
+
+    <select id="countMainForReAllocation" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM transfer_declare_cost_allocation_main tdcam
+        WHERE tdcam.is_deleted = false
+          AND tdcam.report_date = #{reportPeriodStr}
+          AND tdcam.report_status = #{reportStatus}
+    </select>
+
 </mapper>

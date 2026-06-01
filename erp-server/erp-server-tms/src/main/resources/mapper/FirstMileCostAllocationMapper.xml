@@ -295,5 +295,29 @@
           )
     </select>
 
+    <!-- 游标分批查待重新分摊分摊表ID：status 等值匹配 waitConfirm，不含 logistics_large 过滤 -->
+    <select id="pageIdsForReAllocation" resultType="java.lang.String">
+        SELECT a.id
+        FROM first_mile_cost_allocation a
+        INNER JOIN report_period_month rpm ON a.report_period_id = rpm.id AND rpm.is_deleted = false
+        WHERE a.is_deleted = false
+          AND rpm.month = #{reportPeriodMonth}
+          AND a.status = #{status}
+        <if test="lastId != null and lastId != ''">
+            AND a.id &gt; #{lastId}
+        </if>
+        ORDER BY a.id ASC
+        LIMIT #{batchSize}
+    </select>
+
+    <select id="countForReAllocation" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM first_mile_cost_allocation a
+        INNER JOIN report_period_month rpm ON a.report_period_id = rpm.id AND rpm.is_deleted = false
+        WHERE a.is_deleted = false
+          AND rpm.month = #{reportPeriodMonth}
+          AND a.status = #{status}
+    </select>
+
 
 </mapper>

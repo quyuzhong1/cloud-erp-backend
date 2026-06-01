@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum TmsAsyncTaskMethodTypeEnum implements EnumMessage {
 	PUSH_ALLOCATION("pushAllocation", "下推分摊"),
 	UPDATE_REPORT_STATUS("updateReportStatus", "批量更新核算状态"),
+	RE_ALLOCATION("reAllocation", "重新分摊"),
     ;
     /**
      * 类型
