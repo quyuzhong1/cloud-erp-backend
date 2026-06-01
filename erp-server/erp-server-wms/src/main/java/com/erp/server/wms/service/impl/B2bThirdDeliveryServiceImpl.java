@@ -94,6 +94,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -199,7 +200,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         // 数据处理
         handleData(b2bThirdDeliveryEntity,addDTO);
         normalizePackingFields(b2bThirdDeliveryEntity, addDTO);
-        validatePacking(b2bThirdDeliveryEntity, addDTO.getDetailList(), addDTO.getPackingDetailList());
+        boolean goodCangWarehouse = isGoodCangWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
+        validatePacking(b2bThirdDeliveryEntity, addDTO.getDetailList(), addDTO.getPackingDetailList(), goodCangWarehouse);
 
         log.info("开始新增B2B三方发货单");
         // 生成单号
@@ -324,7 +326,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         // 数据处理
         handleData(b2bThirdDeliveryEntity,addOrUpdateDTO);
         normalizePackingFields(b2bThirdDeliveryEntity, addOrUpdateDTO);
-        validatePacking(b2bThirdDeliveryEntity, addOrUpdateDTO.getDetailList(), addOrUpdateDTO.getPackingDetailList());
+        boolean goodCangWarehouse = isGoodCangWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
+        validatePacking(b2bThirdDeliveryEntity, addOrUpdateDTO.getDetailList(), addOrUpdateDTO.getPackingDetailList(), goodCangWarehouse);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFFH);
         b2bThirdDeliveryEntity.setCode(code);
         log.info("编辑 开始修改B2B三方发货单数据，单号：【{}】", old.getCode());
@@ -1580,7 +1583,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             String fileName = "B2B客户装箱明细导入错误.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
             if (!file.isDirectory()) {
-                importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
+                try {
+                    importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
+                } finally {
+                    try {
+                        Files.delete(file.toPath());
+                    } catch (IOException e) {
+                        log.warn("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath());
+                    }
+                }
             }
         }
         return importDTO;
@@ -1607,10 +1618,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     private void validatePacking(B2bThirdDeliveryEntity entity,
                                  List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList,
-                                 List<B2bCustomerPackingDTO.AddDTO> packingDetailList) {
+                                 List<B2bCustomerPackingDTO.AddDTO> packingDetailList,
+                                 boolean goodCang) {
         String packingType = CharSequenceUtil.blankToDefault(entity.getPackingType(), B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
         Integer labelsPerBox = entity.getLabelsPerBox() != null ? entity.getLabelsPerBox() : 0;
-        boolean goodCang = isGoodCangWarehouse(entity.getDeliveryWarehouseId());
 
         if (B2bPackingTypeEnum.WAREHOUSE_SELF.getCode().equals(packingType)) {
             if (!Objects.equals(labelsPerBox, 0)) {
@@ -1756,7 +1767,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<B2bCustomerPackingDTO.ViewDTO> packingViewList = new ArrayList<>();
         for (Map.Entry<Integer, List<B2bCustomerPackingEntity>> entry : packingGroup.entrySet()) {
             List<B2bCustomerPackingEntity> boxEntities = entry.getValue();
-            B2bCustomerPackingEntity boxHead = boxEntities.get(0);
+            B2bCustomerPackingEntity boxHead = B2bCustomerPackingServiceImpl.getBoxHead(boxEntities, entry.getKey()).orElse(boxEntities.get(0));
             B2bCustomerPackingDTO.ViewDTO boxDTO = new B2bCustomerPackingDTO.ViewDTO();
             boxDTO.setMainId(boxHead.getMainId());
             boxDTO.setBoxSeq(boxHead.getBoxSeq());

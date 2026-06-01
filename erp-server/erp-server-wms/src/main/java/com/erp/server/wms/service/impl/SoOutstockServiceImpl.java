@@ -3168,8 +3168,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         addDTOS = (LinkedList<SoOutstockDetailDTO.AddDTO>) addDTOS.stream().filter(v->detailIds.contains(v.getSoDetailId())).collect(Collectors.toCollection(LinkedList::new));
         List<String> outstockedSoDetailIds = listPlatformOutstockedSoDetailIds(entity.getId(), warehouseId);
         if (CollectionUtils.isNotEmpty(outstockedSoDetailIds)) {
+            Set<String> outstockedSoDetailIdSet = new HashSet<>(outstockedSoDetailIds);
             addDTOS = addDTOS.stream()
-                    .filter(v -> !outstockedSoDetailIds.contains(v.getSoDetailId()))
+                    .filter(v -> !outstockedSoDetailIdSet.contains(v.getSoDetailId()))
                     .collect(Collectors.toCollection(LinkedList::new));
         }
         if (CollectionUtils.isEmpty(addDTOS)) {

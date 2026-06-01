@@ -315,6 +315,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     private void fillPackingForOutboundReq(ThirdWarehouseCreateFbaOutboundReq req, B2bThirdDeliveryEntity entity) {
         if (CharSequenceUtil.isBlank(entity.getPackingType())) {
             req.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+            return;
         }
         List<B2bCustomerPackingEntity> packingList = b2bCustomerPackingService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(packingList)) {

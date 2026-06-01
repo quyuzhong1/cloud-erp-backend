@@ -548,6 +548,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 productItem.setQuantity(entry.getValue());
                 itemList.add(productItem);
             }
+            if (CollUtil.isEmpty(itemList)) {
+                throw new ServiceException("装箱明细中无有效SKU，无法构建出库商品列表");
+            }
             return itemList;
         }
         List<GoodCangCreateB2bReq.Item> itemList = new ArrayList<>();
