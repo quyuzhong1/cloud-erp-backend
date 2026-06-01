@@ -240,6 +240,9 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
         private String warehousePlatformSku;
         private Integer packingQty;
         private String boxMarkNo;
+        private String boxMarkRefNo;
+        private String labelSize;
+        private String labelingRequirement;
         private Integer boxSeq;
     }
 

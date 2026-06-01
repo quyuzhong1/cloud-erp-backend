@@ -325,6 +325,9 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             item.setWarehousePlatformSku(p.getWarehousePlatformSku());
             item.setPackingQty(p.getPackingQty());
             item.setBoxMarkNo(p.getBoxMarkNo());
+            item.setBoxMarkRefNo(p.getBoxMarkRefNo());
+            item.setLabelSize(p.getLabelSize());
+            item.setLabelingRequirement(p.getLabelingRequirement());
             item.setBoxSeq(p.getBoxSeq());
             return item;
         }).collect(Collectors.toList());

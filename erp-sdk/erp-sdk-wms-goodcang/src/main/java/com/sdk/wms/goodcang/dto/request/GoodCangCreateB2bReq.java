@@ -107,6 +107,9 @@ public class GoodCangCreateB2bReq {
         @JSONField(name = "item_list")
         private List<GoodCangCreateB2bReq.Item> itemList;
 
+        @JSONField(name = "packing_list")
+        private List<GoodCangCreateB2bReq.Packing> packingList;
+
     }
 
     @Data
@@ -123,6 +126,66 @@ public class GoodCangCreateB2bReq {
 
     }
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Packing {
+
+        @JSONField(name = "box_mark")
+        private String boxMark;
+
+        @JSONField(name = "box_no")
+        private Integer boxNo;
+
+        @JSONField(name = "box_ref_mark")
+        private String boxRefMark;
+
+        @JSONField(name = "shipment_file_id")
+        private String shipmentFileId;
+
+        @JSONField(name = "shipment_file_list")
+        private List<GoodCangCreateB2bReq.ShipmentFile> shipmentFileList;
+
+        @JSONField(name = "logistics_file_id")
+        private String logisticsFileId;
+
+        @JSONField(name = "customs_file_id")
+        private String customsFileId;
+
+        @JSONField(name = "packing_line_list")
+        private List<GoodCangCreateB2bReq.PackingLine> packingLineList;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ShipmentFile {
+
+        @JSONField(name = "labelling_require")
+        private String labellingRequire;
+
+        @JSONField(name = "label_size")
+        private String labelSize;
+
+        @JSONField(name = "shipment_file_id")
+        private String shipmentFileId;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class PackingLine {
+
+        @JSONField(name = "product_sku")
+        private String productSku;
+
+        @JSONField(name = "quantity")
+        private Integer quantity;
+    }
+
     @JSONField(name = "other_info")
     private OtherInfo otherInfo;
 
@@ -135,7 +198,7 @@ public class GoodCangCreateB2bReq {
         @JSONField(name = "order_desc")
         private String orderDesc;
 
-        @JSONField(name = "packingFileId")
+        @JSONField(name = "packing_file_id")
         private Integer packingFileId;
 
     }
