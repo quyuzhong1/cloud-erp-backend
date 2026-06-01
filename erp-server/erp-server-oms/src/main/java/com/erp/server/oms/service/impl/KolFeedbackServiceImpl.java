@@ -216,6 +216,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchDelete(BaseIdsDTO.IdsDTO dto) {
         if (CollUtil.isEmpty(dto.getIds())) {
             throw new ServiceException("删除ID列表不能为空");
@@ -234,11 +235,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         }
         
         Set<String> deleteIdSet = new HashSet<>(dto.getIds());
-        Map<String, Boolean> sameFeedbackMap = list.stream().collect(Collectors.toMap(
-                KolFeedbackEntity::getId,
-                entity -> hasSameActiveFeedback(entity, deleteIdSet),
-                (v1, v2) -> v1
-        ));
+        Map<String, Boolean> sameFeedbackMap = buildSameActiveFeedbackMap(list, deleteIdSet);
 
         // 执行批量删除
         boolean remove = super.removeByIds(dto.getIds());
@@ -726,6 +723,41 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 .eq(KolFeedbackEntity::getIsDeleted, false)
                 .notIn(CollUtil.isNotEmpty(excludeIds), KolFeedbackEntity::getId, excludeIds)
                 .count() > 0;
+    }
+
+    private Map<String, Boolean> buildSameActiveFeedbackMap(List<KolFeedbackEntity> deleteList, Set<String> deleteIdSet) {
+        Map<String, Boolean> result = new HashMap<>();
+        if (CollUtil.isEmpty(deleteList)) {
+            return result;
+        }
+        List<KolFeedbackEntity> validDeleteList = deleteList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getId()))
+                .filter(item -> StrUtil.isNotBlank(item.getSourceType()))
+                .filter(item -> StrUtil.isNotBlank(item.getSourceDetailId()))
+                .filter(item -> StrUtil.isNotBlank(item.getUrlHash()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(validDeleteList)) {
+            return result;
+        }
+        List<String> sourceTypeList = validDeleteList.stream().map(KolFeedbackEntity::getSourceType).distinct().collect(Collectors.toList());
+        List<String> sourceDetailIdList = validDeleteList.stream().map(KolFeedbackEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> urlHashList = validDeleteList.stream().map(KolFeedbackEntity::getUrlHash).distinct().collect(Collectors.toList());
+        List<KolFeedbackEntity> activeFeedbackList = lambdaQuery()
+                .in(KolFeedbackEntity::getSourceType, sourceTypeList)
+                .in(KolFeedbackEntity::getSourceDetailId, sourceDetailIdList)
+                .in(KolFeedbackEntity::getUrlHash, urlHashList)
+                .eq(KolFeedbackEntity::getIsDeleted, false)
+                .notIn(CollUtil.isNotEmpty(deleteIdSet), KolFeedbackEntity::getId, deleteIdSet)
+                .list();
+        Set<String> activeFeedbackKeySet = CollUtil.isEmpty(activeFeedbackList)
+                ? new HashSet<>()
+                : activeFeedbackList.stream().map(this::buildFeedbackUrlKey).collect(Collectors.toSet());
+        validDeleteList.forEach(item -> result.put(item.getId(), activeFeedbackKeySet.contains(buildFeedbackUrlKey(item))));
+        return result;
+    }
+
+    private String buildFeedbackUrlKey(KolFeedbackEntity entity) {
+        return StrUtil.format("{}#{}#{}", entity.getSourceType(), entity.getSourceDetailId(), entity.getUrlHash());
     }
 
     /**

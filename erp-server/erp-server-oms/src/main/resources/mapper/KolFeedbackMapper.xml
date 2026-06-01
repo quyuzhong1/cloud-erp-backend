@@ -112,6 +112,7 @@
                 id
             from kol_sample_cost_ref_feedback_url
             where is_deleted = false
+              and source_type = 'kolB2bApplication'
             order by source_detail_id, url_hash, sort, create_time, id
         ) kfu
         <where>
