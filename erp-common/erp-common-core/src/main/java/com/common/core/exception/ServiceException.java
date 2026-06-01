@@ -52,7 +52,7 @@ public class ServiceException extends RuntimeException {
     public ServiceException(Throwable cause, String msg, Object... args) {
         super(CharSequenceUtil.format(msg, args), cause);
         this.code = ApiError.HTTP_UNKNOWN.getCode();
-        this.msg = CharSequenceUtil.format(msg, args);
+        this.msg = getMessage();
         this.data = null;
         log.error("[ServiceException] code={}, msg={}", code, this.msg, cause);
     }

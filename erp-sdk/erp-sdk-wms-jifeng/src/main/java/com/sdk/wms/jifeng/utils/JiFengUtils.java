@@ -3,6 +3,7 @@ package com.sdk.wms.jifeng.utils;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -19,6 +20,13 @@ import java.util.stream.Collectors;
 public class JiFengUtils {
 
     public static final String SUCCESS = "Success";
+    private static final String EMPTY_RESPONSE_MESSAGE = "极风接口返回为空";
+
+    private static void assertResponseNotBlank(String jsonStr) {
+        if (CharSequenceUtil.isBlank(jsonStr)) {
+            throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+        }
+    }
 
     public static String sign(String key, String data) {
         return hmacsha256(key, data);
@@ -48,11 +56,14 @@ public class JiFengUtils {
      */
     public static <T> JiFengBaseResp<T> parseToJiFengResp(String jsonStr, Class<T> clazz) {
         try {
-            if (CharSequenceUtil.isBlank(jsonStr)) {
-                return JiFengBaseResp.error("极风接口返回为空");
-            }
+            assertResponseNotBlank(jsonStr);
             JiFengBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<JiFengBaseResp<T>>(clazz) {});
-            return resp == null ? JiFengBaseResp.error("极风接口返回为空") : resp;
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return JiFengBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -67,11 +78,14 @@ public class JiFengUtils {
      */
     public static <T> JiFengBaseResp<T> parseToJiFengResp(String jsonStr, TypeReference<JiFengBaseResp<T>> typeRef) {
         try {
-            if (CharSequenceUtil.isBlank(jsonStr)) {
-                return JiFengBaseResp.error("极风接口返回为空");
-            }
+            assertResponseNotBlank(jsonStr);
             JiFengBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
-            return resp == null ? JiFengBaseResp.error("极风接口返回为空") : resp;
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return JiFengBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
