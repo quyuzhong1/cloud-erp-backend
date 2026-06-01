@@ -37,6 +37,8 @@ public class DaMaiUtils {
                 throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
             }
             return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -57,6 +59,8 @@ public class DaMaiUtils {
                 throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
             }
             return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
@@ -78,6 +82,8 @@ public class DaMaiUtils {
                 throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
             }
             return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiPageBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -98,6 +104,8 @@ public class DaMaiUtils {
                 throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
             }
             return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return DaMaiPageBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
