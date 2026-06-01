@@ -3,6 +3,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
@@ -44,6 +45,33 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * 主表驱动任务正常收尾：FINISH + endTime，保留主表已有 detailCount/errorCount
      */
     void finishTaskOnMainRecord(String taskId);
+
+    /**
+     * 加载批次配置；缺失时标记任务失败并返回 null
+     */
+    CfgSettingValueDTO.BillBatchParamsDTO loadBillBatchParams(String taskId);
+
+    /**
+     * 解析批次大小，非法或缺失时使用默认值
+     */
+    int resolveBatchSize(String batchConfig, int defaultSize);
+
+    /**
+     * 格式化任务错误信息，避免 getMessage() 为 null
+     */
+    String formatTaskErrorMessage(Exception e);
+
+    /**
+     * MQ 派发前 CAS 认领失败时的幂等处理：任务已在 ING 则返回成功，否则标记失败并抛异常
+     *
+     * @return 幂等成功时返回 BatchResultDTO，认领成功时返回 null 由调用方继续
+     */
+    BatchResultDTO resolveDispatchClaimOrThrow(String taskId, boolean claimed, String taskCode, String errorPayload);
+
+    /**
+     * 分批循环内检查任务是否应终止（记录消失或已完成）
+     */
+    boolean shouldStopLoopTask(String taskId, TmsAsyncTaskRecordEntity currentTask);
 
     void terminateTaskTimeout(String taskId, String errorMsg);
 

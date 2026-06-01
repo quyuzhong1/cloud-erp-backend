@@ -2770,7 +2770,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             log.error("MQ消息发送异常，taskId: {}", taskId, e);
             asyncTaskRecordService.lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000))
+                .set(TmsAsyncTaskRecordEntity::getErrorData, asyncTaskRecordService.formatTaskErrorMessage(e))
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
             throw e;
@@ -2845,8 +2845,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
                 if (batchNumber == 1 || batchNumber % 10 == 0) {
                     TmsAsyncTaskRecordEntity currentTask = asyncTaskRecordService.getById(taskId);
-                    if (Objects.equals(currentTask.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
-                        log.warn("循环过程中，任务状态显示已完成，taskId: {}", taskId);
+                    if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
                     taskExecTimeout = currentTask.getExecTimeout();
@@ -2923,7 +2922,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             log.warn("小包分摊异步任务获取锁被中断，taskId: {}", taskId, e);
         } catch (Exception e) {
             log.error("小包分摊异步任务执行失败，taskId: {}", taskId, e);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), org.apache.commons.lang3.StringUtils.substring(e.getMessage(), 0, 1000));
+            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), asyncTaskRecordService.formatTaskErrorMessage(e));
         } finally {
             if (locked && taskLock.isHeldByCurrentThread()) {
                 taskLock.unlock();
