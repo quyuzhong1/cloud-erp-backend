@@ -84,4 +84,9 @@ public class WdtReturnOrderDetailDTO implements Serializable {
      * 退款金额
      */
     private BigDecimal amount;
+
+    /**
+     * 明细单价
+     */
+    private BigDecimal price;
 }

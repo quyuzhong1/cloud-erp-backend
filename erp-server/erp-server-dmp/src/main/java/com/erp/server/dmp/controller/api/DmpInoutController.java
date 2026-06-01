@@ -218,7 +218,6 @@ public class DmpInoutController extends BaseController {
             typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
             typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
             typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
-            typeCacheMap.put("dorisQueryCfgSettingEntity", dmpHandlerCache.getDorisQueryCfgSettingEntityCache());
         }
         return success(typeCacheMap);
     }
@@ -226,17 +225,6 @@ public class DmpInoutController extends BaseController {
     @PostMapping("initCache")
     public ApiResult<?> initCache() {
         dmpHandlerCache.initCache(false);
-        return success();
-    }
-
-    /**
-     * 重建 Doris 路由配置内存缓存并广播给所有业务节点
-     * 当运维通过 SQL 直接修改 cfg_setting(type=doris_query_cfg) 后调用此接口可秒级生效，
-     * 无需等待 5 秒 update_time 轮询
-     */
-    @PostMapping("refreshDorisCfg")
-    public ApiResult<?> refreshDorisCfg() {
-        dmpHandlerCache.rebuildAndPublishDorisQueryCfg();
         return success();
     }
 
@@ -467,9 +455,9 @@ public class DmpInoutController extends BaseController {
 				    						List<Predicate<? super WarehouseLocationDTO.LocationListDTO>> predicateList = new ArrayList<>();
 											predicateList.add(l -> l.getCode().equals(finalPosition));
 											predicateList.add(l -> l.getCode().startsWith("3"));
-											predicateList.add(l -> l.getCode().startsWith("2"));
 											predicateList.add(l -> l.getCode().startsWith("4"));
-											predicateList.add(l -> l.getCode().equals(""));
+											predicateList.add(l -> l.getCode().startsWith(""));
+											predicateList.add(l -> l.getCode().equals("2"));
 				    						for(Predicate<? super WarehouseLocationDTO.LocationListDTO> predicate : predicateList) {
 				    							num = this.addWdtMoveNum(num, addNumMaps, locationList, predicate);
 				    						}

@@ -27,6 +27,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -444,6 +445,20 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (ObjectUtil.isNotEmpty(warehouseEntity)) {
             entity.setWarehouseId(dto.getWarehouseId());
             entity.setWarehouseName(warehouseEntity.getName());
+        }
+        // 币种：优先取入参，其次退货单，再次销售订单
+        String currency = dto.getCurrency();
+        if (CharSequenceUtil.isBlank(currency)) {
+            currency = soB2cReturnEntity.getCurrency();
+        }
+        if (CharSequenceUtil.isBlank(currency) && Objects.nonNull(soB2cEntity)) {
+            currency = soB2cEntity.getCurrency();
+        }
+        entity.setCurrency(currency);
+        if (CharSequenceUtil.isNotBlank(dto.getCurrencySymbol())) {
+            entity.setCurrencySymbol(dto.getCurrencySymbol());
+        } else if (CharSequenceUtil.isNotBlank(currency)) {
+            entity.setCurrencySymbol(CurrencyEnum.getSymbolByCode(currency));
         }
         this.save(entity);
         //操作日志

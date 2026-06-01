@@ -362,6 +362,11 @@ public class SoOutstockDTO implements Serializable {
         private BigDecimal cnyTaxPrice;
 
         /**
+         * 价税合计
+         */
+        private BigDecimal taxAmount;
+
+        /**
          * 价税合计（本位币）
          */
         private BigDecimal allAmountLocalCurrency;
@@ -1299,6 +1304,26 @@ public class SoOutstockDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 自定义导出字段
+         */
+        private List<ExportField> fieldList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportField {
+
+        /**
+         * 字段编码
+         */
+        private String field;
+
+        /**
+         * 字段名称
+         */
+        private String fieldName;
     }
 
     @Data
@@ -2057,6 +2082,16 @@ public class SoOutstockDTO implements Serializable {
         private String soOutstockCode;
 
         /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelName;
+
+        /**
          * 销售组织id
          */
         private String salesOrgId;
@@ -2099,5 +2134,26 @@ public class SoOutstockDTO implements Serializable {
          * 客户id
          */
         private String customerId;
+    }
+
+
+    /**
+     * 更新出库日期
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateOutstockDateDTO {
+
+        @NotBlank(message = "销售出库单id不能为空")
+        private String id;
+
+        @NotNull(message = "出库日期不能为空")
+        private LocalDate outDate;
+
+        /**
+         * 客户端版本号，用于乐观锁校验，避免并发覆盖
+         */
+        @NotNull(message = "版本号不能为空")
+        private Integer version;
     }
 }

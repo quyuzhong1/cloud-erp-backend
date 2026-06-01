@@ -429,6 +429,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
                 if (Boolean.TRUE.equals(resultDTO.getStatus())) {
                     e.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
                     e.setTrackNo(resultDTO.getTrackNo());
+                    e.setExceptionReason("");
                     // 操作日志
                     String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流下单", e.getCode());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_ORDER.getCode(), e.getId(), "新增操作");
@@ -832,8 +833,8 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public List<AfterSaleDTO.LogisticsOrderResultDTO> batchGetLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS) {
         log.info("批量获取物流面单开始：{}", JSON.toJSONString(logisticsLabelDTOS));
-        List<LogisticsOrderEntity> logisticsOrderEntityList = this.listByIds(logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList()));
-        Map<String, LogisticsOrderEntity> idEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getId, Function.identity(), (v1, v2) -> v1));
+        List<LogisticsOrderEntity> logisticsOrderEntityList = this.lambdaQuery().in(LogisticsOrderEntity::getAfterSaleId, logisticsLabelDTOS.stream().map(LogisticsOrderDTO.LogisticsLabelDTO::getAfterSaleId).collect(Collectors.toList())).list();
+        Map<String, LogisticsOrderEntity> idEntityMap = logisticsOrderEntityList.stream().collect(Collectors.toMap(LogisticsOrderEntity::getAfterSaleId, Function.identity(), (v1, v2) -> v1));
         List<AfterSaleDTO.LogisticsOrderResultDTO> resultDTOList = new ArrayList<>();
         for (LogisticsOrderDTO.LogisticsLabelDTO logisticsLabelDTO : logisticsLabelDTOS) {
             AfterSaleDTO.LogisticsOrderResultDTO resultDTO = new AfterSaleDTO.LogisticsOrderResultDTO();
@@ -989,6 +990,7 @@ public class LogisticsOrderServiceImpl extends SuperServiceImpl<LogisticsOrderMa
     private void handleOrderResult(BaseResult baseResult, LogisticsOrderEntity entity) {
         if (baseResult.isSuccess()) {
             entity.setStatus(LogisticsStatusEnum.SUCCESS.getCode());
+            entity.setExceptionReason("");
             OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
             List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
             if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {

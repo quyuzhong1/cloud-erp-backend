@@ -116,4 +116,7 @@ public class ProductConstant implements Serializable {
     public static final String PRODUCT_BATTERY_LITHIUM_ION = "锂离子电池（可充电式）";
     public static final String PRODUCT_BATTERY_LITHIUM_POLYMER = "锂聚合物电池（充电式）";
 
+    public static final String PRODUCT_CUSTOMIZED = "product_customized";
+
+    public static final String PRODUCT_INSTRUCTION = "product_instruction";
 }

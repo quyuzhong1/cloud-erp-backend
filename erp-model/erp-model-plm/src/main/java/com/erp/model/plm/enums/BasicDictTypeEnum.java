@@ -59,7 +59,10 @@ public enum  BasicDictTypeEnum {
     /**
      * 保险属性
      */
-    INSURANCE_PROPERTY("insuranceProperty", "保险属性")
+    INSURANCE_PROPERTY("insuranceProperty", "保险属性"),
+
+
+    WARRANTY_PERIOD("warrantyPeriod", "产品质保期"),
     ;
 
 

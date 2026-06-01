@@ -16,15 +16,18 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.*;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.ExpotParamDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.PagingParamDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.TotalDTO;
+import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.model.dmp.entity.doris.AdsErpOutstockDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.mapper.doris.AdsErpOutstockDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,26 +134,6 @@ public class AdsErpOutstockDiffFlowServiceImpl extends SuperServiceImpl<AdsErpOu
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
 		return lambdaUpdate().eq(AdsErpOutstockDiffFlowEntity::getId, dto.getId()).set(AdsErpOutstockDiffFlowEntity::getRemark, dto.getRemark()).update();
-	}
-	
-	@Override
-	public Boolean reCreate(ReCreateDTO dto) {
-		String checkMonth = dto.getCheckMonth();
-		checkMonth = checkMonth.replace("-", "年") + "月";
-		Integer count = lambdaQuery().eq(AdsErpOutstockDiffFlowEntity::getCheckMonth, checkMonth)
-		.eq(AdsErpOutstockDiffFlowEntity::getExecStatus, "doing").count();
-		if(count != null && count > 0) {
-			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_outstock_diff_flow_recreate");
-		if(reCreate) {
-			lambdaUpdate().eq(AdsErpOutstockDiffFlowEntity::getCheckMonth, checkMonth)
-			.set(AdsErpOutstockDiffFlowEntity::getExecStatus, "doing")
-			.set(AdsErpOutstockDiffFlowEntity::getExecStatusName, "执行中")
-			.setSql(" finish_time = null ")
-			.update();
-		}
-		return true;
 	}
 
 	@Override

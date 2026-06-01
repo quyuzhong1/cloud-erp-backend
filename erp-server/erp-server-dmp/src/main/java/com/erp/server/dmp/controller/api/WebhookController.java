@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.api;
 
+import com.common.business.dto.WebhookResult;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.dmp.enums.WebhookServiceEnum;
@@ -7,6 +8,8 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
 import com.erp.server.dmp.handler.WebhookHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -52,9 +55,9 @@ public class WebhookController extends BaseController {
      * @return
      */
     @PostMapping("/receive/{serviceFlag}")
-    public String receiveWebhook(@PathVariable("serviceFlag") String serviceFlag,
-                                 @RequestBody String data,
-                                 @RequestHeader Map<String, String> headers) {
+    public ResponseEntity<?> receiveWebhook(@PathVariable("serviceFlag") String serviceFlag,
+                                            @RequestBody String data,
+                                            @RequestHeader Map<String, String> headers) {
         log.info("========接收到webhook接口请求=======start");
         log.info("receiveWebhook:serviceFlag:{},data:{},headers:{}", serviceFlag, data, headers);
         // 解析请求中的服务标识，进行不同的处理
@@ -64,13 +67,22 @@ public class WebhookController extends BaseController {
         //安全校验
         handler.verify(data, headers, serviceFlag);
         //业务处理
-        String result = handler.process(data, headers, serviceFlag);
+        WebhookResult result = handler.process(data, headers, serviceFlag);
         log.info("========接收到webhook接口请求=======end");
-        return result;
+        // 返回 ResponseEntity，支持 JSON 和 XML
+        return getWebhookResultResponseEntity(result, serviceFlag);
+    }
+
+    private static ResponseEntity<?> getWebhookResultResponseEntity(WebhookResult result, String serviceFlag) {
+        if (WebhookServiceEnum.QIMEN_CALL_BACK.getCode().equals(serviceFlag)){
+            return ResponseEntity.ok().body(result.toXml());
+        }else {
+            return ResponseEntity.ok(result);
+        }
     }
 
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
-        WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByName(serviceFlag);
+        WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByCode(serviceFlag);
         if (Objects.nonNull(serviceEnum)) {
             return serviceEnum.getCode();
         }
