@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseQueryFbaOutboundResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
-import com.erp.model.wms.entity.B2bCustomerPackingEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.damai.dto.request.DaMaiCreateFbaOrderRequest;
 import com.sdk.wms.damai.dto.response.DaMaiGetFbaOrderResp;
@@ -33,7 +32,6 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "detailList", source = "detailEntityList")
     B2bThirdDeliveryDTO.ViewDTO toB2bThirdDeliveryViewDTO(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList);
 
-    B2bCustomerPackingDTO.ViewDTO toPackingViewDTO(B2bCustomerPackingEntity entity);
     B2bThirdDeliveryDetailDTO.ViewDTO toB2bThirdDeliveryDetailViewDTO(B2bThirdDeliveryDetailEntity deliveryDetail);
 
     List<B2bThirdDeliveryDetailEntity> toB2bThirdDeliveryDetail(List<B2bThirdDeliveryDetailDTO.AddDTO> detailList);

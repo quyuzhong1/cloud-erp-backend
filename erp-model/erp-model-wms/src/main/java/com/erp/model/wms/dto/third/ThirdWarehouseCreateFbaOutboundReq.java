@@ -237,12 +237,33 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
     @NoArgsConstructor
     @Builder
     public static class PackingDetailItem {
+        /**
+         * 三方仓SKU
+         */
         private String warehousePlatformSku;
+        /**
+         * 当前箱内该SKU装箱数量
+         */
         private Integer packingQty;
+        /**
+         * 箱唛号
+         */
         private String boxMarkNo;
+        /**
+         * 箱唛参考号
+         */
         private String boxMarkRefNo;
+        /**
+         * 标签尺寸
+         */
         private String labelSize;
+        /**
+         * 贴标要求
+         */
         private String labelingRequirement;
+        /**
+         * 箱序号
+         */
         private Integer boxSeq;
     }
 

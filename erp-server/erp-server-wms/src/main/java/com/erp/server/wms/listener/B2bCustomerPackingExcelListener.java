@@ -28,6 +28,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
     private final Map<String, B2bThirdDeliveryDetailDTO.AddDTO> skuDetailMap;
     private final Map<String, Integer> skuSaleQtyMap;
 
+    private final List<B2bCustomerPackingDTO.LineViewDTO> successLineList = new ArrayList<>();
     private final List<B2bCustomerPackingDTO.ViewDTO> successList = new ArrayList<>();
     private final List<B2bCustomerPackingImportExcelDTO> errorList = new ArrayList<>();
 
@@ -90,12 +91,8 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             errorList.add(row);
             return;
         }
-        B2bCustomerPackingDTO.ViewDTO viewDTO = new B2bCustomerPackingDTO.ViewDTO();
+        B2bCustomerPackingDTO.LineViewDTO viewDTO = new B2bCustomerPackingDTO.LineViewDTO();
         viewDTO.setBoxSeq(boxSeq);
-        viewDTO.setBoxMarkNo(CharSequenceUtil.blankToDefault(row.getBoxMarkNo(), "").trim());
-        viewDTO.setBoxMarkRefNo(CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), "").trim());
-        viewDTO.setLabelSize(CharSequenceUtil.blankToDefault(row.getLabelSize(), "").trim());
-        viewDTO.setLabelingRequirement(CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), "").trim());
         viewDTO.setSkuNo(row.getSkuNo().trim());
         viewDTO.setPackingQty(packingQty);
         if (productDetail != null) {
@@ -104,7 +101,14 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             viewDTO.setWarehousePlatformSku(productDetail.getWarehousePlatformSku());
         }
         viewDTO.setSaleQty(skuSaleQtyMap.getOrDefault(viewDTO.getSkuNo(), 0));
-        successList.add(viewDTO);
+        successLineList.add(viewDTO);
+        B2bCustomerPackingDTO.ViewDTO boxDTO = new B2bCustomerPackingDTO.ViewDTO();
+        boxDTO.setBoxSeq(boxSeq);
+        boxDTO.setBoxMarkNo(CharSequenceUtil.blankToDefault(row.getBoxMarkNo(), "").trim());
+        boxDTO.setBoxMarkRefNo(CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), "").trim());
+        boxDTO.setLabelSize(CharSequenceUtil.blankToDefault(row.getLabelSize(), "").trim());
+        boxDTO.setLabelingRequirement(CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), "").trim());
+        successList.add(boxDTO);
     }
 
     @Override
@@ -136,6 +140,15 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         }
         if (CollectionUtils.isNotEmpty(errorList)) {
             successList.clear();
+            successLineList.clear();
+            return;
+        }
+        Map<Integer, List<B2bCustomerPackingDTO.LineViewDTO>> lineMap = successLineList.stream()
+                .collect(Collectors.groupingBy(B2bCustomerPackingDTO.LineViewDTO::getBoxSeq));
+        successList.clear();
+        for (B2bCustomerPackingDTO.ViewDTO box : boxHeadMap.values()) {
+            box.setPackingLineList(lineMap.getOrDefault(box.getBoxSeq(), new ArrayList<>()));
+            successList.add(box);
         }
     }
 

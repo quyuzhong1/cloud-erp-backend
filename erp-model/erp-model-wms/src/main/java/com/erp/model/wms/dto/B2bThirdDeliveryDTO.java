@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -454,6 +454,7 @@ public class B2bThirdDeliveryDTO implements Serializable {
         /**
          * 装箱明细（谷仓仓）
          */
+        @Valid
         private List<B2bCustomerPackingDTO.AddDTO> packingDetailList;
 
     }

@@ -50,31 +50,48 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
         }
         List<B2bCustomerPackingEntity> entityList = new ArrayList<>();
         int sort = 0;
-        for (B2bCustomerPackingDTO.AddDTO dto : packingList) {
-            B2bCustomerPackingEntity entity = new B2bCustomerPackingEntity();
-            entity.setMainId(mainId);
-            entity.setBoxSeq(dto.getBoxSeq());
-            entity.setBoxMarkNo(CharSequenceUtil.blankToDefault(dto.getBoxMarkNo(), ""));
-            entity.setBoxMarkRefNo(CharSequenceUtil.blankToDefault(dto.getBoxMarkRefNo(), ""));
-            entity.setLabelSize(CharSequenceUtil.blankToDefault(dto.getLabelSize(), ""));
-            entity.setLabelingRequirement(CharSequenceUtil.blankToDefault(dto.getLabelingRequirement(), ""));
-            entity.setSkuId(CharSequenceUtil.blankToDefault(dto.getSkuId(), ""));
-            entity.setSkuNo(dto.getSkuNo());
-            entity.setProductName(CharSequenceUtil.blankToDefault(dto.getProductName(), ""));
-            entity.setSaleQty(dto.getSaleQty() != null ? dto.getSaleQty() : 0);
-            entity.setPackingQty(dto.getPackingQty());
-            entity.setWarehousePlatformSku(CharSequenceUtil.blankToDefault(dto.getWarehousePlatformSku(), ""));
-            entity.setSort(dto.getSort() != null ? dto.getSort() : sort++);
-            entityList.add(entity);
-        }
-        saveBatch(entityList);
-        for (int i = 0; i < packingList.size(); i++) {
-            List<AttachDTO> attachList = packingList.get(i).getAttachList();
-            if (CollUtil.isNotEmpty(attachList)) {
-                wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entityList.get(i).getId());
+        for (B2bCustomerPackingDTO.AddDTO box : packingList) {
+            for (B2bCustomerPackingDTO.LineAddDTO line : box.getPackingLineList()) {
+                entityList.add(toEntity(mainId, box, line, line.getSort() != null ? line.getSort() : sort++));
             }
         }
+        saveBatch(entityList);
+        saveBoxAttachments(packingList, entityList);
         return entityList;
+    }
+
+    private void saveBoxAttachments(List<B2bCustomerPackingDTO.AddDTO> packingList,
+                                    List<B2bCustomerPackingEntity> entityList) {
+        for (B2bCustomerPackingDTO.AddDTO box : packingList) {
+            List<AttachDTO> attachList = box.getAttachList();
+            if (CollUtil.isNotEmpty(attachList)) {
+                for (B2bCustomerPackingEntity entity : entityList) {
+                    if (box.getBoxSeq().equals(entity.getBoxSeq())) {
+                        wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private B2bCustomerPackingEntity toEntity(String mainId, B2bCustomerPackingDTO.AddDTO box,
+                                              B2bCustomerPackingDTO.LineAddDTO line, int sort) {
+        B2bCustomerPackingEntity entity = new B2bCustomerPackingEntity();
+        entity.setMainId(mainId);
+        entity.setBoxSeq(box.getBoxSeq());
+        entity.setBoxMarkNo(CharSequenceUtil.blankToDefault(box.getBoxMarkNo(), ""));
+        entity.setBoxMarkRefNo(CharSequenceUtil.blankToDefault(box.getBoxMarkRefNo(), ""));
+        entity.setLabelSize(CharSequenceUtil.blankToDefault(box.getLabelSize(), ""));
+        entity.setLabelingRequirement(CharSequenceUtil.blankToDefault(box.getLabelingRequirement(), ""));
+        entity.setSkuId(CharSequenceUtil.blankToDefault(line.getSkuId(), ""));
+        entity.setSkuNo(line.getSkuNo());
+        entity.setProductName(CharSequenceUtil.blankToDefault(line.getProductName(), ""));
+        entity.setSaleQty(line.getSaleQty() != null ? line.getSaleQty() : 0);
+        entity.setPackingQty(line.getPackingQty());
+        entity.setWarehousePlatformSku(CharSequenceUtil.blankToDefault(line.getWarehousePlatformSku(), ""));
+        entity.setSort(sort);
+        return entity;
     }
 
     @Override
