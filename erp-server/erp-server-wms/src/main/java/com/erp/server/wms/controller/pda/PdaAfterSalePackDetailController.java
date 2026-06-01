@@ -81,8 +81,8 @@ public class PdaAfterSalePackDetailController extends BaseController {
      */
     @GetMapping("/listByCode")
     @LogViewService
-    public ApiResult<List<AfterSalePackDetailDTO.ViewDTO>> listByCode(@RequestParam("code") String code) {
-        return success(afterSalePackDetailService.listByCode(code));
+    public ApiResult<List<AfterSalePackDetailDTO.ViewDTO>> listByCode(@RequestParam("code") String code, @RequestParam("sourceId") String sourceId) {
+        return success(afterSalePackDetailService.listByCode(code, sourceId));
     }
 
 }
