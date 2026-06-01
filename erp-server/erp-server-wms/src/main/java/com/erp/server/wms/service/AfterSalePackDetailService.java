@@ -44,5 +44,5 @@ public interface AfterSalePackDetailService extends SuperService<AfterSalePackDe
      * @author lei.nie
      * @date: 2026-05-12
      */
-    List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code);
+    List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code, String sourceId);
 }
