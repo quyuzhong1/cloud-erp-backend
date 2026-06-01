@@ -1905,7 +1905,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(skuNos)) {
-            throw new ServiceException("保存失败，sku【{}】下多个箱唛的退货仓位不一致，需调整成一致的退货仓位" + String.join(",", skuNos));
+            throw new ServiceException("保存失败，sku【{}】下多个箱唛的退货仓位不一致，需调整成一致的退货仓位", String.join(",", skuNos));
         }
     }
 
