@@ -259,5 +259,41 @@
         </if>
     </select>
 
+    <!-- 游标分批查分摊表ID：前置过滤 status 与 logistics_large，后置期间校验在消费时兜底 -->
+    <select id="pageIdsByReportPeriodMonth" resultType="java.lang.String">
+        SELECT a.id
+        FROM first_mile_cost_allocation a
+        INNER JOIN report_period_month rpm ON a.report_period_id = rpm.id AND rpm.is_deleted = false
+        WHERE a.is_deleted = false
+          AND rpm.month = #{reportPeriodMonth}
+        <if test="status != null and status != ''">
+            AND a.status != #{status}
+        </if>
+          AND NOT EXISTS (
+            SELECT 1 FROM logistics_large ll
+            WHERE ll.is_deleted = false AND ll.source_id = a.id
+          )
+        <if test="lastId != null and lastId != ''">
+            AND a.id &gt; #{lastId}
+        </if>
+        ORDER BY a.id ASC
+        LIMIT #{batchSize}
+    </select>
+
+    <select id="countByReportPeriodMonth" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM first_mile_cost_allocation a
+        INNER JOIN report_period_month rpm ON a.report_period_id = rpm.id AND rpm.is_deleted = false
+        WHERE a.is_deleted = false
+          AND rpm.month = #{reportPeriodMonth}
+        <if test="status != null and status != ''">
+            AND a.status != #{status}
+        </if>
+          AND NOT EXISTS (
+            SELECT 1 FROM logistics_large ll
+            WHERE ll.is_deleted = false AND ll.source_id = a.id
+          )
+    </select>
+
 
 </mapper>

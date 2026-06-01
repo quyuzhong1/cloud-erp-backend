@@ -110,6 +110,16 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     BatchResultDTO updateStatus(FirstMileCostAllocationEntity entity, String status, String accountPeriod);
 
     /**
+     * 按月异步更新核算状态
+     */
+    BatchResultDTO asyncUpdateStatus(FirstMileCostAllocationDTO.UpdateStatusDTO dto);
+
+    /**
+     * 消费端分批更新核算状态
+     */
+    void pushUpdateStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
      * 根据对账单id查询费用分摊记录
      * @param reconciliationIds
      * @return

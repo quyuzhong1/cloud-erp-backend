@@ -49,4 +49,17 @@ public interface SmallBagCostAllocationMainService extends SuperService<SmallBag
      * @return List<SmallBagCostAllocationMainEntity>
      */
     List<SmallBagCostAllocationMainEntity> listByCostIdList(List<String> costIdList);
+
+    /**
+     * 游标分批查询指定核算月份的主表ID（直查主表 + 前置过滤无效记录）
+     */
+    List<String> pageMainIdsByReportPeriodStr(String reportPeriodStr, String reportStatus,
+                                              boolean excludeBigTableDone, String bigTableDoneCode,
+                                              String lastId, int batchSize);
+
+    /**
+     * 统计指定核算月份可更新核算状态的主表记录数
+     */
+    int countMainByReportPeriodStr(String reportPeriodStr, String reportStatus,
+                                   boolean excludeBigTableDone, String bigTableDoneCode);
 }
