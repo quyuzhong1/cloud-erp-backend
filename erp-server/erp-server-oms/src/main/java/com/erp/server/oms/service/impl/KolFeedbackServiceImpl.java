@@ -46,6 +46,7 @@ import com.erp.server.oms.service.KolPartnerInfoService;
 import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import com.erp.server.oms.service.KolSocialMediaService;
 import com.erp.server.oms.service.OperateLogService;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -531,7 +532,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         if (CollUtil.isEmpty(sourceDetailIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList);
+        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList, SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
     }
 
     @Override
@@ -730,6 +731,9 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         if (CollUtil.isEmpty(deleteList)) {
             return result;
         }
+        deleteList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getId()))
+                .forEach(item -> result.put(item.getId(), false));
         List<KolFeedbackEntity> validDeleteList = deleteList.stream()
                 .filter(item -> StrUtil.isNotBlank(item.getId()))
                 .filter(item -> StrUtil.isNotBlank(item.getSourceType()))
@@ -739,21 +743,31 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         if (CollUtil.isEmpty(validDeleteList)) {
             return result;
         }
-        List<String> sourceTypeList = validDeleteList.stream().map(KolFeedbackEntity::getSourceType).distinct().collect(Collectors.toList());
-        List<String> sourceDetailIdList = validDeleteList.stream().map(KolFeedbackEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<String> urlHashList = validDeleteList.stream().map(KolFeedbackEntity::getUrlHash).distinct().collect(Collectors.toList());
-        List<KolFeedbackEntity> activeFeedbackList = lambdaQuery()
-                .in(KolFeedbackEntity::getSourceType, sourceTypeList)
-                .in(KolFeedbackEntity::getSourceDetailId, sourceDetailIdList)
-                .in(KolFeedbackEntity::getUrlHash, urlHashList)
-                .eq(KolFeedbackEntity::getIsDeleted, false)
-                .notIn(CollUtil.isNotEmpty(deleteIdSet), KolFeedbackEntity::getId, deleteIdSet)
-                .list();
-        Set<String> activeFeedbackKeySet = CollUtil.isEmpty(activeFeedbackList)
-                ? new HashSet<>()
-                : activeFeedbackList.stream().map(this::buildFeedbackUrlKey).collect(Collectors.toSet());
+        Set<String> activeFeedbackKeySet = new HashSet<>();
+        for (List<KolFeedbackEntity> partitionList : Lists.partition(validDeleteList, 100)) {
+            LambdaQueryWrapper<KolFeedbackEntity> wrapper = new LambdaQueryWrapper<KolFeedbackEntity>()
+                    .eq(KolFeedbackEntity::getIsDeleted, false)
+                    .notIn(CollUtil.isNotEmpty(deleteIdSet), KolFeedbackEntity::getId, deleteIdSet)
+                    .and(nested -> {
+                        appendFeedbackUrlCondition(nested, partitionList.get(0));
+                        for (int i = 1; i < partitionList.size(); i++) {
+                            KolFeedbackEntity item = partitionList.get(i);
+                            nested.or(orWrapper -> appendFeedbackUrlCondition(orWrapper, item));
+                        }
+                    });
+            List<KolFeedbackEntity> activeFeedbackList = super.list(wrapper);
+            if (CollUtil.isNotEmpty(activeFeedbackList)) {
+                activeFeedbackKeySet.addAll(activeFeedbackList.stream().map(this::buildFeedbackUrlKey).collect(Collectors.toSet()));
+            }
+        }
         validDeleteList.forEach(item -> result.put(item.getId(), activeFeedbackKeySet.contains(buildFeedbackUrlKey(item))));
         return result;
+    }
+
+    private void appendFeedbackUrlCondition(LambdaQueryWrapper<KolFeedbackEntity> wrapper, KolFeedbackEntity entity) {
+        wrapper.eq(KolFeedbackEntity::getSourceType, entity.getSourceType())
+                .eq(KolFeedbackEntity::getSourceDetailId, entity.getSourceDetailId())
+                .eq(KolFeedbackEntity::getUrlHash, entity.getUrlHash());
     }
 
     private String buildFeedbackUrlKey(KolFeedbackEntity entity) {
