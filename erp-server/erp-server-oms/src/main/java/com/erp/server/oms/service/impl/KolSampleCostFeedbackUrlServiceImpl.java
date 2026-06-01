@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.oms.entity.KolFeedbackEntity;
@@ -31,6 +32,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
             SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
 
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "feedback.sourceType,feedback.sourceDetailId,feedback.urlHash")
     @Override
     public void syncByFeedback(KolFeedbackEntity feedback) {
         if (!isValidSampleFeedback(feedback)) {
@@ -44,10 +46,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
                 .eq(KolSampleCostFeedbackUrlEntity::getIsDeleted, false)
                 .one();
         if (existEntity != null) {
-            KolSampleCostFeedbackUrlEntity updateEntity = buildEntity(feedback, url);
-            updateEntity.setId(existEntity.getId());
-            updateEntity.setSort(existEntity.getSort());
-            updateById(updateEntity);
+            updateExistingFeedbackUrl(existEntity, feedback, url);
             return;
         }
 
@@ -96,6 +95,14 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
                 .setUrl(url)
                 .setUrlHash(feedback.getUrlHash())
                 .setFeedbackStatus(CharSequenceUtil.blankToDefault(feedback.getFeedbackStatus(), ""));
+    }
+
+    private void updateExistingFeedbackUrl(KolSampleCostFeedbackUrlEntity existEntity, KolFeedbackEntity feedback, String url) {
+        KolSampleCostFeedbackUrlEntity updateEntity = buildEntity(feedback, url);
+        updateEntity.setId(existEntity.getId());
+        updateEntity.setSort(existEntity.getSort());
+        updateEntity.setVersion(existEntity.getVersion());
+        updateById(updateEntity);
     }
 
     private Integer nextSort(String sourceType, String sourceDetailId) {
