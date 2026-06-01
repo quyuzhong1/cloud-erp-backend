@@ -1081,6 +1081,11 @@ public class SupplierDTO implements Serializable {
     public static class PagingExportDTO  extends  PagingViewDTO{
 
         /**
+         * 采购员id（导出 SQL 中已 SELECT sup.purchase_user_id，用于电话脱敏权限判断）
+         */
+        private String purchaseUserId;
+
+        /**
          * 联系人-人员
          */
         private String person;
