@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.jitu.dto.request.*;
 import com.sdk.wms.jitu.dto.request.StockOutOrderCreateRequest;
 import com.sdk.wms.jitu.dto.response.*;
@@ -92,7 +93,7 @@ public class JituService {
         } catch (IOException e) {
             ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
-            throw new RuntimeException(e);
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
         return JSON.parseObject(bodyStr, new TypeReference<OverseasInboundCreateResponse>() {}.getType());
     }
@@ -115,7 +116,7 @@ public class JituService {
         } catch (IOException e) {
             ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
-            throw new RuntimeException(e);
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
         return JSON.parseObject(bodyStr, new TypeReference<OverseasInboundCancelResponse>() {}.getType());
     }
@@ -139,11 +140,11 @@ public class JituService {
         } catch (IOException e) {
             ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
-            throw new RuntimeException(e);
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
         StockOutOrderCreateResponse response = JSON.parseObject(bodyStr, new TypeReference<StockOutOrderCreateResponse>() {}.getType());
         if (response == null) {
-            throw new ServiceException("极兔创建出库单接口返回为空");
+            throw new ThirdWarehouseEmptyResponseException("极兔创建出库单接口返回为空");
         }
         return response;
     }
@@ -167,7 +168,7 @@ public class JituService {
         } catch (IOException e) {
             ThirdWarehouseContext.setResponseJson(e.getMessage());
             log.error("请求失败,异常: {}", e);
-            throw new RuntimeException(e);
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
         return JSON.parseObject(bodyStr, new TypeReference<StockOutOrderCancelResponse>() {}.getType());
     }

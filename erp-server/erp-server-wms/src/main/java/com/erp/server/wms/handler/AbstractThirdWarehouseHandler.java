@@ -12,6 +12,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -214,7 +215,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             //执行逻辑
             ApiResult<T> result = handler.handle();
             if (isRetryableOutboundResult(result, businessType)) {
-                result = ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), getRetryableOutboundMessage(result.getMsg()));
+                result = ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), result.getMsg());
             }
             ThirdWarehouseContext.setMsg(result.getMsg());
             //记录日志
@@ -245,11 +246,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return isOutboundBusiness(businessType)
                 && ObjectUtil.isNotEmpty(result)
                 && !result.isSuccess()
-                && (isTimeoutMessage(result.getMsg()) || isEmptyResponseMessage(result.getMsg()));
-    }
-
-    private String getRetryableOutboundMessage(String message) {
-        return isEmptyResponseMessage(message) ? THIRD_WAREHOUSE_EMPTY_RESPONSE : message;
+                && (isTimeoutMessage(result.getMsg()) || THIRD_WAREHOUSE_EMPTY_RESPONSE.equals(result.getMsg()));
     }
 
     private boolean isOutboundBusiness(SourceTypeEnum businessType) {
@@ -258,8 +255,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     private boolean isEmptyResponseException(Exception e) {
-        return e instanceof NullPointerException && CharSequenceUtil.isBlank(e.getMessage())
-                || isEmptyResponseMessage(e.getMessage());
+        return e instanceof ThirdWarehouseEmptyResponseException
+                || e instanceof NullPointerException && CharSequenceUtil.isBlank(e.getMessage());
     }
 
     private boolean isTimeoutException(Throwable throwable) {
@@ -273,19 +270,6 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return false;
     }
 
-    private boolean isEmptyResponseMessage(String message) {
-        if (CharSequenceUtil.isBlank(message)) {
-            return false;
-        }
-        return message.contains("返回为空")
-                || message.contains("响应为空")
-                || message.contains("返回数据为空")
-                || message.contains("返回结果为空")
-                || message.contains("响应结果为空")
-                || message.contains("接口返回为空")
-                || isBlankOriginalJsonParseError(message);
-    }
-
     private boolean isTimeoutMessage(String message) {
         if (CharSequenceUtil.isBlank(message)) {
             return false;
@@ -295,19 +279,6 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
                 || lowerMessage.contains("timed out")
                 || lowerMessage.contains("sockettimeoutexception")
                 || message.contains("超时");
-    }
-
-    private boolean isBlankOriginalJsonParseError(String message) {
-        if (!CharSequenceUtil.containsIgnoreCase(message, "json 解析失败") || !message.contains("原始值：")) {
-            return false;
-        }
-        int originalValueStart = message.indexOf("原始值：") + "原始值：".length();
-        int originalValueEnd = message.indexOf("，异常", originalValueStart);
-        if (originalValueEnd < 0) {
-            return false;
-        }
-        String originalValue = message.substring(originalValueStart, originalValueEnd);
-        return CharSequenceUtil.isBlank(originalValue) || "null".equalsIgnoreCase(originalValue.trim());
     }
 
     @FunctionalInterface

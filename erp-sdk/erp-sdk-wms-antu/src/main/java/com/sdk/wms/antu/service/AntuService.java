@@ -6,6 +6,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.antu.constants.AntuConstants;
 import com.sdk.wms.antu.dto.request.*;
 import com.sdk.wms.antu.dto.response.*;
@@ -150,7 +151,7 @@ public class AntuService {
         AntuResponse<String> respDto = JSON.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
         if(Objects.isNull(respDto)){
             log.error("{}创建出库单接口返回为空,返回值:{}", platformEnum.getName(), response);
-            throw new ServiceException(platformEnum.getName() + "创建出库单接口返回为空");
+            throw new ThirdWarehouseEmptyResponseException(platformEnum.getName() + "创建出库单接口返回为空");
         }
         //处理返回值
         if(StringUtil.isNotBlank(respDto.getOrderCode())){
