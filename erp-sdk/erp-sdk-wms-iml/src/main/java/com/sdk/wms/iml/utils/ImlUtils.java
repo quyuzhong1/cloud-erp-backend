@@ -1,5 +1,6 @@
 package com.sdk.wms.iml.utils;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -70,7 +71,11 @@ public class ImlUtils {
      */
     public static <T> ImlBaseResp<T> parseToImlResp(String jsonStr, Class<T> clazz) {
         try {
-            return JSON.parseObject(jsonStr, new TypeReference<ImlBaseResp<T>>(clazz) {});
+            if (CharSequenceUtil.isBlank(jsonStr)) {
+                return ImlBaseResp.error("IML接口返回为空");
+            }
+            ImlBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<ImlBaseResp<T>>(clazz) {});
+            return resp == null ? ImlBaseResp.error("IML接口返回为空") : resp;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return ImlBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -85,7 +90,11 @@ public class ImlUtils {
      */
     public static <T> ImlBaseResp<T> parseToImlResp(String jsonStr, TypeReference<ImlBaseResp<T>> typeRef) {
         try {
-            return JSON.parseObject(jsonStr, typeRef);
+            if (CharSequenceUtil.isBlank(jsonStr)) {
+                return ImlBaseResp.error("IML接口返回为空");
+            }
+            ImlBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
+            return resp == null ? ImlBaseResp.error("IML接口返回为空") : resp;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return ImlBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);

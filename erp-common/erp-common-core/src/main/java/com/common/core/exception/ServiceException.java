@@ -48,6 +48,15 @@ public class ServiceException extends RuntimeException {
         this(ApiError.HTTP_UNKNOWN.getCode(), msg, args);
     }
 
+    /** 传入原始异常，使用默认错误码 */
+    public ServiceException(Throwable cause, String msg, Object... args) {
+        super(CharSequenceUtil.format(msg, args), cause);
+        this.code = ApiError.HTTP_UNKNOWN.getCode();
+        this.msg = CharSequenceUtil.format(msg, args);
+        this.data = null;
+        log.error("[ServiceException] code={}, msg={}", code, this.msg, cause);
+    }
+
     /**
      * 从枚举中获取参数
      *
