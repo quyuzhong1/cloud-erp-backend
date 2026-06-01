@@ -59,6 +59,10 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
     BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto);
 
     void pushReAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
     
     BatchResultDTO reAllocation(String id);
     

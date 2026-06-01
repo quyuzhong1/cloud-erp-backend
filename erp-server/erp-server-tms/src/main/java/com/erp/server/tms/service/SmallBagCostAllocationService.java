@@ -68,6 +68,16 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
      * MQ 消费：游标分批批量重新分摊
      */
     void pushReAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 按核算月份异步批量删除
+     */
+    BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量删除
+     */
+    void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
     
     BatchResultDTO reAllocation(String id);
     
