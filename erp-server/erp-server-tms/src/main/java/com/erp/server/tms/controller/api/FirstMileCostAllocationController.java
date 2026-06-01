@@ -126,27 +126,27 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新状态")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
+        if (CollUtil.isNotEmpty(dto.getIds())) {
+            List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)) {
+                return failure("批量更新状态失败，未查询到费用分摊记录");
+            }
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+            for (FirstMileCostAllocationEntity entity : entityList) {
+                try {
+                    resultDTOS.add(firstMileCostAllocationService.updateStatus(entity, dto.getStatus(), dto.getAccountPeriod()));
+                } catch (Exception e) {
+                    log.error("费用分摊记录更新状态失败", e);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
+                }
+            }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        }
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
             BatchResultDTO taskResult = firstMileCostAllocationService.asyncUpdateStatus(dto);
             return success(Collections.singletonList(taskResult));
         }
-        List<FirstMileCostAllocationEntity> entityList = null;
-        if (CollUtil.isNotEmpty(dto.getIds())){
-            entityList = firstMileCostAllocationService.listByIds(dto.getIds());
-        }
-        if (CollectionUtils.isEmpty(entityList)){
-            return failure("批量更新状态失败，未查询到费用分摊记录");
-        }
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
-        for (FirstMileCostAllocationEntity entity : entityList) {
-            try {
-                resultDTOS.add(firstMileCostAllocationService.updateStatus(entity,dto.getStatus(),dto.getAccountPeriod()));
-            }catch (Exception e){
-                log.error("费用分摊记录更新状态失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
-            }
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return failure("批量更新状态失败，未查询到费用分摊记录");
     }
     /**
      * 删除记录
@@ -160,25 +160,27 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除记录")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
-        List<FirstMileCostAllocationEntity> entityList = null;
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = firstMileCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
-            entityList = firstMileCostAllocationService.listByIds(dto.getIds());
-        }
-        if (CollectionUtils.isEmpty(entityList)){
-            return failure("批量删除记录失败，未查询到待确认费用分摊记录");
-        }
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
-        for (FirstMileCostAllocationEntity entity : entityList) {
-            try {
-                resultDTOS.add(firstMileCostAllocationService.delete(entity));
-            }catch (Exception e){
-                log.error(ERROR_MSG,e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
+        if (CollUtil.isNotEmpty(dto.getIds())) {
+            List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)) {
+                return failure("批量删除记录失败，未查询到待确认费用分摊记录");
             }
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+            for (FirstMileCostAllocationEntity entity : entityList) {
+                try {
+                    resultDTOS.add(firstMileCostAllocationService.delete(entity));
+                } catch (Exception e) {
+                    log.error(ERROR_MSG, e);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
+                }
+            }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
+            BatchResultDTO taskResult = firstMileCostAllocationService.asyncDelete(dto);
+            return success(Collections.singletonList(taskResult));
+        }
+        return failure("批量删除记录失败，未查询到待确认费用分摊记录");
     }
     /**
      * 导出Excel
@@ -206,51 +208,62 @@ public class FirstMileCostAllocationController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<List<BatchResultDTO>> calcAllocatedCost(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
-        List<FirstMileCostAllocationEntity> entityList = new ArrayList<>();
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = firstMileCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
+        if (CollUtil.isNotEmpty(dto.getIds())) {
             List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-            entityList = firstMileCostAllocationService.listByIds(ids);
-        }
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
-        if (CollectionUtils.isEmpty(entityList)){
-            resultDTOS.add(BatchResultDTO.fail("","", MSG));
-            return failure(resultDTOS);
-        }
-
-        List<String> sourceIds = entityList.stream().filter(e -> ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
-        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            firstMileCostAllocationService.asyncResetAllocatedCost(entityList,firstMileDeliveryEntityList, deliveryDetailEntityList);
-            return success();
-        }else {
+            List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+            if (CollectionUtils.isEmpty(entityList)) {
+                resultDTOS.add(BatchResultDTO.fail("", "", MSG));
+                return failure(resultDTOS);
+            }
+            List<String> sourceIds = entityList.stream()
+                .filter(e -> ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus()))
+                .map(FirstMileCostAllocationEntity::getSourceId)
+                .distinct()
+                .collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList;
+            List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList;
+            if (CollUtil.isEmpty(sourceIds)) {
+                firstMileDeliveryEntityList = Collections.emptyList();
+                deliveryDetailEntityList = Collections.emptyList();
+            } else {
+                firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
+                deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
+            }
             for (FirstMileCostAllocationEntity entity : entityList) {
-                if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"核算状态已确认，不可重新分摊"));
+                if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "核算状态已确认，不可重新分摊"));
                     continue;
                 }
                 String sourceId = entity.getSourceId();
-                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
-                if(Objects.isNull(firstMileDeliveryEntity)){
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"费用分摊发货单记录不存在"));
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream()
+                    .filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
+                if (Objects.isNull(firstMileDeliveryEntity)) {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "费用分摊发货单记录不存在"));
                     continue;
                 }
-                List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
-                    resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"费用分摊发货单明细记录不存在"));
+                List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream()
+                    .filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)) {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "费用分摊发货单明细记录不存在"));
                     continue;
                 }
                 try {
-                    resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
-                }catch (Exception e){
-                    log.error(ERROR_MSG,e);
+                    resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity, firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
+                } catch (Exception e) {
+                    log.error(ERROR_MSG, e);
                     resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
                 }
             }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
+            BatchResultDTO taskResult = firstMileCostAllocationService.asyncReAllocationCalcCost(dto);
+            return success(Collections.singletonList(taskResult));
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(1);
+        resultDTOS.add(BatchResultDTO.fail("", "", MSG));
+        return failure(resultDTOS);
     }
 
     /**

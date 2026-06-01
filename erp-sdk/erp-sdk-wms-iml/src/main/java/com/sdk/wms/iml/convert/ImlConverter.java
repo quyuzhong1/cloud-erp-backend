@@ -26,6 +26,7 @@ public interface ImlConverter {
             @Mapping(target = "platformType", constant = "warehouse"),
             @Mapping(target = "platformSkuNo", source = "productSku"),
             @Mapping(target = "platformSkuName", source = "productTitle"),
+            @Mapping(target = "platformProductBarcode", expression = "java(ImlConverter.getProductBarcode(sourceData))"),
             @Mapping(target = "productImageUrl", source = "productDescUrl"),
             @Mapping(target = "productSpec", source = "productModel"),
             @Mapping(target = "type", expression ="java(ImlConverter.getType())"),
@@ -105,6 +106,19 @@ public interface ImlConverter {
 
     static String getUniqueKey(ImlProductResp sourceData){
         return MD5Util.toMD5("iml"+sourceData.getProductSku());
+    }
+
+    static String getProductBarcode(ImlProductResp sourceData) {
+        if (sourceData == null || sourceData.getProductSku() == null || sourceData.getProductSku().isEmpty()) {
+            return "";
+        }
+        String companyCode = sourceData.getCompanyCode();
+        String productSku = sourceData.getProductSku();
+        if (companyCode == null || companyCode.isEmpty()) {
+            return productSku;
+        }
+        String ownerPrefix = companyCode + "-";
+        return productSku.startsWith(ownerPrefix) ? productSku : ownerPrefix + productSku;
     }
 
     static String getProvider(){

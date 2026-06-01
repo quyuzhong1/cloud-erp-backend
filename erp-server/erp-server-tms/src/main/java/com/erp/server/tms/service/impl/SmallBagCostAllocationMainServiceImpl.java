@@ -137,4 +137,22 @@ public class SmallBagCostAllocationMainServiceImpl extends SuperServiceImpl<Smal
         Integer count = baseMapper.countMainByReportPeriodStr(reportPeriodStr, reportStatus, excludeBigTableDone, bigTableDoneCode);
         return count == null ? 0 : count;
     }
+
+    @Override
+    public List<String> pageMainIdsForReAllocation(String reportPeriodStr, String reportStatus,
+                                                   String lastId, int batchSize) {
+        if (StrUtil.isBlank(reportPeriodStr)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.pageMainIdsForReAllocation(reportPeriodStr, reportStatus, lastId, batchSize);
+    }
+
+    @Override
+    public int countMainForReAllocation(String reportPeriodStr, String reportStatus) {
+        if (StrUtil.isBlank(reportPeriodStr)) {
+            return 0;
+        }
+        Integer count = baseMapper.countMainForReAllocation(reportPeriodStr, reportStatus);
+        return count == null ? 0 : count;
+    }
 }

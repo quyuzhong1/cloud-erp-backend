@@ -31,4 +31,12 @@ public interface TransferDeclareCostAllocationMainMapper extends BaseMapper<Tran
                                        @Param("excludeBigTableDone") boolean excludeBigTableDone,
                                        @Param("bigTableDoneCode") String bigTableDoneCode);
 
+    List<String> pageMainIdsForReAllocation(@Param("reportPeriodStr") String reportPeriodStr,
+                                            @Param("reportStatus") String reportStatus,
+                                            @Param("lastId") String lastId,
+                                            @Param("batchSize") int batchSize);
+
+    Integer countMainForReAllocation(@Param("reportPeriodStr") String reportPeriodStr,
+                                     @Param("reportStatus") String reportStatus);
+
 }

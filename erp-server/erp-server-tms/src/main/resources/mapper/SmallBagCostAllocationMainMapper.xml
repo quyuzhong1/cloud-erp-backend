@@ -67,4 +67,26 @@
         </if>
     </select>
 
+    <!-- 游标分批查待重新分摊主表ID：直查主表，report_status 等值匹配待确认 -->
+    <select id="pageMainIdsForReAllocation" resultType="java.lang.String">
+        SELECT sbcam.id
+        FROM small_bag_cost_allocation_main sbcam
+        WHERE sbcam.is_deleted = false
+          AND sbcam.report_date = #{reportPeriodStr}
+          AND sbcam.report_status = #{reportStatus}
+        <if test="lastId != null and lastId != ''">
+            AND sbcam.id &gt; #{lastId}
+        </if>
+        ORDER BY sbcam.id ASC
+        LIMIT #{batchSize}
+    </select>
+
+    <select id="countMainForReAllocation" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM small_bag_cost_allocation_main sbcam
+        WHERE sbcam.is_deleted = false
+          AND sbcam.report_date = #{reportPeriodStr}
+          AND sbcam.report_status = #{reportStatus}
+    </select>
+
 </mapper>

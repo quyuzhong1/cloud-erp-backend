@@ -79,6 +79,10 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             String methodType = dto.getMethodType();
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 firstMileCostAllocationService.pushUpdateStatus(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
+                firstMileCostAllocationService.pushReAllocationCalcCost(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
+                firstMileCostAllocationService.pushDelete(dto);
             } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
             } else {
@@ -94,6 +98,10 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 //批量更新核算状态
                 smallBagCostAllocationService.pushUpdateReportStatus(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
+                smallBagCostAllocationService.pushReAllocation(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
+                smallBagCostAllocationService.pushDelete(dto);
             } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 //下推小包费用分摊
                 logisticsBillCostService.pushSmallBagCostAllocation(dto);
@@ -108,6 +116,10 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
             String methodType = dto.getMethodType();
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 transferDeclareCostAllocationService.pushUpdateReportStatus(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
+                transferDeclareCostAllocationService.pushReAllocation(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
+                transferDeclareCostAllocationService.pushDelete(dto);
             } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
                 //创建任务明细等相关内容
                 if (transferDeclareService.addTaskDetailByTransferDeclare(dto)) return;

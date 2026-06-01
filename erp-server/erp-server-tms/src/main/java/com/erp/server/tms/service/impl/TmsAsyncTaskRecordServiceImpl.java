@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,6 +18,8 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SystemCodeEnum;
 import com.common.business.vo.PagingVO;
+import com.alibaba.fastjson.JSON;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.DistributeKeyConstant;
@@ -43,6 +46,7 @@ import com.erp.server.tms.service.TmsAsyncTaskRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.context.annotation.Lazy;
@@ -58,7 +62,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
-import java.util.stream.Collectors;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
@@ -72,6 +75,8 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Slf4j
 @Service
 public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTaskRecordMapper, TmsAsyncTaskRecordEntity> implements TmsAsyncTaskRecordService {
+
+    private static final JSONConfig TASK_DATA_JSON_CONFIG = JSONConfig.create().setIgnoreNullValue(true);
 
     @Resource
     private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
@@ -99,16 +104,31 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "businessType", unlockAfterTx = true)
     public TmsAsyncTaskRecordEntity addManualTask(String businessType, String methodType, Integer detailCount, String json){
-        // 防重键：businessType + methodType + dataJson，避免同单据不同方法互相挡重
+        String compactJson = compactTaskDataJson(json);
         List<TmsAsyncTaskRecordEntity> runningTasks = lambdaQuery()
             .eq(TmsAsyncTaskRecordEntity::getBusinessType, businessType)
-            .eq(StringUtils.isNotBlank(methodType), TmsAsyncTaskRecordEntity::getMethodType, methodType)
-            .isNull(StringUtils.isBlank(methodType), TmsAsyncTaskRecordEntity::getMethodType)
             .in(TmsAsyncTaskRecordEntity::getStatus,
                 Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
             .list();
+
+        String reportPeriodStr = extractReportPeriodStr(compactJson);
+        if (StringUtils.isNotBlank(reportPeriodStr) && CollUtil.isNotEmpty(runningTasks)) {
+            Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
+                .filter(task -> reportPeriodStr.equals(extractReportPeriodStr(task.getDataJson())))
+                .findFirst();
+            if (periodConflict.isPresent()) {
+                TmsAsyncTaskRecordEntity conflict = periodConflict.get();
+                log.warn("手动异步任务核算期间冲突，businessType: {}, reportPeriodStr: {}, 进行中任务 code: {}, methodType: {}",
+                    businessType, reportPeriodStr, conflict.getCode(), conflict.getMethodType());
+                return null;
+            }
+        }
+
         if (CollUtil.isNotEmpty(runningTasks)
-            && runningTasks.stream().anyMatch(task -> isSameManualTaskDataJson(json, task.getDataJson()))) {
+            && runningTasks.stream()
+            .filter(task -> StringUtils.equals(methodType, task.getMethodType())
+                || (StringUtils.isBlank(methodType) && StringUtils.isBlank(task.getMethodType())))
+            .anyMatch(task -> isSameManualTaskDataJson(compactJson, task.getDataJson()))) {
             log.warn("手动异步任务参数重复，businessType: {}, methodType: {}", businessType, methodType);
             return null;
         }
@@ -120,7 +140,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setBusinessType(businessType);
         entity.setMethodType(methodType);
         entity.setDetailCount(detailCount);
-        entity.setDataJson(json);
+        entity.setDataJson(compactJson);
         entity.setStartTime(LocalDateTime.now());
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
@@ -140,41 +160,69 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     private String normalizeManualTaskDataJson(String json) {
+        return compactTaskDataJson(json);
+    }
+
+    /**
+     * 持久化用任务参数 JSON：仅保留有值字段，去掉执行期字段及表列已存的 businessType/methodType
+     */
+    private String compactTaskDataJson(String json) {
         if (StringUtils.isBlank(json)) {
             return "";
         }
-        try {
-            TmsAsyncTaskRecordDTO.PushParamsDTO params = JSONUtil.toBean(json, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
-            params.setTaskId(null);
-            params.setLastId(null);
-            params.setBatchSize(null);
-            if (CollUtil.isNotEmpty(params.getIds())) {
-                List<String> sortedIds = params.getIds().stream()
-                    .filter(StringUtils::isNotBlank)
-                    .sorted()
-                    .collect(Collectors.toList());
-                params.setIds(sortedIds);
-            } else {
-                params.setIds(null);
-            }
-            return JSONUtil.toJsonStr(params);
-        } catch (Exception e) {
-            log.debug("手动任务参数按 PushParamsDTO 归一化失败，回退 JSON 对象比较: {}", e.getMessage());
-            cn.hutool.json.JSONObject obj = JSONUtil.parseObj(json);
-            obj.remove("taskId");
-            obj.remove("lastId");
-            obj.remove("batchSize");
-            cn.hutool.json.JSONArray idsArr = obj.getJSONArray("ids");
-            if (idsArr != null && !idsArr.isEmpty()) {
-                List<String> sortedIds = idsArr.stream()
-                    .map(String::valueOf)
-                    .filter(StringUtils::isNotBlank)
-                    .sorted()
-                    .collect(Collectors.toList());
-                obj.set("ids", sortedIds);
-            }
-            return obj.toString();
+        TmsAsyncTaskRecordDTO.PushParamsDTO params = parsePushParams(json);
+        if (params == null) {
+            return json.trim();
         }
+        sanitizePushParamsForStorage(params);
+        return JSONUtil.toJsonStr(params, TASK_DATA_JSON_CONFIG);
+    }
+
+    private String extractReportPeriodStr(String json) {
+        TmsAsyncTaskRecordDTO.PushParamsDTO params = parsePushParams(json);
+        if (params == null) {
+            return null;
+        }
+        return trimToNull(params.getReportPeriodStr());
+    }
+
+    private TmsAsyncTaskRecordDTO.PushParamsDTO parsePushParams(String json) {
+        try {
+            return JSONUtil.toBean(json, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+        } catch (Exception e) {
+            log.debug("任务参数解析 PushParamsDTO 失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private void sanitizePushParamsForStorage(TmsAsyncTaskRecordDTO.PushParamsDTO params) {
+        params.setTaskId(null);
+        params.setLastId(null);
+        params.setBatchSize(null);
+        params.setBusinessType(null);
+        params.setMethodType(null);
+        params.setReportPeriodStr(trimToNull(params.getReportPeriodStr()));
+        params.setReportStatus(trimToNull(params.getReportStatus()));
+        params.setReportDate(trimToNull(params.getReportDate()));
+        params.setType(trimToNull(params.getType()));
+        if (CollUtil.isNotEmpty(params.getIds())) {
+            List<String> sortedIds = params.getIds().stream()
+                .filter(StringUtils::isNotBlank)
+                .map(String::trim)
+                .sorted()
+                .collect(Collectors.toList());
+            params.setIds(CollUtil.isEmpty(sortedIds) ? null : sortedIds);
+        } else {
+            params.setIds(null);
+        }
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     /**
@@ -270,12 +318,72 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     @Override
     public void finishTaskOnMainRecord(String taskId) {
-        lambdaUpdate()
+        TmsAsyncTaskRecordEntity task = getById(taskId);
+        boolean clearErrorData = task == null || task.getErrorCount() == null || task.getErrorCount() == 0;
+        if (clearErrorData) {
+            lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
                 .set(TmsAsyncTaskRecordEntity::getErrorData, "")
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
+        } else {
+            lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .update();
+        }
+    }
+
+    @Override
+    public CfgSettingValueDTO.BillBatchParamsDTO loadBillBatchParams(String taskId) {
+        CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
+        if (byKey == null || byKey.getDataJson() == null) {
+            log.error("配置项 {} 不存在或 dataJson 为空，taskId: {}",
+                CfgSettingEnum.BILL_BATCH_PARAMS.getCode(), taskId);
+            finishTaskWithError(taskId, "批次配置缺失");
+            return null;
+        }
+        return JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+    }
+
+    @Override
+    public int resolveBatchSize(String batchConfig, int defaultSize) {
+        int batchSize = NumberUtils.toInt(batchConfig, defaultSize);
+        return batchSize <= 0 ? defaultSize : batchSize;
+    }
+
+    @Override
+    public String formatTaskErrorMessage(Exception e) {
+        String message = e == null ? null : e.getMessage();
+        return StringUtils.substring(Objects.toString(message, e == null ? "未知错误" : e.getClass().getSimpleName()), 0, 1000);
+    }
+
+    @Override
+    public BatchResultDTO resolveDispatchClaimOrThrow(String taskId, boolean claimed, String taskCode, String errorPayload) {
+        if (claimed) {
+            return null;
+        }
+        TmsAsyncTaskRecordEntity existing = getById(taskId);
+        if (existing != null && TmsAsyncTaskRecordStatusEnum.ING.getCode().equals(existing.getStatus())) {
+            return BatchResultDTO.success(taskId, existing.getCode());
+        }
+        finishTaskWithError(taskId, "任务状态竞争失败");
+        throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, errorPayload);
+    }
+
+    @Override
+    public boolean shouldStopLoopTask(String taskId, TmsAsyncTaskRecordEntity currentTask) {
+        if (currentTask == null) {
+            log.error("循环中任务记录已消失，终止处理，taskId: {}", taskId);
+            return true;
+        }
+        if (Objects.equals(currentTask.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+            log.warn("循环过程中，任务状态显示已完成，taskId: {}", taskId);
+            return true;
+        }
+        return false;
     }
 
     /**
