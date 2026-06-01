@@ -93,16 +93,30 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
-    * 批量更新质检员
+    * 批量更新质检员-弹窗数据
+    * @author wtr
+    * @date: 2026-06-01
+    * @param dto 选中的质检通知单明细id列表
+    * @return ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>>
+    */
+    @PostMapping("/updateQcUserView")
+    public ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>> updateQcUserView(
+            @RequestBody @Validated QcNoticeDTO.UpdateQcUserViewParamDTO dto) {
+        return success(qcNoticeService.updateQcUserView(dto));
+    }
+
+    /**
+    * 批量更新质检员（每行独立质检员，并级联更新下游质检单）
     * @author wtr
     * @date: 2026-05-28
-    * @param dto
+    * @param dtos 明细质检员列表，每行 {detailId, qcUserId, qcUserName}
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/updateQcUser")
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
-    public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(@RequestBody @Validated QcNoticeDTO.UpdateQcUserDTO dto) {
-        return success(qcNoticeService.batchUpdateQcUser(dto));
+    public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
+            @RequestBody @Valid List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
+        return success(qcNoticeService.batchUpdateQcUser(dtos));
     }
 
     /**

@@ -209,8 +209,6 @@
         qnd.qc_problem_dict AS qcProblemDict,
         qnd.qc_date AS qcDate,
         qnd.supplier_id AS supplierId,
-        qnd.supplier_code AS supplierCode,
-        qnd.supplier_name AS supplierName,
         qi.id AS qcBillId,
         qi.code AS qcBillCode
         FROM

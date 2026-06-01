@@ -22,7 +22,6 @@
        <result column="qc_type" property="qcType" />
        <result column="warehouse_id" property="warehouseId" />
        <result column="expect_qc_date" property="expectQcDate" />
-       <result column="plan_qc_date" property="planQcDate" />
        <result column="remark" property="remark" />
     </resultMap>
 

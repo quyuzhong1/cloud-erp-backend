@@ -1871,8 +1871,10 @@ public enum ApiError implements Serializable {
     PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED(16019,"外验质检类型审核通过时，计划质检日期不能为空"),
     PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW(16020,"计划质检日期只能选择当前及以后的日期"),
     CFG_QC_USER_QC_USER_AT_LEAST_ONE(16021,"至少需要配置一名质检员"),
-    CFG_QC_USER_IMPORT_UPDATE_KEY_NOT_MODIFIABLE(16022,"导入更新时不允许修改供应商或仓库"),
     CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE(16023,"修改时不允许变更供应商或仓库"),
+    QC_NOTICE_PARAM_REQUIRED(16024,"请输入质检通知单号或选择明细"),
+    QC_NOTICE_DETAILS_MUST_SAME_NOTICE(16025,"选中的明细必须属于同一质检通知单"),
+    QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID(16026,"只能更新待质检状态通知单的质检员"),
 
     ;
     @Getter

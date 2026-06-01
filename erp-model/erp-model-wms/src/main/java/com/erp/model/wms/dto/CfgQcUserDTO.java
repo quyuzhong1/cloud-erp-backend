@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.validator.AddGroup;
 import com.common.core.anno.FieldValid;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -359,16 +360,18 @@ public class CfgQcUserDTO implements Serializable {
         /**
         * 供应商id
          * /scm/drop/down/supplier/pagingSelect
+         * 仅新增时必填；修改时由 Service 强制使用原值，允许为空
         */
-        @NotBlank(message = "供应商id不能为空")
+        @NotBlank(message = "供应商id不能为空", groups = AddGroup.class)
         @Size(max = 64,message = "供应商id最大长度不能超过64位")
         private String supplierId;
 
         /**
         * 仓库id
          * /warehouse/list
+         * 仅新增时必填；修改时由 Service 强制使用原值，允许为空
         */
-        @NotBlank(message = "仓库id不能为空")
+        @NotBlank(message = "仓库id不能为空", groups = AddGroup.class)
         @Size(max = 64, message = "仓库id最大长度不能超过64位")
         private String warehouseId;
 

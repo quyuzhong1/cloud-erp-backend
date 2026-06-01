@@ -44,11 +44,6 @@ import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
 import com.erp.server.wms.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcResultService;
-import com.erp.server.wms.service.WmsAttachmentService;
-import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -102,9 +97,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private OperateLogService operateLogService;
-
-    @Resource
-    private QcProductService qcProductService;
     /**
      * 质检信息 暂存
      *
@@ -223,21 +215,6 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             //箱唛图片
             List<String> boxImageUrlList = attachmentList.stream().filter(a->WmsConstant.QC_BOX.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> boxImageNameList = attachmentList.stream().filter(a->WmsConstant.QC_BOX.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-
-            //如果质检信息中没有图片，则从产品信息表中获取历史数据（兼容历史数据）
-            if (CollectionUtils.isEmpty(productRealImageUrlList) || CollectionUtils.isEmpty(boxImageUrlList)) {
-                QcProductDTO.ViewDTO productView = qcProductService.getByMainId(billId);
-                if (productView != null) {
-                    if (CollectionUtils.isEmpty(productRealImageUrlList)) {
-                        productRealImageUrlList = productView.getProductImageUrlList();
-                        productRealImageNameList = productView.getProductImageNameList();
-                    }
-                    if (CollectionUtils.isEmpty(boxImageUrlList)) {
-                        boxImageUrlList = productView.getBoxImageUrlList();
-                        boxImageNameList = productView.getBoxImageNameList();
-                    }
-                }
-            }
 
             qcInfoView.setQcAttachmentNameList(qcAttachmentNameList);
             qcInfoView.setQcAttachmentUrlList(qcAttachmentUrlList);

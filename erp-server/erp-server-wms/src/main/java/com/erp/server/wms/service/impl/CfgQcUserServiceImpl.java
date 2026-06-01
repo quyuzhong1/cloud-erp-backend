@@ -38,6 +38,7 @@ import com.erp.server.wms.listener.CfgQcUserExcelListener;
 import com.erp.server.wms.mapper.CfgQcUserMapper;
 import com.erp.server.wms.service.CfgQcUserService;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -83,7 +84,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     private FileFeign fileFeign;
 
     @Resource
-    private com.erp.server.wms.service.WarehouseService warehouseService;
+    private WarehouseService warehouseService;
 
     @Resource
     private KingdeeFeign kingdeeFeign;
@@ -364,7 +365,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
             UserContext.setLoginUser(user);
         }
 
-        CfgQcUserExcelListener excelListenerUtil = new CfgQcUserExcelListener(dto.getTaskId(), dto.getImportType(), dto.getImportCount());
+        CfgQcUserExcelListener excelListenerUtil = new CfgQcUserExcelListener(dto.getTaskId(), dto.getImportCount());
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), CfgQcUserDTO.ImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -452,7 +453,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         String orgId = null;
         if (StrUtil.isNotBlank(warehouseId)) {
             // 根据warehouseId获取仓库信息
-            com.erp.model.wms.entity.WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+            WarehouseEntity warehouse = warehouseService.getById(warehouseId);
             if (ObjectUtil.isNotEmpty(warehouse)) {
                 orgId = warehouse.getOrgId();
             }

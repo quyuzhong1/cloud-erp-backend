@@ -125,7 +125,10 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
 
         qcNoticeDetailList.stream().forEach(e -> {
             e.setMainId(mainId);
-            e.setQcUserName(userMap.get(e.getQcUserId()));
+            // 仅当系统用户列表中能匹配到时才覆盖；否则保留原有名称（如自动分配时已通过业务员管理设置好）
+            if (StringUtils.isNotBlank(e.getQcUserId()) && userMap.containsKey(e.getQcUserId())) {
+                e.setQcUserName(userMap.get(e.getQcUserId()));
+            }
 
             ProductDetailEntity productDetailEntity = skuMap.get(e.getSkuId());
             if (Objects.nonNull(productDetailEntity)) {

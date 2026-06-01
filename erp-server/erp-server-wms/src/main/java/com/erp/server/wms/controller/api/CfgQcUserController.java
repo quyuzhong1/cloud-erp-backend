@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.groups.Default;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -60,7 +62,7 @@ public class CfgQcUserController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "新增质检员配置")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgQcUserDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated({Default.class, AddGroup.class}) CfgQcUserDTO.AddDTO dto) {
         return success(cfgQcUserService.add(dto));
     }
 

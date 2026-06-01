@@ -47,8 +47,6 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
 
     private final String taskId;
 
-    private final String importType;
-
     private final Integer importCount;
 
     @Getter
@@ -77,9 +75,8 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
      */
     private final Map<String, Map<String, String>> qcUserNameToIdMapByOrgId = new HashMap<>();
 
-    public CfgQcUserExcelListener(String taskId, String importType, Integer importCount) {
+    public CfgQcUserExcelListener(String taskId, Integer importCount) {
         this.taskId = taskId;
-        this.importType = importType;
         this.importCount = importCount;
     }
 
@@ -234,7 +231,7 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
         WarehouseDTO.ListDTO warehouse = warehouses.get(0);
         if (Boolean.TRUE.equals(warehouse.getDisabled())
                 || warehouse.getApproveStatus() == null
-                || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatus().getCode())) {
+                || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouse.getApproveStatus().getStatus())) {
             dto.setErrorMsg(MessageFormat.format(ApiError.CFG_QC_USER_WAREHOUSE_NOT_FOUND.getMsg(), warehouseName));
             return null;
         }

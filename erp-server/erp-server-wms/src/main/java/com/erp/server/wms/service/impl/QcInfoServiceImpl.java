@@ -52,7 +52,6 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.entity.QcResultEntity;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
