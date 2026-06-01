@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -65,14 +67,19 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
         for (B2bCustomerPackingDTO.AddDTO box : packingList) {
             List<AttachDTO> attachList = box.getAttachList();
             if (CollUtil.isNotEmpty(attachList)) {
-                for (B2bCustomerPackingEntity entity : entityList) {
-                    if (box.getBoxSeq().equals(entity.getBoxSeq())) {
-                        wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId());
-                        break;
-                    }
-                }
+                getBoxHead(entityList, box.getBoxSeq()).ifPresent(entity ->
+                        wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId()));
             }
         }
+    }
+
+    public static java.util.Optional<B2bCustomerPackingEntity> getBoxHead(List<B2bCustomerPackingEntity> entityList, Integer boxSeq) {
+        if (CollUtil.isEmpty(entityList)) {
+            return java.util.Optional.empty();
+        }
+        return entityList.stream()
+                .filter(entity -> Objects.equals(boxSeq, entity.getBoxSeq()))
+                .min(Comparator.comparing(B2bCustomerPackingEntity::getSort, Comparator.nullsLast(Integer::compareTo)));
     }
 
     private B2bCustomerPackingEntity toEntity(String mainId, B2bCustomerPackingDTO.AddDTO box,
@@ -104,7 +111,10 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
             List<String> packingIds = packingList.stream().map(B2bCustomerPackingEntity::getId).collect(Collectors.toList());
             wmsAttachmentService.batchRemoveAttachment(packingIds);
         }
-        lambdaUpdate().in(B2bCustomerPackingEntity::getMainId, mainIds).remove();
+        lambdaUpdate()
+                .in(B2bCustomerPackingEntity::getMainId, mainIds)
+                .set(B2bCustomerPackingEntity::getIsDeleted, Boolean.TRUE)
+                .update();
     }
 
     private void deleteByMainId(String mainId) {

@@ -3,6 +3,7 @@ package com.erp.server.wms.listener;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
@@ -23,6 +24,8 @@ import java.util.stream.Collectors;
  */
 public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCustomerPackingImportExcelDTO> {
 
+    private static final int MAX_IMPORT_ROWS = 5000;
+
     private final String packingType;
     private final List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList;
     private final Map<String, B2bThirdDeliveryDetailDTO.AddDTO> skuDetailMap;
@@ -31,6 +34,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
     private final List<B2bCustomerPackingDTO.LineViewDTO> successLineList = new ArrayList<>();
     private final List<B2bCustomerPackingDTO.ViewDTO> successList = new ArrayList<>();
     private final List<B2bCustomerPackingImportExcelDTO> errorList = new ArrayList<>();
+    private int rowCount;
 
     public B2bCustomerPackingExcelListener(String packingType, List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList) {
         this.packingType = packingType;
@@ -49,6 +53,10 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     @Override
     public void invoke(B2bCustomerPackingImportExcelDTO row, AnalysisContext context) {
+        rowCount++;
+        if (rowCount > MAX_IMPORT_ROWS) {
+            throw new ServiceException("装箱明细导入最多支持{}行", MAX_IMPORT_ROWS);
+        }
         List<String> errorMsgList = new ArrayList<>();
         List<String> fieldErrors = FieldValidUtil.fieldValid(row);
         if (CollectionUtils.isNotEmpty(fieldErrors)) {
@@ -121,6 +129,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             return;
         }
         Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new HashMap<>();
+        List<B2bCustomerPackingImportExcelDTO> boxErrorList = new ArrayList<>();
         for (B2bCustomerPackingDTO.ViewDTO row : successList) {
             B2bCustomerPackingDTO.ViewDTO head = boxHeadMap.get(row.getBoxSeq());
             if (head == null) {
@@ -134,11 +143,12 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                     error.setBoxSeq(String.valueOf(row.getBoxSeq()));
                     error.setSkuNo(getFirstSkuNo(row.getBoxSeq()));
                     error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
-                    errorList.add(error);
+                    boxErrorList.add(error);
                 }
             }
         }
-        if (CollectionUtils.isNotEmpty(errorList)) {
+        if (CollectionUtils.isNotEmpty(boxErrorList)) {
+            errorList.addAll(boxErrorList);
             successList.clear();
             successLineList.clear();
             return;

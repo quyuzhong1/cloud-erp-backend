@@ -660,13 +660,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         Map<String,List<SoB2cDetailEntity>> detailMap = handleDetailList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
         detailMap.forEach((warehouseId,detailEntities)->{
             for (SoB2cDetailEntity detailEntity : detailEntities) {
-                if (StringUtils.isBlank(detailEntity.getPlatformSubSoCode())) {
-                    continue;
+                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO;
+                if (StringUtils.isNotBlank(detailEntity.getPlatformSubSoCode())) {
+                    teMuSoOutStockDetailDTO = detailList.stream()
+                            .filter(v -> detailEntity.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
+                            .findFirst()
+                            .orElse(null);
+                } else {
+                    teMuSoOutStockDetailDTO = detailList.stream()
+                            .filter(v -> v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo()))
+                            .findFirst()
+                            .orElse(null);
                 }
-                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream()
-                        .filter(v -> detailEntity.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
-                        .findFirst()
-                        .orElse(null);
                 if(Objects.nonNull(teMuSoOutStockDetailDTO)){
                     detailEntity.setQty(teMuSoOutStockDetailDTO.getQty());
                 }
