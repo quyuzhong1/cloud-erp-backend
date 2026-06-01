@@ -143,8 +143,8 @@ public class CfgQcUserController extends BaseController {
      * @param response
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载质检员配置模板")
-    @GetMapping("/exportTemplate")
-    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/cfgQcUserTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
