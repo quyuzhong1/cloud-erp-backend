@@ -753,4 +753,14 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2c/updateB2cByPlatformOutbound")
     void updateB2cByPlatformOutbound(@RequestBody SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
+    /**
+     * 轻量查询B2C订单拦截标识（仅返回 id + isIntercept）。
+     * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景。
+     *
+     * @param soIds B2C订单ID集合
+     * @return 仅包含 id 与 isIntercept 的订单数据
+     */
+    @PostMapping("/feign/soB2c/listIdAndInterceptByIds")
+    List<SoB2cEntity> listIdAndInterceptByIds(@RequestBody List<String> soIds);
 }
