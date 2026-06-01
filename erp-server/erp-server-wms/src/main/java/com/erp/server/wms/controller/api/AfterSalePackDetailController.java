@@ -81,7 +81,7 @@ public class AfterSalePackDetailController extends BaseController {
      */
     @GetMapping("/listByCode")
     @LogViewService
-    public ApiResult<List<AfterSalePackDetailDTO.ViewDTO>> listByCode(@RequestParam("code") String code, @RequestParam("sourceId") String sourceId) {
+    public ApiResult<List<AfterSalePackDetailDTO.ViewDTO>> listByCode(@RequestParam("code") String code, @RequestParam(value = "sourceId", required = false) String sourceId) {
         return success(afterSalePackDetailService.listByCode(code, sourceId));
     }
 
