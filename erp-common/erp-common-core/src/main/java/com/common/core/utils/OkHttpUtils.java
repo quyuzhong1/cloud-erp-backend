@@ -23,7 +23,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class OkHttpUtils {
 
-    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL = "http://127.0.0.1:9090/test/thirdWarehouseTimeout";
+    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY = "THIRD_WAREHOUSE_TIMEOUT_TEST_URL";
+    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_DEFAULT = "http://erp-wms:9090/test/thirdWarehouseTimeout";
 
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
@@ -214,13 +215,21 @@ public class OkHttpUtils {
     }
 
     private static void callTimeoutTestApi() throws IOException {
-        Request request = new Request.Builder().url(THIRD_WAREHOUSE_TIMEOUT_TEST_URL).build();
+        Request request = new Request.Builder().url(getTimeoutTestUrl()).build();
         try (Response response = client.newCall(request).execute()) {
             ResponseBody body = response.body();
             if (body != null) {
                 body.string();
             }
         }
+    }
+
+    private static String getTimeoutTestUrl() {
+        String url = System.getProperty(THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY);
+        if (url == null || url.trim().isEmpty()) {
+            url = System.getenv(THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY);
+        }
+        return url == null || url.trim().isEmpty() ? THIRD_WAREHOUSE_TIMEOUT_TEST_URL_DEFAULT : url;
     }
 
     private static HttpUrl createHttpUrl(Request request, Map<String, Object> params, Map<String, String> headers) {
