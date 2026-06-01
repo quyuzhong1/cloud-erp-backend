@@ -1,4 +1,4 @@
-﻿package com.erp.server.wms.convert;
+package com.erp.server.wms.convert;
 
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
