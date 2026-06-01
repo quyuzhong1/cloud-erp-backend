@@ -12453,6 +12453,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
+                .in(SoB2cEntity::getId, soIds)
+                .list();
+    }
+
+    @Override
     public PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<PagingParamDTO> pagingParamDTO) {
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         PagingParamDTO params = pagingParamDTO.getParams();

@@ -1033,12 +1033,6 @@ public class SoB2cFeignController extends BaseController {
      */
     @PostMapping("/listIdAndInterceptByIds")
     public List<SoB2cEntity> listIdAndInterceptByIds(@RequestBody List<String> soIds) {
-        if (CollectionUtils.isEmpty(soIds)) {
-            return Collections.emptyList();
-        }
-        return soB2cService.lambdaQuery()
-                .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
-                .in(SoB2cEntity::getId, soIds)
-                .list();
+        return soB2cService.listIdAndInterceptByIds(soIds);
     }
 }
