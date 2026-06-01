@@ -394,7 +394,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 .filter(e -> e.getTotalQty() != null)
                 .collect(Collectors.toMap(
                         QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId,
-                        QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty,
+                        e -> e.getTotalQty() != null ? e.getTotalQty() : 0,
                         Integer::sum
                 ));
         //外验允许入库量
