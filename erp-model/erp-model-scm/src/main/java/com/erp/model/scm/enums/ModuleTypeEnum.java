@@ -1,4 +1,4 @@
-﻿package com.erp.model.scm.enums;
+package com.erp.model.scm.enums;
 
 /**
  * @author Will
