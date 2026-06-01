@@ -47,7 +47,10 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
     }
 
     protected String buildDownloadFileName(FileTask fileTask) {
-        String excelPath = getExcelPath();
+        return buildDownloadFileName(fileTask, getExcelPath());
+    }
+
+    protected String buildDownloadFileName(FileTask fileTask, String excelPath) {
         String name = fileTask.getFileName();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         return date + name + excelPath.substring(excelPath.lastIndexOf("."));

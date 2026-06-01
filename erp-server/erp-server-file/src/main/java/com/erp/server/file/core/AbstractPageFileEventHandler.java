@@ -37,6 +37,14 @@ import java.util.*;
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
 
     /**
+     * 按导出参数选择模板。固定模板的子类继续重写无参 {@link #getExcelPath()} 即可；
+     * 需要按参数切换模板的子类重写本方法，避免依赖 ThreadLocal 传递参数。
+     */
+    protected String getExcelPath(P params) {
+        return getExcelPath();
+    }
+
+    /**
      * 解析导出查询参数。默认根据 {@code AbstractPageFileEventHandler&lt;T, P&gt;} 的泛型 {@code P}
      * 从 {@link FileTask#getMetaInfo()} 反序列化，子类通常<strong>无需再写</strong> {@code readValue}。
      * <p>
@@ -88,10 +96,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         Path tempPath = null;
         try {
             P params = resolveExportParams(fileTask);
+            String excelPath = getExcelPath(params);
             tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx", fileTask.getUniqueWithFileName());
-            int total = writePagedExcel(tempPath.toFile(), params);
+            int total = writePagedExcel(tempPath.toFile(), params, excelPath);
             fileTask.setCount(total);
-            String displayName = buildDownloadFileName(fileTask);
+            String displayName = buildDownloadFileName(fileTask, excelPath);
             String url = FastDFSClientUtil.uploadFile(tempPath.toFile(), displayName, null);
             fileTask.setFileUrl(url);
         } catch (IOException e) {
@@ -103,12 +112,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
 
-    protected Integer writePagedExcel(File outFile, P params) throws IOException {
+    protected Integer writePagedExcel(File outFile, P params, String excelPath) throws IOException {
         switch (exportPaginationMode()) {
             case KEYSET_BY_SORT_ID:
-                return writeKeysetBatches(outFile, params);
+                return writeKeysetBatches(outFile, params, excelPath);
             case OFFSET:
-                return writeOffsetBatches(outFile, params);
+                return writeOffsetBatches(outFile, params, excelPath);
             default:
                 throw new BusinessException(exportPaginationMode().name());
         }
@@ -304,7 +313,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return n;
     }
 
-    private void logEasyExcelFillContext(String exportPhase, Throwable ex, String pagingState, int sheetNo,
+    private void logEasyExcelFillContext(String exportPhase, String excelPath, Throwable ex, String pagingState, int sheetNo,
             long rowsInSheet, List<T> batch, List<T> originalPageList) {
         int batchSize = batch == null ? -1 : batch.size();
         int nullInOriginal = nullElementCount(originalPageList);
@@ -315,7 +324,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         log.error(
                 "EasyExcel模板填充失败(见下文字段便于检索): phase={} handler={} template={} paging={} "
                         + "sheetNo={} rowsInSheet={} batchSize={} nullInOriginalPage={} firstRowClass={}",
-                exportPhase, getClass().getName(), getExcelPath(), pagingState, sheetNo, rowsInSheet, batchSize,
+                exportPhase, getClass().getName(), excelPath, pagingState, sheetNo, rowsInSheet, batchSize,
                 nullInOriginal, firstRowClass, ex);
     }
 
@@ -344,7 +353,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     /**
      * 将一批列表按 {@link #maxDataRowsPerSheet()} 与 xlsx 行上限，跨多个已预先克隆好的物理 sheet 写入。
      */
-    private void fillBatchAcrossDataSheets(String exportPhase, ExcelWriter excelWriter, FillConfig fillConfig,
+    private void fillBatchAcrossDataSheets(String exportPhase, String excelPath, ExcelWriter excelWriter, FillConfig fillConfig,
             List<T> batch, List<T> rawPageForLog, OffsetSheetCursor c, String pagingState, int dataTotalCount) {
         int maxPerConfigured = maxDataRowsPerSheet();
         int idx = 0;
@@ -367,7 +376,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             try {
                 fillOnSheet(excelWriter, c.writeSheet, fillList, fillConfig);
             } catch (Throwable fillEx) {
-                logEasyExcelFillContext(exportPhase, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
+                logEasyExcelFillContext(exportPhase, excelPath, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
                         c.rowsInSheet, fillList, rawPageForLog);
                 throw fillEx;
             }
@@ -379,12 +388,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         }
     }
 
-    private int writeKeysetBatches(File outFile, P params) throws IOException {
+    private int writeKeysetBatches(File outFile, P params, String excelPath) throws IOException {
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         Long lastId = null;
         int preparedSheets = keysetPreparedSheetCount();
-        byte[] rawTemplate = readClasspathTemplateBytes(getExcelPath());
+        byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
         // 预先克隆好多张数据 sheet，避免在写入过程中再 clone 导致的性能问题（尤其是当模板复杂时）。若数据量超出预估则直接报错，避免无限克隆。
         ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, preparedSheets);
         rawTemplate = null;
@@ -414,7 +423,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         throw new BusinessException("键集导出数据量超过当前模板可承载的上限（约 " + cap
                                 + " 行），请缩小筛选范围或改用 OFFSET 导出。");
                     }
-                    fillBatchAcrossDataSheets("KEYSET", excelWriter, fillConfig, batch, rawList, cursor,
+                    fillBatchAcrossDataSheets("KEYSET", excelPath, excelWriter, fillConfig, batch, rawList, cursor,
                             "lastIdExclusive=" + lastId + ",hasNext=" + vo.isHasNext(), 0);
                     total += batch.size();
                     Long next = vo.getNextCursorId();
@@ -465,7 +474,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return listSeqData(resolveExportParams(fileTask));
     }
 
-    private int writeOffsetBatches(File outFile, P params) throws IOException {
+    private int writeOffsetBatches(File outFile, P params, String excelPath) throws IOException {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         PagingDTO<P> dto = new PagingDTO<>();
         dto.setPageSize(getPageSize());
@@ -475,7 +484,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         PagingVO<T> firstData = getPageData(dto);
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
-        byte[] rawTemplate = readClasspathTemplateBytes(getExcelPath());
+        byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
         ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, dataSheets);
         rawTemplate = null;
 
@@ -502,7 +511,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         List<T> rawPage = pageData.getList();
                         List<T> batch = withoutNullListElements(rawPage);
                         if (!batch.isEmpty()) {
-                            fillBatchAcrossDataSheets("OFFSET", excelWriter, fillConfig, batch, rawPage, cursor,
+                            fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, batch, rawPage, cursor,
                                     "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
                             totalRows += batch.size();
                             clearBatchIfDetachedCopy(batch, rawPage);
