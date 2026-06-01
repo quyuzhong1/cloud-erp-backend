@@ -7,6 +7,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.erp.server.wms.service.WegoOpenApiService;
+import com.sdk.wms.wego.constants.WeGoConstants;
 import com.sdk.wms.wego.utils.WeGoSignUtils;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +20,11 @@ import java.util.Map;
 @Service
 public class WegoOpenApiServiceImpl implements WegoOpenApiService {
 
-    private static final String ROUTER_PATH = "/open-api/router";
-    private static final String QUERY_WAREHOUSE_INTERFACE = "warehouse.get";
-
     @Override
     public JSONObject queryWarehouse(WegoWarehouseQueryDTO.QueryReqDTO dto) {
         Map<String, Object> params = new HashMap<>();
         params.put("accessToken", dto.getAccessToken());
-        params.put("interfaceType", QUERY_WAREHOUSE_INTERFACE);
+        params.put("interfaceType", WeGoConstants.WAREHOUSE_GET);
         if (dto.getBizParams() != null && !dto.getBizParams().isEmpty()) {
             params.putAll(dto.getBizParams());
         }
@@ -60,6 +58,6 @@ public class WegoOpenApiServiceImpl implements WegoOpenApiService {
         if (normalized.endsWith("/")) {
             normalized = normalized.substring(0, normalized.length() - 1);
         }
-        return normalized + ROUTER_PATH;
+        return normalized + WeGoConstants.ROUTER_PATH;
     }
 }
