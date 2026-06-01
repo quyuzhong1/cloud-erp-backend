@@ -468,6 +468,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             data.setBusinessTypeName(TmsAsyncTaskRecordBusinessTypeEnum.getName(data.getBusinessType()));
             data.setStatusName(TmsAsyncTaskRecordStatusEnum.getName(data.getStatus()));
             data.setExecTypeName(TmsAsyncTaskRecordExecTypeEnum.getName(data.getExecType()));
+            data.setMethodTypeName(TmsAsyncTaskMethodTypeEnum.getName(data.getMethodType()));
         }
     }
 
