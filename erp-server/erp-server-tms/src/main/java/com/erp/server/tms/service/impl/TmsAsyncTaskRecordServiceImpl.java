@@ -273,7 +273,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, "")
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
     }

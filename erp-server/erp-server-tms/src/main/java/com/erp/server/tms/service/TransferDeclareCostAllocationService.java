@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 
 /**
@@ -54,6 +55,10 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
      * MQ 消费：游标分批批量更新核算状态
      */
     void pushUpdateReportStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    void pushReAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
     
     BatchResultDTO reAllocation(String id);
     

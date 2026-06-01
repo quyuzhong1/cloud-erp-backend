@@ -62,4 +62,15 @@ public interface SmallBagCostAllocationMainService extends SuperService<SmallBag
      */
     int countMainByReportPeriodStr(String reportPeriodStr, String reportStatus,
                                    boolean excludeBigTableDone, String bigTableDoneCode);
+
+    /**
+     * 游标分批查询指定核算月份待重新分摊的主表ID
+     */
+    List<String> pageMainIdsForReAllocation(String reportPeriodStr, String reportStatus,
+                                             String lastId, int batchSize);
+
+    /**
+     * 统计指定核算月份待重新分摊的主表记录数
+     */
+    int countMainForReAllocation(String reportPeriodStr, String reportStatus);
 }

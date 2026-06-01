@@ -48,4 +48,9 @@ public interface TransferDeclareCostAllocationMainService extends SuperService<T
 
     int countMainByReportPeriodStr(String reportPeriodStr, String reportStatus,
                                    boolean excludeBigTableDone, String bigTableDoneCode);
+
+    List<String> pageMainIdsForReAllocation(String reportPeriodStr, String reportStatus,
+                                            String lastId, int batchSize);
+
+    int countMainForReAllocation(String reportPeriodStr, String reportStatus);
 }
