@@ -10,6 +10,7 @@ import com.common.business.enums.ExportPaginationMode;
 import com.common.business.vo.KeysetPagingVO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
@@ -216,6 +217,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 再由数据源 sheet 克隆补齐，保证数据 sheet 物理下标连续（0、1、2…）且不残留中间空 sheet。返回真实物理 sheet 下标映射。
      */
     private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
+        if (dataSheetCount <= 0) {
+            throw new ServiceException("dataSheetCount 必须大于 0");
+        }
         int source = templateSourceSheetIndex();
         try (ByteArrayInputStream bin = new ByteArrayInputStream(templateBytes);
                 XSSFWorkbook wb = new XSSFWorkbook(bin)) {
@@ -231,8 +235,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     continue;
                 }
                 if (wb.getSheetAt(i).getPhysicalNumberOfRows() > 0) {
-                    throw new BusinessException("导出模板除第一个数据 sheet 外存在非空 sheet（sheet=" + wb.getSheetName(i)
-                            + "），无法用于分页多 sheet 导出，请将其清空或从模板中移除。");
+                    throw new ServiceException("导出模板除第一个数据 sheet 外存在非空 sheet（sheet="
+                            + wb.getSheetName(i) + "），无法用于分页多 sheet 导出，请将其清空或从模板中移除。");
                 }
             }
             // 直接替换这些空占位 sheet：先移除，再由数据源 sheet 克隆补齐，使数据 sheet 连续排布且不残留空 sheet
