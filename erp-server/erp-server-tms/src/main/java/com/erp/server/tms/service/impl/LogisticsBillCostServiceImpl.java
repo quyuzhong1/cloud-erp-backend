@@ -2730,16 +2730,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
 
-        String taskId = asyncTaskRecordService.addManualTask(businessType, jsonStr);
-        if(StringUtils.isBlank(taskId)){
+        dto.setMethodType(TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode());
+        jsonStr = JSONUtil.toJsonStr(dto);
+        // 创建任务时直接写入预期明细数量，返回任务实体
+        TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(businessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode(), totalCount, jsonStr);
+        if(Objects.isNull(taskRecord)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-
-        // 更新任务的预期明细数量
-        asyncTaskRecordService.lambdaUpdate()
-            .set(TmsAsyncTaskRecordEntity::getDetailCount, totalCount)
-            .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-            .update();
+        String taskId = taskRecord.getId();
 
         dto.setTaskId(taskId);
 

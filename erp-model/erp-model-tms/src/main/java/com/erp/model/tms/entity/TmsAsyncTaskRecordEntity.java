@@ -96,6 +96,11 @@ public class TmsAsyncTaskRecordEntity extends BaseEntity<TmsAsyncTaskRecordEntit
      */
     @TableField("is_retry")
     private Boolean isRetry;
+    /**
+     * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
+     */
+    @TableField("method_type")
+    private String methodType;
 
     public static final String BUSINESS_TYPE = "business_type";
 

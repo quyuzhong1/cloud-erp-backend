@@ -6,9 +6,10 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
-import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
+import com.erp.model.tms.enums.TmsAsyncTaskMethodTypeEnum;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,13 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
     private LogisticsBillCostService logisticsBillCostService;
 
     @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
+
+    @Resource
     private TransferDeclareService transferDeclareService;
+
+    @Resource
+    private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
 
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
@@ -69,24 +76,52 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         }
         //头程分摊
         else if(Objects.equals(businessType,SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-            //下推费用分摊
-            firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
+            String methodType = dto.getMethodType();
+            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
+                firstMileCostAllocationService.pushUpdateStatus(dto);
+            } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
+            } else {
+                log.warn("头程分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
+                asyncTaskRecordService.finishTaskWithError(taskId, "头程分摊MQ方法类型不支持: " + methodType);
+                return;
+            }
         }
         //小包分摊
         else if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
-            //下推小包费用分摊
-            logisticsBillCostService.pushSmallBagCostAllocation(dto);
+            String methodType = dto.getMethodType();
+            // 同一单据类型下按 methodType 二级分发；methodType 为空兜底为下推分摊（兼容历史/在途消息）
+            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
+                //批量更新核算状态
+                smallBagCostAllocationService.pushUpdateReportStatus(dto);
+            } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                //下推小包费用分摊
+                logisticsBillCostService.pushSmallBagCostAllocation(dto);
+            } else {
+                log.warn("小包分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
+                asyncTaskRecordService.finishTaskWithError(taskId, "小包分摊MQ方法类型不支持: " + methodType);
+                return;
+            }
         }
         //中转分摊
         else if(Objects.equals(businessType,SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
-            //创建任务明细等相关内容
-            if (transferDeclareService.addTaskDetailByTransferDeclare(dto)) return;
-            //下推小包费用分摊
-            transferDeclareService.pushTransferDeclare(dto);
+            String methodType = dto.getMethodType();
+            if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
+                transferDeclareCostAllocationService.pushUpdateReportStatus(dto);
+            } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+                //创建任务明细等相关内容
+                if (transferDeclareService.addTaskDetailByTransferDeclare(dto)) return;
+                //下推中转费用分摊
+                transferDeclareService.pushTransferDeclare(dto);
+            } else {
+                log.warn("中转分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
+                asyncTaskRecordService.finishTaskWithError(taskId, "中转分摊MQ方法类型不支持: " + methodType);
+                return;
+            }
         }
         else {
-            log.warn("下推分摊MQ业务类型不支持，跳过消费，taskId: {}, businessType: {}", taskId, businessType);
-            asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"下推分摊MQ业务类型不支持，跳过消费");
+            log.warn("TMS异步任务MQ业务类型不支持，跳过消费，taskId: {}, businessType: {}", taskId, businessType);
+            asyncTaskRecordService.finishTaskWithError(taskId, "TMS异步任务MQ业务类型不支持: " + businessType);
             return;
         }
         log.info("TMS异步任务消费完成，taskId: {}, businessType: {}", taskId, businessType);
