@@ -601,7 +601,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    @DistributeLocker(keyName = "entity.platformOrderCode,entity.detailList.platformSkuNo",waiteTime = 60)
+    @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId",waiteTime = 60)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(entity.getPlatformOrderCode()),PlatformDictEnum.TE_MU.getCode(),entity.getShopId(),"");
@@ -625,7 +625,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<SoB2cDetailEntity> handleDetailList = new ArrayList<>();
         for (TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO : detailList) {
             String erpWarehouseId = warehouseMappingDTOS.stream().filter(v->v.getThirdWarehouseCode().equals(teMuSoOutStockDetailDTO.getPlatformWarehouseCode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).findFirst().orElse(null);
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
+            SoB2cDetailEntity soB2cDetailEntity = getTemuSoB2cDetail(soB2cDetailEntityList, teMuSoOutStockDetailDTO);
             if(Objects.isNull(soB2cDetailEntity)){
                 log.warn("同步temu销售出库单失败，未查询到对应的销售订单明细，平台订单号：{}，平台sku编号：{}", entity.getPlatformOrderCode(), teMuSoOutStockDetailDTO.getPlatformSkuNo());
                 continue;
@@ -660,7 +660,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         Map<String,List<SoB2cDetailEntity>> detailMap = handleDetailList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
         detailMap.forEach((warehouseId,detailEntities)->{
             for (SoB2cDetailEntity detailEntity : detailEntities) {
-                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream().filter(v->v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).findFirst().orElse(null);
+                if (StringUtils.isBlank(detailEntity.getPlatformSubSoCode())) {
+                    continue;
+                }
+                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream()
+                        .filter(v -> detailEntity.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
+                        .findFirst()
+                        .orElse(null);
                 if(Objects.nonNull(teMuSoOutStockDetailDTO)){
                     detailEntity.setQty(teMuSoOutStockDetailDTO.getQty());
                 }
@@ -680,6 +686,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
 
+    }
+
+    private SoB2cDetailEntity getTemuSoB2cDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO) {
+        if (StringUtils.isNotBlank(teMuSoOutStockDetailDTO.getPlatformSubSoCode())) {
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+                    .filter(v -> teMuSoOutStockDetailDTO.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.nonNull(soB2cDetailEntity)) {
+                return soB2cDetailEntity;
+            }
+        }
+        return soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
     }
 
     @Override
