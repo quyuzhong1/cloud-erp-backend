@@ -1085,6 +1085,7 @@ public enum ApiError implements Serializable {
     PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
     PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
     PO_RECONCILIATION_STATUS_NOT_CONFIRM(9673,"单据状态不是【已确认待完结】，不允许上传发票"),
+    PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED(9674,"发票数量不能超过10个"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500

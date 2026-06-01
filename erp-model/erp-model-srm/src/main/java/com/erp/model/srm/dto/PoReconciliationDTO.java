@@ -12,6 +12,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -689,10 +690,56 @@ public class PoReconciliationDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
-        @NotBlank(message = "附件url不能为空")
+        /**
+         * 发票附件列表，全量保存语义：
+         * - 长度 0 或 null：不修改现有数据
+         * - 长度 1~10：删除该对账单已有发票后批量保存本次列表
+         * - 长度 > 10：拒绝
+         */
+        @Valid
+        @Size(max = 10, message = "发票数量不能超过10个")
+        private List<InvoiceFileDTO> attachmentList;
+    }
+
+    /**
+     * 发票附件入参元素
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class InvoiceFileDTO {
+
+        /**
+         * 附件 URL
+         */
+        @NotBlank(message = "附件URL不能为空")
         private String attachUrl;
 
+        /**
+         * 附件文件名
+         */
         @NotBlank(message = "附件名称不能为空")
+        private String attachName;
+    }
+
+    /**
+     * 发票附件出参
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class InvoiceFileVO {
+
+        /**
+         * 附件 URL
+         */
+        private String attachUrl;
+
+        /**
+         * 附件文件名
+         */
         private String attachName;
     }
 
