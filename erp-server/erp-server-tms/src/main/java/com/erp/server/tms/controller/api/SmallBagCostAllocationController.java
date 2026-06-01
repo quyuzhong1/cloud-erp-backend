@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -149,10 +150,13 @@ public class SmallBagCostAllocationController extends BaseController {
             tableAlias = "t",
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
-        List<SmallBagCostAllocationEntity> entityList = null;
+        // 按核算月份全量处理：改为异步任务，立即返回任务 id+code（结构保持 List<BatchResultDTO> 不变）
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = smallBagCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            BatchResultDTO taskResult = smallBagCostAllocationService.asyncUpdateReportStatus(dto);
+            return success(Collections.singletonList(taskResult));
+        }
+        List<SmallBagCostAllocationEntity> entityList = null;
+        if (CollUtil.isNotEmpty(dto.getIds())){
             entityList = smallBagCostAllocationService.listByIds(dto.getIds());
         }
         if (CollectionUtils.isEmpty(entityList)){

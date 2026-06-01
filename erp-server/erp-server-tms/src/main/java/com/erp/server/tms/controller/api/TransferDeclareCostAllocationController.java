@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -142,13 +143,15 @@ public class TransferDeclareCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclareCostAllocation:updateReportStatus",
-            serviceClass = SmallBagCostAllocationService.class,
+            serviceClass = TransferDeclareCostAllocationService.class,
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody TransferDeclareCostAllocationDTO.UpdateStatusDTO dto) {
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
+            BatchResultDTO taskResult = transferDeclareCostAllocationService.asyncUpdateReportStatus(dto);
+            return success(Collections.singletonList(taskResult));
+        }
         List<TransferDeclareCostAllocationEntity> entityList = null;
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = transferDeclareCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
+        if (CollUtil.isNotEmpty(dto.getIds())){
             entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
         }
         if (CollectionUtils.isEmpty(entityList)){

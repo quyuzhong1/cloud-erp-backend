@@ -308,6 +308,21 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String type;
 
         /**
+         * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
+         */
+        private String methodType;
+
+        /**
+         * 核算期间 yyyy-MM（按月处理时的过滤条件）
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 目标核算状态（批量更新核算状态时使用）
+         */
+        private String reportStatus;
+
+        /**
          *开始日期
          */
         private LocalDate startDate;
