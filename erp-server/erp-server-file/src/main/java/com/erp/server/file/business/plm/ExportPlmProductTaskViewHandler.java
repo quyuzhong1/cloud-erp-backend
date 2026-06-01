@@ -9,13 +9,10 @@ import com.erp.model.plm.dto.ProductTaskViewDTO;
 import com.erp.model.plm.dto.ProductTaskViewSearchDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Objects;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_TASK_VIEW;
@@ -25,16 +22,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_TASK_VIEW;
 public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandler<ProductTaskViewDTO, ProductTaskViewSearchDTO> {
     @Resource
     private ExportPlmFeign exportPlmFeign;
-
-    private static final ThreadLocal<ProductTaskViewSearchDTO> threadLocal = new ThreadLocal<>();
-
-    @Override
-    protected List<ProductTaskViewDTO> getData(FileTask fileTask) {
-        ProductTaskViewSearchDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProductTaskViewSearchDTO>() {
-        });
-        threadLocal.set(dto);
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ProductTaskViewDTO> getPageData(PagingDTO<ProductTaskViewSearchDTO> dto) {
@@ -48,9 +35,13 @@ public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandle
 
     @Override
     public String getExcelPath() {
-        ProductTaskViewSearchDTO dto = threadLocal.get();
+        throw new UnsupportedOperationException("分页导出请使用 getExcelPath(P)");
+    }
+
+    @Override
+    protected String getExcelPath(ProductTaskViewSearchDTO dto) {
         String excelPath = "";
-        if (Objects.isNull(dto.getType())) {
+        if (dto == null || Objects.isNull(dto.getType())) {
             throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
         switch (dto.getType()) {
@@ -69,7 +60,6 @@ public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandle
             default:
                 excelPath = "";
         }
-        threadLocal.remove();
         return excelPath;
     }
 }

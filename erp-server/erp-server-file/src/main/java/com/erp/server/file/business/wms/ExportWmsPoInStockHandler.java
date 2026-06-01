@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PO_IN_STOCK;
 
@@ -22,35 +19,25 @@ public class ExportWmsPoInStockHandler extends AbstractPageFileEventHandler<PoIn
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
-    private static final ThreadLocal<PoInstockDTO.ExportParamDTO> threadLocal = new ThreadLocal<>();
 
     @Override
     public String getExcelPath() {
-        PoInstockDTO.ExportParamDTO dto = threadLocal.get();
-        Boolean isHaveFieldPower = dto.getIsHaveFieldPower();
-        String excelPath;
+        throw new UnsupportedOperationException("分页导出请使用 getExcelPath(P)");
+    }
+
+    @Override
+    protected String getExcelPath(PoInstockDTO.ExportParamDTO params) {
+        Boolean isHaveFieldPower = params == null ? null : params.getIsHaveFieldPower();
         if (isHaveFieldPower != null && isHaveFieldPower) {
-            excelPath = "excel/wms/poInStock.xlsx";
-        } else {
-            excelPath = "excel/wms/poInStockNotField.xlsx";
+            return "excel/wms/poInStock.xlsx";
         }
-        threadLocal.remove();
-        return excelPath;
+        return "excel/wms/poInStockNotField.xlsx";
     }
 
     @Override
     public FileTaskEventEnum getEvent() {
         return EXPORT_WMS_PO_IN_STOCK;
     }
-
-    @Override
-    protected List<PoInstockDTO.ListDTO> getData(FileTask fileTask) {
-        PoInstockDTO.ExportParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PoInstockDTO.ExportParamDTO>() {
-        });
-        threadLocal.set(dto);
-        return listSeqData(dto);
-    }
-
 
     @Override
     protected PagingVO<PoInstockDTO.ListDTO> getPageData(PagingDTO<PoInstockDTO.ExportParamDTO> dto) {
