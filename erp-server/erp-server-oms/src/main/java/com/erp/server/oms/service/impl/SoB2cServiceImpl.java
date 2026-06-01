@@ -3679,7 +3679,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
                 log.warn("新增三方仓发货单成功，发货单code:{}", code);
                 createOutboundReq.setReferenceNo(code);
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】创建三方仓发货单【{}】", entity.getCode(), code), entity.getId(), "创建三方仓发货单");
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】提交发货，创建三方仓发货单【{}】", entity.getCode(), code), entity.getId(), "创建三方仓发货单");
             } else {
                 log.warn("订单{}使用已存在的发货单号{}创建三方仓出库单", entity.getCode(), createOutboundReq.getReferenceNo());
             }
@@ -3701,7 +3701,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     throw new ServiceException("调用三方仓出库单异常，{}", apiResult.getMsg());
                 }
                 String message = "创建三方仓出库单异常" + apiResult.getMsg();
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】删除，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 //标记三方仓发货单为删除
@@ -3723,7 +3723,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
             } catch (Exception e1) {
                 String message = e1.getMessage();
-                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】删除，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                 return ApiResult.error(-1, message);
@@ -3731,7 +3731,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             log.error("订单{}三方仓发货单号{}已达到最大重试次数{}次，停止重试", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT);
             String message = "重试创建出库单异常"+ e.getMessage();
-            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】删除，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
             soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
             thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             return ApiResult.error( -1, e.getMessage());
