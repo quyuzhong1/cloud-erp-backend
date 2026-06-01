@@ -124,7 +124,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     }
 
     @Override
-    public List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code) {
+    public List<AfterSalePackDetailDTO.ViewDTO> listByCode(String code, String sourceId) {
         if (StrUtil.isBlank(code)) {
             throw new ServiceException("箱唛不能为空");
         }
@@ -136,7 +136,9 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         }
         // 箱唛已经被使用，不可操作
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
-            throw new ServiceException("箱唛已被其它单据使用，不可重复使用");
+            if (!afterSalePackEntity.getSourceId().equals(sourceId)) {
+                throw new ServiceException("箱唛已被其它单据使用，不可重复使用");
+            }
         }
         // 箱唛状态不等于已封箱，不可操作
         if (!AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
