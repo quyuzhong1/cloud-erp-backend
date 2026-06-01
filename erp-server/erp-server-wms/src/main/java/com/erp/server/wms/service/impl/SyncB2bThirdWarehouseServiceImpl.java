@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -27,6 +28,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
+import com.erp.model.wms.enums.B2bPackingTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -64,6 +66,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
 
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private B2bCustomerPackingService b2bCustomerPackingService;
 
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
@@ -122,6 +126,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
+        fillPackingForOutboundReq(req, entity);
 
         OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(entity.getDeliveryWarehouseId());
         if (Objects.nonNull(overseasProviderWarehouse)) {
@@ -305,5 +310,27 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setRemark(entity.getRemark());
         req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         return BeanUtil.beanToMap(req);
+    }
+
+    private void fillPackingForOutboundReq(ThirdWarehouseCreateFbaOutboundReq req, B2bThirdDeliveryEntity entity) {
+        if (CharSequenceUtil.isBlank(entity.getPackingType())) {
+            req.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+        }
+        List<B2bCustomerPackingEntity> packingList = b2bCustomerPackingService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isEmpty(packingList)) {
+            return;
+        }
+        List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {
+            ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item = new ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem();
+            item.setWarehousePlatformSku(p.getWarehousePlatformSku());
+            item.setPackingQty(p.getPackingQty());
+            item.setBoxMarkNo(p.getBoxMarkNo());
+            item.setBoxMarkRefNo(p.getBoxMarkRefNo());
+            item.setLabelSize(p.getLabelSize());
+            item.setLabelingRequirement(p.getLabelingRequirement());
+            item.setBoxSeq(p.getBoxSeq());
+            return item;
+        }).collect(Collectors.toList());
+        req.setPackingDetailList(items);
     }
 }

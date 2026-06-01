@@ -217,6 +217,55 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
 
     private List<WarehouseOperationTypeDTO> warehouseOperationTypeDTOList;
 
+    /**
+     * 装箱类型 0/1/2
+     */
+    private String packingType;
+
+    /**
+     * 每箱张贴货件标签数
+     */
+    private Integer labelsPerBox;
+
+    /**
+     * 装箱明细（谷仓客户指定/已暂存箱发货时使用）
+     */
+    private List<PackingDetailItem> packingDetailList;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class PackingDetailItem {
+        /**
+         * 三方仓SKU
+         */
+        private String warehousePlatformSku;
+        /**
+         * 当前箱内该SKU装箱数量
+         */
+        private Integer packingQty;
+        /**
+         * 箱唛号
+         */
+        private String boxMarkNo;
+        /**
+         * 箱唛参考号
+         */
+        private String boxMarkRefNo;
+        /**
+         * 标签尺寸
+         */
+        private String labelSize;
+        /**
+         * 贴标要求
+         */
+        private String labelingRequirement;
+        /**
+         * 箱序号
+         */
+        private Integer boxSeq;
+    }
 
     @Data
     @NoArgsConstructor

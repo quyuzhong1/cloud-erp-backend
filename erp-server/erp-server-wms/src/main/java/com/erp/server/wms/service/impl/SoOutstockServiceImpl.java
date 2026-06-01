@@ -3166,6 +3166,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         LinkedList<SoOutstockDetailDTO.AddDTO> addDTOS = generateB2cDTO.getDetailList();
         List<String> detailIds = soB2cDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         addDTOS = (LinkedList<SoOutstockDetailDTO.AddDTO>) addDTOS.stream().filter(v->detailIds.contains(v.getSoDetailId())).collect(Collectors.toCollection(LinkedList::new));
+        List<String> outstockedSoDetailIds = listPlatformOutstockedSoDetailIds(entity.getId(), warehouseId);
+        if (CollectionUtils.isNotEmpty(outstockedSoDetailIds)) {
+            addDTOS = addDTOS.stream()
+                    .filter(v -> !outstockedSoDetailIds.contains(v.getSoDetailId()))
+                    .collect(Collectors.toCollection(LinkedList::new));
+        }
+        if (CollectionUtils.isEmpty(addDTOS)) {
+            log.warn("平台仓出库单已生成，跳过重复生成，销售订单：{}，仓库：{}", entity.getCode(), warehouseId);
+            fillBlankPlatformOutstockTrackNo(entity.getId(), warehouseId, trackNo);
+            return Boolean.TRUE;
+        }
         for (SoOutstockDetailDTO.AddDTO addDTO : addDTOS) {
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v -> v.getId().equals(addDTO.getSoDetailId())).findFirst().orElse(null);
             if (Objects.nonNull(soB2cDetailEntity)) {
@@ -3177,6 +3188,27 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         generateB2cDTO.setBillDate(outTime.toLocalDate());
         fillBlankPlatformOutstockTrackNo(entity.getId(), warehouseId, trackNo);
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+    }
+
+    private List<String> listPlatformOutstockedSoDetailIds(String soB2cId, String warehouseId) {
+        List<SoOutstockEntity> outstockList = this.lambdaQuery()
+                .eq(SoOutstockEntity::getSoId, soB2cId)
+                .eq(CharSequenceUtil.isNotBlank(warehouseId), SoOutstockEntity::getWarehouseId, warehouseId)
+                .eq(SoOutstockEntity::getSourceType, SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode())
+                .and(wrapper -> wrapper.isNull(SoOutstockEntity::getInvalidStatus).or().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE))
+                .list();
+        if (CollectionUtils.isEmpty(outstockList)) {
+            return Collections.emptyList();
+        }
+        List<String> outstockIds = outstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+        List<SoOutstockDetailEntity> outstockDetailList = soOutstockDetailService.listByMainIds(outstockIds);
+        if (CollectionUtils.isEmpty(outstockDetailList)) {
+            return Collections.emptyList();
+        }
+        return outstockDetailList.stream()
+                .map(SoOutstockDetailEntity::getSoDetailId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
     }
 
     private void fillBlankPlatformOutstockTrackNo(String soB2cId, String warehouseId, String trackNo) {
