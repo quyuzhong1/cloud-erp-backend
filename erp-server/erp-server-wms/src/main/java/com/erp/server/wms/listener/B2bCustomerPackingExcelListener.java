@@ -132,7 +132,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                         || !Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelingRequirement(), ""), CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), ""))) {
                     B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
                     error.setBoxSeq(String.valueOf(row.getBoxSeq()));
-                    error.setSkuNo(row.getSkuNo());
+                    error.setSkuNo(getFirstSkuNo(row.getBoxSeq()));
                     error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
                     errorList.add(error);
                 }
@@ -150,6 +150,15 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             box.setPackingLineList(lineMap.getOrDefault(box.getBoxSeq(), new ArrayList<>()));
             successList.add(box);
         }
+    }
+
+    private String getFirstSkuNo(Integer boxSeq) {
+        return successLineList.stream()
+                .filter(e -> Objects.equals(e.getBoxSeq(), boxSeq))
+                .map(B2bCustomerPackingDTO.LineViewDTO::getSkuNo)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse("");
     }
 
     public List<B2bCustomerPackingDTO.ViewDTO> getSuccessList() {
