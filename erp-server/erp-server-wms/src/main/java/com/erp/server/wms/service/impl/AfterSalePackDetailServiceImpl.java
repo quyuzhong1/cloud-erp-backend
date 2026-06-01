@@ -136,7 +136,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         }
         // 箱唛已经被使用，不可操作
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
-            if (!afterSalePackEntity.getSourceId().equals(sourceId)) {
+            if (StrUtil.isBlank(sourceId) || !Objects.equals(afterSalePackEntity.getSourceId(), sourceId)) {
                 throw new ServiceException("箱唛已被其它单据使用，不可重复使用");
             }
         }
