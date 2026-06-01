@@ -107,4 +107,24 @@ public class TransferDeclareCostAllocationMainServiceImpl extends SuperServiceIm
                 .eq(TransferDeclareCostAllocationMainEntity::getId, id)
                 .update();
     }
+
+    @Override
+    public List<String> pageMainIdsByReportPeriodStr(String reportPeriodStr, String reportStatus,
+                                                     boolean excludeBigTableDone, String bigTableDoneCode,
+                                                     String lastId, int batchSize) {
+        if (StrUtil.isBlank(reportPeriodStr)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.pageMainIdsByReportPeriodStr(reportPeriodStr, reportStatus, excludeBigTableDone, bigTableDoneCode, lastId, batchSize);
+    }
+
+    @Override
+    public int countMainByReportPeriodStr(String reportPeriodStr, String reportStatus,
+                                          boolean excludeBigTableDone, String bigTableDoneCode) {
+        if (StrUtil.isBlank(reportPeriodStr)) {
+            return 0;
+        }
+        Integer count = baseMapper.countMainByReportPeriodStr(reportPeriodStr, reportStatus, excludeBigTableDone, bigTableDoneCode);
+        return count == null ? 0 : count;
+    }
 }

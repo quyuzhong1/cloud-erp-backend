@@ -34,5 +34,37 @@
         transfer_declare_id, declare_reconciliation_detail_id, report_date, account_date, report_status, big_table_status
     </sql>
 
+    <!-- 游标分批查主表ID：直查主表，前置过滤掉会立即失败的记录，减少无效子任务 -->
+    <select id="pageMainIdsByReportPeriodStr" resultType="java.lang.String">
+        SELECT tdcam.id
+        FROM transfer_declare_cost_allocation_main tdcam
+        WHERE tdcam.is_deleted = false
+          AND tdcam.report_date = #{reportPeriodStr}
+        <if test="reportStatus != null and reportStatus != ''">
+            AND tdcam.report_status != #{reportStatus}
+        </if>
+        <if test="excludeBigTableDone">
+            AND (tdcam.big_table_status IS NULL OR tdcam.big_table_status != #{bigTableDoneCode})
+        </if>
+        <if test="lastId != null and lastId != ''">
+            AND tdcam.id &gt; #{lastId}
+        </if>
+        ORDER BY tdcam.id ASC
+        LIMIT #{batchSize}
+    </select>
+
+    <!-- COUNT 预估总量，与游标查询同过滤条件 -->
+    <select id="countMainByReportPeriodStr" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM transfer_declare_cost_allocation_main tdcam
+        WHERE tdcam.is_deleted = false
+          AND tdcam.report_date = #{reportPeriodStr}
+        <if test="reportStatus != null and reportStatus != ''">
+            AND tdcam.report_status != #{reportStatus}
+        </if>
+        <if test="excludeBigTableDone">
+            AND (tdcam.big_table_status IS NULL OR tdcam.big_table_status != #{bigTableDoneCode})
+        </if>
+    </select>
 
 </mapper>

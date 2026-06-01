@@ -8,6 +8,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
+import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 
 /**
@@ -43,6 +44,16 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
     PagingVO<TransferDeclareCostAllocationDTO.ListDTO> paging(PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto);
     
     BatchResultDTO updateReportStatus(String id , String reportDate , String reportStatus);
+
+    /**
+     * 按核算月份异步批量更新核算状态
+     */
+    BatchResultDTO asyncUpdateReportStatus(TransferDeclareCostAllocationDTO.UpdateStatusDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量更新核算状态
+     */
+    void pushUpdateReportStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
     
     BatchResultDTO reAllocation(String id);
     

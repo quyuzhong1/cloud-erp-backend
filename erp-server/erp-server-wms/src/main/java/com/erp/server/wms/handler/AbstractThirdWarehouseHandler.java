@@ -12,6 +12,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -40,6 +41,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public abstract class AbstractThirdWarehouseHandler extends BaseController implements ThirdWarehouseService {
+
+    private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "第三方仓接口返回为空";
+    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_REMARK = "测试三方仓超时";
 
     @Resource
     private OverseasProviderService overseasProviderService;
@@ -100,6 +104,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     @Override
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
         log.error("createOutboundBill authId:{} request:{}", authId, JSONUtil.toJsonStr(createOutboundReq));
+        ThirdWarehouseContext.setTimeoutTest(isTimeoutTestRemark(createOutboundReq.getRemark()));
         //相同sku合并数量
         if(CollectionUtils.isNotEmpty(createOutboundReq.getItems())){
             Map<String,Integer> mergeSkuMap = createOutboundReq.getItems().stream().collect(Collectors.toMap(ThirdWarehouseCreateOutboundReq.Item::getProductSku, ThirdWarehouseCreateOutboundReq.Item::getQuantity, Integer::sum));
@@ -110,6 +115,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             }).collect(Collectors.toList()));
         }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
+    }
+
+    private boolean isTimeoutTestRemark(String remark) {
+        return THIRD_WAREHOUSE_TIMEOUT_TEST_REMARK.equals(CharSequenceUtil.trim(remark));
     }
     @Override
     public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq, String authId) {
@@ -205,6 +214,9 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             handleAuthInfo(authId);
             //执行逻辑
             ApiResult<T> result = handler.handle();
+            if (isRetryableOutboundResult(result, businessType)) {
+                result = ApiResult.error(ApiError.WH_OVERSEAS_INTERFACE_EXCEPTION.getCode(), result.getMsg());
+            }
             ThirdWarehouseContext.setMsg(result.getMsg());
             //记录日志
             pushOperateLog(businessType,result.getCode(),erpBusinessCode, false);
@@ -221,13 +233,52 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     }
 
     private String getThirdWarehouseExceptionMessage(Exception e, SourceTypeEnum businessType) {
-        if ((businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
-                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL)
-                && e instanceof NullPointerException
-                && CharSequenceUtil.isBlank(e.getMessage())) {
-            return "第三方仓接口返回为空";
+        if (isOutboundBusiness(businessType) && isTimeoutException(e)) {
+            return CharSequenceUtil.blankToDefault(e.getMessage(), "第三方仓接口请求超时");
+        }
+        if (isOutboundBusiness(businessType) && isEmptyResponseException(e)) {
+            return THIRD_WAREHOUSE_EMPTY_RESPONSE;
         }
         return e.getMessage();
+    }
+
+    private boolean isRetryableOutboundResult(ApiResult<?> result, SourceTypeEnum businessType) {
+        return isOutboundBusiness(businessType)
+                && ObjectUtil.isNotEmpty(result)
+                && !result.isSuccess()
+                && (isTimeoutMessage(result.getMsg()) || THIRD_WAREHOUSE_EMPTY_RESPONSE.equals(result.getMsg()));
+    }
+
+    private boolean isOutboundBusiness(SourceTypeEnum businessType) {
+        return businessType == SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL
+                || businessType == SourceTypeEnum.THIRD_WAREHOUSE_QUERY_OUTBOUND_BILL;
+    }
+
+    private boolean isEmptyResponseException(Exception e) {
+        return e instanceof ThirdWarehouseEmptyResponseException
+                || e instanceof NullPointerException && CharSequenceUtil.isBlank(e.getMessage());
+    }
+
+    private boolean isTimeoutException(Throwable throwable) {
+        Throwable current = throwable;
+        while (Objects.nonNull(current)) {
+            if (current instanceof java.net.SocketTimeoutException || isTimeoutMessage(current.getMessage())) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private boolean isTimeoutMessage(String message) {
+        if (CharSequenceUtil.isBlank(message)) {
+            return false;
+        }
+        String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("timeout")
+                || lowerMessage.contains("timed out")
+                || lowerMessage.contains("sockettimeoutexception")
+                || message.contains("超时");
     }
 
     @FunctionalInterface

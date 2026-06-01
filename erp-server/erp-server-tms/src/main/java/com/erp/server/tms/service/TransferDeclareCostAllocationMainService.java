@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationMainDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 中转费用分摊主表 服务类
@@ -39,4 +41,11 @@ public interface TransferDeclareCostAllocationMainService extends SuperService<T
      * @return
      */
     Boolean updateBigTableStatus(String id, String bigTableStatus);
+
+    List<String> pageMainIdsByReportPeriodStr(String reportPeriodStr, String reportStatus,
+                                              boolean excludeBigTableDone, String bigTableDoneCode,
+                                              String lastId, int batchSize);
+
+    int countMainByReportPeriodStr(String reportPeriodStr, String reportStatus,
+                                   boolean excludeBigTableDone, String bigTableDoneCode);
 }

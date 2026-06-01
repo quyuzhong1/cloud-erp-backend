@@ -42,6 +42,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -125,10 +126,12 @@ public class FirstMileCostAllocationController extends BaseController {
     )
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新状态")
     public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
+            BatchResultDTO taskResult = firstMileCostAllocationService.asyncUpdateStatus(dto);
+            return success(Collections.singletonList(taskResult));
+        }
         List<FirstMileCostAllocationEntity> entityList = null;
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = firstMileCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
+        if (CollUtil.isNotEmpty(dto.getIds())){
             entityList = firstMileCostAllocationService.listByIds(dto.getIds());
         }
         if (CollectionUtils.isEmpty(entityList)){

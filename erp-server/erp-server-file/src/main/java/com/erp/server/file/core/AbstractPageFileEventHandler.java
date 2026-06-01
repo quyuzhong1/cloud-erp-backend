@@ -10,6 +10,7 @@ import com.common.business.enums.ExportPaginationMode;
 import com.common.business.vo.KeysetPagingVO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
@@ -34,7 +35,6 @@ import java.util.*;
 
 @Slf4j
 public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEventHandler<T> {
-
 
     /**
      * 解析导出查询参数。默认根据 {@code AbstractPageFileEventHandler&lt;T, P&gt;} 的泛型 {@code P}
@@ -210,28 +210,52 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     /**
-     * 将模板中 {@link #templateSourceSheetIndex()} 指向的 sheet 再复制 {@code dataSheetCount - 1} 份，
-     * 得到共 {@code dataSheetCount} 张同结构数据 sheet，供 EasyExcel 按 sheet 分批 fill。
+     * 将模板中 {@link #templateSourceSheetIndex()} 指向的数据源 sheet 复制为共 {@code dataSheetCount} 张同结构数据 sheet，
+     * 供 EasyExcel 按 sheet 分批 fill。
      * <p>
-     * 注意：POI cloneSheet 会把克隆 sheet 追加到 workbook 末尾，数据 sheet 不一定是 0、1、2 连续下标。
-     * 因此这里同时返回真实物理 sheet 下标，后续 fill 必须按该映射写入。
+     * 模板除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link BusinessException}；展开时会先移除这些空占位 sheet，
+     * 再由数据源 sheet 克隆补齐，保证数据 sheet 物理下标连续（0、1、2…）且不残留中间空 sheet。返回真实物理 sheet 下标映射。
      */
     private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
-        int source = templateSourceSheetIndex();
-        if (dataSheetCount <= 1) {
-            return new ExpandedTemplate(templateBytes, Collections.singletonList(source));
+        if (dataSheetCount <= 0) {
+            throw new ServiceException("dataSheetCount 必须大于 0");
         }
+        int source = templateSourceSheetIndex();
         try (ByteArrayInputStream bin = new ByteArrayInputStream(templateBytes);
-                XSSFWorkbook wb = new XSSFWorkbook(bin);
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            List<Integer> dataSheetIndexes = new ArrayList<>(dataSheetCount);
-            dataSheetIndexes.add(source);
+                XSSFWorkbook wb = new XSSFWorkbook(bin)) {
+            int originalSheetCount = wb.getNumberOfSheets();
+            // 模板仅一个 sheet 且只需一个数据 sheet：无需展开
+            if (originalSheetCount == 1 && dataSheetCount <= 1) {
+                return new ExpandedTemplate(templateBytes, Collections.singletonList(source));
+            }
+            String sourceSheetName = wb.getSheetName(source);
+            // 除数据源（第一个）sheet 外，模板其余 sheet 必须为空（仅作可被替换的占位 sheet）；非空则报错
+            for (int i = 0; i < originalSheetCount; i++) {
+                if (i == source) {
+                    continue;
+                }
+                if (wb.getSheetAt(i).getPhysicalNumberOfRows() > 0) {
+                    throw new ServiceException("导出模板除第一个数据 sheet 外存在非空 sheet（sheet="
+                            + wb.getSheetName(i) + "），无法用于分页多 sheet 导出，请将其清空或从模板中移除。");
+                }
+            }
+            // 直接替换这些空占位 sheet：先移除，再由数据源 sheet 克隆补齐，使数据 sheet 连续排布且不残留空 sheet
+            for (int i = originalSheetCount - 1; i >= 0; i--) {
+                if (i != source) {
+                    wb.removeSheetAt(i);
+                }
+            }
+            int newSource = wb.getSheetIndex(sourceSheetName);
+            List<Integer> dataSheetIndexes = new ArrayList<>(Math.max(1, dataSheetCount));
+            dataSheetIndexes.add(newSource);
             for (int i = 1; i < dataSheetCount; i++) {
-                wb.cloneSheet(source);
+                wb.cloneSheet(newSource);
                 dataSheetIndexes.add(wb.getNumberOfSheets() - 1);
             }
-            wb.write(out);
-            return new ExpandedTemplate(out.toByteArray(), dataSheetIndexes);
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                wb.write(out);
+                return new ExpandedTemplate(out.toByteArray(), dataSheetIndexes);
+            }
         }
     }
 
