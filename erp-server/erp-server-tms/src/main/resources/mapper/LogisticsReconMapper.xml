@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsReconMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsReconEntity">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="code" property="code"/>
+        <result column="reconciliation_month" property="reconciliationMonth"/>
+        <result column="business_type" property="businessType"/>
+        <result column="cfg_import_id" property="cfgImportId"/>
+        <result column="cfg_type" property="cfgType"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="sheet_name" property="sheetName"/>
+        <result column="file_url" property="fileUrl"/>
+        <result column="file_name" property="fileName"/>
+        <result column="import_fail_reason" property="importFailReason"/>
+        <result column="check_status" property="checkStatus"/>
+        <result column="import_count" property="importCount"/>
+        <result column="cost_count" property="costCount"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="currency" property="currency"/>
+        <result column="check_user_id" property="checkUserId"/>
+        <result column="check_user_name" property="checkUserName"/>
+        <result column="check_time" property="checkTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, create_time, update_time, version, is_deleted, create_user_id, create_user_name,
+        update_user_id, update_user_name,
+        code, reconciliation_month, business_type, cfg_import_id, cfg_type,
+        supplier_id, supplier_name, sheet_name, file_url, file_name,
+        import_fail_reason, check_status,
+        import_count, cost_count, total_amount, currency,
+        check_user_id, check_user_name, check_time, remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDTO$ListDTO">
+        SELECT <include refid="Base_Column_List"/>,
+        COALESCE(m.match_count, 0) AS match_count,
+        COALESCE(a.match_success_amount, 0) AS match_success_amount,
+        COALESCE(a.match_fail_amount, 0) AS match_fail_amount
+        FROM logistics_recon
+        LEFT JOIN (
+            SELECT main_id,
+                   COUNT(*) FILTER (WHERE match_status = 'matched') AS match_count
+            FROM logistics_recon_detail_sub
+            WHERE is_deleted = false
+            GROUP BY main_id
+        ) m ON m.main_id = logistics_recon.id
+        LEFT JOIN (
+            SELECT sub.main_id,
+                   SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'matched') AS match_success_amount,
+                   SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount
+            FROM logistics_recon_detail_sub sub
+            WHERE sub.is_deleted = false
+            GROUP BY sub.main_id
+        ) a ON a.main_id = logistics_recon.id
+        WHERE ${params.sqlMap.default}
+        AND is_deleted = false
+        <if test="params.matchStatus != null and params.matchStatus != ''">
+            <choose>
+                <when test="params.matchStatus == 'unmatched'">
+                    AND (cost_count &lt;= 0 OR COALESCE(m.match_count, 0) &lt;= 0)
+                </when>
+                <when test="params.matchStatus == 'partial'">
+                    AND COALESCE(m.match_count, 0) &gt; 0
+                    AND COALESCE(m.match_count, 0) &lt; cost_count
+                </when>
+                <when test="params.matchStatus == 'matched'">
+                    AND cost_count &gt; 0
+                    AND COALESCE(m.match_count, 0) &gt;= cost_count
+                </when>
+            </choose>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time DESC
+    </select>
+
+    <!-- TAB 计数：按 check_status 分组（前端 TAB 全部 / 导入中 / 待确认 / 已确认） -->
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsReconDTO$TabListDTO">
+        SELECT check_status AS tabFlag, count(*) AS count
+        FROM logistics_recon
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY check_status
+    </select>
+
+</mapper>

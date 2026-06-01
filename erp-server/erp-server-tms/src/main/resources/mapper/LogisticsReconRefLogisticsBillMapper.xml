@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsReconRefLogisticsBillMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="main_id" property="mainId"/>
+        <result column="detail_id" property="detailId"/>
+        <result column="detail_sub_id" property="detailSubId"/>
+        <result column="logistics_bill_id" property="logisticsBillId"/>
+        <result column="logistics_bill_detail_id" property="logisticsBillDetailId"/>
+        <result column="logistics_bill_cost_id" property="logisticsBillCostId"/>
+        <result column="tms_cost_detail_id" property="tmsCostDetailId"/>
+        <result column="match_type" property="matchType"/>
+        <result column="match_user_id" property="matchUserId"/>
+        <result column="match_user_name" property="matchUserName"/>
+        <result column="match_time" property="matchTime"/>
+        <result column="import_type" property="importType"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, main_id, detail_id, detail_sub_id, logistics_bill_id, logistics_bill_detail_id,
+        logistics_bill_cost_id, tms_cost_detail_id, match_type, match_user_id, match_user_name,
+        match_time, import_type
+    </sql>
+
+    <select id="listByDetailIds" resultType="com.erp.model.tms.dto.LogisticsReconRefLogisticsBillDTO$ListDTO">
+        SELECT
+            r.id, r.main_id, r.detail_id, r.detail_sub_id,
+            r.logistics_bill_id, lb.code AS logistics_bill_code,
+            r.logistics_bill_detail_id, r.logistics_bill_cost_id, lbc.code AS logistics_bill_cost_code,
+            r.tms_cost_detail_id, r.match_type, r.match_user_id, r.match_user_name, r.match_time, r.import_type
+        FROM logistics_recon_ref_logistics_bill r
+        LEFT JOIN logistics_bill lb ON lb.id = r.logistics_bill_id AND lb.is_deleted = false
+        LEFT JOIN logistics_bill_cost lbc ON lbc.id = r.logistics_bill_cost_id AND lbc.is_deleted = false
+        WHERE r.is_deleted = false
+        AND r.detail_id IN
+        <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
+            #{detailId}
+        </foreach>
+    </select>
+
+    <select id="listByMainId" resultType="com.erp.model.tms.dto.LogisticsReconRefLogisticsBillDTO$ListDTO">
+        SELECT
+            r.id, r.main_id, r.detail_id, r.detail_sub_id,
+            r.logistics_bill_id, lb.code AS logistics_bill_code,
+            r.logistics_bill_detail_id, r.logistics_bill_cost_id, lbc.code AS logistics_bill_cost_code,
+            r.tms_cost_detail_id, r.match_type, r.match_user_id, r.match_user_name, r.match_time, r.import_type
+        FROM logistics_recon_ref_logistics_bill r
+        LEFT JOIN logistics_bill lb ON lb.id = r.logistics_bill_id AND lb.is_deleted = false
+        LEFT JOIN logistics_bill_cost lbc ON lbc.id = r.logistics_bill_cost_id AND lbc.is_deleted = false
+        WHERE r.is_deleted = false
+          AND r.main_id = #{mainId}
+    </select>
+
+</mapper>
