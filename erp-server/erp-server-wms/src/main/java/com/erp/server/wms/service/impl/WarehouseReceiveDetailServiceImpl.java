@@ -391,7 +391,12 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //入库质检总数量（包含入库质检与新品入库质检）
         Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream()
                 .filter(e -> QcTypeEnum.STOCK_IN.getCode().equals(e.getQcType()) || QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode().equals(e.getQcType()))
-                .collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty, Integer::sum));
+                .filter(e -> e.getTotalQty() != null)
+                .collect(Collectors.toMap(
+                        QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId,
+                        QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty,
+                        Integer::sum
+                ));
         //外验允许入库量
         Map<String, Integer> allowInstockQtyMap = totalAllowInstockQtyList.stream().filter(e -> QcTypeEnum.OUTSIDE_QC.getCode().equals(e.getQcType())).collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
         //查询采购订单下的 收货数量汇总
