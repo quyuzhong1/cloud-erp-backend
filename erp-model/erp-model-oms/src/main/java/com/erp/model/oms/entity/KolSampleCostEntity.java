@@ -194,6 +194,16 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("product_cost")
     private BigDecimal productCost = BigDecimal.ZERO;
     /**
+    * 成本来源
+    */
+    @TableField("cost_source")
+    private String costSource;
+    /**
+    * 成本来源月份
+    */
+    @TableField("cost_source_month")
+    private String costSourceMonth;
+    /**
     * 头程费用
     */
     @TableField("first_mile_shipping_cost")
@@ -208,6 +218,11 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     */
     @TableField("shipping_cost")
     private BigDecimal shippingCost = BigDecimal.ZERO;
+    /**
+    * 费用来源
+    */
+    @TableField("fee_source")
+    private String feeSource;
     /**
     * 关税
     */
@@ -286,11 +301,17 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
 
     public static final String PRODUCT_COST = "product_cost";
 
+    public static final String COST_SOURCE = "cost_source";
+
+    public static final String COST_SOURCE_MONTH = "cost_source_month";
+
     public static final String FIRST_MILE_SHIPPING_COST = "first_mile_shipping_cost";
 
     public static final String CLEARANCE_CUSTOMS_TAX = "clearance_customs_tax";
 
     public static final String SHIPPING_COST = "shipping_cost";
+
+    public static final String FEE_SOURCE = "fee_source";
 
     public static final String CUSTOMS_TAX = "customs_tax";
 

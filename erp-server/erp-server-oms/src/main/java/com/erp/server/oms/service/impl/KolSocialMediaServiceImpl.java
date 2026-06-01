@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.entity.KolSocialMediaEntity;
 import com.erp.server.oms.mapper.KolSocialMediaMapper;
 import com.erp.server.oms.mapper.KolFeedbackMapper;
+import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import com.erp.server.oms.service.KolSocialMediaService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -62,6 +63,9 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
 
     @Autowired
     private KolFeedbackMapper kolFeedbackMapper;
+
+    @Autowired
+    private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
@@ -510,6 +514,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 .eq(KolFeedbackEntity::getIsDeleted, false)
                 .set(KolFeedbackEntity::getFeedbackStatus, feedbackStatus);
         int updateCount = kolFeedbackMapper.update(null, updateWrapper);
+        kolSampleCostFeedbackUrlService.syncFeedbackStatusByUrlHash(urlHash, feedbackStatus);
         log.info("同步回片状态：urlHash=【{}】，状态=【{}】，更新数量=【{}】", urlHash, feedbackStatus, updateCount);
     }
 }

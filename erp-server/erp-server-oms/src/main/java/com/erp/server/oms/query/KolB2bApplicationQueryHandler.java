@@ -53,7 +53,7 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
                     ")" ;
         }
         if ("feedbackUrl".equals(field)) {
-            return " exists (SELECT source_detail_id FROM kol_feedback  WHERE is_deleted= false source_detail_id = kbad.id and url "+ compareCodeSplicingValueSql +
+            return " exists (SELECT source_detail_id FROM kol_sample_cost_ref_feedback_url WHERE is_deleted = false and source_type = 'kolB2bApplication' and source_detail_id = kbad.id and url "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         return null;
