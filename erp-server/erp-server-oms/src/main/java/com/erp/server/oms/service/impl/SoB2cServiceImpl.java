@@ -3473,6 +3473,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setSoId(entity.getId());
         createOutboundReq.setPayTime(entity.getPayTime());
         createOutboundReq.setBuyerRemark(entity.getBuyerRemark());
+        createOutboundReq.setRemark(entity.getRemark());
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
         createOutboundReq.setShopName(shopInfoEntity.getName());
         // 设置EORI税号

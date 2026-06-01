@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractThirdWarehouseHandler extends BaseController implements ThirdWarehouseService {
 
     private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "第三方仓接口返回为空";
+    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_REMARK = "测试三方仓超时";
 
     @Resource
     private OverseasProviderService overseasProviderService;
@@ -102,6 +103,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     @Override
     public ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq, String authId) {
         log.error("createOutboundBill authId:{} request:{}", authId, JSONUtil.toJsonStr(createOutboundReq));
+        ThirdWarehouseContext.setTimeoutTest(isTimeoutTestRemark(createOutboundReq.getRemark()));
         //相同sku合并数量
         if(CollectionUtils.isNotEmpty(createOutboundReq.getItems())){
             Map<String,Integer> mergeSkuMap = createOutboundReq.getItems().stream().collect(Collectors.toMap(ThirdWarehouseCreateOutboundReq.Item::getProductSku, ThirdWarehouseCreateOutboundReq.Item::getQuantity, Integer::sum));
@@ -112,6 +114,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
             }).collect(Collectors.toList()));
         }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
+    }
+
+    private boolean isTimeoutTestRemark(String remark) {
+        return THIRD_WAREHOUSE_TIMEOUT_TEST_REMARK.equals(CharSequenceUtil.trim(remark));
     }
     @Override
     public ApiResult<String> createFbaOutboundBill(ThirdWarehouseCreateFbaOutboundReq createOutboundReq, String authId) {

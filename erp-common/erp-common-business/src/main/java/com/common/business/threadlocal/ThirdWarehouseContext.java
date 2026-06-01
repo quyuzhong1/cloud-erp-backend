@@ -1,5 +1,6 @@
 package com.common.business.threadlocal;
 
+import com.common.core.context.ThirdWarehouseHttpTestContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -70,6 +71,14 @@ public class ThirdWarehouseContext {
 
     public static String getData() { return data.get();}
 
+    public static void setTimeoutTest(Boolean timeoutTest) {
+        ThirdWarehouseHttpTestContext.setTimeoutTest(timeoutTest);
+    }
+
+    public static boolean isTimeoutTest() {
+        return ThirdWarehouseHttpTestContext.isTimeoutTest();
+    }
+
     public static void remove() {
         responseJson.remove();
         requestJson.remove();
@@ -77,5 +86,6 @@ public class ThirdWarehouseContext {
         authId.remove();
         msg.remove();
         data.remove();
+        ThirdWarehouseHttpTestContext.remove();
     }
 }
