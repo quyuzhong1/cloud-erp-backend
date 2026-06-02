@@ -36,10 +36,10 @@
 
 | 字段 | 默认值    |
 |---|--------|
-| create_user_id | 0      |
-| update_user_id | 0      |
-| create_user_name | system |
-| update_user_name | system    |
+| create_user_id | '0'      |
+| update_user_id | '0'      |
+| create_user_name | 'system' |
+| update_user_name | 'system' |
 | create_time | now()  |
 | update_time | now()  |
 | version | 0      |
