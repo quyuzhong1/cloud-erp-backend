@@ -1093,7 +1093,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 送检数量
          */
-        private Integer qcQty;
+        private Integer totalQty;
         
         /**
          * 质检结果

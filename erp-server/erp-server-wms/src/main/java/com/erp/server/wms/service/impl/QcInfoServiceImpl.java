@@ -3342,7 +3342,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 // 从质检结果中获取送检数量和质检结果
                 QcResultEntity qcResult = finalQcResultMap.get(item.getId());
                 if (qcResult != null) {
-                    item.setQcQty(qcResult.getQcQty());
+                    item.setTotalQty(qcResult.getQcQty());
                     item.setQcResult(qcResult.getQcResult());
                     item.setQcResultName(QcResultEnum.getByCode(qcResult.getQcResult()));
                 }
