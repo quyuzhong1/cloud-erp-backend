@@ -85,6 +85,7 @@ import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
+import com.erp.server.tms.service.TransferDeclareService;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -127,6 +128,9 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
     private MQProducerService mQProducerService;
+    @Lazy
+    @Resource
+    private TransferDeclareService transferDeclareService;
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
@@ -1040,6 +1044,12 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			return Collections.emptyList();
 		}
         return baseMapper.listByReportPeriodStr(reportPeriodStr,reportStatus);
+    }
+
+    @Override
+    public void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        if (transferDeclareService.addTaskDetailByTransferDeclare(dto)) return;
+        transferDeclareService.pushTransferDeclare(dto);
     }
 
 }
