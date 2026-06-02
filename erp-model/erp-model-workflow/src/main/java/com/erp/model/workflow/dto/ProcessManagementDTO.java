@@ -1241,6 +1241,20 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CurApproveSimpleDTO {
+        /**
+         * 流程业务ID
+         */
+        private String businessId;
+        /**
+         * 当前审批人名称
+         */
+        private String curApproveName;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class TaskKeyInfoDTO {
         /**
          * 业务类型key
