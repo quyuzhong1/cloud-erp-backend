@@ -43,6 +43,8 @@ public interface SoB2cDetailMapper extends BaseMapper<SoB2cDetailEntity> {
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
 
+    void rollbackWarehouseBatch(@Param("detailList") List<SoB2cDetailEntity> detailList);
+
     /**
      *  更新明细的扩展数据
      * @param id
