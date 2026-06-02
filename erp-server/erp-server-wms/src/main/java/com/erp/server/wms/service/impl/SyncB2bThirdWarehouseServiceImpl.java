@@ -321,6 +321,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         if (CollUtil.isEmpty(packingList)) {
             return;
         }
+        Map<String, WmsAttachmentDTO.UpdateDTO> shipmentFileMap = getShipmentFileMap(packingList);
         List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {
             ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item = new ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem();
             item.setWarehousePlatformSku(p.getWarehousePlatformSku());
@@ -328,10 +329,47 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             item.setBoxMarkNo(p.getBoxMarkNo());
             item.setBoxMarkRefNo(p.getBoxMarkRefNo());
             item.setLabelSize(p.getLabelSize());
+            fillShipmentFile(item, shipmentFileMap.get(p.getId()));
             item.setLabelingRequirement(p.getLabelingRequirement());
             item.setBoxSeq(p.getBoxSeq());
             return item;
         }).collect(Collectors.toList());
         req.setPackingDetailList(items);
+    }
+
+    private Map<String, WmsAttachmentDTO.UpdateDTO> getShipmentFileMap(List<B2bCustomerPackingEntity> packingList) {
+        List<String> boxHeadIds = packingList.stream()
+                .map(B2bCustomerPackingEntity::getBoxSeq)
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(boxSeq -> B2bCustomerPackingServiceImpl.getBoxHead(packingList, boxSeq).orElse(null))
+                .filter(Objects::nonNull)
+                .map(B2bCustomerPackingEntity::getId)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(boxHeadIds)) {
+            return Collections.emptyMap();
+        }
+        List<WmsAttachmentDTO.UpdateDTO> attachments = wmsAttachmentService.getByBusinessIds(boxHeadIds, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode());
+        if (CollUtil.isEmpty(attachments)) {
+            return Collections.emptyMap();
+        }
+        return attachments.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getBusinessId()) && CharSequenceUtil.isNotBlank(e.getAttachUrl()))
+                .collect(Collectors.toMap(WmsAttachmentDTO.UpdateDTO::getBusinessId, e -> e, (a, b) -> a));
+    }
+
+    private void fillShipmentFile(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item, WmsAttachmentDTO.UpdateDTO attachment) {
+        if (Objects.isNull(attachment) || CharSequenceUtil.isBlank(attachment.getAttachUrl())) {
+            return;
+        }
+        item.setShipmentFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
+        item.setShipmentFileName(attachment.getAttachName());
+        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        if (Objects.isNull(bytes) || bytes.length == 0) {
+            log.warn("B2B三方发货单装箱标签附件下载为空，fileUrl={}", attachment.getAttachUrl());
+            return;
+        }
+        bytes = cleanAttachmentBytes(bytes, attachment.getAttachName(), attachment.getAttachUrl(), item.getBoxSeq() == null ? "" : String.valueOf(item.getBoxSeq()));
+        item.setShipmentFileBase64(Base64.getEncoder().encodeToString(bytes));
     }
 }
