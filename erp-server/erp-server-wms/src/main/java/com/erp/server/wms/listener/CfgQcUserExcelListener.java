@@ -18,7 +18,6 @@ import com.erp.model.sys.dto.UserInfoDTO;
 import com.erp.model.wms.dto.CfgQcUserDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.CfgQcUserEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
@@ -31,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -114,7 +112,6 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if (!successList.isEmpty()) {
             processBatch();
@@ -136,10 +133,29 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
             }
         }
 
+        List<String> supplierCodes = successList.stream()
+                .map(CfgQcUserDTO.ImportExcelDTO::getSupplierCode)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SupplierEntity> supplierByCode = new HashMap<>();
+        if (CollUtil.isNotEmpty(supplierCodes)) {
+            List<SupplierEntity> suppliers = supplierFeign.listByCodes(supplierCodes);
+            if (CollUtil.isNotEmpty(suppliers)) {
+                for (SupplierEntity supplier : suppliers) {
+                    if (StrUtil.isNotBlank(supplier.getCode())) {
+                        supplierByCode.putIfAbsent(supplier.getCode(), supplier);
+                    }
+                }
+            }
+        }
+
+        Map<String, CfgQcUserEntity> existsByKey = loadExistsByKey(supplierByCode, warehouseMap);
+
         for (CfgQcUserDTO.ImportExcelDTO dto : new ArrayList<>(successList)) {
             try {
-                List<SupplierEntity> suppliers = supplierFeign.listByCodes(Collections.singletonList(dto.getSupplierCode()));
-                if (CollectionUtils.isEmpty(suppliers)) {
+                SupplierEntity supplier = supplierByCode.get(dto.getSupplierCode());
+                if (Objects.isNull(supplier)) {
                     dto.setErrorMsg(MessageFormat.format(ApiError.CFG_QC_USER_SUPPLIER_NOT_FOUND.getMsg(), dto.getSupplierCode()));
                     errorList.add(dto);
                     continue;
@@ -151,15 +167,11 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                     continue;
                 }
 
-                SupplierEntity supplier = suppliers.get(0);
-                CfgQcUserEntity exists = cfgQcUserMapper.selectBySupplierIdAndWarehouseId(supplier.getId(), warehouse.getId());
+                CfgQcUserEntity exists = existsByKey.get(buildSupplierWarehouseKey(supplier.getId(), warehouse.getId()));
 
-                String orgId;
-                if (Objects.nonNull(exists)) {
-                    orgId = resolveOrgIdByWarehouseId(exists.getWarehouseId());
-                } else {
-                    orgId = warehouse.getOrgId();
-                }
+                // exists 是按 warehouse.getId() 精确匹配出来的，其 warehouseId 必然等于 warehouse.getId()，
+                // 因此直接复用 warehouse.getOrgId()，避免历史实现里再多一次 warehouseService.getById 的 N+1。
+                String orgId = warehouse.getOrgId();
 
                 Map<String, String> qcUserMap = getQcUserNameToIdMap(orgId);
                 List<String> notFoundUsers = new ArrayList<>();
@@ -238,12 +250,42 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
         return warehouse;
     }
 
-    private String resolveOrgIdByWarehouseId(String warehouseId) {
-        if (StrUtil.isBlank(warehouseId)) {
-            return null;
+    /**
+     * 批量查询当前批次内 (supplierId, warehouseId) 组合已存在的质检员配置，构造 Key->Entity 映射，避免循环内单条查询。
+     */
+    private Map<String, CfgQcUserEntity> loadExistsByKey(Map<String, SupplierEntity> supplierByCode,
+                                                         Map<String, List<WarehouseDTO.ListDTO>> warehouseMap) {
+        Map<String, CfgQcUserEntity> existsByKey = new HashMap<>();
+        if (supplierByCode.isEmpty() || warehouseMap.isEmpty()) {
+            return existsByKey;
         }
-        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
-        return warehouse == null ? null : warehouse.getOrgId();
+        List<String> supplierIds = supplierByCode.values().stream()
+                .map(SupplierEntity::getId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> warehouseIds = warehouseMap.values().stream()
+                .flatMap(List::stream)
+                .map(WarehouseDTO.ListDTO::getId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (supplierIds.isEmpty() || warehouseIds.isEmpty()) {
+            return existsByKey;
+        }
+        List<CfgQcUserEntity> existsList = cfgQcUserMapper.selectBySupplierIdsAndWarehouseIds(supplierIds, warehouseIds);
+        if (CollUtil.isEmpty(existsList)) {
+            return existsByKey;
+        }
+        // 按 create_time DESC 排序，putIfAbsent 保留最新一条，等价于原 LIMIT 1 语义。
+        for (CfgQcUserEntity entity : existsList) {
+            existsByKey.putIfAbsent(buildSupplierWarehouseKey(entity.getSupplierId(), entity.getWarehouseId()), entity);
+        }
+        return existsByKey;
+    }
+
+    private String buildSupplierWarehouseKey(String supplierId, String warehouseId) {
+        return StrUtil.blankToDefault(supplierId, "") + "::" + StrUtil.blankToDefault(warehouseId, "");
     }
 
     private Map<String, String> getQcUserNameToIdMap(String orgId) {

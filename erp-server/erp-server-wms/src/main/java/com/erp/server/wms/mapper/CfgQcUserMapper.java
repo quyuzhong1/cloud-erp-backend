@@ -68,4 +68,14 @@ public interface CfgQcUserMapper extends BaseMapper<CfgQcUserEntity> {
      */
     CfgQcUserEntity selectBySupplierIdAndWarehouseId(@Param("supplierId") String supplierId,
                                                      @Param("warehouseId") String warehouseId);
+
+    /**
+     * 根据供应商ID集合和仓库ID集合批量查询配置（用于导入批处理，避免 N+1）
+     *
+     * @param supplierIds  供应商ID集合
+     * @param warehouseIds 仓库ID集合
+     * @return 质检员配置列表
+     */
+    List<CfgQcUserEntity> selectBySupplierIdsAndWarehouseIds(@Param("supplierIds") List<String> supplierIds,
+                                                             @Param("warehouseIds") List<String> warehouseIds);
 }

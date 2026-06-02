@@ -172,4 +172,20 @@
         LIMIT 1
     </select>
 
+    <!-- 批量按供应商ID集合 + 仓库ID集合查询（用于导入批处理避免 N+1） -->
+    <select id="selectBySupplierIdsAndWarehouseIds" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM cfg_qc_user
+        WHERE is_deleted = FALSE
+          AND supplier_id IN
+          <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+              #{supplierId}
+          </foreach>
+          AND warehouse_id IN
+          <foreach collection="warehouseIds" item="warehouseId" open="(" separator="," close=")">
+              #{warehouseId}
+          </foreach>
+        ORDER BY create_time DESC
+    </select>
+
 </mapper>
