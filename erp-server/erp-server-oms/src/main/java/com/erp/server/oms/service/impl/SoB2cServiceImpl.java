@@ -2856,6 +2856,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode(), operate);
     }
 
+    @Override
+    public void addSubmitDeliveryClickLog(String id) {
+        addSubmitDeliveryClickLog(this.getById(id), id);
+    }
+
+    @Override
+    public void addSubmitDeliveryClickLog(SoB2cEntity entity, String id) {
+        try {
+            String code = Objects.nonNull(entity) ? entity.getCode() : id;
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】用户点击提交发货", code), id, "提交发货");
+        } catch (Exception e) {
+            log.warn("B2C销售订单点击提交发货日志写入失败,soId:{}", id, e);
+        }
+    }
+
     private void updatePlatformStatus(SoB2cEntity entity, String status) {
         if (Objects.isNull(entity) || CharSequenceUtil.isBlank(status)) {
             return;
@@ -11631,8 +11646,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //查询最新数据
             soB2cEntity = this.getById(soB2cEntity.getId());
             SoB2cEntity oldSoB2cEntity = SerializationUtils.clone(soB2cEntity);
-            beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity, soB2cReceiverEntity, updateDTO, detailEntityList);
             try {
+                detailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+                if (CollectionUtils.isEmpty(detailEntityList)) {
+                    throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
+                }
+                soB2cService.beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity, soB2cReceiverEntity, updateDTO, detailEntityList);
                 BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto, soB2cEntity, soB2cLogisticsEntity, detailEntityList, soB2cReceiverEntity, baseDTO, noInventorySkuIdList, overseasWarehouse, oldSoB2cEntity);
                 resultDTOList.add(resultDTO);
             } catch (Exception e) {
@@ -11655,12 +11674,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
-    private void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList) {
+    @Transactional(rollbackFor = Exception.class)
+    public void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList) {
         soB2cLogisticsEntity.setCode(dto.getTrackNo());
         soB2cLogisticsEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
         soB2cLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
         soB2cLogisticsEntity.setDeliveryTime(dto.getDeliveryTime());
-        soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         soB2cEntity.setAbnormalType("");
         soB2cEntity.setIsMatchLogisticsRule(true);
@@ -11691,10 +11710,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailEntity.setWarehouseId(dto.getWarehouseId());
             detailEntity.setWarehouseName(updateDTO.getName());
         }
-        //先更新订单信息
+        // 先确保销售订单明细仓库落库，再继续生成三方仓发货/出库单，避免主从单据仓库不一致。
         soB2cEntity.setSignOrderError("");
-        soB2cService.updateById(soB2cEntity);
-        soB2cDetailService.updateBatchById(detailEntityList);
+        boolean detailUpdated = soB2cDetailService.updateBatchById(detailEntityList);
+        if (!detailUpdated) {
+            throw new ServiceException("不出库发货失败：销售订单明细仓库更新失败，请刷新后重试");
+        }
+        int notUpdatedDetailCount = soB2cDetailService.lambdaQuery()
+                .eq(SoB2cDetailEntity::getMainId, soB2cEntity.getId())
+                .and(wrapper -> wrapper.isNull(SoB2cDetailEntity::getWarehouseId)
+                        .or()
+                        .eq(SoB2cDetailEntity::getWarehouseId, "")
+                        .or()
+                        .ne(SoB2cDetailEntity::getWarehouseId, dto.getWarehouseId()))
+                .count();
+        if (notUpdatedDetailCount > 0) {
+            throw new ServiceException("不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试");
+        }
+        boolean logisticsUpdated = soB2cLogisticsService.updateById(soB2cLogisticsEntity);
+        if (!logisticsUpdated) {
+            throw new ServiceException("不出库发货失败：销售订单物流信息更新失败，请刷新后重试");
+        }
+        boolean mainUpdated = soB2cService.updateById(soB2cEntity);
+        if (!mainUpdated) {
+            throw new ServiceException("不出库发货失败：销售订单状态更新失败，请刷新后重试");
+        }
     }
 
     @Override
