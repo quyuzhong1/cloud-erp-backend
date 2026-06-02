@@ -58,26 +58,6 @@
         UPDATE so_b2c_detail SET extend_data = #{extendData}, update_time = now(),version = version + 1
         WHERE  id = #{id}
     </update>
-    <update id="rollbackWarehouseBatch">
-        <foreach collection="detailList" item="item" index="index" separator=";">
-            UPDATE so_b2c_detail
-            SET warehouse_id = #{item.warehouseId},
-                warehouse_name = #{item.warehouseName},
-                virtual_warehouse_id = #{item.virtualWarehouseId},
-                update_time = now(),
-                version = version + 1
-            WHERE id = #{item.id}
-            AND is_deleted = false
-            <choose>
-                <when test="item.version != null">
-                    AND version = #{item.version}
-                </when>
-                <otherwise>
-                    AND version IS NULL
-                </otherwise>
-            </choose>
-        </foreach>
-    </update>
     <!--查詢需要出库单要的数据-->
     <select id="listOutstockByMainId" resultType="com.erp.model.oms.dto.SoB2cDetailDTO$OutstockDTO">
            SELECT
