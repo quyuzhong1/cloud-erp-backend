@@ -9154,13 +9154,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } catch (ServiceException e) {
             if (StringUtils.isBlank(e.getMessage())) {
                 log.error("B2C销售订单导出失败，params:{}", JSON.toJSONString(dto.getParams()), e);
-                throw new ServiceException(e, "B2C销售订单导出失败:{}", e.getClass().getSimpleName());
+                throw new ServiceException("B2C销售订单导出失败:{}", e.getClass().getSimpleName());
             }
             throw e;
         } catch (Exception e) {
             log.error("B2C销售订单导出失败，params:{}", JSON.toJSONString(dto.getParams()), e);
             String errorMsg = StringUtils.isBlank(e.getMessage()) ? e.getClass().getSimpleName() : e.getMessage();
-            throw new ServiceException(e, "B2C销售订单导出失败:{}", errorMsg);
+            throw new ServiceException("B2C销售订单导出失败:{}", errorMsg);
         }
         return new PagingVO<>(records, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
