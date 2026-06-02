@@ -10,7 +10,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -747,6 +746,34 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             str.append(parentCategoryEntity.getName()).append("->").append(childCategory.getName());
         }
         return str.toString();
+    }
+
+    /**
+     * 按 id 索引版本的产品分类名称取值，避免在循环内重复扫描全量品类列表。
+     * 行为与 {@link #getProductCategoryName(List, Object, Boolean)} 保持一致。
+     *
+     * @param productCategoryMap 按品类 id 索引的 map
+     * @param value 子级品类 id
+     * @param isDynamic 是否动态导出（true 返回"父类->子类"，false 仅返回子类名）
+     * @return 拼装后的分类名
+     */
+    private String getProductCategoryName(Map<String, BasicCategoryEntity> productCategoryMap, Object value, Boolean isDynamic) {
+        if (value == null || productCategoryMap == null) {
+            return "";
+        }
+        BasicCategoryEntity childCategory = productCategoryMap.get(value.toString());
+        //非动态只需要返回子级品类名称
+        if (Boolean.FALSE.equals(isDynamic)) {
+            return childCategory == null ? "" : StrUtil.nullToDefault(childCategory.getName(), "");
+        }
+        if (childCategory == null) {
+            return "";
+        }
+        BasicCategoryEntity parentCategoryEntity = CharSequenceUtil.isBlank(childCategory.getPid()) ? null : productCategoryMap.get(childCategory.getPid());
+        if (parentCategoryEntity == null) {
+            return StrUtil.nullToDefault(childCategory.getName(), "");
+        }
+        return StrUtil.nullToDefault(parentCategoryEntity.getName(), "") + "->" + StrUtil.nullToDefault(childCategory.getName(), "");
     }
 
     /**
@@ -1622,9 +1649,20 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         keyList.add(DictBasicEnum.CERTIFICATE.getType());
         //获取供应商等级
         List<SupplierGradeEntity> supplierGradeList = supplierGradeService.list();
+        // 按 id 预聚合，循环内 O(1) 查找
+        Map<String, SupplierGradeEntity> supplierGradeMap = CollUtil.isEmpty(supplierGradeList) ? new HashMap<>() :
+                supplierGradeList.stream()
+                        .filter(g -> CharSequenceUtil.isNotBlank(g.getId()))
+                        .collect(Collectors.toMap(SupplierGradeEntity::getId, Function.identity(), (a, b) -> a));
         //根据 key list 获取到对应数据
         List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(keyList);
         Map<String, DictBasicEntity> dictMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() : dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getId, Function.identity()));
+        // 字典按 (type, value) 二级索引，用于属性 / 体系认证名称查找
+        Map<String, Map<String, DictBasicEntity>> dictByTypeValueMap = CollUtil.isEmpty(dictBasicList) ? new HashMap<>() :
+                dictBasicList.stream()
+                        .filter(d -> CharSequenceUtil.isNotBlank(d.getType()) && CharSequenceUtil.isNotBlank(d.getValue()))
+                        .collect(Collectors.groupingBy(DictBasicEntity::getType,
+                                Collectors.toMap(DictBasicEntity::getValue, Function.identity(), (a, b) -> a)));
 
         //用户
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -1634,14 +1672,34 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         List<String> supplierIdList = list.stream().map(SupplierDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //付款条件
         List<KingdeePaymentConditionEntity> paymentConditionList = kingdeePaymentConditionService.list();
+        // 按 code 预聚合
+        Map<String, KingdeePaymentConditionEntity> paymentConditionMap = CollUtil.isEmpty(paymentConditionList) ? new HashMap<>() :
+                paymentConditionList.stream()
+                        .filter(p -> CharSequenceUtil.isNotBlank(p.getCode()))
+                        .collect(Collectors.toMap(KingdeePaymentConditionEntity::getCode, Function.identity(), (a, b) -> a));
 
         //供应商工厂地
         List<SupplierPlantAddrDTO.ViewDTO> supplierPlantAddrList = supplierPlantAddrService.listViewBySupplierIdList(supplierIdList);
+        // 按 supplierId 预分组
+        Map<String, List<SupplierPlantAddrDTO.ViewDTO>> plantAddrBySupplierMap = CollUtil.isEmpty(supplierPlantAddrList) ? new HashMap<>() :
+                supplierPlantAddrList.stream()
+                        .filter(p -> CharSequenceUtil.isNotBlank(p.getSupplierId()))
+                        .collect(Collectors.groupingBy(SupplierPlantAddrDTO.ViewDTO::getSupplierId));
 
         //产品分类
         List<BasicCategoryEntity> productCategoryList = FeignQuery.list(BasicCategoryEntity.class);
+        // 按 id 预聚合
+        Map<String, BasicCategoryEntity> productCategoryMap = CollUtil.isEmpty(productCategoryList) ? new HashMap<>() :
+                productCategoryList.stream()
+                        .filter(c -> CharSequenceUtil.isNotBlank(c.getId()))
+                        .collect(Collectors.toMap(BasicCategoryEntity::getId, Function.identity(), (a, b) -> a));
         //应用分类
         List<ApplicationCategoryEntity> applicationCategoryList = FeignQuery.list(ApplicationCategoryEntity.class);
+        // 按 code 预聚合
+        Map<String, ApplicationCategoryEntity> applicationCategoryMap = CollUtil.isEmpty(applicationCategoryList) ? new HashMap<>() :
+                applicationCategoryList.stream()
+                        .filter(c -> CharSequenceUtil.isNotBlank(c.getCode()))
+                        .collect(Collectors.toMap(ApplicationCategoryEntity::getCode, Function.identity(), (a, b) -> a));
 
         //币别
         List<String> currencyCodeList =list.stream().map(SupplierDTO.PagingExportDTO::getPayCurrency).distinct().collect(Collectors.toList());
@@ -1650,6 +1708,11 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
         //获取供应商默认联系人信息
         List<SupplierContactEntity> contactList = supplierContactService.getDefaultBySupplierIdList(supplierIdList);
+        // 按 supplierId 预聚合（默认联系人每个供应商最多 1 条）
+        Map<String, SupplierContactEntity> contactBySupplierMap = CollUtil.isEmpty(contactList) ? new HashMap<>() :
+                contactList.stream()
+                        .filter(c -> CharSequenceUtil.isNotBlank(c.getSupplierId()))
+                        .collect(Collectors.toMap(SupplierContactEntity::getSupplierId, Function.identity(), (a, b) -> a));
 
         //获取供应商配置
         List<SupplierConfigVO> supplierConfigVOS = srmCfgSettingFeign.getConfigList(supplierIdList);
@@ -1667,8 +1730,48 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 throw new ServiceException(ApiError.HTTP_UNKNOWN);
             }
         }
+        // 按 businessId 预分组，循环内直接取值，避免 O(N*M) 扫描
+        Map<String, List<ProcessManagementDTO.CurApproveInfoDTO>> curApproveByBusinessMap =
+                (listApiResult == null || CollUtil.isEmpty(listApiResult.getData())) ? new HashMap<>() :
+                        listApiResult.getData().stream()
+                                .filter(e -> CharSequenceUtil.isNotBlank(e.getBusinessId()) && StringUtils.isNotBlank(e.getCurApproveName()))
+                                .collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId));
+
         List<String> credentialIdList = list.stream().map(SupplierDTO.PagingExportDTO::getCredentialId).distinct().collect(Collectors.toList());
         List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(credentialIdList);
+        // 按 businessId 预分组
+        Map<String, List<AttachmentDTO.UpdateDTO>> attachmentByBusinessMap = CollUtil.isEmpty(attachmentList) ? new HashMap<>() :
+                attachmentList.stream()
+                        .filter(a -> CharSequenceUtil.isNotBlank(a.getBusinessId()))
+                        .collect(Collectors.groupingBy(AttachmentDTO.UpdateDTO::getBusinessId));
+
+        // 属性 / 体系认证字典在循环外取一次，循环内复用
+        Map<String, DictBasicEntity> propertyDictMap = dictByTypeValueMap.getOrDefault(DictBasicEnum.PROPERTY.getType(), Collections.emptyMap());
+        Map<String, DictBasicEntity> certificateDictMap = dictByTypeValueMap.getOrDefault(DictBasicEnum.CERTIFICATE.getType(), Collections.emptyMap());
+
+        // 电话查看权限：与当前登录用户相关的部分整页只算一次，避免每行 3 次 Feign + 1 次 listByIds
+        LoginUser telAuthUser = UserContext.getDefaultLoginUser();
+        final String telMenuCode = "supplier:telNumber:view";
+        List<String> telAuthRoleIdList = sysUserFeign.getRoleIdList(telAuthUser.getUid());
+        UserRequestPermissionsDTO telPermission;
+        if (CollUtil.isNotEmpty(telAuthRoleIdList) && telAuthRoleIdList.contains("1")) {
+            telPermission = new UserRequestPermissionsDTO();
+            telPermission.setPermissionsCode(telMenuCode);
+            telPermission.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
+        } else {
+            List<UserRequestPermissionsDTO> telAuthPermissionList = sysUserFeign.getRequestPermissionsList(telAuthUser.getUid());
+            telPermission = CollUtil.isEmpty(telAuthPermissionList) ? null :
+                    telAuthPermissionList.stream()
+                            .filter(p -> telMenuCode.equals(p.getPermissionsCode()))
+                            .findFirst()
+                            .orElse(null);
+        }
+        Integer telAuthScope = telPermission == null ? null : telPermission.getDataScope();
+        // 部门用户清单仅 DEPT 范围时才需要拉一次
+        List<String> telAuthDeptUserList = DataPermissionAspect.DATA_SCOPE_DEPT.equals(telAuthScope)
+                ? sysUserFeign.getDepUserList(telAuthUser.getUid())
+                : Collections.emptyList();
+        final String telAuthUid = telAuthUser.getUid();
 
         for (SupplierDTO.PagingExportDTO item : list) {
             String id = item.getId();
@@ -1699,51 +1802,59 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             //税率
             exportExcel.setTaxRate(MathUtil.multiplyWithTwo(item.getTaxRate(),MathUtil.BigDecimal_100).stripTrailingZeros());
 
-            //等级id
-            String gradeId = item.getGradeId();
-            String gradeName = supplierGradeList.stream().filter(g -> g.getId().equals(gradeId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            exportExcel.setGradeName(gradeName);
+            //等级
+            SupplierGradeEntity gradeEntity = item.getGradeId() == null ? null : supplierGradeMap.get(item.getGradeId());
+            exportExcel.setGradeName(gradeEntity == null ? "" : StrUtil.nullToDefault(gradeEntity.getName(), ""));
             //分类
             exportExcel.setCategoryName(getCategoryName(dictMap,item.getCategoryId(),isDynamic));
             //结算方式
             String payMethodId = item.getPayMethodId();
-            String payMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            DictBasicEntity payMethodDict = payMethodId == null ? null : dictMap.get(payMethodId);
+            String payMethodName = payMethodDict == null ? "" : StrUtil.nullToDefault(payMethodDict.getName(), "");
             exportExcel.setPayMethodName(payMethodName);
             //付款条件
             String paymentCondition = item.getPaymentCondition();
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            exportExcel.setPaymentConditionName(paymentConditionName);
+            KingdeePaymentConditionEntity paymentConditionEntity = paymentCondition == null ? null : paymentConditionMap.get(paymentCondition);
+            exportExcel.setPaymentConditionName(paymentConditionEntity == null ? "" : StrUtil.nullToDefault(paymentConditionEntity.getName(), ""));
 
             //供应商工厂地
-            if(CollUtil.isNotEmpty(supplierPlantAddrList)) {
-                String plantAddrsNames = supplierPlantAddrList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), item.getId())).map(obj -> getSupplierPlantAddr(obj,isDynamic)).collect(Collectors.joining(","));
+            List<SupplierPlantAddrDTO.ViewDTO> plantAddrs = plantAddrBySupplierMap.get(item.getId());
+            if (CollUtil.isNotEmpty(plantAddrs)) {
+                String plantAddrsNames = plantAddrs.stream().map(obj -> getSupplierPlantAddr(obj,isDynamic)).collect(Collectors.joining(","));
                 exportExcel.setPlantAddrNames(plantAddrsNames);
             }
             //供应商属性名称
             if (ObjectUtil.isNotEmpty(item.getPropertyJson())) {
-                String propertyNames = item.getPropertyJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.PROPERTY.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                String propertyNames = item.getPropertyJson().stream().map(obj -> {
+                    DictBasicEntity dict = obj == null ? null : propertyDictMap.get(obj.toString());
+                    return dict == null ? "" : StrUtil.nullToDefault(dict.getName(), "");
+                }).collect(Collectors.joining(","));
                 exportExcel.setPropertyNames(propertyNames);
             }
             //体系认证名称
             if (ObjectUtil.isNotEmpty(item.getCertificateJson())) {
-                String certificateJson = item.getCertificateJson().stream().map(obj -> dictBasicList.stream().filter(e -> CharSequenceUtil.equals(obj.toString(),e.getValue()) && CharSequenceUtil.equals(e.getType(),DictBasicEnum.CERTIFICATE.getType())).map(DictBasicEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                String certificateJson = item.getCertificateJson().stream().map(obj -> {
+                    DictBasicEntity dict = obj == null ? null : certificateDictMap.get(obj.toString());
+                    return dict == null ? "" : StrUtil.nullToDefault(dict.getName(), "");
+                }).collect(Collectors.joining(","));
                 exportExcel.setCertificateNames(certificateJson);
             }
             //产品分类名称名称
             if (ObjectUtil.isNotEmpty(item.getProductCategoryJson())) {
-                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryList,obj,isDynamic)).collect(Collectors.joining(","));
+                String productCategoryNames = item.getProductCategoryJson().stream().map(obj -> getProductCategoryName(productCategoryMap,obj,isDynamic)).collect(Collectors.joining(","));
                 exportExcel.setProductCategoryNames(productCategoryNames);
             }
             //应用分类名称
             if(ObjectUtil.isNotEmpty(item.getApplicationCategoryJson())) {
-                String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> applicationCategoryList.stream().filter(e-> CharSequenceUtil.equals(e.getCode(),obj.toString())).map(ApplicationCategoryEntity::getName).findFirst().orElse("")).collect(Collectors.joining(","));
+                String applicationCategoryNames = item.getApplicationCategoryJson().stream().map(obj -> {
+                    ApplicationCategoryEntity ac = obj == null ? null : applicationCategoryMap.get(obj.toString());
+                    return ac == null ? "" : StrUtil.nullToDefault(ac.getName(), "");
+                }).collect(Collectors.joining(","));
                 exportExcel.setApplicationCategoryNames(applicationCategoryNames);
             }
             //导出列表时联系人为空则取需要重新查联系人
             if (CharSequenceUtil.isBlank(exportExcel.getPerson()) && CharSequenceUtil.isBlank(exportExcel.getTelNumber())){
-                SupplierContactEntity contact = contactList.stream().filter(c -> c.getSupplierId().equals(item.getId())).findFirst().orElse(null);
+                SupplierContactEntity contact = contactBySupplierMap.get(item.getId());
                 if (contact != null) {
                     exportExcel.setPerson(contact.getPerson());
                     exportExcel.setTelNumber(contact.getTelNumber());
@@ -1757,8 +1868,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             exportExcel.setCreateTime(item.getCreateTime());
             exportExcel.setCreateUserName(item.getCreateUserName());
             //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveInfos = curApproveByBusinessMap.get(item.getId());
+            if (CollUtil.isNotEmpty(curApproveInfos)) {
+                String curApprove = curApproveInfos.stream().map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 exportExcel.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,exportExcel.getApproveUserName()));
             }
             exportExcel.setApproveTime(item.getApproveTime());
@@ -1767,18 +1879,36 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             exportExcel.setContactIsDefaultName(Boolean.TRUE.equals(item.getContactIsDefault()) ? "是" : "否");
             exportExcel.setContactDisabledName(Boolean.TRUE.equals(item.getContactDisabled()) ? "停用" : "启用");
 
-            //查询是否存在电话查看权限
-            Boolean existAuth = isExistAuth(Collections.singletonList(item.getId()), "supplier:telNumber:view", "purchase_user_id");
+            //查询是否存在电话查看权限：无匹配权限→false；ALL→true；DEPT→行 purchase_user_id 与部门用户清单有交集；SELF→行 purchase_user_id 含当前用户；其它 scope→true
+            boolean existAuth;
+            if (telPermission == null) {
+                existAuth = false;
+            } else if (DataPermissionAspect.DATA_SCOPE_ALL.equals(telAuthScope)) {
+                existAuth = true;
+            } else {
+                String purchaseUserIdStr = item.getPurchaseUserId();
+                List<String> rowUsers = CharSequenceUtil.isBlank(purchaseUserIdStr)
+                        ? Collections.emptyList()
+                        : Arrays.asList(purchaseUserIdStr.split(","));
+                if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(telAuthScope)) {
+                    existAuth = rowUsers.stream().anyMatch(telAuthDeptUserList::contains);
+                } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(telAuthScope)) {
+                    existAuth = rowUsers.contains(telAuthUid);
+                } else {
+                    existAuth = true;
+                }
+            }
             if (!existAuth) {
                 exportExcel.setTelNumber(DesensitizedUtil.mobilePhone(exportExcel.getTelNumber()));
             }
             //付款账户信息
             exportExcel.setAccountDefaultName(Boolean.TRUE.equals(item.getAccountDefault()) ? "是" : "否");
-            String bankPayMethodName = dictBasicList.stream().filter(d -> d.getId().equals(payMethodId)).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            exportExcel.setBankPayMethodName(bankPayMethodName);
+            // 银行结算方式与上面 payMethodDict 同源（DTO 字段同名），复用结果即可
+            exportExcel.setBankPayMethodName(payMethodName);
             //资质信息
-            String attachmentName = attachmentList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBusinessId(), item.getCredentialId())).map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.joining(","));
+            List<AttachmentDTO.UpdateDTO> attachments = attachmentByBusinessMap.get(item.getCredentialId());
+            String attachmentName = CollUtil.isEmpty(attachments) ? "" :
+                    attachments.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.joining(","));
             exportExcel.setAttachmentName(attachmentName);
             resultList.add(exportExcel);
 
@@ -2161,67 +2291,6 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
              updateDTO.setTelNumber(DesensitizedUtil.mobilePhone(updateDTO.getTelNumber()));
         }
     }
-    /**
-     * 查看是否存在权限
-     * @author will
-     * @date 2025/7/25 12:21
-     * @param billIdList
-     * @param menuCode
-     * @param menuTableField
-     * @return Boolean
-     */
-    private Boolean isExistAuth (List<String> billIdList,String menuCode,String menuTableField) {
-        //判断是否有权限回填产品信息
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
-        UserRequestPermissionsDTO userRequestPermissions = new UserRequestPermissionsDTO();
-        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
-        if (roleIdList.contains("1")) {
-            userRequestPermissions.setPermissionsCode(menuCode);
-            userRequestPermissions.setDataScope(DataPermissionAspect.DATA_SCOPE_ALL);
-        } else {
-            userRequestPermissions = requestPermissionsList
-                    .stream()
-                    .filter(p -> p.getPermissionsCode().equals(menuCode))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (ObjectUtils.isEmpty(userRequestPermissions)) {
-            return Boolean.FALSE;
-        }
-        List<String> userList = sysUserFeign.getDepUserList(userInfo.getUid());
-        List<String> users = new ArrayList<>();
-        List<?> objects = this.listByIds(billIdList);
-        for (Object object : objects) {
-            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
-
-            if (CharSequenceUtil.isBlank(menuTableField)) {
-                return Boolean.FALSE;
-            }
-            String[] tableFields = menuTableField.split(",");
-            for (String tableField : tableFields) {
-                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
-                if (o == null) {
-                    continue;
-                }
-                users.addAll(Arrays.asList(o.toString().split(",")));
-            }
-        }
-        if (DataPermissionAspect.DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
-            return Boolean.TRUE;
-        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
-            if (containsUserCount == 0) {
-                return Boolean.FALSE;
-            }
-        } else if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            if (!users.contains(userInfo.getUid())) {
-                return Boolean.FALSE;
-            }
-        }
-        return Boolean.TRUE;
-    }
-
     /**
      * 处理导入数据
      * @author will
