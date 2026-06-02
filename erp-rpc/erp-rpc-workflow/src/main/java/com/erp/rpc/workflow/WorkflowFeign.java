@@ -252,7 +252,7 @@ public interface WorkflowFeign {
      * @return 轻量审批人信息
      */
     @PostMapping("/feign/process/batchCurApproverSimple")
-    ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> curApproverSimple(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
+    ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> batchCurApproverSimple(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
 
     /**
      * 批量查询当前待审核业务单据
