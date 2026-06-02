@@ -2149,11 +2149,5 @@ public class SoOutstockDTO implements Serializable {
 
         @NotNull(message = "出库日期不能为空")
         private LocalDate outDate;
-
-        /**
-         * 客户端版本号，用于乐观锁校验，避免并发覆盖
-         */
-        @NotNull(message = "版本号不能为空")
-        private Integer version;
     }
 }
