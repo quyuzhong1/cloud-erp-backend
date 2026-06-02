@@ -10277,9 +10277,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .collect(Collectors.toList());
         Map<String, String> countryNameMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(countryList)) {
-            countryNameMap = sysDictFeign.listCountryByIds(countryList)
+            countryNameMap = Optional.ofNullable(sysDictFeign.listCountryByIds(countryList)).orElse(Collections.emptyList())
                     .stream()
-                    .collect(Collectors.toMap(BaseEntity::getId, DictCountryEntity::getNameCn));
+                    .filter(Objects::nonNull)
+                    .filter(country -> StringUtils.isNotBlank(country.getId()))
+                    .collect(Collectors.toMap(BaseEntity::getId, country -> CharSequenceUtil.blankToDefault(country.getNameCn(), ""), (oldValue, newValue) -> oldValue));
         }
         //根据SKU查询BOM判断是否是组合SKU
         bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
@@ -10351,8 +10353,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
 
         //B2C销售订单分类
-        List<SoB2cRefCategoryDTO.CategoryNamesDTO> categoryNamesList = soB2cRefCategoryService.listCategoryNamesBySoIds(soIds);
-        Map<String, String> categoryNamesMap = categoryNamesList.stream().collect(Collectors.toMap(SoB2cRefCategoryDTO.CategoryNamesDTO::getSoB2cId, SoB2cRefCategoryDTO.CategoryNamesDTO::getCategoryNames));
+        List<SoB2cRefCategoryDTO.CategoryNamesDTO> categoryNamesList = Optional.ofNullable(soB2cRefCategoryService.listCategoryNamesBySoIds(soIds)).orElse(Collections.emptyList());
+        Map<String, String> categoryNamesMap = categoryNamesList.stream()
+                .filter(Objects::nonNull)
+                .filter(category -> StringUtils.isNotBlank(category.getSoB2cId()))
+                .collect(Collectors.toMap(SoB2cRefCategoryDTO.CategoryNamesDTO::getSoB2cId, category -> CharSequenceUtil.blankToDefault(category.getCategoryNames(), ""), (oldValue, newValue) -> oldValue));
 
 
         //查询发货单号（so_b2c_delivery 、 third_warehouse_delivery）
