@@ -11645,14 +11645,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //查询最新数据
             soB2cEntity = this.getById(soB2cEntity.getId());
-            SoB2cEntity oldSoB2cEntity = SerializationUtils.clone(soB2cEntity);
+            if (Objects.isNull(soB2cEntity)) {
+                resultDTOList.add(BatchResultDTO.fail(dto.getId(), dto.getId(), "销售订单未找到"));
+                return;
+            }
             try {
                 detailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
                 if (CollectionUtils.isEmpty(detailEntityList)) {
                     throw new ServiceException(ApiError.SO_B2C_DETAIL_NOT_FOUND);
                 }
-                soB2cService.beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity, soB2cReceiverEntity, updateDTO, detailEntityList);
-                BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto, soB2cEntity, soB2cLogisticsEntity, detailEntityList, soB2cReceiverEntity, baseDTO, noInventorySkuIdList, overseasWarehouse, oldSoB2cEntity);
+                SoB2cLogisticsEntity latestLogisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
+                if (Objects.nonNull(latestLogisticsEntity)) {
+                    soB2cLogisticsEntity = latestLogisticsEntity;
+                }
+                SoB2cEntity oldSoB2cEntity = SerializationUtils.clone(soB2cEntity);
+                SoB2cLogisticsEntity oldLogisticsEntity = SerializationUtils.clone(soB2cLogisticsEntity);
+                List<SoB2cDetailEntity> oldDetailEntityList = SerializationUtils.clone(new ArrayList<>(detailEntityList));
+                List<VirtualWarehouseRelationEntity> virtualWarehouseList = this.listDeliveryVirtualWarehouse(dto, soB2cEntity, soB2cReceiverEntity);
+                soB2cService.beforeDelivery(dto, soB2cLogisticsEntity, baseDTO, soB2cEntity, updateDTO, detailEntityList, virtualWarehouseList);
+                BatchResultDTO resultDTO = soB2cService.deliveryWithNotOutbound(dto, soB2cEntity, soB2cLogisticsEntity, detailEntityList, soB2cReceiverEntity, baseDTO, noInventorySkuIdList, overseasWarehouse, oldSoB2cEntity, oldLogisticsEntity, oldDetailEntityList);
                 resultDTOList.add(resultDTO);
             } catch (Exception e) {
                 log.error("B2C销售订单不出库发货失败,id:{}", soB2cEntity.getId(), e);
@@ -11674,8 +11685,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    private List<VirtualWarehouseRelationEntity> listDeliveryVirtualWarehouse(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cReceiverEntity soB2cReceiverEntity) {
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+        platformDTO.setRelationId(soB2cEntity.getShopId());
+        platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+        platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
+        return wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+    }
+
     @Transactional(rollbackFor = Exception.class)
-    public void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList) {
+    public void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<VirtualWarehouseRelationEntity> virtualWarehouseList) {
         soB2cLogisticsEntity.setCode(dto.getTrackNo());
         soB2cLogisticsEntity.setLogisticsChannelId(dto.getLogisticsChannelId());
         soB2cLogisticsEntity.setLogisticsChannelName(baseDTO.getName());
@@ -11693,13 +11713,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cService.approveEnd(approveOneDTO, soB2cEntity, true);
             soB2cEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
         }
-        //虚拟仓库查询
-        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
-        platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
-        platformDTO.setRelationId(soB2cEntity.getShopId());
-        platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
-        platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
-        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         for (SoB2cDetailEntity detailEntity : detailEntityList) {
             if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(virtualWarehouseList)) {
                 String virtualWarehouseId = virtualWarehouseList.get(0).getVirtualWarehouseId();
@@ -11712,10 +11725,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 先确保销售订单明细仓库落库，再继续生成三方仓发货/出库单，避免主从单据仓库不一致。
         soB2cEntity.setSignOrderError("");
-        boolean detailUpdated = soB2cDetailService.updateBatchById(detailEntityList);
-        if (!detailUpdated) {
-            throw new ServiceException("不出库发货失败：销售订单明细仓库更新失败，请刷新后重试");
-        }
+        soB2cDetailService.updateBatchById(detailEntityList);
         int notUpdatedDetailCount = soB2cDetailService.lambdaQuery()
                 .eq(SoB2cDetailEntity::getMainId, soB2cEntity.getId())
                 .and(wrapper -> wrapper.isNull(SoB2cDetailEntity::getWarehouseId)
@@ -11725,20 +11735,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         .ne(SoB2cDetailEntity::getWarehouseId, dto.getWarehouseId()))
                 .count();
         if (notUpdatedDetailCount > 0) {
-            throw new ServiceException("不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试");
+            throw new ServiceException(ApiError.SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED);
         }
         boolean logisticsUpdated = soB2cLogisticsService.updateById(soB2cLogisticsEntity);
         if (!logisticsUpdated) {
-            throw new ServiceException("不出库发货失败：销售订单物流信息更新失败，请刷新后重试");
+            throw new ServiceException(ApiError.SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED);
         }
         boolean mainUpdated = soB2cService.updateById(soB2cEntity);
         if (!mainUpdated) {
-            throw new ServiceException("不出库发货失败：销售订单状态更新失败，请刷新后重试");
+            throw new ServiceException(ApiError.SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED);
         }
     }
 
     @Override
-    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, SoB2cEntity oldSoB2cEntity) {
+    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity) {
+        return deliveryWithNotOutbound(dto, soB2cEntity, soB2cLogisticsEntity, detailEntityList, soB2cReceiverEntity, baseDTO, noInventorySkuIdList, overseasWarehouse, oldSoB2cEntity, null, Collections.emptyList());
+    }
+
+    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList) {
         //检查发货限制
         String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
         if (CharSequenceUtil.isNotBlank(restrictionMsg)) {
@@ -11753,9 +11767,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cCoreService.generateDeliveryAndOutStock(soB2cEntity, detailEntityList, dto, soB2cLogisticsEntity, soB2cReceiverEntity, overseasWarehouse);
         } catch (Exception e) {
             log.error("生成发货单，出库单失败:{}", e.getMessage());
-            //回退订单状态
-            soB2cService.lambdaUpdate().set(SoB2cEntity::getSoOutstockDate, oldSoB2cEntity.getSoOutstockDate()).set(SoB2cEntity::getBillStatus, oldSoB2cEntity.getBillStatus()).set(SoB2cEntity::getIsNotOutbound, oldSoB2cEntity.getIsNotOutbound())
-                    .eq(SoB2cEntity::getId, soB2cEntity.getId()).update();
+            // 回退 beforeDelivery 已落库字段，避免发货/出库单失败后订单主从数据不一致。
+            soB2cService.rollbackBeforeDelivery(soB2cEntity.getId(), oldSoB2cEntity, oldLogisticsEntity, oldDetailEntityList);
             throw new ServiceException(CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage()));
         } finally {
             UserContext.clearIsUserSystem();
@@ -11789,6 +11802,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         operateLogService.addModuleOperateLog("订单操作不出库发货", ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "不出库发货");
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "不出库发货成功");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void rollbackBeforeDelivery(String soB2cId, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList) {
+        if (Objects.nonNull(oldSoB2cEntity)) {
+            soB2cService.lambdaUpdate()
+                    .set(SoB2cEntity::getSoOutstockDate, oldSoB2cEntity.getSoOutstockDate())
+                    .set(SoB2cEntity::getBillStatus, oldSoB2cEntity.getBillStatus())
+                    .set(SoB2cEntity::getIsNotOutbound, oldSoB2cEntity.getIsNotOutbound())
+                    .set(SoB2cEntity::getIsMatchLogisticsRule, oldSoB2cEntity.getIsMatchLogisticsRule())
+                    .set(SoB2cEntity::getIsMatchOrderRule, oldSoB2cEntity.getIsMatchOrderRule())
+                    .set(SoB2cEntity::getSignOrderError, oldSoB2cEntity.getSignOrderError())
+                    .set(SoB2cEntity::getAbnormalType, oldSoB2cEntity.getAbnormalType())
+                    .set(SoB2cEntity::getApproveStatus, oldSoB2cEntity.getApproveStatus())
+                    .eq(SoB2cEntity::getId, soB2cId).update();
+        }
+        if (Objects.nonNull(oldLogisticsEntity)) {
+            soB2cLogisticsService.lambdaUpdate()
+                    .set(SoB2cLogisticsEntity::getCode, oldLogisticsEntity.getCode())
+                    .set(SoB2cLogisticsEntity::getLogisticsChannelId, oldLogisticsEntity.getLogisticsChannelId())
+                    .set(SoB2cLogisticsEntity::getLogisticsChannelName, oldLogisticsEntity.getLogisticsChannelName())
+                    .set(SoB2cLogisticsEntity::getDeliveryTime, oldLogisticsEntity.getDeliveryTime())
+                    .eq(SoB2cLogisticsEntity::getId, oldLogisticsEntity.getId()).update();
+        }
+        if (CollectionUtils.isNotEmpty(oldDetailEntityList)) {
+            oldDetailEntityList.forEach(detailEntity -> soB2cDetailService.lambdaUpdate()
+                    .set(SoB2cDetailEntity::getWarehouseId, detailEntity.getWarehouseId())
+                    .set(SoB2cDetailEntity::getWarehouseName, detailEntity.getWarehouseName())
+                    .set(SoB2cDetailEntity::getVirtualWarehouseId, detailEntity.getVirtualWarehouseId())
+                    .eq(SoB2cDetailEntity::getId, detailEntity.getId()).update());
+        }
     }
 
     @Override
