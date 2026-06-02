@@ -171,6 +171,14 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
      * @return
      */
     List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO);
+
+    /**
+     * PLM标准成本专用：按核算月份取最新已审核SKU成本（人民币）
+     * 排序依据为核算月份 accounting_month，生效日期取核算月1日
+     * @param queryDTO 查询参数
+     * @return 每个 sku+warehouse+org 核算月份最新的已审核成本，含 accountingMonth 字段
+     */
+    List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNYForStdCost(InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO);
     /**
      * 查询sku成本
      * @author will
