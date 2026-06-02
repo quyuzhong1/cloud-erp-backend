@@ -51,6 +51,8 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
+    private static final String VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM = "vmChannelAllScopeSkipCheckPlatform";
+
     @Resource
     private OperateLogService operateLogService;
 
@@ -533,6 +535,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         }
         //比较数据
         List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO = buildBaseChannelDTO(curChannelEntitieList,hasPartitionIds);
+        curChannelDTO = filterAllScopeSkipCheckPlatform(curChannelDTO);
+        if (CollUtil.isEmpty(curChannelDTO)) {
+            return;
+        }
         //获取当前已经绑定的所有渠道
         List<VirtualWarehouseDTO.BindChannelDto> allBindedList = baseMapper.getBindedDictPlatformNoGroup();
         if (CollUtil.isEmpty(allBindedList)) {
@@ -544,6 +550,25 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             throw new ServiceException(msg.toString());
         }
 
+    }
+
+    /**
+     * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
+     */
+    private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
+        List<String> skipPlatformList = customerFeign.getDictBasicByKey(VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM).stream()
+                .map(DictBasicDTO.ViewDTO::getValue)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skipPlatformList)) {
+            return curChannelDTO;
+        }
+        return curChannelDTO.stream()
+                .filter(e -> !(skipPlatformList.contains(e.getDictPlatform())
+                        && CharSequenceUtil.isBlank(e.getRelationId())
+                        && CharSequenceUtil.isBlank(e.getPartitionId())))
+                .collect(Collectors.toList());
     }
 
     /**
