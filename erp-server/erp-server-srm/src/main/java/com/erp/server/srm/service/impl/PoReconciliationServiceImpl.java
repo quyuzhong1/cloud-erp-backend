@@ -223,6 +223,11 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     }
 
     @Override
+    public List<PoReconciliationDTO.InvoiceFileVO> listInvoice(String id) {
+        return poReconciliationScmService.listInvoice(id);
+    }
+
+    @Override
     public List<BatchResultDTO> downloadInvoice(List<String> ids) {
         return poReconciliationScmService.downloadInvoice(ids);
     }

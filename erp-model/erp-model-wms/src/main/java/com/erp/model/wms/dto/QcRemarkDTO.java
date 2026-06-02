@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -154,6 +155,26 @@ public class QcRemarkDTO implements Serializable {
          * 附件名称
          */
         private String attachName;
+
+        /**
+         * 产品实物图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> productRealImageUrlList;
+
+        /**
+         * 产品实物图片名称集合
+         */
+        private List<String> productRealImageNameList;
+
+        /**
+         * 箱唛图片地址集合（从产品信息移动到质检信息）
+         */
+        private List<String> boxImageUrlList;
+
+        /**
+         * 箱唛图片名称集合
+         */
+        private List<String> boxImageNameList;
 
     }
 }

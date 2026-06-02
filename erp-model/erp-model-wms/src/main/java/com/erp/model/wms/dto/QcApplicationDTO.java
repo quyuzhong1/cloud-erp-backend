@@ -227,7 +227,7 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 期望质检日期【可排序】
         */
-        private LocalDate planQcDate;
+        private LocalDate expectQcDate;
 
         /**
         * 备注【可排序】
@@ -328,7 +328,7 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 期望质检日期
         */
-        private LocalDate planQcDate;
+        private LocalDate expectQcDate;
 
         /**
         * 备注
@@ -415,7 +415,8 @@ public class QcApplicationDTO implements Serializable {
         /**
         * 期望质检日期
         */
-        private LocalDate planQcDate;
+        @NotNull(message = "期望质检日期不能为空")
+        private LocalDate expectQcDate;
 
         /**
         * 备注
@@ -459,7 +460,7 @@ public class QcApplicationDTO implements Serializable {
         /**
          * 期望质检日期
          */
-        private LocalDate planQcDate;
+        private LocalDate expectQcDate;
     }
 
     @Data
@@ -475,7 +476,7 @@ public class QcApplicationDTO implements Serializable {
          * 期望质检日期
          */
         @NotNull(message = "期望质检日期不能为空")
-        private LocalDate planQcDate;
+        private LocalDate expectQcDate;
 
         /**
         * 质检员id
@@ -506,6 +507,6 @@ public class QcApplicationDTO implements Serializable {
         /**
          * 期望质检日期
          */
-        private LocalDate planQcDate;
+        private LocalDate expectQcDate;
     }
 }

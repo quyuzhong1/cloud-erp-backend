@@ -39,4 +39,7 @@ public interface ImportWmsFeign {
     @PostMapping("/feign/import/importWarehouseLocationMapping")
     void importWarehouseLocationMapping(@RequestBody BaseDTO.ImportDTO dto);
 
+    @PostMapping("/feign/import/importCfgQcUser")
+    void importCfgQcUser(@RequestBody BaseDTO.ImportDTO dto);
+
 }

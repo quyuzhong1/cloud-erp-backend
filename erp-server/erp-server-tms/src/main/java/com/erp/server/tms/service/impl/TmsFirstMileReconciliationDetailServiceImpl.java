@@ -3184,4 +3184,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         return lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getRelationCode, relationCodeList).list();
     }
+
+    @Override
+    public void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        // 通过 Spring 代理调用，确保两个方法各自的 @Transactional 生效
+        if (tmsFirstMileReconciliationDetailService.addTaskDetailByFirstMileReconciliation(dto)) return;
+        pushFirstMileReconciliation(dto);
+    }
 }
