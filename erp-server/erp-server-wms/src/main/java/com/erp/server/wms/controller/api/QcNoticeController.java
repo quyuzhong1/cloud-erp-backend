@@ -466,7 +466,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:generateQcInfoFullView",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
+    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody @Validated QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
         return success(qcNoticeService.generateQcInfoFullView(qcNoticeParamDTO));
     }
 
