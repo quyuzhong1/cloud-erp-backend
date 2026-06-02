@@ -1085,6 +1085,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         try {
             prepareCreateFbaOutboundAttachment(service, req);
+            preparePackingShipmentFiles(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
         } catch (Exception e) {
             log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
@@ -1157,6 +1158,47 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return fileType;
         }
         return FileUtil.getFileExtension(req.getFileUrl());
+    }
+
+    private void preparePackingShipmentFiles(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
+        if (!PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+                || CollUtil.isEmpty(req.getPackingDetailList())) {
+            return;
+        }
+        Map<Integer, ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxHeadMap = new LinkedHashMap<>();
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+            if (item.getBoxSeq() != null && !boxHeadMap.containsKey(item.getBoxSeq())) {
+                boxHeadMap.put(item.getBoxSeq(), item);
+            }
+        }
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead : boxHeadMap.values()) {
+            if (Objects.nonNull(boxHead.getShipmentFileId()) || StrUtil.isBlank(boxHead.getShipmentFileBase64())) {
+                continue;
+            }
+            Integer shipmentFileId = uploadPackingShipmentFile(service, req, boxHead);
+            for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+                if (Objects.equals(item.getBoxSeq(), boxHead.getBoxSeq())) {
+                    item.setShipmentFileId(shipmentFileId);
+                }
+            }
+        }
+    }
+
+    private Integer uploadPackingShipmentFile(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                              ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        ThirdWarehouseUploadFileReq uploadFileReq = new ThirdWarehouseUploadFileReq();
+        uploadFileReq.setAuthId(req.getAuthId());
+        uploadFileReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+        uploadFileReq.setOrderCode(req.getReferenceNo());
+        uploadFileReq.setFileData(boxHead.getShipmentFileBase64());
+        uploadFileReq.setFileUrl(boxHead.getShipmentFileUrl());
+        uploadFileReq.setFileName(boxHead.getShipmentFileName());
+        uploadFileReq.setFileType("SHIPMENT_LABEL_ATTACHMENT");
+        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
+        if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
+            throw new ServiceException("上传B2B装箱货件标签失败:{}", uploadFileResult.getMsg());
+        }
+        return uploadFileResult.getData().getAttachId();
     }
 
     @Override
