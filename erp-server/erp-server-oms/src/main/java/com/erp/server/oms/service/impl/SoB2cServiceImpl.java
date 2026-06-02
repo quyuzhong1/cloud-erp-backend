@@ -12313,4 +12313,33 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
     }
+
+
+    @Override
+    public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+
+        // 初始化结果集
+        List<SoB2cEntity> resultList = new ArrayList<>(soIds.size());
+        int batchSize = 1000;
+        int totalSize = soIds.size();
+
+        // 纯 Java 手动分批切分
+        for (int i = 0; i < totalSize; i += batchSize) {
+            // 计算当前批次的结束索引，防止越界
+            int toIndex = Math.min(i + batchSize, totalSize);
+            List<String> batchIds = soIds.subList(i, toIndex);
+
+            // 执行查询
+            List<SoB2cEntity> batchList = lambdaQuery()
+                    .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
+                    .in(SoB2cEntity::getId, batchIds)
+                    .list();
+
+            resultList.addAll(batchList);
+        }
+        return resultList;
+    }
 }
