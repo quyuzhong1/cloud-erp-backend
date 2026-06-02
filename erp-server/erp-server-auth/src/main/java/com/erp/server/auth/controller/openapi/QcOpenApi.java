@@ -128,8 +128,8 @@ public class QcOpenApi {
      * 质检通知单 - 详情
      */
     @OpenApi("qcNoticeView")
-    public ApiResult<QcNoticeDTO.ViewDTO> qcNoticeView(String id) {
-        return qcNoticeFeign.qcNoticeView(id);
+    public ApiResult<QcNoticeDTO.ViewDTO> qcNoticeView(@RequestBody @Validated BaseIdDTO dto) {
+        return qcNoticeFeign.qcNoticeView(dto);
     }
 
     /**
