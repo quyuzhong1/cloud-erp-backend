@@ -1,13 +1,11 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.context.ThirdWarehouseHttpTestContext;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +20,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class OkHttpUtils {
-
-    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY = "THIRD_WAREHOUSE_TIMEOUT_TEST_URL";
-    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_DEFAULT = "http://172.16.100.60:32200/api/wms/test/thirdWarehouseTimeout";
 
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
@@ -200,9 +195,6 @@ public class OkHttpUtils {
     private static String execute(Call call) {
         String respStr = "";
         try {
-            if (ThirdWarehouseHttpTestContext.isTimeoutTest()) {
-                callTimeoutTestApi();
-            }
             ResponseBody body = call.execute().body();
             if (body != null) {
                 respStr = body.string();
@@ -212,24 +204,6 @@ public class OkHttpUtils {
         }
         return respStr;
 
-    }
-
-    private static void callTimeoutTestApi() throws IOException {
-        Request request = new Request.Builder().url(getTimeoutTestUrl()).build();
-        try (Response response = client.newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) {
-                body.string();
-            }
-        }
-    }
-
-    private static String getTimeoutTestUrl() {
-        String url = System.getProperty(THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY);
-        if (url == null || url.trim().isEmpty()) {
-            url = System.getenv(THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY);
-        }
-        return url == null || url.trim().isEmpty() ? THIRD_WAREHOUSE_TIMEOUT_TEST_URL_DEFAULT : url;
     }
 
     private static HttpUrl createHttpUrl(Request request, Map<String, Object> params, Map<String, String> headers) {
@@ -366,9 +340,6 @@ public class OkHttpUtils {
     private static String executeBase64(Call call) {
         String respStr = "";
         try {
-            if (ThirdWarehouseHttpTestContext.isTimeoutTest()) {
-                callTimeoutTestApi();
-            }
             ResponseBody body = call.execute().body();
             if (body != null) {
                 MediaType mediaType = body.contentType();

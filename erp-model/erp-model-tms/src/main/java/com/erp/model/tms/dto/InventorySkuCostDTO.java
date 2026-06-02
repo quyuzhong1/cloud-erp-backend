@@ -589,6 +589,11 @@ public class InventorySkuCostDTO implements Serializable {
          * 分摊月份
          */
         private LocalDate allocatedMonth;
+
+        /**
+         * 核算月份
+         */
+        private LocalDate accountingMonth;
     }
 
     /**
