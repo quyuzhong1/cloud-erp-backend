@@ -2858,9 +2858,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public void addSubmitDeliveryClickLog(String id) {
-        SoB2cEntity entity = this.getById(id);
-        String code = Objects.nonNull(entity) ? entity.getCode() : id;
-        addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】用户点击提交发货", code), id, "提交发货");
+        addSubmitDeliveryClickLog(this.getById(id), id);
+    }
+
+    @Override
+    public void addSubmitDeliveryClickLog(SoB2cEntity entity, String id) {
+        try {
+            String code = Objects.nonNull(entity) ? entity.getCode() : id;
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】用户点击提交发货", code), id, "提交发货");
+        } catch (Exception e) {
+            log.warn("B2C销售订单点击提交发货日志写入失败,soId:{}", id, e);
+        }
     }
 
     private void updatePlatformStatus(SoB2cEntity entity, String status) {
