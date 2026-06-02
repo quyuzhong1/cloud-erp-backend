@@ -129,7 +129,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private RedissonClient redissonClient;
     @Lazy
     @Resource
-    private SmallBagCostAllocationServiceImpl self;
+    private SmallBagCostAllocationService self;
 
 	@Autowired
 	@Qualifier("costAllocationPool")

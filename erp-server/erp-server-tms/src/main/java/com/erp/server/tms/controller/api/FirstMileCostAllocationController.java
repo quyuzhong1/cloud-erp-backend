@@ -41,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -125,7 +126,7 @@ public class FirstMileCostAllocationController extends BaseController {
             keyIdName = "ids"
     )
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新状态")
-    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
+    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Validated FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
         if (CollUtil.isNotEmpty(dto.getIds())) {
             List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(dto.getIds());
             if (CollectionUtils.isEmpty(entityList)) {
@@ -200,7 +201,7 @@ public class FirstMileCostAllocationController extends BaseController {
      * 重新分摊
      */
     @PostMapping("/calcAllocatedCost")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "重新分摊")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新分摊")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:firstMileCostAllocation:calcAllocatedCost",

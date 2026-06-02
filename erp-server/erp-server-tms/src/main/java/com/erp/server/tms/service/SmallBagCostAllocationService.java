@@ -10,6 +10,7 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 
 import java.util.List;
 
@@ -80,6 +81,8 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
     
     BatchResultDTO reAllocation(String id);
+
+    BatchResultDTO reAllocation(SmallBagCostAllocationMainEntity entity);
     
     BatchResultDTO delete(String id);
     
