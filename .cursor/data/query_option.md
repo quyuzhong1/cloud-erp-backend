@@ -107,7 +107,7 @@
 | 1767086563482669057 | 自动匹配类型 | oms | /oms/common/enumDropDown?type=SkuMappingRule | get | value | code | disabled |  |  | ?type=SkuMappingRule |
 | 2026960219825614900 | 获取TikTok店铺 | oms | /oms/shop/getShopifyByPlatform | get | name | id | disabled |  |  | /oms/shop/getShopifyByPlatform |
 | 1754025014362902529 | 获取亚马逊店铺 | oms | /oms/shop/listShopByAmazon | get | name | id | disabled |  |  | /oms/shop/listShopByAmazon |
-| 1753952456133316610 | 获取客户（下拉框） | oms | /oms/customer/listEnable | postJson | name | id | false |  |  | /oms/customer/listEnable |
+| 1753952456133316610 | 获取客户（下拉框） | oms | /oms/customer/listEnable | postJson | name | id | disabled |  |  | /oms/customer/listEnable |
 | 1778350878693003266 | 获取销售平台 | oms | /oms/drop/down/dict/list?key=salesPlatform | get | value | code | disabled |  |  | ?key=salesPlatform |
 | 1753988202969960449 | 获取销售平台类型 | oms | /oms/drop/down/dict/list?key=salesPlatform | get | value | code | disabled | searchKeyword | {"searchKeyField": "searchKeyword"} | ?key=salesPlatform |
 | 1995787832613951577 | 语言 | oms | /oms/dictLanguage/drop/down | postJson | nameZh | id | disable |  |  | /oms/dictLanguage/drop/down |
@@ -281,7 +281,7 @@
 | 1899354823365533697 | 入库类型 | wms | /wms/dict/drop/down?type=instockType | get | name | code | disable |  |  | ?type=instockType |
 | 1872210324297662466 | 出入库单据类型 | wms | /wms/common/enumDropDown?type=InventorySourceType | get | value | code | disable |  |  | ?type=InventorySourceType |
 | 1871771082979102722 | 分单规则 | wms | /wms/common/enumDropDown?type=SeparateRule | get | value | code | disable |  |  | ?type=SeparateRule |
-| 1755056191752376322 | 加工单事务类型 | wms | /wms/dict/drop/down?type=workType | get | name | code | disabeld |  |  | ?type=workType |
+| 1755056191752376322 | 加工单事务类型 | wms | /wms/dict/drop/down?type=workType | get | name | code | disable |  |  | ?type=workType |
 | 1765269036247027713 | 加工单来源类型 | wms | /wms/common/enumDropDown?type=MachineSourceType | get | value | code | disabled |  |  | ?type=MachineSourceType |
 | 1868542168394650026 | 单据下推类型 | wms | /wms/dict/drop/down?type=billPushDownStatus | get | name | code | disable | {} | {"searchKeyField": "{}"} | ?type=billPushDownStatus |
 | 1961251818584240134 | 单据状态 | wms | /wms/drop/down/approveStatus/list | get | value | code | disabled |  |  | /wms/drop/down/approveStatus/list |
