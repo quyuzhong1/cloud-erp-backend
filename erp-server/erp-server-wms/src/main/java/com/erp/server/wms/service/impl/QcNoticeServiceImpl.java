@@ -1277,7 +1277,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (Objects.nonNull(qcInfoEntity)) {
                 qcInfoView.setQcBillId(qcInfoEntity.getId());
                 qcInfoView.setQcBillCode(qcInfoEntity.getCode());
-                qcInfoView.setQcStatus(qcInfoEntity.getCode());
+                qcInfoView.setQcStatus(qcInfoEntity.getQcStatus().getCode());
                 qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
                 QcResultEntity qcResultEntity = qcResults.stream()
                         .filter(item -> Objects.equals(item.getMainId(), qcInfoEntity.getId()))
