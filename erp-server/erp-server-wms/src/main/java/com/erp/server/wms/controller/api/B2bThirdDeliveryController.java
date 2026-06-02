@@ -20,10 +20,8 @@ import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -308,31 +305,8 @@ public class B2bThirdDeliveryController extends BaseController {
     @PostMapping("/importPackingDetail")
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱明细")
     public ApiResult<B2bCustomerPackingDTO.ImportDTO> importPackingDetail(
-            @ModelAttribute @Validated PackingExcelImportDTO excelImportDTO) {
-        return success(b2bThirdDeliveryService.importPackingDetail(
-                excelImportDTO.getExcelFile(),
-                excelImportDTO.getPackingType(),
-                excelImportDTO.getDetailList()));
-    }
-
-    @Data
-    public static class PackingExcelImportDTO {
-
-        /**
-         * 导入文件
-         */
-        @NotNull(message = "导入文件不能为空")
-        private MultipartFile excelFile;
-
-        /**
-         * 装箱类型
-         */
-        private String packingType;
-
-        /**
-         * 产品明细，用于校验SKU并带出产品信息
-         */
-        private List<B2bThirdDeliveryDetailDTO.AddDTO> detailList;
+            @ModelAttribute @Validated B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
+        return success(b2bThirdDeliveryService.importPackingDetail(excelImportDTO));
     }
 
 }

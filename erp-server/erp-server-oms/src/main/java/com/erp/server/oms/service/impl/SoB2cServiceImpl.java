@@ -735,7 +735,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void deleteB2cSoJob() {
         List<SoB2cEntity> soB2cList = this.lambdaQuery()
                 .lt(SoB2cEntity::getCreateTime, LocalDateTime.now().minusDays(30)) // 30天前
@@ -746,7 +745,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
-        //非货到付款（批量预取支付方式配置，避免循环内重复查库）
         Map<String, CfgSettingDTO.PayMethodDTO> payMethodSettingMap = soB2cCoreService.listPayMethodSettingMap();
         List<SoB2cEntity> toDeleteList = soB2cList.stream()
                 .filter(entity -> !payMethodSettingMap.containsKey(
@@ -757,17 +755,68 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
 
-        List<String> soB2cIdList = toDeleteList.stream()
-                .map(SoB2cEntity::getId)
-                .collect(Collectors.toList());
-        String codes = toDeleteList.stream()
-                .map(SoB2cEntity::getCode)
-                .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.joining(","));
+        List<String> successCodeList = new ArrayList<>();
+        List<String> skipCodeList = new ArrayList<>();
 
-        this.deleteById(soB2cIdList, codes);
+        // 每个订单一个独立事务，单条失败不影响其他订单
+        for (SoB2cEntity entity : toDeleteList) {
+            try {
+                BatchResultDTO result = soB2cService.deleteSingleB2cSo(entity);
+                if (result.getSuccess()) {
+                    successCodeList.add(entity.getCode());
+                } else {
+                    skipCodeList.add(CharSequenceUtil.format("{}({})", entity.getCode(), result.getMsg()));
+                }
+            } catch (Exception e) {
+                log.error("定时删除B2C销售订单【{}】失败", entity.getCode(), e);
+                skipCodeList.add(CharSequenceUtil.format("{}({})", entity.getCode(), "删除异常:" + e.getMessage()));
+            }
+        }
 
-        XxlJobHelper.log("成功删除{}条b2c销售订单，ID为:{}",soB2cIdList.size(), codes);
+        if (CollUtil.isNotEmpty(successCodeList)) {
+            String codes = String.join(",", successCodeList);
+            XxlJobHelper.log("成功删除{}条b2c销售订单，单号为:{}", successCodeList.size(), codes);
+        }
+
+        if (CollUtil.isNotEmpty(skipCodeList)) {
+            XxlJobHelper.log("跳过{}条不符合删除条件的b2c销售订单，单号及原因:{}", skipCodeList.size(), String.join("; ", skipCodeList));
+        }
+    }
+
+    /**
+     * 删除单条B2C销售订单（每条订单独立事务，供 {@link #deleteB2cSoJob()} 调用）。
+     * 必须通过 Spring 代理（注入的 soB2cService）调用，否则事务失效。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteSingleB2cSo(SoB2cEntity entity) {
+        BatchResultDTO validateResult = validateForDelete(entity);
+        if (!validateResult.getSuccess()) {
+            return validateResult;
+        }
+        this.deleteById(Collections.singletonList(entity.getId()), entity.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
+    }
+
+    private BatchResultDTO validateForDelete(SoB2cEntity entity) {
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        if (Objects.nonNull(logisticsEntity)) {
+            if (CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ||
+                CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ||
+                CharSequenceUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+                try {
+                    List<SoB2cEntity> soB2cEntityList = Collections.singletonList(entity);
+                    List<SoB2cLogisticsEntity> logisticsEntityList = Collections.singletonList(logisticsEntity);
+                    BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), soB2cEntityList, logisticsEntityList, true);
+                    if (!resultDTO.getSuccess()) {
+                        return BatchResultDTO.fail(entity.getId(), entity.getCode(), resultDTO.getMsg());
+                    }
+                } catch (Exception e) {
+                    log.error("B2C销售订单【{}】校验删除条件时取消物流单失败", entity.getCode(), e);
+                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败，请联系物流同事处理");
+                }
+            }
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
@@ -7698,11 +7747,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
             addError.setMainId(entity.getId());
             addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
-            soB2cErrorService.add(addError);
+            soB2cErrorService.addWithoutSignError(addError);
 
         } else {
             if (SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())) {
-                soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+                soB2cErrorService.removeErrorOrderWithoutSignError(entity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
                 entity.setSignOrderError("");
                 entity.setIsFrozen(false);
                 entity.setFrozenType("");
