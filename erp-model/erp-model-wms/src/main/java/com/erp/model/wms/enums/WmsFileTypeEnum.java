@@ -14,6 +14,9 @@ public enum WmsFileTypeEnum implements EnumMessage {
     REVIEW_REPORT("reviewReport", "评审报告"),
     MANUFACTURING_REPORT("manufacturingReport", "量产报告"),
     CATEGORY_GENERAL_STANDARD("categoryGeneralStandard", "品类通用标准"),
+    PACKAGING_COLOR_DIFF_STANDARD("packagingColorDiffStandard", "包装色差判定标准"),
+    PACKAGING_DESIGN_STANDARD("packagingDesignStandard", "包装设计标准"),
+    PACKAGING_INSPECTION_STANDARD("packagingInspectionStandard", "包装检验标准"),
     ;
     /**
      * 类型

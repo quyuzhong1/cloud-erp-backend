@@ -93,6 +93,33 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
+    * 批量更新质检员-弹窗数据
+    * @author wtr
+    * @date: 2026-06-01
+    * @param dto 选中的质检通知单明细id列表
+    * @return ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>>
+    */
+    @PostMapping("/updateQcUserView")
+    public ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>> updateQcUserView(
+            @RequestBody @Validated QcNoticeDTO.UpdateQcUserViewParamDTO dto) {
+        return success(qcNoticeService.updateQcUserView(dto));
+    }
+
+    /**
+    * 批量更新质检员（每行独立质检员，并级联更新下游质检单）
+    * @author wtr
+    * @date: 2026-05-28
+    * @param dtos 明细质检员列表，每行 {detailId, qcUserId, qcUserName}
+    * @return ApiResult<List<BatchResultDTO>>
+    */
+    @PostMapping("/updateQcUser")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
+    public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
+            @RequestBody @Valid List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
+        return success(qcNoticeService.batchUpdateQcUser(dtos));
+    }
+
+    /**
     * 获取状态统计
     * @return
     */
@@ -217,7 +244,12 @@ public class QcNoticeController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = qcNoticeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(id);
+                approveOneDTO.setType(dto.getType());
+                approveOneDTO.setComment(dto.getComment());
+                approveOneDTO.setPlanQcDate(dto.getPlanQcDate());
+                approveResult = qcNoticeService.approve(approveOneDTO);
             }catch (Exception e){
                 log.error("质检通知单审核失败",e);
                 QcNoticeEntity entity = idEntityMap.get(id);
@@ -434,7 +466,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:generateQcInfoFullView",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody @Validated QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
+    public ApiResult<List<QcNoticeDTO.QcInfoFullView>> generateQcInfoFullView(@RequestBody QcNoticeDTO.QcNoticeParamDTO qcNoticeParamDTO) {
         return success(qcNoticeService.generateQcInfoFullView(qcNoticeParamDTO));
     }
 

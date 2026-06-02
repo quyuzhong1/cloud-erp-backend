@@ -21,7 +21,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -41,6 +40,7 @@ import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -67,6 +67,7 @@ import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.*;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.server.wms.utils.QcUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -81,7 +82,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
@@ -93,7 +93,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_DAILY_QC_BILL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_BILL;
 
@@ -235,6 +234,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private QcEffectivenessService qcEffectivenessService;
+
+    @Resource
+    private SupplierFeign supplierFeign;
 
     /**
      * 保存 质检单
@@ -652,8 +654,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 //生成入库单
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId,bill.getCode());
             }
-            //新品首批回填SKU的尺寸信息
-            updateProductPack(Collections.singletonList(billId));
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
@@ -1297,9 +1297,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(ids);
-
-            //新品首批回填SKU的尺寸信息
-            updateProductPack(ids);
 
             //累加质检合格量(结果：合格)
             if (Objects.nonNull(qcResult)) {
@@ -3294,11 +3291,62 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         List<String> skuIds = list.stream().map(QcInfoDTO.OpenPagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        
+        // 获取质检单ID列表，查询详细信息
+        List<String> qcInfoIds = list.stream().map(QcInfoDTO.OpenPagingViewDTO::getId).collect(Collectors.toList());
+        List<QcInfoEntity> qcInfoEntities = this.listByIds(qcInfoIds);
+        Map<String, QcInfoEntity> qcInfoMap = qcInfoEntities.stream()
+                .collect(Collectors.toMap(QcInfoEntity::getId, e -> e));
+        
+        // 获取供应商ID列表
+        List<String> supplierIds = qcInfoEntities.stream()
+                .map(QcInfoEntity::getSupplierId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 查询供应商信息
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(supplierIds)) {
+            supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+        }
+        
+        // 查询质检结果信息
+        Map<String, QcResultEntity> qcResultMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(qcInfoIds)) {
+            List<QcResultEntity> qcResults = qcResultService.lambdaQuery()
+                    .in(QcResultEntity::getMainId, qcInfoIds)
+                    .list();
+            qcResultMap = qcResults.stream()
+                    .collect(Collectors.toMap(QcResultEntity::getMainId, e -> e));
+        }
+
+        Map<String, SupplierDTO.SupplierSimpleDTO> finalSupplierMap = supplierMap;
+        Map<String, QcResultEntity> finalQcResultMap = qcResultMap;
         list.forEach(item -> {
             item.setQcStatusName(QcBillStatusEnum.getNameByCode(item.getQcStatus()));
             skuVOS.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().ifPresent(skuVO -> {
                 item.setProductName(skuVO.getSkuName());
             });
+            
+            // 填充供应商名称、送检数量、质检结果
+            QcInfoEntity entity = qcInfoMap.get(item.getId());
+            if (entity != null) {
+                // 供应商ID和名称
+                item.setSupplierId(entity.getSupplierId());
+                SupplierDTO.SupplierSimpleDTO supplier = finalSupplierMap.get(entity.getSupplierId());
+                if (supplier != null) {
+                    item.setSupplierName(supplier.getName());
+                }
+                
+                // 从质检结果中获取送检数量和质检结果
+                QcResultEntity qcResult = finalQcResultMap.get(item.getId());
+                if (qcResult != null) {
+                    item.setQcQty(qcResult.getQcQty());
+                    item.setQcResult(qcResult.getQcResult());
+                    item.setQcResultName(QcResultEnum.getByCode(qcResult.getQcResult()));
+                }
+            }
         });
     }
 
