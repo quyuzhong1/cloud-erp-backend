@@ -870,8 +870,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         ProductChangeEntity entity = this.getById(id);
-        if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.BOM_NOT_FOUND);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到产品变更信息单数据");
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
