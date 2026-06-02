@@ -73,6 +73,15 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
      * @return
      */
     List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNY(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("orgId") String orgId);
+
+    /**
+     * PLM标准成本专用：按核算月份取最新已审核SKU成本（人民币）
+     * @param skuIds     SKU ID列表
+     * @param warehouseIds 仓库ID列表
+     * @param orgId      组织ID
+     * @return 每个 sku+warehouse+org 核算月份最新的已审核成本，含 accountingMonth 字段
+     */
+    List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNYForStdCost(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("orgId") String orgId);
     /**
      * 查询sku成本
      * @author will
