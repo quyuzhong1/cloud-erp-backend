@@ -18,8 +18,7 @@ public class AuthPassPath {
             "/open/api/;/logisticsTrack/webhookByTrack123;/webhook/receive/;/overseasInventory/shopifyShippedInfo;"+
             "/webhook/tiktok;"+
             "/fs/callback/api;/thirdProcessDefinition/getFsAppId;"+
-            "/sso/login;" +
-            "/test/thirdWarehouseTimeout"
+            "/sso/login;"
             ;
 
 

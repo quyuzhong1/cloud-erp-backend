@@ -146,10 +146,6 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      */
     private String buyerRemark;
     /**
-     * 订单备注
-     */
-    private String remark;
-    /**
      * 是否签名服务
      */
     private Boolean isApiSign;
