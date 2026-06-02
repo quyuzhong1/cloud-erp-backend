@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class OkHttpUtils {
 
     private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_KEY = "THIRD_WAREHOUSE_TIMEOUT_TEST_URL";
-    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_DEFAULT = "http://172.16.100.60:32200/api/wms/test/thirdWarehouseTimeout";
+    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL_DEFAULT = "http://erp-wms:9090/test/thirdWarehouseTimeout";
 
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
