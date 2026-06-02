@@ -275,14 +275,32 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 新增/移除明细日志：按“仓位 -> SKU集合”对比，避免SKU与仓位变更判断错位。
         Map<String, String> warehouseLocationDisplayMap = buildWarehouseLocationDisplayMap(afterSalePackDetailEntityList, detailEntityList, warehouseLocationMap);
         logAfterSalePackDetailChange(afterSalePackEntity.getId(), afterSalePackDetailEntityList, detailEntityList, warehouseLocationDisplayMap);
-        // 修改的
+        // 修改的：日志对比时将仓位ID替换成仓位编码，避免操作日志中展示原始ID
         for (AfterSalePackDetailEntity update : updateList) {
             AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
             if (old != null) {
+                AfterSalePackDetailEntity oldForLog = convertWarehouseLocationIdToDisplay(old, warehouseLocationDisplayMap);
+                AfterSalePackDetailEntity newForLog = convertWarehouseLocationIdToDisplay(update, warehouseLocationDisplayMap);
                 String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("skuNo:【{}】 ", old.getSkuNo()) : "";
-                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
+                operateLogService.addModuleOperateLogByObj(oldForLog, newForLog, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
             }
         }
+    }
+
+    /**
+     * 拷贝一份明细实体，仅用于操作日志字段对比：把拣货仓位ID替换成仓位编码/名称，
+     * 避免污染原实体的真实ID字段，同时让日志展示业务编码而非内部ID。
+     */
+    private AfterSalePackDetailEntity convertWarehouseLocationIdToDisplay(AfterSalePackDetailEntity source,
+                                                                         Map<String, String> warehouseLocationDisplayMap) {
+        AfterSalePackDetailEntity copy = BeanMapperUtils.map(AfterSalePackDetailEntity.class, source);
+        if (copy == null) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(source.getOutWarehouseLocationId())) {
+            copy.setOutWarehouseLocationId(getWarehouseLocationDisplay(source.getOutWarehouseLocationId(), warehouseLocationDisplayMap));
+        }
+        return copy;
     }
 
     private String buildDetailMatchKey(String skuNo, String outWarehouseLocationId) {
