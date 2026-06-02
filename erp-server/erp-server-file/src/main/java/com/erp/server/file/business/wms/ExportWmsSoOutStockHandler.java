@@ -44,4 +44,9 @@ public class ExportWmsSoOutStockHandler extends AbstractPageFileEventHandler<SoO
     protected PagingVO<SoOutstockDTO.PagingViewDTO> getPageData(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
         return exportWmsFeign.exportSoOutStock(dto);
     }
+
+    @Override
+    protected int getPageSize() {
+        return 10000;
+    }
 }
