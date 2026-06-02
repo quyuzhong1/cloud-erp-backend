@@ -62,6 +62,8 @@ import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
@@ -11533,9 +11535,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         platformDTO.setRelationId(soB2cEntity.getShopId());
         platformDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
         platformDTO.setPartitionId(Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getPartitionId() : "");
-        return wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+        return virtualWarehouseList != null ? virtualWarehouseList : Collections.emptyList();
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<VirtualWarehouseRelationEntity> virtualWarehouseList) {
         soB2cLogisticsEntity.setCode(dto.getTrackNo());
@@ -11568,6 +11572,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 先确保销售订单明细仓库落库，再继续生成三方仓发货/出库单，避免主从单据仓库不一致。
         soB2cEntity.setSignOrderError("");
         soB2cDetailService.updateBatchById(detailEntityList);
+        // 不出库发货要求订单明细统一回填本次选择的发货仓库，仍存在其他仓库则视为前置落库失败。
         int notUpdatedDetailCount = soB2cDetailService.lambdaQuery()
                 .eq(SoB2cDetailEntity::getMainId, soB2cEntity.getId())
                 .and(wrapper -> wrapper.isNull(SoB2cDetailEntity::getWarehouseId)
@@ -11590,10 +11595,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity) {
-        return deliveryWithNotOutbound(dto, soB2cEntity, soB2cLogisticsEntity, detailEntityList, soB2cReceiverEntity, baseDTO, noInventorySkuIdList, overseasWarehouse, oldSoB2cEntity, null, Collections.emptyList());
-    }
-
     public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList) {
         //检查发货限制
         String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
@@ -11610,7 +11611,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } catch (Exception e) {
             log.error("生成发货单，出库单失败:{}", e.getMessage());
             // 回退 beforeDelivery 已落库字段，避免发货/出库单失败后订单主从数据不一致。
-            soB2cService.rollbackBeforeDelivery(soB2cEntity.getId(), oldSoB2cEntity, oldLogisticsEntity, oldDetailEntityList);
+            try {
+                soB2cService.rollbackBeforeDelivery(soB2cEntity.getId(), oldSoB2cEntity, oldLogisticsEntity, oldDetailEntityList);
+            } catch (Exception rollbackEx) {
+                log.error("不出库发货回滚失败，需人工介入，soB2cId:{}", soB2cEntity.getId(), rollbackEx);
+                sendNotOutboundRollbackWarnMsg(soB2cEntity, rollbackEx);
+            }
             throw new ServiceException(CharSequenceUtil.format("生成发货单，出库单失败:{}", e.getMessage()));
         } finally {
             UserContext.clearIsUserSystem();
@@ -11646,10 +11652,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "不出库发货成功");
     }
 
+    private void sendNotOutboundRollbackWarnMsg(SoB2cEntity soB2cEntity, Exception rollbackEx) {
+        try {
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("B2C不出库发货");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle("B2C不出库发货补偿回滚失败");
+            warnMsgInfo.setTableName("so_b2c");
+            warnMsgInfo.setTableId(Objects.nonNull(soB2cEntity) ? soB2cEntity.getId() : "");
+            warnMsgInfo.setKeyInfo(CharSequenceUtil.format("订单号:{}，失败原因:{}",
+                    Objects.nonNull(soB2cEntity) ? soB2cEntity.getCode() : "",
+                    rollbackEx.getMessage()));
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            mqProducerService.sendWarnMsg(warnMsgInfo);
+        } catch (Exception warnEx) {
+            log.error("不出库发货回滚失败预警发送失败，soB2cId:{}",
+                    Objects.nonNull(soB2cEntity) ? soB2cEntity.getId() : "", warnEx);
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void rollbackBeforeDelivery(String soB2cId, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList) {
         if (Objects.nonNull(oldSoB2cEntity)) {
-            soB2cService.lambdaUpdate()
+            SoB2cEntity currentSoB2cEntity = soB2cService.getById(soB2cId);
+            Integer expectedVersion = getRollbackExpectedVersion(oldSoB2cEntity.getVersion(), Objects.nonNull(currentSoB2cEntity) ? currentSoB2cEntity.getVersion() : null);
+            boolean mainRollbackUpdated = Objects.nonNull(currentSoB2cEntity) && soB2cService.lambdaUpdate()
                     .set(SoB2cEntity::getSoOutstockDate, oldSoB2cEntity.getSoOutstockDate())
                     .set(SoB2cEntity::getBillStatus, oldSoB2cEntity.getBillStatus())
                     .set(SoB2cEntity::getIsNotOutbound, oldSoB2cEntity.getIsNotOutbound())
@@ -11658,22 +11686,76 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .set(SoB2cEntity::getSignOrderError, oldSoB2cEntity.getSignOrderError())
                     .set(SoB2cEntity::getAbnormalType, oldSoB2cEntity.getAbnormalType())
                     .set(SoB2cEntity::getApproveStatus, oldSoB2cEntity.getApproveStatus())
-                    .eq(SoB2cEntity::getId, soB2cId).update();
+                    .setSql(Objects.nonNull(expectedVersion), "version = version + 1")
+                    .eq(SoB2cEntity::getId, soB2cId)
+                    .eq(Objects.nonNull(expectedVersion), SoB2cEntity::getVersion, expectedVersion)
+                    .isNull(Objects.isNull(expectedVersion), SoB2cEntity::getVersion)
+                    .update();
+            if (!mainRollbackUpdated) {
+                throw new ServiceException(CharSequenceUtil.format("不出库发货回滚销售订单主表失败，soB2cId:{}", soB2cId));
+            }
         }
         if (Objects.nonNull(oldLogisticsEntity)) {
-            soB2cLogisticsService.lambdaUpdate()
+            SoB2cLogisticsEntity currentLogisticsEntity = soB2cLogisticsService.getById(oldLogisticsEntity.getId());
+            Integer expectedVersion = getRollbackExpectedVersion(oldLogisticsEntity.getVersion(), Objects.nonNull(currentLogisticsEntity) ? currentLogisticsEntity.getVersion() : null);
+            boolean logisticsRollbackUpdated = Objects.nonNull(currentLogisticsEntity) && soB2cLogisticsService.lambdaUpdate()
                     .set(SoB2cLogisticsEntity::getCode, oldLogisticsEntity.getCode())
                     .set(SoB2cLogisticsEntity::getLogisticsChannelId, oldLogisticsEntity.getLogisticsChannelId())
                     .set(SoB2cLogisticsEntity::getLogisticsChannelName, oldLogisticsEntity.getLogisticsChannelName())
                     .set(SoB2cLogisticsEntity::getDeliveryTime, oldLogisticsEntity.getDeliveryTime())
-                    .eq(SoB2cLogisticsEntity::getId, oldLogisticsEntity.getId()).update();
+                    .setSql(Objects.nonNull(expectedVersion), "version = version + 1")
+                    .eq(SoB2cLogisticsEntity::getId, oldLogisticsEntity.getId())
+                    .eq(Objects.nonNull(expectedVersion), SoB2cLogisticsEntity::getVersion, expectedVersion)
+                    .isNull(Objects.isNull(expectedVersion), SoB2cLogisticsEntity::getVersion)
+                    .update();
+            if (!logisticsRollbackUpdated) {
+                throw new ServiceException(CharSequenceUtil.format("不出库发货回滚销售订单物流失败，soB2cId:{}，logisticsId:{}", soB2cId, oldLogisticsEntity.getId()));
+            }
         }
         if (CollectionUtils.isNotEmpty(oldDetailEntityList)) {
-            oldDetailEntityList.forEach(detailEntity -> soB2cDetailService.lambdaUpdate()
-                    .set(SoB2cDetailEntity::getWarehouseId, detailEntity.getWarehouseId())
-                    .set(SoB2cDetailEntity::getWarehouseName, detailEntity.getWarehouseName())
-                    .set(SoB2cDetailEntity::getVirtualWarehouseId, detailEntity.getVirtualWarehouseId())
-                    .eq(SoB2cDetailEntity::getId, detailEntity.getId()).update());
+            List<SoB2cDetailEntity> rollbackDetailList = oldDetailEntityList.stream()
+                    .map(detailEntity -> {
+                        SoB2cDetailEntity rollbackDetail = new SoB2cDetailEntity();
+                        rollbackDetail.setId(detailEntity.getId());
+                        rollbackDetail.setWarehouseId(detailEntity.getWarehouseId());
+                        rollbackDetail.setWarehouseName(detailEntity.getWarehouseName());
+                        rollbackDetail.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
+                        rollbackDetail.setVersion(getRollbackExpectedVersion(detailEntity.getVersion(), null));
+                        return rollbackDetail;
+                    })
+                    .collect(Collectors.toList());
+            boolean detailRollbackUpdated = soB2cDetailService.rollbackWarehouseBatch(rollbackDetailList);
+            if (!detailRollbackUpdated) {
+                throw new ServiceException(CharSequenceUtil.format("不出库发货回滚销售订单明细失败，soB2cId:{}", soB2cId));
+            }
+            verifyDetailWarehouseRollback(soB2cId, oldDetailEntityList);
+        }
+    }
+
+    private Integer getRollbackExpectedVersion(Integer oldVersion, Integer currentVersion) {
+        if (Objects.nonNull(oldVersion)) {
+            return oldVersion + 1;
+        }
+        return currentVersion;
+    }
+
+    private void verifyDetailWarehouseRollback(String soB2cId, List<SoB2cDetailEntity> oldDetailEntityList) {
+        List<String> detailIdList = oldDetailEntityList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
+        Map<String, SoB2cDetailEntity> currentDetailMap = soB2cDetailService.listByIds(detailIdList).stream()
+                .collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity(), (oldValue, newValue) -> oldValue));
+        List<String> rollbackFailedDetailIdList = oldDetailEntityList.stream()
+                .filter(detailEntity -> {
+                    SoB2cDetailEntity currentDetail = currentDetailMap.get(detailEntity.getId());
+                    return Objects.isNull(currentDetail)
+                            || !Objects.equals(currentDetail.getWarehouseId(), detailEntity.getWarehouseId())
+                            || !Objects.equals(currentDetail.getWarehouseName(), detailEntity.getWarehouseName())
+                            || !Objects.equals(currentDetail.getVirtualWarehouseId(), detailEntity.getVirtualWarehouseId());
+                })
+                .map(SoB2cDetailEntity::getId)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(rollbackFailedDetailIdList)) {
+            throw new ServiceException(CharSequenceUtil.format("不出库发货回滚销售订单明细失败，soB2cId:{}，detailIds:{}",
+                    soB2cId, String.join(",", rollbackFailedDetailIdList)));
         }
     }
 
