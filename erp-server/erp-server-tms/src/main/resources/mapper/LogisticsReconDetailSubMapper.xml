@@ -27,13 +27,14 @@
         <result column="local_exchange_rate" property="localExchangeRate"/>
         <result column="match_status" property="matchStatus"/>
         <result column="match_fail_reason" property="matchFailReason"/>
+        <result column="reconciliation_status" property="reconciliationStatus"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         id, main_id, detail_id, seq_no, cost_name, cfg_cost_id, cfg_cost_name,
         actual_amount, estimated_amount, currency,
         settlement_currency, settlement_exchange_rate, local_currency, local_exchange_rate,
-        match_status, match_fail_reason
+        match_status, match_fail_reason, reconciliation_status
     </sql>
 
     <select id="listByDetailIds" resultType="com.erp.model.tms.dto.LogisticsReconDetailSubDTO$ListDTO">

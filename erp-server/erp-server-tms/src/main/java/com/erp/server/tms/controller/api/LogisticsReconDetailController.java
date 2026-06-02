@@ -103,18 +103,18 @@ public class LogisticsReconDetailController extends BaseController {
 
 
     /**
-     * 物流商对账费用项手动匹配（指定 detail_sub ↔ 已存在的 ERP 物流单）
+     * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）
      * @author Will
      * @date: 2026/05/29
      * @param dto
-     * @return ApiResult<BatchResultDTO>
+     * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/manualMatch")
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流商对账费用项手动匹配")
-    public ApiResult<BatchResultDTO> manualMatch(
+    public ApiResult<List<BatchResultDTO>> manualMatch(
             @RequestBody @Validated LogisticsReconDetailDTO.ManualMatchDTO dto) {
-        BatchResultDTO result = logisticsReconDetailService.manualMatch(dto);
-        return result.getSuccess() ? success(result) : failure(result);
+        List<BatchResultDTO> results = logisticsReconDetailService.manualMatch(dto);
+        return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
     }
 
     /**

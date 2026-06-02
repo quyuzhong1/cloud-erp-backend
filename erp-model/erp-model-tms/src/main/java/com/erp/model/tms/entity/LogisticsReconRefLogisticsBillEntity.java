@@ -102,6 +102,12 @@ public class LogisticsReconRefLogisticsBillEntity extends BaseEntity<LogisticsRe
     @TableField("import_type")
     private String importType;
 
+    /**
+     * 关联物流费用单对账状态快照（来自 logistics_bill_cost.reconciliation_status）
+     */
+    @TableField("reconciliation_status")
+    private String reconciliationStatus;
+
     public static final String MAIN_ID = "main_id";
     public static final String DETAIL_ID = "detail_id";
     public static final String DETAIL_SUB_ID = "detail_sub_id";
@@ -114,6 +120,7 @@ public class LogisticsReconRefLogisticsBillEntity extends BaseEntity<LogisticsRe
     public static final String MATCH_USER_NAME = "match_user_name";
     public static final String MATCH_TIME = "match_time";
     public static final String IMPORT_TYPE = "import_type";
+    public static final String RECONCILIATION_STATUS = "reconciliation_status";
 
     @Override
     public Serializable pkVal() {

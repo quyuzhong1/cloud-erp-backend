@@ -3,14 +3,18 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -18,18 +22,30 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FieldValidUtil;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsReconDTO;
+import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
+import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
 import com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity;
 import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
+import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconRefMatchTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.mapper.LogisticsReconMapper;
+import com.erp.server.tms.listener.LogisticsReconExcelListener;
+import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
+import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsReconDetailService;
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
@@ -41,14 +57,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_RECON;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_RECON;
 
 /**
  * <p>
@@ -86,6 +107,15 @@ public class LogisticsReconServiceImpl
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+
+    @Resource
+    private FileFeign fileFeign;
+
+    @Resource
+    private CfgLogisticsCostImportService cfgLogisticsCostImportService;
+
+    @Resource
+    private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
 
 
     @Override
@@ -148,14 +178,344 @@ public class LogisticsReconServiceImpl
     public BaseResultDTO.AddDTO importExcel(LogisticsReconDTO.ImportDTO dto) {
         // 1. 先创建主表占位（check_status = importing 导入中），便于异步任务进度回写
         LogisticsReconEntity entity = createImportingMain(dto);
-        // 2. TODO 提交异步任务执行 Excel 解析 + 落 logistics_recon_detail / _detail_sub
-        //  原 ImportHistoryRecordServiceImpl#importFile + handleImportSuccessList 的解析链路待重构；
-        //  重构完成后在任务回调中：
-        //    - 调 LogisticsReconDetailService / LogisticsReconDetailSubService 批量写入
-        //    - 汇总主表 import_count / cost_count / total_amount（导入完成一次性写；match 不写，查询实时聚合）
-        //    - 把 check_status 由 importing 置为 pending（待确认）；失败置 import_fail_reason，保持 importing 直到任务结束
-        log.info("[importExcel] processingType=importOnly mainId={} fileUrl={}", entity.getId(), dto.getFileUrl());
+        dto.setMainId(entity.getId());
+        dto.setCode(entity.getCode());
+        String taskId = downloadTaskFeign.saveImportTask(DOC_NAME + "导入", IMPORT_TMS_LOGISTICS_RECON.getCode(), dto);
+        log.info("[importExcel] submit taskId={} processingType=importOnly mainId={} fileUrl={}", taskId, entity.getId(), dto.getFileUrl());
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void executeImportTask(LogisticsReconDTO.ImportDTO dto) {
+        try {
+            CfgLogisticsCostImportEntity importCfg = cfgLogisticsCostImportService.getById(dto.getCfgImportId());
+            if (importCfg == null) {
+                throw new ServiceException("导入模板配置不存在");
+            }
+            List<CfgLogisticsCostImportDetailEntity> cfgDetails =
+                    cfgLogisticsCostImportDetailService.listByMainIdList(Collections.singletonList(dto.getCfgImportId()));
+            if (CollUtil.isEmpty(cfgDetails)) {
+                throw new ServiceException("导入模板字段配置不存在");
+            }
+            LogisticsReconExcelListener excelListener = readReconExcel(dto, importCfg);
+            List<LogisticsReconImportExcelDTO> errorList = saveReconImportData(dto, importCfg, cfgDetails, excelListener);
+            BaseDTO.ImportResultDTO resultDTO = new BaseDTO.ImportResultDTO();
+            resultDTO.setTaskId(dto.getTaskId());
+            resultDTO.setCount(excelListener.getRows().size());
+            resultDTO.setErrorUrl(uploadErrorFile(errorList));
+            resultDTO.setFinishTime(LocalDateTime.now());
+            resultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+            resultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+            downloadTaskFeign.updateTask(resultDTO);
+        } catch (Exception e) {
+            lambdaUpdate()
+                    .eq(LogisticsReconEntity::getId, dto.getMainId())
+                    .set(LogisticsReconEntity::getImportFailReason, e.getMessage())
+                    .update(new LogisticsReconEntity());
+            throw e;
+        }
+    }
+
+    /**
+     * 读取物流商对账单 Excel 数据
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @param importCfg
+     * @return LogisticsReconExcelListener
+     */
+    private LogisticsReconExcelListener readReconExcel(LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
+        byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+        LogisticsReconExcelListener excelListener = new LogisticsReconExcelListener();
+        EasyExcel.read(new ByteArrayInputStream(bytes), excelListener)
+                .headRowNumber(importCfg.getHeaderRow())
+                .sheet(importCfg.getSheetName())
+                .doRead();
+        if (excelListener.getHeadMap().isEmpty()) {
+            throw new ServiceException("未读取到 Excel 表头");
+        }
+        return excelListener;
+    }
+
+    /**
+     * 保存物流商对账单导入数据
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @param importCfg
+     * @param cfgDetails
+     * @param excelListener
+     * @return List<LogisticsReconImportExcelDTO>
+     */
+    private List<LogisticsReconImportExcelDTO> saveReconImportData(LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg,
+                                                                   List<CfgLogisticsCostImportDetailEntity> cfgDetails,
+                                                                   LogisticsReconExcelListener excelListener) {
+        List<LogisticsReconDetailEntity> detailList = new ArrayList<>();
+        List<LogisticsReconDetailSubEntity> subList = new ArrayList<>();
+        List<LogisticsReconImportExcelDTO> errorList = new ArrayList<>();
+        Map<String, Integer> headerIndexMap = buildHeaderIndexMap(excelListener.getHeadMap());
+        int rowNo = 1;
+        for (Map<Integer, String> row : excelListener.getRows()) {
+            LogisticsReconImportExcelDTO excelDTO = buildReconImportExcel(rowNo, row, headerIndexMap, cfgDetails);
+            List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
+            if (CollUtil.isNotEmpty(errorMsgList)) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                rowNo++;
+                continue;
+            }
+            LogisticsReconDetailEntity detail = buildReconDetail(dto, rowNo++, excelDTO);
+            detailList.add(detail);
+            subList.add(buildReconDetailSub(dto, detail, excelDTO));
+        }
+        if (CollUtil.isNotEmpty(detailList)) {
+            logisticsReconDetailService.saveBatch(detailList);
+        }
+        if (CollUtil.isNotEmpty(subList)) {
+            logisticsReconDetailSubService.saveBatch(subList);
+        }
+        BigDecimal totalAmount = subList.stream()
+                .map(LogisticsReconDetailSubEntity::getActualAmount)
+                .filter(ObjectUtil::isNotEmpty)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        lambdaUpdate()
+                .eq(LogisticsReconEntity::getId, dto.getMainId())
+                .set(LogisticsReconEntity::getBusinessType, importCfg.getBusinessType())
+                .set(LogisticsReconEntity::getCfgImportId, importCfg.getId())
+                .set(LogisticsReconEntity::getCfgType, importCfg.getCfgType())
+                .set(LogisticsReconEntity::getSupplierId, importCfg.getDictPlatform())
+                .set(LogisticsReconEntity::getSupplierName, importCfg.getName())
+                .set(LogisticsReconEntity::getSheetName, importCfg.getSheetName())
+                .set(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
+                .set(LogisticsReconEntity::getImportCount, detailList.size())
+                .set(LogisticsReconEntity::getCostCount, subList.size())
+                .set(LogisticsReconEntity::getTotalAmount, totalAmount)
+                .set(LogisticsReconEntity::getCurrency, resolveCurrency(detailList))
+                .update(new LogisticsReconEntity());
+        return errorList;
+    }
+
+    /**
+     * 构建表头索引
+     * @author Will
+     * @date: 2026/06/02
+     * @param headMap
+     * @return Map<String, Integer>
+     */
+    private Map<String, Integer> buildHeaderIndexMap(Map<Integer, String> headMap) {
+        return headMap.entrySet().stream()
+                .filter(entry -> StrUtil.isNotBlank(entry.getValue()))
+                .collect(Collectors.toMap(entry -> entry.getValue().trim(), Map.Entry::getKey, (first, second) -> first));
+    }
+
+    /**
+     * 构建导入中间对象并执行字段映射
+     * @author Will
+     * @date: 2026/06/02
+     * @param rowNo
+     * @param row
+     * @param headerIndexMap
+     * @param cfgDetails
+     * @return LogisticsReconImportExcelDTO
+     */
+    private LogisticsReconImportExcelDTO buildReconImportExcel(int rowNo, Map<Integer, String> row,
+                                                              Map<String, Integer> headerIndexMap,
+                                                              List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
+        LogisticsReconImportExcelDTO excelDTO = new LogisticsReconImportExcelDTO();
+        excelDTO.setNo(String.valueOf(rowNo));
+        for (CfgLogisticsCostImportDetailEntity cfg : cfgDetails) {
+            String target = StrUtil.blankToDefault(cfg.getTargetField(), cfg.getTargetDetailField());
+            String value = getCellValue(row, headerIndexMap, cfg);
+            if (StrUtil.isBlank(target) || StrUtil.isBlank(value)) {
+                continue;
+            }
+            applyImportExcelField(excelDTO, target, value, cfg);
+        }
+        if (StrUtil.isNotBlank(excelDTO.getActualAmount())) {
+            excelDTO.setActualAmountValue(parseAmount(excelDTO.getActualAmount(), false));
+        }
+        return excelDTO;
+    }
+
+    /**
+     * 构建对账行明细
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @param rowNo
+     * @param excelDTO
+     * @return LogisticsReconDetailEntity
+     */
+    private LogisticsReconDetailEntity buildReconDetail(LogisticsReconDTO.ImportDTO dto, int rowNo,
+                                                        LogisticsReconImportExcelDTO excelDTO) {
+        LogisticsReconDetailEntity detail = new LogisticsReconDetailEntity()
+                .setMainId(dto.getMainId())
+                .setRowNo(rowNo)
+                .setSoCode(excelDTO.getSoCode())
+                .setPlatformOrderNo(excelDTO.getPlatformOrderNo())
+                .setTrackNo(excelDTO.getTrackNo())
+                .setTransportNo(excelDTO.getTransportNo())
+                .setSoDeliveryCode(excelDTO.getSoDeliveryCode())
+                .setCurrency(excelDTO.getCurrency())
+                .setPayType(excelDTO.getPayType())
+                .setWeightLogistics(parseAmount(excelDTO.getWeightLogistics(), false))
+                .setVolumeWeightLogistics(parseAmount(excelDTO.getVolumeWeightLogistics(), false))
+                .setBillingWeightLogistics(parseAmount(excelDTO.getBillingWeightLogistics(), false))
+                .setWeightUnit(excelDTO.getWeightUnit())
+                .setThirdLength(parseAmount(excelDTO.getThirdLength(), false))
+                .setThirdWidth(parseAmount(excelDTO.getThirdWidth(), false))
+                .setThirdHeight(parseAmount(excelDTO.getThirdHeight(), false))
+                .setCostCount(1);
+        detail.setId(IdWorker.getIdStr());
+        return detail;
+    }
+
+    /**
+     * 构建费用项明细
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @param detail
+     * @param excelDTO
+     * @return LogisticsReconDetailSubEntity
+     */
+    private LogisticsReconDetailSubEntity buildReconDetailSub(LogisticsReconDTO.ImportDTO dto,
+                                                              LogisticsReconDetailEntity detail,
+                                                              LogisticsReconImportExcelDTO excelDTO) {
+        return new LogisticsReconDetailSubEntity()
+                .setMainId(dto.getMainId())
+                .setDetailId(detail.getId())
+                .setSeqNo(1)
+                .setCostName(excelDTO.getCostName())
+                .setCfgCostName(excelDTO.getCostName())
+                .setActualAmount(excelDTO.getActualAmountValue())
+                .setEstimatedAmount(BigDecimal.ZERO)
+                .setCurrency(StrUtil.blankToDefault(detail.getCurrency(), ""))
+                .setMatchStatus(LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
+                .setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+    }
+
+    /**
+     * 获取单元格值
+     * @author Will
+     * @date: 2026/06/02
+     * @param row
+     * @param headerIndexMap
+     * @param cfg
+     * @return String
+     */
+    private String getCellValue(Map<Integer, String> row, Map<String, Integer> headerIndexMap,
+                                CfgLogisticsCostImportDetailEntity cfg) {
+        String source = StrUtil.blankToDefault(cfg.getSourceDetailField(), cfg.getSourceField());
+        Integer index = headerIndexMap.get(source);
+        if (index == null) {
+            return "";
+        }
+        return StrUtil.trimToEmpty(row.get(index));
+    }
+
+    /**
+     * 映射导入字段到 Excel 中间对象
+     * @author Will
+     * @date: 2026/06/02
+     * @param excelDTO
+     * @param target
+     * @param value
+     * @param cfg
+     * @return void
+     */
+    private void applyImportExcelField(LogisticsReconImportExcelDTO excelDTO, String target, String value,
+                                       CfgLogisticsCostImportDetailEntity cfg) {
+        if ("sourceCode".equals(target) || "soCode".equals(target)) {
+            excelDTO.setSoCode(value);
+        } else if ("platformCode".equals(target) || "platformOrderNo".equals(target)) {
+            excelDTO.setPlatformOrderNo(value);
+        } else if ("trackNo".equals(target)) {
+            excelDTO.setTrackNo(value);
+        } else if ("transportNo".equals(target)) {
+            excelDTO.setTransportNo(value);
+        } else if ("soDeliveryCode".equals(target)) {
+            excelDTO.setSoDeliveryCode(value);
+        } else if ("currency".equals(target)) {
+            excelDTO.setCurrency(value);
+        } else if ("payType".equals(target)) {
+            excelDTO.setPayType(value);
+        } else if ("thirdActualWeight".equals(target) || "weightLogistics".equals(target)) {
+            excelDTO.setWeightLogistics(value);
+        } else if ("volumeWeightLogistics".equals(target)) {
+            excelDTO.setVolumeWeightLogistics(value);
+        } else if ("billingWeightLogistics".equals(target)) {
+            excelDTO.setBillingWeightLogistics(value);
+        } else if ("logisticsWeightUnit".equals(target) || "weightUnit".equals(target)) {
+            excelDTO.setWeightUnit(value);
+        } else if ("thirdLength".equals(target)) {
+            excelDTO.setThirdLength(value);
+        } else if ("thirdWidth".equals(target)) {
+            excelDTO.setThirdWidth(value);
+        } else if ("thirdHeight".equals(target)) {
+            excelDTO.setThirdHeight(value);
+        } else if ("actualAmount".equals(target) || StrUtil.isNotBlank(cfg.getTargetDetailField())) {
+            excelDTO.setCostName(StrUtil.blankToDefault(cfg.getTargetDetailFieldName(), cfg.getSourceDetailField()));
+            excelDTO.setActualAmount(value);
+        }
+    }
+
+    /**
+     * 解析金额/数字
+     * @author Will
+     * @date: 2026/06/02
+     * @param value
+     * @param absolute
+     * @return BigDecimal
+     */
+    private BigDecimal parseAmount(String value, Boolean absolute) {
+        if (StrUtil.isBlank(value)) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal amount = new BigDecimal(value.replace(",", "").trim());
+        return Boolean.TRUE.equals(absolute) ? amount.abs() : amount;
+    }
+
+    /**
+     * 导出并上传错误文件
+     * @author Will
+     * @date: 2026/06/02
+     * @param errorList
+     * @return String
+     */
+    private String uploadErrorFile(List<LogisticsReconImportExcelDTO> errorList) {
+        if (CollUtil.isEmpty(errorList)) {
+            return "";
+        }
+        List<LogisticsReconImportExcelDTO> sortedErrorList = errorList.stream()
+                .sorted(Comparator.comparingInt(item -> {
+                    try {
+                        return Integer.parseInt(item.getNo());
+                    } catch (Exception e) {
+                        return 0;
+                    }
+                }))
+                .collect(Collectors.toList());
+        String fileName = "物流商对账单导入错误信息.xlsx";
+        File file = ExcelUtil.exportFile(fileName, "error", sortedErrorList, LogisticsReconImportExcelDTO.class);
+        return file.isDirectory() ? "" : FastDFSClientUtil.uploadFile(file, fileName);
+    }
+
+    /**
+     * 推导主表币别（多币别返回空）
+     * @author Will
+     * @date: 2026/06/02
+     * @param detailList
+     * @return String
+     */
+    private String resolveCurrency(List<LogisticsReconDetailEntity> detailList) {
+        List<String> currencies = detailList.stream()
+                .map(LogisticsReconDetailEntity::getCurrency)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        return currencies.size() == 1 ? currencies.get(0) : "";
     }
 
     /**
@@ -299,6 +659,12 @@ public class LogisticsReconServiceImpl
                 for (String logisticsBillCostId : logisticsBillCostIds) {
                     logisticsBillCostService.updateReconciliationStatus(logisticsBillCostId, targetStatus, confirmTime);
                 }
+                logisticsReconRefLogisticsBillService.lambdaUpdate()
+                        .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)
+                        .in(LogisticsReconRefLogisticsBillEntity::getLogisticsBillCostId, logisticsBillCostIds)
+                        .set(LogisticsReconRefLogisticsBillEntity::getReconciliationStatus, targetStatus)
+                        .update(new LogisticsReconRefLogisticsBillEntity());
+                refreshDetailSubReconciliationStatus(mainId);
                 String msg = StrUtil.format("用户【{}】将{}【{}】关联物流费用单对账状态更新为【{}】",
                         UserContext.getDefaultLoginUser().getUserName(), DOC_NAME, entity.getCode(),
                         ReconciliationStatusEnum.getName(targetStatus));
@@ -319,6 +685,18 @@ public class LogisticsReconServiceImpl
         logisticsReconRefLogisticsBillService.removeByDetailSubIds(dto.getDetailSubIds());
         logisticsReconDetailSubService.batchUpdateMatchStatus(dto.getDetailSubIds(),
                 LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode(), null);
+        logisticsReconDetailSubService.lambdaUpdate()
+                .in(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getId, dto.getDetailSubIds())
+                .set(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getReconciliationStatus,
+                        LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
+                .update(new com.erp.model.tms.entity.LogisticsReconDetailSubEntity());
+        logisticsReconDetailSubService.lambdaQuery()
+                .in(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getId, dto.getDetailSubIds())
+                .list()
+                .stream()
+                .map(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getMainId)
+                .distinct()
+                .forEach(this::refreshDetailSubReconciliationStatus);
         // 解绑后匹配数由列表/详情查询实时聚合，无需回写主表
 
         List<BatchResultDTO> results = new ArrayList<>(dto.getDetailSubIds().size());
@@ -384,6 +762,72 @@ public class LogisticsReconServiceImpl
                 .update(new LogisticsReconEntity());
     }
 
+    /**
+     * 刷新费用项确认状态汇总（ref → detail_sub）
+     * @author Will
+     * @date 2026/6/2 16:30
+     * @param mainId 对账单 id
+     * @return void
+     */
+    private void refreshDetailSubReconciliationStatus(String mainId) {
+        List<com.erp.model.tms.entity.LogisticsReconDetailSubEntity> subList =
+                logisticsReconDetailSubService.lambdaQuery()
+                        .eq(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getMainId, mainId)
+                        .list();
+        if (CollUtil.isEmpty(subList)) {
+            return;
+        }
+
+        Map<String, List<LogisticsReconRefLogisticsBillEntity>> refMap =
+                logisticsReconRefLogisticsBillService.lambdaQuery()
+                        .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)
+                        .eq(LogisticsReconRefLogisticsBillEntity::getIsDeleted, false)
+                        .list()
+                        .stream()
+                        .collect(Collectors.groupingBy(LogisticsReconRefLogisticsBillEntity::getDetailSubId));
+
+        List<String> confirmedSubIds = new ArrayList<>();
+        List<String> partialSubIds = new ArrayList<>();
+        List<String> unconfirmedSubIds = new ArrayList<>();
+        for (com.erp.model.tms.entity.LogisticsReconDetailSubEntity sub : subList) {
+            List<LogisticsReconRefLogisticsBillEntity> refs = refMap.get(sub.getId());
+            int total = CollUtil.isEmpty(refs) ? 0 : refs.size();
+            int confirmed = CollUtil.isEmpty(refs) ? 0 : (int) refs.stream()
+                    .filter(ref -> ReconciliationStatusEnum.CONFIRMED.getCode().equals(ref.getReconciliationStatus()))
+                    .count();
+            String status = LogisticsReconReconciliationStatusEnum.resolve(confirmed, total);
+            if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(status)) {
+                confirmedSubIds.add(sub.getId());
+            } else if (LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(status)) {
+                partialSubIds.add(sub.getId());
+            } else {
+                unconfirmedSubIds.add(sub.getId());
+            }
+        }
+
+        updateDetailSubReconciliationStatus(confirmedSubIds, LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode());
+        updateDetailSubReconciliationStatus(partialSubIds, LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode());
+        updateDetailSubReconciliationStatus(unconfirmedSubIds, LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+    }
+
+    /**
+     * 批量更新费用项确认状态
+     * @author Will
+     * @date: 2026/06/02
+     * @param ids
+     * @param status
+     * @return void
+     */
+    private void updateDetailSubReconciliationStatus(List<String> ids, String status) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        logisticsReconDetailSubService.lambdaUpdate()
+                .in(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getId, ids)
+                .set(com.erp.model.tms.entity.LogisticsReconDetailSubEntity::getReconciliationStatus, status)
+                .update(new com.erp.model.tms.entity.LogisticsReconDetailSubEntity());
+    }
+
     // ============================== private ==============================
 
     /**
@@ -397,6 +841,8 @@ public class LogisticsReconServiceImpl
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDTO.ListDTO data : list) {
             data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(data.getCheckStatus()));
+            data.setReconciliationStatusName(
+                    LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));
             // match_count 由 paging 子查询实时聚合得到，match_status 在此按 cost_count（费用项数）派生
             int matchCount = data.getMatchCount() == null ? 0 : data.getMatchCount();
             int costCount = data.getCostCount() == null ? 0 : data.getCostCount();

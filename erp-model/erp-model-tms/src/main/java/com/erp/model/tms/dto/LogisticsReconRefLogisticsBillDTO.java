@@ -88,5 +88,9 @@ public class LogisticsReconRefLogisticsBillDTO implements Serializable {
          * 合并匹配时使用的导入处理类型 importUpdate / importAddOld / importAddNew
          */
         private String importType;
+        /**
+         * 关联物流费用单对账状态快照
+         */
+        private String reconciliationStatus;
     }
 }

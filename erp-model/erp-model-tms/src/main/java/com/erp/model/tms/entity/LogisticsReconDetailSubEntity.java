@@ -119,6 +119,13 @@ public class LogisticsReconDetailSubEntity extends BaseEntity<LogisticsReconDeta
     @TableField("match_fail_reason")
     private String matchFailReason;
 
+    /**
+     * 费用项确认状态汇总  枚举：LogisticsReconReconciliationStatusEnum
+     * toBeConfirm / partialConfirm / confirmed
+     */
+    @TableField("reconciliation_status")
+    private String reconciliationStatus;
+
     public static final String MAIN_ID = "main_id";
     public static final String DETAIL_ID = "detail_id";
     public static final String SEQ_NO = "seq_no";
@@ -134,6 +141,7 @@ public class LogisticsReconDetailSubEntity extends BaseEntity<LogisticsReconDeta
     public static final String LOCAL_EXCHANGE_RATE = "local_exchange_rate";
     public static final String MATCH_STATUS = "match_status";
     public static final String MATCH_FAIL_REASON = "match_fail_reason";
+    public static final String RECONCILIATION_STATUS = "reconciliation_status";
 
     @Override
     public Serializable pkVal() {

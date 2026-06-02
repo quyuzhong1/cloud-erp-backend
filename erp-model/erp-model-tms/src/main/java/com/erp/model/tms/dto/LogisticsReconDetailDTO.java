@@ -199,6 +199,14 @@ public class LogisticsReconDetailDTO implements Serializable {
          */
         private String matchFailReason;
         /**
+         * 费用项确认状态汇总 toBeConfirm / partialConfirm / confirmed
+         */
+        private String reconciliationStatus;
+        /**
+         * 费用项确认状态名称
+         */
+        private String reconciliationStatusName;
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -299,27 +307,49 @@ public class LogisticsReconDetailDTO implements Serializable {
     }
 
     /**
-     * 手动匹配（指定 detail_sub ↔ ERP 物流单）
+     * 手动匹配（批量指定 detail_sub ↔ ERP 四个业务单号）
      */
     @Data
     @NoArgsConstructor
     public static class ManualMatchDTO {
         /**
-         * 对账费用项 id
+         * 手动匹配明细
          */
-        @NotBlank(message = "对账费用项id不能为空")
-        private String detailSubId;
-
-        /**
-         * 已存在的 ERP 物流单 id
-         */
-        @NotBlank(message = "物流单id不能为空")
-        private String logisticsBillId;
-
+        @NotEmpty(message = "手动匹配明细不能为空")
+        private List<ManualMatchItemDTO> itemList;
         /**
          * 备注
          */
         private String remark;
+    }
+
+    /**
+     * 手动匹配明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ManualMatchItemDTO {
+        /**
+         * 对账费用项 id
+         */
+        @NotBlank(message = "对账费用项id不能为空")
+        private String detailSubId;
+        /**
+         * ERP 销售单号
+         */
+        private String erpSoCode;
+        /**
+         * ERP 平台订单号
+         */
+        private String erpPlatformOrderNo;
+        /**
+         * ERP 物流跟踪号
+         */
+        private String erpTrackNo;
+        /**
+         * ERP 发货单号
+         */
+        private String erpSoDeliveryCode;
     }
 
     /**

@@ -148,6 +148,14 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String checkStatusName;
         /**
+         * 对账确认状态 toBeConfirm / partialConfirm / confirmed（查询时按当前对账单费用项状态派生，非主表存储）
+         */
+        private String reconciliationStatus;
+        /**
+         * 对账确认状态名称
+         */
+        private String reconciliationStatusName;
+        /**
          * 匹配状态 unmatched / partial / matched（查询时按费用项 cost_count + 已匹配费用项数实时派生，非主表存储）
          */
         private String matchStatus;
@@ -355,6 +363,18 @@ public class LogisticsReconDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ImportDTO {
+        /**
+         * 文件中心任务 id（异步回调时由文件中心写入）
+         */
+        private String taskId;
+        /**
+         * 对账单主表 id（提交导入任务前生成）
+         */
+        private String mainId;
+        /**
+         * 对账单号（提交导入任务前生成）
+         */
+        private String code;
         /**
          * 导入模板配置 id（cfg_logistics_cost_import.id）
          */

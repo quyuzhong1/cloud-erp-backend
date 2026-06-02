@@ -68,6 +68,15 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      */
     BaseResultDTO.AddDTO importExcel(LogisticsReconDTO.ImportDTO dto);
 
+    /**
+     * 物流商对账单异步导入任务执行
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @return void
+     */
+    void executeImportTask(LogisticsReconDTO.ImportDTO dto);
+
 
     /**
      * 物流商对账单校验状态批量切换（待确认 ↔ 已确认）

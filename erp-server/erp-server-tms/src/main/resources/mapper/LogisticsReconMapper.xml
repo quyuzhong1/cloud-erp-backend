@@ -49,7 +49,16 @@
         SELECT <include refid="Base_Column_List"/>,
         COALESCE(m.match_count, 0) AS match_count,
         COALESCE(a.match_success_amount, 0) AS match_success_amount,
-        COALESCE(a.match_fail_amount, 0) AS match_fail_amount
+        COALESCE(a.match_fail_amount, 0) AS match_fail_amount,
+        CASE
+            WHEN COALESCE(a.reconciliation_total_count, 0) &lt;= 0
+                OR (COALESCE(a.reconciliation_confirmed_count, 0) &lt;= 0
+                    AND COALESCE(a.reconciliation_partial_count, 0) &lt;= 0)
+                THEN 'toBeConfirm'
+            WHEN COALESCE(a.reconciliation_confirmed_count, 0) &gt;= COALESCE(a.reconciliation_total_count, 0)
+                THEN 'confirmed'
+            ELSE 'partialConfirm'
+        END AS reconciliation_status
         FROM logistics_recon
         LEFT JOIN (
             SELECT main_id,
@@ -61,28 +70,16 @@
         LEFT JOIN (
             SELECT sub.main_id,
                    SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'matched') AS match_success_amount,
-                   SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount
+                   SUM(sub.actual_amount) FILTER (WHERE sub.match_status = 'failed') AS match_fail_amount,
+                   COUNT(*) AS reconciliation_total_count,
+                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'confirmed') AS reconciliation_confirmed_count,
+                   COUNT(*) FILTER (WHERE sub.reconciliation_status = 'partialConfirm') AS reconciliation_partial_count
             FROM logistics_recon_detail_sub sub
             WHERE sub.is_deleted = false
             GROUP BY sub.main_id
         ) a ON a.main_id = logistics_recon.id
         WHERE ${params.sqlMap.default}
         AND is_deleted = false
-        <if test="params.matchStatus != null and params.matchStatus != ''">
-            <choose>
-                <when test="params.matchStatus == 'unmatched'">
-                    AND (cost_count &lt;= 0 OR COALESCE(m.match_count, 0) &lt;= 0)
-                </when>
-                <when test="params.matchStatus == 'partial'">
-                    AND COALESCE(m.match_count, 0) &gt; 0
-                    AND COALESCE(m.match_count, 0) &lt; cost_count
-                </when>
-                <when test="params.matchStatus == 'matched'">
-                    AND cost_count &gt; 0
-                    AND COALESCE(m.match_count, 0) &gt;= cost_count
-                </when>
-            </choose>
-        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

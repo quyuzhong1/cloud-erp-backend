@@ -94,6 +94,14 @@ public class LogisticsReconDetailSubDTO implements Serializable {
          * 匹配失败原因
          */
         private String matchFailReason;
+        /**
+         * 确认状态汇总 toBeConfirm / partialConfirm / confirmed
+         */
+        private String reconciliationStatus;
+        /**
+         * 确认状态名称
+         */
+        private String reconciliationStatusName;
     }
 
     /**

@@ -52,7 +52,8 @@
             sub.cost_name, sub.cfg_cost_name, sub.actual_amount, sub.currency,
             d.pay_type, d.weight_logistics, d.volume_weight_logistics,
             d.billing_weight_logistics, d.weight_unit, d.third_length, d.third_width, d.third_height,
-            d.cost_count, sub.match_status, sub.match_fail_reason, d.create_time, d.create_user_name,
+            d.cost_count, sub.match_status, sub.match_fail_reason, sub.reconciliation_status,
+            d.create_time, d.create_user_name,
             lb.code AS matched_logistics_bill_code
         FROM logistics_recon_detail_sub sub
         INNER JOIN logistics_recon_detail d

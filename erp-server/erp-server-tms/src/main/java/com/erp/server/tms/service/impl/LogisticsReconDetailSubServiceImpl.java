@@ -5,6 +5,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
+import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import com.erp.server.tms.mapper.LogisticsReconDetailSubMapper;
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,11 @@ public class LogisticsReconDetailSubServiceImpl
         }
         List<String> ids = detailIds instanceof List ? (List<String>) detailIds : new ArrayList<>(detailIds);
         List<LogisticsReconDetailSubDTO.ListDTO> list = baseMapper.listByDetailIds(ids);
-        list.forEach(item -> item.setMatchStatusName(
-                LogisticsReconDetailMatchStatusEnum.getName(item.getMatchStatus())));
+        list.forEach(item -> {
+            item.setMatchStatusName(LogisticsReconDetailMatchStatusEnum.getName(item.getMatchStatus()));
+            item.setReconciliationStatusName(
+                    LogisticsReconReconciliationStatusEnum.getName(item.getReconciliationStatus()));
+        });
         return list;
     }
 

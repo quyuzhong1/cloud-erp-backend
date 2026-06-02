@@ -58,14 +58,14 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
     List<BatchResultDTO> importMatch(LogisticsReconDetailDTO.ImportMatchDTO dto);
 
     /**
-     * 物流商对账明细手动匹配（指定 detail ↔ 已存在的 ERP 物流单）
-     * TODO 复用 logistics_bill / logistics_bill_cost / tms_cost_detail 的查询与匹配规则
+     * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）
+     * TODO 后续按 ERP 四个业务单号查询 logistics_bill / logistics_bill_cost / tms_cost_detail 并落 ref 关系
      * @author Will
      * @date: 2026/05/29
      * @param dto
-     * @return BatchResultDTO
+     * @return List<BatchResultDTO>
      */
-    BatchResultDTO manualMatch(LogisticsReconDetailDTO.ManualMatchDTO dto);
+    List<BatchResultDTO> manualMatch(LogisticsReconDetailDTO.ManualMatchDTO dto);
 
     /**
      * 物流商对账明细新增费用单（基于对账明细补建物流费用单后绑定，match_type=newBill）

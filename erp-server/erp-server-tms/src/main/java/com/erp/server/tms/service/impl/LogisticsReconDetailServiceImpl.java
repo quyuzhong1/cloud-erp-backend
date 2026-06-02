@@ -13,6 +13,7 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
+import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.LogisticsReconDetailMapper;
 import com.erp.server.tms.service.LogisticsReconDetailService;
@@ -131,13 +132,18 @@ public class LogisticsReconDetailServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO manualMatch(LogisticsReconDetailDTO.ManualMatchDTO dto) {
+    public List<BatchResultDTO> manualMatch(LogisticsReconDetailDTO.ManualMatchDTO dto) {
         // TODO 手动匹配：
-        //  1. 查 detail_sub + 所属 detail，按指定 logistics_bill_id 找对应 logistics_bill_cost / tms_cost_detail
+        //  1. 按每条 item 的 ERP 销售单号 / 平台订单号 / 物流跟踪号 / 发货单号查询 logistics_bill / logistics_bill_cost / tms_cost_detail
         //  2. 构造 LogisticsReconRefLogisticsBillEntity（match_type=manual）
         //  3. LogisticsReconRefLogisticsBillService.removeByDetailSubIds + save ref
         //  4. detail_sub.match_status = matched（主表匹配数由查询实时聚合，无需回写）
-        throw new ServiceException("手动匹配待重构 ImportHistoryRecord 后接入");
+        List<BatchResultDTO> results = new ArrayList<>(dto.getItemList().size());
+        for (LogisticsReconDetailDTO.ManualMatchItemDTO item : dto.getItemList()) {
+            results.add(BatchResultDTO.fail(item.getDetailSubId(), item.getDetailSubId(),
+                    "手动匹配待接入 ERP 单号查询逻辑"));
+        }
+        return results;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -161,6 +167,8 @@ public class LogisticsReconDetailServiceImpl
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDetailDTO.ListDTO data : list) {
             data.setMatchStatusName(LogisticsReconDetailMatchStatusEnum.getName(data.getMatchStatus()));
+            data.setReconciliationStatusName(
+                    LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));
             data.setThirdSize(buildThirdSize(data.getThirdLength(), data.getThirdWidth(), data.getThirdHeight()));
             String symbol = currencySymbolMap.getOrDefault(data.getCurrency(), "¥");
             data.setCurrencySymbol(symbol);
@@ -199,6 +207,13 @@ public class LogisticsReconDetailServiceImpl
         return plain(length) + "*" + plain(width) + "*" + plain(height);
     }
 
+    /**
+     * BigDecimal 转普通字符串并去除末尾零
+     * @author Will
+     * @date: 2026/06/02
+     * @param value
+     * @return String
+     */
     private String plain(BigDecimal value) {
         return value == null ? "" : value.stripTrailingZeros().toPlainString();
     }
