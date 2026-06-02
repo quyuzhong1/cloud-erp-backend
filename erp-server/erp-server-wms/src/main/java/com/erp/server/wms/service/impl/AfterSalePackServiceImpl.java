@@ -275,16 +275,57 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         // 新增/移除明细日志：按“仓位 -> SKU集合”对比，避免SKU与仓位变更判断错位。
         Map<String, String> warehouseLocationDisplayMap = buildWarehouseLocationDisplayMap(afterSalePackDetailEntityList, detailEntityList, warehouseLocationMap);
         logAfterSalePackDetailChange(afterSalePackEntity.getId(), afterSalePackDetailEntityList, detailEntityList, warehouseLocationDisplayMap);
-        // 修改的：日志对比时将仓位ID替换成仓位编码，避免操作日志中展示原始ID
+        // 修改的：日志对比时将仓位ID替换成仓位编码，避免操作日志中展示原始ID。
+        // 注意：上方 warehouseLocationDisplayMap 来自“已被就地改写的列表”，旧仓位ID不在其中；
+        // 为避免影响其他逻辑，这里单独再构建一份仅用于字段级日志的旧/新仓位ID->编码映射。
+        Map<String, String> logWarehouseLocationDisplayMap = buildLogWarehouseLocationDisplayMap(oldDetailMap, updateList);
         for (AfterSalePackDetailEntity update : updateList) {
             AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
             if (old != null) {
-                AfterSalePackDetailEntity oldForLog = convertWarehouseLocationIdToDisplay(old, warehouseLocationDisplayMap);
-                AfterSalePackDetailEntity newForLog = convertWarehouseLocationIdToDisplay(update, warehouseLocationDisplayMap);
+                AfterSalePackDetailEntity oldForLog = convertWarehouseLocationIdToDisplay(old, logWarehouseLocationDisplayMap);
+                AfterSalePackDetailEntity newForLog = convertWarehouseLocationIdToDisplay(update, logWarehouseLocationDisplayMap);
                 String msg = StringUtils.isNotBlank(old.getSkuNo()) ? StrUtil.format("skuNo:【{}】 ", old.getSkuNo()) : "";
                 operateLogService.addModuleOperateLogByObj(oldForLog, newForLog, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "", msg);
             }
         }
+    }
+
+    /**
+     * 仅供字段级操作日志使用：根据被更新明细的旧/新拣货仓位ID，单独构建一份 ID->仓位编码 映射。
+     * 与全局 warehouseLocationDisplayMap 隔离，避免改动其他逻辑。
+     */
+    private Map<String, String> buildLogWarehouseLocationDisplayMap(Map<String, AfterSalePackDetailEntity> oldDetailMap,
+                                                                    List<AfterSalePackDetailEntity> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            return Collections.emptyMap();
+        }
+        Set<String> locationIdSet = new HashSet<>();
+        for (AfterSalePackDetailEntity update : updateList) {
+            if (update == null) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(update.getOutWarehouseLocationId())) {
+                locationIdSet.add(update.getOutWarehouseLocationId());
+            }
+            AfterSalePackDetailEntity old = oldDetailMap.get(update.getId());
+            if (old != null && StringUtils.isNotBlank(old.getOutWarehouseLocationId())) {
+                locationIdSet.add(old.getOutWarehouseLocationId());
+            }
+        }
+        if (locationIdSet.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByIds(locationIdSet);
+        if (CollectionUtils.isEmpty(warehouseLocationEntityList)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> displayMap = new HashMap<>();
+        for (WarehouseLocationEntity warehouseLocationEntity : warehouseLocationEntityList) {
+            if (warehouseLocationEntity != null && StringUtils.isNotBlank(warehouseLocationEntity.getId())) {
+                displayMap.put(warehouseLocationEntity.getId(), buildWarehouseLocationDisplay(warehouseLocationEntity));
+            }
+        }
+        return displayMap;
     }
 
     /**
