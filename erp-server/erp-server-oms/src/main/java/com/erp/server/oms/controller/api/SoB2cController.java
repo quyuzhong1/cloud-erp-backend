@@ -844,6 +844,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
+                soB2cService.addSubmitDeliveryClickLog(id);
                 result = soB2cService.submitDelivery(id, dto.getChannelId());
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败,id:{}",id, e);
