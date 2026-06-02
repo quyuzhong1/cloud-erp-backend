@@ -13,6 +13,7 @@ import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSubstringModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSymbolPositionEnum;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -78,7 +79,11 @@ public final class CfgLogisticsCostImportEtlRuleHelper {
 
     public static String buildStorage(List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList) {
         Map<String, Object> storage = new HashMap<>(1);
-        storage.put("data", Optional.ofNullable(ruleList).orElse(Collections.emptyList()));
+        List<JSONObject> sanitizedRules = new ArrayList<>();
+        for (CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO : Optional.ofNullable(ruleList).orElse(Collections.emptyList())) {
+            sanitizedRules.add(toStorageJson(ruleDTO));
+        }
+        storage.put("data", sanitizedRules);
         return JSON.toJSONString(storage);
     }
 
@@ -89,11 +94,15 @@ public final class CfgLogisticsCostImportEtlRuleHelper {
         try {
             JSONObject jsonObject = JSON.parseObject(etlRuleListStorage);
             JSONArray data = jsonObject.getJSONArray("data");
-            if (Objects.isNull(data)) {
+            if (Objects.isNull(data) || data.isEmpty()) {
                 return Collections.emptyList();
             }
+            JSONArray sanitizedData = stripBlankStringFields(data);
             List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> ruleList =
-                    data.toJavaList(CfgLogisticsCostImportDetailDTO.EtlRuleDTO.class);
+                    JSON.parseArray(sanitizedData.toJSONString(), CfgLogisticsCostImportDetailDTO.EtlRuleDTO.class);
+            if (Objects.isNull(ruleList)) {
+                return Collections.emptyList();
+            }
             ruleList.sort(Comparator.comparing(rule -> Optional.ofNullable(rule.getIndex()).orElse(0)));
             return ruleList;
         } catch (Exception e) {
@@ -218,5 +227,40 @@ public final class CfgLogisticsCostImportEtlRuleHelper {
         if (StringUtils.isNotBlank(value)) {
             params.put(key, value);
         }
+    }
+
+    /**
+     * 持久化前去掉空字符串字段，避免 Fastjson2 反序列化静态内部类时 setMode 等 setter 异常。
+     */
+    private static JSONObject toStorageJson(CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO) {
+        JSONObject jsonObject = (JSONObject) JSON.toJSON(ruleDTO);
+        jsonObject.keySet().removeIf(key -> {
+            Object value = jsonObject.get(key);
+            return value instanceof String && StringUtils.isBlank((String) value);
+        });
+        return jsonObject;
+    }
+
+    /**
+     * 兼容历史数据：前端 toPositive/toNegative 等规则会把未用字段存成空字符串。
+     */
+    private static JSONArray stripBlankStringFields(JSONArray data) {
+        JSONArray sanitizedData = new JSONArray(data.size());
+        for (int i = 0; i < data.size(); i++) {
+            JSONObject ruleJson = data.getJSONObject(i);
+            if (Objects.isNull(ruleJson)) {
+                continue;
+            }
+            JSONObject sanitizedRule = new JSONObject();
+            for (String key : ruleJson.keySet()) {
+                Object value = ruleJson.get(key);
+                if (value instanceof String && StringUtils.isBlank((String) value)) {
+                    continue;
+                }
+                sanitizedRule.put(key, value);
+            }
+            sanitizedData.add(sanitizedRule);
+        }
+        return sanitizedData;
     }
 }
