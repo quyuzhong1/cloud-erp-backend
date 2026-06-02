@@ -74,7 +74,9 @@ import java.util.stream.Collectors;
 import static com.alibaba.excel.EasyExcelFactory.write;
 import static com.alibaba.excel.EasyExcelFactory.writerSheet;
 import static com.alibaba.fastjson.JSON.toJSONString;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_PRODUCT;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_TASK;
 
 /**
  * <p>
@@ -2522,7 +2524,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(CollUtil.isNotEmpty(params.getProductIds())){
             params.setIds(params.getProductIds());
         }
-        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PRODUCT.getCode(), params);
+        String eventCode = resolveProductDevelopExportEventCode(params.getExportDataList());
+        downloadTaskFeign.saveDownloadTask(builder.toString(), eventCode, params);
         return Boolean.TRUE;
     }
 
@@ -2636,5 +2639,32 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
     }
 
-
+    /**
+     * 导出数据类型：
+     * 0 产品列表
+     * 1 任务列表
+     */
+    private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
+        if (CollectionUtils.isEmpty(exportDataList)) {
+            throw new ServiceException("导出数据类型不能为空");
+        }
+        if (exportDataList.size() == 1) {
+            Integer flag = exportDataList.get(0);
+            if (Integer.valueOf(0).equals(flag)) {
+                return EXPORT_PLM_PRODUCT_DEV_PRODUCT.getCode();
+            }
+            if (Integer.valueOf(1).equals(flag)) {
+                return EXPORT_PLM_PRODUCT_DEV_TASK.getCode();
+            }
+            throw new ServiceException("导出数据类型不合法：" + flag);
+        }
+        if (exportDataList.size() == 2) {
+            boolean hasProduct = exportDataList.contains(0);
+            boolean hasTask = exportDataList.contains(1);
+            if (hasProduct && hasTask) {
+                return EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
+            }
+        }
+        throw new ServiceException("导出数据类型不合法：" + exportDataList);
+    }
 }
