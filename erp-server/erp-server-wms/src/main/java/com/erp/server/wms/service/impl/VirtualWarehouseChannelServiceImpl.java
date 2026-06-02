@@ -557,7 +557,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
         List<String> skipPlatformList = customerFeign.getDictBasicByKey(VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM).stream()
-                .map(DictBasicDTO.ViewDTO::getValue)
+                .map(DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
