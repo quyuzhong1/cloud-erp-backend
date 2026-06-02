@@ -7538,11 +7538,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
             addError.setMainId(entity.getId());
             addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
-            soB2cErrorService.add(addError);
+            soB2cErrorService.addWithoutSignError(addError);
 
         }else{
             if(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())){
-                soB2cErrorService.removeErrorOrder(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+                soB2cErrorService.removeErrorOrderWithoutSignError(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
                 entity.setSignOrderError("");
                 entity.setIsFrozen(false);
                 entity.setFrozenType("");
