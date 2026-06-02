@@ -97,7 +97,8 @@
             aeid.diff_closing_qty AS diffClosingQty,
             aeid.diff_closing_intransit_qty AS diffClosingIntransitQty,
             aeid.remark AS remark,
-            aeid.finish_time AS finishTime
+            aeid.finish_time AS finishTime,
+            aeid.exec_status_name AS execStatusName
         FROM ads_erp_inventory_diff aeid
         WHERE ${params.sqlMap.default}
         and aeid.is_deleted = FALSE
