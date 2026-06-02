@@ -1773,9 +1773,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                             .orElse(null);
         }
         Integer telAuthScope = telPermission == null ? null : telPermission.getDataScope();
-        // 部门用户清单仅 DEPT 范围时才需要拉一次
+        // 部门用户清单仅 DEPT 范围时才需要拉一次，并对 Feign 空返回做兜底防 NPE
         List<String> telAuthDeptUserList = DataPermissionAspect.DATA_SCOPE_DEPT.equals(telAuthScope)
-                ? sysUserFeign.getDepUserList(telAuthUser.getUid())
+                ? CollUtil.defaultIfEmpty(sysUserFeign.getDepUserList(telAuthUser.getUid()), Collections.emptyList())
                 : Collections.emptyList();
         final String telAuthUid = telAuthUser.getUid();
 
