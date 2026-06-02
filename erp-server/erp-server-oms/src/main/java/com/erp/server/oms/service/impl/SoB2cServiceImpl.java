@@ -9264,9 +9264,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
+        if (Objects.isNull(dto) || Objects.isNull(dto.getParams())) {
+            throw new ServiceException("B2C销售订单导出参数不能为空");
+        }
         Page<SoB2cDTO.ExcelExportDTO> page;
         List<SoB2cDTO.ExcelExportDTO> records;
-        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
+        List<AdvanceQueryDTO> advanceQueryDTOList = Optional.ofNullable(dto.getParams().getAdvanceQueryDTOList()).orElse(Collections.emptyList());
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
         String dynamicDataSource = "";
@@ -9275,11 +9278,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         dto.getParams().setDynamicDataSource(dynamicDataSource);
         //是否缺货 过滤
-        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Object isOutStockValue = advanceQueryDTOList.stream()
+                .filter(Objects::nonNull)
+                .filter(v -> Objects.equals(v.getField(), "isOutStock"))
+                .findAny()
+                .map(AdvanceQueryDTO::getValue)
+                .orElse(null);
+        Boolean isOutStock;
+        if (Objects.isNull(isOutStockValue)) {
+            isOutStock = null;
+        } else if (isOutStockValue instanceof Boolean) {
+            isOutStock = (Boolean) isOutStockValue;
+        } else if (isOutStockValue instanceof String
+                && ("true".equalsIgnoreCase(((String) isOutStockValue).trim())
+                || "false".equalsIgnoreCase(((String) isOutStockValue).trim()))) {
+            isOutStock = Boolean.valueOf(((String) isOutStockValue).trim());
+        } else {
+            throw new ServiceException("缺货过滤参数格式错误");
+        }
         try {
             if (Objects.nonNull(isOutStock)) {
                 //必须选仓库而且只能选一个
-                List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+                List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream()
+                        .filter(Objects::nonNull)
+                        .filter(v -> Objects.equals(v.getField(), "sb2cd.warehouse_id")
+                                && (Objects.equals(v.getCompare(), QueryConditionEnum.EQ.getCompareCode())
+                                || Objects.equals(v.getCompare(), QueryConditionEnum.IN_LIST.getCompareCode())))
+                        .findFirst()
+                        .map(AdvanceQueryDTO::getValue)
+                        .orElse(null));
                 if (warehouseIdList.size() != 1) {
                     throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
                 }
@@ -9299,8 +9326,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 // 数据处理
                 records = handleExport(page.getRecords(), dto.getParams().getExportType(), Boolean.FALSE);
             }
+        } catch (ServiceException e) {
+            if (StringUtils.isBlank(e.getMessage())) {
+                log.error("B2C销售订单导出失败，params:{}", JSON.toJSONString(dto.getParams()), e);
+                throw new ServiceException(e, "B2C销售订单导出失败:{}", e.getClass().getSimpleName());
+            }
+            throw e;
         } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
+            log.error("B2C销售订单导出失败，params:{}", JSON.toJSONString(dto.getParams()), e);
+            String errorMsg = StringUtils.isBlank(e.getMessage()) ? e.getClass().getSimpleName() : e.getMessage();
+            throw new ServiceException(e, "B2C销售订单导出失败:{}", errorMsg);
         }
         return new PagingVO<>(records, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
@@ -12618,16 +12653,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+
     @Override
     public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
         if (CollectionUtils.isEmpty(soIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery()
-                .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
-                .in(SoB2cEntity::getId, soIds)
-                .list();
+
+        // 初始化结果集
+        List<SoB2cEntity> resultList = new ArrayList<>(soIds.size());
+        int batchSize = 1000;
+        int totalSize = soIds.size();
+
+        // 纯 Java 手动分批切分
+        for (int i = 0; i < totalSize; i += batchSize) {
+            // 计算当前批次的结束索引，防止越界
+            int toIndex = Math.min(i + batchSize, totalSize);
+            List<String> batchIds = soIds.subList(i, toIndex);
+
+            // 执行查询
+            List<SoB2cEntity> batchList = lambdaQuery()
+                    .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
+                    .in(SoB2cEntity::getId, batchIds)
+                    .list();
+
+            resultList.addAll(batchList);
+        }
+        return resultList;
     }
+
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<PagingParamDTO> pagingParamDTO) {

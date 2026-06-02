@@ -1222,9 +1222,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     void retryPlatformOutbound( List<String> ids);
 
-    void deleteB2cSoJob();
-
     void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
+    void deleteB2cSoJob();
 
     /**
      * 轻量查询B2C订单拦截标识（仅返回 id + isIntercept）。
