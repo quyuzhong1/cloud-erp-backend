@@ -30,6 +30,7 @@ import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.listener.PlatformInitStockExcelListener;
 import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
@@ -38,6 +39,8 @@ import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -287,4 +290,11 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
         downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_INVENTORY_DETAIL_SELF.getCode(), dto);
         return Boolean.TRUE;
     }
+
+    @Async("pullErpOpenApi")
+	@Override
+	public void updateReCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
+			String sourceSystem) {
+		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem);
+	}
 }
