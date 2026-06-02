@@ -467,8 +467,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setCurrencySymbol(detail.getCurrencySymbol());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
                     continue;
-                } else if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
-                        && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
+                } else if (SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
                     if (isRepairSubcontractSource) {
                         //返修采购单子行：取返修委外来源明细中的含税单价
                         String sourceDetailId = addDTO.getSourceDetailId();
