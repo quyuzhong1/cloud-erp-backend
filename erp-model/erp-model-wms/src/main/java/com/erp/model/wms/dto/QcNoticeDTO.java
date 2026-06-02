@@ -246,6 +246,7 @@ public class QcNoticeDTO implements Serializable {
          * 问题属性 type=qcProblemType
          */
         private String qcProblemDict;
+        private String qcProblemDictName;
 
         /**
          * 质检状态 QcBillStatusEnum
