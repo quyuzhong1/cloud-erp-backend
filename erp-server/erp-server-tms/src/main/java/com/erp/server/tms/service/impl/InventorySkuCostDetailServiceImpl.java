@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -135,24 +137,15 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             //明细为空则清空
             lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, entity.getId()).remove();
         }
-        //检查数据是否已存在
+        // 跨单判重：分摊月份+核算月份+成本组织+仓库+SKU 五元组全局唯一
         List<String> skuIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<InventorySkuCostDTO.PagingVO> existDetailEntityList = this.listDetailBySkuIds(skuIds);
-        detailEntityList.forEach(detailEntity -> {
-            if (!CollectionUtils.isEmpty(existDetailEntityList)){
-                InventorySkuCostDTO.PagingVO pagingVO = existDetailEntityList.stream().filter(e -> Objects.nonNull(e)
-                        && !Objects.equals(entity.getId(), e.getId())
-                        && Objects.equals(e.getCompanyId(), entity.getCompanyId())
-                        && Objects.equals(e.getAllocatedMonth(), entity.getAllocatedMonth())
-                        && Objects.equals(e.getAccountingMonth(), entity.getAccountingMonth())
-                        && Objects.equals(e.getWarehouseId(), detailEntity.getWarehouseId())
-                        && Objects.equals(e.getSkuId(), detailEntity.getSkuId())
-                        && Objects.equals(e.getSkuNo(), detailEntity.getSkuNo())).findFirst().orElse(null);
-                if (Objects.nonNull(pagingVO)){
-                    throw new ServiceException(CharSequenceUtil.format("SKU成本中【{}】成本组织【{}】SKU【{}】分摊月份【{}】核算月份【{}】仓库【{}】已存在", pagingVO.getCode(), entity.getCompanyName(),pagingVO.getSkuNo(),pagingVO.getAllocatedMonthStr(),pagingVO.getAccountingMonth(),pagingVO.getWarehouseName()));
-                }
+        for (InventorySkuCostDetailEntity detailEntity : detailEntityList) {
+            InventorySkuCostDTO.PagingVO duplicate = findDuplicateDetail(existDetailEntityList, entity, detailEntity);
+            if (Objects.nonNull(duplicate)) {
+                throw new ServiceException(buildDuplicateErrorMessage(duplicate, entity));
             }
-        });
+        }
         List<InventorySkuCostDetailEntity> oldDetailEntityList = this.listByMainIds(Collections.singletonList(entity.getId()));
         if (!CollectionUtils.isEmpty(oldDetailEntityList)) {
             List<String> oldDetailIds = oldDetailEntityList.stream().map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -182,6 +175,41 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
     private Boolean hasSameDetail(List<InventorySkuCostDetailEntity> detailEntityList) {
         long count = detailEntityList.stream().map(e -> e.getSkuId() + e.getWarehouseId()).distinct().count();
         return count != detailEntityList.size();
+    }
+
+    private InventorySkuCostDTO.PagingVO findDuplicateDetail(List<InventorySkuCostDTO.PagingVO> existDetailList,
+                                                             InventorySkuCostEntity entity,
+                                                             InventorySkuCostDetailEntity detailEntity) {
+        if (CollectionUtils.isEmpty(existDetailList)) {
+            return null;
+        }
+        return existDetailList.stream()
+                .filter(e -> Objects.nonNull(e)
+                        && !Objects.equals(entity.getId(), e.getId())
+                        && Objects.equals(e.getCompanyId(), entity.getCompanyId())
+                        && Objects.equals(e.getAllocatedMonth(), entity.getAllocatedMonth())
+                        && Objects.equals(e.getAccountingMonth(), entity.getAccountingMonth())
+                        && Objects.equals(e.getWarehouseId(), detailEntity.getWarehouseId())
+                        && Objects.equals(e.getSkuId(), detailEntity.getSkuId()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String buildDuplicateErrorMessage(InventorySkuCostDTO.PagingVO duplicate, InventorySkuCostEntity entity) {
+        String allocatedMonth = formatMonth(duplicate.getAllocatedMonthStr(), duplicate.getAllocatedMonth());
+        String accountingMonth = formatMonth(duplicate.getAccountingMonthStr(), duplicate.getAccountingMonth());
+        String companyName = CharSequenceUtil.isNotBlank(entity.getCompanyName()) ? entity.getCompanyName() : duplicate.getCompanyName();
+        return CharSequenceUtil.format(
+                "SKU成本单据【{}】中，成本组织【{}】、分摊月份【{}】、核算月份【{}】、仓库【{}】、SKU【{}】已存在，不可重复提交",
+                duplicate.getCode(), companyName, allocatedMonth, accountingMonth,
+                duplicate.getWarehouseName(), duplicate.getSkuNo());
+    }
+
+    private String formatMonth(String monthStr, LocalDate month) {
+        if (CharSequenceUtil.isNotBlank(monthStr)) {
+            return monthStr;
+        }
+        return Objects.nonNull(month) ? month.format(DateTimeFormatter.ofPattern("yyyy-MM")) : CharSequenceUtil.EMPTY;
     }
 
     @Override

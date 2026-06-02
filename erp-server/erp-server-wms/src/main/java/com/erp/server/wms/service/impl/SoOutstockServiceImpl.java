@@ -1912,7 +1912,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoB2cEntity> soB2cEntities= Lists.newArrayList();
         if(Objects.nonNull(isExport) && isExport){
             //查询是否有拦截单
-            List<String> soIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getSoId).distinct().collect(Collectors.toList());
+            List<String> soIds = list.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
             soB2cEntities = soB2cFeign.listIdAndInterceptByIds(soIds);
         }
         Map<String, Boolean> b2cEntityMap = CollUtil.isNotEmpty(soB2cEntities) ? soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)) : Collections.emptyMap();
@@ -1951,7 +1951,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //查询审核流程
         List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = ids.stream().map(obj -> new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_OUTSTOCK.getCode(), obj)).collect(Collectors.toCollection(ValidList::new));
-        ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> listApiResult = workflowFeign.curApproverSimple(dtoList);
+        ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> listApiResult = workflowFeign.batchCurApproverSimple(dtoList);
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
@@ -2048,7 +2048,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
 
             //最新审核人
-            item.setApproveUserName(CharSequenceUtil.blankToDefault(approveNameMap.get(item.getId()),item.getApproveUserName()));
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && CharSequenceUtil.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveSimpleDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(CharSequenceUtil.blankToDefault(curApprove,item.getApproveUserName()));
+            }
         }
     }
 
@@ -5149,12 +5152,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
                         "只允许选择待提交、审核不通过销售出库单更新出库日期"));
-            } else if (Objects.isNull(dto.getVersion())) {
-                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
-                        "版本号不能为空，请刷新后重试"));
-            } else if (!dto.getVersion().equals(entity.getVersion())) {
-                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
-                        "数据已被他人修改，请刷新后重试"));
             } else {
                 entity.setBillDate(dto.getOutDate());
                 updateList.add(entity);

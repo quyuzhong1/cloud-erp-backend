@@ -119,6 +119,9 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
 
     void pushDeclareReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+    /** MQ 消费：下推报关对账（含任务明细初始化） */
+    void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
     /**
      * @description: 获取第三方物流名称
      * @author Will

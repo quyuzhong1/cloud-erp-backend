@@ -2217,7 +2217,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                    taskExecTimeout = currentTask.getExecTimeout();
+                    if (currentTask != null) {
+                        taskExecTimeout = currentTask.getExecTimeout();
+                    }
                 }
 
                 if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
@@ -2490,7 +2492,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                    taskExecTimeout = currentTask.getExecTimeout();
+                    if (currentTask != null) {
+                        taskExecTimeout = currentTask.getExecTimeout();
+                    }
                 }
 
                 if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
@@ -2742,7 +2746,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                    taskExecTimeout = currentTask.getExecTimeout();
+                    if (currentTask != null) {
+                        taskExecTimeout = currentTask.getExecTimeout();
+                    }
                 }
 
                 if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
@@ -2950,8 +2956,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return;
             }
 
-            CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
-            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
+            if (billBatchParamsDTO == null) {
+                return;
+            }
 
             TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
             if (Objects.isNull(taskRecord)) {
@@ -3000,7 +3008,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                    taskExecTimeout = currentTask.getExecTimeout();
+                    if (currentTask != null) {
+                        taskExecTimeout = currentTask.getExecTimeout();
+                    }
                 }
 
                 if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {

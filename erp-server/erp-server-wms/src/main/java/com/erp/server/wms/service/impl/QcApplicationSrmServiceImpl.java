@@ -176,7 +176,7 @@ public class QcApplicationSrmServiceImpl extends SuperServiceImpl<QcApplicationM
             addDTO.setSourceId(purchaseOrderEntity.getId());
             addDTO.setSourceCode(purchaseOrderEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.WAIT_DELIVERY.getCode());
-            addDTO.setPlanQcDate(value.get(0).getPlanQcDate());
+            addDTO.setExpectQcDate(value.get(0).getExpectQcDate());
             addDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
 
             List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();

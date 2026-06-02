@@ -26,6 +26,7 @@
         <result column="error_count" property="errorCount"/>
         <result column="exec_type" property="execType"/>
         <result column="is_retry" property="isRetry"/>
+        <result column="method_type" property="methodType"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -52,7 +53,8 @@ tatr.data_json AS dataJson,
 tatr.error_data AS errorData,
 tatr.detail_count AS detailCount,
 tatr.error_count AS errorCount,
-tatr.exec_type AS execType
+tatr.exec_type AS execType,
+tatr.method_type AS methodType
     </sql>
 
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsAsyncTaskRecordDTO$TabListDTO">

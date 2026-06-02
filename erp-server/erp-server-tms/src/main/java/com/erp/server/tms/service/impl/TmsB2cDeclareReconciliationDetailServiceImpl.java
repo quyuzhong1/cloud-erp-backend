@@ -51,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -128,6 +129,9 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     private TmsAsyncTaskRecordService asyncTaskRecordService;
     @Resource
     private TmsAsyncTaskDetailService asyncTaskDetailRecordService;
+    @Lazy
+    @Resource
+    private TmsB2cDeclareReconciliationDetailService self;
     @Autowired
     @Qualifier("costAllocationPool")
     private ExecutorService costAllocationPool;
@@ -1343,5 +1347,12 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
 	public List<TmsB2cDeclareReconciliationDetailEntity> listAutoGenerateCost(LocalDate startDate, LocalDate endDate) {
 		return this.getBaseMapper().listAutoGenerateCost(startDate, endDate);
 	}
+
+    @Override
+    public void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+        // 通过 Spring 代理调用，确保 addTaskDetailByDeclareReconciliation 的 @Transactional 生效
+        if (self.addTaskDetailByDeclareReconciliation(dto)) return;
+        pushDeclareReconciliation(dto);
+    }
 
 }

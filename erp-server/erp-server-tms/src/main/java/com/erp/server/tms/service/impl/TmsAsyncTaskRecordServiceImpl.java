@@ -6,7 +6,6 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -62,6 +61,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
@@ -466,6 +467,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             data.setBusinessTypeName(TmsAsyncTaskRecordBusinessTypeEnum.getName(data.getBusinessType()));
             data.setStatusName(TmsAsyncTaskRecordStatusEnum.getName(data.getStatus()));
             data.setExecTypeName(TmsAsyncTaskRecordExecTypeEnum.getName(data.getExecType()));
+            data.setMethodTypeName(TmsAsyncTaskMethodTypeEnum.getName(data.getMethodType()));
         }
     }
 
@@ -731,23 +733,20 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      */
     @Override
     public void startTask(){
-        LocalDate today = LocalDate.now();
-        LocalDateTime taskStartTime = today.atStartOfDay(); // 00:00:00
-        LocalDateTime taskEndTime = today.atTime(LocalTime.MAX); // 23:59:59.999999999
+        LocalDateTime now = LocalDateTime.now();
 
-        //查询所有
+        // 查询所有 ING 或 PENDING 且 startTime <= now 的任务，去掉今日限制：
+        // 避免补偿场景（如服务宕机恢复后）中历史 PENDING 任务被永久搁置
         List<TmsAsyncTaskRecordEntity> list = lambdaQuery()
                 .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
-                .ge(TmsAsyncTaskRecordEntity::getStartTime, taskStartTime)
-                .le(TmsAsyncTaskRecordEntity::getStartTime, taskEndTime)
+                .le(TmsAsyncTaskRecordEntity::getStartTime, now)
                 .list();
         if(CollUtil.isEmpty(list)){
-            log.error("TmsAsyncTaskRecord不存在待执行或者执行中的任务");
+            log.info("TmsAsyncTaskRecord不存在待执行或者执行中的任务");
             return;
         }
 
         //执行中（手动 + 自动）
-        LocalDateTime now = LocalDateTime.now();
         List<TmsAsyncTaskRecordEntity> ingList = list.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.ING.getCode())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(ingList)){
             for (TmsAsyncTaskRecordEntity entity : ingList) {
@@ -797,7 +796,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         try {
             SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                log.error("消息发送结果失败：{}", JSON.toJSONString(sendResult));
                 lambdaUpdate()
                         .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                         .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
@@ -820,13 +819,14 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
 
     /**
-     * 根据tms生成配置生成异步任务
+     * 根据tms生成配置生成异步任务。
+     * 不加 @Transactional：各子任务通过 selfServer.addAutoTask() 独立提交，
+     * 任意一个生成失败不影响其他任务，失败时仅记录错误日志。
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void genAutoTask() {
         long startTime = System.currentTimeMillis();
-        log.error("====开始自动生成tms异步任务====");
+        log.info("====开始自动生成tms异步任务====");
         // 查询系统配置
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
         if(Objects.isNull(cfgSettingEntity) || Objects.isNull(cfgSettingEntity.getDataJson())){
@@ -843,15 +843,25 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             return;
         }
 
-        generateFirstMileReconciliation(dto);
-        generateTmsB2cDeclareReconciliation(dto);
-        generateFirstMileCostAllocation(dto);
-        generateSmallBagCostAllocation(dto);
-        generateTransferDeclareCostAllocation(dto);
+        tryGenAutoTask("头程对账单", () -> generateFirstMileReconciliation(dto));
+        tryGenAutoTask("报关对账", () -> generateTmsB2cDeclareReconciliation(dto));
+        tryGenAutoTask("头程费用分摊", () -> generateFirstMileCostAllocation(dto));
+        tryGenAutoTask("小包费用分摊", () -> generateSmallBagCostAllocation(dto));
+        tryGenAutoTask("中转费用分摊", () -> generateTransferDeclareCostAllocation(dto));
 
-        // 统计执行结果
         long totalDuration = System.currentTimeMillis() - startTime;
-        log.error("====结束自动生成tms异步任务  执行时间：【{}】====", totalDuration);
+        log.info("====结束自动生成tms异步任务  执行时间：【{}】ms====", totalDuration);
+    }
+
+    /**
+     * 各子任务生成失败相互隔离，不影响其他任务
+     */
+    private void tryGenAutoTask(String taskName, Runnable task) {
+        try {
+            task.run();
+        } catch (Exception e) {
+            log.error("[自动生成任务] {} 生成异常: {}", taskName, e.getMessage(), e);
+        }
     }
 
 
@@ -896,7 +906,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 selfServer.addAutoTask(businessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode(), jsonStr, startTimeStr);
             }
         }else {
-            log.error("[生成中转费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getFirstMileAllocationType());
+            log.error("[生成中转费用分摊] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getPackageAllocationType());
         }
     }
 
@@ -966,7 +976,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             //根据任务执行时间，推算出当时的时间范围
             startDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
             endDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
-        } else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getFirstMileReconciliationType())) {
+        } else if (ReconciliationTypeEnum.CREAT_BY_PERIOD.getCode().equals(dto.getDeclareReconciliationType())) {
             declareReconciliationDate = dto.getDeclareReconciliationDate().intValue();
 
             //根据生成日期作为任务的开始时间
@@ -980,7 +990,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             startDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
             endDate = taskStartDate.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth());
         }else {
-            log.error("[生成头程对账单] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getDeclareReconciliationType());
+            log.error("[生成报关对账] AutoGenAsyncTaskJob 任务结束: 生成类型【{}】不支持", dto.getDeclareReconciliationType());
             return;
         }
         String businessType = TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode();

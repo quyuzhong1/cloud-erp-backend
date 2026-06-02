@@ -1563,12 +1563,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    public B2bCustomerPackingDTO.ImportDTO importPackingDetail(MultipartFile excelFile, String packingType,
-                                                                          List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList) {
-        String resolvedPackingType = CharSequenceUtil.blankToDefault(packingType, B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
-        B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(resolvedPackingType, detailList);
+    public B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
+        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = toPackingImportDetailList(soInfoFeign.listSoDetailByMainId(excelImportDTO.getSoId()));
+        B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
+            EasyExcel.read(excelImportDTO.getExcelFile().getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入装箱明细失败", e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
@@ -1595,6 +1594,24 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         return importDTO;
+    }
+
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> toPackingImportDetailList(List<SoDetailEntity> detailEntities) {
+        if (CollUtil.isEmpty(detailEntities)) {
+            return Collections.emptyList();
+        }
+        return detailEntities.stream().map(e -> {
+            com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
+            dto.setSkuId(e.getSkuId());
+            dto.setSkuNo(e.getSkuNo());
+            dto.setProductName(e.getProductName());
+            dto.setSaleQty(e.getQty());
+            dto.setDeliveryQty(e.getDeliveryQty());
+            dto.setPerBoxQty(e.getPerBoxQty());
+            dto.setDeliverySkuId(e.getDeliverySkuId());
+            dto.setDeliverySkuNo(e.getDeliverySkuNo());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private void normalizePackingFields(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {

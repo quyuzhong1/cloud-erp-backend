@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.CfgQcUserMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.CfgQcUserEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="stockin_qc_user_id" property="stockinQcUserId" />
+       <result column="stockin_qc_user_name" property="stockinQcUserName" />
+       <result column="stockout_qc_user_id" property="stockoutQcUserId" />
+       <result column="stockout_qc_user_name" property="stockoutQcUserName" />
+       <result column="outside_qc_user_id" property="outsideQcUserId" />
+       <result column="outside_qc_user_name" property="outsideQcUserName" />
+       <result column="inside_qc_user_id" property="insideQcUserId" />
+       <result column="inside_qc_user_name" property="insideQcUserName" />
+       <result column="new_product_stockin_qc_user_id" property="newProductStockinQcUserId" />
+       <result column="new_product_stockin_qc_user_name" property="newProductStockinQcUserName" />
+       <result column="b2b_outside_qc_user_id" property="b2bOutsideQcUserId" />
+       <result column="b2b_outside_qc_user_name" property="b2bOutsideQcUserName" />
+       <result column="return_qc_user_id" property="returnQcUserId" />
+       <result column="return_qc_user_name" property="returnQcUserName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        supplier_id,
+        warehouse_id,
+        stockin_qc_user_id,
+        stockin_qc_user_name,
+        stockout_qc_user_id,
+        stockout_qc_user_name,
+        outside_qc_user_id,
+        outside_qc_user_name,
+        inside_qc_user_id,
+        inside_qc_user_name,
+        new_product_stockin_qc_user_id,
+        new_product_stockin_qc_user_name,
+        b2b_outside_qc_user_id,
+        b2b_outside_qc_user_name,
+        return_qc_user_id,
+        return_qc_user_name
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.CfgQcUserDTO$ListDTO">
+        SELECT
+            cqu.id,
+            cqu.supplier_id,
+            cqu.warehouse_id,
+            cqu.stockin_qc_user_id AS stockInQcUserId,
+            cqu.stockin_qc_user_name AS stockInQcUserName,
+            cqu.stockout_qc_user_id AS stockOutQcUserId,
+            cqu.stockout_qc_user_name AS stockOutQcUserName,
+            cqu.outside_qc_user_id AS outsideQcUserId,
+            cqu.outside_qc_user_name AS outsideQcUserName,
+            cqu.inside_qc_user_id AS insideQcUserId,
+            cqu.inside_qc_user_name AS insideQcUserName,
+            cqu.new_product_stockin_qc_user_id AS newProductStockInQcUserId,
+            cqu.new_product_stockin_qc_user_name AS newProductStockInQcUserName,
+            cqu.b2b_outside_qc_user_id AS b2bOutsideQcUserId,
+            cqu.b2b_outside_qc_user_name AS b2bOutsideQcUserName,
+            cqu.return_qc_user_id AS returnQcUserId,
+            cqu.return_qc_user_name AS returnQcUserName,
+            cqu.create_time,
+            cqu.create_user_id,
+            cqu.create_user_name,
+            cqu.update_time,
+            cqu.update_user_id,
+            cqu.update_user_name
+        FROM cfg_qc_user cqu
+        WHERE
+        ${params.sqlMap.default}
+        and cqu.is_deleted = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cqu.create_time desc
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        SELECT '' AS approve_status, count(id) AS count
+        FROM cfg_qc_user
+        WHERE is_deleted = false
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.CfgQcUserDTO$ListDTO">
+        SELECT 
+            id,
+            supplier_id,
+            warehouse_id,
+            stockin_qc_user_id AS stockInQcUserId,
+            stockin_qc_user_name AS stockInQcUserName,
+            stockout_qc_user_id AS stockOutQcUserId,
+            stockout_qc_user_name AS stockOutQcUserName,
+            outside_qc_user_id AS outsideQcUserId,
+            outside_qc_user_name AS outsideQcUserName,
+            inside_qc_user_id AS insideQcUserId,
+            inside_qc_user_name AS insideQcUserName,
+            new_product_stockin_qc_user_id AS newProductStockInQcUserId,
+            new_product_stockin_qc_user_name AS newProductStockInQcUserName,
+            b2b_outside_qc_user_id AS b2bOutsideQcUserId,
+            b2b_outside_qc_user_name AS b2bOutsideQcUserName,
+            return_qc_user_id AS returnQcUserId,
+            return_qc_user_name AS returnQcUserName,
+            create_time,
+            create_user_name,
+            update_time,
+            update_user_name
+        FROM cfg_qc_user
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <if test="params != null and params.ids != null and params.ids.size() > 0">
+            AND id IN
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.wms.dto.CfgQcUserDTO$TabListDTO">
+        SELECT
+        '' AS tabFlag,
+        count(*) AS count
+        FROM cfg_qc_user
+        WHERE is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="selectBySupplierId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM cfg_qc_user
+        WHERE is_deleted = FALSE
+          AND supplier_id = #{supplierId}
+    </select>
+
+    <!-- 按供应商 + 仓库精确匹配 -->
+    <select id="selectBySupplierIdAndWarehouseId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM cfg_qc_user
+        WHERE is_deleted = FALSE
+          AND supplier_id = #{supplierId}
+          AND warehouse_id = #{warehouseId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 批量按供应商ID集合 + 仓库ID集合查询（用于导入批处理避免 N+1） -->
+    <select id="selectBySupplierIdsAndWarehouseIds" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM cfg_qc_user
+        WHERE is_deleted = FALSE
+          AND supplier_id IN
+          <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
+              #{supplierId}
+          </foreach>
+          AND warehouse_id IN
+          <foreach collection="warehouseIds" item="warehouseId" open="(" separator="," close=")">
+              #{warehouseId}
+          </foreach>
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

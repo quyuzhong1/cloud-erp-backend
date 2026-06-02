@@ -82,8 +82,9 @@ public class QcApplicationEntity extends BaseEntity<QcApplicationEntity> {
     /**
     * 期望质检日期
     */
-    @TableField("plan_qc_date")
-    private LocalDate planQcDate;
+    @TableField("expect_qc_date")
+    private LocalDate expectQcDate;
+
     /**
     * 备注
     */
@@ -111,7 +112,7 @@ public class QcApplicationEntity extends BaseEntity<QcApplicationEntity> {
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
-    public static final String PLAN_DATE = "plan_date";
+    public static final String EXPECT_QC_DATE = "expect_qc_date";
 
     public static final String REMARK = "remark";
 

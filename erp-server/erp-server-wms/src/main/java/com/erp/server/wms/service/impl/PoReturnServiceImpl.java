@@ -689,12 +689,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(detailView.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
-            detailView.setAfterSalePackDetailList(afterSalePackDetailMap.get(detailView.getSkuId()));
+            // 整箱退货：移除单行箱唛或整箱移除SKU时 actualQty=0，详情接口不应回传这些已移除的箱唛明细。
+            detailView.setAfterSalePackDetailList(filterActiveAfterSalePackDetails(afterSalePackDetailMap.get(detailView.getSkuId())));
 
             detailViewDTOS.add(detailView);
         }
         viewDTO.setPurchasePriceDetailList(detailViewDTOS);
         return viewDTO;
+    }
+
+    /**
+     * 过滤已移除的售后装箱明细：actualQty <= 0 视为「单行移除」或「整箱移除SKU」，详情接口不应回传。
+     * 与 addAfterSalePackAddLog / addAfterSalePackUpdateLog 等位置保持同一判定口径。
+     */
+    private List<AfterSalePackDTO.DetailDTO> filterActiveAfterSalePackDetails(List<AfterSalePackDTO.DetailDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return detailList;
+        }
+        return detailList.stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> getAfterSalePackActualQty(detail) > MathUtil.ZERO)
+                .collect(Collectors.toList());
     }
 
     /**

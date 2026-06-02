@@ -9,7 +9,6 @@ import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
 import com.erp.model.wms.dto.excel.B2bCustomerPackingImportExcelDTO;
 import com.erp.model.wms.enums.B2bPackingLabelSizeEnum;
-import com.erp.model.wms.enums.B2bPackingTypeEnum;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     private static final int MAX_IMPORT_ROWS = 5000;
 
-    private final String packingType;
     private final List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList;
     private final Map<String, B2bThirdDeliveryDetailDTO.AddDTO> skuDetailMap;
     private final Map<String, Integer> skuSaleQtyMap;
@@ -36,8 +34,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
     private final List<B2bCustomerPackingImportExcelDTO> errorList = new ArrayList<>();
     private int rowCount;
 
-    public B2bCustomerPackingExcelListener(String packingType, List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList) {
-        this.packingType = packingType;
+    public B2bCustomerPackingExcelListener(List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList) {
         this.productDetailList = CollectionUtils.isEmpty(productDetailList) ? new ArrayList<>() : productDetailList;
         this.skuDetailMap = this.productDetailList.stream()
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
@@ -83,9 +80,6 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         }
         if (CharSequenceUtil.isNotBlank(row.getLabelSize()) && !B2bPackingLabelSizeEnum.isValid(row.getLabelSize().trim())) {
             errorMsgList.add("标签尺寸不合法");
-        }
-        if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType) && CharSequenceUtil.isBlank(row.getBoxMarkNo())) {
-            errorMsgList.add("装箱类型为已暂存箱发货时箱唛号必填");
         }
         B2bThirdDeliveryDetailDTO.AddDTO productDetail = null;
         if (CharSequenceUtil.isNotBlank(row.getSkuNo())) {

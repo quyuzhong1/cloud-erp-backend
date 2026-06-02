@@ -30,6 +30,7 @@ import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.listener.PlatformInitStockExcelListener;
 import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
@@ -38,6 +39,8 @@ import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +49,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +74,14 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpRestCloudService dmpRestCloudService;
+    
+    private static final Set<String> ALLOWED_TABLES = Arrays.stream(InventoryMonthCheckEnum.values())
+            .map(InventoryMonthCheckEnum::getCode)
+            .collect(Collectors.toSet());
+    
+    // 若暂无枚举，至少提取为 private static final：
+    private static final String EXEC_STATUS_WAIT = "wait";
+    private static final String EXEC_STATUS_WAIT_NAME = "待执行";
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -287,4 +299,19 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
         downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_INVENTORY_DETAIL_SELF.getCode(), dto);
         return Boolean.TRUE;
     }
+
+    /**
+     *需要异步，不然直接使用的postgres数据源
+     */
+    @Async("pullErpOpenApi")
+	@Override
+	public void updateReCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
+			String sourceSystem) {
+    	String tableCode = inventoryMonthCheckEnum.getCode();
+    	//此处仅防 Mapper 被直接调用时的滥用
+        if (!ALLOWED_TABLES.contains(tableCode)) {
+            throw new ServiceException("非法表名：" + tableCode);
+        }
+		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem , EXEC_STATUS_WAIT , EXEC_STATUS_WAIT_NAME);
+	}
 }
