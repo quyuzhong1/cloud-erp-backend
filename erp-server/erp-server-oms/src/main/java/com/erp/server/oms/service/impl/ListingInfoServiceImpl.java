@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -26,12 +27,14 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.WegoSkuSyncDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
@@ -56,6 +59,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -657,5 +661,140 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .set(ListingInfoEntity::getPlatformSkuId, platformSkuId)
                 .eq(ListingInfoEntity::getId, listingId)
                 .update();
+    }
+
+    /**
+     * 同步第三方仓 SKU 到「sku对照表-未匹配」：
+     * 1) 先按平台 SKU 去重；
+     * 2) 已存在记录按最新数据纠偏（名称/条码）并更新平台更新时间；
+     * 3) 不存在记录写入 listing_info（未匹配）；
+     * 4) 仅为新增 listing_info 创建一条初始 sku_mapping（产品 SKU 信息为空，待后续人工匹配）。
+     *
+     * @param dto 三方仓 SKU 同步参数
+     * @return 本次新增 listing_info 数量
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Integer syncWarehouseNotMatchSku(WegoSkuSyncDTO.SyncReqDTO dto) {
+        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getSkuList())) {
+            return 0;
+        }
+        // 按平台SKU去重，保留最后一条数据
+        Map<String, WegoSkuSyncDTO.SkuItemDTO> itemMap = new LinkedHashMap<>();
+        for (WegoSkuSyncDTO.SkuItemDTO itemDTO : dto.getSkuList()) {
+            if (Objects.isNull(itemDTO) || StringUtils.isBlank(itemDTO.getSku())) {
+                continue;
+            }
+            itemMap.put(itemDTO.getSku(), itemDTO);
+        }
+        if (itemMap.isEmpty()) {
+            return 0;
+        }
+
+        List<String> skuNoList = new ArrayList<>(itemMap.keySet());
+        List<ListingInfoEntity> existingList = this.listByAuth(
+                RuleTypeEnum.WAREHOUSE.getCode(),
+                skuNoList,
+                Collections.singletonList(dto.getAuthId())
+        );
+        Map<String, ListingInfoEntity> existingMap = existingList.stream()
+                .collect(Collectors.toMap(ListingInfoEntity::getPlatformSkuNo, Function.identity(), (a, b) -> a));
+
+        LocalDateTime now = LocalDateTime.now();
+        List<ListingInfoEntity> toInsert = new ArrayList<>();
+        List<ListingInfoEntity> toUpdate = new ArrayList<>();
+        for (WegoSkuSyncDTO.SkuItemDTO itemDTO : itemMap.values()) {
+            String latestBarcode = buildBarcode(itemDTO.getBarcode());
+            ListingInfoEntity listingInfoEntity = existingMap.get(itemDTO.getSku());
+            if (Objects.isNull(listingInfoEntity)) {
+                // 新 SKU：落库为未匹配状态，等待后续映射
+                ListingInfoEntity add = new ListingInfoEntity();
+                add.setPlatformSkuNo(itemDTO.getSku());
+                add.setPlatformSkuName(StringUtils.defaultString(itemDTO.getName()));
+                add.setThirdBarcode(latestBarcode);
+                add.setType(RuleTypeEnum.WAREHOUSE.getCode());
+                add.setPlatform(dto.getPlatform());
+                add.setAuthId(dto.getAuthId());
+                add.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
+                add.setRemark("");
+                add.setSourceType(ListingSourceTypeEnum.THIRD.getCode());
+                add.setPlatformUpdateTime(now);
+                toInsert.add(add);
+                continue;
+            }
+
+            // 已存在 SKU：只感知 SkuItemDTO 携带的字段（name / barcode）变化，避免无效写入
+            boolean dataChanged = false;
+
+            String latestName = StringUtils.defaultString(itemDTO.getName());
+            if (!StringUtils.equals(listingInfoEntity.getPlatformSkuName(), latestName)) {
+                listingInfoEntity.setPlatformSkuName(latestName);
+                dataChanged = true;
+            }
+            if (!StringUtils.equals(listingInfoEntity.getThirdBarcode(), latestBarcode)) {
+                listingInfoEntity.setThirdBarcode(latestBarcode);
+                dataChanged = true;
+            }
+            if (dataChanged) {
+                listingInfoEntity.setPlatformUpdateTime(now);
+                toUpdate.add(listingInfoEntity);
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(toInsert)) {
+            CollUtil.split(toInsert, 500).forEach(batch -> service.saveBatch(batch));
+        }
+        if (CollectionUtils.isNotEmpty(toUpdate)) {
+            CollUtil.split(toUpdate, 500).forEach(batch -> service.updateBatchById(batch));
+        }
+        if (CollectionUtils.isEmpty(toInsert)) {
+            // 没有新增 listing_info 时无需新增 sku_mapping
+            return 0;
+        }
+
+        String platformName = OmsPlatformEnum.getName(dto.getPlatform());
+        if (StringUtils.isBlank(platformName)) {
+            platformName = dto.getPlatform();
+        }
+        LocalDateTime effectiveTime = LocalDateTime.now();
+        List<SkuMappingEntity> addSkuMappingList = new ArrayList<>();
+        for (ListingInfoEntity listingInfoEntity : toInsert) {
+            // 新增未匹配 SKU 对应一条“空产品信息”的仓库映射，后续人工维护 productSku 字段
+            SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+            skuMappingEntity.setShopId("");
+            skuMappingEntity.setDictPlatform(dto.getPlatform());
+            skuMappingEntity.setPlatformName(platformName);
+            skuMappingEntity.setProductSkuId("");
+            skuMappingEntity.setProductSkuNo("");
+            skuMappingEntity.setProductName("");
+            skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
+            skuMappingEntity.setListingId(listingInfoEntity.getId());
+            skuMappingEntity.setWarehouseId("");
+            skuMappingEntity.setWarehouseName("");
+            skuMappingEntity.setHasMappingAll(Boolean.FALSE);
+            skuMappingEntity.setIsExpire(Boolean.FALSE);
+            skuMappingEntity.setEffectiveTime(effectiveTime);
+            skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+            addSkuMappingList.add(skuMappingEntity);
+        }
+        if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
+            CollUtil.split(addSkuMappingList, 500).forEach(batch -> skuMappingService.saveBatch(batch));
+        }
+        return toInsert.size();
+    }
+
+    /**
+     * 条码列表转字符串（逗号分隔），用于落库 third_barcode。
+     *
+     * @param barcodeList 条码列表
+     * @return 过滤空值后的条码串
+     */
+    private String buildBarcode(List<String> barcodeList) {
+        if (CollectionUtils.isEmpty(barcodeList)) {
+            return "";
+        }
+        return barcodeList.stream()
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(","));
     }
 }
