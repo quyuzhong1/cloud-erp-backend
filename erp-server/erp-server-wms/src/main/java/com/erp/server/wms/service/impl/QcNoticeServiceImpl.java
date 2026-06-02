@@ -2570,9 +2570,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //问题属性字典 type=qcProblemType
         Map<String, String> qcProblemDictNameMap = dictBasicService.getByKey("qcProblemType").stream()
                 .filter(d -> StringUtils.isNotBlank(d.getValue()))
-                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (a, b) -> a));
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (a, b) -> a));
 
-        LocalDateTime nowTime = LocalDateTime.now();
         // 属性赋值
         for (QcNoticeDTO.ListDTO data : list) {
             //质检仓库
