@@ -1,13 +1,11 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.context.ThirdWarehouseHttpTestContext;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +20,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class OkHttpUtils {
-
-    private static final String THIRD_WAREHOUSE_TIMEOUT_TEST_URL = "http://127.0.0.1:9090/test/thirdWarehouseTimeout";
 
     private static final OkHttpClient client =
             new OkHttpClient.Builder()
@@ -199,9 +195,6 @@ public class OkHttpUtils {
     private static String execute(Call call) {
         String respStr = "";
         try {
-            if (ThirdWarehouseHttpTestContext.isTimeoutTest()) {
-                callTimeoutTestApi();
-            }
             ResponseBody body = call.execute().body();
             if (body != null) {
                 respStr = body.string();
@@ -211,16 +204,6 @@ public class OkHttpUtils {
         }
         return respStr;
 
-    }
-
-    private static void callTimeoutTestApi() throws IOException {
-        Request request = new Request.Builder().url(THIRD_WAREHOUSE_TIMEOUT_TEST_URL).build();
-        try (Response response = client.newCall(request).execute()) {
-            ResponseBody body = response.body();
-            if (body != null) {
-                body.string();
-            }
-        }
     }
 
     private static HttpUrl createHttpUrl(Request request, Map<String, Object> params, Map<String, String> headers) {
@@ -357,9 +340,6 @@ public class OkHttpUtils {
     private static String executeBase64(Call call) {
         String respStr = "";
         try {
-            if (ThirdWarehouseHttpTestContext.isTimeoutTest()) {
-                callTimeoutTestApi();
-            }
             ResponseBody body = call.execute().body();
             if (body != null) {
                 MediaType mediaType = body.contentType();
