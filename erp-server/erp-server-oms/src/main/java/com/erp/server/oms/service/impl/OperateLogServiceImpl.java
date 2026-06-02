@@ -29,6 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -385,6 +387,18 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 .setContent(content)
                 .setOperation(operation);
         entity.setIsUserSystem(isUserSystem);
+        return this.save(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public Boolean addModuleOperateLogRequiresNew(String content, String moduleType, String businessId, String operation) {
+        OperateLogEntity entity = new OperateLogEntity();
+        entity.setModuleType(moduleType)
+                .setBusinessId(businessId)
+                .setContent(content)
+                .setOperation(operation);
+        entity.setIsUserSystem(false);
         return this.save(entity);
     }
 

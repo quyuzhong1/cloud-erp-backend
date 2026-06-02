@@ -2905,6 +2905,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode(), operate);
     }
 
+    @Override
+    public void addSubmitDeliveryClickLog(String id) {
+        addSubmitDeliveryClickLog(this.getById(id), id);
+    }
+
+    @Override
+    public void addSubmitDeliveryClickLog(SoB2cEntity entity, String id) {
+        try {
+            String code = Objects.nonNull(entity) ? entity.getCode() : id;
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】用户点击提交发货", code), id, "提交发货");
+        } catch (Exception e) {
+            log.warn("B2C销售订单点击提交发货日志写入失败,soId:{}", id, e);
+        }
+    }
+
     private void updatePlatformStatus(SoB2cEntity entity, String status) {
         if (Objects.isNull(entity) ||  CharSequenceUtil.isBlank(status)){
             return;
@@ -3718,11 +3733,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 String code = soB2cService.addThirdWarehouseDelivery(createOutboundReq, warehouseId, entity);
                 log.warn("新增三方仓发货单成功，发货单code:{}", code);
                 createOutboundReq.setReferenceNo(code);
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】提交发货，创建三方仓发货单【{}】", entity.getCode(), code), entity.getId(), "创建三方仓发货单");
             }else {
                 log.warn("订单{}使用已存在的发货单号{}创建三方仓出库单", entity.getCode(), createOutboundReq.getReferenceNo());
             }
         }catch (Exception e){
             log.error("B2C订单【{}】生成三方仓发货单异常>>>{}", entity.getCode(), e.getMessage());
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】创建三方仓发货单失败，原因：{}", entity.getCode(), e.getMessage()), entity.getId(), "创建三方仓发货单失败");
             throw new ServiceException("生成三方仓发货单异常", e.getMessage());
         }
         ApiResult<ThirdWarehouseQueryOutboundResponse> apiResult = null;
@@ -3738,6 +3755,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     throw new ServiceException("调用三方仓出库单异常，{}", apiResult.getMsg());
                 }
                 String message = "创建三方仓出库单异常" + apiResult.getMsg();
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】删除，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), apiResult.getMsg()), entity.getId(), "三方仓发货失败");
                 //生成异常订单信息
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 //标记三方仓发货单为删除
@@ -3754,21 +3772,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (retryCount + 1 < MAX_RETRY_COUNT){
             try {
                 log.error("订单{}三方仓发货单号{}，30秒后进行第{}次重试", entity.getCode(), createOutboundReq.getReferenceNo(), retryCount + 2);
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】，原因：{}，进行第{}次重试", entity.getCode(), createOutboundReq.getReferenceNo(), e.getMessage(), retryCount + 2), entity.getId(), "三方仓发货重试");
                 Thread.sleep(RETRY_DELAY_SECONDS);
                 return createThirdWarehouseOutbound(entity, warehouseId, createOutboundReq, retryCount + 1, thirdWarehouseDeliveryEntity);
             }catch (Exception e1){
                 String message = e1.getMessage();
+                addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货失败，三方仓发货单【{}】删除，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), message), entity.getId(), "三方仓发货失败");
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
                 return ApiResult.error( -1, message);
             }
         }else {
             log.error("订单{}三方仓发货单号{}已达到最大重试次数{}次，停止重试", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT);
-            operateLogService.addModuleOperateLog("系统有重试，超过了最大次数，异常类型：" + SoB2cErrorTypeEnum.getName(type), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "重试失败");
             String message = "重试创建出库单异常"+ e.getMessage();
+            addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】三方仓发货重试失败，三方仓发货单【{}】删除，已达到最大重试次数{}次，原因：{}", entity.getCode(), createOutboundReq.getReferenceNo(), MAX_RETRY_COUNT, e.getMessage()), entity.getId(), "三方仓发货失败");
             soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
             thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
             return ApiResult.error( -1, e.getMessage());
+        }
+    }
+
+    private void addModuleOperateLogRequiresNew(String content, String businessId, String operation) {
+        try {
+            operateLogService.addModuleOperateLogRequiresNew(content, ModuleTypeEnum.SO_B2C.getCode(), businessId, operation);
+        } catch (Exception logEx) {
+            log.warn("B2C销售订单操作日志写入失败，businessId:{}, operation:{}, content:{}", businessId, operation, content, logEx);
         }
     }
 
@@ -7511,11 +7539,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setType(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
             addError.setMainId(entity.getId());
             addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
-            soB2cErrorService.add(addError);
+            soB2cErrorService.addWithoutSignError(addError);
 
         }else{
             if(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())){
-                soB2cErrorService.removeErrorOrder(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+                soB2cErrorService.removeErrorOrderWithoutSignError(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
                 entity.setSignOrderError("");
                 entity.setIsFrozen(false);
                 entity.setFrozenType("");
