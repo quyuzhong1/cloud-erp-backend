@@ -2856,6 +2856,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode(), operate);
     }
 
+    @Override
+    public void addSubmitDeliveryClickLog(String id) {
+        SoB2cEntity entity = this.getById(id);
+        String code = Objects.nonNull(entity) ? entity.getCode() : id;
+        addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】用户点击提交发货", code), id, "提交发货");
+    }
+
     private void updatePlatformStatus(SoB2cEntity entity, String status) {
         if (Objects.isNull(entity) || CharSequenceUtil.isBlank(status)) {
             return;

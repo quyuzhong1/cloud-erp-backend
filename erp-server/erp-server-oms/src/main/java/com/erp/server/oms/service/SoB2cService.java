@@ -199,6 +199,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO submitDelivery(String id, String channelId);
     /**
+     * 记录用户点击提交发货日志
+     * @param id B2C订单ID
+     */
+    void addSubmitDeliveryClickLog(String id);
+    /**
      * 检查发货限制
      * @param id 订单ID
      * @param deliveryType 发货类型 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.DeliveryRestrictionEnum}
