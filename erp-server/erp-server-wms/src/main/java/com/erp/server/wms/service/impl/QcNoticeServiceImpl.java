@@ -1195,6 +1195,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
 
+        // 供应商编码 / 名称按 supplierId 批量回填（qc_notice_detail 只存 supplier_id）
+        List<String> qcSupplierIds = qcInfoViews.stream()
+                .map(QcNoticeDTO.QcInfoFullView::getSupplierId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> qcSupplierMap = CollUtil.isEmpty(qcSupplierIds)
+                ? Collections.emptyMap()
+                : supplierFeign.getSupplierSimpleInfo(qcSupplierIds);
 
         List<String> qcNoticeIds = qcInfoViews
                 .stream()
@@ -1221,6 +1230,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 BeanUtils.copyProperties(productPackVO,qcProductView);
                 qcProductView.setBoxImageUrlList(productPackVO.getBoxImageUrlList());
                 qcProductView.setProductImageUrlList(productPackVO.getSkuImageUrlList());
+            }
+
+            //供应商编码 / 名称
+            if (StrUtil.isNotBlank(qcInfoView.getSupplierId())) {
+                SupplierDTO.SupplierSimpleDTO supplierSimple = qcSupplierMap.get(qcInfoView.getSupplierId());
+                if (supplierSimple != null) {
+                    qcInfoView.setSupplierCode(supplierSimple.getCode());
+                    qcInfoView.setSupplierName(supplierSimple.getName());
+                }
             }
 
             //抽样方案
