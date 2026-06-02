@@ -796,7 +796,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .eq(SoB2cEntity::getIsDeleted, Boolean.FALSE)
                 .list();
 
-        //非货到付款（批量预取支付方式配置，避免循环内重复查库）
         Map<String, CfgSettingDTO.PayMethodDTO> payMethodSettingMap = soB2cCoreService.listPayMethodSettingMap();
         List<SoB2cEntity> toDeleteList = soB2cList.stream()
                 .filter(entity -> !payMethodSettingMap.containsKey(
@@ -807,17 +806,51 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
 
-        List<String> soB2cIdList = toDeleteList.stream()
-                .map(SoB2cEntity::getId)
-                .collect(Collectors.toList());
-        String codes = toDeleteList.stream()
-                .map(SoB2cEntity::getCode)
-                .filter(CharSequenceUtil::isNotBlank)
-                .collect(Collectors.joining(","));
+        List<String> soB2cIdList = new ArrayList<>();
+        List<String> skipCodeList = new ArrayList<>();
+        List<String> successCodeList = new ArrayList<>();
 
-        this.deleteById(soB2cIdList, codes);
+        for (SoB2cEntity entity : toDeleteList) {
+            BatchResultDTO validateResult = validateForDelete(entity);
+            if (!validateResult.getSuccess()) {
+                skipCodeList.add(CharSequenceUtil.format("{}({})", entity.getCode(), validateResult.getMsg()));
+                continue;
+            }
+            soB2cIdList.add(entity.getId());
+            successCodeList.add(entity.getCode());
+        }
 
-        XxlJobHelper.log("成功删除{}条b2c销售订单，ID为:{}",soB2cIdList.size(), codes);
+        if (CollUtil.isNotEmpty(soB2cIdList)) {
+            String codes = successCodeList.stream().filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(","));
+            this.deleteById(soB2cIdList, codes);
+            XxlJobHelper.log("成功删除{}条b2c销售订单，单号为:{}", soB2cIdList.size(), codes);
+        }
+
+        if (CollUtil.isNotEmpty(skipCodeList)) {
+            XxlJobHelper.log("跳过{}条不符合删除条件的b2c销售订单，单号及原因:{}", skipCodeList.size(), String.join("; ", skipCodeList));
+        }
+    }
+
+    private BatchResultDTO validateForDelete(SoB2cEntity entity) {
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        if (Objects.nonNull(logisticsEntity)) {
+            if (CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ||
+                CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ||
+                CharSequenceUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+                try {
+                    List<SoB2cEntity> soB2cEntityList = Collections.singletonList(entity);
+                    List<SoB2cLogisticsEntity> logisticsEntityList = Collections.singletonList(logisticsEntity);
+                    BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(entity.getId(), soB2cEntityList, logisticsEntityList, true);
+                    if (!resultDTO.getSuccess()) {
+                        return BatchResultDTO.fail(entity.getId(), entity.getCode(), resultDTO.getMsg());
+                    }
+                } catch (Exception e) {
+                    log.error("B2C销售订单【{}】校验删除条件时取消物流单失败", entity.getCode(), e);
+                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消物流单失败，请联系物流同事处理");
+                }
+            }
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
