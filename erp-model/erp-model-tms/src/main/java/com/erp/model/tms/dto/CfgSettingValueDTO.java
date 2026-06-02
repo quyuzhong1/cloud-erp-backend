@@ -353,6 +353,8 @@ public class CfgSettingValueDTO implements Serializable {
         private String smallBagTimeoutSeconds;
         private String firstMileBatch;
         private String firstMileTimeoutSeconds;
+        private String transferBatch;
+        private String transferTimeoutSeconds;
     }
 
 }

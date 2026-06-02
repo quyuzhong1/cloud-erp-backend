@@ -106,7 +106,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private RedissonClient redissonClient;
     @Lazy
     @Resource
-    private SmallBagCostAllocationServiceImpl self;
+    private SmallBagCostAllocationService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
