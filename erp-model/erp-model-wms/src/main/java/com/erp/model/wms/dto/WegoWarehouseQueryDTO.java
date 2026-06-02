@@ -3,7 +3,6 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -24,19 +23,16 @@ public class WegoWarehouseQueryDTO implements Serializable {
         /**
          * WEGO 网关域名，例如 https://xxx.wegobusiness.com
          */
-        @NotBlank(message = "WEGO域名不能为空")
         private String domain;
 
         /**
          * WEGO accessToken
          */
-        @NotBlank(message = "accessToken不能为空")
         private String accessToken;
 
         /**
          * WEGO secret（用于本地签名，不会发给第三方）
          */
-        @NotBlank(message = "secret不能为空")
         private String secret;
 
         /**

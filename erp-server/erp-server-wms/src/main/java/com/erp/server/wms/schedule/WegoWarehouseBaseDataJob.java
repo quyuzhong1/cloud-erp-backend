@@ -10,8 +10,7 @@ import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
-import com.erp.server.wms.service.WegoOpenApiService;
-import com.sdk.wms.wego.constants.WeGoConstants;
+import com.sdk.wms.wego.service.WegoOpenApiService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -83,21 +82,19 @@ public class WegoWarehouseBaseDataJob {
                 }
                 String appToken = toStr(authJson.get(AUTH_KEY_APP_TOKEN));
                 String appSecret = toStr(authJson.get(AUTH_KEY_APP_SECRET));
-                String domain = WeGoConstants.BASE_URL;
-                if (CharSequenceUtil.hasBlank(appToken, appSecret, domain)) {
-                    XxlJobHelper.log("[WEGO仓库基础数据] 服务商[id={}, shortName={}] appToken/appSecret/domain缺失，跳过",
+                if (CharSequenceUtil.hasBlank(appToken, appSecret)) {
+                    XxlJobHelper.log("[WEGO仓库基础数据] 服务商[id={}, shortName={}] appToken/appSecret缺失，跳过",
                             provider.getId(), provider.getShortName());
                     failCount++;
                     continue;
                 }
 
                 WegoWarehouseQueryDTO.QueryReqDTO reqDTO = new WegoWarehouseQueryDTO.QueryReqDTO();
-                reqDTO.setDomain(domain);
                 reqDTO.setAccessToken(appToken);
                 reqDTO.setSecret(appSecret);
 
-                JSONObject result = wegoOpenApiService.queryWarehouse(reqDTO);
-                JSONArray warehouseList = extractWarehouseList(result);
+                JSONObject response = wegoOpenApiService.queryWarehouse(reqDTO);
+                JSONArray warehouseList = extractWarehouseList(response);
                 if (Objects.isNull(warehouseList)) {
                     XxlJobHelper.log("[WEGO仓库基础数据] 服务商[id={}, shortName={}] 接口返回失败或result为空，跳过落库",
                             provider.getId(), provider.getShortName());
@@ -131,26 +128,20 @@ public class WegoWarehouseBaseDataJob {
     }
 
     /**
-     * 从 WegoOpenApiService 返回的包装对象中提取 result 数组，校验业务成功标识。
+     * 从 WEGO 原始响应中提取 result 数组，校验业务成功标识。
      * <p>
      * 接口结构: {success, errorCode, errorMsg, serverTime, result:[...]}
      */
-    private JSONArray extractWarehouseList(JSONObject result) {
-        if (Objects.isNull(result)) {
+    private JSONArray extractWarehouseList(JSONObject response) {
+        if (Objects.isNull(response)) {
             return null;
         }
-        Object responseBody = result.get("responseBody");
-        if (!(responseBody instanceof JSONObject)) {
-            XxlJobHelper.log("[WEGO仓库基础数据] 响应体非JSON结构: {}", responseBody);
-            return null;
-        }
-        JSONObject body = (JSONObject) responseBody;
-        Boolean success = body.getBoolean("success");
+        Boolean success = response.getBoolean("success");
         if (!Boolean.TRUE.equals(success)) {
             XxlJobHelper.log("[WEGO仓库基础数据] 接口返回失败: errorCode={}, errorMsg={}",
-                    body.get("errorCode"), body.get("errorMsg"));
+                    response.get("errorCode"), response.get("errorMsg"));
             return null;
         }
-        return body.getJSONArray("result");
+        return response.getJSONArray("result");
     }
 }

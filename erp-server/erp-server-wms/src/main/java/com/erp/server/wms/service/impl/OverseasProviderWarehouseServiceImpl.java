@@ -42,6 +42,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.*;
@@ -479,12 +480,13 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             if (existingCodeSet.contains(warehouseCode)) {
                 continue;
             }
-
+            AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(wh.getString("warehouseRegion"));
             OverseasProviderWarehouseEntity insert = new OverseasProviderWarehouseEntity();
             insert.setMainId(mainId);
             insert.setPlatformWarehouseCode(warehouseCode);
             insert.setPlatformWarehouseName(wh.getString("warehouseName"));
             insert.setCountry(wh.getString("warehouseRegion"));
+            insert.setCountryName(marketPlaceEnum.getName());
             insert.setDisabled(Boolean.TRUE);
             toInsert.add(insert);
         }
@@ -493,7 +495,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         List<String> toDeleteIds = new ArrayList<>();
         List<OverseasProviderWarehouseEntity> toDisable = new ArrayList<>();
         for (OverseasProviderWarehouseEntity exist : existingList) {
-            String code = exist.getPlatformWarehouseCode();
+            String code = exist.getWarehouseCode();
             if (CharSequenceUtil.isBlank(code) || apiWarehouseCodes.contains(code)) {
                 continue;
             }
