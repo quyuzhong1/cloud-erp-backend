@@ -306,7 +306,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                     .warehouseIds(Collections.singletonList(dto.getWarehouseId()))
                     .orgId(dto.getOrgId())
                     .build();
-            List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList = logisticsFeign.getSkuCostInCNY(queryDTO);
+            List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList = logisticsFeign.getSkuCostInCNYForStdCost(queryDTO);
             if (CollectionUtils.isNotEmpty(skuCostList)) {
                 skuCostMap = skuCostList.stream()
                         .filter(item -> StringUtils.isNotBlank(item.getSkuId()))
@@ -407,25 +407,28 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 .warehouseIds(Collections.singletonList(warehouseId))
                 .orgId(orgId)
                 .build();
-        return resolveAutoFetchSkuCost(logisticsFeign.getSkuCostInCNY(queryDTO));
+        return resolveAutoFetchSkuCost(logisticsFeign.getSkuCostInCNYForStdCost(queryDTO));
     }
 
     InventorySkuCostDTO.SkuCostCNYDTO resolveAutoFetchSkuCost(List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
         if (CollectionUtils.isEmpty(skuCostList)) {
             throw new ServiceException("未找到最新已审核SKU成本");
         }
-        InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.get(0);
+        InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
+                .filter(item -> item.getAccountingMonth() != null)
+                .max(Comparator.comparing(InventorySkuCostDTO.SkuCostCNYDTO::getAccountingMonth))
+                .orElse(null);
+        if (skuCost == null) {
+            throw new ServiceException("最新已审核SKU成本核算月份为空");
+        }
         if (skuCost.getProductCostCNY() == null || BigDecimal.ZERO.compareTo(skuCost.getProductCostCNY()) >= 0) {
             throw new ServiceException("最新已审核SKU成本材料成本无效");
-        }
-        if (skuCost.getAllocatedMonth() == null) {
-            throw new ServiceException("最新已审核SKU成本核算月份为空");
         }
         return skuCost;
     }
 
     LocalDate getAutoFetchEffectiveDate(InventorySkuCostDTO.SkuCostCNYDTO skuCost) {
-        return skuCost.getAllocatedMonth().withDayOfMonth(1);
+        return skuCost.getAccountingMonth().withDayOfMonth(1);
     }
 
     @Transactional(rollbackFor = Exception.class)
