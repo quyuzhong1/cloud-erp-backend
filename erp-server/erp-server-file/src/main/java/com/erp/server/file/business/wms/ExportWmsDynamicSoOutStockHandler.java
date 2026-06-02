@@ -20,6 +20,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOC
 @Slf4j
 public class ExportWmsDynamicSoOutStockHandler extends AbstractDynamicHeadersFileEventHandler<SoOutstockDTO.PagingParamDTO> {
 
+    private static final int PAGE_SIZE = 10000;
+
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
@@ -38,5 +40,11 @@ public class ExportWmsDynamicSoOutStockHandler extends AbstractDynamicHeadersFil
     @Override
     public FileTaskEventEnum getEvent() {
         return EXPORT_WMS_SO_OUT_STOCK_DYNAMIC;
+    }
+
+
+    @Override
+    protected int getPageSize() {
+        return PAGE_SIZE;
     }
 }
