@@ -5149,12 +5149,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             } else if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
                 resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
                         "只允许选择待提交、审核不通过销售出库单更新出库日期"));
-            } else if (Objects.isNull(dto.getVersion())) {
-                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
-                        "版本号不能为空，请刷新后重试"));
-            } else if (!dto.getVersion().equals(entity.getVersion())) {
-                resultDTOS.add(BatchResultDTO.fail(dto.getId(), entity.getCode(),
-                        "数据已被他人修改，请刷新后重试"));
             } else {
                 entity.setBillDate(dto.getOutDate());
                 updateList.add(entity);
