@@ -74,7 +74,8 @@ public class TikTokSoB2cHandle extends AbstractSoB2cHandle  {
         //如果是已发货且是平台仓订单 就生成销售出库单
         if (isShipped && hasPlatformWarehouse) {
             try {
-                validateWarehouseMapping(dto, mainEntity);
+                //这是之前旧代码 第一版的FBT校验 去掉
+//                validateWarehouseMapping(dto, mainEntity);
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
                 LocalDate soOutstockDate = dto == null ? null : dto.getBillDate();
                 if (soOutstockDate == null) {
