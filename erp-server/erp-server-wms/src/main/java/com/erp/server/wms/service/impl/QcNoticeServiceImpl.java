@@ -177,6 +177,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @Resource
     private CfgQcUserService cfgQcUserService;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -2557,6 +2560,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
         Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
+        //问题属性字典 type=qcProblemType
+        Map<String, String> qcProblemDictNameMap = dictBasicService.getByKey("qcProblemType").stream()
+                .filter(d -> StringUtils.isNotBlank(d.getValue()))
+                .collect(Collectors.toMap(DictBasicDTO.ListDTO::getValue, DictBasicDTO.ListDTO::getName, (a, b) -> a));
+
         LocalDateTime nowTime = LocalDateTime.now();
         // 属性赋值
         for (QcNoticeDTO.ListDTO data : list) {
@@ -2585,6 +2593,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());
 
             data.setQcInfoCode(map.getOrDefault(data.getDetailId(), ""));
+
+            //问题属性名称 type=qcProblemType
+            if (StringUtils.isNotBlank(data.getQcProblemDict())) {
+                data.setQcProblemDictName(qcProblemDictNameMap.getOrDefault(data.getQcProblemDict(), ""));
+            }
 
             SupplierEntity supplier = supplierFeign.getSupplierById(data.getSupplierId());
             if (Objects.nonNull(supplier)) {
