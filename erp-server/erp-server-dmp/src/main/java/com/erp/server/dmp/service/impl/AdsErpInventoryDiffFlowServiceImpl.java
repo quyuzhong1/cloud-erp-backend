@@ -78,6 +78,10 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
     private static final Set<String> ALLOWED_TABLES = Arrays.stream(InventoryMonthCheckEnum.values())
             .map(InventoryMonthCheckEnum::getCode)
             .collect(Collectors.toSet());
+    
+    // 若暂无枚举，至少提取为 private static final：
+    private static final String EXEC_STATUS_WAIT = "wait";
+    private static final String EXEC_STATUS_WAIT_NAME = "待执行";
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -304,9 +308,10 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
 	public void updateReCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
 			String sourceSystem) {
     	String tableCode = inventoryMonthCheckEnum.getCode();
+    	//此处仅防 Mapper 被直接调用时的滥用
         if (!ALLOWED_TABLES.contains(tableCode)) {
             throw new ServiceException("非法表名：" + tableCode);
         }
-		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem , "wait" , "待执行");
+		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem , EXEC_STATUS_WAIT , EXEC_STATUS_WAIT_NAME);
 	}
 }
