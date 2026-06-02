@@ -133,7 +133,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     private RedissonClient redissonClient;
     @Lazy
     @Resource
-    private TransferDeclareCostAllocationServiceImpl self;
+    private TransferDeclareCostAllocationService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -445,11 +445,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 					return;
 				}
 			} else if (!Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-				log.warn("中转核算状态变更异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
-				return;
-			}
+			log.warn("中转核算状态变更异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
+			return;
+		}
 
-			int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getSmallBagBatch(), 500);
+		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -655,11 +655,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 					return;
 				}
 			} else if (!Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-				log.warn("中转重新分摊异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
-				return;
-			}
+			log.warn("中转重新分摊异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
+			return;
+		}
 
-			int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getSmallBagBatch(), 500);
+		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -864,11 +864,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 					return;
 				}
 			} else if (!Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())) {
-				log.warn("中转批量删除异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
-				return;
-			}
+			log.warn("中转批量删除异步任务状态不可执行，taskId: {}, status: {}", taskId, taskRecord.getStatus());
+			return;
+		}
 
-			int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getSmallBagBatch(), 500);
+		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;

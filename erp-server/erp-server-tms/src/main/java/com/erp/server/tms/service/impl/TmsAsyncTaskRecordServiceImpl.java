@@ -6,7 +6,6 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONConfig;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
@@ -62,6 +61,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
@@ -466,6 +467,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             data.setBusinessTypeName(TmsAsyncTaskRecordBusinessTypeEnum.getName(data.getBusinessType()));
             data.setStatusName(TmsAsyncTaskRecordStatusEnum.getName(data.getStatus()));
             data.setExecTypeName(TmsAsyncTaskRecordExecTypeEnum.getName(data.getExecType()));
+            data.setMethodTypeName(TmsAsyncTaskMethodTypeEnum.getName(data.getMethodType()));
         }
     }
 
@@ -797,7 +799,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         try {
             SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                log.error("消息发送结果失败：{}", JSON.toJSONString(sendResult));
                 lambdaUpdate()
                         .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                         .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
