@@ -49,6 +49,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -73,6 +74,10 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpRestCloudService dmpRestCloudService;
+    
+    private static final Set<String> ALLOWED_TABLES = Arrays.stream(InventoryMonthCheckEnum.values())
+            .map(InventoryMonthCheckEnum::getCode)
+            .collect(Collectors.toSet());
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -291,10 +296,17 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
         return Boolean.TRUE;
     }
 
+    /**
+     *需要异步，不然直接使用的postgres数据源
+     */
     @Async("pullErpOpenApi")
 	@Override
 	public void updateReCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
 			String sourceSystem) {
-		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem);
+    	String tableCode = inventoryMonthCheckEnum.getCode();
+        if (!ALLOWED_TABLES.contains(tableCode)) {
+            throw new ServiceException("非法表名：" + tableCode);
+        }
+		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem , "wait" , "待执行");
 	}
 }

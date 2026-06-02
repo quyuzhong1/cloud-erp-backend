@@ -498,12 +498,17 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
 		BatchResultDTO doTask = doTask(id, dto, dmpCfgInputEntity, dmpCfgInputDetailEntity);
 		
 		String finSourceSystem = sourceSystem;
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-			@Override
-            public void afterCommit() {
-            	adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
-            }
-        });
+		if (TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+				@Override
+	            public void afterCommit() {
+	            	adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
+	            }
+	        });
+		}else {
+			// 无事务时直接调用
+			adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
+		}
 		return doTask;
 	}
 }
