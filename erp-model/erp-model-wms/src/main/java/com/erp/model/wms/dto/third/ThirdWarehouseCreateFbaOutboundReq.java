@@ -258,6 +258,22 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          */
         private String labelSize;
         /**
+         * 货件标签文件ID
+         */
+        private Integer shipmentFileId;
+        /**
+         * 货件标签文件URL
+         */
+        private String shipmentFileUrl;
+        /**
+         * 货件标签文件名称
+         */
+        private String shipmentFileName;
+        /**
+         * 货件标签文件base64
+         */
+        private String shipmentFileBase64;
+        /**
          * 贴标要求
          */
         private String labelingRequirement;

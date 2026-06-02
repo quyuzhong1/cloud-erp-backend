@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.B2bPackingLabelSizeEnum;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String GOOD_CANG_SHIPMENT_LABEL_ATTACHMENT = "SHIPMENT_LABEL_ATTACHMENT";
 
     @Resource
     private GoodCangService goodCangService;
@@ -184,14 +186,13 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq){
-        GoodCangUploadFileReq goodCangUploadFileReq = GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
+        GoodCangUploadFileReq goodCangUploadFileReq = isGoodCangB2bAttachment(uploadFileReq.getFileType())
                 ? ThirdWarehouseConverter.INSTANCE.reqToGoodCangB2bAttachmentUploadFileReq(uploadFileReq)
                 : ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
         if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
         }
-        if(GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(uploadFileReq.getFileType())
-                && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
+        if(isGoodCangB2bAttachment(uploadFileReq.getFileType()) && CharSequenceUtil.isNotBlank(uploadFileReq.getFileName())){
             goodCangUploadFileReq.setFileName(uploadFileReq.getFileName());
             goodCangUploadFileReq.setFile(cleanB2bAttachmentBase64(goodCangUploadFileReq.getFile(), uploadFileReq.getFileName()));
         }
@@ -205,6 +206,11 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
         return isSuccess(response.getAsk(), response.getMessage()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
 
+    }
+
+    private boolean isGoodCangB2bAttachment(String fileType) {
+        return GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(fileType)
+                || GOOD_CANG_SHIPMENT_LABEL_ATTACHMENT.equalsIgnoreCase(fileType);
     }
     @Override
     public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq){
@@ -590,17 +596,17 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .collect(Collectors.toList());
             GoodCangCreateB2bReq.ShipmentFile shipmentFile = GoodCangCreateB2bReq.ShipmentFile.builder()
                     .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
-                    .labelSize(CharSequenceUtil.blankToDefault(boxHead.getLabelSize(), ""))
-                    .shipmentFileId("")
+                    .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
+                    .shipmentFileId(boxHead.getShipmentFileId())
                     .build();
             packingList.add(GoodCangCreateB2bReq.Packing.builder()
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
                     .boxNo(entry.getKey())
                     .boxRefMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
-                    .shipmentFileId("")
+                    .shipmentFileId(boxHead.getShipmentFileId())
                     .shipmentFileList(Collections.singletonList(shipmentFile))
-                    .logisticsFileId("")
-                    .customsFileId("")
+                    .logisticsFileId(null)
+                    .customsFileId(null)
                     .packingLineList(packingLineList)
                     .build());
         }

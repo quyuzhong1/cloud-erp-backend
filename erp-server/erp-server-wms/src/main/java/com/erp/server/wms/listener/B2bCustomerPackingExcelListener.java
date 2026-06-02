@@ -12,6 +12,7 @@ import com.erp.model.wms.enums.B2bPackingLabelSizeEnum;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +98,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         viewDTO.setBoxSeq(boxSeq);
         viewDTO.setSkuNo(row.getSkuNo().trim());
         viewDTO.setPackingQty(packingQty);
+        viewDTO.setSort(successLineList.size());
         if (productDetail != null) {
             viewDTO.setSkuId(productDetail.getSkuId());
             viewDTO.setProductName(productDetail.getProductName());
@@ -110,6 +112,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         boxDTO.setBoxMarkRefNo(CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), "").trim());
         boxDTO.setLabelSize(CharSequenceUtil.blankToDefault(row.getLabelSize(), "").trim());
         boxDTO.setLabelingRequirement(CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), "").trim());
+        boxDTO.setAttachList(Collections.emptyList());
         successList.add(boxDTO);
     }
 

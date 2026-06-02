@@ -166,7 +166,7 @@ public class GoodCangCreateB2bReq {
          * 货件标签文件ID
          */
         @JSONField(name = "shipment_file_id")
-        private String shipmentFileId;
+        private Integer shipmentFileId;
 
         /**
          * 货件标签文件列表
@@ -178,13 +178,13 @@ public class GoodCangCreateB2bReq {
          * 物流文件ID
          */
         @JSONField(name = "logistics_file_id")
-        private String logisticsFileId;
+        private Integer logisticsFileId;
 
         /**
          * 报关文件ID
          */
         @JSONField(name = "customs_file_id")
-        private String customsFileId;
+        private Integer customsFileId;
 
         /**
          * 箱内SKU列表
@@ -206,16 +206,16 @@ public class GoodCangCreateB2bReq {
         private String labellingRequire;
 
         /**
-         * 标签尺寸
+         * 标签尺寸枚举值，100*150 对应 1
          */
         @JSONField(name = "label_size")
-        private String labelSize;
+        private Integer labelSize;
 
         /**
          * 货件标签文件ID
          */
         @JSONField(name = "shipment_file_id")
-        private String shipmentFileId;
+        private Integer shipmentFileId;
     }
 
     @Data

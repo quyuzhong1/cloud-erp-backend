@@ -33,6 +33,7 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -82,6 +83,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
@@ -178,6 +180,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
@@ -1081,6 +1085,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         try {
             prepareCreateFbaOutboundAttachment(service, req);
+            preparePackingShipmentFiles(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
         } catch (Exception e) {
             log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
@@ -1153,6 +1158,47 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return fileType;
         }
         return FileUtil.getFileExtension(req.getFileUrl());
+    }
+
+    private void preparePackingShipmentFiles(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
+        if (!PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+                || CollUtil.isEmpty(req.getPackingDetailList())) {
+            return;
+        }
+        Map<Integer, ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxHeadMap = new LinkedHashMap<>();
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+            if (item.getBoxSeq() != null && !boxHeadMap.containsKey(item.getBoxSeq())) {
+                boxHeadMap.put(item.getBoxSeq(), item);
+            }
+        }
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead : boxHeadMap.values()) {
+            if (Objects.nonNull(boxHead.getShipmentFileId()) || StrUtil.isBlank(boxHead.getShipmentFileBase64())) {
+                continue;
+            }
+            Integer shipmentFileId = uploadPackingShipmentFile(service, req, boxHead);
+            for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+                if (Objects.equals(item.getBoxSeq(), boxHead.getBoxSeq())) {
+                    item.setShipmentFileId(shipmentFileId);
+                }
+            }
+        }
+    }
+
+    private Integer uploadPackingShipmentFile(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                              ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        ThirdWarehouseUploadFileReq uploadFileReq = new ThirdWarehouseUploadFileReq();
+        uploadFileReq.setAuthId(req.getAuthId());
+        uploadFileReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+        uploadFileReq.setOrderCode(req.getReferenceNo());
+        uploadFileReq.setFileData(boxHead.getShipmentFileBase64());
+        uploadFileReq.setFileUrl(boxHead.getShipmentFileUrl());
+        uploadFileReq.setFileName(boxHead.getShipmentFileName());
+        uploadFileReq.setFileType("SHIPMENT_LABEL_ATTACHMENT");
+        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
+        if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
+            throw new ServiceException("上传B2B装箱货件标签失败:{}", uploadFileResult.getMsg());
+        }
+        return uploadFileResult.getData().getAttachId();
     }
 
     @Override
@@ -1564,7 +1610,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
-        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = toPackingImportDetailList(soInfoFeign.listSoDetailByMainId(excelImportDTO.getSoId()));
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(excelImportDTO.getSoId());
+        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = enrichPackingImportDetailList(toPackingImportDetailList(soDetailList), soDetailList);
         B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
         try {
             EasyExcel.read(excelImportDTO.getExcelFile().getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
@@ -1610,8 +1657,65 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             dto.setPerBoxQty(e.getPerBoxQty());
             dto.setDeliverySkuId(e.getDeliverySkuId());
             dto.setDeliverySkuNo(e.getDeliverySkuNo());
+            dto.setWarehousePlatformSku(CharSequenceUtil.blankToDefault(e.getPlatformSkuNo(), e.getDeliverySkuNo()));
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> enrichPackingImportDetailList(
+            List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList,
+            List<SoDetailEntity> soDetailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, String> productNameMap = getProductNameMap(detailList);
+        Map<String, String> warehouseSkuMap = getWarehouseSkuMap(soDetailList);
+        detailList.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getProductName())) {
+                e.setProductName(CharSequenceUtil.blankToDefault(productNameMap.get(e.getSkuId()), productNameMap.get(e.getDeliverySkuId())));
+            }
+            if (CharSequenceUtil.isBlank(e.getWarehousePlatformSku())) {
+                e.setWarehousePlatformSku(warehouseSkuMap.get(e.getSkuNo()));
+            }
+        });
+        return detailList;
+    }
+
+    private Map<String, String> getProductNameMap(List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList) {
+        Set<String> skuIds = new HashSet<>();
+        detailList.forEach(e -> {
+            if (CharSequenceUtil.isNotBlank(e.getSkuId())) {
+                skuIds.add(e.getSkuId());
+            }
+            if (CharSequenceUtil.isNotBlank(e.getDeliverySkuId())) {
+                skuIds.add(e.getDeliverySkuId());
+            }
+        });
+        Map<String, String> productNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(skuIds)) {
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
+            if (CollUtil.isNotEmpty(productDetailList)) {
+                for (ProductDetailEntity productDetail : productDetailList) {
+                    if (CharSequenceUtil.isNotBlank(productDetail.getId()) && CharSequenceUtil.isNotBlank(productDetail.getName())) {
+                        productNameMap.putIfAbsent(productDetail.getId(), productDetail.getName());
+                    }
+                }
+            }
+        }
+        return productNameMap;
+    }
+
+    private Map<String, String> getWarehouseSkuMap(List<SoDetailEntity> soDetailList) {
+        Map<String, String> warehouseSkuMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(soDetailList)) {
+            for (SoDetailEntity soDetail : soDetailList) {
+                String warehousePlatformSku = CharSequenceUtil.blankToDefault(soDetail.getPlatformSkuNo(), soDetail.getDeliverySkuNo());
+                if (CharSequenceUtil.isNotBlank(soDetail.getSkuNo()) && CharSequenceUtil.isNotBlank(warehousePlatformSku)) {
+                    warehouseSkuMap.putIfAbsent(soDetail.getSkuNo(), warehousePlatformSku);
+                }
+            }
+        }
+        return warehouseSkuMap;
     }
 
     private void normalizePackingFields(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {
