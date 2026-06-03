@@ -28,6 +28,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
@@ -287,29 +288,40 @@ public class LogisticsReconServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public LogisticsReconService.ReconBatchResult handleReconImportBatch(List<Map<Integer, String>> rows,
-                                                                         Map<Integer, String> headMap,
-                                                                         int rowNoStart,
-                                                                         LogisticsReconDTO.ImportDTO dto,
-                                                                         CfgLogisticsCostImportEntity importCfg,
-                                                                         List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
+    public LogisticsReconBatchResultDTO handleReconImportBatch(List<Map<Integer, String>> rows,
+                                                               Map<Integer, String> headMap,
+                                                               int rowNoStart,
+                                                               LogisticsReconDTO.ImportDTO dto,
+                                                               CfgLogisticsCostImportEntity importCfg,
+                                                               List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
         Map<String, Integer> headerIndexMap = buildHeaderIndexMap(headMap);
         List<LogisticsReconDetailEntity> detailList = new ArrayList<>();
         List<LogisticsReconDetailSubEntity> subList = new ArrayList<>();
         List<LogisticsReconImportExcelDTO> errorList = new ArrayList<>();
         int rowNo = rowNoStart;
         for (Map<Integer, String> row : rows) {
-            LogisticsReconImportExcelDTO excelDTO = buildReconImportExcel(rowNo, row, headerIndexMap, cfgDetails);
-            List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
-            if (CollUtil.isNotEmpty(errorMsgList)) {
-                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            int currentRowNo = rowNo++;
+            LogisticsReconImportExcelDTO excelDTO = null;
+            try {
+                excelDTO = buildReconImportExcel(currentRowNo, row, headerIndexMap, cfgDetails);
+                List<String> errorMsgList = FieldValidUtil.fieldValid(excelDTO);
+                if (CollUtil.isNotEmpty(errorMsgList)) {
+                    excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                LogisticsReconDetailEntity detail = buildReconDetail(dto, currentRowNo, excelDTO);
+                detailList.add(detail);
+                subList.add(buildReconDetailSub(dto, detail, excelDTO));
+            } catch (NumberFormatException e) {
+                // 金额/数字单元格格式非法：收为行级错误，不上抛中断整批（避免已成功行随事务回滚）
+                if (excelDTO == null) {
+                    excelDTO = new LogisticsReconImportExcelDTO();
+                    excelDTO.setNo(String.valueOf(currentRowNo));
+                }
+                excelDTO.setErrorMsg("金额或数字字段格式不正确");
                 errorList.add(excelDTO);
-                rowNo++;
-                continue;
             }
-            LogisticsReconDetailEntity detail = buildReconDetail(dto, rowNo++, excelDTO);
-            detailList.add(detail);
-            subList.add(buildReconDetailSub(dto, detail, excelDTO));
         }
         if (CollUtil.isNotEmpty(detailList)) {
             logisticsReconDetailService.saveBatch(detailList);
@@ -325,7 +337,7 @@ public class LogisticsReconServiceImpl
                 .map(LogisticsReconDetailEntity::getCurrency)
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toCollection(HashSet::new));
-        return new LogisticsReconService.ReconBatchResult(errorList, detailList.size(), subList.size(),
+        return new LogisticsReconBatchResultDTO(errorList, detailList.size(), subList.size(),
                 batchAmount, currencies);
     }
 
@@ -750,7 +762,9 @@ public class LogisticsReconServiceImpl
                 //  2. 调 ImportHistoryRecordServiceImpl#importBatchAddOrUpdate(List<ImportDataDTO>, processingType, mainId) 重载
                 //  3. 落 logistics_recon_ref_logistics_bill（按 detail 整批写）
                 //  4. detail_sub.match_status 整批更新（主表匹配数/匹配状态由查询实时聚合，无需回写）
-                results.add(BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE));
+                // 功能未实现前不返回成功，统一返回未实现失败，避免前端误判匹配成功而污染数据状态
+                results.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
+                        new ServiceException(ApiError.LOGISTICS_RECON_MATCH_NOT_READY).getMsg()));
             } catch (Exception e) {
                 log.error("[batchMatch] 失败 mainId={}", mainId, e);
                 results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
