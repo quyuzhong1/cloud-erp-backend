@@ -47,7 +47,7 @@
       qa.qc_type as qcType,
       qa.warehouse_id as warehouseId,
       qa.expect_qc_date as expectQcDate,
-      qa.plan_qc_date as planQcDate,
+      qn.plan_qc_date as planQcDate,
       qa.remark
     </sql>
 
@@ -66,8 +66,7 @@
                 qnd.qc_good_qty as qcGoodQty,
                 qnd.qc_bad_qty as qcBadQty,
                 qnd.qc_qty as qcQty,
-                qad.qty,
-                qn.plan_qc_date as planQcDate
+                qad.qty
             from qc_application qa
             inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
             left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE
