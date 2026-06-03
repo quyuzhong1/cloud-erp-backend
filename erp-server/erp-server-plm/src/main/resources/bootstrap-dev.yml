@@ -9,6 +9,10 @@ spring:
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-plm.yml,erp-third-party.yml,druid-common.yml
+        extension-configs:
+          - data-id: erp-release-control.yml
+            group: DEFAULT_GROUP
+            refresh: true
 #显示日期的
 #  jackson:
 #    date-format: yyyy-MM-dd HH:mm:ss

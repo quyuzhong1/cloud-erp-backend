@@ -9,6 +9,10 @@ spring:
         namespace: test
         file-extension: yml
         shared-configs: gateway.yml,common.yml,db-gateway.yml
+        extension-configs:
+          - data-id: erp-release-control.yml
+            group: DEFAULT_GROUP
+            refresh: true
 #    gateway:
 #      routes:
 #        - id: admin_route

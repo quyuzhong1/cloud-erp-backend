@@ -8,3 +8,7 @@ spring:
         server-addr: 172.16.100.60:32570
         namespace: test
         shared-configs: common.yml,erp-auth.yml
+        extension-configs:
+          - data-id: erp-release-control.yml
+            group: DEFAULT_GROUP
+            refresh: true

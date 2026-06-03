@@ -3,6 +3,7 @@ package com.common.business.health;
 import com.common.core.controller.BaseController;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,12 +31,21 @@ public class InternalHealthController extends BaseController {
     private static final String REASON_APPLICATION_NOT_READY = "APPLICATION_NOT_READY";
     private static final String REASON_PRE_STOPPING = "PRE_STOPPING";
     private static final String REASON_PRE_STOP_FORBIDDEN = "PRE_STOP_FORBIDDEN";
+    private static final String RELEASE_ACTIVE_COLOR = "release.active-color";
+    private static final String RELEASE_ACTIVE_VERSION = "release.active-version";
+    private static final String RELEASE_COLOR = "release.color";
+    private static final String RELEASE_VERSION = "release.version";
+    private static final String RELEASE_MQ_CONSUMER_ENABLED = "release.mq.consumer.enabled";
+    private static final String RELEASE_XXL_JOB_ENABLED = "release.xxl.job.enabled";
 
     @Resource
     private ReadinessState readinessState;
 
     @Resource
     private NacosSelfRegistrationChecker nacosSelfRegistrationChecker;
+
+    @Resource
+    private Environment environment;
 
     @GetMapping("/live")
     public ResponseEntity<Map<String, Object>> live() {
@@ -61,6 +71,23 @@ public class InternalHealthController extends BaseController {
                 checkResult.getMessage());
     }
 
+    @GetMapping("/release-state")
+    public ResponseEntity<Map<String, Object>> releaseState() {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("activeColor", environment.getProperty(RELEASE_ACTIVE_COLOR));
+        body.put("activeVersion", environment.getProperty(RELEASE_ACTIVE_VERSION));
+        body.put("releaseColor", environment.getProperty(RELEASE_COLOR));
+        body.put("releaseVersion", environment.getProperty(RELEASE_VERSION));
+        body.put("mqConsumerEnabled", environment.getProperty(RELEASE_MQ_CONSUMER_ENABLED, Boolean.class, true));
+        body.put("xxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true));
+        body.put("currentReleaseActive", isCurrentReleaseActive());
+        body.put("effectiveMqConsumerEnabled", environment.getProperty(RELEASE_MQ_CONSUMER_ENABLED, Boolean.class, true)
+                && isCurrentReleaseActive());
+        body.put("effectiveXxlJobEnabled", environment.getProperty(RELEASE_XXL_JOB_ENABLED, Boolean.class, true)
+                && isCurrentReleaseActive());
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping("/pre-stop")
     public ResponseEntity<Map<String, Object>> preStop(HttpServletRequest request) {
         if (!isLoopbackRequest(request)) {
@@ -84,6 +111,26 @@ public class InternalHealthController extends BaseController {
     private boolean isLoopbackRequest(HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
         return "127.0.0.1".equals(remoteAddr) || "0:0:0:0:0:0:0:1".equals(remoteAddr) || "::1".equals(remoteAddr);
+    }
+
+    private boolean isCurrentReleaseActive() {
+        String activeColor = environment.getProperty(RELEASE_ACTIVE_COLOR);
+        String localColor = environment.getProperty(RELEASE_COLOR);
+        if (hasText(activeColor) && hasText(localColor)) {
+            return activeColor.equalsIgnoreCase(localColor);
+        }
+
+        String activeVersion = environment.getProperty(RELEASE_ACTIVE_VERSION);
+        String localVersion = environment.getProperty(RELEASE_VERSION);
+        if (hasText(activeVersion) && hasText(localVersion)) {
+            return activeVersion.equalsIgnoreCase(localVersion);
+        }
+
+        return true;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private Map<String, Object> body(String status, String reason, String message) {
