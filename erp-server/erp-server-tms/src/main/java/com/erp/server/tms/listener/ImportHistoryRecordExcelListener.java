@@ -132,7 +132,9 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
             String value = map.get(entry.getKey());
-            map.put(entry.getKey(), normalizeImportCellValue(value));
+            if (ObjectUtil.isEmpty(value)) {
+                map.put(entry.getKey(),"");
+            }
         }
         JSONObject excelDTO = new JSONObject(map);
         successList.add(excelDTO);
@@ -344,20 +346,5 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             }
         }
         return  resultKey;
-    }
-
-    /**
-     * 标准化 Excel 单元格文本，数值列统一转为不含多余小数的 plain string。
-     */
-    private String normalizeImportCellValue(String value) {
-        if (CharSequenceUtil.isBlank(value)) {
-            return "";
-        }
-        String text = value.trim();
-        try {
-            return new java.math.BigDecimal(text).stripTrailingZeros().toPlainString();
-        } catch (NumberFormatException e) {
-            return text;
-        }
     }
 }

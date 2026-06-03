@@ -233,6 +233,9 @@ public final class CfgLogisticsCostImportEtlRuleHelper {
      * 持久化前去掉空字符串字段，避免 Fastjson2 反序列化静态内部类时 setMode 等 setter 异常。
      */
     private static JSONObject toStorageJson(CfgLogisticsCostImportDetailDTO.EtlRuleDTO ruleDTO) {
+        if (Objects.isNull(ruleDTO)) {
+            return new JSONObject();
+        }
         JSONObject jsonObject = (JSONObject) JSON.toJSON(ruleDTO);
         jsonObject.keySet().removeIf(key -> {
             Object value = jsonObject.get(key);
