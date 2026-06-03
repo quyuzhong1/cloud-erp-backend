@@ -208,6 +208,7 @@
             sba.partition_id,
             sba.type,
             sba.detail_id,
+            sba.purchase_average_cost,
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
@@ -220,7 +221,8 @@
             sd.id as so_detail_id,
             si.code as so_code,
             si.partition_id,
-            kbad.id as detail_id
+            kbad.id as detail_id,
+            0 as purchase_average_cost
         from kol_b2b_application kba
         inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
         inner join so_info si on si.source_id = kba.id and si.is_deleted = false
@@ -239,7 +241,8 @@
             sbd.id as so_detail_id,
             sb.code as so_code,
             sbr.partition_id,
-            kbad.id as detail_id
+            kbad.id as detail_id,
+            sbd.product_cost as purchase_average_cost
         from
         kol_b2c_application kba
         inner join kol_b2c_application_detail kbad on

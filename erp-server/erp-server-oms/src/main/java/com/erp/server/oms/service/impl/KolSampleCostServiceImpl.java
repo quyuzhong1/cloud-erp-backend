@@ -33,7 +33,6 @@ import com.erp.model.oms.enums.KolSampleCostCostSourceEnum;
 import com.erp.model.oms.enums.KolSampleCostFeeSourceEnum;
 import com.erp.model.oms.enums.KolSampleCostImportFeeTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
@@ -43,7 +42,6 @@ import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -97,9 +95,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Resource
     private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
-
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private LogisticsFeign logisticsFeign;
@@ -281,7 +276,6 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         // SKU成本
         List<InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostDTOS = listInventorySkuCost(skuIdList, warehouseIdList, soOrgIdList);
         Map<String, InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, true);
-        Map<String, SkuVO> purchaseAverageCostMap = buildPurchaseAverageCostMap(skuIdList);
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
         bagCostParamDTO.setSkuIdList(skuIdList);
@@ -298,7 +292,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             // 按 销售组织+SKU+仓库 匹配 SKU 成本；未命中再用采购平均成本兜底。
             InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
             if (ObjUtil.isEmpty(invSkuCostDTO)) {
-                applyPurchaseAverageCost(kolSampleCostEntity, purchaseAverageCostMap.get(kolSampleCostEntity.getSkuId()), updateCostSourceMonth);
+                applyPurchaseAverageCost(kolSampleCostEntity, updateCostSourceMonth);
             } else {
                 applyInventorySkuCost(kolSampleCostEntity, invSkuCostDTO);
             }
@@ -478,19 +472,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
     }
 
-    private Map<String, SkuVO> buildPurchaseAverageCostMap(List<String> skuIdList) {
-        if (CollUtil.isEmpty(skuIdList)) {
-            return new HashMap<>();
-        }
-        List<SkuVO> skuVOList = ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(skuIdList), CollUtil.newArrayList());
-        return skuVOList.stream()
-                .filter(obj -> ObjUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getSkuId()))
-                .collect(Collectors.toMap(SkuVO::getSkuId, obj -> obj, (v1, v2) -> v1));
-    }
-
-    private void applyPurchaseAverageCost(KolSampleCostEntity kolSampleCostEntity, SkuVO skuVO, String updateCostSourceMonth) {
+    private void applyPurchaseAverageCost(KolSampleCostEntity kolSampleCostEntity, String updateCostSourceMonth) {
         BigDecimal qty = MathUtil.valueOf(kolSampleCostEntity.getQty());
-        BigDecimal productCost = ObjUtil.defaultIfNull(Objects.isNull(skuVO) ? null : skuVO.getProductCost(), BigDecimal.ZERO);
+        BigDecimal productCost = ObjUtil.defaultIfNull(kolSampleCostEntity.getPurchaseAverageCost(), BigDecimal.ZERO);
         kolSampleCostEntity.setExchangeRate(BigDecimal.ONE);
         kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(productCost, qty));
         kolSampleCostEntity.setFirstMileShippingCost(BigDecimal.ZERO);
@@ -623,6 +607,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             costEntity.setPartnerId(sampleCostEntity.getPartnerId());
             costEntity.setPartnerNickname(sampleCostEntity.getPartnerNickname());
             costEntity.setFeedbackUrl(sampleCostEntity.getFeedbackUrl());
+            costEntity.setPurchaseAverageCost(sampleCostEntity.getPurchaseAverageCost());
             if (useWdtSourceCodeAsSoCode) {
                 costEntity.setSoCode(kolSoOutstockDTO.getSourceCode());
             }
