@@ -656,8 +656,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //审核通过时需要校验库存，质检通知数量必须小于等于可用库存，否则审核失败，提示库存不足
         if (Objects.equals(approveType, ApproveTypeEnum.PASS)){
             //外验质检类型审核通过时，计划质检日期必填，且只能选择当前及以后的日期
-            if (Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(), entity.getQcType())
-                    || Objects.equals(QcTypeEnum.B2B_OUTSIDE_QC.getCode(), entity.getQcType())) {
+            if (Objects.equals(QcTypeEnum.OUTSIDE_QC.getCode(), entity.getQcType())) {
                 if (ObjectUtil.isEmpty(dto.getPlanQcDate())) {
                     throw new ServiceException(ApiError.PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED);
                 }

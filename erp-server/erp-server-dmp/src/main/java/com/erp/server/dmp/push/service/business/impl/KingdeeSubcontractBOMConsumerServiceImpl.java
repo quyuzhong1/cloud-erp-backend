@@ -333,8 +333,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //发料方式：直接倒冲
-        entry.put("FIssueType", "2");
         //变更前
         entry.put("FChangeType","2");
         //仓库与仓位（按仓库类型决定是否同步仓位）
@@ -403,6 +401,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
         entityLinkEntry.put("FEntity_Link_FBaseStdQty",srcEntry.get("StdQty"));
         entry.put("FEntity__Link",entityLinkEntry);
+        //发料方式：直接倒冲（放在最后，避免金蝶 BOS 字段联动覆盖 FStockID）
+        entry.put("FIssueType", "2");
         return entry;
     }
 
@@ -443,8 +443,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //发料方式：直接倒冲
-        entry.put("FIssueType", "2");
         //变更后
         entry.put("FChangeType","3");
         //仓库与仓位（按仓库类型决定是否同步仓位）
@@ -508,6 +506,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
         entityLinkEntry.put("FEntity_Link_FBaseStdQty",0);
         entry.put("FEntity__Link",entityLinkEntry);
+        //发料方式：直接倒冲（放在最后，避免金蝶 BOS 字段联动覆盖 FStockID）
+        entry.put("FIssueType", "2");
         return entry;
     }
 
@@ -538,8 +538,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //发料方式：直接倒冲
-        entry.put("FIssueType", "2");
         //需求日期
         entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
@@ -566,6 +564,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (parentDetail.getRepairQty() == 1) {
             entry.put("FNumerator", parentDetail.getRepairQty());
         }
+        //发料方式：直接倒冲（放在最后，避免金蝶 BOS 字段联动覆盖 FStockID）
+        entry.put("FIssueType", "2");
 
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
