@@ -56,11 +56,10 @@ import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
 import com.google.common.base.Stopwatch;
-import groovy.lang.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +74,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,6 +92,8 @@ import static com.erp.server.tms.listener.ImportHistoryRecordExcelListener.*;
 @Slf4j
 @Service
 public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHistoryRecordMapper, ImportHistoryRecordEntity> implements ImportHistoryRecordService {
+    private static final String LOGISTICS_COST_IMPORT_TASK_NAME = "物流商费用导入";
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -115,7 +117,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     @Resource
     private SysUserFeign sysUserFeign;
     @Lazy
-    @Autowired
+    @Resource
     private ImportHistoryRecordService importHistoryRecordService;
 
     @Resource
@@ -211,7 +213,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         importSyncDTO.setCfgLogisticsCostImportList(cfgLogisticsCostImportList);
         importSyncDTO.setImportDetailList(importDetailList);
         importSyncDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        String taskId = downloadTaskFeign.saveImportTask("物流商费用导入", IMPORT_TMS_IMPORT_HISTORY_RECORD.getCode(), importSyncDTO);
+        String taskId = downloadTaskFeign.saveImportTask(LOGISTICS_COST_IMPORT_TASK_NAME, IMPORT_TMS_IMPORT_HISTORY_RECORD.getCode(), importSyncDTO);
         return  BatchResultDTO.success(taskId,importSyncDTO.getFileName(),"导入成功");
     }
 
@@ -608,6 +610,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     JSONObject successJson = new JSONObject();
                     List<String> errorMsgList = new ArrayList<>();
                     List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost(successJson, jsonObject, errorMsgList, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, preQueryResult.getDictCostAttribution(), preQueryResult.getSourceType(), currencyLookupMap,currencyRateMap);
+                    if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                        synchronized (matchImportList) {  updateMatchResult(Collections.singletonList(jsonObject), matchIndex.toString(), errorIndex.toString(), errorMsgList, matchImportList);} ;
+                        continue;
+                    }
                     List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateList);
                     try {
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
@@ -739,29 +745,25 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     private Map<String, String> buildPlatformCodeMapByAddList(List<LogisticsBillCostDTO.AddDTO> importCostList) {
-        Map<String, String> platformCodeMap = new LinkedHashMap<>();
-        if (CollUtil.isEmpty(importCostList)) {
-            return platformCodeMap;
-        }
-        for (LogisticsBillCostDTO.AddDTO importCost : importCostList) {
-            if (CharSequenceUtil.isBlank(importCost.getLogisticsBillId()) || Objects.isNull(importCost.getPlatformCode())) {
-                continue;
-            }
-            platformCodeMap.put(importCost.getLogisticsBillId(), importCost.getPlatformCode());
-        }
-        return platformCodeMap;
+        return buildPlatformCodeMap(importCostList, LogisticsBillCostDTO.AddDTO::getLogisticsBillId, LogisticsBillCostDTO.AddDTO::getPlatformCode);
     }
 
     private Map<String, String> buildPlatformCodeMapByUpdateList(List<LogisticsBillCostDTO.UpdateDTO> importCostList) {
+        return buildPlatformCodeMap(importCostList, LogisticsBillCostDTO.UpdateDTO::getLogisticsBillId, LogisticsBillCostDTO.UpdateDTO::getPlatformCode);
+    }
+
+    private <T> Map<String, String> buildPlatformCodeMap(List<T> importCostList, Function<T, String> logisticsBillIdGetter, Function<T, String> platformCodeGetter) {
         Map<String, String> platformCodeMap = new LinkedHashMap<>();
         if (CollUtil.isEmpty(importCostList)) {
             return platformCodeMap;
         }
-        for (LogisticsBillCostDTO.UpdateDTO importCost : importCostList) {
-            if (CharSequenceUtil.isBlank(importCost.getLogisticsBillId()) || Objects.isNull(importCost.getPlatformCode())) {
+        for (T importCost : importCostList) {
+            String logisticsBillId = logisticsBillIdGetter.apply(importCost);
+            String platformCode = platformCodeGetter.apply(importCost);
+            if (CharSequenceUtil.isBlank(logisticsBillId) || Objects.isNull(platformCode)) {
                 continue;
             }
-            platformCodeMap.put(importCost.getLogisticsBillId(), importCost.getPlatformCode());
+            platformCodeMap.put(logisticsBillId, platformCode);
         }
         return platformCodeMap;
     }
@@ -770,16 +772,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isEmpty(logisticsBillList) || platformCodeMap.isEmpty()) {
             return;
         }
+        List<LogisticsBillEntity> updateList = new ArrayList<>();
         for (LogisticsBillEntity logisticsBill : logisticsBillList) {
             String platformCode = platformCodeMap.get(logisticsBill.getId());
             if (Objects.isNull(platformCode)) {
                 continue;
             }
             logisticsBill.setPlatformCode(platformCode);
-            logisticsBillService.lambdaUpdate()
-                    .set(LogisticsBillEntity::getPlatformCode, platformCode)
-                    .eq(LogisticsBillEntity::getId, logisticsBill.getId())
-                    .update();
+            LogisticsBillEntity updateEntity = new LogisticsBillEntity();
+            updateEntity.setId(logisticsBill.getId());
+            updateEntity.setPlatformCode(platformCode);
+            updateList.add(updateEntity);
+        }
+        if (CollUtil.isNotEmpty(updateList)) {
+            logisticsBillService.updateBatchById(updateList);
         }
     }
 
@@ -1415,7 +1421,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 }
                 orderWeight = orderWeight.add(productPackEntity.getGrossWeight().multiply(BigDecimal.valueOf(detailEntity.getActualQty())));
             }
-            if (!hasWeightDetailError && orderWeight.compareTo(BigDecimal.ZERO) <= 0) {
+            if (hasWeightDetailError) {
+                continue;
+            }
+            if (orderWeight.compareTo(BigDecimal.ZERO) <= 0) {
                 errorMsgList.add("订单重量为0，无法执行费用分摊：" + logisticsBillVo.getOutstockCode());
                 continue;
             }
@@ -1983,7 +1992,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 result = applyFillEmptyRule(result, rule, rowData, headMap);
                 continue;
             }
-            throw new ServiceException("不支持的字段清洗规则类型：" + type);
+            log.error("不支持的字段清洗规则类型：{}", type);
         }
         return result;
     }
@@ -2134,6 +2143,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             if (!"g".equalsIgnoreCase(unit)) {
                 continue;
             }
+            Map<CfgLogisticsCostImportDetailEntity, String> convertedWeightMap = new HashMap<>();
+            boolean convertFailed = false;
             for (CfgLogisticsCostImportDetailEntity weightDetail : weightDetails) {
                 String weightValue = getPreparedValue(rowData, weightDetail);
                 if (CharSequenceUtil.isBlank(weightValue)) {
@@ -2141,11 +2152,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 }
                 try {
                     BigDecimal kgValue = new BigDecimal(weightValue).divide(new BigDecimal("1000"), 4, RoundingMode.DOWN);
-                    setPreparedValue(rowData, weightDetail, kgValue.stripTrailingZeros().toPlainString());
+                    convertedWeightMap.put(weightDetail, kgValue.stripTrailingZeros().toPlainString());
                 } catch (NumberFormatException e) {
                     log.warn("物流商重量值无法转换为 KG：{}", weightValue);
+                    convertFailed = true;
                 }
             }
+            if (convertFailed) {
+                continue;
+            }
+            convertedWeightMap.forEach((weightDetail, value) -> setPreparedValue(rowData, weightDetail, value));
             setPreparedValue(rowData, unitDetail, "kg");
         }
     }
