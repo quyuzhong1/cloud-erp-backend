@@ -156,7 +156,9 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         if (CollUtil.isEmpty(mainIdList)) {
             return  Collections.emptyList();
         }
-        return lambdaQuery().in(CfgLogisticsCostImportDetailEntity::getMainId,mainIdList).list();
+        List<CfgLogisticsCostImportDetailEntity> list = lambdaQuery().in(CfgLogisticsCostImportDetailEntity::getMainId,mainIdList).list();
+        fillEntityList(list);
+        return list;
     }
 
     /**
@@ -233,6 +235,15 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         }
         // 属性赋值
         for(CfgLogisticsCostImportDetailDTO.ListDTO data : list) {
+            data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
+        }
+   }
+
+   private void fillEntityList(List<CfgLogisticsCostImportDetailEntity> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (CfgLogisticsCostImportDetailEntity data : list) {
             data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
         }
    }
