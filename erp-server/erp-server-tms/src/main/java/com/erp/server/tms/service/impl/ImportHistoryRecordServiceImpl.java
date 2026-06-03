@@ -653,12 +653,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
 
         //新增物流明细
-        List<LogisticsBillDetailEntity> logisticsBillDetailList = importDataList.stream().flatMap(obj -> {
+        List<LogisticsBillDetailEntity> importLogisticsBillDetailList = importDataList.stream().flatMap(obj -> {
             List<LogisticsBillDetailEntity> list = obj.getLogisticsBillDetailList();
             return list == null ? Stream.empty() : list.stream();
         }).filter(ObjectUtil::isNotNull).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(logisticsBillDetailList)) {
-            logisticsBillDetailService.saveBatch(logisticsBillDetailList);
+        List<LogisticsBillDetailEntity> addLogisticsBillDetailList = importLogisticsBillDetailList.stream()
+                .filter(obj -> CharSequenceUtil.isBlank(obj.getId()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addLogisticsBillDetailList)) {
+            logisticsBillDetailService.saveBatch(addLogisticsBillDetailList);
         }
 
         //新增物流费用
@@ -676,10 +679,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         //主表数据
         List<String> logisticsBillAddIdList = logisticsBillCostAddList.stream().map(LogisticsBillCostDTO.AddDTO::getLogisticsBillId).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillAddList = CollUtil.isEmpty(logisticsBillAddIdList) ? Collections.emptyList() : logisticsBillService.listByIds(logisticsBillAddIdList);
+        updateImportPlatformCode(logisticsBillAddList, buildPlatformCodeMapByAddList(logisticsBillCostAddList));
         logisticsBillList.addAll(logisticsBillAddList);
         //明细数据
         List<String> addDetailIdList = logisticsBillCostAddList.stream().map(LogisticsBillCostDTO.AddDTO::getLogisticsBillDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailAddList = CollUtil.isEmpty(addDetailIdList) ? Collections.emptyList() : logisticsBillDetailService.listByIds(addDetailIdList);
+        List<LogisticsBillDetailEntity> logisticsBillDetailList = new ArrayList<>(addLogisticsBillDetailList);
         logisticsBillDetailList.addAll(logisticsBillDetailAddList);
         logisticsBillCostService.batchImportAdd(logisticsBillList,logisticsBillDetailList,logisticsBillCostAddList,processingType);
 
@@ -697,6 +702,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         List<String> logisticsBillUpdateIdList = logisticsBillCostUpdateList.stream().map(LogisticsBillCostDTO.UpdateDTO::getLogisticsBillId).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillUpdateList = CollUtil.isEmpty(logisticsBillUpdateIdList) ? Collections.emptyList() : logisticsBillService.listByIds(logisticsBillUpdateIdList);
+        updateImportPlatformCode(logisticsBillUpdateList, buildPlatformCodeMapByUpdateList(logisticsBillCostUpdateList));
 
         List<String> updateDetailIdList = logisticsBillCostUpdateList.stream().map(LogisticsBillCostDTO.UpdateDTO::getLogisticsBillDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailUpdateList = CollUtil.isEmpty(updateDetailIdList) ? Collections.emptyList() : logisticsBillDetailService.listByIds(updateDetailIdList);
@@ -730,6 +736,51 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     confirmMap.putIfAbsent(key, dto);
                 });
         return new ArrayList<>(confirmMap.values());
+    }
+
+    private Map<String, String> buildPlatformCodeMapByAddList(List<LogisticsBillCostDTO.AddDTO> importCostList) {
+        Map<String, String> platformCodeMap = new LinkedHashMap<>();
+        if (CollUtil.isEmpty(importCostList)) {
+            return platformCodeMap;
+        }
+        for (LogisticsBillCostDTO.AddDTO importCost : importCostList) {
+            if (CharSequenceUtil.isBlank(importCost.getLogisticsBillId()) || Objects.isNull(importCost.getPlatformCode())) {
+                continue;
+            }
+            platformCodeMap.put(importCost.getLogisticsBillId(), importCost.getPlatformCode());
+        }
+        return platformCodeMap;
+    }
+
+    private Map<String, String> buildPlatformCodeMapByUpdateList(List<LogisticsBillCostDTO.UpdateDTO> importCostList) {
+        Map<String, String> platformCodeMap = new LinkedHashMap<>();
+        if (CollUtil.isEmpty(importCostList)) {
+            return platformCodeMap;
+        }
+        for (LogisticsBillCostDTO.UpdateDTO importCost : importCostList) {
+            if (CharSequenceUtil.isBlank(importCost.getLogisticsBillId()) || Objects.isNull(importCost.getPlatformCode())) {
+                continue;
+            }
+            platformCodeMap.put(importCost.getLogisticsBillId(), importCost.getPlatformCode());
+        }
+        return platformCodeMap;
+    }
+
+    private void updateImportPlatformCode(List<LogisticsBillEntity> logisticsBillList, Map<String, String> platformCodeMap) {
+        if (CollUtil.isEmpty(logisticsBillList) || platformCodeMap.isEmpty()) {
+            return;
+        }
+        for (LogisticsBillEntity logisticsBill : logisticsBillList) {
+            String platformCode = platformCodeMap.get(logisticsBill.getId());
+            if (Objects.isNull(platformCode)) {
+                continue;
+            }
+            logisticsBill.setPlatformCode(platformCode);
+            logisticsBillService.lambdaUpdate()
+                    .set(LogisticsBillEntity::getPlatformCode, platformCode)
+                    .eq(LogisticsBillEntity::getId, logisticsBill.getId())
+                    .update();
+        }
     }
 
     @Override
@@ -1215,7 +1266,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     addDataDTO.setConfirmTime(confirmTime);
                     List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO, currentUpdateList);
                     getLogisticsBillCostAddData(addDataDTO, logisticsBillCostEntity, dtoList, addSourceType);
-                    addBillCostList.addAll(ObjectUtil.defaultIfNull(addDataDTO.getAddBillCostList(), Collections.emptyList()));
+                    List<LogisticsBillCostDTO.AddDTO> currentAddBillCostList = addDataDTO.getAddBillCostList();
+                    if (CollUtil.isNotEmpty(currentAddBillCostList)) {
+                        currentAddBillCostList.forEach(addDTO -> addDTO.setPlatformCode(excelDTO.getPlatformCode()));
+                        addBillCostList.addAll(currentAddBillCostList);
+                    }
                     addCfgCostList.addAll(ObjectUtil.defaultIfNull(addDataDTO.getAddCfgCostList(), Collections.emptyList()));
                 } else {
                     updateDataDTO.setId(logisticsBillCostEntity.getId());
@@ -1667,6 +1722,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
         updateDataDTO.setPayType(excelDTO.getPayType());
         updateDataDTO.setConfirmTime(confirmTime);
+        updateDataDTO.setPlatformCode(excelDTO.getPlatformCode());
         updateDataDTO.setTrackNo(excelDTO.getTrackNo());
         //对账月份
         updateDataDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
