@@ -21,6 +21,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
@@ -63,7 +64,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -156,7 +156,7 @@ public class LogisticsReconServiceImpl
     @Override
     public LogisticsReconDTO.ViewDTO view(String id) {
         LogisticsReconEntity entity = super.getByIdOpt(id)
-                .orElseThrow(() -> new ServiceException("未找到" + DOC_NAME + "数据"));
+                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
         LogisticsReconDTO.ViewDTO data = new LogisticsReconDTO.ViewDTO();
         data.setId(entity.getId());
         data.setReconciliationMonth(formatReconciliationMonth(entity.getReconciliationMonth()));
@@ -170,49 +170,79 @@ public class LogisticsReconServiceImpl
     public List<BatchResultDTO> preprocessingImportExcel(LogisticsReconDTO.PreprocessingDTO dto) {
         // TODO 预处理：调用重构后的 buildSupplierBillDetailList（仅 ETL 清洗 + 校验，不落库）
         //  现阶段不复用 ImportHistoryRecordServiceImpl#importFile，原方法需重构后再接入
-        throw new ServiceException("预处理导入待重构后接入");
+        throw new ServiceException(ApiError.LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO importExcel(LogisticsReconDTO.ImportDTO dto) {
-        // 1. 先创建主表占位（check_status = importing 导入中），便于异步任务进度回写
-        LogisticsReconEntity entity = createImportingMain(dto);
-        dto.setMainId(entity.getId());
-        dto.setCode(entity.getCode());
+        List<CfgLogisticsCostImportEntity> cfgList =
+                cfgLogisticsCostImportService.listByImport(dto.getFileName(), dto.getBusinessType(), dto.getCostType());
+        if (CollUtil.isEmpty(cfgList)) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED);
+        }
+        List<String> cfgIds = cfgList.stream().map(CfgLogisticsCostImportEntity::getId).collect(Collectors.toList());
+        List<CfgLogisticsCostImportDetailEntity> cfgDetails = cfgLogisticsCostImportDetailService.listByMainIdList(cfgIds);
+        if (CollUtil.isEmpty(cfgDetails)) {
+            throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+        }
+        dto.setCfgLogisticsCostImportList(cfgList);
+        dto.setImportDetailList(cfgDetails);
         String taskId = downloadTaskFeign.saveImportTask(DOC_NAME + "导入", IMPORT_TMS_LOGISTICS_RECON.getCode(), dto);
-        log.info("[importExcel] submit taskId={} processingType=importOnly mainId={} fileUrl={}", taskId, entity.getId(), dto.getFileUrl());
-        return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
+        log.info("[importExcel] submit taskId={} fileName={} cfgCount={}", taskId, dto.getFileName(), cfgList.size());
+        return new BaseResultDTO.AddDTO(taskId, dto.getFileName());
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void executeImportTask(LogisticsReconDTO.ImportDTO dto) {
         try {
-            CfgLogisticsCostImportEntity importCfg = cfgLogisticsCostImportService.getById(dto.getCfgImportId());
-            if (importCfg == null) {
-                throw new ServiceException("导入模板配置不存在");
+            List<CfgLogisticsCostImportEntity> cfgList = dto.getCfgLogisticsCostImportList();
+            if (CollUtil.isEmpty(cfgList)) {
+                cfgList = cfgLogisticsCostImportService.listByImport(dto.getFileName(), dto.getBusinessType(), dto.getCostType());
             }
-            List<CfgLogisticsCostImportDetailEntity> cfgDetails =
-                    cfgLogisticsCostImportDetailService.listByMainIdList(Collections.singletonList(dto.getCfgImportId()));
-            if (CollUtil.isEmpty(cfgDetails)) {
-                throw new ServiceException("导入模板字段配置不存在");
+            if (CollUtil.isEmpty(cfgList)) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED);
             }
-            LogisticsReconExcelListener excelListener = readReconExcel(dto, importCfg);
-            List<LogisticsReconImportExcelDTO> errorList = saveReconImportData(dto, importCfg, cfgDetails, excelListener);
+            List<CfgLogisticsCostImportDetailEntity> allCfgDetails = dto.getImportDetailList();
+            if (CollUtil.isEmpty(allCfgDetails)) {
+                List<String> cfgIds = cfgList.stream().map(CfgLogisticsCostImportEntity::getId).collect(Collectors.toList());
+                allCfgDetails = cfgLogisticsCostImportDetailService.listByMainIdList(cfgIds);
+            }
+            if (CollUtil.isEmpty(allCfgDetails)) {
+                throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+            }
+            Map<String, List<CfgLogisticsCostImportDetailEntity>> detailMap =
+                    allCfgDetails.stream().collect(Collectors.groupingBy(CfgLogisticsCostImportDetailEntity::getMainId));
+            int totalCount = 0;
+            List<LogisticsReconImportExcelDTO> errorList = new ArrayList<>();
+            for (CfgLogisticsCostImportEntity importCfg : cfgList) {
+                List<CfgLogisticsCostImportDetailEntity> cfgDetails = detailMap.get(importCfg.getId());
+                if (CollUtil.isEmpty(cfgDetails)) {
+                    throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+                }
+                LogisticsReconEntity entity = createImportingMain(dto, importCfg);
+                dto.setMainId(entity.getId());
+                dto.setCode(entity.getCode());
+                LogisticsReconExcelListener excelListener = readReconExcel(dto, importCfg);
+                totalCount += excelListener.getRows().size();
+                errorList.addAll(saveReconImportData(dto, importCfg, cfgDetails, excelListener));
+            }
             BaseDTO.ImportResultDTO resultDTO = new BaseDTO.ImportResultDTO();
             resultDTO.setTaskId(dto.getTaskId());
-            resultDTO.setCount(excelListener.getRows().size());
+            resultDTO.setCount(totalCount);
             resultDTO.setErrorUrl(uploadErrorFile(errorList));
             resultDTO.setFinishTime(LocalDateTime.now());
             resultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
             resultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
             downloadTaskFeign.updateTask(resultDTO);
         } catch (Exception e) {
-            lambdaUpdate()
-                    .eq(LogisticsReconEntity::getId, dto.getMainId())
-                    .set(LogisticsReconEntity::getImportFailReason, e.getMessage())
-                    .update(new LogisticsReconEntity());
+            if (StrUtil.isNotBlank(dto.getMainId())) {
+                lambdaUpdate()
+                        .eq(LogisticsReconEntity::getId, dto.getMainId())
+                        .set(LogisticsReconEntity::getImportFailReason, e.getMessage())
+                        .update(new LogisticsReconEntity());
+            }
             throw e;
         }
     }
@@ -233,7 +263,7 @@ public class LogisticsReconServiceImpl
                 .sheet(importCfg.getSheetName())
                 .doRead();
         if (excelListener.getHeadMap().isEmpty()) {
-            throw new ServiceException("未读取到 Excel 表头");
+            throw new ServiceException(ApiError.LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND);
         }
         return excelListener;
     }
@@ -519,14 +549,25 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 新建导入中主表（共用 importExcel / importExcelCheck）
+     * 新建导入中主表
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @param importCfg
+     * @return LogisticsReconEntity
      */
-    private LogisticsReconEntity createImportingMain(LogisticsReconDTO.ImportDTO dto) {
+    private LogisticsReconEntity createImportingMain(LogisticsReconDTO.ImportDTO dto,
+                                                     CfgLogisticsCostImportEntity importCfg) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
         LogisticsReconEntity entity = new LogisticsReconEntity()
                 .setCode(code)
                 .setReconciliationMonth(dto.getReconciliationMonth())
-                .setCfgImportId(dto.getCfgImportId())
+                .setBusinessType(importCfg.getBusinessType())
+                .setCfgImportId(importCfg.getId())
+                .setCfgType(importCfg.getCfgType())
+                .setSupplierId(importCfg.getDictPlatform())
+                .setSupplierName(importCfg.getName())
+                .setSheetName(importCfg.getSheetName())
                 .setFileUrl(dto.getFileUrl())
                 .setFileName(dto.getFileName())
                 .setCheckStatus(LogisticsReconCheckStatusEnum.IMPORTING.getCode())
@@ -534,7 +575,7 @@ public class LogisticsReconServiceImpl
                 .setCostCount(0);
         boolean save = super.save(entity);
         if (!save) {
-            throw new ServiceException(DOC_NAME + "保存失败");
+            throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
         }
         return entity;
     }
@@ -582,19 +623,19 @@ public class LogisticsReconServiceImpl
     private void validateCheckStatusTransition(LogisticsReconEntity entity, String targetStatus) {
         // 导入中不允许直接切换校验状态（需等导入完成进入待确认）
         if (LogisticsReconCheckStatusEnum.IMPORTING.getCode().equals(entity.getCheckStatus())) {
-            throw new ServiceException("对账单导入中，暂不允许切换校验状态");
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN);
         }
         // 仅允许在 待确认 / 已确认 之间流转
         if (!LogisticsReconCheckStatusEnum.PENDING.getCode().equals(targetStatus)
                 && !LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(targetStatus)) {
-            throw new ServiceException("非法的校验状态目标值");
+            throw new ServiceException(ApiError.LOGISTICS_RECON_CHECK_STATUS_INVALID);
         }
         if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(targetStatus)) {
             int refCount = (int) logisticsReconRefLogisticsBillService.lambdaQuery()
                     .eq(com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity::getMainId, entity.getId())
                     .count();
             if (refCount > 0) {
-                throw new ServiceException("已存在有效匹配关系，不允许回退到待确认");
+                throw new ServiceException(ApiError.LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN);
             }
         }
     }
@@ -608,9 +649,9 @@ public class LogisticsReconServiceImpl
         for (String mainId : dto.getIds()) {
             try {
                 LogisticsReconEntity entity = super.getByIdOpt(mainId)
-                        .orElseThrow(() -> new ServiceException(DOC_NAME + "不存在"));
+                        .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
                 if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
-                    throw new ServiceException("仅已确认的对账单允许触发合并匹配");
+                    throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
                 }
                 // TODO 合并 & 匹配：
                 //  1. 把 detail + detail_sub 转 ImportDataDTO（依赖 ImportHistoryRecordServiceImpl#buildImportDataList 重构后的入口）
@@ -632,7 +673,7 @@ public class LogisticsReconServiceImpl
         String targetStatus = dto.getReconciliationStatus();
         if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(targetStatus)
                 && !ReconciliationStatusEnum.CONFIRMED.getCode().equals(targetStatus)) {
-            throw new ServiceException("仅支持更新为待确认或账单确认");
+            throw new ServiceException(ApiError.LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID);
         }
         List<BatchResultDTO> results = new ArrayList<>(dto.getIds().size());
         LocalDateTime confirmTime = ReconciliationStatusEnum.CONFIRMED.getCode().equals(targetStatus)
@@ -640,9 +681,9 @@ public class LogisticsReconServiceImpl
         for (String mainId : dto.getIds()) {
             try {
                 LogisticsReconEntity entity = super.getByIdOpt(mainId)
-                        .orElseThrow(() -> new ServiceException(DOC_NAME + "不存在"));
+                        .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
                 if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
-                    throw new ServiceException("仅已确认的对账单允许执行账单确认");
+                    throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM);
                 }
                 List<String> logisticsBillCostIds = logisticsReconRefLogisticsBillService.lambdaQuery()
                         .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)
@@ -654,7 +695,7 @@ public class LogisticsReconServiceImpl
                         .distinct()
                         .collect(Collectors.toList());
                 if (CollUtil.isEmpty(logisticsBillCostIds)) {
-                    throw new ServiceException("未找到已匹配的物流费用单");
+                    throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND);
                 }
                 for (String logisticsBillCostId : logisticsBillCostIds) {
                     logisticsBillCostService.updateReconciliationStatus(logisticsBillCostId, targetStatus, confirmTime);

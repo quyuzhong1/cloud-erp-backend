@@ -3,6 +3,8 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -376,10 +378,26 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String code;
         /**
-         * 导入模板配置 id（cfg_logistics_cost_import.id）
+         * 业务类型
          */
-        @NotBlank(message = "导入模板配置id不能为空")
+        @NotBlank(message = "业务类型不能为空")
+        private String businessType;
+        /**
+         * 费用类型 api / excel
+         */
+        private String costType = "excel";
+        /**
+         * 导入模板配置 id（cfg_logistics_cost_import.id；异步任务内按文件名可匹配多个配置）
+         */
         private String cfgImportId;
+        /**
+         * 匹配到的导入模板配置
+         */
+        private List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList;
+        /**
+         * 匹配到的导入模板字段配置
+         */
+        private List<CfgLogisticsCostImportDetailEntity> importDetailList;
 
         /**
          * 对账月份 YYYY-MM
