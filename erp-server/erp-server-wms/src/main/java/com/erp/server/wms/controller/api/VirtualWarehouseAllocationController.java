@@ -81,6 +81,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @PostMapping("/saveAndSubmit")
     @LogAction(value = LogActionEnum.INSERT, desc = "分货单保存并提交")
     public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateDTO dto) {
+        virtualWarehouseAllocationService.checkBeforeSaveAndSubmit(dto);
         return success(virtualWarehouseAllocationService.saveAndSubmit(dto));
     }
 
