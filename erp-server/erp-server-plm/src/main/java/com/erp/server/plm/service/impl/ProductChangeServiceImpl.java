@@ -35,6 +35,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductChangeExcelListener;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -94,6 +95,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @Resource
     private ProductChangeDetailService productChangeDetailService;
@@ -910,6 +914,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             updateSkuChange(entity,detailEntityList,productDetailEntity);
             //推送金蝶
             productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
         }
 
         return Boolean.TRUE;
