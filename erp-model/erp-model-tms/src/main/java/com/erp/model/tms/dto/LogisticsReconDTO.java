@@ -42,6 +42,10 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String tabFlag;
         /**
+         * tab 名称
+         */
+        private String tabFlagName;
+        /**
          * 数量
          */
         private Integer count;
@@ -377,6 +381,10 @@ public class LogisticsReconDTO implements Serializable {
          * 对账单号（提交导入任务前生成）
          */
         private String code;
+        /**
+         * 预创建的对账单主表 id 映射（cfg_logistics_cost_import.id -> logistics_recon.id）
+         */
+        private Map<String, String> mainIdMap;
         /**
          * 业务类型
          */

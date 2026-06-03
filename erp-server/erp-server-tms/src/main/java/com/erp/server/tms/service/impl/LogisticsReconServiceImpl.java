@@ -68,6 +68,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -135,16 +136,20 @@ public class LogisticsReconServiceImpl
         if (list == null) {
             list = new ArrayList<>();
         }
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(obj -> obj.setTabFlagName(LogisticsReconCheckStatusEnum.getName(obj.getTabFlag())));
+        }
         // 不存在的状态补 0
         List<String> existStatus = list.stream()
                 .map(LogisticsReconDTO.TabListDTO::getTabFlag)
                 .collect(Collectors.toList());
         for (String status : LogisticsReconCheckStatusEnum.getStatusList()) {
             if (!existStatus.contains(status)) {
-                list.add(new LogisticsReconDTO.TabListDTO(status, 0));
+                list.add(new LogisticsReconDTO.TabListDTO(status,
+                        LogisticsReconCheckStatusEnum.getName(status), 0));
             }
         }
-        list.add(new LogisticsReconDTO.TabListDTO("all",
+        list.add(new LogisticsReconDTO.TabListDTO("all", "全部",
                 list.stream().mapToInt(LogisticsReconDTO.TabListDTO::getCount).sum()));
         return list;
     }
@@ -182,6 +187,7 @@ public class LogisticsReconServiceImpl
         throw new ServiceException(ApiError.LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO importExcel(LogisticsReconDTO.ImportDTO dto) {
         List<CfgLogisticsCostImportEntity> cfgList =
@@ -198,14 +204,24 @@ public class LogisticsReconServiceImpl
         dto.setImportDetailList(cfgDetails);
         // 提交导入时捕获操作人，异步回调落导入历史记录时使用
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+        // 按配置预创建主表（一个配置一条），列表立即可见「导入中」状态；
+        // mainId/code 为异步任务内按配置逐条处理时使用的临时字段，提交阶段不在此设置
+        Map<String, String> mainIdMap = new HashMap<>(cfgList.size());
+        for (CfgLogisticsCostImportEntity importCfg : cfgList) {
+            LogisticsReconEntity entity = createImportingMain(dto, importCfg);
+            mainIdMap.put(importCfg.getId(), entity.getId());
+        }
+        dto.setMainIdMap(mainIdMap);
         String taskId = downloadTaskFeign.saveImportTask(DOC_NAME + "导入", IMPORT_TMS_LOGISTICS_RECON.getCode(), dto);
-        log.info("[importExcel] submit taskId={} fileName={} cfgCount={}", taskId, dto.getFileName(), cfgList.size());
+        log.info("[importExcel] submit taskId={} fileName={} cfgCount={} mainIds={}",
+                taskId, dto.getFileName(), cfgList.size(), mainIdMap.values());
         return new BaseResultDTO.AddDTO(taskId, dto.getFileName());
     }
 
     @Override
     public void executeImportTask(LogisticsReconDTO.ImportDTO dto) {
-        List<String> createdMainIds = new ArrayList<>();
+        List<String> createdMainIds = CollUtil.isNotEmpty(dto.getMainIdMap())
+                ? new ArrayList<>(dto.getMainIdMap().values()) : new ArrayList<>();
         try {
             List<CfgLogisticsCostImportEntity> cfgList = dto.getCfgLogisticsCostImportList();
             if (CollUtil.isEmpty(cfgList)) {
@@ -234,8 +250,7 @@ public class LogisticsReconServiceImpl
                 if (CollUtil.isEmpty(cfgDetails)) {
                     throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
                 }
-                LogisticsReconEntity entity = createImportingMain(dto, importCfg);
-                createdMainIds.add(entity.getId());
+                LogisticsReconEntity entity = resolveImportMain(dto, importCfg, createdMainIds);
                 dto.setMainId(entity.getId());
                 dto.setCode(entity.getCode());
                 // 边解析边分批落库（监听器内每 1000 条回调 handleReconImportBatch）
@@ -590,11 +605,38 @@ public class LogisticsReconServiceImpl
     }
 
     /**
+     * 获取或创建导入主表（优先使用 importExcel 预创建的记录，兼容历史异步任务）
+     * @author Will
+     * @date: 2026/06/03
+     * @param dto 导入参数
+     * @param importCfg 导入配置
+     * @param createdMainIds 本次任务涉及的主表 id 集合（兜底创建时追加）
+     * @return LogisticsReconEntity
+     */
+    private LogisticsReconEntity resolveImportMain(LogisticsReconDTO.ImportDTO dto,
+                                                   CfgLogisticsCostImportEntity importCfg,
+                                                   List<String> createdMainIds) {
+        String mainId = CollUtil.isNotEmpty(dto.getMainIdMap())
+                ? dto.getMainIdMap().get(importCfg.getId()) : null;
+        if (StrUtil.isNotBlank(mainId)) {
+            LogisticsReconEntity entity = super.getById(mainId);
+            if (entity != null) {
+                return entity;
+            }
+        }
+        LogisticsReconEntity entity = createImportingMain(dto, importCfg);
+        if (!createdMainIds.contains(entity.getId())) {
+            createdMainIds.add(entity.getId());
+        }
+        return entity;
+    }
+
+    /**
      * 新建导入中主表
      * @author Will
      * @date: 2026/06/02
-     * @param dto
-     * @param importCfg
+     * @param dto 导入参数
+     * @param importCfg 导入配置
      * @return LogisticsReconEntity
      */
     private LogisticsReconEntity createImportingMain(LogisticsReconDTO.ImportDTO dto,
