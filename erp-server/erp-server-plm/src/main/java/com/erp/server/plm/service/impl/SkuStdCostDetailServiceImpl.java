@@ -28,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostChangeExcelDTO;
 import com.erp.model.plm.dto.excel.SkuStdCostUpdateExcelDTO;
@@ -37,10 +38,15 @@ import com.erp.model.plm.entity.SkuStdCostEntity;
 import com.erp.model.plm.entity.OperateLogEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.listener.SkuStdCostChangeExcelListener;
 import com.erp.server.plm.listener.SkuStdCostUpdateExcelListener;
@@ -95,6 +101,10 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     private BomSkuService bomSkuService;
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Lazy
     @Autowired
