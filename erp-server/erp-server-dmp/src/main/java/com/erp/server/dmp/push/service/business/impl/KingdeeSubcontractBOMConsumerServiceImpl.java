@@ -719,9 +719,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FStockID", stockJson);
         //仓位仅在供应商仓库下同步
         if (info.isSupplierWarehouse() && StringUtils.isNotBlank(info.getWarehouseLocation())) {
-            JSONObject locField = new JSONObject();
-            locField.put("FNumber", info.getWarehouseLocation());
-            entry.put("FStockLOCID", locField);
+            entry.put("FStockLOCID", info.getWarehouseLocation());
         }
     }
 
