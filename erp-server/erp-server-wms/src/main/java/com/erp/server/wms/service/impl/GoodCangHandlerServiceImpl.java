@@ -566,6 +566,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if ("0".equals(packingType) || CollUtil.isEmpty(createOutboundReq.getPackingDetailList())) {
             return null;
         }
+        boolean preStagedBox = B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType);
         Map<Integer, List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem>> detailByBox = createOutboundReq.getPackingDetailList().stream()
                 .filter(e -> Objects.nonNull(e.getBoxSeq()))
                 .collect(Collectors.groupingBy(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem::getBoxSeq, LinkedHashMap::new, Collectors.toList()));
@@ -581,7 +582,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build();
             packingList.add(GoodCangCreateB2bReq.Packing.builder()
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
-                    .boxNo(entry.getKey())
+                    .boxNo(preStagedBox ? null : entry.getKey())
                     .boxRefMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
                     .shipmentFileId(null)
                     .shipmentFileList(Collections.singletonList(shipmentFile))
