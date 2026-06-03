@@ -6,6 +6,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.WegoTransportQueryDTO;
 import com.erp.model.wms.dto.WegoSkuQueryDTO;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.sdk.wms.wego.constants.WeGoConstants;
@@ -78,6 +79,21 @@ public class WegoOpenApiService {
         bizParams.put("pageNum", dto.getPageNum());
         mergeBizParams(bizParams, dto.getBizParams(), "查询SKU", SKU_QUERY_RESERVED_PARAM_KEYS);
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.PRODUCT_SEARCH, bizParams, "查询SKU");
+    }
+
+    /**
+     * 调用 WEGO transport.get 查询派送渠道列表。
+     * <p>
+     * 业务参数（warehouseBusiness / warehouseCode / transportationType）均为可选，
+     * 调用方按需通过 {@link WegoTransportQueryDTO.QueryReqDTO#getBizParams()} 透传。
+     *
+     * @param dto 入参，包含 accessToken / secret / 业务扩展参数
+     * @return WEGO 接口原始响应解析后的 JSONObject（含 success / errorCode / errorMsg / serverTime / result 等字段）
+     */
+    public JSONObject queryTransport(WegoTransportQueryDTO.QueryReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        mergeBizParams(bizParams, dto.getBizParams(), "查询派送渠道", Collections.emptySet());
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TRANSPORT_GET, bizParams, "查询派送渠道");
     }
 
     /**
