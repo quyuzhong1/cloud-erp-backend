@@ -5,7 +5,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
-import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlFillModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlOrderDirectionEnum;
@@ -13,15 +12,10 @@ import com.erp.model.tms.enums.CfgLogisticsCostImportEtlReplaceModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlRuleTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSubstringModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSymbolPositionEnum;
-import com.erp.model.tms.enums.CfgLogisticsCostImportFieldUnitTypeEnum;
 import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
-import com.erp.server.tms.service.CfgLogisticsCostImportFieldService;
 import org.junit.Test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -123,7 +117,7 @@ public class LogisticsCostImportFieldRuleTest {
         JSONObject rowData = new JSONObject();
         rowData.set("0", "88");
 
-        assertEquals("AB-001", clean(service, "A_001", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(),
+        assertEquals("A-001", clean(service, "A_001", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(),
                 "sourceText", "_", "mode", CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_TO.getCode(), "targetText", "-")), rowData, headMap));
         assertEquals("001", clean(service, "AB-001", detailWithRules(rule(CfgLogisticsCostImportEtlRuleTypeEnum.SUBSTRING.getCode(),
                 "mode", CfgLogisticsCostImportEtlSubstringModeEnum.BY_SYMBOL.getCode(), "symbol", "-", "symbolPosition", CfgLogisticsCostImportEtlSymbolPositionEnum.AFTER.getCode())), rowData, headMap));
@@ -181,6 +175,116 @@ public class LogisticsCostImportFieldRuleTest {
         assertEquals(Collections.singletonList("ABC"), paramMap.get("trackingNo"));
     }
 
+    @Test
+    public void prepareImportRowValuesShouldNotFallbackToDefaultForSourceField() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity detail = importDetail("source", "trackingNo", "物流商单号");
+        detail.setSourceField("物流单号");
+        detail.setDefaultValue("DEFAULT-NO");
+        Map<Integer, String> headMap = Collections.singletonMap(0, "物流单号");
+        JSONObject rowData = new JSONObject();
+        rowData.set("0", "");
+
+        invokePrivate(service, "prepareImportRowValues", new Class[]{List.class, Map.class, List.class}, Collections.singletonList(detail), headMap, Collections.singletonList(rowData));
+
+        assertEquals("", getPrepared(service, rowData, detail));
+        assertEquals("", rowData.getStr("trackingNo"));
+    }
+
+    @Test
+    public void prepareImportRowValuesShouldEnrichDefaultOnlyVirtualField() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity detail = importDetail("virtual", "logisticsWeightUnit", "物流商重量单位");
+        detail.setDefaultValue("g");
+        detail.setEtlRuleList(Collections.singletonList(rule(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(),
+                "sourceText", "g", "mode", CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_TO.getCode(), "targetText", "kg")));
+        JSONObject rowData = new JSONObject();
+
+        invokePrivate(service, "prepareImportRowValues", new Class[]{List.class, Map.class, List.class}, Collections.singletonList(detail), Collections.emptyMap(), Collections.singletonList(rowData));
+
+        assertEquals("kg", getPrepared(service, rowData, detail));
+        assertEquals("kg", rowData.getStr("logisticsWeightUnit"));
+    }
+
+    @Test
+    public void uniqueKeyShouldRejectDefaultOnlyVirtualField() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity detail = importDetail("unique", "trackingNo", "物流商单号");
+        detail.setIsUniqueKey(true);
+        detail.setDefaultValue("DEFAULT-NO");
+
+        assertThrowsServiceException(() -> invokePrivate(service, "extractUniqueKeyList", new Class[]{List.class}, Collections.singletonList(detail)));
+    }
+
+    @Test
+    public void prepareImportRowValuesShouldApplyRulesByIndexOrder() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity detail = importDetail("ordered", "trackingNo", "物流商单号");
+        detail.setSourceField("物流单号");
+        CfgLogisticsCostImportDetailDTO.EtlRuleDTO second = rule(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(),
+                "sourceText", "B", "mode", CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_TO.getCode(), "targetText", "C");
+        second.setIndex(2);
+        CfgLogisticsCostImportDetailDTO.EtlRuleDTO first = rule(CfgLogisticsCostImportEtlRuleTypeEnum.REPLACE.getCode(),
+                "sourceText", "A", "mode", CfgLogisticsCostImportEtlReplaceModeEnum.REPLACE_TO.getCode(), "targetText", "B");
+        first.setIndex(1);
+        detail.setEtlRuleList(Arrays.asList(second, first));
+        Map<Integer, String> headMap = Collections.singletonMap(0, "物流单号");
+        JSONObject rowData = new JSONObject();
+        rowData.set("0", "A-001");
+
+        invokePrivate(service, "prepareImportRowValues", new Class[]{List.class, Map.class, List.class}, Collections.singletonList(detail), headMap, Collections.singletonList(rowData));
+
+        assertEquals("C-001", getPrepared(service, rowData, detail));
+    }
+
+    @Test
+    public void cleanFileShouldProjectCleanedColumns() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity detail = importDetail("amount", "actualAmount", "实际金额");
+        detail.setSourceField("金额");
+        detail.setMappingIndex(0);
+        JSONObject rowData = new JSONObject();
+        rowData.set("0", "USD 88");
+        setPrepared(service, rowData, detail, "88");
+
+        invokePrivate(service, "projectCleanFileRows", new Class[]{List.class, List.class},
+                Collections.singletonList(detail), Collections.singletonList(rowData));
+
+        assertEquals("88", rowData.getStr("0"));
+    }
+
+    @Test
+    public void cleanFileCleanedModeShouldProjectCleanedAndVirtualValues() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity amount = importDetail("amount", "actualAmount", "实际金额");
+        amount.setSourceField("金额");
+        amount.setMappingIndex(0);
+        CfgLogisticsCostImportDetailEntity unit = importDetail("unit", "logisticsWeightUnit", "物流商重量单位");
+        unit.setDefaultValue("kg");
+        List<CfgLogisticsCostImportDetailEntity> details = Arrays.asList(amount, unit);
+        List<String> headList = new ArrayList<>(Arrays.asList("金额", "匹配结果", "错误信息"));
+        Map<Integer, String> headMap = new HashMap<>();
+        headMap.put(0, "金额");
+        headMap.put(1, "匹配结果");
+        headMap.put(2, "错误信息");
+        JSONObject rowData = new JSONObject();
+        rowData.set("0", "USD 88");
+        rowData.set("2", "");
+        setPrepared(service, rowData, amount, "88");
+        setPrepared(service, rowData, unit, "kg");
+
+        invokePrivate(service, "prepareCleanFileHeaders", new Class[]{List.class, List.class, Map.class},
+                details, headList, headMap);
+        invokePrivate(service, "prepareCleanFileHeaders", new Class[]{List.class, List.class, Map.class},
+                details, headList, headMap);
+        invokePrivate(service, "projectCleanFileRows", new Class[]{List.class, List.class},
+                details, Collections.singletonList(rowData));
+
+        assertEquals(Arrays.asList("金额", "物流商重量单位", "匹配结果", "错误信息"), headList);
+        assertEquals("88", rowData.getStr("0"));
+        assertEquals("kg", rowData.getStr("1"));
+    }
+
     /**
      * 验证明细 DTO 不保存或回显字段单位属性。
      *
@@ -208,34 +312,27 @@ public class LogisticsCostImportFieldRuleTest {
      * @date 2026/05/22
      */
     @Test
-    public void weightFieldShouldConvertGramToKilogramOnlyForWeightMetadata() throws Exception {
+    public void weightFieldShouldConvertGramToKilogramOnlyForConfiguredTargetFields() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
-        injectFieldService(service, Arrays.asList(
-                fieldMeta("chargeWeight", CfgLogisticsCostImportFieldUnitTypeEnum.WEIGHT.getCode(), "kg"),
-                fieldMeta("packageLength", CfgLogisticsCostImportFieldUnitTypeEnum.LENGTH.getCode(), "cm"),
-                fieldMeta("feeAmount", CfgLogisticsCostImportFieldUnitTypeEnum.AMOUNT.getCode(), "USD")
-        ));
-        CfgLogisticsCostImportEntity main = new CfgLogisticsCostImportEntity();
-        main.setBusinessType("logisticsBillCost");
         CfgLogisticsCostImportDetailEntity unit = importDetail("unit", "logisticsWeightUnit", "物流商重量单位");
-        CfgLogisticsCostImportDetailEntity weight = importDetail("weight", "chargeWeight", "计费重");
-        CfgLogisticsCostImportDetailEntity length = importDetail("length", "packageLength", "长");
+        CfgLogisticsCostImportDetailEntity billingWeight = importDetail("billingWeight", "billingWeightLogistics", "计费重(物流商)");
+        CfgLogisticsCostImportDetailEntity actualWeight = importDetail("actualWeight", "thirdActualWeight", "实重(物流商)");
         CfgLogisticsCostImportDetailEntity amount = importDetail("amount", "feeAmount", "费用");
-        List<CfgLogisticsCostImportDetailEntity> details = Arrays.asList(unit, weight, length, amount);
+        List<CfgLogisticsCostImportDetailEntity> details = Arrays.asList(unit, billingWeight, actualWeight, amount);
         JSONObject rowData = new JSONObject();
         setPrepared(service, rowData, unit, "g");
-        setPrepared(service, rowData, weight, "1500");
-        setPrepared(service, rowData, length, "20");
+        setPrepared(service, rowData, billingWeight, "1500");
+        setPrepared(service, rowData, actualWeight, "800");
         setPrepared(service, rowData, amount, "300");
 
-        @SuppressWarnings("unchecked")
-        List<JSONObject> validRows = (List<JSONObject>) invokePrivate(service, "standardizeImportRowWeightValues",
-                new Class[]{CfgLogisticsCostImportEntity.class, List.class, List.class, List.class, Map.class},
-                main, details, Collections.singletonList(rowData), new ArrayList<>(), Collections.emptyMap());
+        List<JSONObject> validRows = Collections.singletonList(rowData);
+        invokePrivate(service, "standardizeImportRowWeightValues",
+                new Class[]{List.class, List.class},
+                details, validRows);
         assertEquals(1, validRows.size());
         assertEquals("kg", getPrepared(service, rowData, unit));
-        assertEquals("1.5", getPrepared(service, rowData, weight));
-        assertEquals("20", getPrepared(service, rowData, length));
+        assertEquals("1.5", getPrepared(service, rowData, billingWeight));
+        assertEquals("0.8", getPrepared(service, rowData, actualWeight));
         assertEquals("300", getPrepared(service, rowData, amount));
     }
 
@@ -254,8 +351,8 @@ public class LogisticsCostImportFieldRuleTest {
     private void invokeValidateDefaultValue(CfgLogisticsCostImportServiceImpl service, CfgLogisticsCostImportDetailDTO.UpdateDTO detail,
                                             CfgLogisticsCostImportFieldEntity field, int index) throws Exception {
         invokePrivate(service, "validateDefaultValue",
-                new Class[]{CfgLogisticsCostImportDetailDTO.UpdateDTO.class, CfgLogisticsCostImportFieldEntity.class, int.class},
-                detail, field, index);
+                new Class[]{CfgLogisticsCostImportDetailDTO.UpdateDTO.class, CfgLogisticsCostImportFieldEntity.class, int.class, java.util.Set.class},
+                detail, field, index, Collections.emptySet());
     }
 
     /**
@@ -325,41 +422,6 @@ public class LogisticsCostImportFieldRuleTest {
      */
     private String getPrepared(ImportHistoryRecordServiceImpl service, JSONObject rowData, CfgLogisticsCostImportDetailEntity detail) throws Exception {
         return (String) invokePrivate(service, "getPreparedValue", new Class[]{JSONObject.class, CfgLogisticsCostImportDetailEntity.class}, rowData, detail);
-    }
-
-    /**
-     * 注入字段基础数据服务代理。
-     *
-     * @param service 服务实例
-     * @param fieldList 字段元数据
-     * @return 无
-     * @throws Exception 反射注入失败时抛出
-     * @author jack
-     * @date 2026/05/22
-     */
-    private void injectFieldService(ImportHistoryRecordServiceImpl service, List<CfgLogisticsCostImportFieldDTO.ListDTO> fieldList) throws Exception {
-        InvocationHandler handler = (proxy, method, args) -> {
-            if ("listByBusinessType".equals(method.getName())) {
-                return fieldList;
-            }
-            if ("toString".equals(method.getName())) {
-                return "CfgLogisticsCostImportFieldServiceProxy";
-            }
-            if ("hashCode".equals(method.getName())) {
-                return System.identityHashCode(proxy);
-            }
-            if ("equals".equals(method.getName())) {
-                return proxy == args[0];
-            }
-            return null;
-        };
-        CfgLogisticsCostImportFieldService proxy = (CfgLogisticsCostImportFieldService) Proxy.newProxyInstance(
-                CfgLogisticsCostImportFieldService.class.getClassLoader(),
-                new Class[]{CfgLogisticsCostImportFieldService.class},
-                handler);
-        Field field = ImportHistoryRecordServiceImpl.class.getDeclaredField("cfgLogisticsCostImportFieldService");
-        field.setAccessible(true);
-        field.set(service, proxy);
     }
 
     /**
@@ -507,26 +569,6 @@ public class LogisticsCostImportFieldRuleTest {
                 throw new IllegalArgumentException("unknown etl rule field: " + key);
         }
     }
-
-    /**
-     * 构造字段元数据。
-     *
-     * @param field 字段编码
-     * @param unitType 单位属性
-     * @param standardUnit 标准单位
-     * @return 字段元数据
-     * @throws
-     * @author jack
-     * @date 2026/05/22
-     */
-    private CfgLogisticsCostImportFieldDTO.ListDTO fieldMeta(String field, String unitType, String standardUnit) {
-        CfgLogisticsCostImportFieldDTO.ListDTO dto = new CfgLogisticsCostImportFieldDTO.ListDTO();
-        dto.setField(field);
-        dto.setUnitType(unitType);
-        dto.setStandardUnit(standardUnit);
-        return dto;
-    }
-
 
     /**
      * 判断类是否声明字段。

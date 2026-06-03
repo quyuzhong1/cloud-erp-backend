@@ -102,9 +102,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private LogisticsFeign logisticsFeign;
-    @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Lazy
     @Autowired

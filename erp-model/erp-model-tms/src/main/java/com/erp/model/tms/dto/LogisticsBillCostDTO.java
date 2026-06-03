@@ -840,6 +840,11 @@ public class LogisticsBillCostDTO implements Serializable {
 
         private String logisticsBillDetailId;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
         private String trackNo;
         /**
          * 对账类型
@@ -907,6 +912,11 @@ public class LogisticsBillCostDTO implements Serializable {
         @NotBlank(message = "物流单明细id不能为空")
         @Size(max = 19,message = "物流单明细id最大长度不能超过19位")
         private String logisticsBillDetailId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
         * 实重
