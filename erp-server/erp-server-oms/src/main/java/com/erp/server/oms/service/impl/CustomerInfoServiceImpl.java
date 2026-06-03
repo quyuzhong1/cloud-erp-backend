@@ -804,6 +804,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setUseOrgName(useOrgName);
+        customer.setDefaultShippingWarehouse(StringUtils.defaultString(dto.getDefaultShippingWarehouse()));
+        customer.setDefaultReceiveAccount(StringUtils.defaultString(dto.getDefaultReceiveAccount()));
         Boolean updateResult = this.updateById(customer);
         
         shopInfoService.lambdaUpdate()
