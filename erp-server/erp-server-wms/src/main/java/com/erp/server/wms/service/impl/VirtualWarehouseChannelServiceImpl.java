@@ -51,7 +51,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
-    private static final String VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM = "vmChannelAllScopeSkipCheckPlatform";
+    private static final String VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
 
     @Resource
     private OperateLogService operateLogService;
