@@ -11,6 +11,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.B2bPackingLabelSizeEnum;
+import com.erp.model.wms.enums.B2bPackingTypeEnum;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -587,13 +588,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         for (Map.Entry<Integer, List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem>> entry : detailByBox.entrySet()) {
             List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxItems = entry.getValue();
             ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead = boxItems.get(0);
-            List<GoodCangCreateB2bReq.PackingLine> packingLineList = boxItems.stream()
-                    .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehousePlatformSku()) && Objects.nonNull(e.getPackingQty()))
-                    .map(e -> GoodCangCreateB2bReq.PackingLine.builder()
-                            .productSku(e.getWarehousePlatformSku())
-                            .quantity(e.getPackingQty())
-                            .build())
-                    .collect(Collectors.toList());
+            List<GoodCangCreateB2bReq.PackingLine> packingLineList = buildGoodCangPackingLineList(packingType, boxItems);
             GoodCangCreateB2bReq.ShipmentFile shipmentFile = GoodCangCreateB2bReq.ShipmentFile.builder()
                     .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
                     .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
@@ -603,7 +598,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
                     .boxNo(entry.getKey())
                     .boxRefMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
-                    .shipmentFileId(boxHead.getShipmentFileId())
+                    .shipmentFileId(null)
                     .shipmentFileList(Collections.singletonList(shipmentFile))
                     .logisticsFileId(null)
                     .customsFileId(null)
@@ -611,6 +606,20 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .build());
         }
         return packingList;
+    }
+
+    private List<GoodCangCreateB2bReq.PackingLine> buildGoodCangPackingLineList(String packingType,
+                                                                               List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxItems) {
+        if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType)) {
+            return null;
+        }
+        return boxItems.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehousePlatformSku()) && Objects.nonNull(e.getPackingQty()))
+                .map(e -> GoodCangCreateB2bReq.PackingLine.builder()
+                        .productSku(e.getWarehousePlatformSku())
+                        .quantity(e.getPackingQty())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public boolean isSuccess(String ask, String message){
