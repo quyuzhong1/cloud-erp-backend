@@ -34,6 +34,8 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -63,6 +65,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
+import com.erp.model.wms.dto.excel.SoReturnStockOverwriteImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -76,6 +79,7 @@ import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.AuthDataFeign;
@@ -86,6 +90,7 @@ import com.erp.server.wms.convert.SoB2cReturnInstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.listener.SoReturnStockExcelListener;
+import com.erp.server.wms.listener.SoReturnStockOverwriteExcelListener;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
@@ -111,6 +116,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -124,6 +131,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_IN_STOCK;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE;
 
 /**
  * 退货入库单
@@ -220,6 +228,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FileFeign fileFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
 
@@ -2453,16 +2463,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
-        //验证导入数据是否为空
         List<SoReturnStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
-        //导入数据处理
         List<SoReturnStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
-        //导出错误数据
         List<SoReturnStockImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        //处理校验导入成功数据
         handleImportSoReturnstockFile(successList, errorList);
 
         if (errorList.isEmpty()) {
@@ -2479,6 +2485,346 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
         }
         return Boolean.FALSE;
+    }
+
+    @Override
+    public void downloadOverwriteTemplate(HttpServletResponse response) {
+        try {
+            response.reset();
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = java.net.URLEncoder.encode("soReturnInstockOverwriteTemplate", StandardCharsets.UTF_8.name());
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
+            EasyExcel.write(response.getOutputStream(), SoReturnStockOverwriteImportExcelDTO.class)
+                    .sheet("Sheet1")
+                    .doWrite(Collections.emptyList());
+        } catch (IOException e) {
+            log.error("downloadOverwriteTemplate 下载失败", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
+        }
+    }
+
+    @Override
+    public Boolean importOverwriteFile(BaseDTO.ImportDTO dto) {
+        try {
+            dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+            downloadTaskFeign.saveImportTask("销售退货入库单批量导入覆盖", IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE.getCode(), dto);
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.error("创建销售退货入库单批量导入覆盖任务失败", e);
+            return Boolean.FALSE;
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void importSoReturnInstockOverwrite(BaseDTO.ImportDTO dto) {
+        setImportUserContext(dto);
+        SoReturnStockOverwriteExcelListener excelListenerUtil = new SoReturnStockOverwriteExcelListener();
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockOverwriteImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (ExcelCommonException e) {
+            log.error("批量导入覆盖格式错误！", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        List<SoReturnStockOverwriteImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        List<SoReturnStockOverwriteImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        List<SoReturnStockOverwriteImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        handleImportSoReturnstockOverwriteFile(successList, errorList);
+        finishImportTask(dto, excelDateList.size(), errorList, SoReturnStockOverwriteImportExcelDTO.class, "销售退货入库单批量导入覆盖错误信息.xlsx");
+    }
+
+    private void setImportUserContext(BaseDTO.ImportDTO dto) {
+        if (CharSequenceUtil.isBlank(dto.getUserId())) {
+            return;
+        }
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Collections.singletonList(dto.getUserId()));
+        if (CollectionUtils.isEmpty(userList)) {
+            return;
+        }
+        FindUserDTO findUserDTO = userList.get(0);
+        LoginUser user = new LoginUser();
+        user.setUid(findUserDTO.getUserId());
+        user.setUserName(findUserDTO.getUserName());
+        user.setRealName(findUserDTO.getRealName());
+        user.setUserAccount(findUserDTO.getMobile());
+        user.setMobile(findUserDTO.getMobile());
+        UserContext.setLoginUser(user);
+    }
+
+    private void finishImportTask(BaseDTO.ImportDTO dto, int totalCount, List<?> errorList, Class<?> errorClass, String errorFileName) {
+        BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+        importResultDTO.setTaskId(dto.getTaskId());
+        importResultDTO.setCount(totalCount);
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            File file = ExcelUtil.exportFile(errorFileName, "error", errorList, errorClass);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, errorFileName);
+            }
+        }
+        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setErrorUrl(url);
+        importResultDTO.setFinishTime(LocalDateTime.now());
+        importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+        downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    /**
+     * 批量导入覆盖处理：校验单据与明细后更新客户
+     */
+    private void handleImportSoReturnstockOverwriteFile(List<SoReturnStockOverwriteImportExcelDTO> successList,
+                                                        List<SoReturnStockOverwriteImportExcelDTO> errorList) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        Map<String, List<SoReturnStockOverwriteImportExcelDTO>> groupByCode = successList.stream()
+                .collect(Collectors.groupingBy(SoReturnStockOverwriteImportExcelDTO::getCode));
+
+        List<String> codeList = new ArrayList<>(groupByCode.keySet());
+        List<SoReturnInstockEntity> entityList = lambdaQuery().in(SoReturnInstockEntity::getCode, codeList).list();
+        Map<String, SoReturnInstockEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(SoReturnInstockEntity::getCode, Function.identity(), (a, b) -> a));
+
+        List<String> mainIdList = entityList.stream().map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+        Map<String, List<SoReturnInstockDetailEntity>> detailMap = Collections.emptyMap();
+        if (CollUtil.isNotEmpty(mainIdList)) {
+            detailMap = soReturnInstockDetailService.listDetailByMainIds(mainIdList).stream()
+                    .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getMainId));
+        }
+
+        List<String> customerNameList = successList.stream().map(SoReturnStockOverwriteImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                .in(CustomerInfoEntity::getName, customerNameList)
+                .eq(CustomerInfoEntity::getDisabled, Boolean.FALSE)
+                .eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                .list();
+        Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getName));
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+
+        for (Map.Entry<String, List<SoReturnStockOverwriteImportExcelDTO>> entry : groupByCode.entrySet()) {
+            String code = entry.getKey();
+            List<SoReturnStockOverwriteImportExcelDTO> rows = entry.getValue();
+            SoReturnInstockEntity entity = entityMap.get(code);
+            if (ObjectUtil.isEmpty(entity)) {
+                appendOverwriteError(rows, errorList, "退货入库单不存在");
+                continue;
+            }
+            if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+                appendOverwriteError(rows, errorList, "退货入库单已作废");
+                continue;
+            }
+            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())
+                    && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) {
+                appendOverwriteError(rows, errorList, ApiError.BILL_EDIT_ALLOWED_STATUS_ONLY.getMsg());
+                continue;
+            }
+            if (!SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())
+                    && !SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
+                appendOverwriteError(rows, errorList, "当前来源类型不允许修改客户");
+                continue;
+            }
+            long customerNameCount = rows.stream().map(SoReturnStockOverwriteImportExcelDTO::getCustomerName).distinct().count();
+            if (customerNameCount > 1) {
+                appendOverwriteError(rows, errorList, "同一退货入库单号退货客户不一致");
+                continue;
+            }
+            SoReturnStockOverwriteImportExcelDTO headerRow = rows.get(0);
+            List<String> headerErrorList = validateOverwriteHeader(entity, headerRow, currencyList);
+            if (CollUtil.isNotEmpty(headerErrorList)) {
+                appendOverwriteError(rows, errorList, FieldValidUtil.getMsgSort(headerErrorList));
+                continue;
+            }
+            List<SoReturnInstockDetailEntity> detailEntityList = detailMap.getOrDefault(entity.getId(), Collections.emptyList());
+            if (CollUtil.isEmpty(detailEntityList)) {
+                appendOverwriteError(rows, errorList, ApiError.SO_RETURN_INBOUND_DETAIL_REQUIRED.getMsg());
+                continue;
+            }
+            if (rows.size() != detailEntityList.size()) {
+                appendOverwriteError(rows, errorList, "导入明细行数与系统明细行数不一致");
+                continue;
+            }
+            List<SoReturnInstockDetailEntity> matchedDetails = new ArrayList<>();
+            boolean detailValid = true;
+            for (SoReturnStockOverwriteImportExcelDTO row : rows) {
+                SoReturnInstockDetailEntity matchedDetail = matchOverwriteDetail(row, detailEntityList, matchedDetails);
+                if (ObjectUtil.isEmpty(matchedDetail)) {
+                    row.setErrorMsg(FieldValidUtil.getMsgSort(Collections.singletonList(
+                            CharSequenceUtil.format("未匹配到明细，SKU【{}】客户sku【{}】", row.getSkuNo(), row.getPlatformSkuNo()))));
+                    errorList.add(row);
+                    detailValid = false;
+                    break;
+                }
+                matchedDetails.add(matchedDetail);
+            }
+            if (!detailValid) {
+                continue;
+            }
+            List<CustomerInfoEntity> customerInfoEntityList = customerMap.get(headerRow.getCustomerName());
+            if (CollUtil.isEmpty(customerInfoEntityList)) {
+                appendOverwriteError(rows, errorList, "未找到有效客户" + headerRow.getCustomerName());
+                continue;
+            }
+            try {
+                ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
+                        .overwriteCustomer(entity, customerInfoEntityList.get(0), headerRow, currencyList);
+            } catch (Exception e) {
+                appendOverwriteError(rows, errorList, e.getMessage());
+            }
+        }
+    }
+
+    private void appendOverwriteError(List<SoReturnStockOverwriteImportExcelDTO> rows,
+                                      List<SoReturnStockOverwriteImportExcelDTO> errorList,
+                                      String errorMsg) {
+        rows.forEach(row -> row.setErrorMsg("1、" + errorMsg));
+        errorList.addAll(rows);
+    }
+
+    private List<String> validateOverwriteHeader(SoReturnInstockEntity entity,
+                                                   SoReturnStockOverwriteImportExcelDTO headerRow,
+                                                   List<DictCurrencyEntity> currencyList) {
+        List<String> errorMsgList = new ArrayList<>();
+        if (!CharSequenceUtil.equals(entity.getInventoryOrgName(), headerRow.getInventoryOrgName())) {
+            errorMsgList.add("库存组织与系统不一致");
+        }
+        DictCurrencyEntity dictCurrencyEntity = currencyList.stream()
+                .filter(obj -> obj.getName().equals(headerRow.getCurrencyStr()) || obj.getId().equals(headerRow.getCurrencyStr()))
+                .findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(dictCurrencyEntity)) {
+            errorMsgList.add("未找到币别" + headerRow.getCurrencyStr());
+        } else if (!CharSequenceUtil.equals(entity.getCurrency(), dictCurrencyEntity.getId())) {
+            errorMsgList.add("币种与系统不一致");
+        }
+        if (!entity.getBillDate().equals(headerRow.getBillDate())) {
+            errorMsgList.add("入库日期与系统不一致");
+        }
+        String typeCode = resolveOverwriteTypeCode(headerRow.getTypeName());
+        if (CharSequenceUtil.isBlank(typeCode)) {
+            errorMsgList.add("单据类型错误");
+        } else if (!CharSequenceUtil.equals(entity.getType(), typeCode)) {
+            errorMsgList.add("单据类型与系统不一致");
+        }
+        String entityLogisticCode = CharSequenceUtil.blankToDefault(entity.getReturnLogisticCode(), "");
+        String importLogisticCode = CharSequenceUtil.blankToDefault(headerRow.getReturnLogisticCode(), "");
+        if (!CharSequenceUtil.equals(entityLogisticCode, importLogisticCode)) {
+            errorMsgList.add("退货物流单号与系统不一致");
+        }
+        return errorMsgList;
+    }
+
+    private String resolveOverwriteTypeCode(String typeName) {
+        if (CharSequenceUtil.isBlank(typeName)) {
+            return null;
+        }
+        String code = BillTypeEnum.getCodeByName(typeName);
+        if (CharSequenceUtil.isNotBlank(code)) {
+            return code;
+        }
+        code = OrderTypeEnum.getCodeByName(typeName);
+        if (CharSequenceUtil.isNotBlank(code)) {
+            return code;
+        }
+        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
+            if (typeName.trim().equalsIgnoreCase(billTypeEnum.getCode())) {
+                return billTypeEnum.getCode();
+            }
+        }
+        for (OrderTypeEnum orderTypeEnum : OrderTypeEnum.values()) {
+            if (typeName.trim().equalsIgnoreCase(orderTypeEnum.getCode())) {
+                return orderTypeEnum.getCode();
+            }
+        }
+        return null;
+    }
+
+    private SoReturnInstockDetailEntity matchOverwriteDetail(SoReturnStockOverwriteImportExcelDTO row,
+                                                             List<SoReturnInstockDetailEntity> detailEntityList,
+                                                             List<SoReturnInstockDetailEntity> matchedDetails) {
+        Integer realQty = Integer.valueOf(row.getRealQtyStr());
+        BigDecimal price = MathUtil.valueOf(row.getPriceStr());
+        BigDecimal taxRate = MathUtil.valueOf(row.getTaxRateStr());
+        BigDecimal taxPrice = MathUtil.valueOf(row.getTaxPriceStr());
+        for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
+            if (matchedDetails.contains(detailEntity)) {
+                continue;
+            }
+            if (!CharSequenceUtil.equals(detailEntity.getSkuNo(), row.getSkuNo())) {
+                continue;
+            }
+            String entityPlatformSku = CharSequenceUtil.blankToDefault(detailEntity.getPlatformSkuNo(), "");
+            String importPlatformSku = CharSequenceUtil.blankToDefault(row.getPlatformSkuNo(), "");
+            if (!CharSequenceUtil.equals(entityPlatformSku, importPlatformSku)) {
+                continue;
+            }
+            if (!Objects.equals(detailEntity.getRealQty(), realQty)) {
+                continue;
+            }
+            if (detailEntity.getPrice() == null || detailEntity.getPrice().compareTo(price) != 0) {
+                continue;
+            }
+            if (detailEntity.getTaxRate() == null || detailEntity.getTaxRate().compareTo(taxRate) != 0) {
+                continue;
+            }
+            if (detailEntity.getTaxPrice() == null || detailEntity.getTaxPrice().compareTo(taxPrice) != 0) {
+                continue;
+            }
+            return detailEntity;
+        }
+        return null;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void overwriteCustomer(SoReturnInstockEntity entity,
+                                  CustomerInfoEntity customerInfo,
+                                  SoReturnStockOverwriteImportExcelDTO headerRow,
+                                  List<DictCurrencyEntity> currencyList) {
+        SoReturnInstockEntity oldEntity = new SoReturnInstockEntity();
+        BeanMapper.copy(entity, oldEntity);
+        if (CharSequenceUtil.equals(entity.getCustomerId(), customerInfo.getId())) {
+            return;
+        }
+        entity.setCustomerId(customerInfo.getId());
+        entity.setCustomerName(customerInfo.getName());
+        entity.setSellerId(customerInfo.getSellerId());
+        entity.setSellerName(customerInfo.getSellerName());
+        if (StringUtils.isNotBlank(customerInfo.getSalesDeptId())) {
+            SysDepartmentDTO department = sysUserFeign.getUserDeptById(customerInfo.getSalesDeptId());
+            if (null != department) {
+                entity.setSalesDeptId(customerInfo.getSalesDeptId());
+                entity.setSalesDeptName(department.getName());
+            }
+        }
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(customerInfo.getUseOrgId()));
+        if (CollectionUtils.isEmpty(orgList)) {
+            throw new ServiceException("销售组织不存在");
+        }
+        String salesOrgName = orgList.stream()
+                .filter(o -> customerInfo.getUseOrgId().equals(o.getId()))
+                .findFirst()
+                .flatMap(obj -> Optional.ofNullable(obj.getName()))
+                .orElse("");
+        entity.setSalesOrgName(salesOrgName);
+        entity.setSalesOrgId(customerInfo.getUseOrgId());
+        DictCurrencyEntity dictCurrencyEntity = currencyList.stream()
+                .filter(obj -> obj.getName().equals(headerRow.getCurrencyStr()) || obj.getId().equals(headerRow.getCurrencyStr()))
+                .findFirst()
+                .orElse(null);
+        if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+            entity.setCurrencySymbol(dictCurrencyEntity.getSymbol());
+            entity.setCurrency(dictCurrencyEntity.getId());
+        }
+        operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
+        operateLogService.addModuleOperateLog(
+                CharSequenceUtil.format("批量导入覆盖：退货客户从【{}】修改为【{}】", oldEntity.getCustomerName(), entity.getCustomerName()),
+                ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
+        if (!this.updateById(entity)) {
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        }
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -368,13 +369,23 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     void downloadTemplate(HttpServletResponse response);
     /**
      * 导入
-     * @author will
-     * @date 2025/4/24 19:49
-     * @param excelFile
-     * @param response
-     * @return Boolean
      */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 下载批量导入覆盖模板
+     */
+    void downloadOverwriteTemplate(HttpServletResponse response);
+
+    /**
+     * 批量导入覆盖（修改客户，异步）
+     */
+    Boolean importOverwriteFile(BaseDTO.ImportDTO dto);
+
+    /**
+     * 异步批量导入覆盖销售退货入库单客户
+     */
+    void importSoReturnInstockOverwrite(BaseDTO.ImportDTO dto);
 
     AliexpressReturnInstockDTO newSyncDataToCaiNiao(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> detailEntityList, String syncOperate);
 

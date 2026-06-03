@@ -265,6 +265,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_WMS_SO_RETURN_NOTICE("EXPORT_WMS_SO_RETURN_NOTICE", "销售退货通知单","","",""),
     EXPORT_WMS_SO_RETURN_RECEIVE("EXPORT_WMS_SO_RETURN_RECEIVE", "销售退货签收单","","",""),
     EXPORT_WMS_SO_RETURN_IN_STOCK("EXPORT_WMS_SO_RETURN_IN_STOCK", "销售退货入库单","","",""),
+    IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE("IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE", "销售退货入库单批量导入覆盖","com.erp.rpc.wms.feign.ImportWmsFeign","importSoReturnInstockOverwrite",""),
     EXPORT_WMS_PO_IN_STOCK("EXPORT_WMS_PO_IN_STOCK", "采购入库单数据","","",""),
     EXPORT_WMS_SUBCONTRACT_ISSUE("EXPORT_WMS_SUBCONTRACT_ISSUE", "委外发料单导出","","",""),
     EXPORT_WMS_SUPPLIER_DELIVERY_ORDER("EXPORT_WMS_SUPPLIER_DELIVERY_ORDER", "供应商送货单","","",""),

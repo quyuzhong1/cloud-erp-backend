@@ -504,8 +504,27 @@ public class SoReturnInstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售退货入库单")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult importWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = soReturnInstockService.importFile(excelFile, response);
+        return result ? success() : failure();
+    }
+
+    /**
+     * 下载批量导入覆盖模板
+     */
+    @GetMapping("/downloadOverwriteTemplate")
+    public ApiResult downloadOverwriteTemplate(HttpServletResponse response) {
+        soReturnInstockService.downloadOverwriteTemplate(response);
+        return success();
+    }
+
+    /**
+     * 批量导入覆盖（修改客户）
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入覆盖销售退货入库单客户")
+    @PostMapping("/importOverwrite")
+    public ApiResult importOverwrite(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = soReturnInstockService.importOverwriteFile(dto);
         return result ? success() : failure();
     }
 
