@@ -104,6 +104,8 @@ public class NfeInvoiceService {
     private static final Logger log = LoggerFactory.getLogger(NfeInvoiceService.class);
     private static final String SHOPEE_BR_DEDUCT_ERROR_MSG = "虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例";
     private static final String SHOPEE_BR_FREIGHT_ERROR_MSG = "虾皮巴西店铺不支持含买家运费开票";
+    private static final int DANFE_SIMPLE_HEIGHT_MM = 150;
+    private static final int DANFE_SIMPLE_WIDTH_MM = 100;
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
@@ -735,15 +737,11 @@ public class NfeInvoiceService {
         }
         try {
             // 调用getDanfe接口获取PDF URL
-            GetDanfeDTO getDanfeDTO = new GetDanfeDTO();
-            getDanfeDTO.setUuid(uuid);
+            GetDanfeDTO getDanfeDTO = buildSimpleDanfeRequest(uuid);
             
             GetDanfeResponseDTO.GetDanfeDataDTO danfeData = tfFiscalService.getDanfeV2(getDanfeDTO, companyToken);
             
-            // 优先使用danfe，如果没有则使用danfe_simples
-            String pdfUrl = CharSequenceUtil.isNotBlank(danfeData.getDanfe()) 
-                ? danfeData.getDanfe() 
-                : danfeData.getDanfeSimples();
+            String pdfUrl = resolveDanfePdfUrl(danfeData);
             
             if (CharSequenceUtil.isBlank(pdfUrl)) {
                 log.warn("获取Danfe PDF URL为空, invoiceId:{}, uuid:{}", invoiceId, uuid);
@@ -769,6 +767,24 @@ public class NfeInvoiceService {
                 log.error("更新发票备注失败, invoiceId:{}", invoiceId, ex);
             }
         }
+    }
+
+    static GetDanfeDTO buildSimpleDanfeRequest(String uuid) {
+        GetDanfeDTO getDanfeDTO = new GetDanfeDTO();
+        getDanfeDTO.setUuid(uuid);
+        getDanfeDTO.setAltura(DANFE_SIMPLE_HEIGHT_MM);
+        getDanfeDTO.setLargura(DANFE_SIMPLE_WIDTH_MM);
+        return getDanfeDTO;
+    }
+
+    static String resolveDanfePdfUrl(GetDanfeResponseDTO.GetDanfeDataDTO danfeData) {
+        if (ObjUtil.isEmpty(danfeData)) {
+            return null;
+        }
+        // 开票清单展示使用简版 DANFE，普通版只作为服务商未返回简版时的兜底。
+        return CharSequenceUtil.isNotBlank(danfeData.getDanfeSimples())
+                ? danfeData.getDanfeSimples()
+                : danfeData.getDanfe();
     }
 
     /**
