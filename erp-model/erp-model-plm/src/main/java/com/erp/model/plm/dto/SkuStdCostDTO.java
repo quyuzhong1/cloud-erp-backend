@@ -76,20 +76,4 @@ public class SkuStdCostDTO implements Serializable {
         private String warehouseId;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class AutoFetchBatchDTO implements Serializable {
-
-        @NotEmpty(message = "SKU标准成本IDS不能为空")
-        private List<String> ids;
-
-        @NotBlank(message = "组织ID不能为空")
-        private String orgId;
-
-        @NotBlank(message = "仓库ID不能为空")
-        private String warehouseId;
-    }
-
-
-
 }
