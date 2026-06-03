@@ -66,7 +66,8 @@
                 qnd.qc_good_qty as qcGoodQty,
                 qnd.qc_bad_qty as qcBadQty,
                 qnd.qc_qty as qcQty,
-                qad.qty
+                qad.qty,
+                qn.plan_qc_date as planQcDate
             from qc_application qa
             inner join qc_application_detail qad on qa.id = qad.main_id and qad.is_deleted = FALSE
             left join product_detail pd on pd.id = qad.sku_id and pd.is_deleted = FALSE
