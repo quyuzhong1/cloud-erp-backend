@@ -45,11 +45,44 @@
         check_user_id, check_user_name, check_time, remark
     </sql>
 
+    <!-- 分页查询列（驼峰别名，与前端排序字段一致） -->
+    <sql id="Paging_Column_List">
+        logistics_recon.id AS id,
+        logistics_recon.create_time AS createTime,
+        logistics_recon.update_time AS updateTime,
+        logistics_recon.version AS version,
+        logistics_recon.is_deleted AS isDeleted,
+        logistics_recon.create_user_id AS createUserId,
+        logistics_recon.create_user_name AS createUserName,
+        logistics_recon.update_user_id AS updateUserId,
+        logistics_recon.update_user_name AS updateUserName,
+        logistics_recon.code AS code,
+        logistics_recon.reconciliation_month AS reconciliationMonth,
+        logistics_recon.business_type AS businessType,
+        logistics_recon.cfg_import_id AS cfgImportId,
+        logistics_recon.cfg_type AS cfgType,
+        logistics_recon.supplier_id AS supplierId,
+        logistics_recon.supplier_name AS supplierName,
+        logistics_recon.sheet_name AS sheetName,
+        logistics_recon.file_url AS fileUrl,
+        logistics_recon.file_name AS fileName,
+        logistics_recon.import_fail_reason AS importFailReason,
+        logistics_recon.check_status AS checkStatus,
+        logistics_recon.import_count AS importCount,
+        logistics_recon.cost_count AS costCount,
+        logistics_recon.total_amount AS totalAmount,
+        logistics_recon.currency AS currency,
+        logistics_recon.check_user_id AS checkUserId,
+        logistics_recon.check_user_name AS checkUserName,
+        logistics_recon.check_time AS checkTime,
+        logistics_recon.remark AS remark
+    </sql>
+
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDTO$ListDTO">
-        SELECT <include refid="Base_Column_List"/>,
-        COALESCE(m.match_count, 0) AS match_count,
-        COALESCE(a.match_success_amount, 0) AS match_success_amount,
-        COALESCE(a.match_fail_amount, 0) AS match_fail_amount,
+        SELECT <include refid="Paging_Column_List"/>,
+        COALESCE(m.match_count, 0) AS matchCount,
+        COALESCE(a.match_success_amount, 0) AS matchSuccessAmount,
+        COALESCE(a.match_fail_amount, 0) AS matchFailAmount,
         CASE
             WHEN COALESCE(a.reconciliation_total_count, 0) &lt;= 0
                 OR (COALESCE(a.reconciliation_confirmed_count, 0) &lt;= 0
@@ -58,7 +91,7 @@
             WHEN COALESCE(a.reconciliation_confirmed_count, 0) &gt;= COALESCE(a.reconciliation_total_count, 0)
                 THEN 'confirmed'
             ELSE 'partialConfirm'
-        END AS reconciliation_status
+        END AS reconciliationStatus
         FROM logistics_recon
         LEFT JOIN (
             SELECT main_id,
@@ -89,7 +122,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time DESC
+        createTime DESC
     </select>
 
     <!-- TAB 计数：按 check_status 分组（all / importing / pending / confirmed） -->
