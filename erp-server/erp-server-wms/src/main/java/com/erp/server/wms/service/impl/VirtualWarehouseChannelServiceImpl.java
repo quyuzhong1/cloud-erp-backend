@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
-    private static final String VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
+    private static final String VM_CHANNEL_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
 
     @Resource
     private OperateLogService operateLogService;
@@ -555,7 +555,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
-        List<String> skipPlatformList = customerFeign.getDictBasicByKey(VM_CHANNEL_ALL_SCOPE_SKIP_CHECK_PLATFORM).stream()
+        List<String> skipPlatformList = customerFeign.getDictBasicByKey(VM_CHANNEL_SKIP_CHECK_PLATFORM).stream()
                 .map(DictBasicDTO.ViewDTO::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
