@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,8 @@ public class ImportTmsFeignController {
     private ImportHistoryRecordService importHistoryRecordService;
     @Resource
     private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+    @Resource
+    private LogisticsReconService logisticsReconService;
 
 
     @PostMapping("/logisticsBillCost")
@@ -107,6 +110,27 @@ public class ImportTmsFeignController {
             logisticsThirdChannelRefService.importLogisticsThirdChannelRef(dto);
         } catch (Exception e) {
             log.error("导入物流-第三方渠道关系表失败", e);
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(dto.getTaskId());
+            importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
+            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            downloadTaskFeign.updateTask(importResultDTO);
+        }
+    }
+
+    /**
+     * 物流商对账单异步导入回调
+     * @author Will
+     * @date: 2026/06/02
+     * @param dto
+     * @return void
+     */
+    @PostMapping("/importLogisticsRecon")
+    public void importLogisticsRecon(@RequestBody LogisticsReconDTO.ImportDTO dto) {
+        try {
+            logisticsReconService.executeImportTask(dto);
+        } catch (Exception e) {
+            log.error("导入物流商对账单失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());

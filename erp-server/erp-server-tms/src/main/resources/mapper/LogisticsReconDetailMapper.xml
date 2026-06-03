@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsReconDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsReconDetailEntity">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="main_id" property="mainId"/>
+        <result column="row_no" property="rowNo"/>
+        <result column="so_code" property="soCode"/>
+        <result column="platform_order_no" property="platformOrderNo"/>
+        <result column="track_no" property="trackNo"/>
+        <result column="transport_no" property="transportNo"/>
+        <result column="so_delivery_code" property="soDeliveryCode"/>
+        <result column="erp_so_code" property="erpSoCode"/>
+        <result column="erp_platform_order_no" property="erpPlatformOrderNo"/>
+        <result column="erp_track_no" property="erpTrackNo"/>
+        <result column="erp_so_delivery_code" property="erpSoDeliveryCode"/>
+        <result column="currency" property="currency"/>
+        <result column="pay_type" property="payType"/>
+        <result column="weight_logistics" property="weightLogistics"/>
+        <result column="volume_weight_logistics" property="volumeWeightLogistics"/>
+        <result column="billing_weight_logistics" property="billingWeightLogistics"/>
+        <result column="weight_unit" property="weightUnit"/>
+        <result column="third_length" property="thirdLength"/>
+        <result column="third_width" property="thirdWidth"/>
+        <result column="third_height" property="thirdHeight"/>
+        <result column="cost_count" property="costCount"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, create_time, update_time, version, is_deleted, create_user_id, create_user_name,
+        update_user_id, update_user_name,
+        main_id, row_no, so_code, platform_order_no, track_no, transport_no, so_delivery_code,
+        erp_so_code, erp_platform_order_no, erp_track_no, erp_so_delivery_code,
+        currency, pay_type, weight_logistics, volume_weight_logistics, billing_weight_logistics,
+        weight_unit, third_length, third_width, third_height, cost_count
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDetailDTO$ListDTO">
+        SELECT
+            sub.id AS id,
+            sub.detail_id AS detailId,
+            d.main_id AS mainId,
+            d.row_no AS rowNo,
+            sub.seq_no AS seqNo,
+            d.so_code AS soCode,
+            d.platform_order_no AS platformOrderNo,
+            d.track_no AS trackNo,
+            d.transport_no AS transportNo,
+            d.so_delivery_code AS soDeliveryCode,
+            d.erp_so_code AS erpSoCode,
+            d.erp_platform_order_no AS erpPlatformOrderNo,
+            d.erp_track_no AS erpTrackNo,
+            d.erp_so_delivery_code AS erpSoDeliveryCode,
+            sub.cost_name AS costName,
+            sub.cfg_cost_name AS cfgCostName,
+            sub.actual_amount AS actualAmount,
+            sub.currency AS currency,
+            d.pay_type AS payType,
+            d.weight_logistics AS weightLogistics,
+            d.volume_weight_logistics AS volumeWeightLogistics,
+            d.billing_weight_logistics AS billingWeightLogistics,
+            d.weight_unit AS weightUnit,
+            d.third_length AS thirdLength,
+            d.third_width AS thirdWidth,
+            d.third_height AS thirdHeight,
+            d.cost_count AS costCount,
+            sub.match_status AS matchStatus,
+            sub.match_fail_reason AS matchFailReason,
+            sub.reconciliation_status AS reconciliationStatus,
+            d.create_time AS createTime,
+            d.create_user_name AS createUserName
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id AND d.is_deleted = false
+        WHERE ${params.sqlMap.default}
+        and sub.is_deleted = false
+        AND d.main_id = #{params.mainId}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rowNo ASC, seqNo ASC
+    </select>
+
+    <select id="countMatchedByMainId" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM logistics_recon_detail_sub
+        WHERE is_deleted = false
+          AND main_id = #{mainId}
+          AND match_status = 'matched'
+    </select>
+
+    <!-- TAB 计数按费用项粒度统计（与列表一行一费用项对齐），按费用项 match_status 分组 -->
+    <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsReconDetailDTO$TabListDTO">
+        SELECT sub.match_status AS tabFlag, count(*) AS count
+        FROM logistics_recon_detail_sub sub
+        INNER JOIN logistics_recon_detail d
+            ON d.id = sub.detail_id AND d.is_deleted = false
+        WHERE sub.is_deleted = false
+          AND d.main_id = #{params.mainId}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY sub.match_status
+    </select>
+
+</mapper>

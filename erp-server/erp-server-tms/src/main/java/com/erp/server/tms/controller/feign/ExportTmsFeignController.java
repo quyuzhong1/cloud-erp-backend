@@ -94,6 +94,13 @@ public class ExportTmsFeignController {
     @Resource
     private LogisticsOrderService logisticsOrderService;
 
+    @Resource
+    private LogisticsReconDetailService logisticsReconDetailService;
+
+    @Resource
+    private LogisticsReconService logisticsReconService;
+
+
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
     PagingVO<TmsDeclareBillDTO.PagingVO> exportB2BDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
@@ -444,5 +451,41 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = CfgLogisticsCostImportQueryHandler.class)
     public PagingVO<LogisticsOrderDTO.ListDTO> exportTmsLogisticsOrder(@RequestBody PagingDTO<LogisticsOrderDTO.PagingParamDTO> dto) {
         return logisticsOrderService.paging(dto);
+    }
+
+    /**
+     * 物流商对账单（主表）导出
+     * @author Will
+     * @date: 2026/06/01
+     * @param dto
+     * @return PagingVO<LogisticsReconDTO.ListDTO>
+     */
+    @PostMapping("/exportLogisticsRecon")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsRecon:paging",
+            tableAlias = "logistics_recon"
+    )
+    @WebAdvanceQuery(handler = LogisticsReconQueryHandler.class)
+    public PagingVO<LogisticsReconDTO.ListDTO> exportLogisticsRecon(@RequestBody PagingDTO<LogisticsReconDTO.PagingParamDTO> dto) {
+        return logisticsReconService.paging(dto);
+    }
+
+    /**
+     * 物流商对账明细导出
+     * @author Will
+     * @date: 2026/06/01
+     * @param dto
+     * @return PagingVO<LogisticsReconDetailDTO.ListDTO>
+     */
+    @PostMapping("/exportLogisticsReconDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsReconDetail:paging",
+            tableAlias = "d"
+    )
+    @WebAdvanceQuery(handler = LogisticsReconDetailQueryHandler.class)
+    public PagingVO<LogisticsReconDetailDTO.ListDTO> exportLogisticsReconDetail(@RequestBody PagingDTO<LogisticsReconDetailDTO.PagingParamDTO> dto) {
+        return logisticsReconDetailService.paging(dto);
     }
 }

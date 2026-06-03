@@ -375,6 +375,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出","","",""),
     EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出","","",""),
     EXPORT_TMS_LOGISTICS_ORDER("EXPORT_TMS_LOGISTICS_ORDER", "物流下单导出","","",""),
+    EXPORT_TMS_LOGISTICS_RECON("EXPORT_TMS_LOGISTICS_RECON", "物流商对账单导出","","",""),
+    EXPORT_TMS_LOGISTICS_RECON_DETAIL("EXPORT_TMS_LOGISTICS_RECON_DETAIL", "物流商对账明细导出","","",""),
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入尾程费用(自发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用(平台发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
@@ -382,6 +384,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_CFG_LOGISTICS_COST("EXPORT_TMS_CFG_LOGISTICS_COST","费用配置导出","","",""),
     IMPORT_TMS_CFG_LOGISTICS_COST("IMPORT_TMS_CFG_LOGISTICS_COST","费用配置导入","com.erp.rpc.tms.feign.ImportTmsFeign","importCfgLogisticsCost",""),
     IMPORT_TMS_IMPORT_HISTORY_RECORD("IMPORT_TMS_IMPORT_HISTORY_RECORD","物流商费用导入","com.erp.rpc.tms.feign.ImportTmsFeign","preprocessingImportExcel",""),
+    IMPORT_TMS_LOGISTICS_RECON("IMPORT_TMS_LOGISTICS_RECON","物流商对账单导入","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsRecon",""),
 
     EXPORT_TMS_ASYNC_TASK_RECORD("EXPORT_TMS_ASYNC_TASK_RECORD","异步任务导出","","",""),
     EXPORT_TMS_ASYNC_TASK_DETAIL("EXPORT_TMS_ASYNC_TASK_DETAIL","异步任务错误导出","","",""),

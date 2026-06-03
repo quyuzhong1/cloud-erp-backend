@@ -91,4 +91,23 @@ public interface ExportTmsFeign {
 
     @PostMapping("/feign/export/exportTmsLogisticsOrder")
     PagingVO<TmsLogisticsOrderExcelDTO> exportTmsLogisticsOrder(@RequestBody PagingDTO<LogisticsOrderDTO.PagingParamDTO> dto);
+    /**
+     * 导出物流商对账单（主表）
+     * @author Will
+     * @date: 2026/06/01
+     * @param dto
+     * @return PagingVO<LogisticsReconDTO.ListDTO>
+     */
+    @PostMapping("/feign/export/exportLogisticsRecon")
+    PagingVO<LogisticsReconDTO.ListDTO> exportLogisticsRecon(@RequestBody PagingDTO<LogisticsReconDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出物流商对账明细
+     * @author Will
+     * @date: 2026/06/01
+     * @param dto
+     * @return PagingVO<LogisticsReconDetailDTO.ListDTO>
+     */
+    @PostMapping("/feign/export/exportLogisticsReconDetail")
+    PagingVO<LogisticsReconDetailDTO.ListDTO> exportLogisticsReconDetail(@RequestBody PagingDTO<LogisticsReconDetailDTO.PagingParamDTO> dto);
 }
