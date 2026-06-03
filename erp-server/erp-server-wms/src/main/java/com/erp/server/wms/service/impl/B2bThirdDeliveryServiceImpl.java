@@ -1693,7 +1693,13 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         });
         Map<String, String> productNameMap = new HashMap<>();
         if (CollUtil.isNotEmpty(skuIds)) {
-            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
+            List<ProductDetailEntity> productDetailList;
+            try {
+                productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
+            } catch (Exception e) {
+                log.warn("B2B装箱导入获取产品名称失败，跳过产品名称补全, skuIds={}", skuIds, e);
+                return productNameMap;
+            }
             if (CollUtil.isNotEmpty(productDetailList)) {
                 for (ProductDetailEntity productDetail : productDetailList) {
                     if (CharSequenceUtil.isNotBlank(productDetail.getId()) && CharSequenceUtil.isNotBlank(productDetail.getName())) {

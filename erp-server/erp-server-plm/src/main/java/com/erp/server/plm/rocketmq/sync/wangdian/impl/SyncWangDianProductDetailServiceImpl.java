@@ -186,6 +186,10 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     }
 
     private void sendMTask(List<DmpPushTaskEntity> dmpPushTask) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            dmpMqFeign.sendTask(dmpPushTask);
+            return;
+        }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
