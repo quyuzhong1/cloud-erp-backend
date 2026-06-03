@@ -6,7 +6,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -26,9 +25,11 @@ import com.erp.server.wms.query.QcNoticeQueryHandler;
 import com.erp.server.wms.service.QcNoticeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -85,15 +86,15 @@ public class QcNoticeFeignController extends BaseController {
     /**
      * 详情
      */
-    @PostMapping("/view")
+    @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:view",
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<QcNoticeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(qcNoticeService.view(dto.getId()));
+    public ApiResult<QcNoticeDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
+        return success(qcNoticeService.view(id));
     }
 
     /**

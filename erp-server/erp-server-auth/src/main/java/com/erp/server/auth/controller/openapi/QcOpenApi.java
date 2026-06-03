@@ -129,7 +129,7 @@ public class QcOpenApi {
      */
     @OpenApi("qcNoticeView")
     public ApiResult<QcNoticeDTO.ViewDTO> qcNoticeView(@RequestBody @Validated BaseIdDTO dto) {
-        return qcNoticeFeign.qcNoticeView(dto);
+        return qcNoticeFeign.qcNoticeView(dto.getId());
     }
 
     /**
