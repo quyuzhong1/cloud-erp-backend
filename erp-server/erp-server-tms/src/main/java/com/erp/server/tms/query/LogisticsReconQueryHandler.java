@@ -1,6 +1,8 @@
 package com.erp.server.tms.query;
 
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
+import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -43,13 +45,13 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     private String matchStatusSql(String status) {
-        if ("unmatched".equals(status)) {
+        if (LogisticsReconMatchStatusEnum.UNMATCHED.getCode().equals(status)) {
             return "(logistics_recon.cost_count <= 0 OR COALESCE(m.match_count, 0) <= 0)";
         }
-        if ("partial".equals(status)) {
+        if (LogisticsReconMatchStatusEnum.PARTIAL.getCode().equals(status)) {
             return "(COALESCE(m.match_count, 0) > 0 AND COALESCE(m.match_count, 0) < logistics_recon.cost_count)";
         }
-        if ("matched".equals(status)) {
+        if (LogisticsReconMatchStatusEnum.MATCHED.getCode().equals(status)) {
             return "(logistics_recon.cost_count > 0 AND COALESCE(m.match_count, 0) >= logistics_recon.cost_count)";
         }
         return "";
@@ -63,17 +65,17 @@ public class LogisticsReconQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     private String reconciliationStatusSql(String status) {
-        if ("toBeConfirm".equals(status)) {
+        if (LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(status)) {
             return "(COALESCE(a.reconciliation_total_count, 0) <= 0 "
                     + "OR (COALESCE(a.reconciliation_confirmed_count, 0) <= 0 "
                     + "AND COALESCE(a.reconciliation_partial_count, 0) <= 0))";
         }
-        if ("partialConfirm".equals(status)) {
+        if (LogisticsReconReconciliationStatusEnum.PARTIAL_CONFIRM.getCode().equals(status)) {
             return "(COALESCE(a.reconciliation_partial_count, 0) > 0 "
                     + "OR (COALESCE(a.reconciliation_confirmed_count, 0) > 0 "
                     + "AND COALESCE(a.reconciliation_confirmed_count, 0) < COALESCE(a.reconciliation_total_count, 0)))";
         }
-        if ("confirmed".equals(status)) {
+        if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(status)) {
             return "(COALESCE(a.reconciliation_total_count, 0) > 0 "
                     + "AND COALESCE(a.reconciliation_confirmed_count, 0) >= COALESCE(a.reconciliation_total_count, 0))";
         }

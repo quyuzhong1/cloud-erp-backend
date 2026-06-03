@@ -134,7 +134,8 @@ public class ImportTmsFeignController {
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
-            importResultDTO.setRemark(e.getMessage().length() > 490 ? e.getMessage().substring(0, 490) : e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            importResultDTO.setRemark(msg.length() > 490 ? msg.substring(0, 490) : msg);
             downloadTaskFeign.updateTask(importResultDTO);
         }
     }

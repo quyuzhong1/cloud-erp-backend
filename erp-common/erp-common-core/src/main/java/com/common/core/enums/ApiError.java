@@ -1507,6 +1507,7 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
 
     WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+    WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT(11139,"SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调"),
 
 
     /**
@@ -1883,7 +1884,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED(13648,"无法识别导入模板，请检查配置是否正确"),
     LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND(13649,"未读取到 Excel 表头"),
     LOGISTICS_RECON_SAVE_FAILED(13650,"物流商对账单保存失败"),
-    LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY(13651,"预处理导入待重构后接入"),
+    LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY(13651,"预处理导入功能暂未开放，请稍后再试"),
     LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN(13652,"对账单导入中，暂不允许切换校验状态"),
     LOGISTICS_RECON_CHECK_STATUS_INVALID(13653,"非法的校验状态目标值"),
     LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN(13654,"已存在有效匹配关系，不允许回退到待确认"),
@@ -1892,9 +1893,10 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM(13657,"仅已确认的对账单允许执行账单确认"),
     LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND(13658,"未找到已匹配的物流费用单"),
     LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN(13659,"已确认的对账单不允许删除"),
-    LOGISTICS_RECON_MANUAL_MATCH_NOT_READY(13660,"手动匹配待接入 ERP 单号查询逻辑"),
-    LOGISTICS_RECON_ADD_BILL_COST_NOT_READY(13661,"新增费用单匹配待重构 ImportHistoryRecord 后接入"),
-    LOGISTICS_RECON_IMPORT_MATCH_NOT_READY(13662,"导入匹配待重构 ImportHistoryRecord 后接入"),
+    LOGISTICS_RECON_MANUAL_MATCH_NOT_READY(13660,"手动匹配功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_ADD_BILL_COST_NOT_READY(13661,"新增费用单功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_IMPORT_MATCH_NOT_READY(13662,"导入匹配功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_MATCH_NOT_READY(13663,"合并匹配功能暂未开放，请稍后再试"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
