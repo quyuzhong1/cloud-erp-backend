@@ -5,6 +5,7 @@ public enum FileTypeEnum {
      * 输出类型
      */
     PDF("pdf", "application/pdf", ".pdf"),
+    PNG("png", "image/png", ".png"),
     HTML("html", "application/html", ".html"),
     XLS("xls", "application/vnd.ms-excel", ".xls"),
     XLSX("xlsx", "application/vnd.ms-excel", ".xlsx"),

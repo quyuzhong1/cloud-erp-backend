@@ -32,6 +32,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.DynamicDataSourceThreadLocal;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.PdfUtil;
 import com.common.business.utils.RedisUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -60,6 +61,7 @@ import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
@@ -67,6 +69,7 @@ import com.erp.model.oms.dto.SoB2cDTO.ListCountDto;
 import com.erp.model.oms.dto.SoB2cDTO.PagingParamDTO;
 import com.erp.model.oms.dto.excel.B2CSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.OmsAttachmentEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -192,6 +195,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
     private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "接口返回为空";
+    private static final String THIRD_WAREHOUSE_MODULE_OTHER_DOCUMENTS_INVOICE = "other_documents_invoice";
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -394,6 +398,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Resource
+    private OmsAttachmentService omsAttachmentService;
     @Resource
     private SyncSoB2cService syncSoB2cService;
 
@@ -2962,14 +2968,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("base64不能为空");
         }
         if (!PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+            boolean antuProvider = PlatformDictEnum.ANTU.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode());
+            String uploadFileData = antuProvider ? getOrCreateInvoicePngBase64(entity, attachDTO, logisticsBase64) : logisticsBase64;
             ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
             thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
-            thirdWarehouseUploadFileReq.setFileData(logisticsBase64);
+            thirdWarehouseUploadFileReq.setFileData(uploadFileData);
             thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
             thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+            if (antuProvider) {
+                thirdWarehouseUploadFileReq.setFileType(FileTypeEnum.PNG.getCode());
+                thirdWarehouseUploadFileReq.setModule(THIRD_WAREHOUSE_MODULE_OTHER_DOCUMENTS_INVOICE);
+            }
             //速派通采用other_documents_invoice
             if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
-                thirdWarehouseUploadFileReq.setModule("other_documents_invoice");
+                thirdWarehouseUploadFileReq.setModule(THIRD_WAREHOUSE_MODULE_OTHER_DOCUMENTS_INVOICE);
             }
             ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
             if (!uploadFileResponse.isSuccess()) {
@@ -2978,12 +2990,59 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Integer attachId = uploadFileResponse.getData().getAttachId();
             List<ThirdWarehouseCreateOutboundReq.Attach> attachList = CollUtil.isEmpty(createOutboundReq.getAttach()) ? new ArrayList<>() : new ArrayList<>(createOutboundReq.getAttach());
             ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
-            attach.setFileType(FileTypeEnum.PDF.getCode());
+            attach.setFileType(antuProvider ? FileTypeEnum.PNG.getCode() : FileTypeEnum.PDF.getCode());
             attach.setAttachId(attachId);
             attachList.add(attach);
             createOutboundReq.setAttach(attachList);
         }
         createOutboundReq.setInvoiceData(logisticsBase64);
+    }
+
+    private String getOrCreateInvoicePngBase64(SoB2cEntity entity, InvoiceInfoDTO.AttachDTO pdfAttachDTO, String pdfBase64) {
+        if (ObjectUtil.isEmpty(pdfAttachDTO) || CharSequenceUtil.isBlank(pdfAttachDTO.getId())) {
+            throw new ServiceException("发票附件信息不完整，无法生成安兔PNG缓存");
+        }
+        OmsAttachmentEntity pngAttachment = omsAttachmentService.lambdaQuery()
+                .eq(OmsAttachmentEntity::getBusinessId, pdfAttachDTO.getId())
+                .eq(OmsAttachmentEntity::getType, AttachmentTypeEnum.INVOICE_INFO_PNG.getCode())
+                .eq(OmsAttachmentEntity::getIsDeleted, false)
+                .isNotNull(OmsAttachmentEntity::getAttachUrl)
+                .ne(OmsAttachmentEntity::getAttachUrl, "")
+                .orderByDesc(OmsAttachmentEntity::getId)
+                .last("limit 1")
+                .one();
+        if (ObjectUtil.isNotEmpty(pngAttachment)) {
+            try {
+                byte[] pngBytes = fileFeign.downloadFile(pngAttachment.getAttachUrl());
+                if (pngBytes != null && pngBytes.length > 0) {
+                    return Base64.getEncoder().encodeToString(pngBytes);
+                }
+            } catch (Exception e) {
+                log.warn("读取安兔发票PNG缓存失败，重新生成, soCode:{}, attachUrl:{}", entity.getCode(), pngAttachment.getAttachUrl(), e);
+            }
+        }
+        String pngBase64 = PdfUtil.pdfBase64FirstPageToPngBase64(pdfBase64);
+        String pngFileName = buildInvoicePngFileName(entity, pdfAttachDTO);
+        String pngUrl = fileFeign.uploadFileByBase64(FileDTO.UploadBase64.builder()
+                .base64(pngBase64)
+                .fileName(pngFileName)
+                .build());
+        if (CharSequenceUtil.isBlank(pngUrl)) {
+            throw new ServiceException("安兔发票PNG上传失败");
+        }
+        omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
+                AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
+                pngUrl,
+                pngFileName,
+                pdfAttachDTO.getId())));
+        return pngBase64;
+    }
+
+    private String buildInvoicePngFileName(SoB2cEntity entity, InvoiceInfoDTO.AttachDTO pdfAttachDTO) {
+        if (ObjectUtil.isNotEmpty(pdfAttachDTO) && CharSequenceUtil.isNotBlank(pdfAttachDTO.getAttachName())) {
+            return pdfAttachDTO.getAttachName().replaceFirst("(?i)\\.pdf$", ".png");
+        }
+        return entity.getCode() + "_invoice.png";
     }
 
 
