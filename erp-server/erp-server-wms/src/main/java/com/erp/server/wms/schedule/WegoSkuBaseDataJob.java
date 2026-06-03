@@ -121,6 +121,7 @@ public class WegoSkuBaseDataJob {
         }
 
         int pageNum = 1;
+        int fetchCount = 0;
         int syncCount = 0;
         while (pageNum <= MAX_PAGE_LIMIT) {
             // 分页拉取 WEGO SKU，避免单次请求数据量过大
@@ -135,6 +136,7 @@ public class WegoSkuBaseDataJob {
 
             JSONArray skuList = pageResult.getJSONArray("list");
             if (Objects.nonNull(skuList) && !skuList.isEmpty()) {
+                fetchCount += skuList.size();
                 WegoSkuSyncDTO.SyncReqDTO syncReqDTO = buildSyncReqDTO(provider.getId(), skuList);
                 // 仅当有效 SKU 非空时才触发 OMS 入库
                 if (CollectionUtils.isNotEmpty(syncReqDTO.getSkuList())) {
@@ -154,6 +156,8 @@ public class WegoSkuBaseDataJob {
             }
             pageNum++;
         }
+        XxlJobHelper.log("[WEGO SKU基础数据] 服务商[id={}, shortName={}] 共拉取SKU={}条，有效页数={}页",
+                provider.getId(), provider.getShortName(), fetchCount, pageNum);
         if (pageNum > MAX_PAGE_LIMIT) {
             XxlJobHelper.log("[WEGO SKU基础数据] 警告：已达到最大翻页上限({})，服务商[id={}, shortName={}] 可能存在未同步数据",
                     MAX_PAGE_LIMIT, provider.getId(), provider.getShortName());
