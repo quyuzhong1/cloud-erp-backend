@@ -225,7 +225,7 @@ public class QcApplicationDTO implements Serializable {
         private Integer qcBadQty;
 
         /**
-         * 期望质检日期【可排序】
+         * 计划质检日期【可排序】
          */
         private LocalDate planQcDate;
 
