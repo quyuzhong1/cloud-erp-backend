@@ -6,6 +6,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
@@ -158,7 +159,7 @@ public class LogisticsReconExcelListener extends AnalysisEventListener<Map<Integ
      */
     private void flush() {
         int rowNoStart = flushedRows + 1;
-        LogisticsReconService.ReconBatchResult result =
+        LogisticsReconBatchResultDTO result =
                 logisticsReconService.handleReconImportBatch(buffer, headMap, rowNoStart, dto, importCfg, cfgDetails);
         errorList.addAll(result.getErrorList());
         detailCount += result.getDetailCount();
