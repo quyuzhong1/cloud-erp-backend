@@ -52,6 +52,8 @@ import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -915,10 +917,27 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             //推送金蝶
             productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
-            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            syncDataToWangDianAfterCommit(productDetailEntity);
         }
 
         return Boolean.TRUE;
+    }
+
+    private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+                } catch (Exception e) {
+                    log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+                }
+            }
+        });
     }
 
     public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList,ProductDetailEntity productDetailEntity) {

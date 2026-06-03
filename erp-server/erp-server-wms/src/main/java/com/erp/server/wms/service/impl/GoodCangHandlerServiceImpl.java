@@ -584,6 +584,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
                     .boxNo(preStagedBox ? null : entry.getKey())
                     .boxRefMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
+                    // GoodCang rejects top-level shipment_file_id when shipment_file_list is present.
                     .shipmentFileId(null)
                     .shipmentFileList(Collections.singletonList(shipmentFile))
                     .logisticsFileId(null)
