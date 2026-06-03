@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -23,6 +24,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -163,6 +165,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if(dto.getMatchResult() != null){
                 dto.setMatchResultStr(String.valueOf(dto.getMatchResult()));
             }
+            fillImlProductBarcode(dto);
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
             //上传图片到文件服务器
@@ -259,6 +262,24 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
             }
         return ApiResult.success();
+    }
+
+    private void fillImlProductBarcode(PlatformProductDTO dto) {
+        if (!PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform())
+                || !RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                || StringUtils.isBlank(dto.getAuthId())
+                || StringUtils.isBlank(dto.getPlatformSkuNo())) {
+            return;
+        }
+        OverseasProviderEntity overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class, dto.getAuthId());
+        if (Objects.isNull(overseasProviderEntity) || StringUtils.isBlank(overseasProviderEntity.getOwnerCode())) {
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
+                    dto.getAuthId(), dto.getPlatformSkuNo());
+            return;
+        }
+        String ownerPrefix = overseasProviderEntity.getOwnerCode() + "-";
+        String platformSkuNo = dto.getPlatformSkuNo();
+        dto.setPlatformProductBarcode(platformSkuNo.startsWith(ownerPrefix) ? platformSkuNo : ownerPrefix + platformSkuNo);
     }
 
     //若父平台skuid 不为空则更新对应的父平台sku的标识为true
