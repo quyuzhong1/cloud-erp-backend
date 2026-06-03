@@ -333,10 +333,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //变更前
-        entry.put("FChangeType","2");
         //仓库与仓位（按仓库类型决定是否同步仓位）
         applyWarehouseAndLocation(entry, skuWarehouseMap, entrySkuNo);
+        //变更前
+        entry.put("FChangeType","2");
         //分子
         entry.put("FNumerator",srcEntry.get("Numerator"));
         //分母
@@ -443,10 +443,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //变更后
-        entry.put("FChangeType","3");
         //仓库与仓位（按仓库类型决定是否同步仓位）
         applyWarehouseAndLocation(entry, skuWarehouseMap, entrySkuNo);
+        //变更后
+        entry.put("FChangeType","3");
         //分子
         entry.put("FNumerator",0);
         //分母
@@ -538,6 +538,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
+        //仓库与仓位（按仓库类型决定是否同步仓位）
+        applyWarehouseAndLocation(entry, skuWarehouseMap, chilDetail.getSkuNo());
         //需求日期
         entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
@@ -548,8 +550,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FSrcBillType", "SUB_PPBOM");
         //源单编号
         entry.put("FSrcBillNo", bomBillNo);
-        //仓库与仓位（按仓库类型决定是否同步仓位）
-        applyWarehouseAndLocation(entry, skuWarehouseMap, chilDetail.getSkuNo());
         //分子 分母
         if (chilDetail.getQty() > parentDetail.getRepairQty()) {
             entry.put("FNumerator", chilDetail.getQty() / parentDetail.getRepairQty());

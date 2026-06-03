@@ -2255,7 +2255,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, CharSequenceUtil.format(ApiError.PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM.getMsg(), noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, MessageUtils.getMessage(ApiError.PO_QC_STOCK_INSUFFICIENT_CONTINUE_CONFIRM, noticeQty, inventoryQty)));
             }
         }
         return results;
