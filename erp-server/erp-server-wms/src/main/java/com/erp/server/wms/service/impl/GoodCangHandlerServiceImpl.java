@@ -567,6 +567,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return null;
         }
         boolean preStagedBox = B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType);
+        boolean customerSpecified = B2bPackingTypeEnum.CUSTOMER_SPECIFIED.getCode().equals(packingType);
         Map<Integer, List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem>> detailByBox = createOutboundReq.getPackingDetailList().stream()
                 .filter(e -> Objects.nonNull(e.getBoxSeq()))
                 .collect(Collectors.groupingBy(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem::getBoxSeq, LinkedHashMap::new, Collectors.toList()));
@@ -583,7 +584,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             packingList.add(GoodCangCreateB2bReq.Packing.builder()
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
                     .boxNo(preStagedBox ? null : entry.getKey())
-                    .boxRefMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
+                    .boxRefMark(customerSpecified ? null : CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
                     // GoodCang rejects top-level shipment_file_id when shipment_file_list is present.
                     .shipmentFileId(null)
                     .shipmentFileList(Collections.singletonList(shipmentFile))
