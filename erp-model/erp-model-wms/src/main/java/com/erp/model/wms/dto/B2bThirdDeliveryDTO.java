@@ -208,6 +208,16 @@ public class B2bThirdDeliveryDTO implements Serializable {
         private String thirdWarehouseCode;
 
         /**
+         * 三方仓服务商编码
+         */
+        private String thirdWarehouseProviderCode;
+
+        /**
+         * 三方仓服务商名称
+         */
+        private String thirdWarehouseProviderName;
+
+        /**
          * 异常原因
          */
         private String errorMessage;
