@@ -157,7 +157,7 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
             log.warn("[WEGO渠道同步] 派送渠道关键字段为空, 跳过: {}", item.toJSONString());
             return null;
         }
-        String channelCode = buildChannelCode(transportationBusiness, transportationService, transportationType);
+        String channelCode = buildChannelCode(transportationBusiness, transportationService);
 
         LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
         entity.setLogisticsPlatform(platform);
@@ -183,10 +183,8 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * 仅由 transportationBusiness / transportationService / transportationType
      * 组合保证同一仓库下唯一。
      */
-    private String buildChannelCode(String transportationBusiness, String transportationService, Integer transportationType) {
-        return CharSequenceUtil.nullToEmpty(transportationBusiness) + "|"
-                + CharSequenceUtil.nullToEmpty(transportationService) + "|"
-                + (transportationType == null ? "" : transportationType);
+    private String buildChannelCode(String transportationBusiness, String transportationService) {
+        return CharSequenceUtil.nullToEmpty(transportationBusiness) + "|" + CharSequenceUtil.nullToEmpty(transportationService);
     }
 
     private String resolveChannelType(Integer transportationType) {
