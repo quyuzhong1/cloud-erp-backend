@@ -378,10 +378,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(VirtualWarehouseAllocationEntity allocationEntity) {
-        return submitInternal(allocationEntity, false);
+        return submitInternal(allocationEntity);
     }
 
-    private BatchResultDTO submitInternal(VirtualWarehouseAllocationEntity allocationEntity, boolean skipTransferWarehouseUsableCheck) {
+    private BatchResultDTO submitInternal(VirtualWarehouseAllocationEntity allocationEntity) {
         String existStatus = allocationEntity.getStatus();
         String code = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
         if (Objects.equals(existStatus, code)) {
@@ -407,7 +407,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         this.updateById(allocationEntity);
 
         //处理分货推送
-        this.submitHandlePush(allocationEntity,detailEntityList,transferWarehouseList,warehouseMap, skipTransferWarehouseUsableCheck);
+        this.submitHandlePush(allocationEntity,detailEntityList,transferWarehouseList,warehouseMap);
 
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
@@ -428,13 +428,12 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @return void
      */
     private void submitHandlePush (VirtualWarehouseAllocationEntity allocationEntity,List<VirtualWarehouseAllocationDetailEntity> detailEntityList,
-                                   List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList,Map<String, String> warehouseMap,
-                                   boolean skipTransferWarehouseUsableCheck) {
+                                   List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList,Map<String, String> warehouseMap) {
         //分货处理
         if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
 
             //生成自动借调直接调拨单
-            checkTransferWarehouseUsableQty(transferWarehouseList, skipTransferWarehouseUsableCheck);
+            checkTransferWarehouseUsableQty(transferWarehouseList);
             List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
             List<String> parentId = new ArrayList<>();
@@ -717,9 +716,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     }
 
     @Override
+    public BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
+        checkBeforeSaveAndSubmit(dto);
+        return service.saveAndSubmitTransaction(dto);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    public BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
+    public BatchResultDTO saveAndSubmitTransaction(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
         String id = dto.getId();
         if (CharSequenceUtil.isBlank(id)) {
             VirtualWarehouseAllocationDTO.AddDTO addDTO = new VirtualWarehouseAllocationDTO.AddDTO();
@@ -730,11 +735,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             service.update(dto);
         }
         VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
-        return submitInternal(allocationEntity, true);
+        return submitInternal(allocationEntity);
     }
 
-    @Override
-    public void checkBeforeSaveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
+    private void checkBeforeSaveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
         if (!VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(dto.getType())) {
             return;
         }
@@ -915,11 +919,28 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CollUtil.isEmpty(detailEntityList)) {
             return;
         }
-        List<WarehouseEntity> list = warehouseService.list();
+        List<String> neededWarehouseIds = detailEntityList.stream()
+                .flatMap(detail -> Stream.of(detail.getWarehouseId(), detail.getToWarehouseId()))
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> toVirtualWarehouseIds = detailEntityList.stream()
+                .map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseList = CollUtil.isEmpty(toVirtualWarehouseIds) ? Collections.emptyList() : virtualWarehouseService.listByIds(toVirtualWarehouseIds);
+        List<String> borrowWarehouseIds = virtualWarehouseList.stream()
+                .map(VirtualWarehouseEntity::getFromWarehouseId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        neededWarehouseIds = Stream.concat(neededWarehouseIds.stream(), borrowWarehouseIds.stream()).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> list = CollUtil.isEmpty(neededWarehouseIds) ? Collections.emptyList() : warehouseService.listByIds(neededWarehouseIds);
         Map<String, WarehouseEntity> warehouseEntityMap = CollUtil.isEmpty(list) ? new HashMap<>() :
                 list.stream().collect(Collectors.toMap(WarehouseEntity::getId, e -> e));
         List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList = transferAndCheckVirtualInventoryQty(allocationEntity, detailEntityList, warehouseEntityMap);
-        checkTransferWarehouseUsableQty(transferWarehouseList, false);
+        checkTransferWarehouseUsableQty(transferWarehouseList);
     }
 
     /**
@@ -1284,12 +1305,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return null;
     }
 
-    private void checkTransferWarehouseUsableQty(List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList, boolean skipWhenInTransaction) {
+    private void checkTransferWarehouseUsableQty(List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList) {
         if (CollUtil.isEmpty(transferWarehouseList)) {
-            return;
-        }
-        if (skipWhenInTransaction) {
-            // saveAndSubmit 已在进入提交事务前预校验；这里保留直接提交入口的兜底保护。
             return;
         }
         List<String> warehouseIdList = transferWarehouseList.stream().map(VirtualWarehouseAllocationDTO.TransferWarehouseDTO::getFromWarehouseId).distinct().collect(Collectors.toList());
@@ -1298,10 +1315,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         redisParamDTO.setWarehouseIdList(warehouseIdList);
         redisParamDTO.setSkuIdList(skuIdList);
         redisParamDTO.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
-        List<InventoryDTO.RedisInventoryReturnDTO> redisInventoryList = inventoryService.getRedisInventory(redisParamDTO);
-        if (CollUtil.isEmpty(redisInventoryList)) {
-            redisInventoryList = Collections.emptyList();
-        }
+        List<InventoryDTO.RedisInventoryReturnDTO> redisInventoryResultList = inventoryService.getRedisInventory(redisParamDTO);
+        List<InventoryDTO.RedisInventoryReturnDTO> redisInventoryList = CollUtil.isEmpty(redisInventoryResultList) ? Collections.emptyList() : redisInventoryResultList;
 
         List<String> errorMsgList = new ArrayList<>();
         Map<String, Map<String, List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO>>> skuWarehouseMap = transferWarehouseList.stream()
