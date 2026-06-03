@@ -44,7 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 下载平台商品消费服务
@@ -58,6 +60,9 @@ import java.util.Objects;
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_products_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+
+    private static final long IML_OWNER_CODE_CACHE_TTL_MILLIS = 5 * 60 * 1000L;
+    private static final Map<String, OwnerCodeCache> IML_OWNER_CODE_CACHE = new ConcurrentHashMap<>();
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -205,7 +210,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 //若父平台skuid 不为空则更新对应的父平台sku的标识为true
                 updatePlateformParentSku(entity.getPlatformParentSpuNo());
             } else {
-                // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {
                     ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
@@ -271,15 +275,56 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 || StringUtils.isBlank(dto.getPlatformSkuNo())) {
             return;
         }
-        OverseasProviderEntity overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class, dto.getAuthId());
-        if (Objects.isNull(overseasProviderEntity) || StringUtils.isBlank(overseasProviderEntity.getOwnerCode())) {
-            log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
-                    dto.getAuthId(), dto.getPlatformSkuNo());
+        String ownerCode = getImlOwnerCode(dto.getAuthId(), dto.getPlatformSkuNo());
+        if (StringUtils.isBlank(ownerCode)) {
             return;
         }
-        String ownerPrefix = overseasProviderEntity.getOwnerCode() + "-";
+        String ownerPrefix = ownerCode + "-";
         String platformSkuNo = dto.getPlatformSkuNo();
         dto.setPlatformProductBarcode(platformSkuNo.startsWith(ownerPrefix) ? platformSkuNo : ownerPrefix + platformSkuNo);
+    }
+
+    private String getImlOwnerCode(String authId, String platformSkuNo) {
+        OwnerCodeCache cache = IML_OWNER_CODE_CACHE.get(authId);
+        if (Objects.nonNull(cache) && !cache.isExpired()) {
+            return cache.getOwnerCode();
+        }
+        OverseasProviderEntity overseasProviderEntity;
+        try {
+            overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class, authId);
+        } catch (Exception e) {
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 异常, authId={}, platformSkuNo={}, error={}",
+                    authId, platformSkuNo, e.getMessage());
+            return null;
+        }
+        if (Objects.isNull(overseasProviderEntity) || StringUtils.isBlank(overseasProviderEntity.getOwnerCode())) {
+            IML_OWNER_CODE_CACHE.remove(authId);
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
+                    authId, platformSkuNo);
+            return null;
+        }
+        String ownerCode = overseasProviderEntity.getOwnerCode();
+        IML_OWNER_CODE_CACHE.put(authId, new OwnerCodeCache(ownerCode));
+        return ownerCode;
+    }
+
+    private static class OwnerCodeCache {
+
+        private final String ownerCode;
+        private final long expireAt;
+
+        private OwnerCodeCache(String ownerCode) {
+            this.ownerCode = ownerCode;
+            this.expireAt = System.currentTimeMillis() + IML_OWNER_CODE_CACHE_TTL_MILLIS;
+        }
+
+        private String getOwnerCode() {
+            return ownerCode;
+        }
+
+        private boolean isExpired() {
+            return System.currentTimeMillis() >= expireAt;
+        }
     }
 
     //若父平台skuid 不为空则更新对应的父平台sku的标识为true
