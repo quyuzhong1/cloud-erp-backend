@@ -453,6 +453,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(dto);
             if (Objects.nonNull(viewDTO)) {
                 viewDTO.setPlatformOrderCode(CharSequenceUtil.EMPTY);
+                fillThirdWarehouseProvider(viewDTO);
             }
             return viewDTO;
         } else {
@@ -504,15 +505,27 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     item.setSaleQty(soDetailMap.getOrDefault(item.getSoDetailId(), 0));
                 });
             }
-            OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
-            if (Objects.nonNull(overseasProviderWarehouse)) {
-                OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
-                if (Objects.nonNull(overseasProvider)) {
-                    viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
-                }
-            }
+            fillThirdWarehouseProvider(viewDTO);
             return viewDTO;
         }
+    }
+
+    private void fillThirdWarehouseProvider(B2bThirdDeliveryDTO.ViewDTO viewDTO) {
+        if (Objects.isNull(viewDTO) || CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseId())) {
+            return;
+        }
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+        if (Objects.isNull(overseasProviderWarehouse)) {
+            return;
+        }
+        OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+        if (Objects.isNull(overseasProvider)) {
+            return;
+        }
+        // Keep legacy field behavior while exposing explicit provider fields for new frontend checks.
+        viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+        viewDTO.setThirdWarehouseProviderCode(overseasProvider.getCode());
+        viewDTO.setThirdWarehouseProviderName(overseasProvider.getName());
     }
 
     @Override
