@@ -192,9 +192,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             return;
         }
         String fileName = attachment.getAttachName();
-        req.setFileName(fileName);
-        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
-
         byte[] bytes;
         try {
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
@@ -207,6 +204,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             return;
         }
         bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
+        req.setFileName(fileName);
+        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
         req.setFileBase64(Base64.getEncoder().encodeToString(bytes));
     }
 
@@ -371,20 +370,20 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         if (CharSequenceUtil.isNotBlank(item.getShipmentFileBase64())) {
             return;
         }
-        item.setShipmentFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
-        item.setShipmentFileName(attachment.getAttachName());
         byte[] bytes;
         try {
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
-            log.warn("B2B三方发货单装箱标签附件下载异常，fileUrl={}", attachment.getAttachUrl(), e);
+            log.warn("B2B三方发货单装箱标签附件下载异常，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl(), e);
             return;
         }
         if (Objects.isNull(bytes) || bytes.length == 0) {
-            log.warn("B2B三方发货单装箱标签附件下载为空，fileUrl={}", attachment.getAttachUrl());
+            log.warn("B2B三方发货单装箱标签附件下载为空，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl());
             return;
         }
         bytes = cleanAttachmentBytes(bytes, attachment.getAttachName(), attachment.getAttachUrl(), item.getBoxSeq() == null ? "" : String.valueOf(item.getBoxSeq()));
+        item.setShipmentFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
+        item.setShipmentFileName(attachment.getAttachName());
         item.setShipmentFileBase64(Base64.getEncoder().encodeToString(bytes));
     }
 }
