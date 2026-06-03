@@ -104,6 +104,9 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+        <if test="params.searchKey != null and params.searchKey != ''">
+            and CONCAT(qn.code, ' ', qn.source_code, ' ', qn.purchase_order_code) LIKE CONCAT('%', #{params.searchKey}::text, '%')
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

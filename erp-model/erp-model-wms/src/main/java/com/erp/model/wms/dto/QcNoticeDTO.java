@@ -69,6 +69,11 @@ public class QcNoticeDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+        /**
+         * 模糊搜索：质检通知单号/来源单号/采购单号
+         */
+        private String searchKey;
+
      }
     /**
     * 分页列表
