@@ -1803,6 +1803,10 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID(13656,"仅支持更新为待确认或账单确认"),
     LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM(13657,"仅已确认的对账单允许执行账单确认"),
     LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND(13658,"未找到已匹配的物流费用单"),
+    LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN(13659,"已确认的对账单不允许删除"),
+    LOGISTICS_RECON_MANUAL_MATCH_NOT_READY(13660,"手动匹配待接入 ERP 单号查询逻辑"),
+    LOGISTICS_RECON_ADD_BILL_COST_NOT_READY(13661,"新增费用单匹配待重构 ImportHistoryRecord 后接入"),
+    LOGISTICS_RECON_IMPORT_MATCH_NOT_READY(13662,"导入匹配待重构 ImportHistoryRecord 后接入"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

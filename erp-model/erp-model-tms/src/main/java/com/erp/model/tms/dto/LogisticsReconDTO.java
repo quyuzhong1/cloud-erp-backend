@@ -38,7 +38,7 @@ public class LogisticsReconDTO implements Serializable {
     @AllArgsConstructor
     public static class TabListDTO {
         /**
-         * tab 标识（all / check_status[importing/pending/confirmed] / match_status）
+         * tab 标识（all / check_status：importing / pending / confirmed）
          */
         private String tabFlag;
         /**
@@ -423,6 +423,11 @@ public class LogisticsReconDTO implements Serializable {
          */
         @NotBlank(message = "处理类型不能为空")
         private String processingType;
+
+        /**
+         * 操作人 id（提交导入时捕获，用于异步回调落导入历史记录）
+         */
+        private String userId;
     }
 
     /**

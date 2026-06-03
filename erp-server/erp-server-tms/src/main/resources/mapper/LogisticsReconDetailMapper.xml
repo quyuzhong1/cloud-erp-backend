@@ -53,15 +53,10 @@
             d.pay_type, d.weight_logistics, d.volume_weight_logistics,
             d.billing_weight_logistics, d.weight_unit, d.third_length, d.third_width, d.third_height,
             d.cost_count, sub.match_status, sub.match_fail_reason, sub.reconciliation_status,
-            d.create_time, d.create_user_name,
-            lb.code AS matched_logistics_bill_code
+            d.create_time, d.create_user_name
         FROM logistics_recon_detail_sub sub
         INNER JOIN logistics_recon_detail d
             ON d.id = sub.detail_id AND d.is_deleted = false
-        LEFT JOIN logistics_recon_ref_logistics_bill r
-            ON r.detail_sub_id = sub.id AND r.is_deleted = false
-        LEFT JOIN logistics_bill lb
-            ON lb.id = r.logistics_bill_id AND lb.is_deleted = false
         WHERE ${params.sqlMap.default}
         and sub.is_deleted = false
         AND d.main_id = #{params.mainId}
@@ -93,6 +88,9 @@
             ON d.id = sub.detail_id AND d.is_deleted = false
         WHERE sub.is_deleted = false
           AND d.main_id = #{params.mainId}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         GROUP BY sub.match_status
     </select>
 

@@ -7,9 +7,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
+import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -99,13 +103,73 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto);
 
     /**
-     * 物流商对账单账单确认（更新已匹配物流费用单对账状态）
+     * 物流商对账单账单确认（单条，更新已匹配物流费用单对账状态）
      * @author Will
-     * @date: 2026/06/01
-     * @param dto
-     * @return List<BatchResultDTO>
+     * @date: 2026/06/02
+     * @param mainId 对账单 id
+     * @param reconciliationStatus 目标对账状态
+     * @return BatchResultDTO
      */
-    List<BatchResultDTO> batchConfirmBill(LogisticsReconDTO.BatchConfirmBillDTO dto);
+    BatchResultDTO confirmBill(String mainId, String reconciliationStatus);
+
+    /**
+     * 物流商对账单导入分批落库（供 Excel 监听器分批回调，每批单独事务）
+     * @author Will
+     * @date: 2026/06/03
+     * @param rows 当前批次原始行数据
+     * @param headMap Excel 表头
+     * @param rowNoStart 当前批次首行行号（1 基，按 sheet 连续）
+     * @param dto 导入参数（含 mainId）
+     * @param importCfg 当前导入配置
+     * @param cfgDetails 配置字段明细
+     * @return 当前批次落库结果（校验失败行 + 落库统计）
+     */
+    ReconBatchResult handleReconImportBatch(List<Map<Integer, String>> rows,
+                                            Map<Integer, String> headMap,
+                                            int rowNoStart,
+                                            LogisticsReconDTO.ImportDTO dto,
+                                            CfgLogisticsCostImportEntity importCfg,
+                                            List<CfgLogisticsCostImportDetailEntity> cfgDetails);
+
+    /**
+     * 单批导入落库结果
+     */
+    class ReconBatchResult {
+        private final List<LogisticsReconImportExcelDTO> errorList;
+        private final int detailCount;
+        private final int subCount;
+        private final java.math.BigDecimal totalAmount;
+        private final java.util.Set<String> currencies;
+
+        public ReconBatchResult(List<LogisticsReconImportExcelDTO> errorList, int detailCount, int subCount,
+                                java.math.BigDecimal totalAmount, java.util.Set<String> currencies) {
+            this.errorList = errorList;
+            this.detailCount = detailCount;
+            this.subCount = subCount;
+            this.totalAmount = totalAmount;
+            this.currencies = currencies;
+        }
+
+        public List<LogisticsReconImportExcelDTO> getErrorList() {
+            return errorList;
+        }
+
+        public int getDetailCount() {
+            return detailCount;
+        }
+
+        public int getSubCount() {
+            return subCount;
+        }
+
+        public java.math.BigDecimal getTotalAmount() {
+            return totalAmount;
+        }
+
+        public java.util.Set<String> getCurrencies() {
+            return currencies;
+        }
+    }
 
     /**
      * 物流商对账明细批量解绑匹配（按 detail 维度，逻辑删 ref）

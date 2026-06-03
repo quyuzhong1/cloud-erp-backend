@@ -70,19 +70,6 @@ public class LogisticsReconDetailSubServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void batchUpdateCfgCost(Collection<String> detailSubIds, String cfgCostId, String cfgCostName) {
-        if (CollUtil.isEmpty(detailSubIds)) {
-            return;
-        }
-        lambdaUpdate()
-                .in(LogisticsReconDetailSubEntity::getId, detailSubIds)
-                .set(LogisticsReconDetailSubEntity::getCfgCostId, cfgCostId)
-                .set(LogisticsReconDetailSubEntity::getCfgCostName, cfgCostName)
-                .update(new LogisticsReconDetailSubEntity());
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
     public void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason) {
         if (CollUtil.isEmpty(detailSubIds)) {
             return;

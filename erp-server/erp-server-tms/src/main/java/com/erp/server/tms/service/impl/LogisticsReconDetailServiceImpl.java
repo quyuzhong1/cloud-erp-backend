@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
@@ -115,18 +116,13 @@ public class LogisticsReconDetailServiceImpl
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> importMatch(LogisticsReconDetailDTO.ImportMatchDTO dto) {
-        // 费用项级"导入匹配"：先标 matching → 调合并匹配链路 → 完成后回写 detail_sub.match_status / ref
-        logisticsReconDetailSubService.batchUpdateMatchStatus(dto.getDetailSubIds(),
-                LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null);
-
+        // TODO 费用项级"导入匹配"：合并匹配链路重构后再接入，完成后按 detail_sub 写 ref 并把
+        //  match_status 置为 matched / failed；接入前不预写 matching 状态，统一返回未实现失败避免污染数据
         List<BatchResultDTO> results = new ArrayList<>(dto.getDetailSubIds().size());
-        // TODO 调用 ImportHistoryRecordServiceImpl 合并匹配重载入口（重构后），按 detailSubIds 范围处理；
-        //  完成后按 detail_sub 写 logistics_recon_ref_logistics_bill，并把 match_status 置为 matched / failed
         for (String detailSubId : dto.getDetailSubIds()) {
-            results.add(BatchResultDTO.success(detailSubId, detailSubId,
-                    com.common.business.enums.OperationTypeEnum.UPDATE));
+            results.add(BatchResultDTO.fail(detailSubId, detailSubId,
+                    new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_MATCH_NOT_READY).getMsg()));
         }
-        // 主表匹配数 / 匹配状态由列表、详情查询实时聚合派生，匹配后无需回写主表
         return results;
     }
 
@@ -141,7 +137,7 @@ public class LogisticsReconDetailServiceImpl
         List<BatchResultDTO> results = new ArrayList<>(dto.getItemList().size());
         for (LogisticsReconDetailDTO.ManualMatchItemDTO item : dto.getItemList()) {
             results.add(BatchResultDTO.fail(item.getDetailSubId(), item.getDetailSubId(),
-                    "手动匹配待接入 ERP 单号查询逻辑"));
+                    new ServiceException(ApiError.LOGISTICS_RECON_MANUAL_MATCH_NOT_READY).getMsg()));
         }
         return results;
     }
@@ -153,11 +149,15 @@ public class LogisticsReconDetailServiceImpl
         //  1. 调 LogisticsBillService / LogisticsBillCostService 新增物流单 + 费用单（billCostPayload 后续类型化）
         //  2. 复用 manualMatch 写 ref 关系（match_type=newBill）
         //  3. detail_sub.match_status = matched（主表匹配数由查询实时聚合，无需回写）
-        throw new ServiceException("新增费用单匹配待重构 ImportHistoryRecord 后接入");
+        throw new ServiceException(ApiError.LOGISTICS_RECON_ADD_BILL_COST_NOT_READY);
     }
 
     /**
      * 费用项列表填充：补 match_status 名称 + 金额 / 尺寸展示字段
+     * @author Will
+     * @date: 2026/06/02
+     * @param list 列表数据
+     * @return void
      */
     private void fillList(List<LogisticsReconDetailDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {

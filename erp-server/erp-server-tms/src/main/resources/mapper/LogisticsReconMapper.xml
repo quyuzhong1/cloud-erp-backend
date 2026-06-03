@@ -92,7 +92,7 @@
         create_time DESC
     </select>
 
-    <!-- TAB 计数：按 check_status 分组（前端 TAB 全部 / 导入中 / 待确认 / 已确认） -->
+    <!-- TAB 计数：按 check_status 分组（all / importing / pending / confirmed） -->
     <select id="tabList" resultType="com.erp.model.tms.dto.LogisticsReconDTO$TabListDTO">
         SELECT check_status AS tabFlag, count(*) AS count
         FROM logistics_recon

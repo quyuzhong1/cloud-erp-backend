@@ -45,17 +45,6 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
     void removeByMainIds(Collection<String> mainIds);
 
     /**
-     * 物流商对账费用项配置外补齐 cfg_cost_id
-     * @author Will
-     * @date: 2026/05/29
-     * @param detailSubIds
-     * @param cfgCostId
-     * @param cfgCostName
-     * @return
-     */
-    void batchUpdateCfgCost(Collection<String> detailSubIds, String cfgCostId, String cfgCostName);
-
-    /**
      * 批量更新费用项匹配状态（合并匹配/手动匹配/解绑等内部调用）
      * @author Will
      * @date: 2026/06/01

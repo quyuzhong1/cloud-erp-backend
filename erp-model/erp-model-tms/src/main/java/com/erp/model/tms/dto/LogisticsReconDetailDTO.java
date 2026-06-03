@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -215,7 +216,7 @@ public class LogisticsReconDetailDTO implements Serializable {
          */
         private String createUserName;
         /**
-         * 关联到的 ERP 物流单号（来自 ref join logistics_bill，给前端展示）
+         * 关联到的 ERP 物流单号（预留字段，当前列表不展示）
          */
         private String matchedLogisticsBillCode;
     }
@@ -279,7 +280,7 @@ public class LogisticsReconDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class TabListParamDTO {
+    public static class TabListParamDTO extends PermissionsDTO {
         /**
          * 对账单 id
          */
