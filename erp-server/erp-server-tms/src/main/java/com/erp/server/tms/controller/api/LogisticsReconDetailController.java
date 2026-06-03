@@ -35,7 +35,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @LogSystemModule("物流商对账明细")
-@RequestMapping("/tms/logisticsReconDetail")
+@RequestMapping("/logisticsReconDetail")
 public class LogisticsReconDetailController extends BaseController {
 
     @Resource
