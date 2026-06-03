@@ -241,6 +241,13 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
     List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApprover(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
 
     /**
+     * 轻量批量查询当前审批人（仅返回业务id + 审批人名称）
+     * @param dtoList
+     * @return
+     */
+    List<ProcessManagementDTO.CurApproveSimpleDTO> batchCurApproverSimple(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
+
+    /**
      * 批量查询当前待审核业务单据
      * @param dtoList
      * @return

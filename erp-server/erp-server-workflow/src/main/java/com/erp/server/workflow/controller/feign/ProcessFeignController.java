@@ -371,6 +371,15 @@ public class ProcessFeignController extends BaseController {
     }
 
     /**
+     * 轻量批量查询流程当前审批人（仅返回 businessId 与 curApproveName）。
+     * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景，减少导出链路返回字段体积。
+     */
+    @PostMapping("/batchCurApproverSimple")
+    public ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> batchCurApproverSimple(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        return success(processManagementService.batchCurApproverSimple(dtoList));
+    }
+
+    /**
      * 批量查询当前待审核业务单据
      */
     @PostMapping("/batchCurApproverByApprove")

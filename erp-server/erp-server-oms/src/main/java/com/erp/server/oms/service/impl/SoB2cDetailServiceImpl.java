@@ -442,6 +442,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
+    public Boolean rollbackWarehouseBatch(List<SoB2cDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return Boolean.TRUE;
+        }
+        baseMapper.rollbackWarehouseBatch(detailList);
+        return Boolean.TRUE;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<SoB2cDetailEntity> saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap, ShopInfoEntity shopInfo, List<SkuInfoSimpleVO> skuList) {
         // 订单明细
