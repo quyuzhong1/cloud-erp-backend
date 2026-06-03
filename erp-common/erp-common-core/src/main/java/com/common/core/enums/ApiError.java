@@ -1501,6 +1501,7 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
 
     WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+    WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT(11139,"SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调"),
 
 
     /**

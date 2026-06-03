@@ -947,6 +947,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private String fromWarehouseId;
         /**
+         * 调出仓库名称
+         */
+        private String fromWarehouseName;
+        /**
          * 调出仓库组织id
          */
         private String fromOrgId;
