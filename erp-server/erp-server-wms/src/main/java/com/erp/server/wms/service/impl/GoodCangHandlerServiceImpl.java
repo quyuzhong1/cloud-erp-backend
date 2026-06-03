@@ -583,7 +583,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
                     .boxNo(entry.getKey())
                     .boxRefMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
-                    .shipmentFileId(boxHead.getShipmentFileId())
+                    .shipmentFileId(null)
                     .shipmentFileList(Collections.singletonList(shipmentFile))
                     .logisticsFileId(null)
                     .customsFileId(null)
