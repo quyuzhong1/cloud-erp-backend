@@ -195,7 +195,13 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setFileName(fileName);
         req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
 
-        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        byte[] bytes;
+        try {
+            bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        } catch (Exception e) {
+            log.warn("B2B三方发货单附件下载异常，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
+            return;
+        }
         if (Objects.isNull(bytes) || bytes.length == 0) {
             log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
             return;
@@ -362,9 +368,18 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         if (Objects.isNull(attachment) || CharSequenceUtil.isBlank(attachment.getAttachUrl())) {
             return;
         }
+        if (CharSequenceUtil.isNotBlank(item.getShipmentFileBase64())) {
+            return;
+        }
         item.setShipmentFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
         item.setShipmentFileName(attachment.getAttachName());
-        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        byte[] bytes;
+        try {
+            bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        } catch (Exception e) {
+            log.warn("B2B三方发货单装箱标签附件下载异常，fileUrl={}", attachment.getAttachUrl(), e);
+            return;
+        }
         if (Objects.isNull(bytes) || bytes.length == 0) {
             log.warn("B2B三方发货单装箱标签附件下载为空，fileUrl={}", attachment.getAttachUrl());
             return;
