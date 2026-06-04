@@ -489,7 +489,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     private Map<String, BigDecimal> buildPlmPurchaseAverageCostMap(List<KolSampleCostEntity> thisMonthList) {
         List<String> skuIdList = thisMonthList.stream()
-                .filter(item -> !isPositive(item.getPurchaseAverageCost()))
+                // listByTime 从 DB 加载的数据不会带 @TableField(exist = false) 的 purchaseAverageCost，这里固定按 SKU 批量兜底查 PLM。
                 .map(KolSampleCostEntity::getSkuId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
