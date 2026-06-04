@@ -98,8 +98,8 @@ public class TongYouService {
         String path = "hwc_api/hwc_order.php";
         log.warn("通邮 getOutboundBill request:{}",JSONObject.toJSONString(authJson));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
-        return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<List<TongYouQueryOutboundResp>>>() {});
-
+        return TongYouUtils.parseToTongYouListResp(bodyStr, TongYouQueryOutboundResp.class,
+                new TypeReference<TongYouBaseResp<List<TongYouQueryOutboundResp>>>() {});
     }
 
     /**
