@@ -34,6 +34,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
         implements KolSampleCostFeedbackUrlService {
 
     private static final String FEEDBACK_URL_LOCK_BUSINESS_TYPE = "kolSampleCostFeedbackUrl:syncByFeedback";
+    private static final int FEEDBACK_URL_QUERY_BATCH_SIZE = 100;
 
     private static final List<String> SAMPLE_SOURCE_TYPES = Arrays.asList(
             SourceTypeEnum.KOL_B2B_APPLICATION.getCode(),
@@ -64,6 +65,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
     }
 
     @Transactional(rollbackFor = Exception.class)
+    // DistributeLocker 切面会展开 List 参数，为每个 sourceType/sourceDetailId 组合加锁。
     @DistributeLocker(keyName = "feedbackList.sourceType,feedbackList.sourceDetailId", businessType = FEEDBACK_URL_LOCK_BUSINESS_TYPE, unlockAfterTx = true)
     @Override
     public void syncByFeedbackList(List<KolFeedbackEntity> feedbackList) {
@@ -77,21 +79,11 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
             return;
         }
 
-        Set<String> sourceTypeSet = validFeedbackList.stream()
-                .map(KolFeedbackEntity::getSourceType)
-                .collect(Collectors.toSet());
-        Set<String> sourceDetailIdSet = validFeedbackList.stream()
-                .map(KolFeedbackEntity::getSourceDetailId)
-                .collect(Collectors.toSet());
         Set<String> urlHashSet = validFeedbackList.stream()
                 .map(KolFeedbackEntity::getUrlHash)
                 .collect(Collectors.toSet());
 
-        List<KolSampleCostFeedbackUrlEntity> activeUrlList = lambdaQuery()
-                .in(KolSampleCostFeedbackUrlEntity::getSourceType, sourceTypeSet)
-                .in(KolSampleCostFeedbackUrlEntity::getSourceDetailId, sourceDetailIdSet)
-                .eq(KolSampleCostFeedbackUrlEntity::getIsDeleted, false)
-                .list();
+        List<KolSampleCostFeedbackUrlEntity> activeUrlList = listActiveFeedbackUrlsByBatch(validFeedbackList);
         Map<String, KolSampleCostFeedbackUrlEntity> existUrlMap = activeUrlList.stream()
                 .filter(item -> urlHashSet.contains(item.getUrlHash()))
                 .collect(Collectors.toMap(this::buildUrlKey, item -> item, (v1, v2) -> v1));
@@ -141,6 +133,32 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
         if (CollUtil.isNotEmpty(updateList)) {
             updateBatchById(updateList);
         }
+    }
+
+    private List<KolSampleCostFeedbackUrlEntity> listActiveFeedbackUrlsByBatch(List<KolFeedbackEntity> validFeedbackList) {
+        Map<String, KolSampleCostFeedbackUrlEntity> activeUrlMap = new HashMap<>();
+        for (int start = 0; start < validFeedbackList.size(); start += FEEDBACK_URL_QUERY_BATCH_SIZE) {
+            List<KolFeedbackEntity> partitionList = validFeedbackList.subList(start,
+                    Math.min(start + FEEDBACK_URL_QUERY_BATCH_SIZE, validFeedbackList.size()));
+            Set<String> sourceTypeSet = partitionList.stream()
+                    .map(KolFeedbackEntity::getSourceType)
+                    .collect(Collectors.toSet());
+            Set<String> sourceDetailIdSet = partitionList.stream()
+                    .map(KolFeedbackEntity::getSourceDetailId)
+                    .collect(Collectors.toSet());
+            if (CollUtil.isEmpty(sourceTypeSet) || CollUtil.isEmpty(sourceDetailIdSet)) {
+                continue;
+            }
+            List<KolSampleCostFeedbackUrlEntity> partitionActiveUrlList = lambdaQuery()
+                    .in(KolSampleCostFeedbackUrlEntity::getSourceType, sourceTypeSet)
+                    .in(KolSampleCostFeedbackUrlEntity::getSourceDetailId, sourceDetailIdSet)
+                    .eq(KolSampleCostFeedbackUrlEntity::getIsDeleted, false)
+                    .list();
+            for (KolSampleCostFeedbackUrlEntity entity : partitionActiveUrlList) {
+                activeUrlMap.putIfAbsent(CharSequenceUtil.blankToDefault(entity.getId(), buildUrlKey(entity)), entity);
+            }
+        }
+        return new ArrayList<>(activeUrlMap.values());
     }
 
     @Transactional(rollbackFor = Exception.class)

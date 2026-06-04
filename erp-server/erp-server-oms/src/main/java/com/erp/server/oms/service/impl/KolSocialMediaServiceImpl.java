@@ -507,6 +507,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         if (StrUtil.isBlank(urlHash)) {
             return;
         }
+        // 同步 kol_feedback 与寄样费用回片 URL 必须在同一事务内完成，避免两张表 feedback_status 不一致。
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> doSyncFeedbackStatusByUrlHash(urlHash));
     }
 
