@@ -222,7 +222,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         addDTO.setSourceType(SourceTypeEnum.QC_APPLICATION.getCode());
         addDTO.setPurchaseOrderId(entity.getSourceId());
         addDTO.setPurchaseOrderCode(entity.getSourceCode());
-        addDTO.setPlanQcDate(dto.getPlanQcDate());
+        addDTO.setExpectQcDate(dto.getExpectQcDate());
         List<QcNoticeDetailDTO.AddDTO> addDetailList = new ArrayList<>();
         for (QcApplicationDetailEntity detailEntity : detailList) {
             QcNoticeDetailDTO.AddDTO  addDetailDTO = new QcNoticeDetailDTO.AddDTO();
@@ -245,7 +245,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_APPLICATION.getCode(), entity.getId(), "生成质检通知单操作");
 
         //更新质检申请单中的期望质检日期
-        updatePlanQcDate(entity, dto.getPlanQcDate());
+        updateExpectQcDate(entity, dto.getExpectQcDate());
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.GENERATE);
     }
@@ -253,19 +253,19 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     /**
      * 更新质检申请单中的期望质检日期
      * @param entity 质检申请单主单实体
-     * @param planQcDate 期望质检日期
+     * @param expectQcDate 期望质检日期
      */
-    private void updatePlanQcDate(QcApplicationEntity entity, LocalDate planQcDate) {
-        if (ObjectUtil.isEmpty(planQcDate) || planQcDate.equals(entity.getPlanQcDate())) {
+    private void updateExpectQcDate(QcApplicationEntity entity, LocalDate expectQcDate) {
+        if (ObjectUtil.isEmpty(expectQcDate) || expectQcDate.equals(entity.getExpectQcDate())) {
             return;
         }
         QcApplicationEntity updateEntity = new QcApplicationEntity();
         updateEntity.setId(entity.getId());
-        updateEntity.setPlanQcDate(planQcDate);
+        updateEntity.setExpectQcDate(expectQcDate);
         super.updateById(updateEntity);
 
         //更新日志
-        String msg = CharSequenceUtil.format("用户【{}】修改单号为【{}】的【{}】单据期望质检日期，原值：【{}】，新值：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单", entity.getPlanQcDate(), planQcDate);
+        String msg = CharSequenceUtil.format("用户【{}】修改单号为【{}】的【{}】单据期望质检日期，原值：【{}】，新值：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检申请单主单", entity.getExpectQcDate(), expectQcDate);
         operateLogService.addModuleOperateLogByObj(entity, updateEntity, ModuleTypeEnum.QC_APPLICATION.getCode(), entity.getId(), msg);
     }
 
@@ -311,7 +311,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
             addDTO.setSourceId(purchaseOrderEntity.getId());
             addDTO.setSourceCode(purchaseOrderEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
-            addDTO.setPlanQcDate(value.get(0).getPlanQcDate());
+            addDTO.setExpectQcDate(value.get(0).getExpectQcDate());
             addDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
 
             List<QcApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
@@ -377,7 +377,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
                 throw new ServiceException(ApiError.WH_NOT_EXIST_OR_NO_PERMISSION);
             }
             dto.setWarehouseName(warehouseEntity.getName());
-            dto.setPlanQcDate(entity.getPlanQcDate());
+            dto.setExpectQcDate(entity.getExpectQcDate());
             resultList.add(dto);
         }
         return resultList;
@@ -639,7 +639,7 @@ public class QcApplicationServiceImpl extends SuperServiceImpl<QcApplicationMapp
     * 新增修改处理数据
     */
     private void handleData(QcApplicationEntity qcApplicationEntity) {
-        if (ObjectUtil.isNotEmpty(qcApplicationEntity.getPlanQcDate()) && qcApplicationEntity.getPlanQcDate().isBefore(LocalDate.now())) {
+        if (ObjectUtil.isNotEmpty(qcApplicationEntity.getExpectQcDate()) && qcApplicationEntity.getExpectQcDate().isBefore(LocalDate.now())) {
             throw new ServiceException(ApiError.QC_APPLICATION_PLAN_QC_DATE_NOT_BEFORE_NOW);
         }
 

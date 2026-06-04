@@ -175,6 +175,9 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     @Transactional(rollbackFor = Exception.class)
     void pushFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+    /** MQ 消费：下推头程对账单（含任务明细初始化） */
+    void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
     void addOrUpdateCost(List<TmsFirstMileReconciliationDetailEntity> list);
 
 

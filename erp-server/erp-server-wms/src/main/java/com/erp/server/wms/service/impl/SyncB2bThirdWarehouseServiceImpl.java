@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -27,6 +28,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelFbaOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateFbaOutboundReq;
+import com.erp.model.wms.enums.B2bPackingTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -64,6 +66,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
 
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private B2bCustomerPackingService b2bCustomerPackingService;
 
     @Override
     public DmpPushTaskEntity syncB2bThirdWarehouse(B2bThirdDeliveryEntity entity, List<B2bThirdDeliveryDetailEntity> detailEntityList, String operate) {
@@ -122,6 +126,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode());
         ThirdWarehouseCreateFbaOutboundReq req = B2bThirdDeliveryConverter.INSTANCE.toCreateFbaOutboundReq(entity, detailEntityList);
+        fillPackingForOutboundReq(req, entity);
 
         OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(entity.getDeliveryWarehouseId());
         if (Objects.nonNull(overseasProviderWarehouse)) {
@@ -187,15 +192,20 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             return;
         }
         String fileName = attachment.getAttachName();
-        req.setFileName(fileName);
-        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
-
-        byte[] bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        byte[] bytes;
+        try {
+            bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        } catch (Exception e) {
+            log.warn("B2B三方发货单附件下载异常，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
+            return;
+        }
         if (Objects.isNull(bytes) || bytes.length == 0) {
             log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
             return;
         }
         bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
+        req.setFileName(fileName);
+        req.setFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl());
         req.setFileBase64(Base64.getEncoder().encodeToString(bytes));
     }
 
@@ -305,5 +315,96 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         req.setRemark(entity.getRemark());
         req.setOwnerCode(overseasProviderEntity.getOwnerCode());
         return BeanUtil.beanToMap(req);
+    }
+
+    private void fillPackingForOutboundReq(ThirdWarehouseCreateFbaOutboundReq req, B2bThirdDeliveryEntity entity) {
+        if (CharSequenceUtil.isBlank(entity.getPackingType())) {
+            req.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+            return;
+        }
+        List<B2bCustomerPackingEntity> packingList = b2bCustomerPackingService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isEmpty(packingList)) {
+            return;
+        }
+        Map<String, List<WmsAttachmentDTO.UpdateDTO>> shipmentFileMap = getShipmentFileMap(packingList);
+        List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {
+            ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item = new ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem();
+            item.setWarehousePlatformSku(p.getWarehousePlatformSku());
+            item.setPackingQty(p.getPackingQty());
+            item.setBoxMarkNo(p.getBoxMarkNo());
+            item.setBoxMarkRefNo(p.getBoxMarkRefNo());
+            item.setLabelSize(p.getLabelSize());
+            fillShipmentFiles(item, shipmentFileMap.get(p.getId()));
+            item.setLabelingRequirement(p.getLabelingRequirement());
+            item.setBoxSeq(p.getBoxSeq());
+            return item;
+        }).collect(Collectors.toList());
+        req.setPackingDetailList(items);
+    }
+
+    private Map<String, List<WmsAttachmentDTO.UpdateDTO>> getShipmentFileMap(List<B2bCustomerPackingEntity> packingList) {
+        List<String> boxHeadIds = packingList.stream()
+                .map(B2bCustomerPackingEntity::getBoxSeq)
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(boxSeq -> B2bCustomerPackingServiceImpl.getBoxHead(packingList, boxSeq).orElse(null))
+                .filter(Objects::nonNull)
+                .map(B2bCustomerPackingEntity::getId)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(boxHeadIds)) {
+            return Collections.emptyMap();
+        }
+        List<WmsAttachmentDTO.UpdateDTO> attachments = wmsAttachmentService.getByBusinessIds(boxHeadIds, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode());
+        if (CollUtil.isEmpty(attachments)) {
+            return Collections.emptyMap();
+        }
+        return attachments.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getBusinessId()) && CharSequenceUtil.isNotBlank(e.getAttachUrl()))
+                .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId, LinkedHashMap::new, Collectors.toList()));
+    }
+
+    private void fillShipmentFiles(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item, List<WmsAttachmentDTO.UpdateDTO> attachments) {
+        if (CollUtil.isEmpty(attachments)) {
+            return;
+        }
+        List<ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem> shipmentFiles = new ArrayList<>(attachments.size());
+        for (WmsAttachmentDTO.UpdateDTO attachment : attachments) {
+            ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = buildShipmentFile(item, attachment);
+            if (Objects.isNull(shipmentFile)) {
+                throw new ServiceException("B2B三方发货单装箱标签附件构建结果不能为空，箱序号：{}", item.getBoxSeq());
+            }
+            shipmentFiles.add(shipmentFile);
+        }
+        if (CollUtil.isEmpty(shipmentFiles)) {
+            return;
+        }
+        ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem firstShipmentFile = shipmentFiles.get(0);
+        item.setShipmentFileUrl(firstShipmentFile.getShipmentFileUrl());
+        item.setShipmentFileName(firstShipmentFile.getShipmentFileName());
+        item.setShipmentFileBase64(firstShipmentFile.getShipmentFileBase64());
+        item.setShipmentFileList(shipmentFiles);
+    }
+
+    private ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem buildShipmentFile(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item, WmsAttachmentDTO.UpdateDTO attachment) {
+        if (Objects.isNull(attachment) || CharSequenceUtil.isBlank(attachment.getAttachUrl())) {
+            throw new ServiceException("B2B三方发货单装箱标签附件缺失，箱序号：{}", item.getBoxSeq());
+        }
+        byte[] bytes;
+        try {
+            bytes = fileFeign.downloadFile(attachment.getAttachUrl());
+        } catch (Exception e) {
+            log.warn("B2B三方发货单装箱标签附件下载异常，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl(), e);
+            throw new ServiceException("B2B三方发货单装箱标签附件下载异常，箱序号：{}，附件：{}", item.getBoxSeq(), attachment.getAttachName());
+        }
+        if (Objects.isNull(bytes) || bytes.length == 0) {
+            log.warn("B2B三方发货单装箱标签附件下载为空，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl());
+            throw new ServiceException("B2B三方发货单装箱标签附件下载为空，箱序号：{}，附件：{}", item.getBoxSeq(), attachment.getAttachName());
+        }
+        bytes = cleanAttachmentBytes(bytes, attachment.getAttachName(), attachment.getAttachUrl(), item.getBoxSeq() == null ? "" : String.valueOf(item.getBoxSeq()));
+        return ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem.builder()
+                .shipmentFileUrl(FastDFSClientUtil.publicUrl + attachment.getAttachUrl())
+                .shipmentFileName(attachment.getAttachName())
+                .shipmentFileBase64(Base64.getEncoder().encodeToString(bytes))
+                .build();
     }
 }

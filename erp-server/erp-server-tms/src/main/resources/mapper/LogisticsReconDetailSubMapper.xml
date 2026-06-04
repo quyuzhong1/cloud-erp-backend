@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsReconDetailSubMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsReconDetailSubEntity">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="main_id" property="mainId"/>
+        <result column="detail_id" property="detailId"/>
+        <result column="seq_no" property="seqNo"/>
+        <result column="cost_name" property="costName"/>
+        <result column="cfg_cost_id" property="cfgCostId"/>
+        <result column="cfg_cost_name" property="cfgCostName"/>
+        <result column="actual_amount" property="actualAmount"/>
+        <result column="estimated_amount" property="estimatedAmount"/>
+        <result column="currency" property="currency"/>
+        <result column="settlement_currency" property="settlementCurrency"/>
+        <result column="settlement_exchange_rate" property="settlementExchangeRate"/>
+        <result column="local_currency" property="localCurrency"/>
+        <result column="local_exchange_rate" property="localExchangeRate"/>
+        <result column="match_status" property="matchStatus"/>
+        <result column="match_fail_reason" property="matchFailReason"/>
+        <result column="reconciliation_status" property="reconciliationStatus"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, main_id, detail_id, seq_no, cost_name, cfg_cost_id, cfg_cost_name,
+        actual_amount, estimated_amount, currency,
+        settlement_currency, settlement_exchange_rate, local_currency, local_exchange_rate,
+        match_status, match_fail_reason, reconciliation_status
+    </sql>
+
+    <select id="listByDetailIds" resultType="com.erp.model.tms.dto.LogisticsReconDetailSubDTO$ListDTO">
+        SELECT <include refid="Base_Column_List"/>
+        FROM logistics_recon_detail_sub
+        WHERE is_deleted = false
+        AND detail_id IN
+        <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
+            #{detailId}
+        </foreach>
+        ORDER BY detail_id, seq_no
+    </select>
+
+</mapper>

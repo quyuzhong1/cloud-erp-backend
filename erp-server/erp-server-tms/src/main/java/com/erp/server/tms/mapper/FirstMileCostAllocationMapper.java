@@ -107,4 +107,12 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      */
     Integer countByReportPeriodMonth(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
                                      @Param("status") String status);
+
+    List<String> pageIdsForReAllocation(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
+                                        @Param("status") String status,
+                                        @Param("lastId") String lastId,
+                                        @Param("batchSize") int batchSize);
+
+    Integer countForReAllocation(@Param("reportPeriodMonth") LocalDate reportPeriodMonth,
+                                 @Param("status") String status);
 }

@@ -8,6 +8,9 @@ import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.dto.B2bCustomerPackingDTO;
+
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -122,5 +125,9 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
     void cancelFbaOutbound(ThirdWarehouseCancelFbaOutboundReq req);
 
     List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO> listWarehouseOperationDescription(B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO);
+
+    void downloadPackingTemplate(HttpServletResponse response);
+
+    B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO);
 
 }

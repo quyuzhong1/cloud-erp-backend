@@ -4,6 +4,7 @@ package com.erp.server.tms.controller.api;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -141,14 +142,14 @@ public class SmallBagCostAllocationController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "核算状态变更")
     @PostMapping("/updateReportStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:smallBagCostAllocation:updateReportStatus",
             serviceClass = SmallBagCostAllocationService.class,
             tableAlias = "t",
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
         // 按核算月份全量处理：改为异步任务，立即返回任务 id+code（结构保持 List<BatchResultDTO> 不变）
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
@@ -163,14 +164,16 @@ public class SmallBagCostAllocationController extends BaseController {
             return failure("批量更新小包分摊状态失败，未查询到小包分摊记录");
         }
         List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        Map<String, SmallBagCostAllocationMainEntity> mainEntityMap = smallBagCostAllocationMainService.listByIds(ids)
+                .stream().collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, e -> e, (a, b) -> a));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             BatchResultDTO submit;
             try {
-                submit = smallBagCostAllocationService.updateReportStatus(id,dto.getReportDate(),dto.getReportStatus());
-            }catch (Exception e){
-                log.error("小包分摊 状态变更",e);
-                SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
+                submit = smallBagCostAllocationService.updateReportStatus(id, dto.getReportDate(), dto.getReportStatus());
+            } catch (Exception e) {
+                log.error("小包分摊 状态变更", e);
+                SmallBagCostAllocationMainEntity entity = mainEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 核算状态");
                     resultDTOS.add(submit);
@@ -190,43 +193,47 @@ public class SmallBagCostAllocationController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新分摊")
     @PostMapping("/reAllocation")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:reAllocation",
     serviceClass = SmallBagCostAllocationService.class,
-    		tableAlias = "t",
-    keyIdName = "id")
+    tableAlias = "t",
+    keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
-        List<SmallBagCostAllocationEntity> entityList = null;
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = smallBagCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), SmallBagCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
-            entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+        if (CollUtil.isNotEmpty(dto.getIds())) {
+            List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)) {
+                return failure("批量重算小包分摊失败，未查询到待确认小包分摊记录");
+            }
+            List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+            Map<String, SmallBagCostAllocationMainEntity> mainEntityMap = smallBagCostAllocationMainService.listByIds(ids)
+                    .stream().collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, e -> e, (a, b) -> a));
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+            for (String id : ids) {
+                BatchResultDTO submit;
+                try {
+                    submit = smallBagCostAllocationService.reAllocation(id);
+                } catch (Exception e) {
+                    log.error("小包分摊 重新分摊", e);
+                    SmallBagCostAllocationMainEntity entity = mainEntityMap.get(id);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
+                        resultDTOS.add(submit);
+                        continue;
+                    }
+                    submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
-        if (CollectionUtils.isEmpty(entityList)){
-            return failure("批量重算小包分摊失败，未查询到待确认小包分摊记录");
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
+            BatchResultDTO taskResult = smallBagCostAllocationService.asyncReAllocation(dto);
+            return success(Collections.singletonList(taskResult));
         }
-    	List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-    	for (String id : ids) {
-    		BatchResultDTO submit;
-    		try {
-    			submit = smallBagCostAllocationService.reAllocation(id);
-    		}catch (Exception e){
-    			log.error("小包分摊 重新分摊",e);
-    			SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
-    			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
-    				resultDTOS.add(submit);
-    				continue;
-    			}
-    			submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-    		}
-    		resultDTOS.add(submit);
-    	}
-    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return failure("批量重算小包分摊失败，未查询到待确认小包分摊记录");
     }
     
     /**
@@ -242,37 +249,41 @@ public class SmallBagCostAllocationController extends BaseController {
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:delete",
     serviceClass = SmallBagCostAllocationService.class,
-    		tableAlias = "t",
-    keyIdName = "id")
+    tableAlias = "t",
+    keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
-        List<SmallBagCostAllocationEntity> entityList = null;
-        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
-            entityList = smallBagCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), SmallBagCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
-        }else if (CollUtil.isNotEmpty(dto.getIds())){
-            entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+        if (CollUtil.isNotEmpty(dto.getIds())) {
+            List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+            if (CollectionUtils.isEmpty(entityList)) {
+                return failure("批量删除失败，未查询到待确认小包分摊记录");
+            }
+            List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+            Map<String, SmallBagCostAllocationMainEntity> mainEntityMap = smallBagCostAllocationMainService.listByIds(ids)
+                    .stream().collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, e -> e, (a, b) -> a));
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+            for (String id : ids) {
+                BatchResultDTO submit;
+                try {
+                    submit = smallBagCostAllocationService.delete(id);
+                } catch (Exception e) {
+                    log.error("小包分摊 删除", e);
+                    SmallBagCostAllocationMainEntity entity = mainEntityMap.get(id);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 删除");
+                        resultDTOS.add(submit);
+                        continue;
+                    }
+                    submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+                }
+                resultDTOS.add(submit);
+            }
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
-        if (CollectionUtils.isEmpty(entityList)){
-            return failure("批量删除失败，未查询到待确认小包分摊记录");
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())) {
+            BatchResultDTO taskResult = smallBagCostAllocationService.asyncDelete(dto);
+            return success(Collections.singletonList(taskResult));
         }
-    	List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-    	for (String id : ids) {
-    		BatchResultDTO submit;
-    		try {
-    			submit = smallBagCostAllocationService.delete(id);
-    		}catch (Exception e){
-    			log.error("小包分摊 重新分摊",e);
-    			SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
-    			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
-    				resultDTOS.add(submit);
-    				continue;
-    			}
-    			submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-    		}
-    		resultDTOS.add(submit);
-    	}
-    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return failure("批量删除失败，未查询到待确认小包分摊记录");
     }
     
     /**

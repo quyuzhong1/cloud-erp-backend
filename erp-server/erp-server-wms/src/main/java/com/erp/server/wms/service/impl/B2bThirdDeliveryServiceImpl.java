@@ -33,11 +33,19 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.dto.LogisticsProductDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
+import com.erp.model.wms.dto.B2bCustomerPackingDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.excel.B2bCustomerPackingImportExcelDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoB2bDeliveryInterceptDTO;
 import com.erp.model.wms.dto.SoB2bDeliveryInterceptDetailDTO;
@@ -53,6 +61,8 @@ import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
 import com.erp.model.wms.entity.B2bThirdDeliveryDetailEntity;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
+import com.erp.model.wms.entity.B2bCustomerPackingEntity;
+import com.erp.server.wms.service.B2bCustomerPackingService;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.B2BDeliveryPushTypeEnum;
@@ -73,12 +83,20 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.convert.B2bThirdDeliveryConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
+import com.erp.server.wms.listener.B2bCustomerPackingExcelListener;
 import com.erp.server.wms.mapper.B2bThirdDeliveryMapper;
 import com.erp.server.wms.service.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -124,6 +142,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Resource
     private B2bThirdDeliveryDetailService b2bThirdDeliveryDetailService;
     @Resource
+    private B2bCustomerPackingService b2bCustomerPackingService;
+    @Resource
     private SysUserFeign sysUserFeign;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
@@ -160,12 +180,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
-    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
+    private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(0, 1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
     @Resource
@@ -180,6 +203,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         // 数据处理
         handleData(b2bThirdDeliveryEntity,addDTO);
+        normalizePackingFields(b2bThirdDeliveryEntity, addDTO);
+        boolean goodCangWarehouse = isGoodCangWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
+        validatePacking(b2bThirdDeliveryEntity, addDTO.getDetailList(), addDTO.getPackingDetailList(), goodCangWarehouse);
 
         log.info("开始新增B2B三方发货单");
         // 生成单号
@@ -195,6 +221,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), b2bThirdDeliveryEntity.getId(), "新增操作");
         // 新增明细
         List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.batchAdd(b2bThirdDeliveryEntity.getId(), addDTO.getDetailList());
+        b2bCustomerPackingService.batchSave(b2bThirdDeliveryEntity.getId(), enrichPackingDetailList(addDTO.getDetailList(), addDTO.getPackingDetailList()));
         //新增附件
         wmsAttachmentService.batchSave(addDTO.getAttachList(), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), b2bThirdDeliveryEntity.getId());
         // 发送B2b三方仓推送任务
@@ -302,6 +329,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         // 数据处理
         handleData(b2bThirdDeliveryEntity,addOrUpdateDTO);
+        normalizePackingFields(b2bThirdDeliveryEntity, addOrUpdateDTO);
+        boolean goodCangWarehouse = isGoodCangWarehouse(b2bThirdDeliveryEntity.getDeliveryWarehouseId());
+        validatePacking(b2bThirdDeliveryEntity, addOrUpdateDTO.getDetailList(), addOrUpdateDTO.getPackingDetailList(), goodCangWarehouse);
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFFH);
         b2bThirdDeliveryEntity.setCode(code);
         log.info("编辑 开始修改B2B三方发货单数据，单号：【{}】", old.getCode());
@@ -315,6 +345,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         operateLogService.addModuleOperateLogByObj(old, b2bThirdDeliveryEntity, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), b2bThirdDeliveryEntity.getId(), msg);
         // 新增明细
         List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.batchAdd(b2bThirdDeliveryEntity.getId(), addOrUpdateDTO.getDetailList());
+        b2bCustomerPackingService.batchSave(b2bThirdDeliveryEntity.getId(), enrichPackingDetailList(addOrUpdateDTO.getDetailList(), addOrUpdateDTO.getPackingDetailList()));
         //新增附件
         wmsAttachmentService.batchSave(addOrUpdateDTO.getAttachList(), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), b2bThirdDeliveryEntity.getId());
         //推送本地消息表
@@ -422,6 +453,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(dto);
             if (Objects.nonNull(viewDTO)) {
                 viewDTO.setPlatformOrderCode(CharSequenceUtil.EMPTY);
+                fillThirdWarehouseProvider(viewDTO);
             }
             return viewDTO;
         } else {
@@ -438,6 +470,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             viewDTO.setWarehouseOperationTypeDTOList(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO.convert(warehouseOperationType,operationDesc));
 
             viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(dto.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode()));
+            fillPackingView(viewDTO, entity, detailEntityList);
             if (Objects.nonNull(soInfoEntity)) {
                 viewDTO.setReceiverName(soInfoEntity.getReceiverName());
                 viewDTO.setTelNumber(soInfoEntity.getTelNumber());
@@ -472,15 +505,27 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     item.setSaleQty(soDetailMap.getOrDefault(item.getSoDetailId(), 0));
                 });
             }
-            OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
-            if (Objects.nonNull(overseasProviderWarehouse)) {
-                OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
-                if (Objects.nonNull(overseasProvider)) {
-                    viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
-                }
-            }
+            fillThirdWarehouseProvider(viewDTO);
             return viewDTO;
         }
+    }
+
+    private void fillThirdWarehouseProvider(B2bThirdDeliveryDTO.ViewDTO viewDTO) {
+        if (Objects.isNull(viewDTO) || CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseId())) {
+            return;
+        }
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
+        if (Objects.isNull(overseasProviderWarehouse)) {
+            return;
+        }
+        OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+        if (Objects.isNull(overseasProvider)) {
+            return;
+        }
+        // Keep legacy field behavior while exposing explicit provider fields for new frontend checks.
+        viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
+        viewDTO.setThirdWarehouseProviderCode(overseasProvider.getCode());
+        viewDTO.setThirdWarehouseProviderName(overseasProvider.getName());
     }
 
     @Override
@@ -706,6 +751,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         this.removeById(entity.getId());
         b2bThirdDeliveryDetailService.deleteByMainIds(Collections.singletonList(entity.getId()));
+        b2bCustomerPackingService.deleteByMainIds(Collections.singletonList(entity.getId()));
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功");
     }
 
@@ -1052,6 +1098,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         try {
             prepareCreateFbaOutboundAttachment(service, req);
+            preparePackingShipmentFiles(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
         } catch (Exception e) {
             log.warn("第{}次执行失败: {}", retryCount + 1, e.getMessage());
@@ -1073,7 +1120,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private void prepareCreateFbaOutboundAttachment(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
-        if (StrUtil.isNotBlank(req.getFileId())) {
+        if (isValidAttachmentId(req.getFileId())) {
             return;
         }
         if (!needUploadAttachment(req.getThirdWarehouseProvideCode())) {
@@ -1098,7 +1145,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
-            uploadFileReq.setFileType(GOOD_CANG_ORDER_ATTACHMENT);
+            uploadFileReq.setFileType(GOOD_CANG_ORDER_PACKING_ATTACHMENT);
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
@@ -1110,6 +1157,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
             req.setFileType(getAttachmentExtension(req));
         }
+    }
+
+    private boolean isValidAttachmentId(String attachmentId) {
+        return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
     }
 
     private boolean needUploadAttachment(String providerCode) {
@@ -1124,6 +1175,76 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             return fileType;
         }
         return FileUtil.getFileExtension(req.getFileUrl());
+    }
+
+    private void preparePackingShipmentFiles(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
+        if (!PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
+                || CollUtil.isEmpty(req.getPackingDetailList())) {
+            return;
+        }
+        Map<Integer, ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxHeadMap = new LinkedHashMap<>();
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+            if (item.getBoxSeq() != null && !boxHeadMap.containsKey(item.getBoxSeq())) {
+                boxHeadMap.put(item.getBoxSeq(), item);
+            }
+        }
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead : boxHeadMap.values()) {
+            if (CollUtil.isNotEmpty(boxHead.getShipmentFileList())) {
+                preparePackingShipmentFileList(service, req, boxHead);
+                continue;
+            }
+            if (Objects.nonNull(boxHead.getShipmentFileId()) || StrUtil.isBlank(boxHead.getShipmentFileBase64())) {
+                continue;
+            }
+            Integer shipmentFileId = uploadPackingShipmentFile(service, req, boxHead);
+            for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+                if (Objects.equals(item.getBoxSeq(), boxHead.getBoxSeq())) {
+                    item.setShipmentFileId(shipmentFileId);
+                }
+            }
+        }
+    }
+
+    private void preparePackingShipmentFileList(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                                ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        for (ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile : boxHead.getShipmentFileList()) {
+            if (Objects.nonNull(shipmentFile.getShipmentFileId()) || StrUtil.isBlank(shipmentFile.getShipmentFileBase64())) {
+                continue;
+            }
+            shipmentFile.setShipmentFileId(uploadPackingShipmentFile(service, req, shipmentFile));
+        }
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+            if (Objects.equals(item.getBoxSeq(), boxHead.getBoxSeq())) {
+                item.setShipmentFileList(boxHead.getShipmentFileList());
+            }
+        }
+    }
+
+    private Integer uploadPackingShipmentFile(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                              ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem.builder()
+                .shipmentFileBase64(boxHead.getShipmentFileBase64())
+                .shipmentFileUrl(boxHead.getShipmentFileUrl())
+                .shipmentFileName(boxHead.getShipmentFileName())
+                .build();
+        return uploadPackingShipmentFile(service, req, shipmentFile);
+    }
+
+    private Integer uploadPackingShipmentFile(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                              ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile) {
+        ThirdWarehouseUploadFileReq uploadFileReq = new ThirdWarehouseUploadFileReq();
+        uploadFileReq.setAuthId(req.getAuthId());
+        uploadFileReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
+        uploadFileReq.setOrderCode(req.getReferenceNo());
+        uploadFileReq.setFileData(shipmentFile.getShipmentFileBase64());
+        uploadFileReq.setFileUrl(shipmentFile.getShipmentFileUrl());
+        uploadFileReq.setFileName(shipmentFile.getShipmentFileName());
+        uploadFileReq.setFileType("SHIPMENT_LABEL_ATTACHMENT");
+        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
+        if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
+            throw new ServiceException("上传B2B装箱货件标签失败:{}", uploadFileResult.getMsg());
+        }
+        return uploadFileResult.getData().getAttachId();
     }
 
     @Override
@@ -1519,5 +1640,332 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         return null;
+    }
+
+    @Override
+    public void downloadPackingTemplate(HttpServletResponse response) {
+        String excelPath = "excel/b2bCustomerPackingTemplate.xlsx";
+        String fileName = "B2B客户装箱明细导入模板";
+        try {
+            ExcelUtil.downloadTemplate(excelPath, fileName, response);
+        } catch (Exception e) {
+            log.error("下载装箱明细模板失败", e);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
+        }
+    }
+
+    @Override
+    public B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(excelImportDTO.getSoId());
+        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = enrichPackingImportDetailList(toPackingImportDetailList(soDetailList), soDetailList);
+        B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
+        try {
+            EasyExcel.read(excelImportDTO.getExcelFile().getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入装箱明细失败", e);
+            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+        } catch (ExcelCommonException e) {
+            log.error("导入装箱明细格式错误", e);
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        B2bCustomerPackingDTO.ImportDTO importDTO = new B2bCustomerPackingDTO.ImportDTO();
+        importDTO.setSuccessList(listener.getSuccessList());
+        List<B2bCustomerPackingImportExcelDTO> errorList = listener.getErrorList();
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "B2B客户装箱明细导入错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
+            if (!file.isDirectory()) {
+                try {
+                    importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
+                } finally {
+                    try {
+                        Files.delete(file.toPath());
+                    } catch (IOException e) {
+                        log.warn("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        return importDTO;
+    }
+
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> toPackingImportDetailList(List<SoDetailEntity> detailEntities) {
+        if (CollUtil.isEmpty(detailEntities)) {
+            return Collections.emptyList();
+        }
+        return detailEntities.stream().map(e -> {
+            com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
+            dto.setSkuId(e.getSkuId());
+            dto.setSkuNo(e.getSkuNo());
+            dto.setProductName(e.getProductName());
+            dto.setSaleQty(e.getQty());
+            dto.setDeliveryQty(e.getDeliveryQty());
+            dto.setPerBoxQty(e.getPerBoxQty());
+            dto.setDeliverySkuId(e.getDeliverySkuId());
+            dto.setDeliverySkuNo(e.getDeliverySkuNo());
+            dto.setWarehousePlatformSku(CharSequenceUtil.blankToDefault(e.getPlatformSkuNo(), e.getDeliverySkuNo()));
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> enrichPackingImportDetailList(
+            List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList,
+            List<SoDetailEntity> soDetailList) {
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, String> productNameMap = getProductNameMap(detailList);
+        Map<String, String> warehouseSkuMap = getWarehouseSkuMap(soDetailList);
+        detailList.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getProductName())) {
+                e.setProductName(CharSequenceUtil.blankToDefault(productNameMap.get(e.getSkuId()), productNameMap.get(e.getDeliverySkuId())));
+            }
+            if (CharSequenceUtil.isBlank(e.getWarehousePlatformSku())) {
+                e.setWarehousePlatformSku(warehouseSkuMap.get(e.getSkuNo()));
+            }
+        });
+        return detailList;
+    }
+
+    private Map<String, String> getProductNameMap(List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList) {
+        Set<String> skuIds = new HashSet<>();
+        detailList.forEach(e -> {
+            if (CharSequenceUtil.isNotBlank(e.getSkuId())) {
+                skuIds.add(e.getSkuId());
+            }
+            if (CharSequenceUtil.isNotBlank(e.getDeliverySkuId())) {
+                skuIds.add(e.getDeliverySkuId());
+            }
+        });
+        Map<String, String> productNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(skuIds)) {
+            List<ProductDetailEntity> productDetailList;
+            try {
+                productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
+            } catch (Exception e) {
+                log.warn("B2B装箱导入获取产品名称失败，跳过产品名称补全, skuIds={}", skuIds, e);
+                return productNameMap;
+            }
+            if (CollUtil.isNotEmpty(productDetailList)) {
+                for (ProductDetailEntity productDetail : productDetailList) {
+                    if (CharSequenceUtil.isNotBlank(productDetail.getId()) && CharSequenceUtil.isNotBlank(productDetail.getName())) {
+                        productNameMap.putIfAbsent(productDetail.getId(), productDetail.getName());
+                    }
+                }
+            }
+        }
+        return productNameMap;
+    }
+
+    private Map<String, String> getWarehouseSkuMap(List<SoDetailEntity> soDetailList) {
+        Map<String, String> warehouseSkuMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(soDetailList)) {
+            for (SoDetailEntity soDetail : soDetailList) {
+                String warehousePlatformSku = CharSequenceUtil.blankToDefault(soDetail.getPlatformSkuNo(), soDetail.getDeliverySkuNo());
+                if (CharSequenceUtil.isNotBlank(soDetail.getSkuNo()) && CharSequenceUtil.isNotBlank(warehousePlatformSku)) {
+                    warehouseSkuMap.putIfAbsent(soDetail.getSkuNo(), warehousePlatformSku);
+                }
+            }
+        }
+        return warehouseSkuMap;
+    }
+
+    private void normalizePackingFields(B2bThirdDeliveryEntity entity, B2bThirdDeliveryDTO.CommonDTO commonDTO) {
+        String packingType = CharSequenceUtil.blankToDefault(commonDTO.getPackingType(), B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+        entity.setPackingType(packingType);
+        if (B2bPackingTypeEnum.WAREHOUSE_SELF.getCode().equals(packingType)) {
+            entity.setLabelsPerBox(0);
+            commonDTO.setLabelsPerBox(0);
+        } else {
+            entity.setLabelsPerBox(commonDTO.getLabelsPerBox() != null ? commonDTO.getLabelsPerBox() : 0);
+        }
+    }
+
+    private boolean isGoodCangWarehouse(String deliveryWarehouseId) {
+        if (CharSequenceUtil.isBlank(deliveryWarehouseId)) {
+            return false;
+        }
+        OverseasProviderEntity overseasProvider = overseasProviderService.getByWarehouseId(deliveryWarehouseId);
+        return Objects.nonNull(overseasProvider) && PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(overseasProvider.getCode());
+    }
+
+    private void validatePacking(B2bThirdDeliveryEntity entity,
+                                 List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList,
+                                 List<B2bCustomerPackingDTO.AddDTO> packingDetailList,
+                                 boolean goodCang) {
+        String packingType = CharSequenceUtil.blankToDefault(entity.getPackingType(), B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+        Integer labelsPerBox = entity.getLabelsPerBox() != null ? entity.getLabelsPerBox() : 0;
+
+        if (B2bPackingTypeEnum.WAREHOUSE_SELF.getCode().equals(packingType)) {
+            if (!Objects.equals(labelsPerBox, 0)) {
+                throw new ServiceException("仓库自主装箱时每箱张贴货件标签数必须为0");
+            }
+        } else if (B2bPackingTypeEnum.requiresPackingDetail(packingType)) {
+            if (!ALLOWED_LABELS_PER_BOX.contains(labelsPerBox) || labelsPerBox == 0) {
+                throw new ServiceException("客户指定装箱或已暂存箱发货时每箱张贴货件标签数必填且只能为1、2或4");
+            }
+        }
+
+        if (!goodCang && CollUtil.isNotEmpty(packingDetailList)) {
+            throw new ServiceException("仅谷仓仓库支持装箱明细");
+        }
+
+        if (goodCang && B2bPackingTypeEnum.requiresPackingDetail(packingType) && CollUtil.isEmpty(packingDetailList)) {
+            throw new ServiceException("装箱明细不能为空");
+        }
+
+        if (CollUtil.isEmpty(packingDetailList)) {
+            return;
+        }
+
+        Set<String> allowedSkuNos = detailList.stream()
+                .map(com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO::getSkuNo)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        Map<String, Integer> deliveryQtyBySku = detailList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
+                .collect(Collectors.groupingBy(com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO::getSkuNo,
+                        Collectors.summingInt(e -> e.getDeliveryQty() != null ? e.getDeliveryQty() : 0)));
+
+        List<String> qtyErrors = new ArrayList<>();
+        Map<String, Integer> packingQtyBySku = new HashMap<>();
+
+        for (int i = 0; i < packingDetailList.size(); i++) {
+            B2bCustomerPackingDTO.AddDTO box = packingDetailList.get(i);
+            if (box.getBoxSeq() == null) {
+                throw new ServiceException("装箱明细第{}箱序号不能为空", i + 1);
+            }
+            if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType) && CharSequenceUtil.isBlank(box.getBoxMarkNo())) {
+                throw new ServiceException("装箱明细序号【{}】箱唛号不能为空", box.getBoxSeq());
+            }
+            if (CharSequenceUtil.length(box.getBoxMarkNo()) > 50) {
+                throw new ServiceException("箱唛号长度不能超过50");
+            }
+            if (CharSequenceUtil.length(box.getBoxMarkRefNo()) > 50) {
+                throw new ServiceException("箱唛参考号长度不能超过50");
+            }
+            if (CharSequenceUtil.length(box.getLabelingRequirement()) > 200) {
+                throw new ServiceException("贴标要求长度不能超过200");
+            }
+            if (CharSequenceUtil.isNotBlank(box.getLabelSize()) && !B2bPackingLabelSizeEnum.isValid(box.getLabelSize())) {
+                throw new ServiceException("标签尺寸不合法");
+            }
+            if (labelsPerBox > 0 && CollUtil.isEmpty(box.getAttachList())) {
+                throw new ServiceException("每箱张贴货件标签数大于0时货件标签必填");
+            }
+            if (CollUtil.isEmpty(box.getPackingLineList())) {
+                throw new ServiceException("装箱明细序号【{}】SKU不能为空", box.getBoxSeq());
+            }
+            for (B2bCustomerPackingDTO.LineAddDTO row : box.getPackingLineList()) {
+                if (CharSequenceUtil.isBlank(row.getSkuNo())) {
+                    throw new ServiceException("装箱明细序号【{}】SKU不能为空", box.getBoxSeq());
+                }
+                if (!allowedSkuNos.contains(row.getSkuNo())) {
+                    throw new ServiceException("装箱明细SKU【{}】不在产品明细中", row.getSkuNo());
+                }
+                if (row.getPackingQty() == null || row.getPackingQty() <= 0) {
+                    throw new ServiceException("装箱明细SKU【{}】装箱数量必须为正整数", row.getSkuNo());
+                }
+                packingQtyBySku.merge(row.getSkuNo(), row.getPackingQty(), Integer::sum);
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : packingQtyBySku.entrySet()) {
+            int deliveryQty = deliveryQtyBySku.getOrDefault(entry.getKey(), 0);
+            if (!Objects.equals(entry.getValue(), deliveryQty)) {
+                qtyErrors.add(CharSequenceUtil.format("SKU【{}】装箱数量【{}】不等于发货数量【{}】", entry.getKey(), entry.getValue(), deliveryQty));
+            }
+        }
+        if (CollUtil.isNotEmpty(qtyErrors)) {
+            throw new ServiceException(String.join("；", qtyErrors));
+        }
+    }
+
+    private List<B2bCustomerPackingDTO.AddDTO> enrichPackingDetailList(
+            List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList,
+            List<B2bCustomerPackingDTO.AddDTO> packingDetailList) {
+        if (CollUtil.isEmpty(packingDetailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> skuMap = detailList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
+                .collect(Collectors.toMap(com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO::getSkuNo, e -> e, (a, b) -> a));
+        Map<String, Integer> saleQtyMap = detailList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
+                .collect(Collectors.groupingBy(com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO::getSkuNo,
+                        Collectors.summingInt(e -> e.getSaleQty() != null ? e.getSaleQty() : 0)));
+        int sort = 0;
+        for (B2bCustomerPackingDTO.AddDTO box : packingDetailList) {
+            for (B2bCustomerPackingDTO.LineAddDTO row : box.getPackingLineList()) {
+                com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO product = skuMap.get(row.getSkuNo());
+                if (product != null) {
+                    row.setSkuId(product.getSkuId());
+                    row.setProductName(product.getProductName());
+                    row.setWarehousePlatformSku(product.getWarehousePlatformSku());
+                }
+                row.setSaleQty(saleQtyMap.getOrDefault(row.getSkuNo(), 0));
+                if (row.getSort() == null) {
+                    row.setSort(sort++);
+                }
+            }
+        }
+        return packingDetailList;
+    }
+
+    private void fillPackingView(B2bThirdDeliveryDTO.ViewDTO viewDTO, B2bThirdDeliveryEntity entity,
+                                 List<B2bThirdDeliveryDetailEntity> detailEntityList) {
+        viewDTO.setPackingType(CharSequenceUtil.blankToDefault(entity.getPackingType(), B2bPackingTypeEnum.WAREHOUSE_SELF.getCode()));
+        viewDTO.setPackingTypeName(B2bPackingTypeEnum.getName(viewDTO.getPackingType()));
+        viewDTO.setLabelsPerBox(entity.getLabelsPerBox() != null ? entity.getLabelsPerBox() : 0);
+        boolean goodCang = isGoodCangWarehouse(entity.getDeliveryWarehouseId());
+        viewDTO.setShowPackingDetail(goodCang);
+        if (!goodCang) {
+            viewDTO.setPackingDetailList(Collections.emptyList());
+            return;
+        }
+        List<B2bCustomerPackingEntity> packingEntities = b2bCustomerPackingService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isEmpty(packingEntities)) {
+            viewDTO.setPackingDetailList(Collections.emptyList());
+            return;
+        }
+        Map<String, Integer> saleQtyBySku = detailEntityList.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
+                .collect(Collectors.groupingBy(B2bThirdDeliveryDetailEntity::getSkuNo,
+                        Collectors.summingInt(e -> e.getSaleQty() != null ? e.getSaleQty() : 0)));
+        List<String> packingIds = packingEntities.stream().map(B2bCustomerPackingEntity::getId).collect(Collectors.toList());
+        List<WmsAttachmentDTO.UpdateDTO> allAttach = wmsAttachmentService.getByBusinessIds(packingIds, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode());
+        Map<String, List<WmsAttachmentDTO.UpdateDTO>> attachMap = allAttach.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
+        Map<Integer, List<B2bCustomerPackingEntity>> packingGroup = packingEntities.stream()
+                .collect(Collectors.groupingBy(B2bCustomerPackingEntity::getBoxSeq, LinkedHashMap::new, Collectors.toList()));
+        List<B2bCustomerPackingDTO.ViewDTO> packingViewList = new ArrayList<>();
+        for (Map.Entry<Integer, List<B2bCustomerPackingEntity>> entry : packingGroup.entrySet()) {
+            List<B2bCustomerPackingEntity> boxEntities = entry.getValue();
+            B2bCustomerPackingEntity boxHead = B2bCustomerPackingServiceImpl.getBoxHead(boxEntities, entry.getKey()).orElse(boxEntities.get(0));
+            B2bCustomerPackingDTO.ViewDTO boxDTO = new B2bCustomerPackingDTO.ViewDTO();
+            boxDTO.setMainId(boxHead.getMainId());
+            boxDTO.setBoxSeq(boxHead.getBoxSeq());
+            boxDTO.setBoxMarkNo(boxHead.getBoxMarkNo());
+            boxDTO.setBoxMarkRefNo(boxHead.getBoxMarkRefNo());
+            boxDTO.setLabelSize(boxHead.getLabelSize());
+            boxDTO.setLabelingRequirement(boxHead.getLabelingRequirement());
+            boxDTO.setAttachList(attachMap.getOrDefault(boxHead.getId(), Collections.emptyList()));
+            List<B2bCustomerPackingDTO.LineViewDTO> lineList = boxEntities.stream().map(e -> {
+                B2bCustomerPackingDTO.LineViewDTO dto = new B2bCustomerPackingDTO.LineViewDTO();
+                dto.setId(e.getId());
+                dto.setMainId(e.getMainId());
+                dto.setBoxSeq(e.getBoxSeq());
+                dto.setSkuId(e.getSkuId());
+                dto.setSkuNo(e.getSkuNo());
+                dto.setProductName(e.getProductName());
+                dto.setSaleQty(saleQtyBySku.getOrDefault(e.getSkuNo(), e.getSaleQty()));
+                dto.setPackingQty(e.getPackingQty());
+                dto.setWarehousePlatformSku(e.getWarehousePlatformSku());
+                dto.setSort(e.getSort());
+                return dto;
+            }).collect(Collectors.toList());
+            boxDTO.setPackingLineList(lineList);
+            packingViewList.add(boxDTO);
+        }
+        viewDTO.setPackingDetailList(packingViewList);
     }
 }

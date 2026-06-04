@@ -443,12 +443,26 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     if (CollectionUtils.isEmpty(subcontractOrderDetailEntityList)) {
                         throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
                     }
-                    SubcontractOrderDetailEntity detail = subcontractOrderDetailEntityList.stream()
-                            .filter(e -> Objects.nonNull(e)
-                                    && StrUtil.isNotBlank(e.getSkuId())
-                                    && Objects.equals(e.getSkuId(), addDTO.getSkuId())
-                                    && CharSequenceUtil.isBlank(e.getParentId()))
-                            .findFirst().orElse(null);
+                    // 优先按上游委外订单明细id精确匹配，避免相同SKU但价格不同的多行被错误地取到同一价格
+                    String parentSourceDetailId = addDTO.getSourceDetailId();
+                    SubcontractOrderDetailEntity detail = null;
+                    if (StrUtil.isNotBlank(parentSourceDetailId)) {
+                        detail = subcontractOrderDetailEntityList.stream()
+                                .filter(e -> Objects.nonNull(e)
+                                        && StrUtil.isNotBlank(e.getSkuId())
+                                        && Objects.equals(e.getSkuId(), addDTO.getSkuId())
+                                        && CharSequenceUtil.isBlank(e.getParentId())
+                                        && Objects.equals(e.getId(), parentSourceDetailId))
+                                .findFirst().orElse(null);
+                    }
+                    if (Objects.isNull(detail)) {
+                        detail = subcontractOrderDetailEntityList.stream()
+                                .filter(e -> Objects.nonNull(e)
+                                        && StrUtil.isNotBlank(e.getSkuId())
+                                        && Objects.equals(e.getSkuId(), addDTO.getSkuId())
+                                        && CharSequenceUtil.isBlank(e.getParentId()))
+                                .findFirst().orElse(null);
+                    }
                     if (Objects.isNull(detail)){
                         throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
                     }
@@ -467,8 +481,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setCurrencySymbol(detail.getCurrencySymbol());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
                     continue;
-                } else if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
-                        && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
+                } else if (SubcontractTypeEnum.ENUM_CHILD.getCode().equals(entity.getSubcontractType())){
                     if (isRepairSubcontractSource) {
                         //返修采购单子行：取返修委外来源明细中的含税单价
                         String sourceDetailId = addDTO.getSourceDetailId();

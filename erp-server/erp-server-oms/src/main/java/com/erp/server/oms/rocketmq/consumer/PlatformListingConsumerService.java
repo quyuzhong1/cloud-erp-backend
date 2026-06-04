@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -23,6 +24,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -42,7 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 下载平台商品消费服务
@@ -56,6 +60,10 @@ import java.util.Objects;
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_products_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+
+    private static final long IML_OWNER_CODE_CACHE_TTL_MILLIS = 5 * 60 * 1000L;
+    private static final int IML_OWNER_CODE_CACHE_MAX_SIZE = 500;
+    private static final Map<String, OwnerCodeCache> IML_OWNER_CODE_CACHE = new ConcurrentHashMap<>();
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -163,6 +171,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if(dto.getMatchResult() != null){
                 dto.setMatchResultStr(String.valueOf(dto.getMatchResult()));
             }
+            fillImlProductBarcode(dto);
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
             //上传图片到文件服务器
@@ -202,7 +211,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 //若父平台skuid 不为空则更新对应的父平台sku的标识为true
                 updatePlateformParentSku(entity.getPlatformParentSpuNo());
             } else {
-                // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {
                     ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
@@ -259,6 +267,101 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
             }
         return ApiResult.success();
+    }
+
+    private void fillImlProductBarcode(PlatformProductDTO dto) {
+        if (!PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform())
+                || !RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                || StringUtils.isBlank(dto.getAuthId())
+                || StringUtils.isBlank(dto.getPlatformSkuNo())) {
+            return;
+        }
+        String ownerCode = getImlOwnerCode(dto.getAuthId(), dto.getPlatformSkuNo());
+        if (StringUtils.isBlank(ownerCode)) {
+            return;
+        }
+        String ownerPrefix = ownerCode + "-";
+        String platformSkuNo = dto.getPlatformSkuNo();
+        dto.setPlatformProductBarcode(platformSkuNo.startsWith(ownerPrefix) ? platformSkuNo : ownerPrefix + platformSkuNo);
+    }
+
+    private String getImlOwnerCode(String authId, String platformSkuNo) {
+        OwnerCodeCache cache = IML_OWNER_CODE_CACHE.get(authId);
+        if (Objects.nonNull(cache)) {
+            if (!cache.isExpired()) {
+                return cache.getOwnerCode();
+            }
+            IML_OWNER_CODE_CACHE.remove(authId, cache);
+        }
+        OverseasProviderEntity overseasProviderEntity;
+        try {
+            overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class, authId);
+        } catch (Exception e) {
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 异常, authId={}, platformSkuNo={}, error={}",
+                    authId, platformSkuNo, e.getMessage());
+            return null;
+        }
+        if (Objects.isNull(overseasProviderEntity) || StringUtils.isBlank(overseasProviderEntity.getOwnerCode())) {
+            IML_OWNER_CODE_CACHE.remove(authId);
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
+                    authId, platformSkuNo);
+            return null;
+        }
+        String ownerCode = overseasProviderEntity.getOwnerCode();
+        cleanupImlOwnerCodeCache();
+        IML_OWNER_CODE_CACHE.put(authId, new OwnerCodeCache(ownerCode));
+        return ownerCode;
+    }
+
+    private void cleanupImlOwnerCodeCache() {
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, OwnerCodeCache> entry : IML_OWNER_CODE_CACHE.entrySet()) {
+            OwnerCodeCache value = entry.getValue();
+            if (value == null || value.isExpired(now)) {
+                IML_OWNER_CODE_CACHE.remove(entry.getKey(), value);
+            }
+        }
+        while (IML_OWNER_CODE_CACHE.size() >= IML_OWNER_CODE_CACHE_MAX_SIZE) {
+            String oldestKey = null;
+            long oldestExpireAt = Long.MAX_VALUE;
+            for (Map.Entry<String, OwnerCodeCache> entry : IML_OWNER_CODE_CACHE.entrySet()) {
+                OwnerCodeCache value = entry.getValue();
+                if (value != null && value.getExpireAt() < oldestExpireAt) {
+                    oldestExpireAt = value.getExpireAt();
+                    oldestKey = entry.getKey();
+                }
+            }
+            if (oldestKey == null || IML_OWNER_CODE_CACHE.remove(oldestKey) == null) {
+                break;
+            }
+        }
+    }
+
+    private static class OwnerCodeCache {
+
+        private final String ownerCode;
+        private final long expireAt;
+
+        private OwnerCodeCache(String ownerCode) {
+            this.ownerCode = ownerCode;
+            this.expireAt = System.currentTimeMillis() + IML_OWNER_CODE_CACHE_TTL_MILLIS;
+        }
+
+        private String getOwnerCode() {
+            return ownerCode;
+        }
+
+        private boolean isExpired() {
+            return isExpired(System.currentTimeMillis());
+        }
+
+        private boolean isExpired(long now) {
+            return now >= expireAt;
+        }
+
+        private long getExpireAt() {
+            return expireAt;
+        }
     }
 
     //若父平台skuid 不为空则更新对应的父平台sku的标识为true

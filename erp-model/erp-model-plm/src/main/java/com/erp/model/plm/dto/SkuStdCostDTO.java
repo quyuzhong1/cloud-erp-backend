@@ -76,6 +76,4 @@ public class SkuStdCostDTO implements Serializable {
         private String warehouseId;
     }
 
-
-
 }

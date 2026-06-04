@@ -45,4 +45,18 @@ public interface SmallBagCostAllocationMainMapper extends BaseMapper<SmallBagCos
                                        @Param("excludeBigTableDone") boolean excludeBigTableDone,
                                        @Param("bigTableDoneCode") String bigTableDoneCode);
 
+    /**
+     * 游标分批查询指定核算月份待重新分摊的主表ID（report_status 等值匹配）
+     */
+    List<String> pageMainIdsForReAllocation(@Param("reportPeriodStr") String reportPeriodStr,
+                                            @Param("reportStatus") String reportStatus,
+                                            @Param("lastId") String lastId,
+                                            @Param("batchSize") int batchSize);
+
+    /**
+     * 统计指定核算月份待重新分摊的主表记录数
+     */
+    Integer countMainForReAllocation(@Param("reportPeriodStr") String reportPeriodStr,
+                                     @Param("reportStatus") String reportStatus);
+
 }

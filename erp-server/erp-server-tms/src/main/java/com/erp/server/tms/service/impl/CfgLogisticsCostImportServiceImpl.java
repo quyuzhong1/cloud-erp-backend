@@ -16,7 +16,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -436,7 +435,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
      * 校验默认值编码
      */
     private void validateDefaultValueCode(String field, String fieldName, String defaultValue, int index, Set<String> validCurrencyKeys) {
-        if (Objects.equals(PAY_TYPE_FIELD, field) && Objects.isNull(logisticsPayTypeEnum.getByStatus(defaultValue))) {
+        if (Objects.equals(PAY_TYPE_FIELD, field) && Objects.isNull(logisticsPayTypeEnum.getByName(defaultValue))) {
             throw new ServiceException("第" + index + "行【" + fieldName + "】默认值不合法");
         }
         if (Objects.equals(CURRENCY_FIELD, field) && !validCurrencyKeys.contains(normalizeCurrencyKey(defaultValue))) {

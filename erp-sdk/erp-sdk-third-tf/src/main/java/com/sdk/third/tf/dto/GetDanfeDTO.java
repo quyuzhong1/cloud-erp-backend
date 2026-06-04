@@ -23,4 +23,16 @@ public class GetDanfeDTO implements Serializable {
     @NotBlank(message = "发票UUID不能为空")
     @JsonProperty("uuid")
     private String uuid;
+
+    /**
+     * 简版Danfe高度，单位mm
+     */
+    @JsonProperty("altura")
+    private Integer altura;
+
+    /**
+     * 简版Danfe宽度，单位mm
+     */
+    @JsonProperty("largura")
+    private Integer largura;
 }

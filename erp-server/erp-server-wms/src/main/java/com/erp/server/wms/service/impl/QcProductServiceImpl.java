@@ -11,14 +11,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcProductDTO;
 import com.erp.model.wms.dto.QcProductLogDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcProductService;
-import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -42,10 +39,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcProductEntity> implements QcProductService {
-
-    @Resource
-    private WmsAttachmentService wmsAttachmentService;
-
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -96,14 +89,16 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
             qcProductEntity.setSkuNo(skuVO.getSkuNo());
             qcProductEntity.setEan(skuVO.getEan());
         }
-        //产品信息
-        List<String> productImageNameList = qcProduct.getProductImageNameList();
-        List<String> productImageUrlList = qcProduct.getProductImageUrlList();
-        wmsAttachmentService.batchSave(productImageUrlList, productImageNameList, WmsConstant.QC_PRODUCT, id);
-        //外箱信息
-        List<String> boxImageNameList = qcProduct.getBoxImageNameList();
-        List<String> boxImageUrlList = qcProduct.getBoxImageUrlList();
-        wmsAttachmentService.batchSave(boxImageUrlList, boxImageNameList, WmsConstant.QC_BOX, id);
+        // 重量尺寸信息只做展示，不保存到数据库，从产品资料获取
+        qcProductEntity.setProductLength(null);
+        qcProductEntity.setProductWidth(null);
+        qcProductEntity.setProductHeight(null);
+        qcProductEntity.setBoxLength(null);
+        qcProductEntity.setBoxWidth(null);
+        qcProductEntity.setBoxHeight(null);
+        qcProductEntity.setProductNetWeight(null);
+        qcProductEntity.setBoxWeight(null);
+        qcProductEntity.setBoxQty(null);
         this.saveOrUpdate(qcProductEntity);
 
         //标记SKU
@@ -146,17 +141,6 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (product != null) {
             BeanMapper.copy(product, productView);
             List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(Collections.singletonList(product.getSkuId()));
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(product.getId()));
-            List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-
-            List<String> productImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_PRODUCT)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-            List<String> productNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_PRODUCT)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-            productView.setBoxImageNameList(boxNameList);
-            productView.setBoxImageUrlList(boxImageUrlList);
-
-            productView.setProductImageNameList(productNameList);
-            productView.setProductImageUrlList(productImageUrlList);
             SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(productView.getSkuId())).findFirst().orElse(null);
             if(skuVO!=null){
                 productView.setProductGrade(skuVO.getProductGrade());

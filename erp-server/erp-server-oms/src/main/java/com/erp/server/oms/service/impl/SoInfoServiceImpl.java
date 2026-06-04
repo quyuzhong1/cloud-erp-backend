@@ -4469,6 +4469,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         viewDTO.setRemark("Customer PO: " + soInfoEntity.getCustomerOrderNo());
+        viewDTO.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+        viewDTO.setLabelsPerBox(0);
+        viewDTO.setPackingDetailList(Collections.emptyList());
         return viewDTO;
     }
 

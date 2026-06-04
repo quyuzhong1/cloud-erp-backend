@@ -102,9 +102,9 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     @Resource
     private OperateLogService operateLogService;
     @Resource
-    private LogisticsFeign logisticsFeign;
-    @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Lazy
     @Autowired
@@ -198,9 +198,6 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     public BatchResultDTO changeAdd(SkuStdCostDetailDTO.ChangeCommonDTO addDTO, SkuStdCostDetailDTO.ListDTO listDTO, SkuStdCostDetailDTO.ListDTO lastListDTO) {
         // 数据校验
         validateChangeParams(addDTO, listDTO, lastListDTO);
-        // 同 SKU 同年月下，已存在待提交/审核中/已审核的记录禁止重复变更
-        checkDuplicateByMonth(listDTO.getMainId(), null, addDTO.getEffectiveDate(),
-                Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE), "变更新增");
         // 构建实体
         SkuStdCostDetailEntity newDetailEntity = buildChangeEntity(addDTO, listDTO.getMainId());
 
@@ -247,9 +244,6 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
         // 设置值（只有新增时才会走到这里）
         if (old.getEffectiveDate() == null) {
-            // 同 SKU 同年月下不允许同时存在多条待提交/审核中/已审核记录
-            checkDuplicateByMonth(old.getMainId(), old.getId(), addOrUpdateDTO.getEffectiveDate(),
-                    Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT, ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE), "编辑设日期");
             newEntity.setEffectiveDate(addOrUpdateDTO.getEffectiveDate());
         }
         return newEntity;
@@ -312,7 +306,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                     .warehouseIds(Collections.singletonList(dto.getWarehouseId()))
                     .orgId(dto.getOrgId())
                     .build();
-            List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList = logisticsFeign.getSkuCostInCNY(queryDTO);
+            List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList = logisticsFeign.getSkuCostInCNYForStdCost(queryDTO);
             if (CollectionUtils.isNotEmpty(skuCostList)) {
                 skuCostMap = skuCostList.stream()
                         .filter(item -> StringUtils.isNotBlank(item.getSkuId()))
@@ -413,25 +407,28 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
                 .warehouseIds(Collections.singletonList(warehouseId))
                 .orgId(orgId)
                 .build();
-        return resolveAutoFetchSkuCost(logisticsFeign.getSkuCostInCNY(queryDTO));
+        return resolveAutoFetchSkuCost(logisticsFeign.getSkuCostInCNYForStdCost(queryDTO));
     }
 
     InventorySkuCostDTO.SkuCostCNYDTO resolveAutoFetchSkuCost(List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
         if (CollectionUtils.isEmpty(skuCostList)) {
             throw new ServiceException("未找到最新已审核SKU成本");
         }
-        InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.get(0);
+        InventorySkuCostDTO.SkuCostCNYDTO skuCost = skuCostList.stream()
+                .filter(item -> item.getAccountingMonth() != null)
+                .max(Comparator.comparing(InventorySkuCostDTO.SkuCostCNYDTO::getAccountingMonth))
+                .orElse(null);
+        if (skuCost == null) {
+            throw new ServiceException("最新已审核SKU成本核算月份为空");
+        }
         if (skuCost.getProductCostCNY() == null || BigDecimal.ZERO.compareTo(skuCost.getProductCostCNY()) >= 0) {
             throw new ServiceException("最新已审核SKU成本材料成本无效");
-        }
-        if (skuCost.getAllocatedMonth() == null) {
-            throw new ServiceException("最新已审核SKU成本核算月份为空");
         }
         return skuCost;
     }
 
     LocalDate getAutoFetchEffectiveDate(InventorySkuCostDTO.SkuCostCNYDTO skuCost) {
-        return skuCost.getAllocatedMonth().withDayOfMonth(1);
+        return skuCost.getAccountingMonth().withDayOfMonth(1);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -869,39 +866,6 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException(ApiError.BILL_SUBMIT_ALLOWED_STATUS_ONLY);
         }
         validateDetail(entity);
-        // 同 SKU 同年月下，已存在审核中或已审核的记录禁止重复提交
-        checkDuplicateByMonth(entity.getMainId(), entity.getId(), entity.getEffectiveDate(),
-                Arrays.asList(ApproveStatusEnum.APPROVE_ING, ApproveStatusEnum.APPROVE), "提交");
-    }
-
-    /**
-     * 校验同一 SKU（mainId）同年月下是否已存在指定状态的明细。
-     * - 阻断状态由调用方决定：提交时拦截 APPROVE_ING/APPROVE；编辑设日期时拦截全部非拒绝状态
-     * - conflictAction：描述当前操作场景，拼入错误提示，如"提交"/"变更新增"/"编辑设日期"
-     * - 先对 sku_std_cost 主行加排他锁，序列化同 SKU 并发请求，消除先查后写竞态；
-     *   DB 层应同步添加 (main_id, DATE_TRUNC('month', effective_date)) 唯一索引作为兜底
-     */
-    private void checkDuplicateByMonth(String mainId, String excludeId, LocalDate effectiveDate,
-                                       List<ApproveStatusEnum> blockedStatuses, String conflictAction) {
-        if (effectiveDate == null || CollectionUtils.isEmpty(blockedStatuses)) {
-            return;
-        }
-        // 对主行加排他锁，防止相同 SKU 的并发请求同时通过下方 COUNT 检查
-        baseMapper.lockSkuStdCostForUpdate(mainId);
-        LocalDate monthStart = effectiveDate.withDayOfMonth(1);
-        LocalDate monthEnd = monthStart.plusMonths(1);
-        long count = lambdaQuery()
-                .eq(SkuStdCostDetailEntity::getMainId, mainId)
-                .ne(StringUtils.isNotBlank(excludeId), SkuStdCostDetailEntity::getId, excludeId)
-                .ge(SkuStdCostDetailEntity::getEffectiveDate, monthStart)
-                .lt(SkuStdCostDetailEntity::getEffectiveDate, monthEnd)
-                .in(SkuStdCostDetailEntity::getApproveStatus, blockedStatuses)
-                .count();
-        if (count > 0) {
-            throw new ServiceException(StrUtil.format(
-                    "{}年{}月已存在相同SKU标准成本记录，{}失败",
-                    effectiveDate.getYear(), effectiveDate.getMonthValue(), conflictAction));
-        }
     }
 
     /**

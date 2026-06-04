@@ -8,7 +8,9 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 
 import java.util.List;
 
@@ -57,8 +59,30 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
      * MQ 消费：游标分批批量更新核算状态
      */
     void pushUpdateReportStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 按核算月份异步批量重新分摊：创建异步任务并发 MQ，立即返回携带任务 id+code 的结果
+     */
+    BatchResultDTO asyncReAllocation(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量重新分摊
+     */
+    void pushReAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 按核算月份异步批量删除
+     */
+    BatchResultDTO asyncDelete(FirstMileCostAllocationDTO.ResetIdsDTO dto);
+
+    /**
+     * MQ 消费：游标分批批量删除
+     */
+    void pushDelete(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
     
     BatchResultDTO reAllocation(String id);
+
+    BatchResultDTO reAllocation(SmallBagCostAllocationMainEntity entity);
     
     BatchResultDTO delete(String id);
     

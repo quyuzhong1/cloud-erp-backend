@@ -829,13 +829,16 @@ public class SoB2cController extends BaseController {
         if(dto.getIds().size()>100){
             throw new ServiceException("批量提交发货数据条数不能超过100");
         }
+        Map<String, SoB2cEntity> entityMap = soB2cService.listByIds(dto.getIds()).stream()
+                .collect(Collectors.toMap(SoB2cEntity::getId, entity -> entity, (oldValue, newValue) -> oldValue));
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
+                soB2cService.addSubmitDeliveryClickLog(entityMap.get(id), id);
                 result = soB2cService.submitDelivery(id, dto.getChannelId());
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败,id:{}",id, e);
-                SoB2cEntity entity = soB2cService.getById(id);
+                SoB2cEntity entity = entityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
                     resultDTOS.add(result);

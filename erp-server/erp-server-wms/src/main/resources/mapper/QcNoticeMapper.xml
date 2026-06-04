@@ -90,6 +90,7 @@
         qn.purchase_order_id as purchaseOrderId,
         qn.purchase_order_code as purchaseOrderCode,
         qnd.supplier_id as supplierId,
+        qn.expect_qc_date as expectQcDate,
         qn.plan_qc_date as planQcDate
         FROM
         qc_notice AS qn
@@ -102,6 +103,9 @@
         AND qnd.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
+        </if>
+        <if test="params.searchKey != null and params.searchKey != ''">
+            and CONCAT(qn.code, ' ', qn.source_code, ' ', qn.purchase_order_code) LIKE CONCAT('%', #{params.searchKey}::text, '%')
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -207,8 +211,9 @@
         qnd.bad_desc AS badDesc,
         qnd.qc_problem_dict AS qcProblemDict,
         qnd.qc_date AS qcDate,
+        qnd.supplier_id AS supplierId,
         qi.id AS qcBillId,
-				qi.code AS qcBillCode
+        qi.code AS qcBillCode
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
@@ -219,6 +224,46 @@
         AND qnd.is_deleted = FALSE
         AND qnd.qc_status = 'wait'
         AND qn.code = #{code}
+        ORDER BY
+        qn.code
+    </select>
+
+    <select id="listQcInfoViewByDetailIds" resultType="com.erp.model.wms.dto.QcNoticeDTO$QcInfoFullView">
+        SELECT
+        qn.ID AS id,
+        qn.code AS code,
+        qn.qc_type AS qcType,
+        qn.qc_status AS qcStatus,
+        qn.qc_warehouse_id AS qcWarehouseId,
+        qnd.id AS detailId,
+        qnd.sku_id AS skuId,
+        qnd.sku_no AS skuNo,
+        qnd.product_name AS productName,
+        qnd.qc_notice_qty AS qcNoticeQty,
+        qnd.qc_qty AS qcQty,
+        qnd.qc_diff_qty AS qcDiffQty,
+        qnd.qc_good_qty AS qcGoodQty,
+        qnd.qc_bad_qty AS qcBadQty,
+        qnd.putaway_qty AS putawayQty,
+        qnd.bad_desc AS badDesc,
+        qnd.qc_problem_dict AS qcProblemDict,
+        qnd.qc_date AS qcDate,
+        qnd.supplier_id AS supplierId,
+        qi.id AS qcBillId,
+        qi.code AS qcBillCode
+        FROM
+        qc_notice AS qn
+        LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        LEFT JOIN qc_info AS qi ON qi.source_detail_id = qnd.id
+        WHERE
+        qn.is_deleted = FALSE
+        AND qn.approve_status = 'approve'
+        AND qnd.is_deleted = FALSE
+        AND qnd.qc_status = 'wait'
+        AND qnd.id IN
+        <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
+            #{detailId}
+        </foreach>
         ORDER BY
         qn.code
     </select>

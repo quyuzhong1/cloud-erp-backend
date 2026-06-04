@@ -127,6 +127,17 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             Map<String, Object> bomMap = queryList.get(0);
             KingdeeUtils.makeFieldJson(json,"Ids",".", bomMap.get("FId"));
 
+            // syncKingdeeId 在循环中保持不变，相关委外订单 / 明细统一在循环外预加载，避免在 convertOldData / convertNewData 内重复 Feign 调用
+            SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
+            if (Objects.isNull(subcontractOrder)) {
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+            }
+            // Feign 降级 / 超时可能返回 null，未取到明细同样视为异常，避免后续 stream() NPE
+            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(subcontractOrder.getId()));
+            if (CollectionUtils.isEmpty(subcontractOrderDetails)) {
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
+            }
+
             //转换数据
             for (Map<String, Object> query : queryList) {
                 Map<String, Object> bomChangeViewMap = new HashMap<>();
@@ -134,7 +145,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
                 log.warn("委外用料清单变更单查询报文：{}" , view.toString());
                 //处理旧单
-                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),syncKingdeeId,query.get("FBillNo").toString());
+                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),subcontractOrder,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveOldParam = new KingdeeParamDTO.SaveParamDTO(convertOldData);
                 saveOldParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -145,7 +156,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 kingdeeCommonService.audit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
 
                 //新增新单
-                JSONObject convertNewData = convertNewData(view,syncKingdeeId,query.get("FBillNo").toString());
+                JSONObject convertNewData = convertNewData(view,subcontractOrder,subcontractOrderDetails,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveNewParam = new KingdeeParamDTO.SaveParamDTO(convertNewData);
                 saveNewParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -159,11 +170,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         }
     }
 
-    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,String syncKingdeeId,String bomBillNo){
+    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,SubcontractOrderEntity subcontractOrder,String bomBillNo){
         JSONArray ppBomEntries = view.getJSONArray("PPBomEntry");
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
-        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
@@ -203,19 +213,15 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    public JSONObject convertNewData(JSONObject view,String syncKingdeeId,String bomBillNo){
+    public JSONObject convertNewData(JSONObject view,SubcontractOrderEntity subcontractOrder,List<SubcontractOrderDetailEntity> subcontractOrderDetails,String bomBillNo){
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
-        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
 
         if (Objects.nonNull(subcontractOrder)){
-            String mainId = subcontractOrder.getId();
-            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
-            
             List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
                     .filter(item -> StringUtils.isBlank(item.getParentId()))
                     .collect(Collectors.toList());
@@ -278,7 +284,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     }
 
     private JSONObject createChangeBeforePpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
-        JSONObject entry = new JSONObject(new LinkedHashMap<>());
+        JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
         Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
@@ -312,6 +318,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
+        //发料方式：直接倒冲
+        entry.put("FIssueType", "2");
         //变更前
         entry.put("FChangeType","2");
         //分子
@@ -335,6 +343,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode","1");
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
+        //倒冲时机：入库倒冲
+        entry.put("FBackFlushType", "3");
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
         //需求日期
@@ -378,12 +388,11 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
         entityLinkEntry.put("FEntity_Link_FBaseStdQty",srcEntry.get("StdQty"));
         entry.put("FEntity__Link",entityLinkEntry);
-        setIssueTypeAndBackFlush(entry, "2");
         return entry;
     }
 
     private JSONObject createChangeAfterPpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
-        JSONObject entry = new JSONObject(new LinkedHashMap<>());
+        JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
         Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
@@ -416,6 +425,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
+        //发料方式
+        //发料方式：直接倒冲
+        entry.put("FIssueType", "2");
         //变更后
         entry.put("FChangeType","3");
         //分子
@@ -434,6 +446,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode","1");
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
+        //倒冲时机：入库倒冲
+        entry.put("FBackFlushType", "3");
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
         //需求日期
@@ -477,13 +491,12 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
         entityLinkEntry.put("FEntity_Link_FBaseStdQty",0);
         entry.put("FEntity__Link",entityLinkEntry);
-        setIssueTypeAndBackFlush(entry, "2");
         return entry;
     }
 
     private JSONObject createNewPpBomEntry(JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
-        Map<String, Object> entry = new LinkedHashMap<>();
+        Map<String, Object> entry = new HashMap<>();
 
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -508,6 +521,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
+        //发料方式
+        //发料方式：直接倒冲
+        entry.put("FIssueType", "2");
         //需求日期
         entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
@@ -533,20 +549,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             entry.put("FNumerator", parentDetail.getRepairQty());
         }
 
-        setIssueTypeAndBackFlush(entry, "2");
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
         return entries;
-    }
-
-    private void setIssueTypeAndBackFlush(Map<String, Object> entry, String issueType) {
-        if (Objects.equals("2", issueType)) {
-            entry.put("FBackFlushType", "3");
-        } else {
-            entry.remove("FBackFlushType");
-        }
-        // Keep FIssueType as the last assigned field to reduce BOS defaulting overrides.
-        entry.put("FIssueType", issueType);
     }
 
     /**

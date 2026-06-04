@@ -35,6 +35,7 @@ import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductChangeExcelListener;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -51,6 +52,8 @@ import jnr.ffi.annotations.In;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -94,6 +97,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @Resource
     private ProductChangeDetailService productChangeDetailService;
@@ -871,7 +877,10 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     @Override
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
-        ProductChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到产品变更信息单数据"));
+        ProductChangeEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到产品变更信息单数据");
+        }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.WF_REVOKE_PROCESS_ALLOWED_STATUS_ONLY);
@@ -909,9 +918,28 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             updateSkuChange(entity,detailEntityList,productDetailEntity);
             //推送金蝶
             productDetailService.sendSinglePushTask(productDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            syncDataToWangDianAfterCommit(productDetailEntity);
         }
 
         return Boolean.TRUE;
+    }
+
+    private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                try {
+                    syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+                } catch (Exception e) {
+                    log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+                }
+            }
+        });
     }
 
     public void updateSkuChange(ProductChangeEntity entity, List<ProductChangeDetailEntity> detailEntityList,ProductDetailEntity productDetailEntity) {

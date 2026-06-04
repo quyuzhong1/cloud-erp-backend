@@ -196,6 +196,12 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String execType;
         private String execTypeName;
 
+        /**
+         * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
+         */
+        private String methodType;
+        private String methodTypeName;
+
     }
 
 //     /**

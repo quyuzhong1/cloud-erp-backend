@@ -85,6 +85,9 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PLM_ORDER_TRACKING("EXPORT_PLM_ORDER_TRACKING", "下单跟踪导出","","",""),
     EXPORT_PLM_ORDER_TRACKING_DETAIL("EXPORT_PLM_ORDER_TRACKING_DETAIL", "下单跟踪明细导出","","",""),
     EXPORT_PLM_PRODUCT("EXPORT_PLM_PRODUCT", "产品开发","","",""),
+    EXPORT_PLM_PRODUCT_DEV_PRODUCT("EXPORT_PLM_PRODUCT_DEV_PRODUCT", "产品开发-产品列表","","",""),
+    EXPORT_PLM_PRODUCT_DEV_TASK("EXPORT_PLM_PRODUCT_DEV_TASK", "产品开发-任务列表","","",""),
+    EXPORT_PLM_PRODUCT_DEV_BOTH("EXPORT_PLM_PRODUCT_DEV_BOTH", "产品开发-产品列表/任务列表","","",""),
     EXPORT_PLM_SKU("EXPORT_PLM_SKU", "产品管理导出","","",""),
     EXPORT_PLM_SKU_DYNAMIC("EXPORT_PLM_SKU_DYNAMIC", "产品管理导出","","",""),
     IMPORT_PLM_SKU_IMAGES("IMPORT_PLM_SKU_IMAGES", "导入SKU图片","com.erp.rpc.plm.feign.ImportPlmFeign","productDetailImages",""),
@@ -330,6 +333,8 @@ public enum FileTaskEventEnum implements EnumMessage {
 
     EXPORT_WMS_QC_APPLICATION("EXPORT_WMS_QC_APPLICATION", "质检申请导出","","",""),
     IMPORT_WMS_QC_APPLICATION_DETAIL("IMPORT_WMS_QC_APPLICATION_DETAIL", "质检申请明细导入","com.erp.rpc.wms.feign.ImportWmsFeign","importQcApplicationDetail",""),
+    IMPORT_WMS_CFG_QC_USER("IMPORT_WMS_CFG_QC_USER", "质检员配置导入","com.erp.rpc.wms.feign.ImportWmsFeign","importCfgQcUser",""),
+    EXPORT_WMS_CFG_QC_USER("EXPORT_WMS_CFG_QC_USER", "质检员配置导出","","",""),
 
     EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES("EXPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES", "售后仓位推荐数据导出","","",""),
     IMPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES("IMPORT_WAREHOUSE_LOCATION_SUGGEST_AFTER_SALES", "售后仓位推荐数据导入","","",""),
@@ -370,6 +375,8 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_DICT_HS_CODE("EXPORT_TMS_DICT_HS_CODE", "出口申报要素导出","","",""),
     EXPORT_TMS_CFG_SAILING("EXPORT_TMS_CFG_SAILING", "截单开船导出","","",""),
     EXPORT_TMS_LOGISTICS_ORDER("EXPORT_TMS_LOGISTICS_ORDER", "物流下单导出","","",""),
+    EXPORT_TMS_LOGISTICS_RECON("EXPORT_TMS_LOGISTICS_RECON", "物流商对账单导出","","",""),
+    EXPORT_TMS_LOGISTICS_RECON_DETAIL("EXPORT_TMS_LOGISTICS_RECON_DETAIL", "物流商对账明细导出","","",""),
 
     IMPORT_TMS_LOGISTICS_BILL_COST("IMPORT_TMS_LOGISTICS_BILL_COST", "导入尾程费用(自发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsBillCost",""),
     IMPORT_TMS_LOGISTICS_LAST_MILE_COST("IMPORT_TMS_LOGISTICS_LAST_MILE_COST", "导入尾程费用(平台发货)","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsLastMileCost",""),
@@ -377,6 +384,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_TMS_CFG_LOGISTICS_COST("EXPORT_TMS_CFG_LOGISTICS_COST","费用配置导出","","",""),
     IMPORT_TMS_CFG_LOGISTICS_COST("IMPORT_TMS_CFG_LOGISTICS_COST","费用配置导入","com.erp.rpc.tms.feign.ImportTmsFeign","importCfgLogisticsCost",""),
     IMPORT_TMS_IMPORT_HISTORY_RECORD("IMPORT_TMS_IMPORT_HISTORY_RECORD","物流商费用导入","com.erp.rpc.tms.feign.ImportTmsFeign","preprocessingImportExcel",""),
+    IMPORT_TMS_LOGISTICS_RECON("IMPORT_TMS_LOGISTICS_RECON","物流商对账单导入","com.erp.rpc.tms.feign.ImportTmsFeign","importLogisticsRecon",""),
 
     EXPORT_TMS_ASYNC_TASK_RECORD("EXPORT_TMS_ASYNC_TASK_RECORD","异步任务导出","","",""),
     EXPORT_TMS_ASYNC_TASK_DETAIL("EXPORT_TMS_ASYNC_TASK_DETAIL","异步任务错误导出","","",""),

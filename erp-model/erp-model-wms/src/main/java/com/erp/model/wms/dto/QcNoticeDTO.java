@@ -69,6 +69,11 @@ public class QcNoticeDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+        /**
+         * 模糊搜索：质检通知单号/来源单号/采购单号
+         */
+        private String searchKey;
+
      }
     /**
     * 分页列表
@@ -246,6 +251,7 @@ public class QcNoticeDTO implements Serializable {
          * 问题属性 type=qcProblemType
          */
         private String qcProblemDict;
+        private String qcProblemDictName;
 
         /**
          * 质检状态 QcBillStatusEnum
@@ -255,6 +261,11 @@ public class QcNoticeDTO implements Serializable {
 
         /**
          * 期望质检日期
+         */
+        private LocalDate expectQcDate;
+
+        /**
+         * 计划质检日期
          */
         private LocalDate planQcDate;
 
@@ -733,8 +744,12 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 质检通知单号
          */
-        @NotBlank(message = "质检通知单号不允许为空")
         private String qcNoticeCode;
+
+        /**
+         * 明细ID列表（勾选的明细）
+         */
+        private List<String> detailIds;
 
     }
 
@@ -781,6 +796,11 @@ public class QcNoticeDTO implements Serializable {
 
         /**
          * 期望质检日期
+         */
+        private LocalDate expectQcDate;
+
+        /**
+         * 计划质检日期
          */
         private LocalDate planQcDate;
 
@@ -1044,6 +1064,21 @@ public class QcNoticeDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 供应商ID
+         */
+        private String supplierId;
+
+        /**
+         * 供应商编码
+         */
+        private String supplierCode;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
          * EAN码
          */
         private String ean;
@@ -1158,5 +1193,108 @@ public class QcNoticeDTO implements Serializable {
          */
         private List<QcInspectItemView>  detailList;
 
+    }
+
+    /**
+     * 批量更新质检员-弹窗数据查询入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateQcUserViewParamDTO {
+
+        /**
+         * 质检通知单明细id列表
+         */
+        @NotEmpty(message = "明细id列表不能为空")
+        private List<String> detailIds;
+    }
+
+    /**
+     * 批量更新质检员-弹窗每行展示数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateQcUserViewDTO {
+
+        /**
+         * 质检通知单明细id（保存接口需回传）
+         */
+        private String detailId;
+
+        /**
+         * 质检通知单id
+         */
+        private String noticeId;
+
+        /**
+         * 质检通知单号
+         */
+        private String noticeCode;
+
+        /**
+         * 质检类型code
+         */
+        private String qcType;
+
+        /**
+         * 质检类型名称
+         */
+        private String qcTypeName;
+
+        /**
+         * 下游质检单号（qc_info.code，可能为空）
+         */
+        private String qcInfoCode;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 当前质检员id
+         */
+        private String qcUserId;
+
+        /**
+         * 当前质检员名称
+         */
+        private String qcUserName;
+    }
+
+    /**
+    * 更新质检员DTO（单行）
+    * 保存接口以 List<UpdateQcUserDTO> 形式传递，每行一个质检员
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateQcUserDTO {
+
+        /**
+         * 质检通知单明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * 质检员id
+         */
+        @NotBlank(message = "质检员id不能为空")
+        private String qcUserId;
+
+        /**
+         * 质检员名称
+         */
+        private String qcUserName;
     }
 }

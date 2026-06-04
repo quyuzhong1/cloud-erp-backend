@@ -1089,6 +1089,7 @@ public enum ApiError implements Serializable {
     PO_QC_RESULT_NOT_EMPTY(9671,"质检结果不允许为空"),
     PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
     PO_RECONCILIATION_STATUS_NOT_CONFIRM(9673,"单据状态不是【已确认待完结】，不允许上传发票"),
+    PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED(9674,"发票数量不能超过10个"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1357,6 +1358,9 @@ public enum ApiError implements Serializable {
     SO_RETURN_EXCHANGE_RATE_REQUIRED(10719,"销售订单明细【{0}】汇率为空，无法计算本位币金额"),
     SO_RETURN_RECEIVE_QTY_INVALID(10720,"sku【{0}】签收数量异常，实际值：{1}"),
     SO_RETURN_RECEIVE_AMOUNT_MISSING(10721,"sku【{0}】签收金额数据缺失"),
+    SO_B2C_NOT_OUTBOUND_DETAIL_WAREHOUSE_UPDATE_FAILED(10753,"不出库发货失败：销售订单明细仓库未成功落库，请刷新后重试"),
+    SO_B2C_NOT_OUTBOUND_LOGISTICS_UPDATE_FAILED(10754,"不出库发货失败：销售订单物流信息更新失败，请刷新后重试"),
+    SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED(10755,"不出库发货失败：销售订单状态更新失败，请刷新后重试"),
     CUSTOMER_ADDRESS_NOT_MATCH(94108,"未匹配到客户地址，客户id：{0}，收货地址：{1}"),
     BILL_DECLARE_STATUS_GENERATED_NOT_DISAPPROVE(94109,"单据已生成申报信息，不支持反审核"),
 
@@ -1503,6 +1507,7 @@ public enum ApiError implements Serializable {
     WH_STOCKTAKING_NOT_ALLOW_APPROVE(11137,"【{0}】盘点日期不能小于当前日期,请修改后重新审核"),
 
     WH_ONWAY_WAREHOUSE_NOT_EXIST(11138,"目的仓【{}】未配置在途仓"),
+    WH_BORROW_WAREHOUSE_USABLE_INSUFFICIENT(11139,"SKU【{0}】，借调仓【{1}】，可用数【{2}】，可用库存不足，无法借调"),
 
 
     /**
@@ -1625,6 +1630,7 @@ public enum ApiError implements Serializable {
     VM_NO_SYNC_INFO(12521,"暂无可同步信息"),
     VM_CHECK_OUT_VIRTUAL_INVENTORY(12522,"SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】"),
     VM_CHANNEL_RELATION_ERROR(12523,"平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n"),
+    VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR(12525,"实体仓【{0}】下虚拟仓【{1}】已配置平台【{2}】，同一实体仓的不同虚拟仓不可重复配置"),
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),
@@ -1876,6 +1882,22 @@ public enum ApiError implements Serializable {
     LOGISTICS_DECLARE_DEST_COUNTRY_CN_NOT_GENERATE(13703,"单据【{0}】目的国为中国大陆，不生成报关单"),
 
 
+    LOGISTICS_RECON_IMPORT_TEMPLATE_NOT_RECOGNIZED(13648,"无法识别导入模板，请检查配置是否正确"),
+    LOGISTICS_RECON_EXCEL_HEAD_NOT_FOUND(13649,"未读取到 Excel 表头"),
+    LOGISTICS_RECON_SAVE_FAILED(13650,"物流商对账单保存失败"),
+    LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY(13651,"预处理导入功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN(13652,"对账单导入中，暂不允许切换校验状态"),
+    LOGISTICS_RECON_CHECK_STATUS_INVALID(13653,"非法的校验状态目标值"),
+    LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN(13654,"已存在有效匹配关系，不允许回退到待确认"),
+    LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH(13655,"仅已确认的对账单允许触发合并匹配"),
+    LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID(13656,"仅支持更新为待确认或账单确认"),
+    LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_BILL_CONFIRM(13657,"仅已确认的对账单允许执行账单确认"),
+    LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND(13658,"未找到已匹配的物流费用单"),
+    LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN(13659,"已确认的对账单不允许删除"),
+    LOGISTICS_RECON_MANUAL_MATCH_NOT_READY(13660,"手动匹配功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_ADD_BILL_COST_NOT_READY(13661,"新增费用单功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_IMPORT_MATCH_NOT_READY(13662,"导入匹配功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_MATCH_NOT_READY(13663,"合并匹配功能暂未开放，请稍后再试"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
@@ -1950,6 +1972,21 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
+    CFG_QC_USER_NOT_EXIST(16011,"未找到质检员配置"),
+    CFG_QC_USER_SUPPLIER_DUPLICATE(16012,"供应商【{0}】仓库【{1}】已配置质检员，不允许重复添加"),
+    CFG_QC_USER_SUPPLIER_REQUIRED(16013,"供应商编码不能为空"),
+    CFG_QC_USER_SUPPLIER_NOT_FOUND(16014,"供应商编码【{0}】不存在"),
+    CFG_QC_USER_IMPORT_USER_NOT_IN_ORG(16015,"质检员【{0}】在仓库对应组织下不存在业务员任岗明细"),
+    CFG_QC_USER_WAREHOUSE_REQUIRED(16016,"仓库不能为空"),
+    CFG_QC_USER_WAREHOUSE_NOT_FOUND(16017,"仓库【{0}】不存在"),
+    CFG_QC_USER_WAREHOUSE_NAME_DUPLICATE(16018,"仓库名称【{0}】存在多条记录，请使用唯一仓库名称"),
+    PO_QC_NOTICE_PLAN_QC_DATE_REQUIRED(16019,"外验质检类型审核通过时，计划质检日期不能为空"),
+    PO_QC_NOTICE_PLAN_QC_DATE_NOT_BEFORE_NOW(16020,"计划质检日期只能选择当前及以后的日期"),
+    CFG_QC_USER_QC_USER_AT_LEAST_ONE(16021,"至少需要配置一名质检员"),
+    CFG_QC_USER_UPDATE_KEY_NOT_MODIFIABLE(16023,"修改时不允许变更供应商或仓库"),
+    QC_NOTICE_PARAM_REQUIRED(16024,"请输入质检通知单号或选择明细"),
+    QC_NOTICE_DETAILS_MUST_SAME_NOTICE(16025,"选中的明细必须属于同一质检通知单"),
+    QC_NOTICE_UPDATE_QC_USER_STATUS_INVALID(16026,"只能更新待质检状态通知单的质检员"),
 
     ;
     @Getter

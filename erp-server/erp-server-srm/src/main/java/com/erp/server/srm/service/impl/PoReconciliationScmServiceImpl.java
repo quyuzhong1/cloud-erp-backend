@@ -936,38 +936,87 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
     }
 
+    /**
+     * 发票附件 type 标识，存储在 attachment 表 type 字段
+     */
+    private static final String INVOICE_ATTACHMENT_TYPE = "po_reconciliation_invoice";
+
+    /**
+     * 单个对账单最多允许上传的发票数量
+     */
+    private static final int INVOICE_MAX_COUNT = 10;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void uploadInvoice(PoReconciliationDTO.UploadFileDTO dto) {
-        // 校验是不是pdf文件
-        if (!StringUtils.endsWithIgnoreCase(dto.getAttachName(), ".pdf")) {
-            throw new ServiceException("仅支持上传PDF格式的文件");
-        }
         PoReconciliationEntity poReconciliationEntity = getById(dto.getId());
         if (ObjectUtil.isEmpty(poReconciliationEntity)) {
             throw new ServiceException(ApiError.PO_RECONCILIATION_NOT_FOUND);
         }
-        // 单据状态不等于“已确认待完结”，不允许上传发票
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.CONFIRM.getCode().equals(poReconciliationEntity.getStatus())) {
             throw new ServiceException(ApiError.PO_RECONCILIATION_STATUS_NOT_CONFIRM);
         }
-        SrmAttachmentEntity attachmentEntity = attachmentService.getOne(new QueryWrapper<SrmAttachmentEntity>().lambda()
-                .eq(SrmAttachmentEntity::getBusinessId, poReconciliationEntity.getId())
-                .eq(SrmAttachmentEntity::getType, "po_reconciliation_invoice"));
-        if (ObjectUtil.isNotEmpty(attachmentEntity)) {
-            attachmentService.removeById(attachmentEntity.getId());
+
+        List<PoReconciliationDTO.InvoiceFileDTO> attachmentList = dto.getAttachmentList();
+        // 空列表语义：保留现有数据，直接返回
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            return;
         }
-        SrmAttachmentEntity srmAttachmentEntity = new SrmAttachmentEntity();
-        srmAttachmentEntity.setBusinessId(dto.getId());
-        srmAttachmentEntity.setType("po_reconciliation_invoice");
-        srmAttachmentEntity.setAttachName(dto.getAttachName());
-        srmAttachmentEntity.setAttachUrl(dto.getAttachUrl());
-        attachmentService.save(srmAttachmentEntity);
+        if (attachmentList.size() > INVOICE_MAX_COUNT) {
+            throw new ServiceException(ApiError.PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED);
+        }
+        for (PoReconciliationDTO.InvoiceFileDTO item : attachmentList) {
+            if (item == null
+                    || StringUtils.isBlank(item.getAttachUrl())
+                    || StringUtils.isBlank(item.getAttachName())) {
+                throw new ServiceException("发票附件 URL 或文件名不能为空");
+            }
+            if (!StringUtils.endsWithIgnoreCase(item.getAttachName(), ".pdf")) {
+                throw new ServiceException("仅支持上传PDF格式的文件");
+            }
+        }
+
+        // 全量保存：删旧 + 批量写新
+        List<SrmAttachmentEntity> oldList = attachmentService.list(new QueryWrapper<SrmAttachmentEntity>().lambda()
+                .eq(SrmAttachmentEntity::getBusinessId, poReconciliationEntity.getId())
+                .eq(SrmAttachmentEntity::getType, INVOICE_ATTACHMENT_TYPE));
+        if (CollectionUtils.isNotEmpty(oldList)) {
+            List<String> oldIds = oldList.stream().map(SrmAttachmentEntity::getId).collect(Collectors.toList());
+            attachmentService.removeByIds(oldIds);
+        }
+        List<String> urlList = attachmentList.stream()
+                .map(PoReconciliationDTO.InvoiceFileDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> nameList = attachmentList.stream()
+                .map(PoReconciliationDTO.InvoiceFileDTO::getAttachName).collect(Collectors.toList());
+        attachmentService.batchSave(urlList, nameList, INVOICE_ATTACHMENT_TYPE, poReconciliationEntity.getId());
+
         poReconciliationEntity.setInvoiceStatus(true);
         updateById(poReconciliationEntity);
-        // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】上传【{}】单据单号为【{}】的发票", UserContext.getDefaultLoginUser().getUserName(), "采购对账单", poReconciliationEntity.getCode());
+
+        String msg = CharSequenceUtil.format("用户【{}】上传【{}】单据单号为【{}】的发票，共{}个",
+                UserContext.getDefaultLoginUser().getUserName(), "采购对账单", poReconciliationEntity.getCode(), attachmentList.size());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationEntity.getId(), "上传发票");
+    }
+
+    @Override
+    public List<PoReconciliationDTO.InvoiceFileVO> listInvoice(String id) {
+        PoReconciliationEntity poReconciliationEntity = getById(id);
+        if (ObjectUtil.isEmpty(poReconciliationEntity)) {
+            throw new ServiceException(ApiError.PO_RECONCILIATION_NOT_FOUND);
+        }
+        List<SrmAttachmentEntity> attachmentList = attachmentService.list(new QueryWrapper<SrmAttachmentEntity>().lambda()
+                .eq(SrmAttachmentEntity::getBusinessId, id)
+                .eq(SrmAttachmentEntity::getType, INVOICE_ATTACHMENT_TYPE)
+                .orderByAsc(SrmAttachmentEntity::getCreateTime));
+        if (CollectionUtils.isEmpty(attachmentList)) {
+            return Collections.emptyList();
+        }
+        return attachmentList.stream()
+                .map(entity -> PoReconciliationDTO.InvoiceFileVO.builder()
+                        .attachUrl(entity.getAttachUrl())
+                        .attachName(entity.getAttachName())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -976,44 +1025,80 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         Map<String, PoReconciliationEntity> reconciliationMap = poReconciliationEntities.stream()
                 .collect(Collectors.toMap(PoReconciliationEntity::getId, obj -> obj));
         List<SrmAttachmentEntity> srmAttachmentEntityList = attachmentService.list(new QueryWrapper<SrmAttachmentEntity>().lambda()
-                .eq(SrmAttachmentEntity::getType, "po_reconciliation_invoice")
-                .in(SrmAttachmentEntity::getBusinessId, ids));
-        Map<String, SrmAttachmentEntity> attachmentMap = srmAttachmentEntityList.stream()
-                .collect(Collectors.toMap(SrmAttachmentEntity::getBusinessId, obj -> obj));
+                .eq(SrmAttachmentEntity::getType, INVOICE_ATTACHMENT_TYPE)
+                .in(SrmAttachmentEntity::getBusinessId, ids)
+                .orderByAsc(SrmAttachmentEntity::getCreateTime));
+        // 每个对账单可能对应多个发票附件，按 businessId 分组
+        Map<String, List<SrmAttachmentEntity>> attachmentMap = srmAttachmentEntityList.stream()
+                .collect(Collectors.groupingBy(SrmAttachmentEntity::getBusinessId));
+
         List<BatchResultDTO> batchResultDTOS = new ArrayList<>();
-        // 2. 构建文件夹结构：对账单号作为文件夹名
-        Map<String, List<String>> folderStructure = new HashMap<>();
+        // 文件夹结构：对账单号 -> 该对账单下所有发票的 URL 列表
+        Map<String, List<String>> folderStructure = new LinkedHashMap<>();
+        // 文件 URL -> ZIP 内显示文件名（同对账单内重名时追加 (1)(2) 后缀避免覆盖）
         Map<String, String> fileUrlToNameMap = new HashMap<>();
+
         for (String id : ids) {
             PoReconciliationEntity entity = reconciliationMap.get(id);
             if (entity == null) {
                 batchResultDTOS.add(BatchResultDTO.fail(id, "", "对账单不存在"));
                 continue;
             }
-            SrmAttachmentEntity attachmentEntity = attachmentMap.get(id);
-            if (!entity.getInvoiceStatus() || attachmentEntity == null) {
+            List<SrmAttachmentEntity> attachments = attachmentMap.get(id);
+            if (CollectionUtils.isEmpty(attachments)) {
                 batchResultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "未上传发票"));
                 continue;
             }
-            // 获取发票文件URL
-            String fileUrl = attachmentEntity.getAttachUrl();
-            String fileName = attachmentEntity.getAttachName();
-            // 将对账单号作为文件夹路径
             String folderPath = entity.getCode();
-            // 添加到文件夹结构
-            folderStructure.computeIfAbsent(folderPath, k -> new ArrayList<>()).add(fileUrl);
-            // 添加文件URL到文件名的映射
-            fileUrlToNameMap.put(fileUrl, fileName);
+            List<String> urlList = folderStructure.computeIfAbsent(folderPath, k -> new ArrayList<>());
+            // 单对账单文件夹内文件名占用情况，命中重名追加 (n) 后缀
+            Set<String> usedNames = new HashSet<>();
+            for (SrmAttachmentEntity attachment : attachments) {
+                String fileUrl = attachment.getAttachUrl();
+                String fileName = attachment.getAttachName();
+                if (StringUtils.isBlank(fileUrl)) {
+                    continue;
+                }
+                if (StringUtils.isBlank(fileName)) {
+                    int lastSlash = fileUrl.lastIndexOf('/');
+                    fileName = lastSlash >= 0 && lastSlash < fileUrl.length() - 1
+                            ? fileUrl.substring(lastSlash + 1)
+                            : "invoice_" + attachment.getId() + ".pdf";
+                }
+                String finalName = resolveUniqueFileName(fileName, usedNames);
+                usedNames.add(finalName);
+                urlList.add(fileUrl);
+                fileUrlToNameMap.put(fileUrl, finalName);
+            }
         }
         if (folderStructure.isEmpty()) {
             return batchResultDTOS;
         }
-        // 3. 调用 createZipFromFolderStructure 方法创建ZIP
         FileDTO.CreateZipDTO createZipDTO = new FileDTO.CreateZipDTO();
         createZipDTO.setFolderStructure(folderStructure);
         createZipDTO.setFileUrlToNameMap(fileUrlToNameMap);
         String zipUrl = fileFeign.createZipFromFolderStructure(createZipDTO);
         batchResultDTOS.add(BatchResultDTO.success(null, null, zipUrl));
         return batchResultDTOS;
+    }
+
+    /**
+     * 在同一文件夹内为重名文件追加 (1)(2)... 后缀，避免 ZIP 内同路径覆盖
+     */
+    private String resolveUniqueFileName(String originalName, Set<String> usedNames) {
+        if (!usedNames.contains(originalName)) {
+            return originalName;
+        }
+        int dotIdx = originalName.lastIndexOf('.');
+        String base = dotIdx > 0 ? originalName.substring(0, dotIdx) : originalName;
+        String ext = dotIdx > 0 ? originalName.substring(dotIdx) : "";
+        int idx = 1;
+        while (true) {
+            String candidate = base + "(" + idx + ")" + ext;
+            if (!usedNames.contains(candidate)) {
+                return candidate;
+            }
+            idx++;
+        }
     }
 }

@@ -45,11 +45,6 @@ import com.erp.server.wms.mapper.QcResultMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.erp.server.wms.service.DictBasicService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.QcResultService;
-import com.erp.server.wms.service.WmsAttachmentService;
-import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -139,6 +134,17 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         //质检附件url
         List<String> qcAttachmentUrlList = qcInfo.getQcAttachmentUrlList();
         wmsAttachmentService.batchSave(qcAttachmentUrlList,qcAttachmentNameList, WmsConstant.QC_ATTACHMENT, id);
+
+        //产品实物图片（从产品信息移动到质检信息）
+        List<String> productRealImageNameList = qcInfo.getProductRealImageNameList();
+        List<String> productRealImageUrlList = qcInfo.getProductRealImageUrlList();
+        wmsAttachmentService.batchSave(productRealImageUrlList, productRealImageNameList, WmsConstant.QC_PRODUCT, id);
+
+        //箱唛图片（从产品信息移动到质检信息）
+        List<String> boxImageNameList = qcInfo.getBoxImageNameList();
+        List<String> boxImageUrlList = qcInfo.getBoxImageUrlList();
+        wmsAttachmentService.batchSave(boxImageUrlList, boxImageNameList, WmsConstant.QC_BOX, id);
+
         this.saveOrUpdate(qcResultEntity);
 
         //操作日志
@@ -146,6 +152,23 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             operateLogService.addModuleOperateLog("新增了质检单的质检信息", ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
         }else {
             operateLogService.addModuleOperateLogByObj(oldEntity, qcResultEntity, ModuleTypeEnum.QC_ORDER.getCode(), billId, "", "编辑了质检单的质检信息");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveProductAndBoxImage(String qcResultId,
+                                       List<String> productImgUrlList, List<String> productImgNameList,
+                                       List<String> boxImgUrlList, List<String> boxImgNameList) {
+        if (CharSequenceUtil.isBlank(qcResultId)) {
+            return;
+        }
+        // null 表示"不动该 type 的附件"；非 null（含空集合）会触发 batchSave 内部"先删再插"
+        if (productImgUrlList != null) {
+            wmsAttachmentService.batchSave(productImgUrlList, productImgNameList, WmsConstant.QC_PRODUCT, qcResultId);
+        }
+        if (boxImgUrlList != null) {
+            wmsAttachmentService.batchSave(boxImgUrlList, boxImgNameList, WmsConstant.QC_BOX, qcResultId);
         }
     }
 
@@ -203,8 +226,20 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             List<String> qcAttachmentUrlList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> qcAttachmentNameList = attachmentList.stream().filter(a->WmsConstant.QC_ATTACHMENT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
 
+            //产品实物图片
+            List<String> productRealImageUrlList = attachmentList.stream().filter(a->WmsConstant.QC_PRODUCT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> productRealImageNameList = attachmentList.stream().filter(a->WmsConstant.QC_PRODUCT.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+
+            //箱唛图片
+            List<String> boxImageUrlList = attachmentList.stream().filter(a->WmsConstant.QC_BOX.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            List<String> boxImageNameList = attachmentList.stream().filter(a->WmsConstant.QC_BOX.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+
             qcInfoView.setQcAttachmentNameList(qcAttachmentNameList);
             qcInfoView.setQcAttachmentUrlList(qcAttachmentUrlList);
+            qcInfoView.setProductRealImageUrlList(productRealImageUrlList);
+            qcInfoView.setProductRealImageNameList(productRealImageNameList);
+            qcInfoView.setBoxImageUrlList(boxImageUrlList);
+            qcInfoView.setBoxImageNameList(boxImageNameList);
             String qcType = qcInfoView.getQcType();
             //不良率
             BigDecimal badRate = qcInfoView.getQcBadRate();

@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.BaseDTO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.LogisticsReconDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,4 +26,7 @@ public interface ImportTmsFeign {
 
     @PostMapping("/feign/import/importLogisticsThirdChannelRef")
     void importLogisticsThirdChannelRef(@RequestBody ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO);
+
+    @PostMapping("/feign/import/importLogisticsRecon")
+    void importLogisticsRecon(@RequestBody LogisticsReconDTO.ImportDTO dto);
 }

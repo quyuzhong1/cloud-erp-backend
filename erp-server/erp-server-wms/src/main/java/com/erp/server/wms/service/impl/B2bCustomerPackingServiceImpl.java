@@ -1,0 +1,125 @@
+package com.erp.server.wms.service.impl;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.dto.AttachDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.B2bCustomerPackingDTO;
+import com.erp.model.wms.entity.B2bCustomerPackingEntity;
+import com.erp.server.wms.mapper.B2bCustomerPackingMapper;
+import com.erp.server.wms.service.B2bCustomerPackingService;
+import com.erp.server.wms.service.WmsAttachmentService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+/**
+ * B2B客户装箱 服务实现类
+ */
+@Slf4j
+@Service
+public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerPackingMapper, B2bCustomerPackingEntity>
+        implements B2bCustomerPackingService {
+
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
+
+    @Override
+    public List<B2bCustomerPackingEntity> listByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(B2bCustomerPackingEntity::getMainId, mainIds)
+                .orderByAsc(B2bCustomerPackingEntity::getSort)
+                .list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<B2bCustomerPackingEntity> batchSave(String mainId, List<B2bCustomerPackingDTO.AddDTO> packingList) {
+        deleteByMainId(mainId);
+        if (CollUtil.isEmpty(packingList)) {
+            return Collections.emptyList();
+        }
+        List<B2bCustomerPackingEntity> entityList = new ArrayList<>();
+        int sort = 0;
+        for (B2bCustomerPackingDTO.AddDTO box : packingList) {
+            for (B2bCustomerPackingDTO.LineAddDTO line : box.getPackingLineList()) {
+                entityList.add(toEntity(mainId, box, line, line.getSort() != null ? line.getSort() : sort++));
+            }
+        }
+        saveBatch(entityList);
+        saveBoxAttachments(packingList, entityList);
+        return entityList;
+    }
+
+    private void saveBoxAttachments(List<B2bCustomerPackingDTO.AddDTO> packingList,
+                                    List<B2bCustomerPackingEntity> entityList) {
+        for (B2bCustomerPackingDTO.AddDTO box : packingList) {
+            List<AttachDTO> attachList = box.getAttachList();
+            if (CollUtil.isNotEmpty(attachList)) {
+                getBoxHead(entityList, box.getBoxSeq()).ifPresent(entity ->
+                        wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId()));
+            }
+        }
+    }
+
+    public static java.util.Optional<B2bCustomerPackingEntity> getBoxHead(List<B2bCustomerPackingEntity> entityList, Integer boxSeq) {
+        if (CollUtil.isEmpty(entityList)) {
+            return java.util.Optional.empty();
+        }
+        return entityList.stream()
+                .filter(entity -> Objects.equals(boxSeq, entity.getBoxSeq()))
+                .min(Comparator.comparing(B2bCustomerPackingEntity::getSort, Comparator.nullsLast(Integer::compareTo)));
+    }
+
+    private B2bCustomerPackingEntity toEntity(String mainId, B2bCustomerPackingDTO.AddDTO box,
+                                              B2bCustomerPackingDTO.LineAddDTO line, int sort) {
+        B2bCustomerPackingEntity entity = new B2bCustomerPackingEntity();
+        entity.setMainId(mainId);
+        entity.setBoxSeq(box.getBoxSeq());
+        entity.setBoxMarkNo(CharSequenceUtil.blankToDefault(box.getBoxMarkNo(), ""));
+        entity.setBoxMarkRefNo(CharSequenceUtil.blankToDefault(box.getBoxMarkRefNo(), ""));
+        entity.setLabelSize(CharSequenceUtil.blankToDefault(box.getLabelSize(), ""));
+        entity.setLabelingRequirement(CharSequenceUtil.blankToDefault(box.getLabelingRequirement(), ""));
+        entity.setSkuId(CharSequenceUtil.blankToDefault(line.getSkuId(), ""));
+        entity.setSkuNo(line.getSkuNo());
+        entity.setProductName(CharSequenceUtil.blankToDefault(line.getProductName(), ""));
+        entity.setSaleQty(line.getSaleQty() != null ? line.getSaleQty() : 0);
+        entity.setPackingQty(line.getPackingQty());
+        entity.setWarehousePlatformSku(CharSequenceUtil.blankToDefault(line.getWarehousePlatformSku(), ""));
+        entity.setSort(sort);
+        return entity;
+    }
+
+    @Override
+    public void deleteByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
+            return;
+        }
+        List<B2bCustomerPackingEntity> packingList = listByMainIds(mainIds);
+        if (CollUtil.isNotEmpty(packingList)) {
+            List<String> packingIds = packingList.stream().map(B2bCustomerPackingEntity::getId).collect(Collectors.toList());
+            wmsAttachmentService.batchRemoveAttachment(packingIds);
+        }
+        lambdaUpdate()
+                .in(B2bCustomerPackingEntity::getMainId, mainIds)
+                .set(B2bCustomerPackingEntity::getIsDeleted, Boolean.TRUE)
+                .update();
+    }
+
+    private void deleteByMainId(String mainId) {
+        if (CharSequenceUtil.isNotBlank(mainId)) {
+            deleteByMainIds(Collections.singletonList(mainId));
+        }
+    }
+}

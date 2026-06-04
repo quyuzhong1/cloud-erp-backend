@@ -136,11 +136,14 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         // TODO 替换当前表Tab状态字段
         List<String> statusList = null;
         // 不存在的状态赋值为0
-        Set<String> existStatusSet = list.stream().map(CfgLogisticsCostImportDetailDTO.TabListDTO::getTabFlag).collect(Collectors.toSet());
-        for (String status : statusList) {
-            if (!existStatusSet.contains(status)) {
-                list.add(new CfgLogisticsCostImportDetailDTO.TabListDTO(status, 0));
-            }
+        Set<String> existStatusSet = list.stream()
+                .map(CfgLogisticsCostImportDetailDTO.TabListDTO::getTabFlag)
+                .collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(statusList)) {
+            list.addAll(statusList.stream()
+                    .filter(status -> !existStatusSet.contains(status))
+                    .map(status -> new CfgLogisticsCostImportDetailDTO.TabListDTO(status, 0))
+                    .collect(Collectors.toList()));
         }
         list.add(new CfgLogisticsCostImportDetailDTO.TabListDTO("all", list.stream().mapToInt(CfgLogisticsCostImportDetailDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
@@ -157,7 +160,9 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         if (CollUtil.isEmpty(mainIdList)) {
             return  Collections.emptyList();
         }
-        return lambdaQuery().in(CfgLogisticsCostImportDetailEntity::getMainId,mainIdList).list();
+        List<CfgLogisticsCostImportDetailEntity> list = lambdaQuery().in(CfgLogisticsCostImportDetailEntity::getMainId,mainIdList).list();
+        fillEntityList(list);
+        return list;
     }
 
     /**
@@ -234,6 +239,15 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
         }
         // 属性赋值
         for(CfgLogisticsCostImportDetailDTO.ListDTO data : list) {
+            data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
+        }
+   }
+
+   private void fillEntityList(List<CfgLogisticsCostImportDetailEntity> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (CfgLogisticsCostImportDetailEntity data : list) {
             data.setEtlRuleList(CfgLogisticsCostImportEtlRuleHelper.parseStorage(data.getEtlRuleListStorage()));
         }
    }
