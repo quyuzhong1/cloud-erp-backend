@@ -806,12 +806,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     dto.setCurrencySymbol(dto.getCurrencySymbol());
                     dto.setAmount(MathUtil.multiplyWithTwo(dto.getRepairPrice(),dto.getRepairQty()).setScale(4, RoundingMode.DOWN));
                 } else if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0){
-                    //委外返修子行
-                    dto.setPrice(dto.getPrice());
-                    dto.setTaxRate(dto.getTaxRate());
-                    dto.setCurrency(dto.getCurrency());
-                    dto.setCurrencySymbol(dto.getCurrencySymbol());
-                    dto.setAmount(MathUtil.multiplyWithTwo(dto.getPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                    //委外返修子行：上游传入参数 DTO 携带价格，需空值保护，避免 NPE
+                    BigDecimal price = Objects.nonNull(dto.getPrice()) ? dto.getPrice() : BigDecimal.ZERO;
+                    if (price.compareTo(BigDecimal.ZERO) == 0) {
+                        throw new ServiceException(StrUtil.format("SKU【{}】委外返修子行价格不能为空", skuVO.getSkuNo()));
+                    }
+                    dto.setAmount(MathUtil.multiplyWithTwo(price, dto.getQty()).setScale(4, RoundingMode.DOWN));
                 }
             }
 

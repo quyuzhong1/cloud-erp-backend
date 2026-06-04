@@ -3,9 +3,11 @@ package com.erp.server.wms.service.impl;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -229,6 +231,25 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         queryWrapper.eq(DictBasicEntity::getValue, value);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public Map<String, String> listValueMapByTypeAndIds(String type, List<String> ids) {
+        if (CharSequenceUtil.isBlank(type) || CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyMap();
+        }
+        List<DictBasicEntity> list = this.lambdaQuery()
+                .eq(DictBasicEntity::getType, type)
+                .in(DictBasicEntity::getId, ids)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+        Map<String, String> result = new HashMap<>(list.size());
+        for (DictBasicEntity entity : list) {
+            result.put(entity.getId(), entity.getValue());
+        }
+        return result;
     }
 
 }
