@@ -1696,25 +1696,29 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryDTO.ViewQueryDTO viewQueryDTO = new B2bThirdDeliveryDTO.ViewQueryDTO();
         viewQueryDTO.setSoId(soId);
         viewQueryDTO.setSoDetailIds(soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
-        B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
-        if (Objects.isNull(viewDTO) || CollUtil.isEmpty(viewDTO.getDetailList())) {
-            return enrichPackingImportDetailList(toPackingImportDetailList(soDetailList), soDetailList);
+        try {
+            B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
+            if (Objects.nonNull(viewDTO) && CollUtil.isNotEmpty(viewDTO.getDetailList())) {
+                return viewDTO.getDetailList().stream().map(e -> {
+                    com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
+                    dto.setSkuId(e.getSkuId());
+                    dto.setSkuNo(e.getSkuNo());
+                    dto.setProductName(e.getProductName());
+                    dto.setSaleQty(e.getSaleQty());
+                    dto.setDeliveryQty(e.getDeliveryQty());
+                    dto.setPerBoxQty(e.getPerBoxQty());
+                    dto.setDeliverySkuId(e.getDeliverySkuId());
+                    dto.setDeliverySkuNo(e.getDeliverySkuNo());
+                    dto.setWarehousePlatformSku(e.getWarehousePlatformSku());
+                    dto.setBoxQty(e.getBoxQty());
+                    dto.setBoxSpecNo(e.getBoxSpecNo());
+                    return dto;
+                }).collect(Collectors.toList());
+            }
+        } catch (Exception e) {
+            log.warn("B2B装箱导入获取三方发货单预览明细失败，使用订单明细兜底, soId={}", soId, e);
         }
-        return viewDTO.getDetailList().stream().map(e -> {
-            com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
-            dto.setSkuId(e.getSkuId());
-            dto.setSkuNo(e.getSkuNo());
-            dto.setProductName(e.getProductName());
-            dto.setSaleQty(e.getSaleQty());
-            dto.setDeliveryQty(e.getDeliveryQty());
-            dto.setPerBoxQty(e.getPerBoxQty());
-            dto.setDeliverySkuId(e.getDeliverySkuId());
-            dto.setDeliverySkuNo(e.getDeliverySkuNo());
-            dto.setWarehousePlatformSku(e.getWarehousePlatformSku());
-            dto.setBoxQty(e.getBoxQty());
-            dto.setBoxSpecNo(e.getBoxSpecNo());
-            return dto;
-        }).collect(Collectors.toList());
+        return enrichPackingImportDetailList(toPackingImportDetailList(soDetailList), soDetailList);
     }
 
     private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> toPackingImportDetailList(List<SoDetailEntity> detailEntities) {
