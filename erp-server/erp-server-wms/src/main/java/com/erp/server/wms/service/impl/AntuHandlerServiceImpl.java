@@ -44,7 +44,10 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
             return;
         }
         String fileData = uploadFileReq.getFileData();
-        if (CharSequenceUtil.isNotBlank(fileData) && fileData.length() > MAX_PDF_BASE64_LENGTH) {
+        if (CharSequenceUtil.isBlank(fileData)) {
+            throw new ServiceException("安兔上传文件内容不能为空");
+        }
+        if (fileData.length() > MAX_PDF_BASE64_LENGTH) {
             throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
         }
         uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));

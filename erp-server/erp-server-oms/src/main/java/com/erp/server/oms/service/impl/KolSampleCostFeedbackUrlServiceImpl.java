@@ -12,8 +12,14 @@ import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -53,6 +59,85 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
         KolSampleCostFeedbackUrlEntity entity = buildEntity(feedback, url);
         entity.setSort(nextSort(feedback.getSourceType(), feedback.getSourceDetailId()));
         save(entity);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void syncByFeedbackList(List<KolFeedbackEntity> feedbackList) {
+        if (CollUtil.isEmpty(feedbackList)) {
+            return;
+        }
+        List<KolFeedbackEntity> validFeedbackList = feedbackList.stream()
+                .filter(this::isValidSampleFeedback)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(validFeedbackList)) {
+            return;
+        }
+
+        Set<String> sourceTypeSet = validFeedbackList.stream()
+                .map(KolFeedbackEntity::getSourceType)
+                .collect(Collectors.toSet());
+        Set<String> sourceDetailIdSet = validFeedbackList.stream()
+                .map(KolFeedbackEntity::getSourceDetailId)
+                .collect(Collectors.toSet());
+        Set<String> urlHashSet = validFeedbackList.stream()
+                .map(KolFeedbackEntity::getUrlHash)
+                .collect(Collectors.toSet());
+
+        List<KolSampleCostFeedbackUrlEntity> activeUrlList = lambdaQuery()
+                .in(KolSampleCostFeedbackUrlEntity::getSourceType, sourceTypeSet)
+                .in(KolSampleCostFeedbackUrlEntity::getSourceDetailId, sourceDetailIdSet)
+                .eq(KolSampleCostFeedbackUrlEntity::getIsDeleted, false)
+                .list();
+        Map<String, KolSampleCostFeedbackUrlEntity> existUrlMap = activeUrlList.stream()
+                .filter(item -> urlHashSet.contains(item.getUrlHash()))
+                .collect(Collectors.toMap(this::buildUrlKey, item -> item, (v1, v2) -> v1));
+        Map<String, Integer> maxSortMap = activeUrlList.stream()
+                .filter(item -> Objects.nonNull(item.getSort()))
+                .collect(Collectors.groupingBy(
+                        this::buildSourceDetailKey,
+                        Collectors.collectingAndThen(Collectors.maxBy((v1, v2) -> v1.getSort().compareTo(v2.getSort())),
+                                item -> item.map(KolSampleCostFeedbackUrlEntity::getSort).orElse(0))));
+
+        List<KolSampleCostFeedbackUrlEntity> addList = new ArrayList<>();
+        List<KolSampleCostFeedbackUrlEntity> updateList = new ArrayList<>();
+        Map<String, KolSampleCostFeedbackUrlEntity> pendingAddMap = new HashMap<>();
+        for (KolFeedbackEntity feedback : validFeedbackList) {
+            String url = CharSequenceUtil.trim(feedback.getUrl());
+            String urlKey = buildUrlKey(feedback.getSourceType(), feedback.getSourceDetailId(), feedback.getUrlHash());
+            KolSampleCostFeedbackUrlEntity existEntity = existUrlMap.get(urlKey);
+            if (Objects.nonNull(existEntity)) {
+                KolSampleCostFeedbackUrlEntity updateEntity = buildEntity(feedback, url);
+                updateEntity.setId(existEntity.getId());
+                updateEntity.setSort(existEntity.getSort());
+                updateEntity.setVersion(existEntity.getVersion());
+                updateList.add(updateEntity);
+                continue;
+            }
+            KolSampleCostFeedbackUrlEntity pendingAddEntity = pendingAddMap.get(urlKey);
+            if (Objects.nonNull(pendingAddEntity)) {
+                KolSampleCostFeedbackUrlEntity latestEntity = buildEntity(feedback, url);
+                latestEntity.setSort(pendingAddEntity.getSort());
+                addList.remove(pendingAddEntity);
+                addList.add(latestEntity);
+                pendingAddMap.put(urlKey, latestEntity);
+                continue;
+            }
+
+            String sourceDetailKey = buildSourceDetailKey(feedback.getSourceType(), feedback.getSourceDetailId());
+            Integer nextSort = maxSortMap.getOrDefault(sourceDetailKey, 0) + 1;
+            maxSortMap.put(sourceDetailKey, nextSort);
+            KolSampleCostFeedbackUrlEntity addEntity = buildEntity(feedback, url);
+            addEntity.setSort(nextSort);
+            addList.add(addEntity);
+            pendingAddMap.put(urlKey, addEntity);
+        }
+        if (CollUtil.isNotEmpty(addList)) {
+            saveBatch(addList);
+        }
+        if (CollUtil.isNotEmpty(updateList)) {
+            updateBatchById(updateList);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -117,6 +202,22 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
             return 1;
         }
         return list.get(0).getSort() + 1;
+    }
+
+    private String buildUrlKey(KolSampleCostFeedbackUrlEntity entity) {
+        return buildUrlKey(entity.getSourceType(), entity.getSourceDetailId(), entity.getUrlHash());
+    }
+
+    private String buildUrlKey(String sourceType, String sourceDetailId, String urlHash) {
+        return sourceType + "#" + sourceDetailId + "#" + urlHash;
+    }
+
+    private String buildSourceDetailKey(KolSampleCostFeedbackUrlEntity entity) {
+        return buildSourceDetailKey(entity.getSourceType(), entity.getSourceDetailId());
+    }
+
+    private String buildSourceDetailKey(String sourceType, String sourceDetailId) {
+        return sourceType + "#" + sourceDetailId;
     }
 
     private boolean isValidSampleFeedback(KolFeedbackEntity feedback) {

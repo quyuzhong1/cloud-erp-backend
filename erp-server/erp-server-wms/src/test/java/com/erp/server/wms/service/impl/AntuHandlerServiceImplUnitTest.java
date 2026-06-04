@@ -91,6 +91,15 @@ public class AntuHandlerServiceImplUnitTest {
         antuHandlerService.convertPdfAttachmentToPng(req);
     }
 
+    @Test(expected = ServiceException.class)
+    public void convertPdfAttachmentToPngRejectBlankPdfAttachment() {
+        ThirdWarehouseUploadFileReq req = new ThirdWarehouseUploadFileReq();
+        req.setModule("other_documents_invoice");
+        req.setFileType(FileTypeEnum.PDF.getCode());
+
+        antuHandlerService.convertPdfAttachmentToPng(req);
+    }
+
     @Test
     public void getPdfFirstPageSizeMmReturnsApprox150By100() {
         float widthMm = 150F;
