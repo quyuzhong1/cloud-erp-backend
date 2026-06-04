@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
     private static final String GOOD_CANG_SHIPMENT_LABEL_ATTACHMENT = "SHIPMENT_LABEL_ATTACHMENT";
 
     @Resource
@@ -196,6 +197,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private boolean isGoodCangB2bAttachment(String fileType) {
         return GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(fileType)
+                || GOOD_CANG_ORDER_PACKING_ATTACHMENT.equalsIgnoreCase(fileType)
                 || GOOD_CANG_SHIPMENT_LABEL_ATTACHMENT.equalsIgnoreCase(fileType);
     }
     @Override
@@ -576,24 +578,39 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> boxItems = entry.getValue();
             ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead = boxItems.get(0);
             List<GoodCangCreateB2bReq.PackingLine> packingLineList = buildGoodCangPackingLineList(packingType, boxItems);
-            GoodCangCreateB2bReq.ShipmentFile shipmentFile = GoodCangCreateB2bReq.ShipmentFile.builder()
-                    .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
-                    .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
-                    .shipmentFileId(boxHead.getShipmentFileId())
-                    .build();
+            List<GoodCangCreateB2bReq.ShipmentFile> shipmentFileList = buildGoodCangShipmentFileList(boxHead);
             packingList.add(GoodCangCreateB2bReq.Packing.builder()
                     .boxMark(CharSequenceUtil.blankToDefault(boxHead.getBoxMarkRefNo(), ""))
                     .boxNo(preStagedBox ? null : entry.getKey())
                     .boxRefMark(customerSpecified ? null : CharSequenceUtil.blankToDefault(boxHead.getBoxMarkNo(), ""))
                     // GoodCang rejects top-level shipment_file_id when shipment_file_list is present.
                     .shipmentFileId(null)
-                    .shipmentFileList(Collections.singletonList(shipmentFile))
+                    .shipmentFileList(shipmentFileList)
                     .logisticsFileId(null)
                     .customsFileId(null)
                     .packingLineList(packingLineList)
                     .build());
         }
         return packingList;
+    }
+
+    private List<GoodCangCreateB2bReq.ShipmentFile> buildGoodCangShipmentFileList(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        if (CollUtil.isNotEmpty(boxHead.getShipmentFileList())) {
+            return boxHead.getShipmentFileList().stream()
+                    .filter(e -> Objects.nonNull(e.getShipmentFileId()))
+                    .map(e -> GoodCangCreateB2bReq.ShipmentFile.builder()
+                            .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
+                            .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
+                            .shipmentFileId(e.getShipmentFileId())
+                            .build())
+                    .collect(Collectors.toList());
+        }
+        GoodCangCreateB2bReq.ShipmentFile shipmentFile = GoodCangCreateB2bReq.ShipmentFile.builder()
+                .labellingRequire(CharSequenceUtil.blankToDefault(boxHead.getLabelingRequirement(), ""))
+                .labelSize(B2bPackingLabelSizeEnum.getGoodCangCode(boxHead.getLabelSize()))
+                .shipmentFileId(boxHead.getShipmentFileId())
+                .build();
+        return Collections.singletonList(shipmentFile);
     }
 
     private List<GoodCangCreateB2bReq.PackingLine> buildGoodCangPackingLineList(String packingType,

@@ -187,7 +187,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
-    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
     private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(0, 1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
@@ -1145,7 +1145,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
-            uploadFileReq.setFileType(GOOD_CANG_ORDER_ATTACHMENT);
+            uploadFileReq.setFileType(GOOD_CANG_ORDER_PACKING_ATTACHMENT);
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
@@ -1185,6 +1185,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead : boxHeadMap.values()) {
+            if (CollUtil.isNotEmpty(boxHead.getShipmentFileList())) {
+                preparePackingShipmentFileList(service, req, boxHead);
+                continue;
+            }
             if (Objects.nonNull(boxHead.getShipmentFileId()) || StrUtil.isBlank(boxHead.getShipmentFileBase64())) {
                 continue;
             }
@@ -1197,15 +1201,40 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    private void preparePackingShipmentFileList(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                                ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        for (ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile : boxHead.getShipmentFileList()) {
+            if (Objects.nonNull(shipmentFile.getShipmentFileId()) || StrUtil.isBlank(shipmentFile.getShipmentFileBase64())) {
+                continue;
+            }
+            shipmentFile.setShipmentFileId(uploadPackingShipmentFile(service, req, shipmentFile));
+        }
+        for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item : req.getPackingDetailList()) {
+            if (Objects.equals(item.getBoxSeq(), boxHead.getBoxSeq())) {
+                item.setShipmentFileList(boxHead.getShipmentFileList());
+            }
+        }
+    }
+
     private Integer uploadPackingShipmentFile(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
                                               ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem boxHead) {
+        ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem.builder()
+                .shipmentFileBase64(boxHead.getShipmentFileBase64())
+                .shipmentFileUrl(boxHead.getShipmentFileUrl())
+                .shipmentFileName(boxHead.getShipmentFileName())
+                .build();
+        return uploadPackingShipmentFile(service, req, shipmentFile);
+    }
+
+    private Integer uploadPackingShipmentFile(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req,
+                                              ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile) {
         ThirdWarehouseUploadFileReq uploadFileReq = new ThirdWarehouseUploadFileReq();
         uploadFileReq.setAuthId(req.getAuthId());
         uploadFileReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
         uploadFileReq.setOrderCode(req.getReferenceNo());
-        uploadFileReq.setFileData(boxHead.getShipmentFileBase64());
-        uploadFileReq.setFileUrl(boxHead.getShipmentFileUrl());
-        uploadFileReq.setFileName(boxHead.getShipmentFileName());
+        uploadFileReq.setFileData(shipmentFile.getShipmentFileBase64());
+        uploadFileReq.setFileUrl(shipmentFile.getShipmentFileUrl());
+        uploadFileReq.setFileName(shipmentFile.getShipmentFileName());
         uploadFileReq.setFileType("SHIPMENT_LABEL_ATTACHMENT");
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
         if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
