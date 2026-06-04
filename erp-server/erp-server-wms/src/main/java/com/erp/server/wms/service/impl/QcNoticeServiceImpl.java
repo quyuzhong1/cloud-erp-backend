@@ -1216,6 +1216,17 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcInfoIds = qcInfoViews.stream().map(item -> item.getQcBillId()).collect(Collectors.toList());
         List<QcResultEntity> qcResults = qcResultService.getByMainIdList(qcInfoIds);
 
+        // 完成质检（详细）查看：按 qc_result.id 批量取 attachment 中产品实物图片(product) / 箱唛图片(box)，用于 qcResultView 回显
+        List<String> qcResultIds = qcResults.stream()
+                .map(QcResultEntity::getId)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toList());
+        Map<String, List<WmsAttachmentDTO.UpdateDTO>> qcResultAttachMap = CollUtil.isEmpty(qcResultIds)
+                ? Collections.emptyMap()
+                : attachmentService.getByBusinessIds(qcResultIds).stream()
+                        .filter(a -> WmsConstant.QC_PRODUCT.equals(a.getType()) || WmsConstant.QC_BOX.equals(a.getType()))
+                        .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
+
         List<QcNoticeDTO.QcInspectItemView> qcInspectItemViews = new ArrayList<>();
         List<QcNoticeDTO.QcImageView> qcImageViews = new ArrayList<>();
         for (QcNoticeDTO.QcInfoFullView qcInfoView : qcInfoViews) {
@@ -1287,6 +1298,24 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         .orElse(null);
                 if (Objects.nonNull(qcResultEntity)) {
                     BeanUtils.copyProperties(qcResultEntity,qcResultView);
+                    // 回显已落库的产品实物图片 / 箱唛图片（attachment.business_id = qc_result.id）
+                    List<WmsAttachmentDTO.UpdateDTO> attaches = qcResultAttachMap.getOrDefault(qcResultEntity.getId(), Collections.emptyList());
+                    qcResultView.setProductRealImageUrlList(attaches.stream()
+                            .filter(a -> WmsConstant.QC_PRODUCT.equals(a.getType()))
+                            .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                            .collect(Collectors.toList()));
+                    qcResultView.setProductRealImageNameList(attaches.stream()
+                            .filter(a -> WmsConstant.QC_PRODUCT.equals(a.getType()))
+                            .map(WmsAttachmentDTO.UpdateDTO::getAttachName)
+                            .collect(Collectors.toList()));
+                    qcResultView.setBoxImageUrlList(attaches.stream()
+                            .filter(a -> WmsConstant.QC_BOX.equals(a.getType()))
+                            .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
+                            .collect(Collectors.toList()));
+                    qcResultView.setBoxImageNameList(attaches.stream()
+                            .filter(a -> WmsConstant.QC_BOX.equals(a.getType()))
+                            .map(WmsAttachmentDTO.UpdateDTO::getAttachName)
+                            .collect(Collectors.toList()));
                 }
             } else {
                 qcInfoView.setQcStatus(QcBillStatusEnum.WAIT_QC.getCode());
@@ -1622,6 +1651,18 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
         if (CollUtil.isNotEmpty(qcResultBatchUpdateList)) qcResultService.updateBatchById(qcResultBatchUpdateList);
+
+        // 完成质检（详细版）：将质检结果中的产品实物图片 / 箱唛图片 落库到 attachment (business_id = qc_result.id)
+        for (QcNoticeDTO.QcInfoFullView qcInfoView : dto) {
+            QcResultEntity qcResult = qcResultMap.get(qcInfoView.getQcBillId());
+            if (qcResult == null || qcInfoView.getQcResultView() == null) {
+                continue;
+            }
+            QcRemarkDTO.QcResultView qrv = qcInfoView.getQcResultView();
+            qcResultService.saveProductAndBoxImage(qcResult.getId(),
+                    qrv.getProductRealImageUrlList(), qrv.getProductRealImageNameList(),
+                    qrv.getBoxImageUrlList(), qrv.getBoxImageNameList());
+        }
 
         //更新收货单的待质检量
         List<String> qcIdList = qcInfoBatchUpdateList.stream().map(QcInfoEntity::getId).distinct().collect(Collectors.toList());
@@ -1981,6 +2022,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (CollUtil.isNotEmpty(detailMap.values())) qcNoticeDetailService.updateBatchById(detailMap.values());
         if (CollUtil.isNotEmpty(qcInfoBatchUpdateList)) qcInfoService.updateBatchById(qcInfoBatchUpdateList);
         if (CollUtil.isNotEmpty(qcResultBatchUpdateList)) qcResultService.updateBatchById(qcResultBatchUpdateList);
+
+        // 完成质检（简易版/App）：产品实物图片、箱唛图片均不在此路径落库，保持原有附件不变。
 
         // 汇集并用1次远程Feign批量累加采购订单合格数
         qcInfoService.batchHandlePurchaseOrderQcAccumulation(accumulateParams);
