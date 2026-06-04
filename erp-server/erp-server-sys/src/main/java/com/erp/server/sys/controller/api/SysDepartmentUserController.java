@@ -19,15 +19,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 部门员工管理
+ *
  * @Classname
-
  * @Date 2022-07-13 18:49
  * @Created by yl
  */
@@ -50,7 +47,7 @@ public class SysDepartmentUserController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除部门人员")
     @RequestMapping("/remove")
     public ApiResult remove(@RequestBody List<String> ids) {
-        boolean flag = sysDepartmentUserService.removeByIds(ids);
+        boolean flag = sysDepartmentUserService.deleteByIds(ids);
         return flag == true ? success() : failure();
     }
 
@@ -70,10 +67,11 @@ public class SysDepartmentUserController extends BaseController {
 
     /**
      * 根据人员id查询部门
-     * @author Will
-     * @date: 2023/3/27 12:10
+     *
      * @param userId
      * @return ApiResult
+     * @author Will
+     * @date: 2023/3/27 12:10
      */
     @GetMapping("/getDeptByUserId")
     public ApiResult getDeptByUserId(@RequestParam("userId") String userId) {
@@ -84,17 +82,17 @@ public class SysDepartmentUserController extends BaseController {
 
     /**
      * 根据部门id获取员工信息
-     * @author yl
-     * @date 2023-06-05 12:02
+     *
      * @param deptId
      * @return
+     * @author yl
+     * @date 2023-06-05 12:02
      */
     @GetMapping("/listDeptUserByDeptId")
     public ApiResult<List<FindUserDTO>> listDeptUserByDeptId(@RequestParam("deptId") String deptId) {
-        List<FindUserDTO>  resultList = sysDepartmentUserService.listDeptUserByDeptId(deptId);
+        List<FindUserDTO> resultList = sysDepartmentUserService.listDeptUserByDeptId(deptId);
         return success(resultList);
     }
-
 
 
 }

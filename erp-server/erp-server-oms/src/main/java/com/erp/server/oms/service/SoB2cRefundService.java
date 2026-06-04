@@ -34,8 +34,6 @@ public interface SoB2cRefundService extends SuperService<SoB2cRefundEntity> {
 
     void exportExcel(SoB2cRefundDTO.PagingParamDTO dto);
 
-    PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto);
-
     BaseResultDTO.AddDTO add(SoB2cRefundEntity soB2cRefundEntity, List<SoB2cRefundDetailEntity> soB2cRefundDetailEntityList);
 
     SoB2cRefundEntity getByPlatformRefundCode(String platformRefundNo);

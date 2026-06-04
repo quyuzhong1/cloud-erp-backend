@@ -42,6 +42,11 @@ public class PackageForecastEntity extends BaseEntity<PackageForecastEntity> {
     @TableField("platform_package_no")
     private String platformPackageNo;
     /**
+     * 平台单号
+     */
+    @TableField("platform_no")
+    private String platformNo;
+    /**
     * 物流商id
     */
     @TableField("logistics_supplier_id")
