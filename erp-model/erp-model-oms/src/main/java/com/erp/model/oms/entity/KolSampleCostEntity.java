@@ -194,6 +194,11 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("product_cost")
     private BigDecimal productCost = BigDecimal.ZERO;
     /**
+     * 采购平均成本（来自B2C销售订单SKU明细，仅用于SKU成本未命中时兜底）
+     */
+    @TableField(exist = false)
+    private BigDecimal purchaseAverageCost;
+    /**
     * 成本来源
     */
     @TableField("cost_source")
