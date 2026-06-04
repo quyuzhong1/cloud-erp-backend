@@ -611,10 +611,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         Map<String, String> warehouseNameMap = warehouseEntityList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
-        List<com.erp.model.wms.dto.DictBasicDTO.ListDTO> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
-                .map(com.erp.model.wms.dto.DictBasicDTO.ListDTO::getName)
+                .map(com.erp.model.wms.entity.DictBasicEntity::getName)
                 .findFirst()
                 .orElse(b2bForeignPlatform);
         Set<String> msgSet = new LinkedHashSet<>();
@@ -635,7 +635,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                     warehouseName, conflictVmName, platformName);
             msgSet.add(format);
         }
-        throw new ServiceException(String.join(CharSequenceUtil.EMPTY, msgSet));
+        throw new ServiceException(String.join("；", msgSet));
     }
 
     /**
@@ -643,7 +643,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
         List<String> skipPlatformList = dictBasicService.getByKey(VM_CHANNEL_SKIP_CHECK_PLATFORM).stream()
-                .map(com.erp.model.wms.dto.DictBasicDTO.ListDTO::getValue)
+                .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());

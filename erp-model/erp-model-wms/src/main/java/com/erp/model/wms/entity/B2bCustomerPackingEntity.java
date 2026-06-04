@@ -59,6 +59,6 @@ public class B2bCustomerPackingEntity extends BaseEntity<B2bCustomerPackingEntit
 
     @Override
     public Serializable pkVal() {
-        return null;
+        return this.getId();
     }
 }

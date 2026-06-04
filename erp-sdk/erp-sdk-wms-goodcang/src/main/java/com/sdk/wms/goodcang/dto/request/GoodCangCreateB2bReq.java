@@ -253,7 +253,7 @@ public class GoodCangCreateB2bReq {
         private String orderDesc;
 
         /**
-         * 装箱文件ID
+         * 装箱文件ID，GoodCang 接口要求 snake_case 字段名。
          */
         @JSONField(name = "packing_file_id")
         private Integer packingFileId;
