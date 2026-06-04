@@ -174,11 +174,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     public Boolean update(KolFeedbackDTO.UpdateDTO addOrUpdateDTO) {
         KolFeedbackEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "KOL回片列单"));
-        
-        // 如果已回片，不允许编辑
-        if (FeedbackStatusEnum.COMPLETED.getCode().equals(old.getFeedbackStatus())) {
-            throw new ServiceException("已回片状态不允许编辑");
-        }
+        // 产品要求：回片列表编辑不再按“已回片”状态拦截，编辑后继续同步寄样费用回片链接。
         
         KolFeedbackEntity kolFeedbackEntity =  BeanMapperUtils.map(KolFeedbackEntity.class, addOrUpdateDTO);
 
@@ -224,16 +220,10 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             throw new ServiceException("删除ID列表不能为空");
         }
         
-        // 检查是否有已回片状态的数据，已回片不允许删除
+        // 产品要求：回片列表删除不再按“已回片”状态拦截，删除时只维护寄样费用回片链接引用。
         List<KolFeedbackEntity> list = super.listByIds(dto.getIds());
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException("未找到要删除的数据");
-        }
-        
-        for (KolFeedbackEntity entity : list) {
-            if (FeedbackStatusEnum.COMPLETED.getCode().equals(entity.getFeedbackStatus())) {
-                throw new ServiceException("已回片状态不允许删除");
-            }
         }
         
         Set<String> deleteIdSet = new HashSet<>(dto.getIds());
@@ -253,11 +243,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         if (entity == null) {
             throw new ServiceException("KOL回片列表不存在");
         }
-        
-        // 检查状态，已回片不允许删除
-        if (FeedbackStatusEnum.COMPLETED.getCode().equals(entity.getFeedbackStatus())) {
-            throw new ServiceException("已回片状态不允许删除");
-        }
+        // 产品要求：回片列表删除不再按“已回片”状态拦截，删除时只维护寄样费用回片链接引用。
         
         boolean hasSameActiveFeedback = hasSameActiveFeedback(entity, Collections.singleton(id));
 

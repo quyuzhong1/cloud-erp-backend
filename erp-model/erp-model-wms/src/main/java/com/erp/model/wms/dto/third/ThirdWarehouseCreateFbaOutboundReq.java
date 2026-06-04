@@ -274,6 +274,10 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          */
         private String shipmentFileBase64;
         /**
+         * 货件标签文件列表
+         */
+        private List<ShipmentFileItem> shipmentFileList;
+        /**
          * 贴标要求
          */
         private String labelingRequirement;
@@ -281,6 +285,29 @@ public class ThirdWarehouseCreateFbaOutboundReq extends ThirdWarehouseAuth {
          * 箱序号
          */
         private Integer boxSeq;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class ShipmentFileItem {
+        /**
+         * 货件标签文件ID
+         */
+        private Integer shipmentFileId;
+        /**
+         * 货件标签文件URL
+         */
+        private String shipmentFileUrl;
+        /**
+         * 货件标签文件名称
+         */
+        private String shipmentFileName;
+        /**
+         * 货件标签文件base64
+         */
+        private String shipmentFileBase64;
     }
 
     @Data

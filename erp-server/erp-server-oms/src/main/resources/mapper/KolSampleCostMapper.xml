@@ -208,6 +208,7 @@
             sba.partition_id,
             sba.type,
             sba.detail_id,
+            sbd.product_cost as purchase_average_cost,
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
@@ -261,6 +262,7 @@
         and kba.approve_status = 'approve'
         ) sba
         left join kolFeedback kfb on sba.source_type = kfb.source_type and sba.detail_id = kfb.source_detail_id
+        left join so_b2c_detail sbd on sba.source_type = 'kolB2cApplication' and sbd.id = sba.so_detail_id and sbd.is_deleted = false
         where sba.so_detail_id in 
         <foreach collection="soDetailIdList" item="id" open="(" separator="," close=")">
              #{id}

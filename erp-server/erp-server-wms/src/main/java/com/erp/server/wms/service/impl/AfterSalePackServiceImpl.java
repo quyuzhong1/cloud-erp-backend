@@ -178,8 +178,12 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
         if (warehouseEntity == null) {
             throw new ServiceException("东莞售后仓库不存在或者被禁用");
         }
-        // 查询仓位信息，普通仓位按 code 查询；空仓位没有 code，需要按 name 查询后参与后续校验和赋值。
-        List<String> warehouseLocationCodes = detailList.stream().map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode).distinct().collect(Collectors.toList());
+        // 查询仓位信息：空仓位的 code 真正存为 ""，前端也以 "" 表示空仓位，统一按 code 匹配，无需再按 name 兜底查询。
+        List<String> warehouseLocationCodes = detailList.stream()
+                .map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.lambdaQuery()
                 .in(WarehouseLocationEntity::getCode, warehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
@@ -187,17 +191,10 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .list();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream()
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, item -> item, (v1, v2) -> v1));
-        if (warehouseLocationCodes.contains(EMPTY_WAREHOUSE_LOCATION_NAME)) {
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationService.lambdaQuery()
-                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
-                    .eq(WarehouseLocationEntity::getDisabled, false)
-                    .eq(WarehouseLocationEntity::getName, EMPTY_WAREHOUSE_LOCATION_NAME)
-                    .one();
-            if (ObjectUtil.isNotEmpty(warehouseLocationEntity)) {
-                warehouseLocationMap.put(EMPTY_WAREHOUSE_LOCATION_NAME, warehouseLocationEntity);
-            }
-        }
+                .collect(Collectors.toMap(
+                        location -> CharSequenceUtil.emptyIfNull(location.getCode()),
+                        item -> item,
+                        (v1, v2) -> v1));
         List<String> notExistWarehouseLocationCodeList = detailList.stream()
                 .map(AfterSalePackDetailDTO.UpdateDTO::getOutWarehouseLocationCode)
                 .filter(Objects::nonNull)
@@ -205,7 +202,11 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .distinct()
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notExistWarehouseLocationCodeList)) {
-            throw new ServiceException("箱唛保存失败，以下仓位不存在：" + String.join(",", notExistWarehouseLocationCodeList));
+            // 空仓位 code 为 ""，错误提示里替换为可读名称，避免输出空字符串。
+            String displayCodes = notExistWarehouseLocationCodeList.stream()
+                    .map(code -> StringUtils.isBlank(code) ? EMPTY_WAREHOUSE_LOCATION_NAME : code)
+                    .collect(Collectors.joining(","));
+            throw new ServiceException("箱唛保存失败，以下仓位不存在：" + displayCodes);
         }
         Map<String, ProductDetailEntity> productMap = productList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, item -> item, (v1, v2) -> v1));
         // 查询售后装箱明细信息
@@ -490,15 +491,15 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
     }
 
     private void checkDetailList(List<AfterSalePackDetailDTO.UpdateDTO> detailList) {
-        // 校验所有的拣货仓位都不能为空
-        if (detailList.stream().anyMatch(detail -> StringUtils.isBlank(detail.getOutWarehouseLocationCode()))) {
+        // 校验所有的拣货仓位都不能为空：空仓位的 code 为 "" 属于合法值，仅当字段缺失（null）时拦截。
+        if (detailList.stream().anyMatch(detail -> detail.getOutWarehouseLocationCode() == null)) {
             throw new ServiceException("箱唛明细拣货仓位不能为空");
         }
         for (AfterSalePackDetailDTO.UpdateDTO detail : detailList) {
             if (StringUtils.isBlank(detail.getSkuNo())) {
                 throw new ServiceException("箱唛明细SKU不能为空");
             }
-            if (StringUtils.isBlank(detail.getOutWarehouseLocationCode())) {
+            if (detail.getOutWarehouseLocationCode() == null) {
                 throw new ServiceException("箱唛明细拣货仓位不能为空");
             }
             if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
@@ -707,12 +708,14 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 BeanMapperUtils.copy(afterSalePackDetailEntity, viewDTO);
                 WarehouseLocationEntity outWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getOutWarehouseLocationId());
                 if (ObjectUtil.isNotEmpty(outWarehouseLocationEntity)) {
-                    viewDTO.setOutWarehouseLocationCode(StringUtils.isNotBlank(outWarehouseLocationEntity.getCode()) ? outWarehouseLocationEntity.getCode() : outWarehouseLocationEntity.getName());
+                    // 空仓位 code 即为 ""，与新增/编辑的入参约定保持一致，不再用名称兜底以免回写时校验不上。
+                    viewDTO.setOutWarehouseLocationCode(CharSequenceUtil.emptyIfNull(outWarehouseLocationEntity.getCode()));
                     viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
                 }
                 WarehouseLocationEntity inWarehouseLocationEntity = warehouseLocationMap.get(afterSalePackDetailEntity.getInWarehouseLocationId());
                 if (ObjectUtil.isNotEmpty(inWarehouseLocationEntity)) {
-                    viewDTO.setInWarehouseLocationCode(StringUtils.isNotBlank(inWarehouseLocationEntity.getCode()) ? inWarehouseLocationEntity.getCode() : inWarehouseLocationEntity.getName());
+                    // 空仓位 code 即为 ""，与出库仓位保持同一约定，不再用名称兜底以免回写时校验不上。
+                    viewDTO.setInWarehouseLocationCode(CharSequenceUtil.emptyIfNull(inWarehouseLocationEntity.getCode()));
                     viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
                 }
                 viewDTOList.add(viewDTO);
