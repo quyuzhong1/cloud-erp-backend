@@ -61,20 +61,19 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         if (CollectionUtils.isNotEmpty(fieldErrors)) {
             errorMsgList.addAll(fieldErrors);
         }
-        Integer boxSeq;
-        try {
-            boxSeq = Integer.parseInt(row.getBoxSeq().trim());
-            if (boxSeq <= 0) {
-                errorMsgList.add("序号必须为正整数");
+        Integer boxSeq = null;
+        if (CharSequenceUtil.isNotBlank(row.getBoxSeq())) {
+            try {
+                boxSeq = Integer.parseInt(row.getBoxSeq().trim());
+                if (boxSeq <= 0) {
+                    errorMsgList.add("序号必须为正整数");
+                }
+            } catch (Exception e) {
+                errorMsgList.add("序号格式不正确");
             }
-        } catch (Exception e) {
-            errorMsgList.add("序号格式不正确");
-            boxSeq = null;
         }
         Integer packingQty = null;
-        if (CharSequenceUtil.isBlank(row.getPackingQty())) {
-            errorMsgList.add("装箱数量不能为空");
-        } else {
+        if (CharSequenceUtil.isNotBlank(row.getPackingQty())) {
             try {
                 packingQty = Integer.parseInt(row.getPackingQty().trim());
                 if (packingQty <= 0) {

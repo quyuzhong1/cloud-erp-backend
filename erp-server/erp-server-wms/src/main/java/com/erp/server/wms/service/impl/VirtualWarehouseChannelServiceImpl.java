@@ -68,6 +68,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     private CustomerFeign customerFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 批量新增
@@ -607,11 +609,11 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         Map<String, String> conflictVmNameMap = conflictVirtualWarehouses.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName, (left, right) -> left));
-        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class, warehouseIds);
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
         Map<String, String> warehouseNameMap = warehouseEntityList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
-        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.SALES_PLATFORM.getType()));
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
                 .map(com.erp.model.wms.entity.DictBasicEntity::getName)
@@ -642,7 +644,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
-        List<String> skipPlatformList = dictBasicService.getByKey(VM_CHANNEL_SKIP_CHECK_PLATFORM).stream()
+        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(VM_CHANNEL_SKIP_CHECK_PLATFORM)).stream()
                 .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()

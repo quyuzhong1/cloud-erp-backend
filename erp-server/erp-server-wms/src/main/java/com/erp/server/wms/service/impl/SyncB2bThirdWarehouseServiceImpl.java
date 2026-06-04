@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.threadlocal.UserContext;
@@ -91,7 +90,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         String msg = StrUtil.format("用户【{}】操作【{}】单据单号为【{}】异步拦截三方仓出库订单，等待三方仓处理/未同步三方仓", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单" , entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "【中台任务】发货拦截");
 
-        String thirdWarehouseProvideCode = resultMap.getOrDefault("thirdWarehouseProvideCode","").toString();
         if (CollUtil.isEmpty(list)) {
             //添加推送任务
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
@@ -267,7 +265,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         String msg = StrUtil.format("用户【{}】操作【{}】单据单号为【{}】异步创建三方仓出库订单", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单" , entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "【中台任务】创建三方仓出库订单");
 
-        String thirdWarehouseProvideCode = resultMap.getOrDefault("thirdWarehouseProvideCode","").toString();
         if (CollUtil.isEmpty(list)) {
             //添加推送任务
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
@@ -322,6 +319,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             req.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
             return;
         }
+        req.setPackingType(entity.getPackingType());
         List<B2bCustomerPackingEntity> packingList = b2bCustomerPackingService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(packingList)) {
             return;
@@ -347,7 +345,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 .map(B2bCustomerPackingEntity::getBoxSeq)
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(boxSeq -> B2bCustomerPackingServiceImpl.getBoxHead(packingList, boxSeq).orElse(null))
+                .map(boxSeq -> b2bCustomerPackingService.getBoxHead(packingList, boxSeq).orElse(null))
                 .filter(Objects::nonNull)
                 .map(B2bCustomerPackingEntity::getId)
                 .collect(Collectors.toList());

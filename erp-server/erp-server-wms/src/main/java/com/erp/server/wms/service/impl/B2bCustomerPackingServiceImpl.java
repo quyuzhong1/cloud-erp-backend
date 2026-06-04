@@ -18,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +59,7 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
                 entityList.add(toEntity(mainId, box, line, line.getSort() != null ? line.getSort() : sort++));
             }
         }
-        saveBatch(entityList);
+        super.saveBatch(entityList, 500);
         saveBoxAttachments(packingList, entityList);
         return entityList;
     }
@@ -71,19 +69,10 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
         for (B2bCustomerPackingDTO.AddDTO box : packingList) {
             List<AttachDTO> attachList = box.getAttachList();
             if (CollUtil.isNotEmpty(attachList)) {
-                getBoxHead(entityList, box.getBoxSeq()).ifPresent(entity ->
+                b2bCustomerPackingService.getBoxHead(entityList, box.getBoxSeq()).ifPresent(entity ->
                         wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId()));
             }
         }
-    }
-
-    public static java.util.Optional<B2bCustomerPackingEntity> getBoxHead(List<B2bCustomerPackingEntity> entityList, Integer boxSeq) {
-        if (CollUtil.isEmpty(entityList)) {
-            return java.util.Optional.empty();
-        }
-        return entityList.stream()
-                .filter(entity -> Objects.equals(boxSeq, entity.getBoxSeq()))
-                .min(Comparator.comparing(B2bCustomerPackingEntity::getSort, Comparator.nullsLast(Integer::compareTo)));
     }
 
     private B2bCustomerPackingEntity toEntity(String mainId, B2bCustomerPackingDTO.AddDTO box,

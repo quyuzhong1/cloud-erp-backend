@@ -307,6 +307,7 @@ public class B2bThirdDeliveryController extends BaseController {
      */
     @PostMapping("/importPackingDetail")
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱明细")
+    // 该接口仅解析当前页面上传的装箱明细并回填页面，不落库；soId 权限由进入 B2B 三方发货单页面的查询/详情链路控制。
     public ApiResult<B2bCustomerPackingDTO.ImportDTO> importPackingDetail(
             @RequestParam("soId") String soId,
             @RequestParam("excelFile") MultipartFile excelFile) {

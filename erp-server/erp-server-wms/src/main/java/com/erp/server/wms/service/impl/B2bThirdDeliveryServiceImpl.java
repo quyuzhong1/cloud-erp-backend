@@ -187,7 +187,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
-    private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
     private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
@@ -1156,7 +1155,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
-            uploadFileReq.setFileType(GOOD_CANG_ORDER_PACKING_ATTACHMENT);
+            // GoodCang B2B 主装箱清单上传使用独立 useFor，与每箱货件标签附件区分。
+            uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_PACKING_ATTACHMENT);
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
@@ -1670,6 +1670,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
         if (CollUtil.isEmpty(detailList)) {
             List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
+            if (soDetailList == null) {
+                throw new ServiceException("获取销售订单明细失败，请稍后重试");
+            }
             detailList = getPackingImportDetailList(soId, soDetailList);
         }
         B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
@@ -1863,10 +1866,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isGoodCangWarehouse(String deliveryWarehouseId) {
-        if (CharSequenceUtil.isBlank(deliveryWarehouseId)) {
-            return false;
-        }
-        OverseasProviderEntity overseasProvider = overseasProviderService.getByWarehouseId(deliveryWarehouseId);
+        OverseasProviderEntity overseasProvider = getOverseasProviderByWarehouseId(deliveryWarehouseId);
         return Objects.nonNull(overseasProvider) && PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(overseasProvider.getCode());
     }
 
@@ -1977,6 +1977,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                         Collectors.summingInt(e -> e.getSaleQty() != null ? e.getSaleQty() : 0)));
         int sort = 0;
         for (B2bCustomerPackingDTO.AddDTO box : packingDetailList) {
+            if (CollUtil.isEmpty(box.getPackingLineList())) {
+                continue;
+            }
             for (B2bCustomerPackingDTO.LineAddDTO row : box.getPackingLineList()) {
                 com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO product = skuMap.get(row.getSkuNo());
                 if (product != null) {
@@ -2019,11 +2022,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<WmsAttachmentDTO.UpdateDTO> allAttach = wmsAttachmentService.getByBusinessIds(packingIds, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode());
         Map<String, List<WmsAttachmentDTO.UpdateDTO>> attachMap = allAttach.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
         Map<Integer, List<B2bCustomerPackingEntity>> packingGroup = packingEntities.stream()
+                .filter(e -> e.getBoxSeq() != null)
                 .collect(Collectors.groupingBy(B2bCustomerPackingEntity::getBoxSeq, LinkedHashMap::new, Collectors.toList()));
         List<B2bCustomerPackingDTO.ViewDTO> packingViewList = new ArrayList<>();
         for (Map.Entry<Integer, List<B2bCustomerPackingEntity>> entry : packingGroup.entrySet()) {
             List<B2bCustomerPackingEntity> boxEntities = entry.getValue();
-            B2bCustomerPackingEntity boxHead = B2bCustomerPackingServiceImpl.getBoxHead(boxEntities, entry.getKey()).orElse(boxEntities.get(0));
+            B2bCustomerPackingEntity boxHead = b2bCustomerPackingService.getBoxHead(boxEntities, entry.getKey()).orElse(boxEntities.get(0));
             B2bCustomerPackingDTO.ViewDTO boxDTO = new B2bCustomerPackingDTO.ViewDTO();
             boxDTO.setMainId(boxHead.getMainId());
             boxDTO.setBoxSeq(boxHead.getBoxSeq());

@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
-    private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
 
     @Resource
     private GoodCangService goodCangService;
@@ -196,7 +195,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private boolean isGoodCangB2bAttachment(String fileType) {
         return GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(fileType)
-                || GOOD_CANG_ORDER_PACKING_ATTACHMENT.equalsIgnoreCase(fileType)
+                || ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_PACKING_ATTACHMENT.equalsIgnoreCase(fileType)
                 || ThirdWarehouseUploadFileReq.FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT.equalsIgnoreCase(fileType);
     }
     @Override
