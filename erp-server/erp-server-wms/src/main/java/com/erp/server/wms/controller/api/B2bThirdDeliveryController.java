@@ -314,6 +314,9 @@ public class B2bThirdDeliveryController extends BaseController {
         if (CharSequenceUtil.isBlank(soId)) {
             throw new ServiceException("销售订单id不能为空");
         }
+        if (excelFile == null || excelFile.isEmpty()) {
+            throw new ServiceException("导入文件不能为空");
+        }
         return success(b2bThirdDeliveryService.importPackingDetail(soId, excelFile));
     }
 

@@ -349,7 +349,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (OrderTypeEnum.B2B.getCode().equals(dto.getOrderType())
                 && StringUtils.isBlank(warehouseId)
                 && StringUtils.isNotBlank(customerId)) {
-            // 手工新增路径只持有 customerId，需独立查询客户档案默认发货仓库。
+            // 手工新增路径只持有 customerId，且仅在请求未带仓库时查询一次客户档案默认发货仓库。
+            // 手工新增路径只持有 customerId，且仅在请求未带仓库时查询一次客户档案默认发货仓库。
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
             if (customerInfoEntity != null && StringUtils.isNotBlank(customerInfoEntity.getDefaultShippingWarehouse())) {
                 warehouseId = customerInfoEntity.getDefaultShippingWarehouse();

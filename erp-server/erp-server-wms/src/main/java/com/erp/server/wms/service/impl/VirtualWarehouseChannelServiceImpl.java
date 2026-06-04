@@ -613,6 +613,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         Map<String, String> warehouseNameMap = warehouseEntityList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
+        // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，这里不会每次直查字典表。
         List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.SALES_PLATFORM.getType()));
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
@@ -637,6 +638,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                     warehouseName, conflictVmName, platformName);
             msgSet.add(format);
         }
+        // 多条业务错误使用中文分号分隔，前端可直接展示完整提示。
         throw new ServiceException(String.join("；", msgSet));
     }
 
@@ -644,6 +646,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
+        // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，避免保存/启用渠道时反复查库。
         List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(VM_CHANNEL_SKIP_CHECK_PLATFORM)).stream()
                 .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)

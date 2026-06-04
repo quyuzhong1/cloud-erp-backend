@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
  */
 public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCustomerPackingImportExcelDTO> {
 
+    // EasyExcel 逐行回调时主动截断导入规模，避免异常大文件持续占用内存。
     private static final int MAX_IMPORT_ROWS = 5000;
 
     private final List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList;

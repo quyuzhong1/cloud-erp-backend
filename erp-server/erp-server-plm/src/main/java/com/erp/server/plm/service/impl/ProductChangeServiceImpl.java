@@ -928,6 +928,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
             return;
         }
+        // 旺店同步是外部补偿动作，审批主事务提交后再执行，避免第三方失败回滚已审批的产品变更。
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
