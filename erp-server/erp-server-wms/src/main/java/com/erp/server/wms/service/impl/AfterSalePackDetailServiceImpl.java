@@ -30,7 +30,6 @@ import com.erp.server.wms.mapper.AfterSalePackDetailMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +54,6 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     private static final String OPERATION_ADD = "add";
     private static final String OPERATION_REDUCE = "reduce";
     private static final String OPERATION_REMOVE = "remove";
-    private static final String EMPTY_WAREHOUSE_LOCATION_NAME = "空仓位";
 
     @Resource
     private OperateLogService operateLogService;
@@ -92,8 +90,8 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (afterSalePackEntity == null) {
             throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "售后装箱单");
         }
-        // 已经发生了移仓，拆箱时移入仓位不能为空
-        if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse()) && StrUtil.isBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
+        // 已经发生了移仓，拆箱时移入仓位不能为空：空仓位 code 为 "" 属于合法选择，仅当字段缺失（null）时拦截。
+        if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse()) && addOrUpdateDTO.getInWarehouseLocationCode() == null) {
             throw new ServiceException("移入仓位不能为空");
         }
         // 箱唛状态不等于已封箱，不可操作
@@ -186,11 +184,12 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (!OPERATION_REMOVE.equals(operation) && (addOrUpdateDTO.getUpdateQty() == null || addOrUpdateDTO.getUpdateQty() <= 0)) {
             throw new ServiceException("新增或者减少数量时，更新数量必填且不能为0");
         }
-        if (StrUtil.isBlank(addOrUpdateDTO.getOutWarehouseLocationCode())) {
+        // 拣货仓位不能为空：空仓位 code 为 "" 属于合法值，仅当字段缺失（null）时拦截。
+        if (addOrUpdateDTO.getOutWarehouseLocationCode() == null) {
             throw new ServiceException("拣货仓位不能为空");
         }
-        // 如果拣货仓位和移入仓位都不为空，两个仓位不能相同
-        if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode()) && addOrUpdateDTO.getOutWarehouseLocationCode().equals(addOrUpdateDTO.getInWarehouseLocationCode())) {
+        // 如果拣货仓位和移入仓位都不为 null，两个仓位不能相同（包括同时选择空仓位的场景）。
+        if (addOrUpdateDTO.getInWarehouseLocationCode() != null && addOrUpdateDTO.getOutWarehouseLocationCode().equals(addOrUpdateDTO.getInWarehouseLocationCode())) {
             throw new ServiceException("拣货仓位和移入仓位不能相同");
         }
     }
@@ -205,40 +204,32 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (warehouseEntity == null) {
             throw new ServiceException("东莞售后仓库不存在或者被禁用");
         }
+        // 收集需要查询的 code：空仓位 code 为 ""，前端也以 "" 表示空仓位，统一按 code 匹配；仅 null 视为字段缺失。
         List<String> warehouseLocationCodes = new ArrayList<>();
-        warehouseLocationCodes.add(addOrUpdateDTO.getOutWarehouseLocationCode());
-        if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode())) {
+        if (addOrUpdateDTO.getOutWarehouseLocationCode() != null) {
+            warehouseLocationCodes.add(addOrUpdateDTO.getOutWarehouseLocationCode());
+        }
+        if (addOrUpdateDTO.getInWarehouseLocationCode() != null) {
             warehouseLocationCodes.add(addOrUpdateDTO.getInWarehouseLocationCode());
         }
-        List<String> normalWarehouseLocationCodes = warehouseLocationCodes.stream()
-                .filter(StringUtils::isNotBlank)
-                .filter(code -> !EMPTY_WAREHOUSE_LOCATION_NAME.equals(code))
-                .distinct()
-                .collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = CollectionUtils.isEmpty(normalWarehouseLocationCodes)
+        List<String> distinctWarehouseLocationCodes = warehouseLocationCodes.stream().distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = CollectionUtils.isEmpty(distinctWarehouseLocationCodes)
                 ? Collections.emptyList()
                 : warehouseLocationService.lambdaQuery()
-                .in(WarehouseLocationEntity::getCode, normalWarehouseLocationCodes)
+                .in(WarehouseLocationEntity::getCode, distinctWarehouseLocationCodes)
                 .eq(WarehouseLocationEntity::getDisabled, false)
                 .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
                 .list();
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationEntityList.stream()
-                .filter(location -> StringUtils.isNotBlank(location.getCode()))
-                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, Function.identity(), (v1, v2) -> v1));
-        if (warehouseLocationCodes.contains(EMPTY_WAREHOUSE_LOCATION_NAME)) {
-            WarehouseLocationEntity emptyWarehouseLocation = warehouseLocationService.lambdaQuery()
-                    .eq(WarehouseLocationEntity::getName, EMPTY_WAREHOUSE_LOCATION_NAME)
-                    .eq(WarehouseLocationEntity::getDisabled, false)
-                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseEntity.getId())
-                    .one();
-            if (emptyWarehouseLocation != null) {
-                warehouseLocationMap.put(EMPTY_WAREHOUSE_LOCATION_NAME, emptyWarehouseLocation);
-            }
-        }
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(
+                        location -> CharSequenceUtil.emptyIfNull(location.getCode()),
+                        Function.identity(),
+                        (v1, v2) -> v1));
         if (warehouseLocationMap.get(addOrUpdateDTO.getOutWarehouseLocationCode()) == null) {
             throw new ServiceException("拣货仓位不存在或已禁用");
         }
-        if (StringUtils.isNotBlank(addOrUpdateDTO.getInWarehouseLocationCode()) && warehouseLocationMap.get(addOrUpdateDTO.getInWarehouseLocationCode()) == null) {
+        if (addOrUpdateDTO.getInWarehouseLocationCode() != null && warehouseLocationMap.get(addOrUpdateDTO.getInWarehouseLocationCode()) == null) {
             throw new ServiceException("移入仓位不存在或已禁用");
         }
         return warehouseLocationMap;

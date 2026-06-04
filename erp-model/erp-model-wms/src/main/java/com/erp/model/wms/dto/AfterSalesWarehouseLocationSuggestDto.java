@@ -343,7 +343,7 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
         @Size(max = 50, message = "源仓位编码最大长度不能超过50位")
         private String sourceWarehouseLocationCode;
 
-        @NotBlank(message = "目标仓位不能为空")
+        @NotNull(message = "目标仓位不能为空")
         @Size(max = 50, message = "目标仓位编码最大长度不能超过50位")
         private String targetWarehouseLocationCode;
 
@@ -420,12 +420,20 @@ public class AfterSalesWarehouseLocationSuggestDto implements Serializable {
 
     /**
      * 整箱移仓 — 单行提交参数，字段命名与 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO}、
-     * {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO} 对齐，便于前端将 {@code /queryBoxByLabel} 结果
+     * {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO} 对齐，便于前端将 {@code /getByCartonCode} 结果
      * （主单 + {@code detailViewDTOList} 每一项）直接拼成 {@code lines}。
      */
     @Data
     @NoArgsConstructor
     public static class PdaFullBoxTransferSubmitLineDto {
+
+        /**
+         * 装箱明细主键，与 {@link com.erp.model.wms.dto.AfterSalePackDetailDTO.ViewDTO#getId()} 相同；
+         * 服务端以此作为唯一标识，防止前端重复提交同一明细行。
+         */
+        @NotBlank(message = "装箱明细detailId不能为空")
+        @Size(max = 19, message = "装箱明细id最大长度不能超过19位")
+        private String detailId;
 
         /**
          * 售后装箱单主键，与主单 {@link com.erp.model.wms.dto.AfterSalePackDTO.ViewDTO#getId()}、

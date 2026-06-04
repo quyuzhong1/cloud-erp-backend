@@ -689,12 +689,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getCode().equals(detailView.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
-            detailView.setAfterSalePackDetailList(afterSalePackDetailMap.get(detailView.getSkuId()));
+            // 整箱退货：移除单行箱唛或整箱移除SKU时 actualQty=0，详情接口不应回传这些已移除的箱唛明细。
+            detailView.setAfterSalePackDetailList(filterActiveAfterSalePackDetails(afterSalePackDetailMap.get(detailView.getSkuId())));
 
             detailViewDTOS.add(detailView);
         }
         viewDTO.setPurchasePriceDetailList(detailViewDTOS);
         return viewDTO;
+    }
+
+    /**
+     * 过滤已移除的售后装箱明细：actualQty <= 0 视为「单行移除」或「整箱移除SKU」，详情接口不应回传。
+     * 与 addAfterSalePackAddLog / addAfterSalePackUpdateLog 等位置保持同一判定口径。
+     */
+    private List<AfterSalePackDTO.DetailDTO> filterActiveAfterSalePackDetails(List<AfterSalePackDTO.DetailDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return detailList;
+        }
+        return detailList.stream()
+                .filter(Objects::nonNull)
+                .filter(detail -> getAfterSalePackActualQty(detail) > MathUtil.ZERO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -1874,7 +1889,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     /**
-     * 整箱退货新增时校验：所有 SKU 明细行的仓位必须有值，任意一行为空则抛错。
+     * 整箱退货新增时校验：所有 SKU 明细行的仓位必须有值，任意一行为 null（前端未带或多箱仓位不一致时被置空）则抛错。
+     * 空仓位 code 为 ""，属于合法值（同一 SKU 下的所有箱唛均来自空仓位），不能拦截。
      * 仅整箱退货（returnDetailType=pack 或带有 afterSalePackDetailList）才触发。
      */
     private void checkPackReturnWarehouseLocationForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
@@ -1884,16 +1900,17 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<String> skuNos = dto.getPurchasePriceDetailList().stream()
                 .filter(Objects::nonNull)
-                .filter(detail -> CharSequenceUtil.isBlank(detail.getWarehouseLocation()))
+                .filter(detail -> detail.getWarehouseLocation() == null)
                 .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(skuNos)) {
-            throw new ServiceException("整箱退货所有SKU明细行的仓位必须填写，未填写仓位的SKU：" + String.join(",", skuNos));
+            throw new ServiceException("保存失败，sku【{}】下多个箱唛的退货仓位不一致，需调整成一致的退货仓位", String.join(",", skuNos));
         }
     }
 
     /**
-     * 整箱退货修改时校验：所有 SKU 明细行的仓位必须有值，任意一行为空则抛错。
+     * 整箱退货修改时校验：所有 SKU 明细行的仓位必须有值，任意一行为 null（前端未带或多箱仓位不一致时被置空）则抛错。
+     * 空仓位 code 为 ""，属于合法值（同一 SKU 下的所有箱唛均来自空仓位），不能拦截。
      * 仅整箱退货（returnDetailType=pack 或带有 afterSalePackDetailList）才触发。
      */
     private void checkPackReturnWarehouseLocationForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
@@ -1903,11 +1920,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<String> skuNos = dto.getPurchasePriceDetailList().stream()
                 .filter(Objects::nonNull)
-                .filter(detail -> CharSequenceUtil.isBlank(detail.getWarehouseLocation()))
+                .filter(detail -> detail.getWarehouseLocation() == null)
                 .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(skuNos)) {
-            throw new ServiceException("整箱退货所有SKU明细行的仓位必须填写，未填写仓位的SKU：" + String.join(",", skuNos));
+            throw new ServiceException("保存失败，sku【{}】下多个箱唛的退货仓位不一致，需调整成一致的退货仓位", String.join(",", skuNos));
         }
     }
 
