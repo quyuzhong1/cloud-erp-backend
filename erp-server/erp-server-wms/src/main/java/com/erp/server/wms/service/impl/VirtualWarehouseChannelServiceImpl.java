@@ -611,10 +611,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         Map<String, String> warehouseNameMap = warehouseEntityList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
-        List<DictBasicEntity> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
-                .map(DictBasicEntity::getName)
+                .map(com.erp.model.wms.entity.DictBasicEntity::getName)
                 .findFirst()
                 .orElse(b2bForeignPlatform);
         Set<String> msgSet = new LinkedHashSet<>();
