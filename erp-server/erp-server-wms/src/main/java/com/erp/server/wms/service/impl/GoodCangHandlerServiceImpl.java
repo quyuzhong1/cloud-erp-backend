@@ -518,11 +518,23 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .itemList(itemList)
                         .packingList(buildGoodCangB2bPackingList(createOutboundReq))
                         .build());
+        Integer packingFileId = parseAttachmentId(createOutboundReq.getFileId(), "装箱清单附件ID");
         goodCangCreateB2bReq.setOtherInfo(GoodCangCreateB2bReq.OtherInfo.builder()
                         .orderDesc(createOutboundReq.getRemark())
-                        .packingFileId(StringUtils.isNotBlank(createOutboundReq.getFileId())?Integer.valueOf(createOutboundReq.getFileId()):null)
+                        .packingFileId(packingFileId)
                         .build());
         return goodCangCreateB2bReq;
+    }
+
+    private Integer parseAttachmentId(String attachmentId, String fieldName) {
+        if (CharSequenceUtil.isBlank(attachmentId) || "null".equalsIgnoreCase(attachmentId.trim())) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(attachmentId);
+        } catch (NumberFormatException e) {
+            throw new ServiceException("B2B三方发货单{}格式错误：{}", fieldName, attachmentId);
+        }
     }
 
     private List<GoodCangCreateB2bReq.Item> buildGoodCangB2bItemList(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {

@@ -1120,7 +1120,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private void prepareCreateFbaOutboundAttachment(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
-        if (StrUtil.isNotBlank(req.getFileId())) {
+        if (isValidAttachmentId(req.getFileId())) {
             return;
         }
         if (!needUploadAttachment(req.getThirdWarehouseProvideCode())) {
@@ -1157,6 +1157,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
             req.setFileType(getAttachmentExtension(req));
         }
+    }
+
+    private boolean isValidAttachmentId(String attachmentId) {
+        return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
     }
 
     private boolean needUploadAttachment(String providerCode) {
