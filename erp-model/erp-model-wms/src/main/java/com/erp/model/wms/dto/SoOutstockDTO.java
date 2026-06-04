@@ -1336,10 +1336,6 @@ public class SoOutstockDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
-        /**
-         * 自定义导出字段
-         */
-        private List<ExportField> fieldList;
     }
 
     @Data
