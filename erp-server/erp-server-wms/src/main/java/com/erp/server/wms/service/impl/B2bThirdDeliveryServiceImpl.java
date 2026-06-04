@@ -1657,7 +1657,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(excelImportDTO.getSoId());
-        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = enrichPackingImportDetailList(toPackingImportDetailList(soDetailList), soDetailList);
+        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getPackingImportDetailList(excelImportDTO.getSoId(), soDetailList);
         B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
         try {
             EasyExcel.read(excelImportDTO.getExcelFile().getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
@@ -1687,6 +1687,34 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         return importDTO;
+    }
+
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> getPackingImportDetailList(String soId, List<SoDetailEntity> soDetailList) {
+        if (CollUtil.isEmpty(soDetailList)) {
+            return Collections.emptyList();
+        }
+        B2bThirdDeliveryDTO.ViewQueryDTO viewQueryDTO = new B2bThirdDeliveryDTO.ViewQueryDTO();
+        viewQueryDTO.setSoId(soId);
+        viewQueryDTO.setSoDetailIds(soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
+        B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
+        if (Objects.isNull(viewDTO) || CollUtil.isEmpty(viewDTO.getDetailList())) {
+            return enrichPackingImportDetailList(toPackingImportDetailList(soDetailList), soDetailList);
+        }
+        return viewDTO.getDetailList().stream().map(e -> {
+            com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
+            dto.setSkuId(e.getSkuId());
+            dto.setSkuNo(e.getSkuNo());
+            dto.setProductName(e.getProductName());
+            dto.setSaleQty(e.getSaleQty());
+            dto.setDeliveryQty(e.getDeliveryQty());
+            dto.setPerBoxQty(e.getPerBoxQty());
+            dto.setDeliverySkuId(e.getDeliverySkuId());
+            dto.setDeliverySkuNo(e.getDeliverySkuNo());
+            dto.setWarehousePlatformSku(e.getWarehousePlatformSku());
+            dto.setBoxQty(e.getBoxQty());
+            dto.setBoxSpecNo(e.getBoxSpecNo());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> toPackingImportDetailList(List<SoDetailEntity> detailEntities) {
