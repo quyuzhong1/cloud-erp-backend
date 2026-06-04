@@ -11,7 +11,6 @@ import com.erp.server.wms.mapper.B2bCustomerPackingMapper;
 import com.erp.server.wms.service.B2bCustomerPackingService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +32,6 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
-    @Lazy
-    @Resource
-    private B2bCustomerPackingService b2bCustomerPackingService;
 
     @Override
     public List<B2bCustomerPackingEntity> listByMainIds(List<String> mainIds) {
@@ -50,7 +46,9 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<B2bCustomerPackingEntity> batchSave(String mainId, List<B2bCustomerPackingDTO.AddDTO> packingList) {
-        deleteByMainId(mainId);
+        if (CharSequenceUtil.isNotBlank(mainId)) {
+            deleteExistingByMainIds(Collections.singletonList(mainId));
+        }
         if (CollUtil.isEmpty(packingList)) {
             return Collections.emptyList();
         }
@@ -126,6 +124,10 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByMainIds(List<String> mainIds) {
+        deleteExistingByMainIds(mainIds);
+    }
+
+    private void deleteExistingByMainIds(List<String> mainIds) {
         if (CollUtil.isEmpty(mainIds)) {
             return;
         }
@@ -138,11 +140,5 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
                 .in(B2bCustomerPackingEntity::getMainId, mainIds)
                 .set(B2bCustomerPackingEntity::getIsDeleted, Boolean.TRUE)
                 .update();
-    }
-
-    private void deleteByMainId(String mainId) {
-        if (CharSequenceUtil.isNotBlank(mainId)) {
-            b2bCustomerPackingService.deleteByMainIds(Collections.singletonList(mainId));
-        }
     }
 }
