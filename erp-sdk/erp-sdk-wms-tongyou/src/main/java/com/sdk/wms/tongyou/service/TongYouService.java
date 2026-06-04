@@ -7,12 +7,10 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseQueryOutboundResponse;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateInboundReq;
 import com.sdk.wms.tongyou.dto.request.TongYouCreateOutboundReq;
-import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
-import com.sdk.wms.tongyou.dto.response.TongYouInboundResp;
-import com.sdk.wms.tongyou.dto.response.TongYouLogisticChannelResp;
-import com.sdk.wms.tongyou.dto.response.TongYouOutboundResp;
+import com.sdk.wms.tongyou.dto.response.*;
 import com.sdk.wms.tongyou.utils.TongYouUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -95,12 +93,12 @@ public class TongYouService {
     /**
      * 查询出库单
      */
-    public TongYouBaseResp<String> getOutboundBill(Map<String, Object> authJson){
+    public TongYouBaseResp<List<TongYouQueryOutboundResp>> getOutboundBill(Map<String, Object> authJson){
         Map<String, String> headerMap = new HashMap<>();
         String path = "hwc_api/hwc_order.php";
         log.warn("通邮 getOutboundBill request:{}",JSONObject.toJSONString(authJson));
         String bodyStr = OkHttpUtils.doPostJson(getPreUrl()+path,authJson, headerMap);
-        return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<String>>() {});
+        return TongYouUtils.parseToTongYouResp(bodyStr, new TypeReference<TongYouBaseResp<List<TongYouQueryOutboundResp>>>() {});
 
     }
 
