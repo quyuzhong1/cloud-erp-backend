@@ -33,6 +33,7 @@ import com.erp.model.oms.enums.KolSampleCostCostSourceEnum;
 import com.erp.model.oms.enums.KolSampleCostFeeSourceEnum;
 import com.erp.model.oms.enums.KolSampleCostImportFeeTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
@@ -42,6 +43,7 @@ import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -95,6 +97,9 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     @Resource
     private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private LogisticsFeign logisticsFeign;
@@ -276,6 +281,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         // SKU成本
         List<InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostDTOS = listInventorySkuCost(skuIdList, warehouseIdList, soOrgIdList);
         Map<String, InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, true);
+        Map<String, BigDecimal> plmPurchaseAverageCostMap = buildPlmPurchaseAverageCostMap(thisMonthList);
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
         bagCostParamDTO.setSkuIdList(skuIdList);
@@ -292,7 +298,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             // 按 销售组织+SKU+仓库 匹配 SKU 成本；未命中再用采购平均成本兜底。
             InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
             if (ObjUtil.isEmpty(invSkuCostDTO)) {
-                applyPurchaseAverageCost(kolSampleCostEntity, updateCostSourceMonth);
+                applyPurchaseAverageCost(kolSampleCostEntity, plmPurchaseAverageCostMap.get(kolSampleCostEntity.getSkuId()), updateCostSourceMonth);
             } else {
                 applyInventorySkuCost(kolSampleCostEntity, invSkuCostDTO);
             }
@@ -472,15 +478,48 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
     }
 
-    private void applyPurchaseAverageCost(KolSampleCostEntity kolSampleCostEntity, String updateCostSourceMonth) {
+    private Map<String, BigDecimal> buildPlmPurchaseAverageCostMap(List<KolSampleCostEntity> thisMonthList) {
+        List<String> skuIdList = thisMonthList.stream()
+                .filter(item -> !isPositive(item.getPurchaseAverageCost()))
+                .map(KolSampleCostEntity::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIdList)) {
+            return new HashMap<>();
+        }
+        List<SkuVO> skuVOList = ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(skuIdList), CollUtil.newArrayList());
+        return skuVOList.stream()
+                .filter(item -> ObjUtil.isNotEmpty(item) && CharSequenceUtil.isNotBlank(item.getSkuId()))
+                .filter(item -> isPositive(item.getNotTaxCostPrice()))
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getNotTaxCostPrice, (v1, v2) -> v1));
+    }
+
+    private void applyPurchaseAverageCost(KolSampleCostEntity kolSampleCostEntity, BigDecimal plmPurchaseAverageCost, String updateCostSourceMonth) {
         BigDecimal qty = MathUtil.valueOf(kolSampleCostEntity.getQty());
-        BigDecimal productCost = ObjUtil.defaultIfNull(kolSampleCostEntity.getPurchaseAverageCost(), BigDecimal.ZERO);
+        BigDecimal productCost = kolSampleCostEntity.getPurchaseAverageCost();
+        if (!isPositive(productCost)) {
+            productCost = plmPurchaseAverageCost;
+        }
+        if (!isPositive(productCost)) {
+            log.warn("SKU采购平均成本为空或0，将使用0作为兜底成本。skuId={}, skuNo={}, soCode={}, sourceType={}, sourceDetailId={}",
+                    kolSampleCostEntity.getSkuId(),
+                    kolSampleCostEntity.getSkuNo(),
+                    kolSampleCostEntity.getSoCode(),
+                    kolSampleCostEntity.getSourceType(),
+                    kolSampleCostEntity.getSourceDetailId());
+            productCost = BigDecimal.ZERO;
+        }
         kolSampleCostEntity.setExchangeRate(BigDecimal.ONE);
         kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(productCost, qty));
         kolSampleCostEntity.setFirstMileShippingCost(BigDecimal.ZERO);
         kolSampleCostEntity.setClearanceCustomsTax(BigDecimal.ZERO);
         kolSampleCostEntity.setCostSource(KolSampleCostCostSourceEnum.PURCHASE_AVG_COST.getName());
         kolSampleCostEntity.setCostSourceMonth(updateCostSourceMonth);
+    }
+
+    private boolean isPositive(BigDecimal value) {
+        return Objects.nonNull(value) && value.compareTo(BigDecimal.ZERO) > 0;
     }
 
     private Map<String, String> buildCustomerPartitionIdMap(List<SoOutstockDTO.KolSoOutstockDTO> soOutstockDTOList) {
