@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -1216,6 +1217,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
 
+    /**
+     * 取消发货并回滚库存，执行完成后发货单状态应为 {@link SoB2cDeliveryStatusEnum#CANCEL_DELIVERY}。
+     */
     @Override
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
@@ -1673,7 +1677,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.add(soB2cDelivery);
         soB2cDeliveryEntity.setIsNotOutbound(soB2cEntity.getIsNotOutbound());
         //生成直接调拨单
-        this.pushTransferInfo(soB2cDeliveryEntity);
+        if (!Boolean.TRUE.equals(soB2cDeliveryService.pushTransferInfoError(soB2cDeliveryEntity))) {
+            throw new ServiceException(ApiError.WH_GENERATE_TRANSFER_OUT_FAILED);
+        }
         // 校验是否已生成销售出库单
         boolean exist = soOutstockService.checkExist(soB2cEntity.getCode(), SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode(), OrderTypeEnum.B2C.getCode());
         if (exist) {
@@ -2522,23 +2528,76 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean pushTransferInfoError(SoB2cDeliveryEntity entity) {
+        // 同一发货单的 pushTransferInfo 必须串行：pushTransferInfo 内部是「查 transfer_info 是否已存在 -> 否则生成」的
+        // check-then-act，外层是 @GlobalTransactional(Seata XA, 120s)。多个并发入口（组包 MQ 多线程重投、重新出库、
+        // intercept、async 等）同时进入时，第二个线程在第一个线程的 XA 提交前读不到已写入的 transfer_info，
+        // 会重复生成直接调拨单。这里用 Redisson 把锁放到 @GlobalTransactional 外侧，覆盖整个事务提交窗口。
+        //
+        // waitTime 选 30s 而非 >= XA 超时(120s) 的权衡：
+        // 1) 组包 MQ 消费线程池 consumeThreadNumber=10，若热点发货单短时间触发多条 MQ，125s 的等待会迅速把消费线程占满，
+        //    其他正常单据消费被阻塞；HTTP 上游网关一般 30–60s 也会先断连但线程仍挂在 tryLock。
+        // 2) 30s 上限可保证任何调用路径最坏阻塞 30s，MQ 线程池与 HTTP 线程不会因单点热度被耗尽。
+        // 3) 单发货单维度的并发恰好挤在同一次 XA 提交窗口内的概率极低；即便锁超时拿不到，会落入下方写错误记录 + 返回 FALSE
+        //    路径，由 soB2cFeign.addSoB2cError 与上游既有的重试机制（组包 MQ 的 delay-level、重新出库重试）兜底，
+        //    不会出现数据错乱。
+        String lockKey = CharSequenceUtil.format(RedisCacheConstants.SO_B2C_DELIVERY_PUSH_TRANSFER_INFO_LOCK, entity.getId());
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean locked = false;
         try {
+            locked = lock.tryLock(30, 180, TimeUnit.SECONDS);
+            if (!locked) {
+                // waitTime(30s) 不再覆盖整个 GlobalTransactional(120s) 窗口：拿不到锁可能是
+                //  a) 持锁线程仍在执行业务 / XA 提交（合法慢事务，30–120s 内，PostgreSQL READ_COMMITTED 下读不到）；
+                //  b) 持锁线程已提交但锁释放瞬间被本线程错过（此时已可读到 transfer_info）；
+                //  c) 持锁线程进程异常退出，依赖 leaseTime(180s) 自动释放。
+                // 注：本方法不追求覆盖全部并发场景。30s 上限是为了避免 MQ 消费线程池（consumeThreadNumber=10）
+                // 被热点单据撑满；场景 a 会落入下方 recordPushTransferInfoError + 返回 FALSE 路径，
+                // 由 addSoB2cError 异常表 + 组包 MQ delay-level 重试做补偿。这里仅针对场景 b 做幂等收敛，
+                // 避免把"前序线程刚提交成功"误判为"生成失败"。
+                // 与 validateTransferInfoPersisted 对齐：必须存在已审批通过的记录才能视为成功，
+                // 防止前序线程写入 transfer_info 后、审批完成前异常退出导致状态不一致被静默吞掉。
+                List<TransferInfoEntity> existing = transferInfoService.listBySourceId(entity.getId());
+                boolean hasApproved = CollectionUtils.isNotEmpty(existing) && existing.stream()
+                        .anyMatch(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()));
+                if (hasApproved) {
+                    log.warn("发货单【{}】生成直接调拨单获取锁超时(30s)，但 transfer_info 已存在且已审批，视为前序线程已完成", entity.getCode());
+                    return Boolean.TRUE;
+                }
+                String msg = CharSequenceUtil.format("发货单【{}】生成直接调拨单获取锁超时(30s)，等待重试或补偿", entity.getCode());
+                log.warn(msg);
+                recordPushTransferInfoError(entity, msg);
+                return Boolean.FALSE;
+            }
             soB2cDeliveryService.pushTransferInfo(entity);
-        } catch (Exception e) {
-            String soB2cId = entity.getSourceId();
-            String type = SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode();
-            String paramJson = JSONUtil.toJsonStr(entity);
-            String message = e.getMessage();
-            log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(type);
-            addError.setMainId(soB2cId);
-            addError.setMessage(message);
-            addError.setParamJson(paramJson);
-            soB2cFeign.addSoB2cError(addError);
+            confirmTransferInfoPersisted(entity);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            recordPushTransferInfoError(entity, "生成直接调拨单等待锁被中断");
             return Boolean.FALSE;
+        } catch (ServiceException se) {
+            recordPushTransferInfoError(entity, se.getMessage());
+            throw se;
+        } catch (Exception e) {
+            recordPushTransferInfoError(entity, e.getMessage());
+            return Boolean.FALSE;
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
         return Boolean.TRUE;
+    }
+
+    private void recordPushTransferInfoError(SoB2cDeliveryEntity entity, String message) {
+        String soB2cId = entity.getSourceId();
+        String paramJson = JSONUtil.toJsonStr(entity);
+        log.error("创建直接调拨单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
+        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+        addError.setType(SoB2cErrorTypeEnum.GENERATE_TRANSFER_INFO.getCode());
+        addError.setMainId(soB2cId);
+        addError.setMessage(message);
+        addError.setParamJson(paramJson);
+        soB2cFeign.addSoB2cError(addError);
     }
 
 
@@ -2546,15 +2605,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor =  Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public Boolean pushTransferInfo(SoB2cDeliveryEntity entity) {
-
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
-        if (CollectionUtils.isNotEmpty(transferInfoList)) {
-            return Boolean.TRUE;
-        }
         //发货单明细
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
             throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED,"发货明细");
+        }
+
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(transferInfoList)) {
+            validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
+            return Boolean.TRUE;
         }
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
@@ -2567,6 +2627,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             //生成直接调拨单
             generateTransferInfo(entity,soB2cDeliveryDetailList,split,batchNo);
+            transferInfoList = transferInfoService.listBySourceId(entity.getId());
+            validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
         }
         //清除异常
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
@@ -2592,8 +2654,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO retryOutstock(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -2615,12 +2675,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException("扣减虚拟冻结库存异常不支持重新出库");
         }
 
-        //生成直接调拨单
-        this.pushTransferInfo(entity);
+        // pushTransferInfoError 内调拨单已在独立全局事务中提交；本方法不再包裹事务，避免 confirm 读到未提交数据。
+        if (!Boolean.TRUE.equals(soB2cDeliveryService.pushTransferInfoError(entity))) {
+            throw new ServiceException(ApiError.WH_GENERATE_TRANSFER_OUT_FAILED);
+        }
 
-        // 操作日志
+        // 操作日志属于非关键路径，写入失败不回滚已落库的调拨单，接受最终一致。
         String msg = CharSequenceUtil.format("用户【{}】重新出库单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "重新出库");
+        try {
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "重新出库");
+        } catch (Exception e) {
+            log.error("重新出库操作日志写入失败，发货单【{}】调拨单已生成", entity.getCode(), e);
+        }
         return BatchResultDTO.success(entity.getBatchNo(), entity.getCode(), "重新出库");
     }
 
@@ -2690,6 +2756,71 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return  Boolean.TRUE;
     }
 
+
+    /**
+     * 全局事务提交后再次确认中转调拨单已落库，避免调拨回滚后仍继续生成出库单。
+     */
+    private void confirmTransferInfoPersisted(SoB2cDeliveryEntity entity) {
+        if (CharSequenceUtil.isBlank(entity.getTransferWarehouseIds())) {
+            return;
+        }
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceId(entity.getId());
+        validateTransferInfoPersisted(entity, soB2cDeliveryDetailList, transferInfoList);
+    }
+
+    private void validateTransferInfoPersisted(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList, List<TransferInfoEntity> transferInfoList) {
+        if (CharSequenceUtil.isBlank(entity.getTransferWarehouseIds())) {
+            return;
+        }
+        List<String> transferWarehouseIdList = StrUtil.split(entity.getTransferWarehouseIds(), ",");
+        String warehouseId = resolveDeliveryWarehouseId(entity, soB2cDeliveryDetailList);
+        int expectedCount = resolveExpectedTransferCount(transferWarehouseIdList, warehouseId);
+        if (expectedCount <= 0) {
+            return;
+        }
+        int actualCount = CollectionUtils.isEmpty(transferInfoList) ? 0 : transferInfoList.size();
+        if (actualCount < expectedCount) {
+            log.error("发货单【{}】中转调拨单未落库，期望{}条，实际{}条", entity.getCode(), expectedCount, actualCount);
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_TRANSFER_NOT_PERSISTED, entity.getCode());
+        }
+        String notApprovedCodes = transferInfoList.stream()
+                .filter(item -> !ApproveStatusEnum.APPROVE.getStatus().equals(item.getApproveStatus()))
+                .map(TransferInfoEntity::getCode)
+                .collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(notApprovedCodes)) {
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_TRANSFER_NOT_APPROVED, entity.getCode(), notApprovedCodes);
+        }
+    }
+
+    /**
+     * 解析发货单明细的统一发货仓库。当前 B2C 发货单明细要求同仓，与 generateTransferInfo 保持一致。
+     */
+    private String resolveDeliveryWarehouseId(SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+        if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
+            throw new ServiceException(ApiError.COMMON_PARAM_TIME_REQUIRED, "发货明细");
+        }
+        String warehouseId = soB2cDeliveryDetailList.get(0).getWarehouseId();
+        if (CharSequenceUtil.isBlank(warehouseId)) {
+            throw new ServiceException(ApiError.SO_B2C_SHIPMENT_WAREHOUSE_REQUIRED, entity.getCode());
+        }
+        boolean multiWarehouse = soB2cDeliveryDetailList.stream()
+                .map(SoB2cDeliveryDetailEntity::getWarehouseId)
+                .anyMatch(id -> !CharSequenceUtil.equals(warehouseId, id));
+        if (multiWarehouse) {
+            throw new ServiceException(ApiError.SO_B2C_DELIVERY_MULTI_WAREHOUSE_NOT_SUPPORTED, entity.getCode());
+        }
+        return warehouseId;
+    }
+
+    private int resolveExpectedTransferCount(List<String> transferWarehouseIdList, String warehouseId) {
+        if (CollectionUtils.isEmpty(transferWarehouseIdList) || CharSequenceUtil.isBlank(warehouseId)) {
+            return 0;
+        }
+        // 发货仓与第一个中转仓相同时，该段无需调拨，期望调拨单数量减 1
+        boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(warehouseId);
+        return firstWarehouseSame ? Math.max(transferWarehouseIdList.size() - 1, 0) : transferWarehouseIdList.size();
+    }
 
     /**
      * 生成直接调拨单

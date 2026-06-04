@@ -602,6 +602,9 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
             case PRODUCT_GRADE:
                 oldValue = productInfoEntity.getGradeId();
                 break;
+            case WARRANTY_PERIOD:
+                oldValue = productInfoEntity.getWarrantyPeriod();
+                break;
             case SALE_CHANNEL:
                 oldValue = productInfoEntity.getSalesChannel();
                 break;
@@ -867,8 +870,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     public BatchResultDTO cancelProcess(ApproveDTO.CancelProcessDTO dto) {
         String id = dto.getId();
         ProductChangeEntity entity = this.getById(id);
-        if (ObjectUtil.isNotEmpty(entity)) {
-            throw new ServiceException(ApiError.BOM_NOT_FOUND);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到产品变更信息单数据");
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
@@ -1108,6 +1111,11 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     ProductBrandEntity productBrandEntity = productBrandEntities.stream().filter(e -> Objects.equals(e.getId(), brandId)).findFirst().orElse(new ProductBrandEntity());
                     productInfoEntity.setBrandId(brandId);
                     productInfoEntity.setBrandName(productBrandEntity.getName());
+                    infoChanged = true;
+                    break;
+                case WARRANTY_PERIOD:
+                    String warrantyPeriod = (String) newValue;
+                    productInfoEntity.setWarrantyPeriod(warrantyPeriod);
                     infoChanged = true;
                     break;
                 case PRODUCT_GRADE:
@@ -1670,6 +1678,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                 convertedNew = basicDictList.stream().filter(e -> Objects.equals(e.getId(), newValue)).findFirst()
                         .map(BasicDictEntity::getName).orElse(newValue);
                 convertedOld = basicDictList.stream().filter(e -> Objects.equals(e.getId(), oldValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(oldValue);
+                break;
+            case WARRANTY_PERIOD:
+                convertedNew = basicDictList.stream().filter(e -> Objects.equals(e.getValue(), newValue)).findFirst()
+                        .map(BasicDictEntity::getName).orElse(newValue);
+                convertedOld = basicDictList.stream().filter(e -> Objects.equals(e.getValue(), oldValue)).findFirst()
                         .map(BasicDictEntity::getName).orElse(oldValue);
                 break;
 

@@ -1562,6 +1562,43 @@ public class SoInfoDTO implements Serializable {
         private List<SoDetailDTO.ViewDTO> detailList;
     }
 
+    /**
+     * SKU过滤计算打标
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FilterCalculateDTO {
+
+        @Valid
+        @Size(min = 1, max = 500, message = "销售订单详情数量需在1到500之间")
+        private List<DetailDTO> detailList;
+
+        @Data
+        @NoArgsConstructor
+        public static class DetailDTO {
+
+            /**
+             * 前端行标识
+             */
+            private String id;
+
+            /**
+             * sku id
+             */
+            private String skuId;
+
+            /**
+             * 发货skuId
+             */
+            private String deliverySkuId;
+
+            /**
+             * 是否过滤计算合计
+             */
+            private Boolean filterCalculate = false;
+        }
+    }
+
 
     /**
      * 导出的spi 信息

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDetailDTO;
@@ -630,4 +631,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void updateRemarkById(String outstockId, String remark);
 
     void updateSoB2cLogisticsInfo(SoB2cLogisticsDTO.transferOrderDTO dto);
+
+    List<BatchResultDTO> updateOutstockDate(List<SoOutstockDTO.UpdateOutstockDateDTO> updateOutstockDateDTO);
+
+    void refreshAmountFields(List<String> ids, Boolean isPushKingdee);
 }

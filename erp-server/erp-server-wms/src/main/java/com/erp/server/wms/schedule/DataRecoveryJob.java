@@ -1,14 +1,14 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseIdsDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
@@ -22,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 数据修复任务临时使用
@@ -33,6 +35,14 @@ import java.util.*;
 @Component
 @Slf4j
 public class DataRecoveryJob {
+
+    private static final String TYPE_SO_OUTSTOCK_AMOUNT = "soOutstockAmount";
+
+    private static final String TYPE_SO_RETURN_INSTOCK_PRICE = "soReturnInstockPrice";
+
+    private static final String TYPE_ALL = "all";
+
+    private static final int DEFAULT_PAGE_SIZE = 500;
 
     @Resource
     private SoOutstockService soOutstockService;
@@ -73,7 +83,6 @@ public class DataRecoveryJob {
         }
 
         ids.parallelStream().forEach(item -> {
-            BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
             SoOutstockEntity soOutstock = soOutstockService.getById(item);
             try {
                 if(CharSequenceUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
@@ -96,6 +105,121 @@ public class DataRecoveryJob {
         });
 
 
+    }
+
+    @XxlJob("soAmountFieldsRefresh")
+    public void soAmountFieldsRefresh() {
+        JSONObject param = parseJobParam();
+        String type = param.getStr("type", TYPE_ALL);
+        List<String> ids = param.getBeanList("ids", String.class);
+        Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
+        Boolean approveOnly = param.getBool("approveOnly", Boolean.TRUE);
+        Integer pageSize = param.getInt("pageSize", DEFAULT_PAGE_SIZE);
+        LocalDate startDate = parseDate(param.getStr("startDate"));
+        LocalDate endDate = parseDate(param.getStr("endDate"));
+        if (CollUtil.isNotEmpty(ids)) {
+            refreshByIds(type, ids, isPushKingdee);
+            return;
+        }
+        if (TYPE_ALL.equals(type) || TYPE_SO_OUTSTOCK_AMOUNT.equals(type)) {
+            refreshSoOutstockAmount(startDate, endDate, pageSize, approveOnly, isPushKingdee);
+        }
+        if (TYPE_ALL.equals(type) || TYPE_SO_RETURN_INSTOCK_PRICE.equals(type)) {
+            refreshSoReturnInstockPrice(startDate, endDate, pageSize, approveOnly);
+        }
+    }
+
+    private JSONObject parseJobParam() {
+        String jobParam = XxlJobHelper.getJobParam();
+        if (CharSequenceUtil.isBlank(jobParam)) {
+            return new JSONObject();
+        }
+        return JSONUtil.parseObj(jobParam);
+    }
+
+    private void refreshByIds(String type, List<String> ids, Boolean isPushKingdee) {
+        if (TYPE_ALL.equals(type) || TYPE_SO_OUTSTOCK_AMOUNT.equals(type)) {
+            soOutstockService.refreshAmountFields(ids, isPushKingdee);
+            XxlJobHelper.log("销售出库金额字段重算完成，数量={}", ids.size());
+        }
+        if (TYPE_ALL.equals(type) || TYPE_SO_RETURN_INSTOCK_PRICE.equals(type)) {
+            soReturnInstockService.refreshPriceFields(ids);
+            XxlJobHelper.log("销售退货入库价格字段重算完成，数量={}", ids.size());
+        }
+    }
+
+    private void refreshSoOutstockAmount(LocalDate startDate, LocalDate endDate, Integer pageSize,
+                                         Boolean approveOnly, Boolean isPushKingdee) {
+        int currentPage = 1;
+        while (true) {
+            LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(SoOutstockEntity::getId);
+            if (Boolean.TRUE.equals(approveOnly)) {
+                queryWrapper.eq(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+            }
+            if (Objects.nonNull(startDate)) {
+                queryWrapper.ge(SoOutstockEntity::getBillDate, startDate);
+            }
+            if (Objects.nonNull(endDate)) {
+                queryWrapper.le(SoOutstockEntity::getBillDate, endDate);
+            }
+            queryWrapper.orderByAsc(SoOutstockEntity::getId);
+            IPage<SoOutstockEntity> page = soOutstockService.page(new Page<>(currentPage, getPageSize(pageSize)), queryWrapper);
+            List<String> ids = page.getRecords().stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+            if (CollUtil.isEmpty(ids)) {
+                break;
+            }
+            soOutstockService.refreshAmountFields(ids, isPushKingdee);
+            XxlJobHelper.log("销售出库金额字段重算完成，当前页={}，数量={}", currentPage, ids.size());
+            if (currentPage >= page.getPages()) {
+                break;
+            }
+            currentPage++;
+        }
+    }
+
+    private void refreshSoReturnInstockPrice(LocalDate startDate, LocalDate endDate, Integer pageSize,
+                                             Boolean approveOnly) {
+        int currentPage = 1;
+        while (true) {
+            LambdaQueryWrapper<SoReturnInstockEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(SoReturnInstockEntity::getId);
+            if (Boolean.TRUE.equals(approveOnly)) {
+                queryWrapper.eq(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+            }
+            if (Objects.nonNull(startDate)) {
+                queryWrapper.ge(SoReturnInstockEntity::getBillDate, startDate);
+            }
+            if (Objects.nonNull(endDate)) {
+                queryWrapper.le(SoReturnInstockEntity::getBillDate, endDate);
+            }
+            queryWrapper.orderByAsc(SoReturnInstockEntity::getId);
+            IPage<SoReturnInstockEntity> page = soReturnInstockService.page(new Page<>(currentPage, getPageSize(pageSize)), queryWrapper);
+            List<String> ids = page.getRecords().stream().map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+            if (CollUtil.isEmpty(ids)) {
+                break;
+            }
+            soReturnInstockService.refreshPriceFields(ids);
+            XxlJobHelper.log("销售退货入库价格字段重算完成，当前页={}，数量={}", currentPage, ids.size());
+            if (currentPage >= page.getPages()) {
+                break;
+            }
+            currentPage++;
+        }
+    }
+
+    private Integer getPageSize(Integer pageSize) {
+        if (Objects.isNull(pageSize) || pageSize <= 0) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return pageSize;
+    }
+
+    private LocalDate parseDate(String date) {
+        if (CharSequenceUtil.isBlank(date)) {
+            return null;
+        }
+        return LocalDate.parse(date);
     }
 
     private List<String> getInnerSoOutStockIds() {

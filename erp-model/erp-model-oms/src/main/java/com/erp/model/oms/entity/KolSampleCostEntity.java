@@ -109,6 +109,26 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     @TableField("so_outstock_code")
     private String soOutstockCode;
     /**
+    * 物流商id
+    */
+    @TableField("logistics_supplier_id")
+    private String logisticsSupplierId;
+    /**
+    * 物流商
+    */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
+    /**
+    * 物流渠道id
+    */
+    @TableField("logistics_channel_id")
+    private String logisticsChannelId;
+    /**
+    * 物流渠道
+    */
+    @TableField("logistics_channel_name")
+    private String logisticsChannelName;
+    /**
     * 销售出库日期
     */
     @TableField("so_outstock_date")
@@ -231,6 +251,14 @@ public class KolSampleCostEntity extends BaseEntity<KolSampleCostEntity> {
     public static final String SO_OUTSTOCK_ID = "so_outstock_id";
 
     public static final String SO_OUTSTOCK_CODE = "so_outstock_code";
+
+    public static final String LOGISTICS_SUPPLIER_ID = "logistics_supplier_id";
+
+    public static final String LOGISTICS_SUPPLIER_NAME = "logistics_supplier_name";
+
+    public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
+
+    public static final String LOGISTICS_CHANNEL_NAME = "logistics_channel_name";
 
     public static final String SO_OUTSTOCK_TIME = "so_outstock_time";
 

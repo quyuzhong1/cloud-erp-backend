@@ -1,14 +1,6 @@
 package com.erp.server.dmp.controller.api;
 
 
-import javax.annotation.Resource;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseResultDTO;
@@ -21,10 +13,18 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDTO;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.query.AdsErpOutstockDiffFlowQueryHandler;
 import com.erp.server.dmp.service.AdsErpOutstockDiffFlowService;
-
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * 第三方仓出库单据差异表
@@ -40,6 +40,9 @@ public class AdsErpOutstockDiffFlowController extends BaseController {
 
     @Resource
     private AdsErpOutstockDiffFlowService adsErpOutstockDiffFlowService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
      * 分页查询，菜单code = dmp:adsErpOutstockDiffFlow:paging
@@ -78,7 +81,8 @@ public class AdsErpOutstockDiffFlowController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "平台单据差异重新生成")
     @PostMapping(value = "/reCreate")
     public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpOutstockDiffFlowDTO.ReCreateDTO dto) {
-        return success(adsErpOutstockDiffFlowService.reCreate(dto));
+        dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_OUTSTOCK_DIFF_FLOW, dto.getCheckMonth(), dto.getSourceSystem());
+        return success(Boolean.TRUE);
     }
     
     /**

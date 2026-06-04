@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -107,6 +108,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         if(ObjectUtil.isEmpty(cfgInvoiceSettingEntity)){
             throw new ServiceException("发票设置不存在！");
         }
+        validateShopeeBrazilInvoiceConfig(dto.getDetailDTOList(), dto.getProductAmountDTOList());
         //处理清空逻辑
         if (CollUtil.isEmpty(dto.getDetailDTOList())){
             this.lambdaUpdate().in(CfgInvoiceSettingDetailEntity::getMainId, mainId).remove();
@@ -330,5 +332,59 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         // 9. 返回处理结果统计
         updateList.addAll(createList);
         return updateList;
+    }
+
+    private void validateShopeeBrazilInvoiceConfig(List<CfgInvoiceSettingDetailDTO.DetailListDTO> detailDTOList,
+                                                   List<CfgRuleInvoiceAmountDTO.ViewDTO> productAmountDTOList) {
+        if (CollUtil.isEmpty(detailDTOList)) {
+            return;
+        }
+        List<CfgInvoiceSettingDetailDTO.CommonDTO> detailList = detailDTOList.stream()
+                .filter(ObjUtil::isNotEmpty)
+                .map(CfgInvoiceSettingDetailDTO.DetailListDTO::getDetailDTOList)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(Collection::stream)
+                .filter(ObjUtil::isNotEmpty)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> shopIdList = detailList.stream()
+                .map(CfgInvoiceSettingDetailDTO.CommonDTO::getShopId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, ShopInfoEntity> shopMap = CollUtil.isEmpty(shopIdList) ? Collections.emptyMap() :
+                shopInfoService.listByIds(shopIdList).stream()
+                        .collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity(), (a, b) -> a));
+        boolean hasShopeeBrazilShop = false;
+        for (CfgInvoiceSettingDetailDTO.CommonDTO detailDTO : detailList) {
+            ShopInfoEntity shopInfoEntity = shopMap.get(detailDTO.getShopId());
+            if (!isShopeeBrazilShop(shopInfoEntity)) {
+                continue;
+            }
+            hasShopeeBrazilShop = true;
+            if (CharSequenceUtil.equals(InvoiceRuleEnum.DEDUCT.getCode(), detailDTO.getDictInvoiceRule())) {
+                throw new ServiceException("虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例");
+            }
+            if (Boolean.TRUE.equals(detailDTO.getIsContainShipFee())) {
+                throw new ServiceException("虾皮巴西店铺不支持含买家运费开票");
+            }
+        }
+        if (!hasShopeeBrazilShop || CollUtil.isEmpty(productAmountDTOList)) {
+            return;
+        }
+        boolean hasDeductRule = productAmountDTOList.stream()
+                .filter(ObjUtil::isNotEmpty)
+                .anyMatch(rule -> CharSequenceUtil.equals(InvoiceRuleEnum.DEDUCT.getCode(), rule.getDictInvoiceRule()));
+        if (hasDeductRule) {
+            throw new ServiceException("虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例");
+        }
+    }
+
+    private boolean isShopeeBrazilShop(ShopInfoEntity shopInfoEntity) {
+        return ObjUtil.isNotEmpty(shopInfoEntity)
+                && CharSequenceUtil.equalsIgnoreCase(PlatformDictEnum.SHOPEE.getCode(), shopInfoEntity.getDictPlatform())
+                && CharSequenceUtil.equalsIgnoreCase("BR", shopInfoEntity.getDictCountryCode());
     }
 }

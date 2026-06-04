@@ -91,7 +91,10 @@ public enum SettingEnum {
 
     // ADS配置
     ADS_ERP_INVENTORY_DIFF_WAREHOUSE_LIST("adsErpInventoryDiffWarehouseList", SettingEnum.ADS_CFG,"ADS平台库存差异仓库配置"),
-    ADS_ERP_INVENTORY_DIFF_PLATFORM_LIST("adsErpInventoryDiffPlatformList", SettingEnum.ADS_CFG,"ADS平台库存差异开启平台配置")
+    ADS_ERP_INVENTORY_DIFF_PLATFORM_LIST("adsErpInventoryDiffPlatformList", SettingEnum.ADS_CFG,"ADS平台库存差异开启平台配置"),
+
+    // 威狮出库时间转换配置
+    WEISHI_OUTBOUND_SHIPPED_TIME_ZONE("weishi_outbound_mx_warehouse_code", SettingEnum.WEISHI_OUTBOUND_SHIPPED_TIME_ZONE_CFG, "威狮出库单已发货时间转换配置")
     ;
 
     @EnumValue
@@ -199,6 +202,11 @@ public enum SettingEnum {
      * 数仓ADS配置
      */
     public static final String ADS_CFG = "ads_cfg";
+
+    /**
+     * 威狮出库时间转换配置
+     */
+    public static final String WEISHI_OUTBOUND_SHIPPED_TIME_ZONE_CFG = "weishi_outbound_shipped_time_zone";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

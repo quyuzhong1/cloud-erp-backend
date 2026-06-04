@@ -22,19 +22,25 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO;
-import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.*;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.ExpotParamDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.PagingParamDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.TotalDTO;
+import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDTO.UpdateRemarkDTO;
 import com.erp.model.dmp.dto.AdsErpInventoryDiffFlowDetailDTO;
 import com.erp.model.dmp.dto.excel.PlatformInitStockExcelDTO;
 import com.erp.model.dmp.entity.doris.AdsErpInventoryDiffFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.listener.PlatformInitStockExcelListener;
 import com.erp.server.dmp.mapper.doris.AdsErpInventoryDiffFlowMapper;
 import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpRestCloudService;
 import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.utils.RestCloudApiUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,9 +49,11 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +74,14 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpRestCloudService dmpRestCloudService;
+    
+    private static final Set<String> ALLOWED_TABLES = Arrays.stream(InventoryMonthCheckEnum.values())
+            .map(InventoryMonthCheckEnum::getCode)
+            .collect(Collectors.toSet());
+    
+    // 若暂无枚举，至少提取为 private static final：
+    private static final String EXEC_STATUS_WAIT = "wait";
+    private static final String EXEC_STATUS_WAIT_NAME = "待执行";
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -215,27 +231,7 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
 	public TotalDTO total(PagingDTO<PagingParamDTO> dto) {
 		return baseMapper.total(dto.getParams());
 	}
-	
-	@Override
-	public Boolean reCreate(ReCreateDTO dto) {
-		String checkMonth = dto.getCheckMonth();
-		checkMonth = checkMonth.replace("-", "年") + "月";
-		Integer count = lambdaQuery().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
-				.eq(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing").count();
-		if(count != null && count > 0) {
-			throw new ServiceException(dto.getCheckMonth() + "核对任务正在执行中");
-		}
-		boolean reCreate = RestCloudApiUtil.syncReCreate(checkMonth, "ods_erp/ods_flow_excel_inventory_flow_recreate");
-		if(reCreate) {
-			lambdaUpdate().eq(AdsErpInventoryDiffFlowEntity::getCheckMonth, checkMonth)
-			.set(AdsErpInventoryDiffFlowEntity::getExecStatus, "doing")
-			.set(AdsErpInventoryDiffFlowEntity::getExecStatusName, "执行中")
-			.setSql(" finish_time = null ")
-			.update();
-		}
-		return true;
-	}
-	
+
 	@Override
 	public Boolean updateRemark(UpdateRemarkDTO dto) {
 		return lambdaUpdate().eq(AdsErpInventoryDiffFlowEntity::getId, dto.getId()).set(AdsErpInventoryDiffFlowEntity::getRemark, dto.getRemark()).update();
@@ -303,4 +299,19 @@ public class AdsErpInventoryDiffFlowServiceImpl extends SuperServiceImpl<AdsErpI
         downloadTaskFeign.saveDownloadTask("朔源查询-库存流水", FileTaskEventEnum.EXPORT_ADS_ERP_INVENTORY_DETAIL_SELF.getCode(), dto);
         return Boolean.TRUE;
     }
+
+    /**
+     *需要异步，不然直接使用的postgres数据源
+     */
+    @Async("pullErpOpenApi")
+	@Override
+	public void updateReCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
+			String sourceSystem) {
+    	String tableCode = inventoryMonthCheckEnum.getCode();
+    	//此处仅防 Mapper 被直接调用时的滥用
+        if (!ALLOWED_TABLES.contains(tableCode)) {
+            throw new ServiceException("非法表名：" + tableCode);
+        }
+		baseMapper.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum.getCode(), checkMonth, sourceSystem , EXEC_STATUS_WAIT , EXEC_STATUS_WAIT_NAME);
+	}
 }
