@@ -281,6 +281,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         // SKU成本
         List<InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostDTOS = listInventorySkuCost(skuIdList, warehouseIdList, soOrgIdList);
         Map<String, InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, true);
+        Map<String, InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, false);
         Map<String, BigDecimal> plmPurchaseAverageCostMap = buildPlmPurchaseAverageCostMap(thisMonthList);
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
@@ -295,8 +296,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             kolSampleCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             fillLogisticsInfo(kolSampleCostEntity, logisticsChannelMap);
-            // 按 销售组织+SKU+仓库 匹配 SKU 成本；未命中再用采购平均成本兜底。
+            // 优先按销售组织+SKU+仓库匹配；销售组织为空时按 SKU+仓库兜底。
             InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
+            if (ObjUtil.isEmpty(invSkuCostDTO) && CharSequenceUtil.isBlank(kolSampleCostEntity.getSoOrgId())) {
+                invSkuCostDTO = fallbackInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
+            }
             if (ObjUtil.isEmpty(invSkuCostDTO)) {
                 applyPurchaseAverageCost(kolSampleCostEntity, plmPurchaseAverageCostMap.get(kolSampleCostEntity.getSkuId()), updateCostSourceMonth);
             } else {
@@ -347,7 +351,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             hasAllocationCost = true;
         }
         if (hasAllocationCost) {
-            kolSampleCostEntity.setFeeSource(KolSampleCostFeeSourceEnum.SMALL_BAG_ALLOCATION.getName());
+            kolSampleCostEntity.setFeeSource(KolSampleCostFeeSourceEnum.SMALL_BAG_ALLOCATION.getCode());
         }
     }
 
@@ -397,7 +401,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     private List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(List<String> skuIdList,
                                                                          List<String> warehouseIdList,
                                                                          List<String> orgIdList) {
-        if (CollUtil.isEmpty(skuIdList) || CollUtil.isEmpty(warehouseIdList) || CollUtil.isEmpty(orgIdList)) {
+        if (CollUtil.isEmpty(skuIdList) || CollUtil.isEmpty(warehouseIdList)) {
             return CollUtil.newArrayList();
         }
         InventorySkuCostDTO.SkuCostParamDTO paramDTO = new InventorySkuCostDTO.SkuCostParamDTO();
@@ -472,7 +476,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(productCost, qty));
         kolSampleCostEntity.setFirstMileShippingCost(MathUtil.multiplyWithFour(firstMileShippingCost, qty));
         kolSampleCostEntity.setClearanceCustomsTax(MathUtil.multiplyWithFour(clearanceCustomsTax, qty));
-        kolSampleCostEntity.setCostSource(KolSampleCostCostSourceEnum.SKU_COST.getName());
+        kolSampleCostEntity.setCostSource(KolSampleCostCostSourceEnum.SKU_COST.getCode());
         if (Objects.nonNull(invSkuCostDTO.getAccountingMonth())) {
             kolSampleCostEntity.setCostSourceMonth(invSkuCostDTO.getAccountingMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")));
         }
@@ -514,7 +518,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         kolSampleCostEntity.setProductCost(MathUtil.multiplyWithFour(productCost, qty));
         kolSampleCostEntity.setFirstMileShippingCost(BigDecimal.ZERO);
         kolSampleCostEntity.setClearanceCustomsTax(BigDecimal.ZERO);
-        kolSampleCostEntity.setCostSource(KolSampleCostCostSourceEnum.PURCHASE_AVG_COST.getName());
+        kolSampleCostEntity.setCostSource(KolSampleCostCostSourceEnum.PURCHASE_AVG_COST.getCode());
         kolSampleCostEntity.setCostSourceMonth(updateCostSourceMonth);
     }
 
@@ -799,7 +803,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                     default:
                         throw new ServiceException("不支持的费用项：" + importExcelDTO.getFeeType());
                 }
-                entity.setFeeSource(KolSampleCostFeeSourceEnum.IMPORT.getName());
+                entity.setFeeSource(KolSampleCostFeeSourceEnum.IMPORT.getCode());
                 entity.setTotalCost(calculateTotalCost(entity));
             }
                 super.updateBatchById(costList);

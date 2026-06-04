@@ -62,6 +62,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     private static final long IML_OWNER_CODE_CACHE_TTL_MILLIS = 5 * 60 * 1000L;
+    private static final int IML_OWNER_CODE_CACHE_MAX_SIZE = 500;
     private static final Map<String, OwnerCodeCache> IML_OWNER_CODE_CACHE = new ConcurrentHashMap<>();
 
     @Resource
@@ -286,8 +287,11 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     private String getImlOwnerCode(String authId, String platformSkuNo) {
         OwnerCodeCache cache = IML_OWNER_CODE_CACHE.get(authId);
-        if (Objects.nonNull(cache) && !cache.isExpired()) {
-            return cache.getOwnerCode();
+        if (Objects.nonNull(cache)) {
+            if (!cache.isExpired()) {
+                return cache.getOwnerCode();
+            }
+            IML_OWNER_CODE_CACHE.remove(authId, cache);
         }
         OverseasProviderEntity overseasProviderEntity;
         try {
@@ -304,8 +308,33 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             return null;
         }
         String ownerCode = overseasProviderEntity.getOwnerCode();
+        cleanupImlOwnerCodeCache();
         IML_OWNER_CODE_CACHE.put(authId, new OwnerCodeCache(ownerCode));
         return ownerCode;
+    }
+
+    private void cleanupImlOwnerCodeCache() {
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, OwnerCodeCache> entry : IML_OWNER_CODE_CACHE.entrySet()) {
+            OwnerCodeCache value = entry.getValue();
+            if (value == null || value.isExpired(now)) {
+                IML_OWNER_CODE_CACHE.remove(entry.getKey(), value);
+            }
+        }
+        while (IML_OWNER_CODE_CACHE.size() >= IML_OWNER_CODE_CACHE_MAX_SIZE) {
+            String oldestKey = null;
+            long oldestExpireAt = Long.MAX_VALUE;
+            for (Map.Entry<String, OwnerCodeCache> entry : IML_OWNER_CODE_CACHE.entrySet()) {
+                OwnerCodeCache value = entry.getValue();
+                if (value != null && value.getExpireAt() < oldestExpireAt) {
+                    oldestExpireAt = value.getExpireAt();
+                    oldestKey = entry.getKey();
+                }
+            }
+            if (oldestKey == null || IML_OWNER_CODE_CACHE.remove(oldestKey) == null) {
+                break;
+            }
+        }
     }
 
     private static class OwnerCodeCache {
@@ -323,7 +352,15 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         }
 
         private boolean isExpired() {
-            return System.currentTimeMillis() >= expireAt;
+            return isExpired(System.currentTimeMillis());
+        }
+
+        private boolean isExpired(long now) {
+            return now >= expireAt;
+        }
+
+        private long getExpireAt() {
+            return expireAt;
         }
     }
 

@@ -238,6 +238,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
         KolFeedbackEntity entity = super.getById(id);
         if (entity == null) {
@@ -704,6 +705,8 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         target.setSkuId(StrUtil.blankToDefault(target.getSkuId(), old.getSkuId()));
         target.setSkuNo(StrUtil.blankToDefault(target.getSkuNo(), old.getSkuNo()));
         target.setProductName(StrUtil.blankToDefault(target.getProductName(), old.getProductName()));
+        target.setUrl(StrUtil.blankToDefault(target.getUrl(), old.getUrl()));
+        target.setUrlHash(StrUtil.blankToDefault(target.getUrlHash(), old.getUrlHash()));
     }
 
     private boolean sameFeedbackUrlKey(KolFeedbackEntity oldEntity, KolFeedbackEntity newEntity) {

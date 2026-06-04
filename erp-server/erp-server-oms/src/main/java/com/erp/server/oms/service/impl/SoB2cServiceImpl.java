@@ -198,7 +198,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
     private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "接口返回为空";
-    private static final String THIRD_WAREHOUSE_MODULE_OTHER_DOCUMENTS_INVOICE = "other_documents_invoice";
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -2957,11 +2956,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             if (antuProvider) {
                 thirdWarehouseUploadFileReq.setFileType(FileTypeEnum.PNG.getCode());
-                thirdWarehouseUploadFileReq.setModule(THIRD_WAREHOUSE_MODULE_OTHER_DOCUMENTS_INVOICE);
+                thirdWarehouseUploadFileReq.setModule(ThirdWarehouseConstants.MODULE_OTHER_DOCUMENTS_INVOICE);
             }
             //速派通采用other_documents_invoice
             if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
-                thirdWarehouseUploadFileReq.setModule(THIRD_WAREHOUSE_MODULE_OTHER_DOCUMENTS_INVOICE);
+                thirdWarehouseUploadFileReq.setModule(ThirdWarehouseConstants.MODULE_OTHER_DOCUMENTS_INVOICE);
             }
             ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
             if(!uploadFileResponse.isSuccess()){

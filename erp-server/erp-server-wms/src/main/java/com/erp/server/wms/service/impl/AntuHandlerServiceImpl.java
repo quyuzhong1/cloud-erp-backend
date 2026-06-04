@@ -6,6 +6,7 @@ import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.third.ThirdWarehouseConstants;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +25,6 @@ import javax.validation.Valid;
 @Service
 @Validated
 public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
-    private static final String MODULE_ORDER_LABEL = "order_label";
-    private static final String MODULE_OTHER_DOCUMENTS_INVOICE = "other_documents_invoice";
 
     @Override
     public OmsPlatformEnum getPlatForm() {
@@ -44,11 +43,11 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         }
         uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(uploadFileReq.getFileData()));
         uploadFileReq.setFileType(FileTypeEnum.PNG.getCode());
-        uploadFileReq.setModule(MODULE_OTHER_DOCUMENTS_INVOICE);
+        uploadFileReq.setModule(ThirdWarehouseConstants.MODULE_OTHER_DOCUMENTS_INVOICE);
     }
 
     public static boolean needConvertPdfAttachment(ThirdWarehouseUploadFileReq uploadFileReq) {
-        if (uploadFileReq == null || CharSequenceUtil.isBlank(uploadFileReq.getModule()) || MODULE_ORDER_LABEL.equalsIgnoreCase(uploadFileReq.getModule())) {
+        if (uploadFileReq == null || CharSequenceUtil.isBlank(uploadFileReq.getModule()) || ThirdWarehouseConstants.MODULE_ORDER_LABEL.equalsIgnoreCase(uploadFileReq.getModule())) {
             return false;
         }
         return isPdfFile(uploadFileReq);
