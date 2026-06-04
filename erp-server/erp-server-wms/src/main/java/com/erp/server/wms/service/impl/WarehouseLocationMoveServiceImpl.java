@@ -925,6 +925,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (CollUtil.isEmpty(detailEntityList) || SourceTypeEnum.isStocktaking(infoEntity.getSourceType())) {
             return;
         }
+        // pcShow 包装类型，dto.getPcShow() 直接拆箱可能 NPE，统一用 Boolean.TRUE.equals
+        boolean pcShow = Boolean.TRUE.equals(dto.getPcShow());
         // key = warehouseId + "@@" + skuId（用不会出现在ID中的分隔符规避UUID自带"-"导致的截断）
         Map<String, Integer> requestQtyMap = new HashMap<>();
         Map<String, WarehouseLocationMoveDetailEntity> detailMap = new HashMap<>();
@@ -935,7 +937,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             if (!CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), detailEntity.getOutInventoryStatus())) {
                 continue;
             }
-            String warehouseId = dto.getPcShow()
+            String warehouseId = pcShow
                     ? CharSequenceUtil.blankToDefault(detailEntity.getWarehouseId(), infoEntity.getWarehouseId())
                     : infoEntity.getWarehouseId();
             if (CharSequenceUtil.isBlank(warehouseId) || CharSequenceUtil.isBlank(detailEntity.getSkuId())) {
@@ -950,12 +952,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (requestQtyMap.isEmpty()) {
             return;
         }
-        // 按仓库批量预取可分配库存，避免 N+1 循环查库
-        Map<String, Map<String, Integer>> allocatableQtyByWarehouse = new HashMap<>();
-        for (Map.Entry<String, Set<String>> whEntry : warehouseSkuMap.entrySet()) {
-            allocatableQtyByWarehouse.put(whEntry.getKey(),
-                    inventoryService.getRecipientAvailableQtyBatch(whEntry.getKey(), new ArrayList<>(whEntry.getValue())));
-        }
+        // 一次性按多仓维度批量预取可分配库存，避免按仓循环造成的 N+1（同组织虚拟仓列表只查一次）
+        Map<String, Map<String, Integer>> allocatableQtyByWarehouse =
+                inventoryService.getRecipientAvailableQtyBatch(warehouseSkuMap);
         for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
             String key = entry.getKey();
             Integer requestQty = entry.getValue();
@@ -964,7 +963,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             Integer allocatableQty = allocatableQtyByWarehouse.getOrDefault(warehouseId, Collections.emptyMap())
                     .getOrDefault(detail.getSkuId(), 0);
             if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
-                String warehouseName = dto.getPcShow()
+                String warehouseName = pcShow
                         ? CharSequenceUtil.blankToDefault(detail.getWarehouseName(), infoEntity.getWarehouseName())
                         : infoEntity.getWarehouseName();
                 throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), warehouseName, allocatableQty);

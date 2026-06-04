@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.StocktakingPlanEntity;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * @Classname: InventoryService
@@ -110,6 +111,16 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return key=skuId，value=可领用库存；未命中数据的 SKU 默认返回 0
      */
     Map<String, Integer> getRecipientAvailableQtyBatch(String warehouseId, List<String> skuIdList);
+
+    /**
+     * 多仓批量查询可领用库存：一次性按 仓库 -> SKU 集合 维度计算。
+     * 与 {@link #getRecipientAvailableQtyBatch(String, List)} 相比，避免在调用方循环每个仓库时重复
+     * 查询同一组织的全量虚拟仓列表，更适合"仓位移动"等多仓场景。
+     *
+     * @param warehouseSkuMap 仓库ID -> SKU ID 集合
+     * @return 第一层 key 为 warehouseId，第二层 Map 中 key=skuId，value=可领用库存
+     */
+    Map<String, Map<String, Integer>> getRecipientAvailableQtyBatch(Map<String, ? extends Collection<String>> warehouseSkuMap);
 
     /**
      * 查实际库存

@@ -495,18 +495,19 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         Map<String, Integer> requestQtyMap = detailList.stream()
                 .collect(Collectors.groupingBy(TransferInDetailEntity::getSkuId,
                         Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
-        Map<String, TransferInDetailEntity> detailMap = detailList.stream()
-                .collect(Collectors.toMap(TransferInDetailEntity::getSkuId, Function.identity(), (left, right) -> left));
+        // 仅需 skuNo 用于错误提示，避免存整 Entity 时 (left, right)->left 误取与 requestQty 求和不一致的明细
+        Map<String, String> skuIdToSkuNo = detailList.stream()
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSkuId()))
+                .collect(Collectors.toMap(TransferInDetailEntity::getSkuId, TransferInDetailEntity::getSkuNo, (left, right) -> left));
         // 一次性批量查询可分配库存，避免循环内 N+1
         Map<String, Integer> allocatableQtyMap = inventoryService.getRecipientAvailableQtyBatch(
                 entity.getOutWarehouseId(), new ArrayList<>(requestQtyMap.keySet()));
         for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
             String skuId = entry.getKey();
             Integer requestQty = entry.getValue();
-            TransferInDetailEntity detail = detailMap.get(skuId);
             Integer allocatableQty = allocatableQtyMap.getOrDefault(skuId, 0);
             if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
-                throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), entity.getOutWarehouseName(), allocatableQty);
+                throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, skuIdToSkuNo.get(skuId), entity.getOutWarehouseName(), allocatableQty);
             }
         }
     }

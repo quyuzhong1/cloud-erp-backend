@@ -69,6 +69,7 @@ import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY;
@@ -269,66 +270,138 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public Map<String, Integer> getRecipientAvailableQtyBatch(String warehouseId, List<String> skuIdList) {
-        Map<String, Integer> resultMap = new HashMap<>();
         if (CharSequenceUtil.isBlank(warehouseId) || CollUtil.isEmpty(skuIdList)) {
+            return new HashMap<>();
+        }
+        Map<String, Map<String, Integer>> result = getRecipientAvailableQtyBatch(
+                Collections.singletonMap(warehouseId, skuIdList));
+        return result.getOrDefault(warehouseId, new HashMap<>());
+    }
+
+    @Override
+    public Map<String, Map<String, Integer>> getRecipientAvailableQtyBatch(Map<String, ? extends Collection<String>> warehouseSkuMap) {
+        Map<String, Map<String, Integer>> resultMap = new HashMap<>();
+        if (warehouseSkuMap == null || warehouseSkuMap.isEmpty()) {
             return resultMap;
         }
-        List<String> distinctSkuIdList = skuIdList.stream()
+        // 1) 一次性拉取所有涉及仓库的实体信息（含组织与是否虚拟仓）
+        List<String> allWarehouseIds = warehouseSkuMap.keySet().stream()
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        if (CollUtil.isEmpty(distinctSkuIdList)) {
+        if (CollUtil.isEmpty(allWarehouseIds)) {
             return resultMap;
         }
-        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        if (Objects.isNull(warehouseEntity)) {
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(allWarehouseIds);
+        if (CollUtil.isEmpty(warehouseEntities)) {
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓库信息");
         }
-        String orgId = warehouseEntity.getOrgId();
+        Map<String, WarehouseEntity> warehouseMap = warehouseEntities.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, Function.identity(), (a, b) -> a));
 
-        // 实体仓实际库存（可用+冻结），按 sku 聚合
-        Map<String, Integer> realQtyMap = new HashMap<>();
-        if (Boolean.FALSE.equals(warehouseEntity.getIsVirtual())) {
-            InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-            dto.setWarehouseIdList(Collections.singletonList(warehouseId));
-            dto.setSkuIdList(distinctSkuIdList);
-            dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
-            List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = this.listSkuInventory(dto);
-            if (CollUtil.isNotEmpty(skuInventoryTotalList)) {
-                realQtyMap = skuInventoryTotalList.stream()
-                        .filter(obj -> Objects.equals(obj.getWarehouseId(), warehouseId))
-                        .collect(Collectors.groupingBy(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getSkuId,
-                                Collectors.summingInt(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal)));
+        // 2) 按 orgId 分组聚合所有实体仓 SKU，避免每个仓单独查实体仓库存
+        Map<String, Set<String>> orgIdToSkuIds = new HashMap<>();
+        Map<String, Set<String>> orgIdToWarehouseIds = new HashMap<>();
+        // 实体仓 sku 集合按 (orgId, warehouseId) 维度聚合
+        Map<String, Map<String, Integer>> realQtyByWarehouse = new HashMap<>();
+        Map<String, Map<String, Integer>> virtualQtyByWarehouse = new HashMap<>();
+        for (Map.Entry<String, ? extends Collection<String>> entry : warehouseSkuMap.entrySet()) {
+            String warehouseId = entry.getKey();
+            WarehouseEntity warehouseEntity = warehouseMap.get(warehouseId);
+            if (warehouseEntity == null) {
+                continue;
             }
+            Set<String> skuIdSet = entry.getValue() == null ? Collections.emptySet()
+                    : entry.getValue().stream()
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .collect(Collectors.toSet());
+            if (skuIdSet.isEmpty()) {
+                continue;
+            }
+            String orgId = warehouseEntity.getOrgId();
+            orgIdToSkuIds.computeIfAbsent(orgId, k -> new HashSet<>()).addAll(skuIdSet);
+            orgIdToWarehouseIds.computeIfAbsent(orgId, k -> new HashSet<>()).add(warehouseId);
+            realQtyByWarehouse.put(warehouseId, new HashMap<>());
+            virtualQtyByWarehouse.put(warehouseId, new HashMap<>());
+        }
+        if (orgIdToWarehouseIds.isEmpty()) {
+            return resultMap;
         }
 
-        // 虚拟仓实际库存，按 sku 聚合
-        Map<String, Integer> virtualQtyMap = new HashMap<>();
-        List<WarehouseEntity> virtualWarehouses = warehouseService.lambdaQuery()
-                .eq(WarehouseEntity::getOrgId, orgId)
-                .eq(WarehouseEntity::getIsVirtual, Boolean.TRUE)
-                .list();
-        if (CollUtil.isNotEmpty(virtualWarehouses)) {
+        // 3) 按组织一次性批量查询：实体仓库存（仅非虚拟仓） + 该组织下虚拟仓列表
+        for (Map.Entry<String, Set<String>> orgEntry : orgIdToWarehouseIds.entrySet()) {
+            String orgId = orgEntry.getKey();
+            Set<String> orgWarehouseIds = orgEntry.getValue();
+            Set<String> orgSkuIds = orgIdToSkuIds.get(orgId);
+
+            // 3.1 实体仓库存（可用 + 冻结）：仅查询该组织下传入的非虚拟实体仓
+            List<String> physicalWarehouseIds = orgWarehouseIds.stream()
+                    .filter(id -> Boolean.FALSE.equals(warehouseMap.get(id).getIsVirtual()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(physicalWarehouseIds)) {
+                InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+                dto.setWarehouseIdList(physicalWarehouseIds);
+                dto.setSkuIdList(new ArrayList<>(orgSkuIds));
+                dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
+                List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = this.listSkuInventory(dto);
+                if (CollUtil.isNotEmpty(skuInventoryTotalList)) {
+                    for (InventoryQtyDTO.SkuInventoryStatusTotalDTO row : skuInventoryTotalList) {
+                        Map<String, Integer> warehouseSkuQty = realQtyByWarehouse.get(row.getWarehouseId());
+                        if (warehouseSkuQty == null) {
+                            continue;
+                        }
+                        warehouseSkuQty.merge(row.getSkuId(), row.getInventoryTotal(), Integer::sum);
+                    }
+                }
+            }
+
+            // 3.2 该组织下的虚拟仓列表：每个 orgId 仅查一次
+            List<WarehouseEntity> virtualWarehouses = warehouseService.lambdaQuery()
+                    .eq(WarehouseEntity::getOrgId, orgId)
+                    .eq(WarehouseEntity::getIsVirtual, Boolean.TRUE)
+                    .list();
+            if (CollUtil.isEmpty(virtualWarehouses)) {
+                continue;
+            }
             List<String> virtualWarehouseIds = virtualWarehouses.stream()
                     .map(WarehouseEntity::getId)
                     .collect(Collectors.toList());
+
+            // 3.3 一次性查询该组织下所有传入仓库的虚拟仓占用量
             VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
-            vmParamDto.setSkuIdList(distinctSkuIdList);
-            vmParamDto.setWarehouseIdList(Collections.singletonList(warehouseId));
+            vmParamDto.setSkuIdList(new ArrayList<>(orgSkuIds));
+            vmParamDto.setWarehouseIdList(new ArrayList<>(orgWarehouseIds));
             vmParamDto.setVirtualWarehouseIdList(virtualWarehouseIds);
             List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = virtualInventoryService.getRealQty(vmParamDto);
             if (CollUtil.isNotEmpty(vmRealQtyList)) {
-                virtualQtyMap = vmRealQtyList.stream()
-                        .filter(obj -> Objects.equals(obj.getWarehouseId(), warehouseId))
-                        .collect(Collectors.groupingBy(VirtualInventoryDTO.ViewQtyDTO::getSkuId,
-                                Collectors.summingInt(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty)));
+                for (VirtualInventoryDTO.ViewQtyDTO row : vmRealQtyList) {
+                    Map<String, Integer> warehouseSkuQty = virtualQtyByWarehouse.get(row.getWarehouseId());
+                    if (warehouseSkuQty == null) {
+                        continue;
+                    }
+                    warehouseSkuQty.merge(row.getSkuId(), row.getToVirtualWarehouseRealQty(), Integer::sum);
+                }
             }
         }
 
-        for (String skuId : distinctSkuIdList) {
-            int realQty = realQtyMap.getOrDefault(skuId, 0);
-            int virtualQty = virtualQtyMap.getOrDefault(skuId, 0);
-            resultMap.put(skuId, realQty - virtualQty);
+        // 4) 组装最终结果：可领用库存 = 实体仓实际库存 - 虚拟仓占用量
+        for (Map.Entry<String, ? extends Collection<String>> entry : warehouseSkuMap.entrySet()) {
+            String warehouseId = entry.getKey();
+            if (!warehouseMap.containsKey(warehouseId) || entry.getValue() == null) {
+                continue;
+            }
+            Map<String, Integer> realMap = realQtyByWarehouse.getOrDefault(warehouseId, Collections.emptyMap());
+            Map<String, Integer> virtualMap = virtualQtyByWarehouse.getOrDefault(warehouseId, Collections.emptyMap());
+            Map<String, Integer> warehouseResult = new HashMap<>();
+            for (String skuId : entry.getValue()) {
+                if (CharSequenceUtil.isBlank(skuId)) {
+                    continue;
+                }
+                int realQty = realMap.getOrDefault(skuId, 0);
+                int virtualQty = virtualMap.getOrDefault(skuId, 0);
+                warehouseResult.put(skuId, realQty - virtualQty);
+            }
+            resultMap.put(warehouseId, warehouseResult);
         }
         return resultMap;
     }
