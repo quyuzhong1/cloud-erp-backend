@@ -194,7 +194,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
     private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "接口返回为空";
-    private static final int MAX_INVOICE_PDF_BASE64_LENGTH = 20 * 1024 * 1024;
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -3032,51 +3031,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(pdfAttachDTO) || CharSequenceUtil.isBlank(pdfAttachDTO.getId())) {
             throw new ServiceException("发票附件信息不完整，无法生成安兔PNG缓存");
         }
+        OmsAttachmentEntity cachedAttachment = findInvoicePngAttachment(pdfAttachDTO.getId());
+        String cachedPngBase64 = downloadInvoicePngBase64(entity, cachedAttachment);
+        if (CharSequenceUtil.isNotBlank(cachedPngBase64)) {
+            return cachedPngBase64;
+        }
+        if (CharSequenceUtil.isNotBlank(pdfBase64) && pdfBase64.length() > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
+            throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
+        }
+        String pngBase64 = PdfUtil.pdfBase64FirstPageToPngBase64(pdfBase64);
+        String pngFileName = buildInvoicePngFileName(entity, pdfAttachDTO);
+        String pngUrl = fileFeign.uploadFileByBase64(FileDTO.UploadBase64.builder()
+                .base64(pngBase64)
+                .fileName(pngFileName)
+                .build());
+        if (CharSequenceUtil.isBlank(pngUrl)) {
+            throw new ServiceException("安兔发票PNG上传失败");
+        }
+        boolean uploadedCacheUsed = false;
         String lockKey = "oms:so-b2c:invoice-png:" + pdfAttachDTO.getId();
         RLock lock = redissonClient.getLock(lockKey);
         boolean locked = false;
         try {
-            locked = lock.tryLock(3, TimeUnit.SECONDS);
+            locked = lock.tryLock(3, 30, TimeUnit.SECONDS);
             if (!locked) {
-                throw new ServiceException("安兔发票PNG缓存生成中，请稍后重试");
+                log.warn("安兔发票PNG缓存写入锁获取失败，本次使用临时生成结果, soCode:{}, pdfAttachId:{}",
+                        entity.getCode(), pdfAttachDTO.getId());
+                return pngBase64;
             }
-            OmsAttachmentEntity pngAttachment = omsAttachmentService.lambdaQuery()
-                    .eq(OmsAttachmentEntity::getBusinessId, pdfAttachDTO.getId())
-                    .eq(OmsAttachmentEntity::getType, AttachmentTypeEnum.INVOICE_INFO_PNG.getCode())
-                    .eq(OmsAttachmentEntity::getIsDeleted, false)
-                    .isNotNull(OmsAttachmentEntity::getAttachUrl)
-                    .ne(OmsAttachmentEntity::getAttachUrl, "")
-                    .orderByDesc(OmsAttachmentEntity::getId)
-                    .last("limit 1")
-                    .one();
-            if (ObjectUtil.isNotEmpty(pngAttachment)) {
-                try {
-                    byte[] pngBytes = fileFeign.downloadFile(pngAttachment.getAttachUrl());
-                    if (pngBytes != null && pngBytes.length > 0) {
-                        return Base64.getEncoder().encodeToString(pngBytes);
-                    }
-                } catch (Exception e) {
-                    log.warn("读取安兔发票PNG缓存失败，重新生成, soCode:{}, attachUrl:{}", entity.getCode(), pngAttachment.getAttachUrl(), e);
-                }
+            // 上传耗时较长，放在锁外；锁内只做 DB 二次检查和缓存记录写入。
+            OmsAttachmentEntity latestAttachment = findInvoicePngAttachment(pdfAttachDTO.getId());
+            boolean sameInvalidCache = ObjectUtil.isNotEmpty(cachedAttachment)
+                    && ObjectUtil.isNotEmpty(latestAttachment)
+                    && Objects.equals(cachedAttachment.getId(), latestAttachment.getId());
+            if (ObjectUtil.isEmpty(latestAttachment) || sameInvalidCache) {
+                omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
+                        AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
+                        pngUrl,
+                        pngFileName,
+                        pdfAttachDTO.getId())));
+                uploadedCacheUsed = true;
             }
-            if (CharSequenceUtil.isNotBlank(pdfBase64) && pdfBase64.length() > MAX_INVOICE_PDF_BASE64_LENGTH) {
-                throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
-            }
-            String pngBase64 = PdfUtil.pdfBase64FirstPageToPngBase64(pdfBase64);
-            String pngFileName = buildInvoicePngFileName(entity, pdfAttachDTO);
-            String pngUrl = fileFeign.uploadFileByBase64(FileDTO.UploadBase64.builder()
-                    .base64(pngBase64)
-                    .fileName(pngFileName)
-                    .build());
-            if (CharSequenceUtil.isBlank(pngUrl)) {
-                throw new ServiceException("安兔发票PNG上传失败");
-            }
-            // 文件已上传但缓存记录保存失败时，下次会重新生成并上传，保证主流程不复用不完整缓存。
-            omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
-                    AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
-                    pngUrl,
-                    pngFileName,
-                    pdfAttachDTO.getId())));
             return pngBase64;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -3085,6 +3080,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (locked && lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
+            if (!uploadedCacheUsed) {
+                deleteTemporaryInvoicePng(pngUrl);
+            }
+        }
+    }
+
+    private OmsAttachmentEntity findInvoicePngAttachment(String pdfAttachId) {
+        return omsAttachmentService.lambdaQuery()
+                .eq(OmsAttachmentEntity::getBusinessId, pdfAttachId)
+                .eq(OmsAttachmentEntity::getType, AttachmentTypeEnum.INVOICE_INFO_PNG.getCode())
+                .eq(OmsAttachmentEntity::getIsDeleted, false)
+                .isNotNull(OmsAttachmentEntity::getAttachUrl)
+                .ne(OmsAttachmentEntity::getAttachUrl, "")
+                .orderByDesc(OmsAttachmentEntity::getId)
+                .last("limit 1")
+                .one();
+    }
+
+    private String downloadInvoicePngBase64(SoB2cEntity entity, OmsAttachmentEntity pngAttachment) {
+        if (ObjectUtil.isEmpty(pngAttachment)) {
+            return null;
+        }
+        try {
+            byte[] pngBytes = fileFeign.downloadFile(pngAttachment.getAttachUrl());
+            if (pngBytes != null && pngBytes.length > 0) {
+                return Base64.getEncoder().encodeToString(pngBytes);
+            }
+        } catch (Exception e) {
+            log.warn("读取安兔发票PNG缓存失败，重新生成, soCode:{}, attachUrl:{}", entity.getCode(), pngAttachment.getAttachUrl(), e);
+        }
+        return null;
+    }
+
+    private void deleteTemporaryInvoicePng(String pngUrl) {
+        if (CharSequenceUtil.isBlank(pngUrl)) {
+            return;
+        }
+        try {
+            fileFeign.deleteFile(pngUrl);
+        } catch (Exception e) {
+            log.warn("清理未使用的安兔发票PNG临时文件失败, attachUrl:{}", pngUrl, e);
         }
     }
 

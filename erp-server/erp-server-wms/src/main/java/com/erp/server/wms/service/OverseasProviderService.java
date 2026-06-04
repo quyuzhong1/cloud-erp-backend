@@ -126,5 +126,7 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
 
     List<OverseasProviderEntity> listByAuthStatus(String code);
 
+    String getOwnerCodeByAuthId(String authId);
+
     OverseasProviderEntity refreshToken(OverseasProviderEntity entity);
 }

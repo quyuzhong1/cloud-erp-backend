@@ -112,6 +112,7 @@
                 id
             from kol_sample_cost_ref_feedback_url
             where is_deleted = false
+              <!-- Mapper 方法已传入 sourceType，这里必须绑定来源类型，避免 B2B/B2C 回片数量串单。 -->
               and source_type = #{sourceType}
               and source_detail_id in
               <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">

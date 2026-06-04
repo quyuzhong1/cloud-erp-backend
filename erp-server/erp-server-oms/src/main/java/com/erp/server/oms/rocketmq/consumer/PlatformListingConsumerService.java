@@ -7,7 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
-import com.common.business.wrapper.FeignQuery;
+import com.common.business.utils.ImlBarcodeUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -24,10 +24,10 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
@@ -88,6 +88,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private ShopInfoService shopInfoService;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -284,9 +286,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         if (StringUtils.isBlank(ownerCode)) {
             return;
         }
-        String ownerPrefix = ownerCode + "-";
-        String platformSkuNo = dto.getPlatformSkuNo();
-        dto.setPlatformProductBarcode(platformSkuNo.startsWith(ownerPrefix) ? platformSkuNo : ownerPrefix + platformSkuNo);
+        dto.setPlatformProductBarcode(ImlBarcodeUtil.buildBarcode(dto.getPlatformSkuNo(), ownerCode));
     }
 
     private String getImlOwnerCode(String authId, String platformSkuNo) {
@@ -297,22 +297,20 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         if (StringUtils.isNotBlank(cachedOwnerCode)) {
             return cachedOwnerCode;
         }
-        OverseasProviderEntity overseasProviderEntity;
+        String ownerCode;
         try {
-            // FeignQuery 是项目框架提供的按 Entity 路由通用 RPC 查询能力，此处用于低频补齐 WMS 货主编码。
-            overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class, authId);
+            ownerCode = overseasProviderFeign.getOwnerCodeByAuthId(authId);
         } catch (Exception e) {
             log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 异常, authId={}, platformSkuNo={}, error={}",
                     authId, platformSkuNo, e.getMessage());
             return null;
         }
-        if (Objects.isNull(overseasProviderEntity) || StringUtils.isBlank(overseasProviderEntity.getOwnerCode())) {
+        if (StringUtils.isBlank(ownerCode)) {
             IML_OWNER_CODE_CACHE.put(authId, OWNER_CODE_NOT_FOUND);
             log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
                     authId, platformSkuNo);
             return null;
         }
-        String ownerCode = overseasProviderEntity.getOwnerCode();
         IML_OWNER_CODE_CACHE.put(authId, ownerCode);
         return ownerCode;
     }

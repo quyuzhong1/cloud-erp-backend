@@ -287,7 +287,10 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
                 ? listInventorySkuCost(skuIdList, warehouseIdList, Collections.emptyList())
                 : exactInvSkuCostDTOS;
         Map<String, InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostMap = buildInventorySkuCostMap(fallbackInvSkuCostDTOS, false);
-        Map<String, BigDecimal> plmPurchaseAverageCostMap = buildPlmPurchaseAverageCostMap(thisMonthList);
+        List<KolSampleCostEntity> inventoryCostMissingList = thisMonthList.stream()
+                .filter(item -> ObjUtil.isEmpty(resolveInventorySkuCost(item, exactInvSkuCostMap, fallbackInvSkuCostMap)))
+                .collect(Collectors.toList());
+        Map<String, BigDecimal> plmPurchaseAverageCostMap = buildPlmPurchaseAverageCostMap(inventoryCostMissingList);
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
         bagCostParamDTO.setSkuIdList(skuIdList);
@@ -301,11 +304,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             kolSampleCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             kolSampleCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             fillLogisticsInfo(kolSampleCostEntity, logisticsChannelMap);
-            // 优先按销售组织+SKU+仓库匹配；销售组织为空时按 SKU+仓库兜底。
-            InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
-            if (ObjUtil.isEmpty(invSkuCostDTO) && CharSequenceUtil.isBlank(kolSampleCostEntity.getSoOrgId())) {
-                invSkuCostDTO = fallbackInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
-            }
+            InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = resolveInventorySkuCost(kolSampleCostEntity, exactInvSkuCostMap, fallbackInvSkuCostMap);
             if (ObjUtil.isEmpty(invSkuCostDTO)) {
                 applyPurchaseAverageCost(kolSampleCostEntity, plmPurchaseAverageCostMap.get(kolSampleCostEntity.getSkuId()), updateCostSourceMonth);
             } else {
@@ -471,6 +470,18 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         return StrUtil.format("{}#{}", skuId, warehouseId);
     }
 
+    private InventorySkuCostDTO.InvSkuCostDTO resolveInventorySkuCost(KolSampleCostEntity kolSampleCostEntity,
+                                                                      Map<String, InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostMap,
+                                                                      Map<String, InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostMap) {
+        // 优先按销售组织+SKU+仓库匹配；销售组织为空时按 SKU+仓库兜底。
+        InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO = exactInvSkuCostMap.get(buildInventorySkuCostKey(
+                kolSampleCostEntity.getSoOrgId(), kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
+        if (ObjUtil.isEmpty(invSkuCostDTO) && CharSequenceUtil.isBlank(kolSampleCostEntity.getSoOrgId())) {
+            invSkuCostDTO = fallbackInvSkuCostMap.get(buildInventorySkuCostKey(kolSampleCostEntity.getSkuId(), kolSampleCostEntity.getWarehouseId()));
+        }
+        return invSkuCostDTO;
+    }
+
     private void applyInventorySkuCost(KolSampleCostEntity kolSampleCostEntity, InventorySkuCostDTO.InvSkuCostDTO invSkuCostDTO) {
         BigDecimal qty = MathUtil.valueOf(kolSampleCostEntity.getQty());
         BigDecimal exchangeRate = ObjUtil.defaultIfNull(invSkuCostDTO.getExchangeRate(), BigDecimal.ONE);
@@ -489,7 +500,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
 
     private Map<String, BigDecimal> buildPlmPurchaseAverageCostMap(List<KolSampleCostEntity> thisMonthList) {
         List<String> skuIdList = thisMonthList.stream()
-                // listByTime 从 DB 加载的数据不会带 @TableField(exist = false) 的 purchaseAverageCost，这里固定按 SKU 批量兜底查 PLM。
+                // listByTime 从 DB 加载的数据不会带 @TableField(exist = false) 的 purchaseAverageCost，TMS 未命中时再按 SKU 兜底查 PLM。
                 .map(KolSampleCostEntity::getSkuId)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()

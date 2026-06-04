@@ -112,6 +112,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     @Autowired
     private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
 
+    // 新增只写 OMS 本地表；PLM Feign 在 handleData 中仅补读 SKU 信息，不需要 Seata 全局事务。
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(KolFeedbackDTO.AddDTO addDTO) {
@@ -140,6 +141,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     /**
     * 批量新增
     */
+    // 批量新增沿用单条新增的本地写入边界，不涉及跨服务写事务。
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> batchAdd(KolFeedbackDTO.BatchAddDTO dto) {

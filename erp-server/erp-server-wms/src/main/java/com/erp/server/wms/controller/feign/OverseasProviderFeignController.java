@@ -69,6 +69,11 @@ public class OverseasProviderFeignController {
         return overseasProviderWarehouseService.listProviderWarehouseBySql(compareCodeSplicingValueSql);
     }
 
+    @GetMapping("/getOwnerCodeByAuthId")
+    public String getOwnerCodeByAuthId(@RequestParam("authId") String authId) {
+        return overseasProviderService.getOwnerCodeByAuthId(authId);
+    }
+
     @PostMapping("/refreshToken")
     public OverseasProviderEntity refreshToken(@RequestBody OverseasProviderEntity entity){
         return overseasProviderService.refreshToken(entity);

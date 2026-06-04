@@ -1,12 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.constant.ThirdWarehouseConstants;
 import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.third.ThirdWarehouseConstants;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +25,6 @@ import javax.validation.Valid;
 @Service
 @Validated
 public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
-
-    static final int MAX_PDF_BASE64_LENGTH = 20 * 1024 * 1024;
 
     @Override
     public OmsPlatformEnum getPlatForm() {
@@ -47,7 +45,7 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         if (CharSequenceUtil.isBlank(fileData)) {
             throw new ServiceException("安兔上传文件内容不能为空");
         }
-        if (fileData.length() > MAX_PDF_BASE64_LENGTH) {
+        if (fileData.length() > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
             throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
         }
         uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));

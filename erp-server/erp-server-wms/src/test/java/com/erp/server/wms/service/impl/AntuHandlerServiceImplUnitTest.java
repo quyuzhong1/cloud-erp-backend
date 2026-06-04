@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.constant.ThirdWarehouseConstants;
 import com.common.business.enums.FileTypeEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.exception.ServiceException;
@@ -81,7 +82,7 @@ public class AntuHandlerServiceImplUnitTest {
 
     @Test(expected = ServiceException.class)
     public void convertPdfAttachmentToPngRejectLargePdfAttachment() {
-        char[] oversizedBase64 = new char[AntuHandlerServiceImpl.MAX_PDF_BASE64_LENGTH + 1];
+        char[] oversizedBase64 = new char[ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH + 1];
         Arrays.fill(oversizedBase64, 'A');
         ThirdWarehouseUploadFileReq req = new ThirdWarehouseUploadFileReq();
         req.setModule("other_documents_invoice");
