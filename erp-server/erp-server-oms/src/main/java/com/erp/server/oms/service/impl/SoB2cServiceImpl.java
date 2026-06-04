@@ -3017,7 +3017,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // 上传耗时较长，放在锁外；锁内只做 DB 二次检查和缓存记录写入。
             OmsAttachmentEntity latestAttachment = findInvoicePngAttachment(pdfAttachDTO.getId());
-            if (ObjectUtil.isEmpty(latestAttachment) || ObjectUtil.isNotEmpty(cachedAttachment)) {
+            boolean sameInvalidCache = ObjectUtil.isNotEmpty(cachedAttachment)
+                    && ObjectUtil.isNotEmpty(latestAttachment)
+                    && Objects.equals(cachedAttachment.getId(), latestAttachment.getId());
+            if (ObjectUtil.isEmpty(latestAttachment) || sameInvalidCache) {
                 omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
                         AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
                         pngUrl,

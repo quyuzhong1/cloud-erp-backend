@@ -65,7 +65,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
     }
 
     @Transactional(rollbackFor = Exception.class)
-    // DistributeLocker 切面会展开 List 参数，为每个 sourceType/sourceDetailId 组合加锁。
+    // DistributeLockerAspect#getValuesByParam 会展开 List 参数，单条和批量最终锁 key 都是 sourceType|sourceDetailId。
     @DistributeLocker(keyName = "feedbackList.sourceType,feedbackList.sourceDetailId", businessType = FEEDBACK_URL_LOCK_BUSINESS_TYPE, unlockAfterTx = true)
     @Override
     public void syncByFeedbackList(List<KolFeedbackEntity> feedbackList) {
