@@ -6,8 +6,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
-import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
@@ -126,52 +126,12 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @param cfgDetails 配置字段明细
      * @return 当前批次落库结果（校验失败行 + 落库统计）
      */
-    ReconBatchResult handleReconImportBatch(List<Map<Integer, String>> rows,
-                                            Map<Integer, String> headMap,
-                                            int rowNoStart,
-                                            LogisticsReconDTO.ImportDTO dto,
-                                            CfgLogisticsCostImportEntity importCfg,
-                                            List<CfgLogisticsCostImportDetailEntity> cfgDetails);
-
-    /**
-     * 单批导入落库结果
-     */
-    class ReconBatchResult {
-        private final List<LogisticsReconImportExcelDTO> errorList;
-        private final int detailCount;
-        private final int subCount;
-        private final java.math.BigDecimal totalAmount;
-        private final java.util.Set<String> currencies;
-
-        public ReconBatchResult(List<LogisticsReconImportExcelDTO> errorList, int detailCount, int subCount,
-                                java.math.BigDecimal totalAmount, java.util.Set<String> currencies) {
-            this.errorList = errorList;
-            this.detailCount = detailCount;
-            this.subCount = subCount;
-            this.totalAmount = totalAmount;
-            this.currencies = currencies;
-        }
-
-        public List<LogisticsReconImportExcelDTO> getErrorList() {
-            return errorList;
-        }
-
-        public int getDetailCount() {
-            return detailCount;
-        }
-
-        public int getSubCount() {
-            return subCount;
-        }
-
-        public java.math.BigDecimal getTotalAmount() {
-            return totalAmount;
-        }
-
-        public java.util.Set<String> getCurrencies() {
-            return currencies;
-        }
-    }
+    LogisticsReconBatchResultDTO handleReconImportBatch(List<Map<Integer, String>> rows,
+                                                        Map<Integer, String> headMap,
+                                                        int rowNoStart,
+                                                        LogisticsReconDTO.ImportDTO dto,
+                                                        CfgLogisticsCostImportEntity importCfg,
+                                                        List<CfgLogisticsCostImportDetailEntity> cfgDetails);
 
     /**
      * 物流商对账明细批量解绑匹配（按 detail 维度，逻辑删 ref）

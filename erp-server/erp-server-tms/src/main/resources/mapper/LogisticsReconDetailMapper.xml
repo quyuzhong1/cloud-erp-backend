@@ -46,14 +46,38 @@
 
     <select id="paging" resultType="com.erp.model.tms.dto.LogisticsReconDetailDTO$ListDTO">
         SELECT
-            sub.id, sub.detail_id, d.main_id, d.row_no, sub.seq_no,
-            d.so_code, d.platform_order_no, d.track_no, d.transport_no, d.so_delivery_code,
-            d.erp_so_code, d.erp_platform_order_no, d.erp_track_no, d.erp_so_delivery_code,
-            sub.cost_name, sub.cfg_cost_name, sub.actual_amount, sub.currency,
-            d.pay_type, d.weight_logistics, d.volume_weight_logistics,
-            d.billing_weight_logistics, d.weight_unit, d.third_length, d.third_width, d.third_height,
-            d.cost_count, sub.match_status, sub.match_fail_reason, sub.reconciliation_status,
-            d.create_time, d.create_user_name
+            sub.id AS id,
+            sub.detail_id AS detailId,
+            d.main_id AS mainId,
+            d.row_no AS rowNo,
+            sub.seq_no AS seqNo,
+            d.so_code AS soCode,
+            d.platform_order_no AS platformOrderNo,
+            d.track_no AS trackNo,
+            d.transport_no AS transportNo,
+            d.so_delivery_code AS soDeliveryCode,
+            d.erp_so_code AS erpSoCode,
+            d.erp_platform_order_no AS erpPlatformOrderNo,
+            d.erp_track_no AS erpTrackNo,
+            d.erp_so_delivery_code AS erpSoDeliveryCode,
+            sub.cost_name AS costName,
+            sub.cfg_cost_name AS cfgCostName,
+            sub.actual_amount AS actualAmount,
+            sub.currency AS currency,
+            d.pay_type AS payType,
+            d.weight_logistics AS weightLogistics,
+            d.volume_weight_logistics AS volumeWeightLogistics,
+            d.billing_weight_logistics AS billingWeightLogistics,
+            d.weight_unit AS weightUnit,
+            d.third_length AS thirdLength,
+            d.third_width AS thirdWidth,
+            d.third_height AS thirdHeight,
+            d.cost_count AS costCount,
+            sub.match_status AS matchStatus,
+            sub.match_fail_reason AS matchFailReason,
+            sub.reconciliation_status AS reconciliationStatus,
+            d.create_time AS createTime,
+            d.create_user_name AS createUserName
         FROM logistics_recon_detail_sub sub
         INNER JOIN logistics_recon_detail d
             ON d.id = sub.detail_id AND d.is_deleted = false
@@ -69,7 +93,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        d.row_no ASC, sub.seq_no ASC
+        rowNo ASC, seqNo ASC
     </select>
 
     <select id="countMatchedByMainId" resultType="java.lang.Integer">

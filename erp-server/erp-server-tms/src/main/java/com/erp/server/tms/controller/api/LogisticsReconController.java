@@ -17,7 +17,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.server.tms.query.LogisticsReconQueryHandler;
-import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import com.erp.server.tms.service.LogisticsReconService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -46,9 +45,6 @@ public class LogisticsReconController extends BaseController {
 
     @Resource
     private LogisticsReconService logisticsReconService;
-
-    @Resource
-    private LogisticsReconDetailSubService logisticsReconDetailSubService;
 
 
     /**
@@ -199,7 +195,8 @@ public class LogisticsReconController extends BaseController {
                 results.add(logisticsReconService.confirmBill(mainId, dto.getReconciliationStatus(), dto.getConfirmTime()));
             } catch (Exception e) {
                 log.error("[batchConfirmBill] 失败 mainId={}", mainId, e);
-                results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
+                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                results.add(BatchResultDTO.fail(mainId, mainId, msg));
             }
         }
         return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
