@@ -242,17 +242,25 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                     .filter(StringUtils::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
-            Map<String, SupplierEntity> supplierMap = CollectionUtils.isEmpty(supplierIds)
+            // Feign 在降级 / 超时 / 序列化异常时可能直接返回 null（而非空列表），
+            // 这里在 .stream() 之前先做空值守卫，避免后续 NPE
+            List<SupplierEntity> supplierList = CollectionUtils.isEmpty(supplierIds)
+                    ? Collections.emptyList()
+                    : scmTaskFeign.getSupplierByIdList(supplierIds);
+            Map<String, SupplierEntity> supplierMap = CollectionUtils.isEmpty(supplierList)
                     ? Collections.emptyMap()
-                    : scmTaskFeign.getSupplierByIdList(supplierIds).stream()
+                    : supplierList.stream()
                             .filter(Objects::nonNull)
                             .collect(Collectors.toMap(SupplierEntity::getId, e -> e, (oldValue, newValue) -> oldValue));
             // 注意：plmTaskFeign.getByIdList 实际是按 product_detail.id 批量查询，
             // 且 SubcontractOrderDetailEntity.skuId 存储的也是 product_detail.id，
             // 因此这里以 ProductDetailEntity#getId 作为 Map key
-            Map<String, ProductDetailEntity> productMap = CollectionUtils.isEmpty(skuIds)
+            List<ProductDetailEntity> productList = CollectionUtils.isEmpty(skuIds)
+                    ? Collections.emptyList()
+                    : plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productMap = CollectionUtils.isEmpty(productList)
                     ? Collections.emptyMap()
-                    : plmTaskFeign.getByIdList(skuIds).stream()
+                    : productList.stream()
                             .filter(Objects::nonNull)
                             .collect(Collectors.toMap(ProductDetailEntity::getId, e -> e, (oldValue, newValue) -> oldValue));
 
