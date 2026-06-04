@@ -71,6 +71,13 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
         dto.setWarehouseId(dtos.get(0).getId());
         //当前只有一个仓位 【空仓位】 默认code为空
         dto.setSourceWarehouseLocationCode("");
+        //因为当前的源仓位固定是空仓位而且目标仓位不能是源仓位所以限制目标仓位不能是空仓位
+        String targetCode = CharSequenceUtil.trim(dto.getTargetWarehouseLocationCode());
+        if (CharSequenceUtil.isBlank(targetCode)) {
+            throw new ServiceException("移出仓默认”空仓位“，与目标仓不可为同一个");
+        }
+        dto.setTargetWarehouseLocationCode(targetCode);
+
         return ApiResult.success(warehouseLocationMoveService.submitGoodsInfo(dto));
     }
 
