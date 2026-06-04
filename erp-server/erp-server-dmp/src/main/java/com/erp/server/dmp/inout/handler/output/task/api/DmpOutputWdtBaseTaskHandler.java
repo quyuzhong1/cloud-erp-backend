@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -87,7 +88,7 @@ public abstract class DmpOutputWdtBaseTaskHandler extends DmpOutputTaskHandler {
         }catch (Exception e){
             log.error("DmpOutputWdtBaseTaskHandler pushData error, id: {}, requestData: {}", id, requestData, e);
             status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
-            List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+            List<DictBasicEntity> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
             String atUser = "";
             if (CollUtil.isNotEmpty(viewDTOList)){
                 atUser = viewDTOList.stream().map(v -> CharSequenceUtil.format("<at user_id=\"{}\"></at>", v.getValue())).collect(Collectors.joining());

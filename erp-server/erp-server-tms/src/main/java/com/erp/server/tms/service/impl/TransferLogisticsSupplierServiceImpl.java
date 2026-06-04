@@ -132,14 +132,14 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     @Override
     public List<TransferLogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<TransferLogisticsSupplierDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
-        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_LOGISTICS_AUTH_STATUS.getType());
+        List<com.erp.model.tms.entity.DictBasicEntity> typeList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_LOGISTICS_AUTH_STATUS.getType());
         List<TransferLogisticsSupplierDTO.TabListDTO> resultList = new ArrayList<>(typeList.size());
         TransferLogisticsSupplierDTO.TabListDTO all = new TransferLogisticsSupplierDTO.TabListDTO();
         all.setTabFlagName("全部");
         all.setTabFlag("all");
         all.setCount(list.size());
         resultList.add(all);
-        for (DictBasicDTO.ViewDTO item : typeList) {
+        for (com.erp.model.tms.entity.DictBasicEntity item : typeList) {
             TransferLogisticsSupplierDTO.TabListDTO tab = new TransferLogisticsSupplierDTO.TabListDTO();
             String type = item.getCode();
             tab.setTabFlag(type);

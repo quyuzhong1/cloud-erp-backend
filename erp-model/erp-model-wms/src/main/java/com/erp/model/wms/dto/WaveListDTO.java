@@ -130,6 +130,7 @@ public class WaveListDTO implements Serializable {
          * 拣货车类型
          */
         private String pickingCartTypeName;
+        private String pickingCartType;
 
         /**
          * 拣货车编码
@@ -160,6 +161,7 @@ public class WaveListDTO implements Serializable {
          * 打印状态
          */
         private String printStatusName;
+        private String printStatus;
 
         /**
          * 是否缺货

@@ -2219,6 +2219,10 @@ public class SoInfoDTO implements Serializable {
          * 通讯地址
          */
         private String mailAddress;
+        /**
+         * 分区id
+         */
+        private String partitionId;
     }
 
 

@@ -926,7 +926,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
                     if(PlatformDictEnum.LING_XING.getCode().equals(thirdAddDTO.getSysType())){
                         // 领星平台映射ERP平台关系
-                        List<DictBasicDTO.ViewDTO> dictbaseList = dictBasicService.getByKey("lingxingPlatformCode");
+                        List<DictBasicEntity> dictbaseList = dictBasicService.getByKey("lingxingPlatformCode");
                         if (dictbaseList.stream().noneMatch(e ->
                                 e.getValue().equalsIgnoreCase(thirdShopEntity.getPlatformId()) && dictPlatform.equalsIgnoreCase(e.getName()))
                         ){
