@@ -369,8 +369,11 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem> shipmentFiles = new ArrayList<>(attachments.size());
         for (WmsAttachmentDTO.UpdateDTO attachment : attachments) {
-            shipmentFiles.add(Objects.requireNonNull(buildShipmentFile(item, attachment),
-                    "B2B三方发货单装箱标签附件构建结果不能为空"));
+            ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = buildShipmentFile(item, attachment);
+            if (Objects.isNull(shipmentFile)) {
+                throw new ServiceException("B2B三方发货单装箱标签附件构建结果不能为空，箱序号：{}", item.getBoxSeq());
+            }
+            shipmentFiles.add(shipmentFile);
         }
         if (CollUtil.isEmpty(shipmentFiles)) {
             return;
