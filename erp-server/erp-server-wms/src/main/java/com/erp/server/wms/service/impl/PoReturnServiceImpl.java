@@ -1889,7 +1889,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     /**
-     * 整箱退货新增时校验：所有 SKU 明细行的仓位必须有值，任意一行为空则抛错。
+     * 整箱退货新增时校验：所有 SKU 明细行的仓位必须有值，任意一行为 null（前端未带或多箱仓位不一致时被置空）则抛错。
+     * 空仓位 code 为 ""，属于合法值（同一 SKU 下的所有箱唛均来自空仓位），不能拦截。
      * 仅整箱退货（returnDetailType=pack 或带有 afterSalePackDetailList）才触发。
      */
     private void checkPackReturnWarehouseLocationForAdd(PurchaseReturnOrderDTO.AddDTO dto) {
@@ -1899,7 +1900,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<String> skuNos = dto.getPurchasePriceDetailList().stream()
                 .filter(Objects::nonNull)
-                .filter(detail -> CharSequenceUtil.isBlank(detail.getWarehouseLocation()))
+                .filter(detail -> detail.getWarehouseLocation() == null)
                 .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(skuNos)) {
@@ -1908,7 +1909,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     }
 
     /**
-     * 整箱退货修改时校验：所有 SKU 明细行的仓位必须有值，任意一行为空则抛错。
+     * 整箱退货修改时校验：所有 SKU 明细行的仓位必须有值，任意一行为 null（前端未带或多箱仓位不一致时被置空）则抛错。
+     * 空仓位 code 为 ""，属于合法值（同一 SKU 下的所有箱唛均来自空仓位），不能拦截。
      * 仅整箱退货（returnDetailType=pack 或带有 afterSalePackDetailList）才触发。
      */
     private void checkPackReturnWarehouseLocationForUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
@@ -1918,7 +1920,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<String> skuNos = dto.getPurchasePriceDetailList().stream()
                 .filter(Objects::nonNull)
-                .filter(detail -> CharSequenceUtil.isBlank(detail.getWarehouseLocation()))
+                .filter(detail -> detail.getWarehouseLocation() == null)
                 .map(detail -> CharSequenceUtil.blankToDefault(detail.getSkuNo(), detail.getSkuId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(skuNos)) {
