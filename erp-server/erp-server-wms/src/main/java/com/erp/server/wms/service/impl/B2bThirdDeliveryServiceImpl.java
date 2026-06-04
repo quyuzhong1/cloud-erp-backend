@@ -1696,12 +1696,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryDTO.ViewQueryDTO viewQueryDTO = new B2bThirdDeliveryDTO.ViewQueryDTO();
         viewQueryDTO.setSoId(soId);
         viewQueryDTO.setSoDetailIds(soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
-        B2bThirdDeliveryDTO.ViewDTO viewDTO = null;
-        try {
-            viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
-        } catch (ServiceException | feign.FeignException ex) {
-            log.warn("B2B装箱导入获取三方发货单预览明细失败，使用订单明细兜底, soId={}", soId, ex);
-        }
+        B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
         if (Objects.nonNull(viewDTO) && CollUtil.isNotEmpty(viewDTO.getDetailList())) {
             return viewDTO.getDetailList().stream().map(e -> {
                 com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
