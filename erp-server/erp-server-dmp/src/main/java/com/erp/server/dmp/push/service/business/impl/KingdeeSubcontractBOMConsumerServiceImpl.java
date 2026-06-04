@@ -127,6 +127,17 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             Map<String, Object> bomMap = queryList.get(0);
             KingdeeUtils.makeFieldJson(json,"Ids",".", bomMap.get("FId"));
 
+            // syncKingdeeId 在循环中保持不变，相关委外订单 / 明细统一在循环外预加载，避免在 convertOldData / convertNewData 内重复 Feign 调用
+            SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
+            if (Objects.isNull(subcontractOrder)) {
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+            }
+            // Feign 降级 / 超时可能返回 null，未取到明细同样视为异常，避免后续 stream() NPE
+            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(subcontractOrder.getId()));
+            if (CollectionUtils.isEmpty(subcontractOrderDetails)) {
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_DETAIL_NOT_FOUND);
+            }
+
             //转换数据
             for (Map<String, Object> query : queryList) {
                 Map<String, Object> bomChangeViewMap = new HashMap<>();
@@ -134,7 +145,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
                 log.warn("委外用料清单变更单查询报文：{}" , view.toString());
                 //处理旧单
-                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),syncKingdeeId,query.get("FBillNo").toString());
+                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),subcontractOrder,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveOldParam = new KingdeeParamDTO.SaveParamDTO(convertOldData);
                 saveOldParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -145,7 +156,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 kingdeeCommonService.audit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
 
                 //新增新单
-                JSONObject convertNewData = convertNewData(view,syncKingdeeId,query.get("FBillNo").toString());
+                JSONObject convertNewData = convertNewData(view,subcontractOrder,subcontractOrderDetails,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveNewParam = new KingdeeParamDTO.SaveParamDTO(convertNewData);
                 saveNewParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -159,11 +170,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         }
     }
 
-    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,String syncKingdeeId,String bomBillNo){
+    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,SubcontractOrderEntity subcontractOrder,String bomBillNo){
         JSONArray ppBomEntries = view.getJSONArray("PPBomEntry");
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
-        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
@@ -203,19 +213,15 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    public JSONObject convertNewData(JSONObject view,String syncKingdeeId,String bomBillNo){
+    public JSONObject convertNewData(JSONObject view,SubcontractOrderEntity subcontractOrder,List<SubcontractOrderDetailEntity> subcontractOrderDetails,String bomBillNo){
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
-        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
 
         if (Objects.nonNull(subcontractOrder)){
-            String mainId = subcontractOrder.getId();
-            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
-            
             List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
                     .filter(item -> StringUtils.isBlank(item.getParentId()))
                     .collect(Collectors.toList());
