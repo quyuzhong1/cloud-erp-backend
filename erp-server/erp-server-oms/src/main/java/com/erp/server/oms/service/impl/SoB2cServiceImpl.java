@@ -3055,7 +3055,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
             locked = lock.tryLock(3, 30, TimeUnit.SECONDS);
             if (!locked) {
-                log.warn("安兔发票PNG缓存写入锁获取失败，本次使用临时生成结果, soCode:{}, pdfAttachId:{}",
+                log.warn("安兔发票PNG缓存写入锁获取失败，本次仅使用内存PNG Base64，临时上传文件将在finally中清理, soCode:{}, pdfAttachId:{}",
                         entity.getCode(), pdfAttachDTO.getId());
                 return pngBase64;
             }

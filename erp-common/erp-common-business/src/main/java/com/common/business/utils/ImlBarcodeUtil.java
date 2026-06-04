@@ -11,6 +11,8 @@ public final class ImlBarcodeUtil {
     }
 
     public static String buildBarcode(String sku, String ownerCode) {
+        sku = CharSequenceUtil.trim(sku);
+        ownerCode = CharSequenceUtil.trim(ownerCode);
         if (CharSequenceUtil.isBlank(sku)) {
             return "";
         }

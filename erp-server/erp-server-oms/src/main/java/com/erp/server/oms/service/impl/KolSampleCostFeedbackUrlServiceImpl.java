@@ -35,6 +35,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
 
     private static final String FEEDBACK_URL_LOCK_BUSINESS_TYPE = "kolSampleCostFeedbackUrl:syncByFeedback";
     private static final int FEEDBACK_URL_QUERY_BATCH_SIZE = 100;
+    private static final int FEEDBACK_URL_WRITE_BATCH_SIZE = 500;
 
     private static final List<String> SAMPLE_SOURCE_TYPES = Arrays.asList(
             SourceTypeEnum.KOL_B2B_APPLICATION.getCode(),
@@ -128,10 +129,14 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
             pendingAddMap.put(urlKey, addEntity);
         }
         if (CollUtil.isNotEmpty(addList)) {
-            saveBatch(addList);
+            for (int start = 0; start < addList.size(); start += FEEDBACK_URL_WRITE_BATCH_SIZE) {
+                saveBatch(addList.subList(start, Math.min(start + FEEDBACK_URL_WRITE_BATCH_SIZE, addList.size())));
+            }
         }
         if (CollUtil.isNotEmpty(updateList)) {
-            updateBatchById(updateList);
+            for (int start = 0; start < updateList.size(); start += FEEDBACK_URL_WRITE_BATCH_SIZE) {
+                updateBatchById(updateList.subList(start, Math.min(start + FEEDBACK_URL_WRITE_BATCH_SIZE, updateList.size())));
+            }
         }
     }
 

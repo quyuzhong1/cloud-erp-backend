@@ -107,6 +107,59 @@
           ksc.other_cost as otherCost
     </sql>
 
+    <sql id="Base_Column_List_No_Feedback_Join">
+        ksc.id,
+        ksc.create_user_id as  createUserId,
+        ksc.create_user_name as createUserName,
+        ksc.create_time as createTime,
+        ksc.update_user_id as updateUserId,
+        ksc.update_user_name as updateUserName,
+        ksc.update_time as updateTime,
+        ksc.version,
+        ksc.is_deleted as isDeleted,
+        ksc.source_id as sourceId,
+          ksc.source_code as sourceCode,
+          ksc.source_type as sourceType,
+          ksc.source_detail_id as sourceDetailId,
+          ksc.type,
+          ksc.partner_id as partnerId,
+          ksc.partner_nickname as partnerNickname,
+          ksc.feedback_url as feedbackUrl ,
+          ksc.so_code as soCode,
+          ksc.so_id as soId,
+          ksc.so_detail_id as soDetailId,
+          ksc.so_org_id as soOrgId,
+          ksc.so_org_name as soOrgName,
+          ksc.so_outstock_id as soOutstockId,
+          ksc.so_outstock_detail_id as soOutstockDetailId,
+          ksc.so_outstock_code as soOutstockCode,
+          ksc.logistics_supplier_id as logisticsSupplierId,
+          ksc.logistics_supplier_name as logisticsSupplierName,
+          ksc.logistics_channel_id as logisticsChannelId,
+          ksc.logistics_channel_name as logisticsChannelName,
+          ksc.so_outstock_date as soOutstockDate,
+          ksc.warehouse_id as warehouseId,
+          ksc.warehouse_name as warehouseName,
+          ksc.partition_id as partitionId,
+          ksc.partition_name as partitionName,
+          ksc.sku_id as skuId,
+          ksc.sku_no as skuNo,
+          ksc.qty,
+          ksc.currency,
+          ksc.currency_symbol as currencySymbol,
+          ksc.exchange_rate as exchangeRate,
+          ksc.total_cost as totalCost,
+          ksc.product_cost as productCost,
+          ksc.cost_source as costSource,
+          ksc.cost_source_month as costSourceMonth,
+          ksc.first_mile_shipping_cost as firstMileShippingCost,
+          ksc.clearance_customs_tax as clearanceCustomsTax,
+          ksc.shipping_cost as shippingCost,
+          ksc.fee_source as feeSource,
+          ksc.customs_tax as customsTax,
+          ksc.other_cost as otherCost
+    </sql>
+
     <!-- source_type 字面量与 com.common.business.enums.SourceTypeEnum.KOL_B2C_APPLICATION.getCode() 保持一致；XML 中用于固定来源标识。 -->
     <sql id="FeedbackUrl_Page_Join">
         left join kol_sub_b2c_application_detail ksc_ksbad
@@ -158,9 +211,8 @@
     <!-- 按时间范围查询列表 -->
     <select id="listByTime" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
         select
-            <include refid="Base_Column_List" />
+            <include refid="Base_Column_List_No_Feedback_Join" />
         from kol_sample_cost ksc
-        <include refid="FeedbackUrl_Page_Join" />
         <where>
             ksc.is_deleted = false
             <if test="startTime != null">

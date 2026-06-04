@@ -510,7 +510,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         }
         List<SkuVO> skuVOList = new ArrayList<>();
         for (List<String> batchSkuIdList : Lists.partition(skuIdList, PLM_SKU_COST_BATCH_SIZE)) {
-            skuVOList.addAll(ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(batchSkuIdList), CollUtil.newArrayList()));
+            try {
+                skuVOList.addAll(ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(batchSkuIdList), CollUtil.newArrayList()));
+            } catch (Exception e) {
+                log.warn("PLM SKU成本批量查询失败，本批降级为空, skuIds={}", batchSkuIdList, e);
+            }
         }
         return skuVOList.stream()
                 .filter(item -> ObjUtil.isNotEmpty(item) && CharSequenceUtil.isNotBlank(item.getSkuId()))

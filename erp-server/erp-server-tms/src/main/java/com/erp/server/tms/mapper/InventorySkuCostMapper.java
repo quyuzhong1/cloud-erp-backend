@@ -83,11 +83,7 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
      */
     List<InventorySkuCostDTO.SkuCostCNYDTO> getSkuCostInCNYForStdCost(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("orgId") String orgId);
     /**
-     * 查询sku成本
-     * @author will
-     * @date 2025/12/10 14:43
-     * @param paramDTO
-     * @return List<InvSkuCostDTO>
+     * 按组织+SKU+仓库查询历史最新已审核SKU成本。
      */
     List<InventorySkuCostDTO.InvSkuCostDTO> listInventorySkuCost(@Param("param")InventorySkuCostDTO.SkuCostParamDTO paramDTO);
 }
