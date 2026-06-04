@@ -65,7 +65,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
-import com.erp.model.wms.dto.excel.SoReturnStockOverwriteImportExcelDTO;
+import com.erp.model.wms.dto.excel.SoReturnStockUpdateImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -90,7 +90,7 @@ import com.erp.server.wms.convert.SoB2cReturnInstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.listener.SoReturnStockExcelListener;
-import com.erp.server.wms.listener.SoReturnStockOverwriteExcelListener;
+import com.erp.server.wms.listener.SoReturnStockUpdateExcelListener;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
 import com.erp.wms.aliexpress.model.AliexpressAuthDTO;
@@ -131,6 +131,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_IN_STOCK;
+import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SO_RETURN_IN_STOCK;
 import static com.common.business.enums.FileTaskEventEnum.IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE;
 
 /**
@@ -2428,17 +2429,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    public void downloadTemplate(HttpServletResponse response) {
+    public void downloadTemplate(String importType, HttpServletResponse response) {
         String path = "excel/soReturnInstockTemplate.xlsx";
+        if (ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(importType)) {
+            path = "excel/soReturnInstockUpdateTemplate.xlsx";
+        }
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
             InputStream inputStream = resourceLoader.getResource(path).getInputStream();
             XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
             OutputStream output = response.getOutputStream();
             response.reset();
-            // 设置文件头
             response.setHeader("Content-Disposition",
                     "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
@@ -2451,16 +2453,40 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        SoReturnStockExcelListener excelListenerUtil = new SoReturnStockExcelListener();
-
+    public Boolean importFile(BaseDTO.ImportDTO dto) {
         try {
-            EasyExcel.read(excelFile.getInputStream(), SoReturnStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
+            dto.setUserId(UserContext.getDefaultLoginUser().getUid());
+            boolean isUpdate = ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType());
+            String taskName = isUpdate ? "销售退货入库单批量更新" : "销售退货入库单导入";
+            String eventCode = isUpdate
+                    ? IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE.getCode()
+                    : IMPORT_WMS_SO_RETURN_IN_STOCK.getCode();
+            downloadTaskFeign.saveImportTask(taskName, eventCode, dto);
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.error("创建销售退货入库单导入任务失败", e);
+            return Boolean.FALSE;
+        }
+    }
+
+    @Override
+    public void importSoReturnInstock(BaseDTO.ImportDTO dto) {
+        if (ImportTypeEnum.UPDATE.getCode().equalsIgnoreCase(dto.getImportType())) {
+            importSoReturnInstockUpdate(dto);
+        } else {
+            importSoReturnInstockAdd(dto);
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void importSoReturnInstockAdd(BaseDTO.ImportDTO dto) {
+        setImportUserContext(dto);
+        SoReturnStockExcelListener excelListenerUtil = new SoReturnStockExcelListener();
+        try {
+            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
+            log.error("销售退货入库单导入格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
         List<SoReturnStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -2470,72 +2496,28 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         List<SoReturnStockImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         handleImportSoReturnstockFile(successList, errorList);
-
-        if (errorList.isEmpty()) {
-            return Boolean.TRUE;
-        }
-        String excelPath = "excel/soReturnInstockError.xlsx";
-        String name = "soReturnInstockError";
-        try {
-            new ExcelPrintUtils().patchExport(errorList,
-                    response,
-                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
-                    excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.FILE_EXPORT_ERROR_DATA_FAILED);
-        }
-        return Boolean.FALSE;
+        finishImportTask(dto, excelDateList.size(), errorList, SoReturnStockImportExcelDTO.class, "销售退货入库单导入错误信息.xlsx");
     }
 
-    @Override
-    public void downloadOverwriteTemplate(HttpServletResponse response) {
-        try {
-            response.reset();
-            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            response.setCharacterEncoding("utf-8");
-            String fileName = java.net.URLEncoder.encode("soReturnInstockOverwriteTemplate", StandardCharsets.UTF_8.name());
-            response.setHeader("Content-Disposition", "attachment;filename=" + fileName + ".xlsx");
-            EasyExcel.write(response.getOutputStream(), SoReturnStockOverwriteImportExcelDTO.class)
-                    .sheet("Sheet1")
-                    .doWrite(Collections.emptyList());
-        } catch (IOException e) {
-            log.error("downloadOverwriteTemplate 下载失败", e);
-            throw new ServiceException(ApiError.FILE_IMPORT_TEMPLATE_DOWNLOAD_FAILED);
-        }
-    }
-
-    @Override
-    public Boolean importOverwriteFile(BaseDTO.ImportDTO dto) {
-        try {
-            dto.setUserId(UserContext.getDefaultLoginUser().getUid());
-            downloadTaskFeign.saveImportTask("销售退货入库单批量导入覆盖", IMPORT_WMS_SO_RETURN_IN_STOCK_OVERWRITE.getCode(), dto);
-            return Boolean.TRUE;
-        } catch (Exception e) {
-            log.error("创建销售退货入库单批量导入覆盖任务失败", e);
-            return Boolean.FALSE;
-        }
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
-    public void importSoReturnInstockOverwrite(BaseDTO.ImportDTO dto) {
+    public void importSoReturnInstockUpdate(BaseDTO.ImportDTO dto) {
         setImportUserContext(dto);
-        SoReturnStockOverwriteExcelListener excelListenerUtil = new SoReturnStockOverwriteExcelListener();
+        SoReturnStockUpdateExcelListener excelListenerUtil = new SoReturnStockUpdateExcelListener();
         try {
             byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
-            EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockOverwriteImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockUpdateImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
-            log.error("批量导入覆盖格式错误！", e);
+            log.error("销售退货入库单批量更新格式错误！", e);
             throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
         }
-        List<SoReturnStockOverwriteImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        List<SoReturnStockUpdateImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
         }
-        List<SoReturnStockOverwriteImportExcelDTO> successList = excelListenerUtil.getSuccessList();
-        List<SoReturnStockOverwriteImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        handleImportSoReturnstockOverwriteFile(successList, errorList);
-        finishImportTask(dto, excelDateList.size(), errorList, SoReturnStockOverwriteImportExcelDTO.class, "销售退货入库单批量导入覆盖错误信息.xlsx");
+        List<SoReturnStockUpdateImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        List<SoReturnStockUpdateImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        handleImportSoReturnstockUpdateFile(successList, errorList);
+        finishImportTask(dto, excelDateList.size(), errorList, SoReturnStockUpdateImportExcelDTO.class, "销售退货入库单批量更新错误信息.xlsx");
     }
 
     private void setImportUserContext(BaseDTO.ImportDTO dto) {
@@ -2575,219 +2557,127 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     /**
-     * 批量导入覆盖处理：校验单据与明细后更新客户
+     * 批量更新主表：全部校验通过后才落库
      */
-    private void handleImportSoReturnstockOverwriteFile(List<SoReturnStockOverwriteImportExcelDTO> successList,
-                                                        List<SoReturnStockOverwriteImportExcelDTO> errorList) {
+    private void handleImportSoReturnstockUpdateFile(List<SoReturnStockUpdateImportExcelDTO> successList,
+                                                     List<SoReturnStockUpdateImportExcelDTO> errorList) {
         if (CollUtil.isEmpty(successList)) {
             return;
         }
-        Map<String, List<SoReturnStockOverwriteImportExcelDTO>> groupByCode = successList.stream()
-                .collect(Collectors.groupingBy(SoReturnStockOverwriteImportExcelDTO::getCode));
+        Set<String> duplicateCodes = successList.stream()
+                .collect(Collectors.groupingBy(SoReturnStockUpdateImportExcelDTO::getCode, Collectors.counting()))
+                .entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(duplicateCodes)) {
+            for (SoReturnStockUpdateImportExcelDTO row : successList) {
+                if (duplicateCodes.contains(row.getCode())) {
+                    row.setErrorMsg("1、退货入库单号在导入表中重复了，请调整");
+                    errorList.add(row);
+                }
+            }
+            return;
+        }
 
-        List<String> codeList = new ArrayList<>(groupByCode.keySet());
-        List<SoReturnInstockEntity> entityList = lambdaQuery().in(SoReturnInstockEntity::getCode, codeList).list();
-        Map<String, SoReturnInstockEntity> entityMap = entityList.stream()
+        List<String> codeList = successList.stream().map(SoReturnStockUpdateImportExcelDTO::getCode).distinct().collect(Collectors.toList());
+        Map<String, SoReturnInstockEntity> entityMap = lambdaQuery().in(SoReturnInstockEntity::getCode, codeList).list().stream()
                 .collect(Collectors.toMap(SoReturnInstockEntity::getCode, Function.identity(), (a, b) -> a));
 
-        List<String> mainIdList = entityList.stream().map(SoReturnInstockEntity::getId).collect(Collectors.toList());
-        Map<String, List<SoReturnInstockDetailEntity>> detailMap = Collections.emptyMap();
-        if (CollUtil.isNotEmpty(mainIdList)) {
-            detailMap = soReturnInstockDetailService.listDetailByMainIds(mainIdList).stream()
-                    .collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getMainId));
+        List<String> customerNameList = successList.stream().map(SoReturnStockUpdateImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = Collections.emptyList();
+        if (CollUtil.isNotEmpty(customerNameList)) {
+            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                    .in(CustomerInfoEntity::getName, customerNameList)
+                    .eq(CustomerInfoEntity::getDisabled, Boolean.FALSE)
+                    .eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                    .list();
         }
+        Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream()
+                .collect(Collectors.groupingBy(CustomerInfoEntity::getName));
 
-        List<String> customerNameList = successList.stream().map(SoReturnStockOverwriteImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
-                .in(CustomerInfoEntity::getName, customerNameList)
-                .eq(CustomerInfoEntity::getDisabled, Boolean.FALSE)
-                .eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
-                .list();
-        Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getName));
+        Map<String, BaseIdDTO.CodeDTO> inventoryOrgMap = sysUserFeign.getAccountingCompanyList(new ArrayList<>()).stream()
+                .filter(org -> !Boolean.TRUE.equals(org.getDisabled()))
+                .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getName, Function.identity(), (a, b) -> a));
+
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
 
-        for (Map.Entry<String, List<SoReturnStockOverwriteImportExcelDTO>> entry : groupByCode.entrySet()) {
-            String code = entry.getKey();
-            List<SoReturnStockOverwriteImportExcelDTO> rows = entry.getValue();
-            SoReturnInstockEntity entity = entityMap.get(code);
-            if (ObjectUtil.isEmpty(entity)) {
-                appendOverwriteError(rows, errorList, "退货入库单不存在");
+        List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> toUpdateList = new ArrayList<>();
+        for (SoReturnStockUpdateImportExcelDTO row : successList) {
+            List<String> rowErrors = validateImportUpdateRow(row, entityMap, customerMap, inventoryOrgMap, currencyList);
+            if (CollUtil.isNotEmpty(rowErrors)) {
+                row.setErrorMsg(FieldValidUtil.getMsgSort(rowErrors));
+                errorList.add(row);
                 continue;
             }
-            if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-                appendOverwriteError(rows, errorList, "退货入库单已作废");
-                continue;
-            }
-            if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())
-                    && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) {
-                appendOverwriteError(rows, errorList, ApiError.BILL_EDIT_ALLOWED_STATUS_ONLY.getMsg());
-                continue;
-            }
-            if (!SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())
-                    && !SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
-                appendOverwriteError(rows, errorList, "当前来源类型不允许修改客户");
-                continue;
-            }
-            long customerNameCount = rows.stream().map(SoReturnStockOverwriteImportExcelDTO::getCustomerName).distinct().count();
-            if (customerNameCount > 1) {
-                appendOverwriteError(rows, errorList, "同一退货入库单号退货客户不一致");
-                continue;
-            }
-            SoReturnStockOverwriteImportExcelDTO headerRow = rows.get(0);
-            List<String> headerErrorList = validateOverwriteHeader(entity, headerRow, currencyList);
-            if (CollUtil.isNotEmpty(headerErrorList)) {
-                appendOverwriteError(rows, errorList, FieldValidUtil.getMsgSort(headerErrorList));
-                continue;
-            }
-            List<SoReturnInstockDetailEntity> detailEntityList = detailMap.getOrDefault(entity.getId(), Collections.emptyList());
-            if (CollUtil.isEmpty(detailEntityList)) {
-                appendOverwriteError(rows, errorList, ApiError.SO_RETURN_INBOUND_DETAIL_REQUIRED.getMsg());
-                continue;
-            }
-            if (rows.size() != detailEntityList.size()) {
-                appendOverwriteError(rows, errorList, "导入明细行数与系统明细行数不一致");
-                continue;
-            }
-            List<SoReturnInstockDetailEntity> matchedDetails = new ArrayList<>();
-            boolean detailValid = true;
-            for (SoReturnStockOverwriteImportExcelDTO row : rows) {
-                SoReturnInstockDetailEntity matchedDetail = matchOverwriteDetail(row, detailEntityList, matchedDetails);
-                if (ObjectUtil.isEmpty(matchedDetail)) {
-                    row.setErrorMsg(FieldValidUtil.getMsgSort(Collections.singletonList(
-                            CharSequenceUtil.format("未匹配到明细，SKU【{}】客户sku【{}】", row.getSkuNo(), row.getPlatformSkuNo()))));
-                    errorList.add(row);
-                    detailValid = false;
-                    break;
-                }
-                matchedDetails.add(matchedDetail);
-            }
-            if (!detailValid) {
-                continue;
-            }
-            List<CustomerInfoEntity> customerInfoEntityList = customerMap.get(headerRow.getCustomerName());
-            if (CollUtil.isEmpty(customerInfoEntityList)) {
-                appendOverwriteError(rows, errorList, "未找到有效客户" + headerRow.getCustomerName());
-                continue;
-            }
-            try {
-                ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
-                        .overwriteCustomer(entity, customerInfoEntityList.get(0), headerRow, currencyList);
-            } catch (Exception e) {
-                appendOverwriteError(rows, errorList, e.getMessage());
-            }
+            SoReturnInstockEntity entity = entityMap.get(row.getCode());
+            SoReturnInstockEntity oldEntity = new SoReturnInstockEntity();
+            BeanMapper.copy(entity, oldEntity);
+            applyImportUpdate(entity, row, customerMap.get(row.getCustomerName()).get(0),
+                    inventoryOrgMap.get(row.getInventoryOrgName()), currencyList);
+            toUpdateList.add(Pair.create(oldEntity, entity));
+        }
+
+        if (CollUtil.isNotEmpty(errorList)) {
+            return;
+        }
+        ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class)
+                .persistAllImportUpdate(toUpdateList);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void persistAllImportUpdate(List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> toUpdateList) {
+        for (Pair<SoReturnInstockEntity, SoReturnInstockEntity> pair : toUpdateList) {
+            persistImportUpdate(pair.getFirst(), pair.getSecond());
         }
     }
 
-    private void appendOverwriteError(List<SoReturnStockOverwriteImportExcelDTO> rows,
-                                      List<SoReturnStockOverwriteImportExcelDTO> errorList,
-                                      String errorMsg) {
-        rows.forEach(row -> row.setErrorMsg("1、" + errorMsg));
-        errorList.addAll(rows);
-    }
-
-    private List<String> validateOverwriteHeader(SoReturnInstockEntity entity,
-                                                   SoReturnStockOverwriteImportExcelDTO headerRow,
-                                                   List<DictCurrencyEntity> currencyList) {
+    private List<String> validateImportUpdateRow(SoReturnStockUpdateImportExcelDTO row,
+                                                 Map<String, SoReturnInstockEntity> entityMap,
+                                                 Map<String, List<CustomerInfoEntity>> customerMap,
+                                                 Map<String, BaseIdDTO.CodeDTO> inventoryOrgMap,
+                                                 List<DictCurrencyEntity> currencyList) {
         List<String> errorMsgList = new ArrayList<>();
-        if (!CharSequenceUtil.equals(entity.getInventoryOrgName(), headerRow.getInventoryOrgName())) {
-            errorMsgList.add("库存组织与系统不一致");
+        SoReturnInstockEntity entity = entityMap.get(row.getCode());
+        if (ObjectUtil.isEmpty(entity)) {
+            errorMsgList.add("无法识别退货入库单号，请确定编码是否正确或是否存在");
+            return errorMsgList;
         }
-        DictCurrencyEntity dictCurrencyEntity = currencyList.stream()
-                .filter(obj -> obj.getName().equals(headerRow.getCurrencyStr()) || obj.getId().equals(headerRow.getCurrencyStr()))
-                .findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(dictCurrencyEntity)) {
-            errorMsgList.add("未找到币别" + headerRow.getCurrencyStr());
-        } else if (!CharSequenceUtil.equals(entity.getCurrency(), dictCurrencyEntity.getId())) {
-            errorMsgList.add("币种与系统不一致");
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            errorMsgList.add("退货入库单已作废");
+            return errorMsgList;
         }
-        if (!entity.getBillDate().equals(headerRow.getBillDate())) {
-            errorMsgList.add("入库日期与系统不一致");
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())
+                && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) {
+            errorMsgList.add(ApiError.BILL_EDIT_ALLOWED_STATUS_ONLY.getMsg());
+            return errorMsgList;
         }
-        String typeCode = resolveOverwriteTypeCode(headerRow.getTypeName());
-        if (CharSequenceUtil.isBlank(typeCode)) {
-            errorMsgList.add("单据类型错误");
-        } else if (!CharSequenceUtil.equals(entity.getType(), typeCode)) {
-            errorMsgList.add("单据类型与系统不一致");
+        if (!SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())
+                && !SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(entity.getSourceType())) {
+            errorMsgList.add("当前来源类型不允许修改");
+            return errorMsgList;
         }
-        String entityLogisticCode = CharSequenceUtil.blankToDefault(entity.getReturnLogisticCode(), "");
-        String importLogisticCode = CharSequenceUtil.blankToDefault(headerRow.getReturnLogisticCode(), "");
-        if (!CharSequenceUtil.equals(entityLogisticCode, importLogisticCode)) {
-            errorMsgList.add("退货物流单号与系统不一致");
+        if (CollUtil.isEmpty(customerMap.get(row.getCustomerName()))) {
+            errorMsgList.add("未能找到客户，请确定客户是否正确/已启用");
+        }
+        if (ObjectUtil.isEmpty(inventoryOrgMap.get(row.getInventoryOrgName()))) {
+            errorMsgList.add("未能找到库存组织，请确定库存组织是否正确/已启用");
+        }
+        if (CharSequenceUtil.isNotBlank(row.getCurrencyStr())) {
+            boolean currencyFound = currencyList.stream()
+                    .anyMatch(obj -> obj.getName().equals(row.getCurrencyStr()) || obj.getId().equals(row.getCurrencyStr()));
+            if (!currencyFound) {
+                errorMsgList.add("该币种未在系统枚举值找到，请确定是否正确");
+            }
         }
         return errorMsgList;
     }
 
-    private String resolveOverwriteTypeCode(String typeName) {
-        if (CharSequenceUtil.isBlank(typeName)) {
-            return null;
-        }
-        String code = BillTypeEnum.getCodeByName(typeName);
-        if (CharSequenceUtil.isNotBlank(code)) {
-            return code;
-        }
-        code = OrderTypeEnum.getCodeByName(typeName);
-        if (CharSequenceUtil.isNotBlank(code)) {
-            return code;
-        }
-        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
-            if (typeName.trim().equalsIgnoreCase(billTypeEnum.getCode())) {
-                return billTypeEnum.getCode();
-            }
-        }
-        for (OrderTypeEnum orderTypeEnum : OrderTypeEnum.values()) {
-            if (typeName.trim().equalsIgnoreCase(orderTypeEnum.getCode())) {
-                return orderTypeEnum.getCode();
-            }
-        }
-        return null;
-    }
-
-    private SoReturnInstockDetailEntity matchOverwriteDetail(SoReturnStockOverwriteImportExcelDTO row,
-                                                             List<SoReturnInstockDetailEntity> detailEntityList,
-                                                             List<SoReturnInstockDetailEntity> matchedDetails) {
-        Integer realQty = Integer.valueOf(row.getRealQtyStr());
-        BigDecimal price = MathUtil.valueOf(row.getPriceStr());
-        BigDecimal taxRate = MathUtil.valueOf(row.getTaxRateStr());
-        BigDecimal taxPrice = MathUtil.valueOf(row.getTaxPriceStr());
-        for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
-            if (matchedDetails.contains(detailEntity)) {
-                continue;
-            }
-            if (!CharSequenceUtil.equals(detailEntity.getSkuNo(), row.getSkuNo())) {
-                continue;
-            }
-            String entityPlatformSku = CharSequenceUtil.blankToDefault(detailEntity.getPlatformSkuNo(), "");
-            String importPlatformSku = CharSequenceUtil.blankToDefault(row.getPlatformSkuNo(), "");
-            if (!CharSequenceUtil.equals(entityPlatformSku, importPlatformSku)) {
-                continue;
-            }
-            if (!Objects.equals(detailEntity.getRealQty(), realQty)) {
-                continue;
-            }
-            if (detailEntity.getPrice() == null || detailEntity.getPrice().compareTo(price) != 0) {
-                continue;
-            }
-            if (detailEntity.getTaxRate() == null || detailEntity.getTaxRate().compareTo(taxRate) != 0) {
-                continue;
-            }
-            if (detailEntity.getTaxPrice() == null || detailEntity.getTaxPrice().compareTo(taxPrice) != 0) {
-                continue;
-            }
-            return detailEntity;
-        }
-        return null;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public void overwriteCustomer(SoReturnInstockEntity entity,
-                                  CustomerInfoEntity customerInfo,
-                                  SoReturnStockOverwriteImportExcelDTO headerRow,
-                                  List<DictCurrencyEntity> currencyList) {
-        SoReturnInstockEntity oldEntity = new SoReturnInstockEntity();
-        BeanMapper.copy(entity, oldEntity);
-        if (CharSequenceUtil.equals(entity.getCustomerId(), customerInfo.getId())) {
-            return;
-        }
+    private void applyImportUpdate(SoReturnInstockEntity entity,
+                                   SoReturnStockUpdateImportExcelDTO row,
+                                   CustomerInfoEntity customerInfo,
+                                   BaseIdDTO.CodeDTO inventoryOrg,
+                                   List<DictCurrencyEntity> currencyList) {
         entity.setCustomerId(customerInfo.getId());
         entity.setCustomerName(customerInfo.getName());
         entity.setSellerId(customerInfo.getSellerId());
@@ -2799,29 +2689,46 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 entity.setSalesDeptName(department.getName());
             }
         }
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(customerInfo.getUseOrgId()));
-        if (CollectionUtils.isEmpty(orgList)) {
-            throw new ServiceException("销售组织不存在");
+        List<BaseIdDTO.CodeDTO> salesOrgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(customerInfo.getUseOrgId()));
+        if (CollectionUtils.isNotEmpty(salesOrgList)) {
+            String salesOrgName = salesOrgList.stream()
+                    .filter(o -> customerInfo.getUseOrgId().equals(o.getId()))
+                    .findFirst()
+                    .map(BaseIdDTO.CodeDTO::getName)
+                    .orElse("");
+            entity.setSalesOrgName(salesOrgName);
+            entity.setSalesOrgId(customerInfo.getUseOrgId());
         }
-        String salesOrgName = orgList.stream()
-                .filter(o -> customerInfo.getUseOrgId().equals(o.getId()))
-                .findFirst()
-                .flatMap(obj -> Optional.ofNullable(obj.getName()))
-                .orElse("");
-        entity.setSalesOrgName(salesOrgName);
-        entity.setSalesOrgId(customerInfo.getUseOrgId());
-        DictCurrencyEntity dictCurrencyEntity = currencyList.stream()
-                .filter(obj -> obj.getName().equals(headerRow.getCurrencyStr()) || obj.getId().equals(headerRow.getCurrencyStr()))
-                .findFirst()
-                .orElse(null);
-        if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-            entity.setCurrencySymbol(dictCurrencyEntity.getSymbol());
-            entity.setCurrency(dictCurrencyEntity.getId());
+        entity.setInventoryOrgId(inventoryOrg.getId());
+        entity.setInventoryOrgName(inventoryOrg.getName());
+        if (CharSequenceUtil.isNotBlank(row.getCurrencyStr())) {
+            DictCurrencyEntity dictCurrencyEntity = currencyList.stream()
+                    .filter(obj -> obj.getName().equals(row.getCurrencyStr()) || obj.getId().equals(row.getCurrencyStr()))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                entity.setCurrencySymbol(dictCurrencyEntity.getSymbol());
+                entity.setCurrency(dictCurrencyEntity.getId());
+            }
         }
+        if (row.getBillDate() != null) {
+            entity.setBillDate(row.getBillDate());
+        }
+        if (CharSequenceUtil.isNotBlank(row.getTypeCode())) {
+            entity.setType(row.getTypeCode());
+        }
+        if (CharSequenceUtil.isNotBlank(row.getReturnLogisticCode())) {
+            entity.setReturnLogisticCode(row.getReturnLogisticCode());
+        }
+    }
+
+    private void persistImportUpdate(SoReturnInstockEntity oldEntity, SoReturnInstockEntity entity) {
         operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
-        operateLogService.addModuleOperateLog(
-                CharSequenceUtil.format("批量导入覆盖：退货客户从【{}】修改为【{}】", oldEntity.getCustomerName(), entity.getCustomerName()),
-                ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
+        if (!CharSequenceUtil.equals(oldEntity.getCustomerName(), entity.getCustomerName())) {
+            operateLogService.addModuleOperateLog(
+                    CharSequenceUtil.format("批量导入更新：退货客户从【{}】修改为【{}】", oldEntity.getCustomerName(), entity.getCustomerName()),
+                    ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
+        }
         if (!this.updateById(entity)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }

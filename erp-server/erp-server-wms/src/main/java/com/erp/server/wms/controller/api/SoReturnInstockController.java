@@ -32,7 +32,6 @@ import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -488,43 +487,23 @@ public class SoReturnInstockController extends BaseController {
      * @param response
      * @return ApiResult
      */
+    /**
+     * 下载模板（importType=add 新增，update 批量更新主表）
+     */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
-        soReturnInstockService.downloadTemplate(response);
+    public ApiResult downloadTemplate(@RequestParam(value = "importType", required = false) String importType,
+                                      HttpServletResponse response) {
+        soReturnInstockService.downloadTemplate(importType, response);
         return success();
     }
 
     /**
-     * 导入
-     * @author will
-     * @date 2025/4/24 19:48
-     * @param excelFile
-     * @param response
-     * @return ApiResult
+     * 异步导入（importType=add 新增，update 批量更新主表）
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售退货入库单")
     @PostMapping("/import")
-    public ApiResult importWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = soReturnInstockService.importFile(excelFile, response);
-        return result ? success() : failure();
-    }
-
-    /**
-     * 下载批量导入覆盖模板
-     */
-    @GetMapping("/downloadOverwriteTemplate")
-    public ApiResult downloadOverwriteTemplate(HttpServletResponse response) {
-        soReturnInstockService.downloadOverwriteTemplate(response);
-        return success();
-    }
-
-    /**
-     * 批量导入覆盖（修改客户）
-     */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入覆盖销售退货入库单客户")
-    @PostMapping("/importOverwrite")
-    public ApiResult importOverwrite(@RequestBody BaseDTO.ImportDTO dto) {
-        Boolean result = soReturnInstockService.importOverwriteFile(dto);
+    public ApiResult importWarehouse(@RequestBody BaseDTO.ImportDTO dto) {
+        Boolean result = soReturnInstockService.importFile(dto);
         return result ? success() : failure();
     }
 

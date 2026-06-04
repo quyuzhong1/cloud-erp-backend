@@ -20,8 +20,6 @@ import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.wms.aliexpress.model.returnorder.AliexpressReturnInstockDTO;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
@@ -366,26 +364,17 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param response
      * @return void
      */
-    void downloadTemplate(HttpServletResponse response);
-    /**
-     * 导入
-     */
-    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
+    void downloadTemplate(String importType, HttpServletResponse response);
 
     /**
-     * 下载批量导入覆盖模板
+     * 异步导入（importType=add 新增，update 批量更新）
      */
-    void downloadOverwriteTemplate(HttpServletResponse response);
+    Boolean importFile(BaseDTO.ImportDTO dto);
 
     /**
-     * 批量导入覆盖（修改客户，异步）
+     * 异步导入销售退货入库单
      */
-    Boolean importOverwriteFile(BaseDTO.ImportDTO dto);
-
-    /**
-     * 异步批量导入覆盖销售退货入库单客户
-     */
-    void importSoReturnInstockOverwrite(BaseDTO.ImportDTO dto);
+    void importSoReturnInstock(BaseDTO.ImportDTO dto);
 
     AliexpressReturnInstockDTO newSyncDataToCaiNiao(SoReturnInstockEntity entity, List<SoReturnInstockDetailEntity> detailEntityList, String syncOperate);
 

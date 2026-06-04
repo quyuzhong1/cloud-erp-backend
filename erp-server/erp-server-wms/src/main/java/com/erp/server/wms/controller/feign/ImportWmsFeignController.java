@@ -146,12 +146,12 @@ public class ImportWmsFeignController {
         }
     }
 
-    @PostMapping("/importSoReturnInstockOverwrite")
-    public void importSoReturnInstockOverwrite(@RequestBody BaseDTO.ImportDTO dto) {
+    @PostMapping("/importSoReturnInstock")
+    public void importSoReturnInstock(@RequestBody BaseDTO.ImportDTO dto) {
         try {
-            soReturnInstockService.importSoReturnInstockOverwrite(dto);
+            soReturnInstockService.importSoReturnInstock(dto);
         } catch (Exception e) {
-            log.error("销售退货入库单批量导入覆盖失败", e);
+            log.error("销售退货入库单导入失败", e);
             BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
             importResultDTO.setTaskId(dto.getTaskId());
             importResultDTO.setStatus(FileTaskStatusEnum.FAIL.getCode());
