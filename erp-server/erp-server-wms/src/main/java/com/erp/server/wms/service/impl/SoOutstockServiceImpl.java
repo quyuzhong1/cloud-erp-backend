@@ -1716,26 +1716,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-        ExportDTO params = dto.getParams();
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        if(dynamicDataSourceTypeEnum == null) {
-        	dynamicDataSourceTypeEnum = DynamicDataSourceTypeEnum.POSTGRES;
-        }
-        params.setDynamicDataSource(dynamicDataSourceTypeEnum.getCode());
-		params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
-        //获取导出数据
-		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            throw new ServiceException(ApiError.FILE_EXPORT_DATA_EMPTY);
-        }
-        fillPaging(page.getRecords(),true);
-        return new PagingVO<>(page);
-    }
-
-    @Override
-    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-        PagingVO<SoOutstockDTO.PagingViewDTO> paging = this.exportSoOutStock(dto);
+    public PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+        PagingVO<SoOutstockDTO.PagingViewDTO> paging = this.paging(dto,true);
         List<SoOutstockDTO.ExportField> fieldList = dto.getParams().getFieldList();
         DynamicExcelDTO dynamicExcelDTO = new DynamicExcelDTO();
         List<LinkedHashMap<String, Object>> data = new ArrayList<>();
@@ -1974,7 +1956,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(new ApiResult(ApiError.HTTP_UNKNOWN.getCode(),listApiResult.getMsg()));
         }
-        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName, Collectors.joining(","))));
+        Map<String, String> approveNameMap = listApiResult.getData().stream().collect(Collectors.groupingBy(ProcessManagementDTO.CurApproveSimpleDTO::getBusinessId, Collectors.mapping(ProcessManagementDTO.CurApproveSimpleDTO::getCurApproveName, Collectors.joining(","))));
         //查询虚拟仓信息
         List<String> virtualWarehouseIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntities = CollectionUtils.isNotEmpty(virtualWarehouseIds)?virtualWarehouseService.listByIds(virtualWarehouseIds):new ArrayList<>();

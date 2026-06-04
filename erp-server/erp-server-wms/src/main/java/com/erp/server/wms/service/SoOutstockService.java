@@ -576,7 +576,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param list
      */
     void deleteTransferInfo(List<SoOutstockEntity> list);
-    
+    PagingVO<DynamicExcelDTO> exportDynamicSoOutStock(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
     /**
      * 修复旺店通数据

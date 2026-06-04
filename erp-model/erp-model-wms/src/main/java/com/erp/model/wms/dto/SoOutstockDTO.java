@@ -473,6 +473,11 @@ public class SoOutstockDTO implements Serializable {
         private List<String> approveStatusList;
 
         private List<LocalDate> billDateList;
+
+        /**
+         * 自定义导出字段
+         */
+        private List<ExportField> fieldList;
         
         /**
          * 动态数据源，需要重新get方法
