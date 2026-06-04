@@ -1869,6 +1869,8 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
+    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(16011,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
+    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(16012,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
 
     ;
     @Getter
