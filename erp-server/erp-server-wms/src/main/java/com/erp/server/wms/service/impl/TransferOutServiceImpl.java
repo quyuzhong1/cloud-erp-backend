@@ -417,7 +417,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
      * 调出数量 <= 可分配库存（实体仓可用+冻结-虚拟仓可用-冻结）
      */
     private void validateAllocationInventoryOnApprove(TransferOutEntity entity) {
-        if (isStocktakingSource(entity.getSourceType())) {
+        if (SourceTypeEnum.isStocktaking(entity.getSourceType())) {
             return;
         }
         List<TransferOutDetailEntity> detailList = transferOutDetailService.listByMainId(entity.getId());
@@ -429,21 +429,18 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                         Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
         Map<String, TransferOutDetailEntity> detailMap = detailList.stream()
                 .collect(Collectors.toMap(TransferOutDetailEntity::getSkuId, Function.identity(), (left, right) -> left));
+        // 一次性批量查询可分配库存，避免循环内 N+1
+        Map<String, Integer> allocatableQtyMap = inventoryService.getRecipientAvailableQtyBatch(
+                entity.getOutWarehouseId(), new ArrayList<>(requestQtyMap.keySet()));
         for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
             String skuId = entry.getKey();
             Integer requestQty = entry.getValue();
             TransferOutDetailEntity detail = detailMap.get(skuId);
-            Integer allocatableQty = inventoryService.getRecipientAvailableQty(entity.getOutWarehouseId(), skuId);
+            Integer allocatableQty = allocatableQtyMap.getOrDefault(skuId, 0);
             if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
                 throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), entity.getOutWarehouseName(), allocatableQty);
             }
         }
-    }
-
-    private boolean isStocktakingSource(String sourceType) {
-        return CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), sourceType)
-                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT.getCode(), sourceType)
-                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_LOSS.getCode(), sourceType);
     }
 
     @Override

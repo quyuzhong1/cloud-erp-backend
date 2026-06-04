@@ -400,6 +400,16 @@ public enum SourceTypeEnum {
     public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
+
+    /**
+     * 是否盘点类来源（盘盈/盘亏/盘盈盘亏单）。
+     * 盘点类业务在审核可分配库存时不参与校验，统一在此判定，避免各业务实现散落重复逻辑。
+     */
+    public static boolean isStocktaking(String code) {
+        return Objects.equals(STOCKTAKING_PROFIT_LOSS.getCode(), code)
+                || Objects.equals(STOCKTAKING_PROFIT.getCode(), code)
+                || Objects.equals(STOCKTAKING_LOSS.getCode(), code);
+    }
     public static List<String> pickingLists() {
         return Arrays.asList(PICKING_LISTS_ADD.getCode(), PICKING_LISTS_SUBTRACT.getCode());
     }

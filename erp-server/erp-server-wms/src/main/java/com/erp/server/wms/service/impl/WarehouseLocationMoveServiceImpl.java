@@ -922,32 +922,47 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
      * 调出库存状态为可用时，校验调出数量 <= 可分配库存（实体仓可用+冻结-虚拟仓可用-冻结）
      */
     private void validateAllocationInventoryOnApprove(WarehouseLocationMoveEntity infoEntity, List<WarehouseLocationMoveDetailEntity> detailEntityList, ApproveOneDTO dto) {
-        if (CollUtil.isEmpty(detailEntityList) || isStocktakingSource(infoEntity.getSourceType())) {
+        if (CollUtil.isEmpty(detailEntityList) || SourceTypeEnum.isStocktaking(infoEntity.getSourceType())) {
             return;
         }
+        // key = warehouseId + "@@" + skuId（用不会出现在ID中的分隔符规避UUID自带"-"导致的截断）
         Map<String, Integer> requestQtyMap = new HashMap<>();
         Map<String, WarehouseLocationMoveDetailEntity> detailMap = new HashMap<>();
+        Map<String, String> keyToWarehouseId = new HashMap<>();
+        // 收集每个仓库下涉及的 SKU，便于批量查询可分配库存
+        Map<String, Set<String>> warehouseSkuMap = new HashMap<>();
         for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
             if (!CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), detailEntity.getOutInventoryStatus())) {
                 continue;
             }
             String warehouseId = dto.getPcShow()
-                    ? (CharSequenceUtil.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId())
+                    ? CharSequenceUtil.blankToDefault(detailEntity.getWarehouseId(), infoEntity.getWarehouseId())
                     : infoEntity.getWarehouseId();
             if (CharSequenceUtil.isBlank(warehouseId) || CharSequenceUtil.isBlank(detailEntity.getSkuId())) {
                 continue;
             }
-            String key = CharSequenceUtil.format("{}-{}", warehouseId, detailEntity.getSkuId());
+            String key = warehouseId + "@@" + detailEntity.getSkuId();
             requestQtyMap.merge(key, MathUtil.valueOfZero(detailEntity.getQty()), Integer::sum);
             detailMap.putIfAbsent(key, detailEntity);
+            keyToWarehouseId.putIfAbsent(key, warehouseId);
+            warehouseSkuMap.computeIfAbsent(warehouseId, k -> new HashSet<>()).add(detailEntity.getSkuId());
+        }
+        if (requestQtyMap.isEmpty()) {
+            return;
+        }
+        // 按仓库批量预取可分配库存，避免 N+1 循环查库
+        Map<String, Map<String, Integer>> allocatableQtyByWarehouse = new HashMap<>();
+        for (Map.Entry<String, Set<String>> whEntry : warehouseSkuMap.entrySet()) {
+            allocatableQtyByWarehouse.put(whEntry.getKey(),
+                    inventoryService.getRecipientAvailableQtyBatch(whEntry.getKey(), new ArrayList<>(whEntry.getValue())));
         }
         for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
             String key = entry.getKey();
             Integer requestQty = entry.getValue();
             WarehouseLocationMoveDetailEntity detail = detailMap.get(key);
-            String[] keyArr = key.split("-", 2);
-            String warehouseId = keyArr[0];
-            Integer allocatableQty = inventoryService.getRecipientAvailableQty(warehouseId, detail.getSkuId());
+            String warehouseId = keyToWarehouseId.get(key);
+            Integer allocatableQty = allocatableQtyByWarehouse.getOrDefault(warehouseId, Collections.emptyMap())
+                    .getOrDefault(detail.getSkuId(), 0);
             if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
                 String warehouseName = dto.getPcShow()
                         ? CharSequenceUtil.blankToDefault(detail.getWarehouseName(), infoEntity.getWarehouseName())
@@ -955,12 +970,6 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), warehouseName, allocatableQty);
             }
         }
-    }
-
-    private boolean isStocktakingSource(String sourceType) {
-        return CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), sourceType)
-                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT.getCode(), sourceType)
-                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_LOSS.getCode(), sourceType);
     }
 
     @Override

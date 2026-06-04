@@ -485,7 +485,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     private void validateAllocationInventoryOnApprove(TransferInEntity entity) {
         TransferOutEntity transferOutEntity = transferOutService.getById(entity.getSourceId());
-        if (transferOutEntity != null && isStocktakingSource(transferOutEntity.getSourceType())) {
+        if (transferOutEntity != null && SourceTypeEnum.isStocktaking(transferOutEntity.getSourceType())) {
             return;
         }
         List<TransferInDetailEntity> detailList = transferInDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
@@ -497,21 +497,18 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                         Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
         Map<String, TransferInDetailEntity> detailMap = detailList.stream()
                 .collect(Collectors.toMap(TransferInDetailEntity::getSkuId, Function.identity(), (left, right) -> left));
+        // 一次性批量查询可分配库存，避免循环内 N+1
+        Map<String, Integer> allocatableQtyMap = inventoryService.getRecipientAvailableQtyBatch(
+                entity.getOutWarehouseId(), new ArrayList<>(requestQtyMap.keySet()));
         for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
             String skuId = entry.getKey();
             Integer requestQty = entry.getValue();
             TransferInDetailEntity detail = detailMap.get(skuId);
-            Integer allocatableQty = inventoryService.getRecipientAvailableQty(entity.getOutWarehouseId(), skuId);
+            Integer allocatableQty = allocatableQtyMap.getOrDefault(skuId, 0);
             if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
                 throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), entity.getOutWarehouseName(), allocatableQty);
             }
         }
-    }
-
-    private boolean isStocktakingSource(String sourceType) {
-        return CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), sourceType)
-                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_PROFIT.getCode(), sourceType)
-                || CharSequenceUtil.equals(SourceTypeEnum.STOCKTAKING_LOSS.getCode(), sourceType);
     }
 
     //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
