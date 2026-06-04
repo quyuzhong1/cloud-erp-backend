@@ -268,6 +268,72 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
+    public Map<String, Integer> getRecipientAvailableQtyBatch(String warehouseId, List<String> skuIdList) {
+        Map<String, Integer> resultMap = new HashMap<>();
+        if (CharSequenceUtil.isBlank(warehouseId) || CollUtil.isEmpty(skuIdList)) {
+            return resultMap;
+        }
+        List<String> distinctSkuIdList = skuIdList.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctSkuIdList)) {
+            return resultMap;
+        }
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        if (Objects.isNull(warehouseEntity)) {
+            throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC, "仓库信息");
+        }
+        String orgId = warehouseEntity.getOrgId();
+
+        // 实体仓实际库存（可用+冻结），按 sku 聚合
+        Map<String, Integer> realQtyMap = new HashMap<>();
+        if (Boolean.FALSE.equals(warehouseEntity.getIsVirtual())) {
+            InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+            dto.setWarehouseIdList(Collections.singletonList(warehouseId));
+            dto.setSkuIdList(distinctSkuIdList);
+            dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
+            List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = this.listSkuInventory(dto);
+            if (CollUtil.isNotEmpty(skuInventoryTotalList)) {
+                realQtyMap = skuInventoryTotalList.stream()
+                        .filter(obj -> Objects.equals(obj.getWarehouseId(), warehouseId))
+                        .collect(Collectors.groupingBy(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getSkuId,
+                                Collectors.summingInt(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal)));
+            }
+        }
+
+        // 虚拟仓实际库存，按 sku 聚合
+        Map<String, Integer> virtualQtyMap = new HashMap<>();
+        List<WarehouseEntity> virtualWarehouses = warehouseService.lambdaQuery()
+                .eq(WarehouseEntity::getOrgId, orgId)
+                .eq(WarehouseEntity::getIsVirtual, Boolean.TRUE)
+                .list();
+        if (CollUtil.isNotEmpty(virtualWarehouses)) {
+            List<String> virtualWarehouseIds = virtualWarehouses.stream()
+                    .map(WarehouseEntity::getId)
+                    .collect(Collectors.toList());
+            VirtualInventoryDTO.ParamDTO vmParamDto = new VirtualInventoryDTO.ParamDTO();
+            vmParamDto.setSkuIdList(distinctSkuIdList);
+            vmParamDto.setWarehouseIdList(Collections.singletonList(warehouseId));
+            vmParamDto.setVirtualWarehouseIdList(virtualWarehouseIds);
+            List<VirtualInventoryDTO.ViewQtyDTO> vmRealQtyList = virtualInventoryService.getRealQty(vmParamDto);
+            if (CollUtil.isNotEmpty(vmRealQtyList)) {
+                virtualQtyMap = vmRealQtyList.stream()
+                        .filter(obj -> Objects.equals(obj.getWarehouseId(), warehouseId))
+                        .collect(Collectors.groupingBy(VirtualInventoryDTO.ViewQtyDTO::getSkuId,
+                                Collectors.summingInt(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty)));
+            }
+        }
+
+        for (String skuId : distinctSkuIdList) {
+            int realQty = realQtyMap.getOrDefault(skuId, 0);
+            int virtualQty = virtualQtyMap.getOrDefault(skuId, 0);
+            resultMap.put(skuId, realQty - virtualQty);
+        }
+        return resultMap;
+    }
+
+    @Override
     public Integer getRealInventoryTotal(String warehouseId, String skuId) {
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);

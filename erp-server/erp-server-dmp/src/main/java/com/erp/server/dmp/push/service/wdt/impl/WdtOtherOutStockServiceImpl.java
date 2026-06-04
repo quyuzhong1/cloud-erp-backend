@@ -87,15 +87,26 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
             log.error("旺店通其他出库单推送失败，request：{}， response：{}", stockoutRequest, response);
             String warnMsg = CharSequenceUtil.format("创建失败，批次号：{}，仓库编码：{}，状态码：{}，错误信息：{}",
                     stockoutRequest.getOuterNo(), stockoutRequest.getWarehouseNo(), response.getStatus(), response.getMessage());
-            sendCreateOrApproveWarnMsg(stockoutRequest, "旺店通其他出库单创建失败", warnMsg);
+            safeSendCreateOrApproveWarnMsg(stockoutRequest, "旺店通其他出库单创建失败", warnMsg);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单失败: {}, {}, {}", stockoutRequest.getOuterNo(), response.getStatus(), response.getMessage());
         }
         if (null != response.getData() && null != response.getData().getStatus() && 0 != response.getData().getStatus()) {
             log.error("旺店通其他出库单审核失败，request：{}，response：{}", stockoutRequest, response);
             String warnMsg = CharSequenceUtil.format("审核失败，批次号：{}，仓库编码：{}，状态码：{}，错误信息：{}",
                     stockoutRequest.getOuterNo(), stockoutRequest.getWarehouseNo(), response.getData().getStatus(), response.getData().getMessage());
-            sendCreateOrApproveWarnMsg(stockoutRequest, "旺店通其他出库单审核失败", warnMsg);
+            safeSendCreateOrApproveWarnMsg(stockoutRequest, "旺店通其他出库单审核失败", warnMsg);
             throw new ServiceException(ApiError.COMMON_WDT_API_CALL_FAILED.getCode(), "推送旺店通其他出库单审核失败: {}, {}", response.getData().getStatus(), response.getData().getMessage());
+        }
+    }
+
+    /**
+     * 包裹一层 try-catch，确保业务主异常不会被告警 MQ 发送时的运行时异常吞掉。
+     */
+    private void safeSendCreateOrApproveWarnMsg(CreateOtherStockoutRequest stockoutRequest, String title, String keyInfo) {
+        try {
+            sendCreateOrApproveWarnMsg(stockoutRequest, title, keyInfo);
+        } catch (Exception e) {
+            log.warn("发送旺店通其他出库单告警 MQ 失败，不影响主流程：title={}, keyInfo={}", title, keyInfo, e);
         }
     }
 

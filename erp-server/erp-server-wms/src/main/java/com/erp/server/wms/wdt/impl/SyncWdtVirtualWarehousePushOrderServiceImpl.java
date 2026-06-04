@@ -160,7 +160,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 Map<String, Integer> currentPushQtyMap = groupCheckDataList.stream()
                         .filter(this::isCurrentPushOrderType)
                         .collect(Collectors.groupingBy(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getSkuNo,
-                                Collectors.summingInt(VirtualWarehousePushHandleDetailDTO.CheckDataDTO::getQty)));
+                                Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
                 for (Map.Entry<String, Integer> skuPushEntry : currentPushQtyMap.entrySet()) {
                     String skuNo = skuPushEntry.getKey();
                     Integer currentPushQty = skuPushEntry.getValue();

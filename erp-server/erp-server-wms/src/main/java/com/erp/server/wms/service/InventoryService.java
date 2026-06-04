@@ -12,6 +12,7 @@ import com.erp.model.wms.entity.StocktakingPlanEntity;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname: InventoryService
@@ -99,6 +100,16 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return 计算后的可领用库存
      */
     Integer getRecipientAvailableQty(String warehouseId, String skuId);
+
+    /**
+     * 批量查询可领用库存：按 SKU 批量返回 仓库 + skuId 维度的可领用库存。
+     * 可领用库存 = 实体仓可用 + 实体仓冻结 - 虚拟仓可用 - 虚拟仓冻结
+     *
+     * @param warehouseId 仓库ID（实体仓或虚拟仓）
+     * @param skuIdList   SKU ID 集合（去重传入）
+     * @return key=skuId，value=可领用库存；未命中数据的 SKU 默认返回 0
+     */
+    Map<String, Integer> getRecipientAvailableQtyBatch(String warehouseId, List<String> skuIdList);
 
     /**
      * 查实际库存
