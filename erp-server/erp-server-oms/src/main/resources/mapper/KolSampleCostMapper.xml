@@ -107,6 +107,7 @@
           ksc.other_cost as otherCost
     </sql>
 
+    <!-- source_type 字面量与 SourceTypeEnum.KOL_B2C_APPLICATION.getCode() 保持一致；XML 中用于 UNION 固定来源标识。 -->
     <sql id="FeedbackUrl_Join">
         left join kol_sub_b2c_application_detail ksc_ksbad
             on ksc.source_type = 'kolB2cApplication'
