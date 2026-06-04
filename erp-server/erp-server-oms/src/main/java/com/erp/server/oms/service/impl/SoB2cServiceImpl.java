@@ -824,34 +824,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
-
-    @Override
-    public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
-        if (CollectionUtils.isEmpty(soIds)) {
-            return Collections.emptyList();
-        }
-
-        // 初始化结果集
-        List<SoB2cEntity> resultList = new ArrayList<>(soIds.size());
-        int batchSize = 1000;
-        int totalSize = soIds.size();
-
-        // 纯 Java 手动分批切分
-        for (int i = 0; i < totalSize; i += batchSize) {
-            // 计算当前批次的结束索引，防止越界
-            int toIndex = Math.min(i + batchSize, totalSize);
-            List<String> batchIds = soIds.subList(i, toIndex);
-
-            // 执行查询
-            List<SoB2cEntity> batchList = lambdaQuery()
-                    .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
-                    .in(SoB2cEntity::getId, batchIds)
-                    .list();
-
-            resultList.addAll(batchList);
-        }
-        return resultList;
-    }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
         LocalDateTime getExchangeRateTime = soB2cEntity.getCreateTime();
@@ -12810,24 +12782,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
     }
-
-    @Override
-    public PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<PagingParamDTO> pagingParamDTO) {
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        PagingParamDTO params = pagingParamDTO.getParams();
-        params.setPermissionSql(getPermissionSql());
-        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-        String dynamicDataSource = "";
-        if (dynamicDataSourceTypeEnum != null) {
-            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
-        }
-        params.setDynamicDataSource(dynamicDataSource);
-        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
-        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.fullyManagedPaging(query, params, Objects.nonNull(isOutStock) || Objects.nonNull(isVirtualOutStock));
-        fillList(pageData.getRecords(), true);
-        return new PagingVO(pageData);
 
     @Override
     public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
