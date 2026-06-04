@@ -507,9 +507,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
         }
         params.setDynamicDataSource(dynamicDataSource);
-        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
-        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        List<AdvanceQueryDTO> advanceQueryDTOList = Optional.ofNullable(params.getAdvanceQueryDTOList()).orElse(Collections.emptyList());
+        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> Objects.equals(v.getField(), "isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> Objects.equals(v.getField(), "isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         if (Objects.nonNull(isOutStock)) {
             return this.filterIsOutStockList(pagingParamDTO, isOutStock);
         } else if (Objects.nonNull(isVirtualOutStock)) {
@@ -12818,9 +12818,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
         }
         params.setDynamicDataSource(dynamicDataSource);
-        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
-        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        List<AdvanceQueryDTO> advanceQueryDTOList = Optional.ofNullable(params.getAdvanceQueryDTOList()).orElse(Collections.emptyList());
+        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> Objects.equals(v.getField(), "isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> Objects.equals(v.getField(), "isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.fullyManagedPaging(query, params, Objects.nonNull(isOutStock) || Objects.nonNull(isVirtualOutStock));
         fillList(pageData.getRecords(), true);
         return new PagingVO(pageData);
