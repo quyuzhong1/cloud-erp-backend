@@ -281,7 +281,11 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         // SKU成本
         List<InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostDTOS = listInventorySkuCost(skuIdList, warehouseIdList, soOrgIdList);
         Map<String, InventorySkuCostDTO.InvSkuCostDTO> exactInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, true);
-        Map<String, InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostMap = buildInventorySkuCostMap(exactInvSkuCostDTOS, false);
+        boolean hasBlankSoOrgId = thisMonthList.stream().anyMatch(item -> CharSequenceUtil.isBlank(item.getSoOrgId()));
+        List<InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostDTOS = hasBlankSoOrgId && CollUtil.isNotEmpty(soOrgIdList)
+                ? listInventorySkuCost(skuIdList, warehouseIdList, Collections.emptyList())
+                : exactInvSkuCostDTOS;
+        Map<String, InventorySkuCostDTO.InvSkuCostDTO> fallbackInvSkuCostMap = buildInventorySkuCostMap(fallbackInvSkuCostDTOS, false);
         Map<String, BigDecimal> plmPurchaseAverageCostMap = buildPlmPurchaseAverageCostMap(thisMonthList);
         //小包费用分摊
         SmallBagCostAllocationDTO.SmallBagCostParamDTO bagCostParamDTO = new SmallBagCostAllocationDTO.SmallBagCostParamDTO();
