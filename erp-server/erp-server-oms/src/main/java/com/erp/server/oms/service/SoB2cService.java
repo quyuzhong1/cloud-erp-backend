@@ -1205,8 +1205,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<VirtualWarehouseRelationEntity> virtualWarehouseList);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList);
-
     void rollbackBeforeDelivery(String soB2cId, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList);
 
     /**
@@ -1224,6 +1222,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
 
+    PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<SoB2cDTO.PagingParamDTO> dto);
+
     void deleteB2cSoJob();
 
     /**
@@ -1231,6 +1231,4 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景。
      */
     List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds);
-
-    PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<SoB2cDTO.PagingParamDTO> dto);
 }

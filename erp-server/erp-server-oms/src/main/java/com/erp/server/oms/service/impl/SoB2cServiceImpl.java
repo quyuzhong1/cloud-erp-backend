@@ -63,7 +63,6 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.file.dto.FileDTO;
 import com.erp.model.oms.dto.CfgSettingDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.SoB2cDTO.ListCountDto;
 import com.erp.model.oms.dto.SoB2cDTO.PagingParamDTO;
@@ -823,6 +822,35 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode());
+    }
+
+
+    @Override
+    public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+
+        // 初始化结果集
+        List<SoB2cEntity> resultList = new ArrayList<>(soIds.size());
+        int batchSize = 1000;
+        int totalSize = soIds.size();
+
+        // 纯 Java 手动分批切分
+        for (int i = 0; i < totalSize; i += batchSize) {
+            // 计算当前批次的结束索引，防止越界
+            int toIndex = Math.min(i + batchSize, totalSize);
+            List<String> batchIds = soIds.subList(i, toIndex);
+
+            // 执行查询
+            List<SoB2cEntity> batchList = lambdaQuery()
+                    .select(SoB2cEntity::getId, SoB2cEntity::getIsIntercept)
+                    .in(SoB2cEntity::getId, batchIds)
+                    .list();
+
+            resultList.addAll(batchList);
+        }
+        return resultList;
     }
     @Override
     public BatchResultDTO refreshExchangeRate(SoB2cEntity soB2cEntity) {
@@ -3824,7 +3852,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 log.warn("新增三方仓发货单成功，发货单code:{}", code);
                 createOutboundReq.setReferenceNo(code);
                 addModuleOperateLogRequiresNew(CharSequenceUtil.format("B2C销售订单【{}】提交发货，创建三方仓发货单【{}】", entity.getCode(), code), entity.getId(), "创建三方仓发货单");
-            } else {
+            }else {
                 log.warn("订单{}使用已存在的发货单号{}创建三方仓出库单", entity.getCode(), createOutboundReq.getReferenceNo());
             }
         } catch (Exception e) {
@@ -7827,9 +7855,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addError.setMessage(ApiError.SO_B2C_GET_EXCHANGE_RATE_FAILED.getMsg());
             soB2cErrorService.addWithoutSignError(addError);
 
-        } else {
-            if (SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())) {
-                soB2cErrorService.removeErrorOrderWithoutSignError(entity.getId(), SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
+        }else{
+            if(SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode().equals(entity.getSignOrderError())){
+                soB2cErrorService.removeErrorOrderWithoutSignError(entity.getId(),SoB2cErrorTypeEnum.GET_EXCHANGE_RATE.getCode());
                 entity.setSignOrderError("");
                 entity.setIsFrozen(false);
                 entity.setFrozenType("");
@@ -11918,8 +11946,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.SO_B2C_NOT_OUTBOUND_STATUS_UPDATE_FAILED);
         }
     }
-
-    @Override
     public BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList) {
         //检查发货限制
         String restrictionMsg = this.checkDeliveryRestriction(dto.getId(), RuleOrderHandleEnum.DeliveryRestrictionEnum.NO_OUTBOUND_DELIVERY.getCode());
@@ -12785,6 +12811,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
+    @Override
+    public PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<PagingParamDTO> pagingParamDTO) {
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        PagingParamDTO params = pagingParamDTO.getParams();
+        params.setPermissionSql(getPermissionSql());
+        DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
+        String dynamicDataSource = "";
+        if (dynamicDataSourceTypeEnum != null) {
+            dynamicDataSource = dynamicDataSourceTypeEnum.getCode();
+        }
+        params.setDynamicDataSource(dynamicDataSource);
+        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
+        Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.fullyManagedPaging(query, params, Objects.nonNull(isOutStock) || Objects.nonNull(isVirtualOutStock));
+        fillList(pageData.getRecords(), true);
+        return new PagingVO(pageData);
 
     @Override
     public List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds) {
