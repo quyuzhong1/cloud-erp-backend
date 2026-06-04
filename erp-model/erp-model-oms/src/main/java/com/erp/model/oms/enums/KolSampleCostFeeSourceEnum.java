@@ -18,4 +18,13 @@ public enum KolSampleCostFeeSourceEnum implements EnumMessage {
     private final String code;
 
     private final String name;
+
+    public static String getName(String code) {
+        for (KolSampleCostFeeSourceEnum item : values()) {
+            if (item.getCode().equals(code)) {
+                return item.getName();
+            }
+        }
+        return code;
+    }
 }

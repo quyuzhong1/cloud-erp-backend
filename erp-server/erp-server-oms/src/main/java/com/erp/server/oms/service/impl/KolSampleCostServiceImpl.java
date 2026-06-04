@@ -882,6 +882,8 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         Map<String, String> skuMap = CollUtil.isEmpty(skuList) ? new HashMap<>() : skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
         for (KolSampleCostDTO.ListDTO listDTO : list) {
             listDTO.setProductName(skuMap.get(listDTO.getSkuId()));
+            listDTO.setCostSource(KolSampleCostCostSourceEnum.getName(listDTO.getCostSource()));
+            listDTO.setFeeSource(KolSampleCostFeeSourceEnum.getName(listDTO.getFeeSource()));
         }
     }
 
