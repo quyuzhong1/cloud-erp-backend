@@ -1315,7 +1315,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<String> costNameList = successList.stream().map(LogisticsBillCostExcelDTO::getCostName).distinct().collect(Collectors.toList());
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostNameList(costNameList);
 
-        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}_{}_{}_{}_{}",obj.getPlatformCode(),obj.getSoCode(),obj.getSoDeliveryCode(),obj.getTrackNo(),obj.getPayType())));
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildBillVoIndex(logisticsBillVos);
+        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(
+                Collectors.groupingBy(
+                        obj -> CharSequenceUtil.format("{}_{}_{}_{}_{}",
+                                obj.getPlatformCode(), obj.getSoCode(), obj.getSoDeliveryCode(), obj.getTrackNo(), obj.getPayType()),
+                        LinkedHashMap::new,
+                        Collectors.toList()));
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupLogisticsBillVoMap = new LinkedHashMap<>();
+        map.forEach((key, rows) ->
+                groupLogisticsBillVoMap.put(key, matchImportLogisticsBillVos(rows.get(0), logisticsBillVos, billVoIndex)));
 
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
         if(CollUtil.isNotEmpty(logisticsBillVos)) {
@@ -1329,12 +1338,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostExcelDTO billCostExcelDTO = value.get(0);
 
             List<String> errorMsgList = new ArrayList<>();
-            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream()
-                    .filter(obj -> CharSequenceUtil.isBlank(billCostExcelDTO.getPlatformCode()) || obj.getPlatformCode().equals(billCostExcelDTO.getPlatformCode()))
-                    .filter(obj -> CharSequenceUtil.isBlank(billCostExcelDTO.getSoDeliveryCode()) || obj.getSoDeliveryCode().equals(billCostExcelDTO.getSoDeliveryCode()))
-                    .filter(obj -> CharSequenceUtil.isBlank(billCostExcelDTO.getSoCode()) || obj.getSourceCode().equals(billCostExcelDTO.getSoCode()))
-                    .filter(obj -> CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo()) || obj.getTrackNo().equals(billCostExcelDTO.getTrackNo()))
-                    .collect(Collectors.toList());
+            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
                 if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                     errorMsgList.add("单号已存在无法新增，请核查单号");
@@ -1525,6 +1529,56 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             existsDTO.setCostValue(existsDTO.getCostValue().add(updateDTO.getCostValue()));
         }
         return new ArrayList<>(updateDetailMap.values());
+    }
+
+    private List<LogisticsBillDTO.LogisticsBillVo> matchImportLogisticsBillVos(LogisticsBillCostExcelDTO excelDTO,
+                                                                               List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,
+                                                                               Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex) {
+        if (CharSequenceUtil.isAllBlank(excelDTO.getPlatformCode(), excelDTO.getSoDeliveryCode(), excelDTO.getSoCode(), excelDTO.getTrackNo())) {
+            return Collections.emptyList();
+        }
+        if (CollUtil.isEmpty(logisticsBillVos)) {
+            return Collections.emptyList();
+        }
+        // 按选择性最高的非空字段从索引中缩小候选集，避免全量 O(n×m) 扫描
+        List<LogisticsBillDTO.LogisticsBillVo> candidates;
+        if (CharSequenceUtil.isNotBlank(excelDTO.getTrackNo())) {
+            candidates = billVoIndex.getOrDefault("trackNo:" + excelDTO.getTrackNo(), Collections.emptyList());
+        } else if (CharSequenceUtil.isNotBlank(excelDTO.getSoDeliveryCode())) {
+            candidates = billVoIndex.getOrDefault("soDelivery:" + excelDTO.getSoDeliveryCode(), Collections.emptyList());
+        } else if (CharSequenceUtil.isNotBlank(excelDTO.getSoCode())) {
+            candidates = billVoIndex.getOrDefault("soCode:" + excelDTO.getSoCode(), Collections.emptyList());
+        } else {
+            candidates = billVoIndex.getOrDefault("platform:" + excelDTO.getPlatformCode(), Collections.emptyList());
+        }
+        return candidates.stream()
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) || CharSequenceUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) || CharSequenceUtil.equals(obj.getSoDeliveryCode(), excelDTO.getSoDeliveryCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoCode()) || CharSequenceUtil.equals(obj.getSourceCode(), excelDTO.getSoCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || CharSequenceUtil.equals(obj.getTrackNo(), excelDTO.getTrackNo()))
+                .collect(Collectors.toList());
+    }
+
+    private Map<String, List<LogisticsBillDTO.LogisticsBillVo>> buildBillVoIndex(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos) {
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> index = new HashMap<>();
+        if (CollUtil.isEmpty(logisticsBillVos)) {
+            return index;
+        }
+        for (LogisticsBillDTO.LogisticsBillVo vo : logisticsBillVos) {
+            if (CharSequenceUtil.isNotBlank(vo.getTrackNo())) {
+                index.computeIfAbsent("trackNo:" + vo.getTrackNo(), k -> new ArrayList<>()).add(vo);
+            }
+            if (CharSequenceUtil.isNotBlank(vo.getSoDeliveryCode())) {
+                index.computeIfAbsent("soDelivery:" + vo.getSoDeliveryCode(), k -> new ArrayList<>()).add(vo);
+            }
+            if (CharSequenceUtil.isNotBlank(vo.getSourceCode())) {
+                index.computeIfAbsent("soCode:" + vo.getSourceCode(), k -> new ArrayList<>()).add(vo);
+            }
+            if (CharSequenceUtil.isNotBlank(vo.getPlatformCode())) {
+                index.computeIfAbsent("platform:" + vo.getPlatformCode(), k -> new ArrayList<>()).add(vo);
+            }
+        }
+        return index;
     }
 
     private void validateSameCostCurrency(List<TmsCostDetailDTO.UpdateDTO> updateDetailList,
