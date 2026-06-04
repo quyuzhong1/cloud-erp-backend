@@ -279,20 +279,25 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
         // 装箱信息item
         List<ThirdWarehouseCreateInboundReq.Item> itemList = new LinkedList<>();
-        for (WmsCartonSpecDTO.PackingItemDTO itemDTO : itemDTOList) {
+        for (int i = 0; i < itemDTOList.size(); i++) {
+            WmsCartonSpecDTO.PackingItemDTO itemDTO = itemDTOList.get(i);
             FirstMileDeliveryDetailEntity  firstMileDeliveryDetailEntity = deliveryDetailEntityList.stream().filter(v->v.getSkuId().equals(itemDTO.getSkuId()) && v.getPlatformSkuNo().equals(itemDTO.getPlatformSkuNo())).findFirst().orElse(null);
             if (null == firstMileDeliveryDetailEntity) {
                 String msg = CharSequenceUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
                 throw new ServiceException(msg);
             }
             //三方条码
-            String thirdBarcode = listingInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSkuNo(), firstMileDeliveryDetailEntity.getPlatformSkuNo())).map(ListingInfoEntity::getThirdBarcode).findFirst().orElse("");
+            String thirdBarcode = listingInfoList.stream().filter(obj -> CharSequenceUtil.equals(providerEntity.getId(),obj.getAuthId()) &&
+                    CharSequenceUtil.equals(obj.getPlatform(), mainEntity.getDictPlatform()) &&
+                    CharSequenceUtil.equals(obj.getPlatformSkuNo(), firstMileDeliveryDetailEntity.getPlatformSkuNo())).map(ListingInfoEntity::getThirdBarcode)
+                    .findFirst().orElse("");
 
             ThirdWarehouseCreateInboundReq.Item currentItem = BeanUtil.copyProperties(itemDTO, ThirdWarehouseCreateInboundReq.Item.class);
             currentItem.setProductSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
             currentItem.setThirdBarcode(thirdBarcode);
             currentItem.setQuantity(itemDTO.getPackQty());
             currentItem.setBoxNo(Integer.parseInt(itemDTO.getBoxNo()));
+            currentItem.setDetailId(firstMileDeliveryDetailEntity.getId());
             itemList.add(currentItem);
         }
         String contactName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_FIRST_NAME) + shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_LAST_NAME);
@@ -790,8 +795,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         resultDTO.setCustomsTypeName(OverseasCustomsTypeNewEnum.getNameByCode(resultDTO.getCustomsType()));
         // 交货方式名称
         resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("imlDeclareType");
-        resultDTO.setDeclareTypeName(dictList.stream().filter(v->v.getValue().equals(resultDTO.getDeclareType())).findFirst().orElse(new DictBasicDTO.ListDTO()).getName());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey("imlDeclareType");
+        resultDTO.setDeclareTypeName(dictList.stream().filter(v->v.getValue().equals(resultDTO.getDeclareType())).findFirst().orElse(new DictBasicEntity()).getName());
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailEntityList)) {
@@ -1031,8 +1036,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<com.erp.model.wms.entity.DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        com.erp.model.wms.entity.DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
 
@@ -1226,10 +1231,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         List<OverseasWarehouseInboundReceivedEntity> insertReceiveEntityList = new ArrayList<>();
         Map<String, OverseasWarehouseInboundDetailEntity> updateDetailEntityMap = new HashMap<>();
         Map<String, Integer> thisSignQtyMap = new HashMap<>();
+        boolean isDaMaiReceivedFlow = dto.getHasReceivedData() && PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform());
         //更新明细表
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailList) {
             PlatformInboundDTO.Item item = itemMap.get(detailEntity.getPlatformSkuNo());
             if (Objects.isNull(item)) {
+                continue;
+            }
+            if (isDaMaiReceivedFlow) {
                 continue;
             }
             //签收数量不一致才更新
@@ -1256,12 +1265,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
-        if(CollectionUtils.isNotEmpty(updateDetailEntityMap.values())){
-            overseasWarehouseInboundDetailService.updateBatchById(updateDetailEntityMap.values());
-        }
         List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity::getId).collect(Collectors.toList());
         List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
         Map<String, OverseasWarehouseInboundReceivedEntity> receivedEntityMap = receivedEntityList.stream().collect(Collectors.toMap(v -> v.getDetailId() + v.getReceiveQty() + LocalDateTimeUtil.formatNormal(v.getReceiveTime()), Function.identity(), (v1, v2) -> v1));
+        Set<String> receivedKeySet = new HashSet<>(receivedEntityMap.keySet());
+        Set<String> daMaiFlowKeySet = receivedEntityList.stream()
+                .filter(v -> StringUtil.isNotBlank(v.getFlowId()))
+                .map(v -> v.getFlowId() + v.getCreateUserId())
+                .collect(Collectors.toSet());
         //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
         if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
@@ -1278,19 +1289,18 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                     }
                 }else if(PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
                     // 先执行流水ID判断
-                    if (receivedEntityList.stream().anyMatch(e ->
-                            e.getFlowId().equals(receiving.getThirdId()) && e.getCreateUserId().equals(dto.getAuthId())
-                    )) {
+                    String flowKey = receiving.getThirdId() + dto.getAuthId();
+                    if (StringUtil.isNotBlank(receiving.getThirdId()) && !daMaiFlowKeySet.add(flowKey)) {
                         continue;
                     }
                     // 再执行key判断
                     String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
-                    if (receivedEntityMap.containsKey(key)) {
+                    if (!receivedKeySet.add(key)) {
                         continue;
                     }
                 } else {
                     String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
-                    if (receivedEntityMap.containsKey(key)) {
+                    if (!receivedKeySet.add(key)) {
                         continue;
                     }
                 }
@@ -1306,7 +1316,21 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setFlowId(StringUtil.isBlank(receiving.getThirdId()) ? "" : receiving.getThirdId());
                 receivedEntity.setCreateUserId(dto.getAuthId());
                 insertReceiveEntityList.add(receivedEntity);
+                if (isDaMaiReceivedFlow) {
+                    Integer thisSignQty = Optional.ofNullable(receiving.getReceiveQty()).orElse(0);
+                    Integer receiveQty = Optional.ofNullable(detailEntity.getReceiveQty()).orElse(0) + thisSignQty;
+                    thisSignQtyMap.merge(detailId, thisSignQty, Integer::sum);
+                    detailEntity.setReceiveQty(receiveQty);
+                    detailEntity.setDiffQty(detailEntity.getReceiveQty() - detailEntity.getPackQty());
+                    detailEntity.setTransportQty(detailEntity.getPackQty() - detailEntity.getReceiveQty());
+                    detailEntity.setReceiveTime(receiving.getReceiveTime());
+                    detailEntity.setReceiveStatus("already");
+                    detailEntity.setReceiveType("system");
+                }
             }
+        }
+        if(CollectionUtils.isNotEmpty(updateDetailEntityMap.values())){
+            overseasWarehouseInboundDetailService.updateBatchById(updateDetailEntityMap.values());
         }
         if (CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);

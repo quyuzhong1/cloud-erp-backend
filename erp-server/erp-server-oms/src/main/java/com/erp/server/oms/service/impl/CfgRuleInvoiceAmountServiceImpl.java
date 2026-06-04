@@ -5,20 +5,25 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.dto.CfgRuleInvoiceAmountDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
 import com.erp.model.oms.entity.CfgRuleInvoiceAmountEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.InvoiceRuleEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.convert.InvoiceSettingConverter;
 import com.erp.server.oms.mapper.CfgRuleInvoiceAmountMapper;
+import com.erp.server.oms.service.CfgInvoiceSettingDetailService;
 import com.erp.server.oms.service.CfgRuleInvoiceAmountService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.oms.service.RuleConditionService;
+import com.erp.server.oms.service.ShopInfoService;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +53,10 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
     private OperateLogService operateLogService;
     @Resource
     private RuleConditionService ruleConditionService;
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+    @Resource
+    private ShopInfoService shopInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -55,6 +64,7 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
     public BaseResultDTO.AddDTO add(CfgRuleInvoiceAmountDTO.AddDTO addDTO) {
         CfgRuleInvoiceAmountEntity cfgRuleInvoiceAmountEntity = new CfgRuleInvoiceAmountEntity();
         BeanMapperUtils.copy(addDTO, cfgRuleInvoiceAmountEntity);
+        validateShopeeBrazilRule(cfgRuleInvoiceAmountEntity.getCfgId(), cfgRuleInvoiceAmountEntity.getDictInvoiceRule());
 
         // 数据处理
         handleData(cfgRuleInvoiceAmountEntity);
@@ -85,6 +95,7 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
         CfgRuleInvoiceAmountEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "发票产品总价计算规则"));
         CfgRuleInvoiceAmountEntity cfgRuleInvoiceAmountEntity =  BeanMapperUtils.map(CfgRuleInvoiceAmountEntity.class, addOrUpdateDTO);
+        validateShopeeBrazilRule(cfgRuleInvoiceAmountEntity.getCfgId(), cfgRuleInvoiceAmountEntity.getDictInvoiceRule());
 
         // 数据处理
         handleData(cfgRuleInvoiceAmountEntity);
@@ -176,5 +187,41 @@ public class CfgRuleInvoiceAmountServiceImpl extends SuperServiceImpl<CfgRuleInv
         if (CharSequenceUtil.isNotBlank(cfgRuleInvoiceAmountEntity.getName())){
             cfgRuleInvoiceAmountEntity.setName(InvoiceRuleEnum.getName(cfgRuleInvoiceAmountEntity.getDictInvoiceRule()));
         }
+    }
+
+    private void validateShopeeBrazilRule(String cfgId, String dictInvoiceRule) {
+        if (!CharSequenceUtil.equals(dictInvoiceRule, InvoiceRuleEnum.DEDUCT.getCode()) || CharSequenceUtil.isBlank(cfgId)) {
+            return;
+        }
+        List<CfgInvoiceSettingDetailEntity> detailEntityList = cfgInvoiceSettingDetailService.lambdaQuery()
+                .eq(CfgInvoiceSettingDetailEntity::getMainId, cfgId)
+                .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(detailEntityList)) {
+            return;
+        }
+        List<String> shopIdList = detailEntityList.stream()
+                .map(CfgInvoiceSettingDetailEntity::getShopId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(shopIdList)) {
+            return;
+        }
+        Map<String, ShopInfoEntity> shopInfoMap = shopInfoService.listByIds(shopIdList).stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, shop -> shop, (left, right) -> left));
+        boolean containsShopeeBrazil = detailEntityList.stream()
+                .map(detail -> shopInfoMap.get(detail.getShopId()))
+                .filter(Objects::nonNull)
+                .anyMatch(this::isShopeeBrazilShop);
+        if (containsShopeeBrazil) {
+            throw new ServiceException("虾皮巴西店铺不支持按佣金开票，请选择产品全额或自定义比例");
+        }
+    }
+
+    private boolean isShopeeBrazilShop(ShopInfoEntity shopInfoEntity) {
+        return Objects.nonNull(shopInfoEntity)
+                && CharSequenceUtil.equalsIgnoreCase(shopInfoEntity.getDictPlatform(), PlatformDictEnum.SHOPEE.getCode())
+                && CharSequenceUtil.equalsIgnoreCase(shopInfoEntity.getDictCountryCode(), "BR");
     }
 }

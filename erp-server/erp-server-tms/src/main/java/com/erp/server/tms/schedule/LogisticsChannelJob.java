@@ -142,9 +142,14 @@ public class LogisticsChannelJob {
     @XxlJob("syncLogisticsChannel")
     public ReturnT syncLogisticsChannel() {
         XxlJobHelper.log("====开始同步渠道====");
+        String jobParam = XxlJobHelper.getJobParam();
         log.info("====全部渠道同步开始=====");
         LogisticsPlatformEnum[] platformEnums = LogisticsPlatformEnum.values();
         for (LogisticsPlatformEnum platformEnum : platformEnums) {
+            if (StringUtils.isNotEmpty(jobParam) && !platformEnum.getCode().equals(jobParam)) {
+                XxlJobHelper.log("跳过物流商{}的渠道同步", platformEnum.getName());
+                continue;
+            }
             //跳过track123
             if (platformEnum.getCode().equals(LogisticsPlatformEnum.TRACK123.getCode())) continue;
             //顺丰没有渠道 只支持手动写入

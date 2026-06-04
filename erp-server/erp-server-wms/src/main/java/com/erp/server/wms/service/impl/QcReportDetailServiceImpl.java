@@ -323,7 +323,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     public PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(PagingDTO<BaseIdDTO> dto) {
 
         List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(dto.getParams().getId());
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
         List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list, ExportQcReportExcelDTO.class);
         for (ExportQcReportExcelDTO item : resultList) {
             String resultDict = item.getResultDict();

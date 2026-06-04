@@ -123,6 +123,11 @@ public class DmpAfterSaleExcelDTO implements Serializable {
         private String outboundTrackNo;
 
         /**
+         * 商家寄出快递渠道
+         */
+        private String logisticsChannelName;
+
+        /**
          * 故障描述
          */
 //        @ExcelProperty(value = "故障描述", index = 17)

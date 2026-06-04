@@ -122,6 +122,26 @@ public class KolSampleCostDTO implements Serializable {
         private String soOutstockCode;
 
         /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流商
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 物流渠道id
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelName;
+
+        /**
          * 销售出库日期
          */
         private LocalDate soOutstockDate;
@@ -296,6 +316,26 @@ public class KolSampleCostDTO implements Serializable {
         * 销售出库单编码
         */
         private String soOutstockCode;
+
+        /**
+        * 物流商id
+        */
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商
+        */
+        private String logisticsSupplierName;
+
+        /**
+        * 物流渠道id
+        */
+        private String logisticsChannelId;
+
+        /**
+        * 物流渠道
+        */
+        private String logisticsChannelName;
 
         /**
         * 销售出库日期
@@ -508,6 +548,30 @@ public class KolSampleCostDTO implements Serializable {
         @NotBlank(message = "销售出库单编码不能为空")
         @Size(max = 32,message = "销售出库单编码最大长度不能超过32位")
         private String soOutstockCode;
+
+        /**
+        * 物流商id
+        */
+        @Size(max = 19,message = "物流商id最大长度不能超过19位")
+        private String logisticsSupplierId;
+
+        /**
+        * 物流商
+        */
+        @Size(max = 128,message = "物流商最大长度不能超过128位")
+        private String logisticsSupplierName;
+
+        /**
+        * 物流渠道id
+        */
+        @Size(max = 19,message = "物流渠道id最大长度不能超过19位")
+        private String logisticsChannelId;
+
+        /**
+        * 物流渠道
+        */
+        @Size(max = 128,message = "物流渠道最大长度不能超过128位")
+        private String logisticsChannelName;
 
         /**
         * 销售出库日期

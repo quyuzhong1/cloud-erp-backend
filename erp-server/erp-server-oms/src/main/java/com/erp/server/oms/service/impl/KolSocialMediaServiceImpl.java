@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -84,15 +85,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
             throw new ServiceException("达人社媒数据单保存失败");
         }
         
-        // 保存成功后，查询和当前urlHash一致的回片列表，修改回片状态为已回片
-        if (StrUtil.isNotBlank(kolSocialMediaEntity.getUrlHash())) {
-            LambdaUpdateWrapper<KolFeedbackEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(KolFeedbackEntity::getUrlHash, kolSocialMediaEntity.getUrlHash())
-                    .eq(KolFeedbackEntity::getFeedbackStatus, FeedbackStatusEnum.PENDING.getCode())
-                    .set(KolFeedbackEntity::getFeedbackStatus, FeedbackStatusEnum.COMPLETED.getCode());
-            int updateCount = kolFeedbackMapper.update(null, updateWrapper);
-            log.info("更新回片状态：urlHash=【{}】，更新数量=【{}】", kolSocialMediaEntity.getUrlHash(), updateCount);
-        }
+        refreshFeedbackStatusBySocialMediaChange(null, kolSocialMediaEntity.getUrlHash());
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "达人社媒数据单" , kolSocialMediaEntity.getId());
@@ -136,6 +129,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
     public Boolean update(KolSocialMediaDTO.UpdateDTO addOrUpdateDTO) {
         KolSocialMediaEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "达人社媒数据单"));
+        String oldUrlHash = old.getUrlHash();
         KolSocialMediaEntity kolSocialMediaEntity =  BeanMapperUtils.map(KolSocialMediaEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -145,6 +139,8 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         if(!save) {
             throw new ServiceException("达人社媒数据单保存失败");
         }
+
+        refreshFeedbackStatusBySocialMediaChange(oldUrlHash, kolSocialMediaEntity.getUrlHash());
 
         // 记录主单操作日志
         log.info("编辑 开始记录达人社媒数据单日志数据，id：【{}】", kolSocialMediaEntity.getId());
@@ -172,6 +168,8 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         if (StrUtil.isBlank(kolSocialMediaEntity.getThirdPlatform())) {
             kolSocialMediaEntity.setThirdPlatform("erp");
         }
+
+        kolSocialMediaEntity.setUrl(StrUtil.trim(kolSocialMediaEntity.getUrl()));
 
         // urlHash 用 hutool hash 工具（如果 url 不为空）
         if (StrUtil.isNotBlank(kolSocialMediaEntity.getUrl())) {
@@ -290,10 +288,10 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         }
 
         // 查询来源平台字典
-        List<DictBasicDTO.ViewDTO> mediaPlatformDictList = dictBasicService.getByKey("socialMediaPlatform");
+        List<DictBasicEntity> mediaPlatformDictList = dictBasicService.getByKey("socialMediaPlatform");
         Map<String, String> mediaPlatformNameMap = mediaPlatformDictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue,
-                        DictBasicDTO.ViewDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue,
+                        DictBasicEntity::getName, (v1, v2) -> v1));
 
         // 属性赋值
         for (KolSocialMediaDTO.ListDTO data : list) {
@@ -340,18 +338,11 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 throw new ServiceException("云听社媒数据保存失败");
             }
             log.info("云听社媒数据新增成功，uniqueKey=【{}】，id=【{}】", dto.getUnique(), newEntity.getId());
-            
-            // 保存成功后，查询和当前urlHash一致的回片列表，修改回片状态为已回片
-            if (StrUtil.isNotBlank(newEntity.getUrlHash())) {
-                LambdaUpdateWrapper<KolFeedbackEntity> updateWrapper = new LambdaUpdateWrapper<>();
-                updateWrapper.eq(KolFeedbackEntity::getUrlHash, newEntity.getUrlHash())
-                        .eq(KolFeedbackEntity::getFeedbackStatus, FeedbackStatusEnum.PENDING.getCode())
-                        .set(KolFeedbackEntity::getFeedbackStatus, FeedbackStatusEnum.COMPLETED.getCode());
-                int updateCount = kolFeedbackMapper.update(null, updateWrapper);
-                log.info("更新回片状态：urlHash=【{}】，更新数量=【{}】", newEntity.getUrlHash(), updateCount);
-            }
+
+            refreshFeedbackStatusBySocialMediaChange(null, newEntity.getUrlHash());
         } else {
             // 存在，更新其他字段
+            String oldUrlHash = existEntity.getUrlHash();
             KolSocialMediaEntity updateEntity = buildKolSocialMediaFromYunting(dto);
             updateEntity.setId(existEntity.getId());
             boolean update = super.updateById(updateEntity);
@@ -359,6 +350,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 throw new ServiceException("云听社媒数据更新失败");
             }
             log.info("云听社媒数据更新成功，uniqueKey=【{}】，id=【{}】", dto.getUnique(), existEntity.getId());
+            refreshFeedbackStatusBySocialMediaChange(oldUrlHash, updateEntity.getUrlHash());
         }
     }
 
@@ -387,11 +379,12 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         entity.setPublishTime(dto.getPublishTime());
         
         // URL
-        entity.setUrl(dto.getUrl());
-        
+        String url = StrUtil.trim(dto.getUrl());
+        entity.setUrl(url);
+
         // 计算urlHash
-        if (StrUtil.isNotBlank(dto.getUrl())) {
-            entity.setUrlHash(DigestUtil.md5Hex(dto.getUrl()));
+        if (StrUtil.isNotBlank(url)) {
+            entity.setUrlHash(DigestUtil.md5Hex(url));
         }
         
         // 标题
@@ -492,5 +485,31 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         entity.setSourceId(dto.getSourceId());
         
         return entity;
+    }
+
+    private void refreshFeedbackStatusBySocialMediaChange(String oldUrlHash, String newUrlHash) {
+        syncFeedbackStatusByUrlHash(oldUrlHash);
+        if (!StrUtil.equals(oldUrlHash, newUrlHash)) {
+            syncFeedbackStatusByUrlHash(newUrlHash);
+        }
+    }
+
+    private void syncFeedbackStatusByUrlHash(String urlHash) {
+        if (StrUtil.isBlank(urlHash)) {
+            return;
+        }
+        long socialMediaCount = lambdaQuery()
+                .eq(KolSocialMediaEntity::getUrlHash, urlHash)
+                .eq(KolSocialMediaEntity::getIsDeleted, false)
+                .count();
+        String feedbackStatus = socialMediaCount > 0
+                ? FeedbackStatusEnum.COMPLETED.getCode()
+                : FeedbackStatusEnum.PENDING.getCode();
+        LambdaUpdateWrapper<KolFeedbackEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(KolFeedbackEntity::getUrlHash, urlHash)
+                .eq(KolFeedbackEntity::getIsDeleted, false)
+                .set(KolFeedbackEntity::getFeedbackStatus, feedbackStatus);
+        int updateCount = kolFeedbackMapper.update(null, updateWrapper);
+        log.info("同步回片状态：urlHash=【{}】，状态=【{}】，更新数量=【{}】", urlHash, feedbackStatus, updateCount);
     }
 }

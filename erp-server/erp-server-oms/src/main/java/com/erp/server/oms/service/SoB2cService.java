@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -198,6 +199,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date: 2023/8/18 16:49
      */
     BatchResultDTO submitDelivery(String id, String channelId);
+    /**
+     * 记录用户点击提交发货日志
+     * @param id B2C订单ID
+     */
+    void addSubmitDeliveryClickLog(String id);
+    /**
+     * 记录用户点击提交发货日志
+     * @param entity B2C订单
+     * @param id B2C订单ID
+     */
+    void addSubmitDeliveryClickLog(SoB2cEntity entity, String id);
     /**
      * 检查发货限制
      * @param id 订单ID
@@ -911,10 +923,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
     SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
 
-    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
+    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, Map<String, Integer> inventoryMap
             , SoB2cDetailDTO.ListDTO detailDTO, List<String> ignoreInventorySkuIds);
 
-    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, Map<String, Integer> virtualInventoryMap
             , SoB2cDetailDTO.DetailLabelDTO detailLabelDTO, SoB2cDetailDTO.ListDTO detailDTO);
 
     /**
@@ -923,7 +935,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
-     * @param skuId
+     * @param soDetailEntity
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList
@@ -1015,6 +1027,22 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
+
+    /**
+     * 是否允许更换发货SKU
+     *
+     * @param entity 订单
+     * @return true-允许
+     */
+    Boolean allowChangeDeliverySku(SoB2cEntity entity);
+
+    /**
+     * 校验是否已生成B2C发货单或三方仓发货单
+     *
+     * @param soId 订单id
+     * @param operationName 操作名称
+     */
+    void checkGeneratedDeliveryForOperation(String soId, String operationName);
 
     /**
      * 更新是否更换sku状态
@@ -1173,7 +1201,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     void lockDeliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cReceiverEntity soB2cReceiverEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, List<BatchResultDTO> resultDTOList);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse,SoB2cEntity oldSoB2cEntity);
+    void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<VirtualWarehouseRelationEntity> virtualWarehouseList);
+
+    void rollbackBeforeDelivery(String soB2cId, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList);
+
     /**
      * 1,创建订单
      * 2,匹配订单规则
@@ -1188,4 +1219,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void retryPlatformOutbound( List<String> ids);
 
     void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
+    PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<SoB2cDTO.PagingParamDTO> dto);
+
+    void deleteB2cSoJob();
+
+    /**
+     * 轻量查询B2C订单拦截标识（仅返回 id + isIntercept）。
+     * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景。
+     */
+    List<SoB2cEntity> listIdAndInterceptByIds(List<String> soIds);
 }

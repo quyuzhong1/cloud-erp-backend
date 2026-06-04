@@ -24,15 +24,14 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.*;
-import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.SkuMappingFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -95,6 +94,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 	@Resource
 	private ThirdWarehouseDeliveryService thirdWarehouseDeliveryService;
+
+	@Resource
+	private SoB2cReturnFeign soB2cReturnFeign;
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -201,6 +203,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		List<SoB2cReturnEntity> soB2cReturnEntityList = FeignQuery.create(SoB2cReturnEntity.class).eq(SoB2cReturnEntity::getPlatformOrderNo,soB2cEntity.getPlatformCode()).list();
 		if(CollectionUtils.isEmpty(soB2cReturnEntityList)){
 			return;
+		}
+		List<SoB2cReturnEntity> updateList = soB2cReturnEntityList.stream().filter(v->v.getStatus().equals(SoB2cReturnStatusEnum.TO_BE_RETURNED.getCode())).map(v->v.setStatus((SoB2cReturnStatusEnum.RETURNED.getCode()))).collect(Collectors.toList());
+		if(CollectionUtils.isNotEmpty(updateList)){
+			log.warn("匹配到销售订单{}的退货单{}，将退货单状态修改为已退货",soB2cEntity.getCode(),updateList.stream().map(SoB2cReturnEntity::getCode).collect(Collectors.joining(",")));
+			soB2cReturnFeign.updateBatch(updateList);
 		}
 		List<String> soB2cReturnIds = soB2cReturnEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
 		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.create(SoB2cReturnDetailEntity.class).in(SoB2cReturnDetailEntity::getMainId,soB2cReturnIds).list();
@@ -370,15 +377,21 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if (CollectionUtils.isEmpty(soDetailEntityList)){
 			ServiceException.runError("【平台退货入库】对应订单明细为空：{}", dto.getPlatformOrderNo());
 		}
+		// 平台SKU -> 就近出库单的实际出库SKU（出库日期<=退货日期，含当天，取最近一张）
+		Map<String, SoOutstockDetailEntity> nearestOutstockSkuMap = buildNearestOutstockSkuMap(dto, soB2cEntity, soDetailEntityList);
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
 		for (PlatformReturnInstockDTO.Detail detail : details) {
-			SoB2cDetailEntity detailEntity = soDetailEntityList.stream().filter(e -> e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku())).findFirst().orElse(null);
-			if(null == detailEntity){
-				ServiceException.runError("找不到销售订单明细:{}", dto.getPlatformOrderNo());
-			}
+            SoOutstockDetailEntity outstockDetail = nearestOutstockSkuMap.get(detail.getProductSku());
+            if (!nearestOutstockSkuMap.containsKey(detail.getProductSku()) || Objects.isNull(outstockDetail)) {
+                // 兜底逻辑
+                // 未匹配到就近出库单，按订单映射兜底
+                log.warn("【平台退货入库】未匹配到就近出库单，按订单映射兜底:订单={}, 平台SKU={}", dto.getPlatformOrderNo(), detail.getProductSku());
+                detailEntityList.add(buildFallbackDetailBySoB2c(detail, soDetailEntityList, warehouseEntity, dto));
+                continue;
+            }
 			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
-			soReturnInstockDetailEntity.setSkuId(detailEntity.getSkuId());
-			soReturnInstockDetailEntity.setSkuNo(detailEntity.getSkuNo());
+			soReturnInstockDetailEntity.setSkuId(outstockDetail.getSkuId());
+			soReturnInstockDetailEntity.setSkuNo(outstockDetail.getSkuNo());
 			soReturnInstockDetailEntity.setMustQty(detail.getMustQty());
 			soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
 			soReturnInstockDetailEntity.setRealQty(detail.getRealQty());
@@ -389,6 +402,80 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
 		return detailEntityList;
+	}
+
+	/**
+	 * 构建 平台SKU -> 就近出库单出库明细 的映射。
+	 * 在该订单已审核且未作废、出库日期(bill_date)<=退货日期(含当天)的出库单中，
+	 * 取出库日期最近(倒序首条)且包含该平台SKU的出库明细，以其实际出库SKU为准。
+	 */
+	private Map<String, SoOutstockDetailEntity> buildNearestOutstockSkuMap(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soDetailEntityList) {
+		LocalDate returnDate = dto.getPutawayTime().toLocalDate();
+		List<SoOutstockEntity> outstockList = soOutstockService.listBySoIds(Collections.singletonList(soB2cEntity.getId()));
+		if (CollectionUtils.isEmpty(outstockList)) {
+            log.warn("【平台退货入库】订单无出库单，按订单映射兜底:订单={}", dto.getPlatformOrderNo());
+			return Collections.emptyMap();
+		}
+		List<SoOutstockEntity> validOutstockList = outstockList.stream()
+				.filter(e -> ApproveStatusEnum.APPROVE.equals(e.getApproveStatus()))
+				.filter(e -> !Boolean.TRUE.equals(e.getInvalidStatus()))
+				.filter(e -> Objects.nonNull(e.getBillDate()) && !e.getBillDate().isAfter(returnDate))
+				.sorted(Comparator.comparing(SoOutstockEntity::getBillDate).reversed())
+				.collect(Collectors.toList());
+		if (CollectionUtils.isEmpty(validOutstockList)) {
+			return Collections.emptyMap();
+		}
+		// 出库单id -> 出库日期，用于明细按就近出库单排序
+		Map<String, LocalDate> outstockBillDateMap = validOutstockList.stream()
+				.collect(Collectors.toMap(SoOutstockEntity::getId, SoOutstockEntity::getBillDate, (a, b) -> a));
+        List<SoOutstockDetailEntity> outstockDetailList = Lists.partition(
+                        validOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList()), 1000
+                ).stream()
+                .flatMap(batch -> soOutstockDetailService.listByMainIds(batch).stream())
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(outstockDetailList)) {
+			return Collections.emptyMap();
+		}
+		// 销售订单明细id -> 平台SKU
+		Map<String, String> soDetailIdToPlatformSku = soDetailEntityList.stream()
+				.filter(e -> StringUtils.isNotBlank(e.getId()) && StringUtils.isNotBlank(e.getPlatformSkuNo()))
+                .collect(Collectors.toMap(
+                        SoB2cDetailEntity::getId,
+                        SoB2cDetailEntity::getPlatformSkuNo,
+                        (a, b) -> {
+                            log.warn("【平台退货入库】销售订单明细重复SKU: platformSkuA={}, platformSkuB={}", a, b);
+                            return a;
+                        }
+                ));
+
+        // 平台SKU -> 出库明细，按出库单出库日期倒序，保留最近一张(首次写入即最近)
+		Map<String, SoOutstockDetailEntity> nearestOutstockSkuMap = new HashMap<>();
+		outstockDetailList.stream()
+				.filter(d -> StringUtils.isNotBlank(d.getSoDetailId()) && soDetailIdToPlatformSku.containsKey(d.getSoDetailId()))
+				.sorted(Comparator.comparing((SoOutstockDetailEntity d) -> outstockBillDateMap.getOrDefault(d.getMainId(), LocalDate.MIN)).reversed())
+				.forEach(d -> nearestOutstockSkuMap.putIfAbsent(soDetailIdToPlatformSku.get(d.getSoDetailId()), d));
+		return nearestOutstockSkuMap;
+	}
+
+	/**
+	 * 兜底：按销售订单明细的平台SKU映射取入库SKU（原逻辑）。
+	 */
+	private SoReturnInstockDetailEntity buildFallbackDetailBySoB2c(PlatformReturnInstockDTO.Detail detail, List<SoB2cDetailEntity> soDetailEntityList, WarehouseEntity warehouseEntity, PlatformReturnInstockDTO dto) {
+		SoB2cDetailEntity detailEntity = soDetailEntityList.stream().filter(e -> e.getPlatformSkuNo().equalsIgnoreCase(detail.getProductSku())).findFirst().orElse(null);
+		if (null == detailEntity) {
+            ServiceException.runError("找不到销售订单明细:订单={}, 平台SKU={}", dto.getPlatformOrderNo(), detail.getProductSku());
+        }
+		SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
+		soReturnInstockDetailEntity.setSkuId(detailEntity.getSkuId());
+		soReturnInstockDetailEntity.setSkuNo(detailEntity.getSkuNo());
+		soReturnInstockDetailEntity.setMustQty(detail.getMustQty());
+		soReturnInstockDetailEntity.setReceiveQty(detail.getReceiveQty());
+		soReturnInstockDetailEntity.setRealQty(detail.getRealQty());
+		soReturnInstockDetailEntity.setWarehouseId(warehouseEntity.getId());
+		soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
+		soReturnInstockDetailEntity.setRemark(dto.getReason());
+		soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+		return soReturnInstockDetailEntity;
 	}
 
 	private SoReturnInstockEntity buildPlatformSoReturnInstockEntity(PlatformReturnInstockDTO dto,

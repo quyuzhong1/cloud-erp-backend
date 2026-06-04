@@ -27,8 +27,7 @@ final class AliExpressIssueSolutionResolver {
             "wait_for_warehouse_quality_check",
             "return_success"));
     private static final Set<String> REFUND_REVERSE_STATUSES = new HashSet<>(Arrays.asList(
-            REVERSE_STATUS_REFUND_SUCCESS,
-            REVERSE_STATUS_REFUND_REJECT));
+            REVERSE_STATUS_REFUND_SUCCESS));
 
     private static final List<String> SOLUTION_LIST_KEYS = Arrays.asList(
             "buyer_solution_list",
@@ -58,9 +57,7 @@ final class AliExpressIssueSolutionResolver {
             matchedReturn = true;
         } else if (hasRefundSolution && isRefundReverseStatus(reverseDetailStatus)) {
             matchedRefund = true;
-        } else if (hasRefundSolution && !hasReturnSolution) {
-            matchedRefund = true;
-        } else if (hasReturnSolution) {
+        } else if (hasReturnSolution && !hasRefundSolution) {
             matchedReturn = true;
         }
 
@@ -87,7 +84,7 @@ final class AliExpressIssueSolutionResolver {
         if ("canceled_issue".equals(getLowerCase(issueStatus))) {
             return "3";
         }
-        return "1";
+        return "";
     }
 
     static String getReturnTrackingNo(Map<String, Object> issueDetail) {

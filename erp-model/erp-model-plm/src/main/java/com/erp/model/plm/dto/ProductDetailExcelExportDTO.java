@@ -365,20 +365,19 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("首批到货状态")
     @MenuCode("plm:product:detail:listProductPurchase")
     private String arrivalState;
+    /**
+     * 一级供应商
+     */
+    @ExcelProperty("一级供应商体系认证")
+    @MenuCode("plm:product:detail:listProductPurchase")
+    private String firstCertificateNames;
 
-//    /**
-//     * 一级供应商
-//     */
-//    @ExcelProperty("一级供应商")
-//    @MenuCode("plm:product:detail:listProductPurchase")
-//    private String mainSupplier;
-//
-//    /**
-//     * 二级供应商
-//     */
-//    @ExcelProperty("二级供应商")
-//    @MenuCode("plm:product:detail:listProductPurchase")
-//    private String secondSupplier;
+    /**
+     * 一级供应商
+     */
+    @ExcelProperty("一级供应商")
+    @MenuCode("plm:product:detail:listProductPurchase")
+    private String mainSupplier;
 
     /**
      * 年目标销量

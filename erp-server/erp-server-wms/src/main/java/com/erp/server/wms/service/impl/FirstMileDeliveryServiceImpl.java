@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -154,6 +155,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private TransferInfoService transferInfoService;
+    @Resource
+    private IdentifierGenerator identifierGenerator;
     @Resource
     private SkuMappingFeign skuMappingFeign;
     @Resource
@@ -655,8 +658,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     if(Objects.isNull(skuVO)){
                         throw new ServiceException(ApiError.COMMON_SKU_NOT_EXIST_OR_NOT_APPROVE, firstMileDeliveryDetailEntity.getSkuNo());
                     }
-                    Integer usableInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
-                    if (firstMileDeliveryDetailEntity.getDeliveryQty() > usableInventoryTotal) {
+                    Integer frozenInventoryTotal = inventoryService.getInventoryTotal(entity.getInventoryOrgId() ,entity.getDeliveryWarehouseId(), skuVO.getSkuId(), firstMileDeliveryDetailEntity.getWarehouseLocation(), InventoryStatusEnum.FROZEN.getCode());
+                    if (firstMileDeliveryDetailEntity.getDeliveryQty() > frozenInventoryTotal) {
                         throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_INVENTORY_INSUFFICIENT, firstMileDeliveryDetailEntity.getSkuNo(), entity.getDeliveryWarehouseName());
                     }
                 }
@@ -688,8 +691,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
 
@@ -1120,6 +1123,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                             && !OmsPlatformEnum.DA_MAI.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.OMS_IML.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.ZHONG_BAO.getCode().equals(providerEntity.getCode())
+                            && !OmsPlatformEnum.JI_TU.getCode().equals(providerEntity.getCode())
                             && !OmsPlatformEnum.TONG_YOU.getCode().equals(providerEntity.getCode())) {
                         // 推送第三方发货单审核通过
                         ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
@@ -1140,7 +1144,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
                 //匹配到规则则进行中转调拨，否则直接生成调拨单
                 if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
-                    String batchNo = IdUtil.getSnowflake().nextIdStr();
+                    String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
                     List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
                     //中转循环调拨
                     generateTransferByRule(split,entity, detailEntityList,batchNo);
@@ -1258,8 +1262,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(toWarehouse)).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (Objects.nonNull(listDTO) && listDTO.getId().equals(destWarehouse.getTypeId())) {
 
@@ -1945,9 +1949,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //查询库存sku
         List<DictCountryEntity> dictCountryEntityList = FeignQuery.list(DictCountryEntity.class);
 
-        //查询已下推的海外入库单
-        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
-
         String bomType = BomTypeEnum.COMBINATION.getType();
 
         Map<String,Integer> qtyMap = new HashMap<>();
@@ -2011,14 +2012,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             data.setWaitApproveUserName(waitApproveUserName);
-            //查询已下推的入库单获取入库单号
-            OverseasWarehouseInboundEntity overseasWarehouseInboundEntity = overseasWarehouseInboundEntities.stream()
-                    .filter(req -> req.getSourceId().equals(data.getId())
-                            && !OverseasInstockStatusEnum.CANCELED.getCode().equals(req.getInstockStatus())
-                    ).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
-                data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
-            }
             if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())
                     || FbaDemandTypeEnum.DEMAND_FBT_WAREHOUSE.getCode().equals(data.getDemandType())
                     || FbaDemandTypeEnum.DEMAND_AWD_WAREHOUSE.getCode().equals(data.getDemandType())){
@@ -2202,7 +2195,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setDictPlatform(dictPlatform);
         OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(dictPlatform);
         viewDTO.setDictPlatformName(null == platformEnum ? "" : platformEnum.getName());
-
+        //入库类型特殊处理
+        if(OmsPlatformEnum.JI_TU.getCode().equals(dictPlatform)) {
+            viewDTO.setInstockType(OverseasInstockTypeEnum.SELF_HEADWAY.getCode());
+            viewDTO.setInstockTypeName(OverseasInstockTypeEnum.SELF_HEADWAY.getName());
+        }
         //明细信息
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(id));
         List<String> skuIdList = firstMileDeliveryDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -2868,7 +2865,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //匹配到规则则进行中转调拨，否则直接生成调拨单
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
-            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            String batchNo = identifierGenerator.nextId(new TransferInfoEntity()).toString();
             List<String> split = CharSequenceUtil.split(entity.getTransferWarehouseIds(), ",");
             //中转循环调拨
             generateTransferByRule(split,entity, detailEntityList,batchNo);
@@ -2904,15 +2901,25 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.BILL_DETAIL_NOT_FOUND,"AWD出库");
         }
 
-        for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
-            if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
-                throw new ServiceException(ApiError.MAPPING_MSKU_NOT_MAPPING,awdOutstockDetailEntity.getMsku());
-            }
-        }
-
         FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getById(awdOutstockEntity.getFbaShipmentId());
         if (Objects.isNull(fbaShipmentEntity)) {
-            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE,"FBA货件");
+            throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA货件");
+        }
+
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList = new ArrayList<>();
+        for (AwdOutstockDetailEntity awdOutstockDetailEntity : awdOutstockDetailEntityList) {
+            if (StringUtils.isBlank(awdOutstockDetailEntity.getSkuId())) {
+                throw new ServiceException(ApiError.MAPPING_MSKU_NOT_MAPPING, awdOutstockDetailEntity.getMsku());
+            }
+            FbaShipmentDetailEntity fbaShipmentDetailEntity = fbaShipmentDetailService.lambdaQuery()
+                    .eq(FbaShipmentDetailEntity::getMainId, fbaShipmentEntity.getId())
+                    .eq(FbaShipmentDetailEntity::getSkuId, awdOutstockDetailEntity.getSkuId())
+                    .one();
+            if (Objects.isNull(fbaShipmentDetailEntity)) {
+                throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "FBA货件");
+            }
+            fbaShipmentDetailEntity.setDeliveryQty(awdOutstockDetailEntity.getQty());
+            fbaShipmentDetailEntityList.add(fbaShipmentDetailEntity);
         }
 
         FirstMileDeliveryDTO.AddDTO addDTO = new FirstMileDeliveryDTO.AddDTO();
@@ -2928,7 +2935,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         List<String> skuIdList = awdOutstockDetailEntityList.stream().map(item -> item.getSkuId()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
         if (CollectionUtils.isEmpty(skuVOList)){
             throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND);
         }
@@ -2954,6 +2961,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             firstMildDetailDTO.setDeclareQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setDeliveryQty(awdOutstockDetailEntity.getQty());
             firstMildDetailDTO.setSourceDetailId(awdOutstockDetailEntity.getId());
+            firstMildDetailDTO.setFbaShipmentCode(awdOutstockEntity.getFbaShipmentCode());
             for (SkuVO skuVO : skuVOList) {
                 firstMildDetailDTO.setNetWeight(skuVO.getNetWeight());
                 firstMildDetailDTO.setProductSizeLength(skuVO.getProductLength());
@@ -2977,6 +2985,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         UserContext.setIsUserSystem(Boolean.TRUE);
         try {
             approve(approveOneDTO);
+            // 更新FBA货件的发货数量
+            if (CollectionUtils.isNotEmpty(fbaShipmentDetailEntityList)) {
+                fbaShipmentDetailService.updateBatchById(fbaShipmentDetailEntityList);
+            }
         }finally {
             //恢复系统标识
             UserContext.setIsUserSystem(originalValue);

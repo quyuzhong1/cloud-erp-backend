@@ -281,4 +281,6 @@ public interface BusinessNoConstant {
     String VJ = "VJ";
     //tms异步任务记录
     String Z="Z";
+
+    String WLD = "WLD";
 }

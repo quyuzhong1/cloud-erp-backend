@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.RequestPermissions;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
@@ -510,6 +511,25 @@ public class PurchaseApplicationController extends BaseController {
     @PostMapping(value = "/exportExcel")
     public ApiResult<Object> exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto) {
         Boolean flag = purchaseApplicationService.exportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 全量导出
+     * @author Codex
+     * @date: 2026/4/7
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "全量导出采购申请单")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:purchaseApplication:exportAll",
+            tableAlias = "so"
+    )
+    @PostMapping(value = "/exportAllExcel")
+    public ApiResult<Object> exportAllExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto) {
+        Boolean flag = purchaseApplicationService.exportAllExcel(dto);
         return flag == true ? success() : failure();
     }
 

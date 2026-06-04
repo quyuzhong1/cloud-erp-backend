@@ -92,4 +92,6 @@ public interface SoB2cRefService extends SuperService<SoB2cRefEntity> {
     List<SoB2cRefEntity> listBySourceIdOrTargetId(List<String> ids);
 
     SoB2cRefDTO.SplitCombinationDTO getSplitCombination(String soId);
+
+    List<String> listDeepestTargetIdsBySourceId(String id);
 }

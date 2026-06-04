@@ -3,6 +3,7 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
@@ -30,7 +31,7 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @param pagingParamDTO
      * @return Integer
      */
-    Integer listCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO pagingParamDTO);
+    List<LogisticsBillCostDTO.TabCountDTO> listCount(@Param("params")LogisticsBillCostDTO.PagingParamDTO pagingParamDTO,@Param("type")String type);
 
     /**
      * @description: 分页查询
@@ -136,4 +137,17 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @return java.math.BigDecimal
      */
     BigDecimal listTotalBillingWeightLogisticsCount(@Param("params") LogisticsBillCostDTO.PagingParamDTO params);
+    /**
+     * 批量确认导入数据
+     *
+     * @param confirmList 导入确认数据
+     * @param reconciliationStatus 对账状态
+     * @param confirmUserId 确认人ID
+     * @param confirmUserName 确认人名称
+     * @return 更新条数
+     */
+    int batchConfirmImport(@Param("confirmList") List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList,
+                           @Param("reconciliationStatus") String reconciliationStatus,
+                           @Param("confirmUserId") String confirmUserId,
+                           @Param("confirmUserName") String confirmUserName);
 }

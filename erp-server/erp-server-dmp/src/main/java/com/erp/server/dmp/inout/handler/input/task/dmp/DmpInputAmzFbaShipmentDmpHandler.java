@@ -109,8 +109,6 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                         }
                     }
 
-                } else {
-                    throw new ServiceException("领星未获取到数据");
                 }
                 String shipmentName = mongoData.get("shipmentName").toString();
                 if (shipmentName.contains("ASDN")) {

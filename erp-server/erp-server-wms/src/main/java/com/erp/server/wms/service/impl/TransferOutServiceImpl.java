@@ -665,7 +665,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> warehouseLocationCodeList = dataList.stream().map(r-> StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(outWarehouseIds, warehouseLocationCodeList);
         // 调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
         // 分步式调出单明细id集合
         List<String> sourceDetailIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getSourceDetailId).distinct().collect(Collectors.toList());
@@ -680,7 +680,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             data.setUnitName(Objects.nonNull(productDetail) ? productDetail.getUnitName() : null);
 
             // 调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             data.setTransferDirectionName(transferDirectionName);
             // 单据来源
             data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
@@ -930,14 +930,14 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         for (TransferOutDTO.PagingViewDTO data : list) {
             //产品名称
             String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
             data.setProductName(productName);
 
             //调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             data.setTransferDirectionName(transferDirectionName);
 
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -957,9 +957,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
      */
     private void fillingView(TransferOutDTO.ViewDTO data, List<TransferOutDetailDTO.ViewDTO> viewDetailList) {
         // 调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         // 调拨方向名称
-        String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+        String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
         data.setTransferDirectionName(transferDirectionName);
         // 审核状态
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));

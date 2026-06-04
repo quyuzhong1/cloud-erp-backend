@@ -155,9 +155,9 @@ public class WdtSoB2ckConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatf
                                     .map(error -> String.format("【拆分单号:%s，错误原因：%s】", error.getNo(), error.getError()))
                                     .collect(Collectors.joining(","));
                             notifyKolB2cCancelPushFailByRequest(dmpSyncTaskId, request, errorMsg);
-                            return ApiResult.error(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg));
+                            return ApiResult.error(MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF, newCount, chgCount, errorMsg));
                         }else {
-                            String successMsg = MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF.getMsg(),newCount,chgCount,errorMsg);
+                            String successMsg = MessageUtils.getMessage(ApiError.SO_WDT_SALES_RAW_TRADE_PUSHSELF, newCount, chgCount, errorMsg);
                             notifyKolB2cCancelPushSuccess(dmpSyncTaskId, request, successMsg);
                             return ApiResult.success(successMsg);
                         }

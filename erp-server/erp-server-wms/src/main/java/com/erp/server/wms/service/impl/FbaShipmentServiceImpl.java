@@ -411,7 +411,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             DmpInoutDTO.CreateInputDTO createInputDTO = new DmpInoutDTO.CreateInputDTO();
             createInputDTO.setSystemCode(PlatformDictEnum.TIK_TOK.getCode());
-            createInputDTO.setBillType("fba_shipment");
+            createInputDTO.setBillType("fbt_shipment");
             createInputDTO.setNextLevelId(authId);
             createInputDTO.setTaskType("hotfix");
             Map<String, Object> detailExtendJson = new LinkedHashMap<>();
@@ -2171,8 +2171,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      **/
     private void checkOnwayWarehouse(WarehouseEntity warehouseEntity) {
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(warehouseEntity.getTypeId())) {
             //如果配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -2267,9 +2267,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public LocalDate getStopGenReceivedDate(FbaShipmentEntity fbaShipmentEntity) {
-        List<DictBasicDTO.ListDTO> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
+        List<DictBasicEntity> stopGenReceivedTimeList = dictBasicService.getByKey(DictBasicEnum.STOP_GEN_RECEIVE_TIME.getKey());
         if (!CollectionUtils.isEmpty(stopGenReceivedTimeList)) {
-            DictBasicDTO.ListDTO configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
+            DictBasicEntity configDTO = stopGenReceivedTimeList.stream().findFirst().orElse(null);
             LocalDateTime stopTime;
             if (null != configDTO && CharSequenceUtil.isNotBlank(configDTO.getValue())) {
                 // 配置时间为主
@@ -2704,12 +2704,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
                 GetLabelsResponse response = api.getLabels(entity.getFbaShipmentId(), pageType, "BARCODE_2D", null, null, null, pageSize, 0);
                 if (CharSequenceUtil.isNotBlank(response.getPayload().getDownloadURL())){
-                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(response.getPayload().getDownloadURL(), true);
-                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                            .fileName(entity.getFbaShipmentId() + ".pdf")
-                            .base64(pdfUrlToBase64)
-                            .build();
-                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
+                    labelUrl = PdfUtil.convertPdfUrlToErpUrl(response.getPayload().getDownloadURL(), true);
                 }
             }catch (ApiException e){
                 throw new ServiceException("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), e.getResponseBody());
@@ -2723,12 +2718,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 AwdApi api = AmazonSpApiInitUtils.create(AwdApi.class, shopInfoDTO, false);
                 ShipmentLabels inboundShipmentLabels = api.getInboundShipmentLabels(entity.getFbaShipmentId(), pageType, formatType);
                 if (CharSequenceUtil.isNotBlank(inboundShipmentLabels.getLabelDownloadURL())){
-                    String pdfUrlToBase64 = PdfUtil.convertPdfUrlToBase64(inboundShipmentLabels.getLabelDownloadURL(), true);
-                    FileDTO.UploadBase64 uploadBase64 = FileDTO.UploadBase64.builder()
-                            .fileName(entity.getFbaShipmentId() + ".pdf")
-                            .base64(pdfUrlToBase64)
-                            .build();
-                    labelUrl = fileFeign.uploadFileByBase64(uploadBase64);
+                    labelUrl = PdfUtil.convertPdfUrlToErpUrl(inboundShipmentLabels.getLabelDownloadURL(), true);
                 }
             }catch (ApiException e){
                 log.error("货件【{}】打印标签失败：{}", entity.getFbaShipmentId(), JSONUtil.toJsonStr(e));

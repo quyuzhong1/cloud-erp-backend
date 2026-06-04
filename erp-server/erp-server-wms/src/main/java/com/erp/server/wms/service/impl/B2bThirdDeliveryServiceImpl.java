@@ -360,7 +360,43 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private void fillList(List<B2bThirdDeliveryDTO.PagingViewDTO> records) {
+        List<String> soIds = records.stream()
+                .map(B2bThirdDeliveryDTO.PagingViewDTO::getSoId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<String> soDetailIds = records.stream()
+                .map(B2bThirdDeliveryDTO.PagingViewDTO::getSoDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> salesPlatformOrderCodeMap = new HashMap<>();
+        Map<String, String> customerPOMap = new HashMap<>();
+        if (CollectionUtils.isNotEmpty(soIds)) {
+            List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(soIds);
+            if (CollectionUtils.isNotEmpty(soInfoList)) {
+                salesPlatformOrderCodeMap = soInfoList.stream()
+                        .filter(item -> CharSequenceUtil.isNotBlank(item.getId()))
+                        .collect(Collectors.toMap(SoInfoEntity::getId, item -> CharSequenceUtil.blankToDefault(item.getPlatformOrderCode(), CharSequenceUtil.EMPTY), (v1, v2) -> v1));
+            }
+        }
+        if (CollectionUtils.isNotEmpty(soDetailIds)) {
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(soDetailIds);
+            if (CollectionUtils.isNotEmpty(soDetailList)) {
+                customerPOMap = soDetailList.stream()
+                        .filter(item -> CharSequenceUtil.isNotBlank(item.getId()) && CharSequenceUtil.isNotBlank(item.getCustomerPO()))
+                        .collect(Collectors.toMap(SoDetailEntity::getId, SoDetailEntity::getCustomerPO, (v1, v2) -> v1));
+            }
+        }
+        Map<String, String> finalSalesPlatformOrderCodeMap = salesPlatformOrderCodeMap;
+        Map<String, String> finalCustomerPOMap = customerPOMap;
         records.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getSalesPlatformOrderCode())) {
+                e.setSalesPlatformOrderCode(finalSalesPlatformOrderCodeMap.getOrDefault(e.getSoId(), CharSequenceUtil.EMPTY));
+            }
+            if (CharSequenceUtil.isBlank(e.getCustomerPO())) {
+                e.setCustomerPO(finalCustomerPOMap.getOrDefault(e.getSoDetailId(), CharSequenceUtil.EMPTY));
+            }
             e.setStatusName(ThirdDeliveryStatusEnum.getName(e.getStatus()));
             String warehouseOperationType = e.getWarehouseOperationType();
             if (CharSequenceUtil.isBlank(warehouseOperationType)) {
@@ -383,7 +419,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     @Override
     public B2bThirdDeliveryDTO.ViewDTO view(B2bThirdDeliveryDTO.ViewQueryDTO dto) {
         if (CharSequenceUtil.isBlank(dto.getId())) {
-            return soInfoFeign.getB2bThirdDeliveryView(dto);
+            B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(dto);
+            if (Objects.nonNull(viewDTO)) {
+                viewDTO.setPlatformOrderCode(CharSequenceUtil.EMPTY);
+            }
+            return viewDTO;
         } else {
             B2bThirdDeliveryEntity entity = this.getById(dto.getId());
             if (Objects.isNull(entity)) {
@@ -439,7 +479,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
                 }
             }
-
             return viewDTO;
         }
     }
@@ -885,7 +924,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.FAILED.getCode(), CharSequenceUtil.format(ApiError.COMMON_PROVIDER_SERVICE_NOT_ENABLED.getMsg(), req.getThirdWarehouseProvideCode()), "", "", "", null);
             return;
         }
-        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(thirdWarehouseService, req, 0);
+        ApiResult<String> fbaOutboundBill = createFbaOutboundBill(thirdWarehouseService, req, entity.getPlatformOrderCode(), 0);
         if (fbaOutboundBill.isSuccess()) {
             // 创建成功
             proxyService.updateStatus(sourceId, ThirdDeliveryStatusEnum.WAIT_SHIPPED.getCode(), "", fbaOutboundBill.getData(), "", "", null);
@@ -894,6 +933,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         // 创建失败，尝试查询是否实际已创建成功
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        if (CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode())) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(entity.getPlatformOrderCode()));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
 
@@ -994,9 +1036,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return null;
     }
 
-    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, final int retryCount) {
+    private ApiResult<String> createFbaOutboundBill(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req, String knownPlatformOrderCode, final int retryCount) {
         ThirdWarehouseQueryFbaOutboundReq queryOutboundReq = new ThirdWarehouseQueryFbaOutboundReq();
         queryOutboundReq.setErpOrderCodeList(Collections.singletonList(req.getReferenceNo()));
+        if (CharSequenceUtil.isNotBlank(knownPlatformOrderCode)) {
+            queryOutboundReq.setPlatformOrderCodeList(Collections.singletonList(knownPlatformOrderCode));
+        }
         queryOutboundReq.setAuthId(req.getAuthId());
         queryOutboundReq.setThirdWarehouseProvideCode(req.getThirdWarehouseProvideCode());
         ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> listApiResult = service.queryFbaOutboundBill(queryOutboundReq, req.getAuthId());
@@ -1015,7 +1060,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 try {
                     log.info("{}秒后进行第{}次重试", RETRY_DELAY_SECONDS / 1000, retryCount + 2);
                     Thread.sleep(RETRY_DELAY_SECONDS);
-                    return createFbaOutboundBill(service, req, retryCount + 1);
+                    return createFbaOutboundBill(service, req, knownPlatformOrderCode, retryCount + 1);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     return ApiResult.error(-1, "重试被中断");

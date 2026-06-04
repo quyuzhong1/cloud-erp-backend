@@ -5,7 +5,7 @@ mutation (
   $fulfillmentOrderLineItems: [FulfillmentOrderLineItemInput!]!
 ) {
   fulfillmentCreate(fulfillment: {
-    notifyCustomer: false,
+    notifyCustomer: true,
     trackingInfo: {
       numbers: $numbers,
       company: $company

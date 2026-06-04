@@ -112,4 +112,13 @@ public interface FileFeign {
      */
     @PostMapping("/feign/file/listLatestFileTask")
     List<FileDTO.FileTaskDTO> listLatestFileTask(@RequestBody List<String> fileUrlList);
+
+    /**
+     * 通过URL上传文件
+     *
+     * @param uploadBase64 FileDTO.UploadBase64
+     * @return String
+     */
+    @PostMapping(value = "/feign/file/uploadFileByUrl")
+    String uploadFileByUrl(@RequestBody FileDTO.UploadBase64 uploadBase64);
 }

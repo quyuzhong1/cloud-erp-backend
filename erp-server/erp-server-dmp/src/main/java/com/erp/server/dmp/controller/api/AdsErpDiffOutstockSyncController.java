@@ -1,23 +1,9 @@
 package com.erp.server.dmp.controller.api;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Resource;
-
-import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ClientTypeEnum;
-import com.erp.model.wms.entity.SampleBorrowInfoEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
@@ -27,10 +13,20 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AdsErpDiffOutstockSyncDTO;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.query.AdsErpDiffOutstockSyncQueryHandler;
 import com.erp.server.dmp.service.AdsErpDiffOutstockSyncService;
-
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * ERP出库单差异表
@@ -46,6 +42,9 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
 
     @Resource
     private AdsErpDiffOutstockSyncService adsErpDiffOutstockSyncService;
+    
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
 
     /**
     * 列表查询 菜单code = dmp:adsErpDiffOutstockSync:paging
@@ -95,23 +94,10 @@ public class AdsErpDiffOutstockSyncController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "ERP出库单差异表重新生成")
     @PostMapping(value = "/reCreate")
     public ApiResult<Boolean> reCreate(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.ReCreateDTO dto) {
-        return success(adsErpDiffOutstockSyncService.reCreate(dto));
+    	dmpCfgInputDetailService.reCreateInventoryMonthCheck(InventoryMonthCheckEnum.ADS_ERP_DIFF_OUTSTOCK_SYNC, dto.getCheckMonth(), dto.getSourceSystem());
+        return success(Boolean.TRUE);
     }
-    
-    /**
-     * ERP数据更新
-     * @author Will
-     * @date: 2023/11/13 16:19
-     * @param dto
-     * @return ApiResult
-     */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "ERP出库单差异表ERP数据更新")
-    @PostMapping(value = "/updateErp")
-    @WebAdvanceQuery(handler = AdsErpDiffOutstockSyncQueryHandler.class)
-    public ApiResult<Boolean> updateErp(@RequestBody @Validated AdsErpDiffOutstockSyncDTO.UpdateErpDTO dto) {
-    	return success(adsErpDiffOutstockSyncService.updateErp(dto));
-    }
-    
+
     /**
      * 修改备注
      * @author Will

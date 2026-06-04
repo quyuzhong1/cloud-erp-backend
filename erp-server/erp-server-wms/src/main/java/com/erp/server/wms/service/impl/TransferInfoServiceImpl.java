@@ -419,7 +419,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //更新审核状态
         updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        operateLogService.addModuleOperateLog("提交了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog("提交了一个直接调拨单", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -457,9 +457,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isNotEmpty(transferDirectionList)) {
-            String name = transferDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse(null);
+            String name = transferDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse(null);
             viewDTO.setTransferDirectionName(name);
         }
         viewDTO.setTypeName(TransferTypeEnum.getNameByCode(entity.getType()));
@@ -1780,7 +1780,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
 
         //调拨方向
-        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        List<DictBasicEntity> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         if (CollectionUtils.isEmpty(transferDirectionList)) {
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECTION_NOT_FOUND);
         }
@@ -1803,7 +1803,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             obj.setSourceTypeName(SourceTypeEnum.getName(obj.getSourceType()));
 
             //调拨方向名称
-            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicEntity::getName).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(transferDirectionName)) {
                 throw new ServiceException(ApiError.WH_TRANSFER_DIRECTION_NOT_FOUND);
             }
