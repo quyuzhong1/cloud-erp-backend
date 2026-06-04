@@ -36,6 +36,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     ZHONG_BAO("zhongbao", "众包"),
     DA_MAI("damai", "大卖仓"),
     DHT("dht", "订货通"),
+    WEGO("wego", "WEGO海外仓"),
     ;
     /**
      * 类型

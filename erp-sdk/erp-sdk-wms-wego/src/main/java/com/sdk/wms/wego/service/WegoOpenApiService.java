@@ -6,6 +6,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.WegoInventoryQueryDTO;
 import com.erp.model.wms.dto.WegoTransportQueryDTO;
 import com.erp.model.wms.dto.WegoSkuQueryDTO;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
@@ -79,6 +80,35 @@ public class WegoOpenApiService {
         bizParams.put("pageNum", dto.getPageNum());
         mergeBizParams(bizParams, dto.getBizParams(), "查询SKU", SKU_QUERY_RESERVED_PARAM_KEYS);
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.PRODUCT_SEARCH, bizParams, "查询SKU");
+    }
+
+    /**
+     * 调用 WEGO 2c.inventory.search 分页查询 2C 库存列表。
+     * <p>
+     * 响应结构示例：
+     * <pre>
+     * {
+     *   "success": true,
+     *   "result": {
+     *     "pageNum": 1, "pageSize": 200, "pages": 5, "total": 900, "emptyFlag": false,
+     *     "list": [ { "sku": "SKU001", "warehouseCode": "W01", "availableQty": 100, ... } ]
+     *   }
+     * }
+     * </pre>
+     *
+     * @param dto 入参，包含 accessToken / secret / warehouseCode（可选）/ pageNum / pageSize
+     * @return WEGO 接口原始响应解析后的 JSONObject
+     */
+    public JSONObject queryInventory(WegoInventoryQueryDTO.QueryReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("pageSize", dto.getPageSize());
+        bizParams.put("pageNum", dto.getPageNum());
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(dto.getWarehouseCode())) {
+            bizParams.put(WegoInventoryQueryDTO.BIZ_KEY_WAREHOUSE_CODE, dto.getWarehouseCode());
+        }
+        mergeBizParams(bizParams, dto.getBizParams(), "查询库存",
+                new HashSet<>(Arrays.asList("pageNum", "pageSize")));
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TWO_C_INVENTORY_SEARCH, bizParams, "查询库存");
     }
 
     /**
