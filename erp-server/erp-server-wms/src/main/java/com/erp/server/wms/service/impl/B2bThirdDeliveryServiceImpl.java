@@ -1667,8 +1667,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
-        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getPackingImportDetailList(soId, soDetailList);
+        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
+        if (CollUtil.isEmpty(detailList)) {
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
+            detailList = getPackingImportDetailList(soId, soDetailList);
+        }
         B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
         try {
             EasyExcel.read(excelFile.getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
@@ -1700,6 +1703,43 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         return importDTO;
+    }
+
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> getExistingDeliveryImportDetailList(String soId) {
+        if (CharSequenceUtil.isBlank(soId)) {
+            return Collections.emptyList();
+        }
+        B2bThirdDeliveryEntity deliveryEntity = this.lambdaQuery()
+                .eq(B2bThirdDeliveryEntity::getSoId, soId)
+                .ne(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .orderByDesc(B2bThirdDeliveryEntity::getCreateTime)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(deliveryEntity)) {
+            return Collections.emptyList();
+        }
+        List<B2bThirdDeliveryDetailEntity> detailList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        return detailList.stream().map(this::toPackingImportDetail).collect(Collectors.toList());
+    }
+
+    private com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO toPackingImportDetail(B2bThirdDeliveryDetailEntity detailEntity) {
+        com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
+        dto.setSoDetailId(detailEntity.getSoDetailId());
+        dto.setSkuId(detailEntity.getSkuId());
+        dto.setSkuNo(detailEntity.getSkuNo());
+        dto.setProductName(detailEntity.getProductName());
+        dto.setSaleQty(detailEntity.getSaleQty());
+        dto.setDeliveryQty(detailEntity.getDeliveryQty());
+        dto.setPerBoxQty(detailEntity.getPerBoxQty());
+        dto.setDeliverySkuId(detailEntity.getDeliverySkuId());
+        dto.setDeliverySkuNo(detailEntity.getDeliverySkuNo());
+        dto.setWarehousePlatformSku(detailEntity.getWarehousePlatformSku());
+        dto.setBoxQty(detailEntity.getBoxQty());
+        dto.setBoxSpecNo(detailEntity.getBoxSpecNo());
+        return dto;
     }
 
     private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> getPackingImportDetailList(String soId, List<SoDetailEntity> soDetailList) {
