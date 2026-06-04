@@ -54,6 +54,7 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
     private static final String OPERATION_ADD = "add";
     private static final String OPERATION_REDUCE = "reduce";
     private static final String OPERATION_REMOVE = "remove";
+    private static final String EMPTY_WAREHOUSE_LOCATION_NAME = "空仓位";
 
     @Resource
     private OperateLogService operateLogService;
@@ -293,12 +294,19 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
                                         String skuNo) {
         String userName = UserContext.getDefaultLoginUser().getUserName();
         String operationName = getOperationName(addOrUpdateDTO.getOperation());
+        // 空仓位 code 为 ""，日志里替换为"空仓位"展示，避免输出空字符串。
+        String outLocationDisplay = formatLocationCodeForLog(addOrUpdateDTO.getOutWarehouseLocationCode());
+        String inLocationDisplay = formatLocationCodeForLog(addOrUpdateDTO.getInWarehouseLocationCode());
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsMoveWarehouse())) {
-            return StrUtil.format("用户【{}】执行[{}]拆箱行为：将sku【{}】从[移出仓位：{}]移仓至[移入仓位{}]数量为[{}]，并再次封箱",
-                    userName, operationName, skuNo, addOrUpdateDTO.getOutWarehouseLocationCode(), addOrUpdateDTO.getInWarehouseLocationCode(), qty);
+            return StrUtil.format("用户【{}】执行[{}]拆箱行为：将sku【{}】从[移出仓位：{}]移仓至[移入仓位：{}]数量为[{}]，并再次封箱",
+                    userName, operationName, skuNo, outLocationDisplay, inLocationDisplay, qty);
         }
         return StrUtil.format("用户【{}】执行[{}]拆箱行为：将sku【{}】从[拣货仓位：{}]{}数量为[{}]，并再次封箱",
-                userName, operationName, skuNo, addOrUpdateDTO.getOutWarehouseLocationCode(), getQuantityAction(addOrUpdateDTO.getOperation()), qty);
+                userName, operationName, skuNo, outLocationDisplay, getQuantityAction(addOrUpdateDTO.getOperation()), qty);
+    }
+
+    private String formatLocationCodeForLog(String code) {
+        return StrUtil.isBlank(code) ? EMPTY_WAREHOUSE_LOCATION_NAME : code;
     }
 
     private String getOperationName(String operation) {
