@@ -31,7 +31,6 @@ import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.SubcontractOrderTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -188,12 +187,9 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             List<String> warehouseTypeIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getTypeId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(warehouseTypeIds)) {
-                List<DictBasicEntity> warehouseTypeList = FeignQuery.create(DictBasicEntity.class)
-                        .in(DictBasicEntity::getId, warehouseTypeIds)
-                        .eq(DictBasicEntity::getType, WAREHOUSE_TYPE)
-                        .list();
-                if (CollectionUtils.isNotEmpty(warehouseTypeList)) {
-                    warehouseTypeMap = warehouseTypeList.stream().collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getValue, (oldValue, newValue) -> oldValue));
+                Map<String, String> remoteWarehouseTypeMap = wmsTaskFeign.listDictValueMapByTypeAndIds(WAREHOUSE_TYPE, warehouseTypeIds);
+                if (remoteWarehouseTypeMap != null && !remoteWarehouseTypeMap.isEmpty()) {
+                    warehouseTypeMap = remoteWarehouseTypeMap;
                 }
             }
         }

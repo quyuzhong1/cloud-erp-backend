@@ -221,40 +221,39 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
 
-        if (Objects.nonNull(subcontractOrder)){
-            List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
-                    .filter(item -> StringUtils.isBlank(item.getParentId()))
-                    .collect(Collectors.toList());
+        // 调用方已在循环外对 subcontractOrder 做非空校验，此处直接展开内部逻辑，无需再次判空
+        List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
+                .filter(item -> StringUtils.isBlank(item.getParentId()))
+                .collect(Collectors.toList());
 
-            List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
-                    .filter(item -> StringUtils.isNotBlank(item.getParentId()))
-                    .collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getParentId()))
+                .collect(Collectors.toList());
 
-            if (!parentList.isEmpty()) {
-                for (SubcontractOrderDetailEntity parentDetail : parentList) {
-                    SupplierEntity supplier = scmTaskFeign.getSupplierById(parentDetail.getSupplierId());
-                    List<ProductDetailEntity> productDetails = plmTaskFeign.getByIdList(Collections.singletonList(parentDetail.getSkuId()));
-                    //委外用料清单单头供应商,sku,数量相等,测试返回的id不一样，所以用名称
-                    if (Objects.nonNull(supplier) && !productDetails.isEmpty()) {
-                        JSONObject materialId = view.getJSONObject("MaterialID");
-                        String skuNo = materialId.get("Number").toString();
+        if (!parentList.isEmpty()) {
+            for (SubcontractOrderDetailEntity parentDetail : parentList) {
+                SupplierEntity supplier = scmTaskFeign.getSupplierById(parentDetail.getSupplierId());
+                List<ProductDetailEntity> productDetails = plmTaskFeign.getByIdList(Collections.singletonList(parentDetail.getSkuId()));
+                //委外用料清单单头供应商,sku,数量相等,测试返回的id不一样，所以用名称
+                if (Objects.nonNull(supplier) && !productDetails.isEmpty()) {
+                    JSONObject materialId = view.getJSONObject("MaterialID");
+                    String skuNo = materialId.get("Number").toString();
 
-                        JSONObject supplierId = view.getJSONObject("SupplierId");
-                        JSONArray valueArray = supplierId.getJSONArray("Name");
-                        JSONObject firstElement = valueArray.getJSONObject(0);
-                        String supplierName = firstElement.get("Value").toString();
+                    JSONObject supplierId = view.getJSONObject("SupplierId");
+                    JSONArray valueArray = supplierId.getJSONArray("Name");
+                    JSONObject firstElement = valueArray.getJSONObject(0);
+                    String supplierName = firstElement.get("Value").toString();
 
-                        String intStr = view.get("Qty").toString().split("\\.")[0]; // 按小数点分割，取整数部分
+                    String intStr = view.get("Qty").toString().split("\\.")[0]; // 按小数点分割，取整数部分
 
-                        if (Objects.equals(skuNo,productDetails.get(0).getSkuNo())
-                                && Objects.equals(supplierName,supplier.getName())
-                                && Integer.parseInt(intStr) == parentDetail.getRepairQty()) {
-                            List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
-                                    .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
-                                    .collect(Collectors.toList());
-                            for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
-                                entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
-                            }
+                    if (Objects.equals(skuNo,productDetails.get(0).getSkuNo())
+                            && Objects.equals(supplierName,supplier.getName())
+                            && Integer.parseInt(intStr) == parentDetail.getRepairQty()) {
+                        List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
+                                .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
+                                .collect(Collectors.toList());
+                        for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
+                            entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
                         }
                     }
                 }

@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -69,4 +70,10 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return com.erp.model.oms.entity.DictBasicEntity
      */
     DictBasicEntity getByTypeAndValue(String type, String value);
+
+    /**
+     * 根据字典 type 与 id 集合，返回 id -> value 映射，供其它服务通过 Feign 获取字典编码
+     * 以避免跨服务直接查询 DictBasicEntity（破坏微服务边界）
+     */
+    Map<String, String> listValueMapByTypeAndIds(String type, List<String> ids);
 }
