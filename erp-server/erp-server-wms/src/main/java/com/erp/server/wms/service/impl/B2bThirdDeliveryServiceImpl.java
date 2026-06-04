@@ -1699,7 +1699,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryDTO.ViewDTO viewDTO = null;
         try {
             viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
-        } catch (RuntimeException ex) {
+        } catch (ServiceException | feign.FeignException ex) {
             log.warn("B2B装箱导入获取三方发货单预览明细失败，使用订单明细兜底, soId={}", soId, ex);
         }
         if (Objects.nonNull(viewDTO) && CollUtil.isNotEmpty(viewDTO.getDetailList())) {
