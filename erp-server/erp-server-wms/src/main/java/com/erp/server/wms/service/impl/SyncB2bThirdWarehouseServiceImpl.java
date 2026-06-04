@@ -369,10 +369,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         List<ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem> shipmentFiles = new ArrayList<>(attachments.size());
         for (WmsAttachmentDTO.UpdateDTO attachment : attachments) {
-            ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = buildShipmentFile(item, attachment);
-            if (Objects.nonNull(shipmentFile)) {
-                shipmentFiles.add(shipmentFile);
-            }
+            shipmentFiles.add(buildShipmentFile(item, attachment));
         }
         if (CollUtil.isEmpty(shipmentFiles)) {
             return;
