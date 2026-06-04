@@ -1400,10 +1400,9 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                     throw new ServiceException(CharSequenceUtil.format("箱唛号【{}】重复，请勿重复提交", code));
                 }
             }
-            String detailKey = mainId + "|" + CharSequenceUtil.trim(line.getSkuNo()) + "|"
-                    + CharSequenceUtil.trim(line.getOutWarehouseLocationName());
-            if (!submittedDetailKeys.add(detailKey)) {
-                throw new ServiceException("箱唛明细重复，请勿重复提交同一箱唛");
+            String detailId = CharSequenceUtil.trim(line.getDetailId());
+            if (!submittedDetailKeys.add(detailId)) {
+                throw new ServiceException(CharSequenceUtil.format("装箱明细【{}】重复提交，请勿重复扫描同一箱唛明细行", detailId));
             }
         }
 
