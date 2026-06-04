@@ -177,6 +177,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         // 产品要求：回片列表编辑不再按“已回片”状态拦截，编辑后继续同步寄样费用回片链接。
         
         KolFeedbackEntity kolFeedbackEntity =  BeanMapperUtils.map(KolFeedbackEntity.class, addOrUpdateDTO);
+        fillMissingUpdateContext(kolFeedbackEntity, old);
 
         // 数据处理
         handleData(kolFeedbackEntity);
@@ -689,6 +690,21 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 kolFeedbackEntity.setFeedbackStatus(FeedbackStatusEnum.PENDING.getCode());
             }
         }
+    }
+
+    private void fillMissingUpdateContext(KolFeedbackEntity target, KolFeedbackEntity old) {
+        if (target == null || old == null) {
+            return;
+        }
+        target.setSourceType(StrUtil.blankToDefault(target.getSourceType(), old.getSourceType()));
+        target.setSourceId(StrUtil.blankToDefault(target.getSourceId(), old.getSourceId()));
+        target.setSourceCode(StrUtil.blankToDefault(target.getSourceCode(), old.getSourceCode()));
+        target.setSourceDetailId(StrUtil.blankToDefault(target.getSourceDetailId(), old.getSourceDetailId()));
+        target.setPartnerId(StrUtil.blankToDefault(target.getPartnerId(), old.getPartnerId()));
+        target.setPartnerNickname(StrUtil.blankToDefault(target.getPartnerNickname(), old.getPartnerNickname()));
+        target.setSkuId(StrUtil.blankToDefault(target.getSkuId(), old.getSkuId()));
+        target.setSkuNo(StrUtil.blankToDefault(target.getSkuNo(), old.getSkuNo()));
+        target.setProductName(StrUtil.blankToDefault(target.getProductName(), old.getProductName()));
     }
 
     private boolean sameFeedbackUrlKey(KolFeedbackEntity oldEntity, KolFeedbackEntity newEntity) {
