@@ -188,7 +188,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
     private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
-    private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(0, 1, 2, 4));
+    private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
     @Resource
@@ -470,7 +470,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             viewDTO.setWarehouseOperationTypeDTOList(B2bThirdDeliveryDTO.WarehouseOperationTypeDTO.convert(warehouseOperationType,operationDesc));
 
             viewDTO.setAttachList(wmsAttachmentService.getByBusinessIds(Collections.singletonList(dto.getId()), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode()));
-            fillPackingView(viewDTO, entity, detailEntityList);
+            OverseasProviderEntity overseasProvider = getOverseasProviderByWarehouseId(entity.getDeliveryWarehouseId());
+            fillPackingView(viewDTO, entity, detailEntityList, overseasProvider);
             if (Objects.nonNull(soInfoEntity)) {
                 viewDTO.setReceiverName(soInfoEntity.getReceiverName());
                 viewDTO.setTelNumber(soInfoEntity.getTelNumber());
@@ -505,7 +506,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     item.setSaleQty(soDetailMap.getOrDefault(item.getSoDetailId(), 0));
                 });
             }
-            fillThirdWarehouseProvider(viewDTO);
+            fillThirdWarehouseProvider(viewDTO, overseasProvider);
             return viewDTO;
         }
     }
@@ -514,11 +515,21 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (Objects.isNull(viewDTO) || CharSequenceUtil.isBlank(viewDTO.getDeliveryWarehouseId())) {
             return;
         }
-        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(viewDTO.getDeliveryWarehouseId());
-        if (Objects.isNull(overseasProviderWarehouse)) {
-            return;
+        fillThirdWarehouseProvider(viewDTO, getOverseasProviderByWarehouseId(viewDTO.getDeliveryWarehouseId()));
+    }
+
+    private OverseasProviderEntity getOverseasProviderByWarehouseId(String deliveryWarehouseId) {
+        if (CharSequenceUtil.isBlank(deliveryWarehouseId)) {
+            return null;
         }
-        OverseasProviderEntity overseasProvider = overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+        OverseasProviderWarehouseEntity overseasProviderWarehouse = overseasProviderWarehouseService.getByWarehouseId(deliveryWarehouseId);
+        if (Objects.isNull(overseasProviderWarehouse)) {
+            return null;
+        }
+        return overseasProviderService.getById(overseasProviderWarehouse.getMainId());
+    }
+
+    private void fillThirdWarehouseProvider(B2bThirdDeliveryDTO.ViewDTO viewDTO, OverseasProviderEntity overseasProvider) {
         if (Objects.isNull(overseasProvider)) {
             return;
         }
@@ -1239,7 +1250,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         uploadFileReq.setFileData(shipmentFile.getShipmentFileBase64());
         uploadFileReq.setFileUrl(shipmentFile.getShipmentFileUrl());
         uploadFileReq.setFileName(shipmentFile.getShipmentFileName());
-        uploadFileReq.setFileType("SHIPMENT_LABEL_ATTACHMENT");
+        uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT);
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
         if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
             throw new ServiceException("上传B2B装箱货件标签失败:{}", uploadFileResult.getMsg());
@@ -1655,12 +1666,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     @Override
-    public B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(excelImportDTO.getSoId());
-        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getPackingImportDetailList(excelImportDTO.getSoId(), soDetailList);
+    public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
+        List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
+        if (CollUtil.isEmpty(detailList)) {
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
+            detailList = getPackingImportDetailList(soId, soDetailList);
+        }
         B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
         try {
-            EasyExcel.read(excelImportDTO.getExcelFile().getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), B2bCustomerPackingImportExcelDTO.class, listener).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入装箱明细失败", e);
             throw new ServiceException(ApiError.FILE_DATA_IMPORT_FAILED);
@@ -1674,9 +1688,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "B2B客户装箱明细导入错误.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
-            if (!file.isDirectory()) {
+            if (file.isFile()) {
                 try {
                     importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
+                } catch (Exception e) {
+                    log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
                 } finally {
                     try {
                         Files.delete(file.toPath());
@@ -1689,6 +1705,43 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return importDTO;
     }
 
+    private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> getExistingDeliveryImportDetailList(String soId) {
+        if (CharSequenceUtil.isBlank(soId)) {
+            return Collections.emptyList();
+        }
+        B2bThirdDeliveryEntity deliveryEntity = this.lambdaQuery()
+                .eq(B2bThirdDeliveryEntity::getSoId, soId)
+                .ne(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .orderByDesc(B2bThirdDeliveryEntity::getCreateTime)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(deliveryEntity)) {
+            return Collections.emptyList();
+        }
+        List<B2bThirdDeliveryDetailEntity> detailList = b2bThirdDeliveryDetailService.listByMainIds(Collections.singletonList(deliveryEntity.getId()));
+        if (CollUtil.isEmpty(detailList)) {
+            return Collections.emptyList();
+        }
+        return detailList.stream().map(this::toPackingImportDetail).collect(Collectors.toList());
+    }
+
+    private com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO toPackingImportDetail(B2bThirdDeliveryDetailEntity detailEntity) {
+        com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
+        dto.setSoDetailId(detailEntity.getSoDetailId());
+        dto.setSkuId(detailEntity.getSkuId());
+        dto.setSkuNo(detailEntity.getSkuNo());
+        dto.setProductName(detailEntity.getProductName());
+        dto.setSaleQty(detailEntity.getSaleQty());
+        dto.setDeliveryQty(detailEntity.getDeliveryQty());
+        dto.setPerBoxQty(detailEntity.getPerBoxQty());
+        dto.setDeliverySkuId(detailEntity.getDeliverySkuId());
+        dto.setDeliverySkuNo(detailEntity.getDeliverySkuNo());
+        dto.setWarehousePlatformSku(detailEntity.getWarehousePlatformSku());
+        dto.setBoxQty(detailEntity.getBoxQty());
+        dto.setBoxSpecNo(detailEntity.getBoxSpecNo());
+        return dto;
+    }
+
     private List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> getPackingImportDetailList(String soId, List<SoDetailEntity> soDetailList) {
         if (CollUtil.isEmpty(soDetailList)) {
             return Collections.emptyList();
@@ -1696,12 +1749,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         B2bThirdDeliveryDTO.ViewQueryDTO viewQueryDTO = new B2bThirdDeliveryDTO.ViewQueryDTO();
         viewQueryDTO.setSoId(soId);
         viewQueryDTO.setSoDetailIds(soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList()));
-        B2bThirdDeliveryDTO.ViewDTO viewDTO = null;
-        try {
-            viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
-        } catch (RuntimeException ex) {
-            log.warn("B2B装箱导入获取三方发货单预览明细失败，使用订单明细兜底, soId={}", soId, ex);
-        }
+        B2bThirdDeliveryDTO.ViewDTO viewDTO = soInfoFeign.getB2bThirdDeliveryView(viewQueryDTO);
         if (Objects.nonNull(viewDTO) && CollUtil.isNotEmpty(viewDTO.getDetailList())) {
             return viewDTO.getDetailList().stream().map(e -> {
                 com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO dto = new com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO();
@@ -1834,7 +1882,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 throw new ServiceException("仓库自主装箱时每箱张贴货件标签数必须为0");
             }
         } else if (B2bPackingTypeEnum.requiresPackingDetail(packingType)) {
-            if (!ALLOWED_LABELS_PER_BOX.contains(labelsPerBox) || labelsPerBox == 0) {
+            if (!ALLOWED_LABELS_PER_BOX.contains(labelsPerBox)) {
                 throw new ServiceException("客户指定装箱或已暂存箱发货时每箱张贴货件标签数必填且只能为1、2或4");
             }
         }
@@ -1946,11 +1994,13 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private void fillPackingView(B2bThirdDeliveryDTO.ViewDTO viewDTO, B2bThirdDeliveryEntity entity,
-                                 List<B2bThirdDeliveryDetailEntity> detailEntityList) {
+                                 List<B2bThirdDeliveryDetailEntity> detailEntityList,
+                                 OverseasProviderEntity overseasProvider) {
         viewDTO.setPackingType(CharSequenceUtil.blankToDefault(entity.getPackingType(), B2bPackingTypeEnum.WAREHOUSE_SELF.getCode()));
         viewDTO.setPackingTypeName(B2bPackingTypeEnum.getName(viewDTO.getPackingType()));
         viewDTO.setLabelsPerBox(entity.getLabelsPerBox() != null ? entity.getLabelsPerBox() : 0);
-        boolean goodCang = isGoodCangWarehouse(entity.getDeliveryWarehouseId());
+        boolean goodCang = Objects.nonNull(overseasProvider)
+                && PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(overseasProvider.getCode());
         viewDTO.setShowPackingDetail(goodCang);
         if (!goodCang) {
             viewDTO.setPackingDetailList(Collections.emptyList());

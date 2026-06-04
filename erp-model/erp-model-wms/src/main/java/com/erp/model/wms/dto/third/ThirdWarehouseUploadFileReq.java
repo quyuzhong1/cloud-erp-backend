@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotBlank;
-import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * @author liuruipeng
@@ -21,6 +19,8 @@ import java.util.List;
 @NoArgsConstructor
 @SuperBuilder
 public class ThirdWarehouseUploadFileReq extends ThirdWarehouseAuth{
+    public static final String FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT = "SHIPMENT_LABEL_ATTACHMENT";
+
     private String orderCode;
     //文件类型
     private String fileType;
