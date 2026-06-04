@@ -163,6 +163,16 @@ public class SampleLedgerDTO implements Serializable {
         private String productName;
 
         /**
+         * 销售状态
+         */
+        private Integer saleState;
+
+        /**
+         * 销售状态名称
+         */
+        private String saleStateName;
+
+        /**
          * 使用方id
          */
         private String useUserId;

@@ -183,11 +183,13 @@
             sl.dept_name,
             sl.sku_no,
             sl.product_name,
+            ps.sale_state,
             sl.use_user_id,
             sl.use_user_name,
             sl.qty,
             sl.sku_id
         FROM sample_ledger sl
+        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
@@ -244,11 +246,13 @@
             sl.dept_name,
             sl.sku_no,
             sl.product_name,
+            ps.sale_state,
             sl.use_user_id,
             sl.use_user_name,
             sl.qty,
             sl.sku_id
         FROM sample_ledger sl
+        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
@@ -297,11 +301,13 @@
             sl.dept_name,
             sl.sku_no,
             sl.product_name,
+            ps.sale_state,
             sl.use_user_id,
             sl.use_user_name,
             sl.qty,
             sl.sku_id
         FROM sample_ledger sl
+        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}

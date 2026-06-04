@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import org.springframework.beans.BeanUtils;
 import com.erp.model.oms.dto.ExhibitionOrderDTO;
+import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.wms.dto.SampleLedgerDTO;
 import com.erp.model.wms.entity.SampleLedgerEntity;
 import com.erp.model.wms.enums.SampleLedgerTypeEnum;
@@ -518,6 +519,8 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
         if (CollUtil.isEmpty(records)) {
             return;
         }
+
+        records.forEach(record -> record.setSaleStateName(SaleStateEnum.getNameByCode(record.getSaleState())));
 
         // 提取所有用户ID（包括userId和useUserId）
         List<String> userIds = records.stream()
