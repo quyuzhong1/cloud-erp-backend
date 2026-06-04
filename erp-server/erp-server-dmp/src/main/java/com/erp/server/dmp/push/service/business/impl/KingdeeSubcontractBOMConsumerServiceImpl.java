@@ -6,12 +6,10 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.KingdeeParamDTO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.dto.WarehouseStockInfoDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -19,8 +17,6 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -38,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -51,16 +46,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontractBOMConsumerService {
-
-    /**
-     * 仓库类型字典: type
-     */
-    private static final String DICT_TYPE_WAREHOUSE_TYPE = "warehouseType";
-    /**
-     * 仓库类型字典: 供应商仓库 value
-     */
-    private static final String WAREHOUSE_TYPE_SUPPLIER = "supplier";
-
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
@@ -142,14 +127,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             Map<String, Object> bomMap = queryList.get(0);
             KingdeeUtils.makeFieldJson(json,"Ids",".", bomMap.get("FId"));
 
-            //提前加载委外订单及其明细，避免循环内多次查询
-            SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
-            List<SubcontractOrderDetailEntity> subcontractOrderDetails = Objects.nonNull(subcontractOrder)
-                    ? scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(subcontractOrder.getId()))
-                    : Collections.emptyList();
-            //构建 skuNo 到仓库信息的映射，用于在变更单分录上写入仓库与仓位
-            Map<String, WarehouseStockInfoDTO> skuWarehouseMap = buildSkuWarehouseInfoMap(subcontractOrderDetails);
-
             //转换数据
             for (Map<String, Object> query : queryList) {
                 Map<String, Object> bomChangeViewMap = new HashMap<>();
@@ -157,7 +134,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 JSONObject view = kingdeeCommonService.view(bomApiUtils, platformEntity.getId(), bomChangeViewMap);
                 log.warn("委外用料清单变更单查询报文：{}" , view.toString());
                 //处理旧单
-                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),subcontractOrder,query.get("FBillNo").toString(),skuWarehouseMap);
+                JSONObject convertOldData = convertOldData(view,skuApiUtils,platformEntity.getId(),syncKingdeeId,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveOldParam = new KingdeeParamDTO.SaveParamDTO(convertOldData);
                 saveOldParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -168,7 +145,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 kingdeeCommonService.audit(null,bomChangeApiUtils,saveOld.getId(),ApiModuleTypeEnum.SUBCONTRACT_BOM.getCode());
 
                 //新增新单
-                JSONObject convertNewData = convertNewData(view,subcontractOrder,subcontractOrderDetails,query.get("FBillNo").toString(),skuWarehouseMap);
+                JSONObject convertNewData = convertNewData(view,syncKingdeeId,query.get("FBillNo").toString());
                 KingdeeParamDTO.SaveParamDTO saveNewParam = new KingdeeParamDTO.SaveParamDTO(convertNewData);
                 saveNewParam.setIsVerifyBaseDataField(Boolean.FALSE);
                 //新增
@@ -182,10 +159,11 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         }
     }
 
-    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,SubcontractOrderEntity subcontractOrder,String bomBillNo,Map<String, WarehouseStockInfoDTO> skuWarehouseMap){
+    public JSONObject convertOldData(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,String syncKingdeeId,String bomBillNo){
         JSONArray ppBomEntries = view.getJSONArray("PPBomEntry");
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
+        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
@@ -195,8 +173,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         for (int i = 0; i < ppBomEntries.size(); i++) {
             if (Objects.nonNull(subcontractOrder)) {
                 JSONObject srcEntry = ppBomEntries.getJSONObject(i);
-                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter,skuWarehouseMap);
-                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter,skuWarehouseMap);
+                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter);
+                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter);
                 counter++;
                 FEntities.put(changeBeforPpBom);
                 FEntities.put(changeAfterPpBom);
@@ -225,15 +203,19 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    public JSONObject convertNewData(JSONObject view,SubcontractOrderEntity subcontractOrder,List<SubcontractOrderDetailEntity> subcontractOrderDetails,String bomBillNo,Map<String, WarehouseStockInfoDTO> skuWarehouseMap){
+    public JSONObject convertNewData(JSONObject view,String syncKingdeeId,String bomBillNo){
         JSONArray FEntities = new JSONArray();
         JSONObject entries = new JSONObject();
+        SubcontractOrderEntity subcontractOrder = scmTaskFeign.listSubcontractOrderByKingdeeId(syncKingdeeId);
         SysAccountingCompanyEntity sysAccountingCompany = sysUserFeign.getCompanyByKindgeeId(view.get("SubOrgId_Id").toString());
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
 
-        if (Objects.nonNull(subcontractOrder) && CollectionUtils.isNotEmpty(subcontractOrderDetails)){
+        if (Objects.nonNull(subcontractOrder)){
+            String mainId = subcontractOrder.getId();
+            List<SubcontractOrderDetailEntity> subcontractOrderDetails = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(mainId));
+            
             List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetails.stream()
                     .filter(item -> StringUtils.isBlank(item.getParentId()))
                     .collect(Collectors.toList());
@@ -265,7 +247,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                                     .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
                                     .collect(Collectors.toList());
                             for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
-                                entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo, skuWarehouseMap);
+                                entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
                             }
                         }
                     }
@@ -295,11 +277,10 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    private JSONObject createChangeBeforePpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter,Map<String, WarehouseStockInfoDTO> skuWarehouseMap) {
-        JSONObject entry = new JSONObject(new LinkedHashMap<>());
+    private JSONObject createChangeBeforePpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
+        JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
-        String entrySkuNo = null;
         Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
         if (Objects.nonNull(kingdeeSkuId)) {
             //ProductDetailEntity productDetail = plmTaskFeign.getSkuBySyncKingdeeId(kingdeeSkuId.toString());
@@ -311,8 +292,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 skuJson.put("FNumber", skuView.get("Number"));
                 entry.put("FMaterialID", skuJson);
                 entry.put("FMaterialID2", skuJson);
-                //仅用于查 skuWarehouseMap 的 key，不影响 FNumber 序列化
-                entrySkuNo = Objects.toString(skuView.get("Number"), null);
             }
         }
 
@@ -333,8 +312,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //仓库与仓位（按仓库类型决定是否同步仓位）
-        applyWarehouseAndLocation(entry, skuWarehouseMap, entrySkuNo);
+        //发料方式：直接倒冲
+        entry.put("FIssueType", "2");
         //变更前
         entry.put("FChangeType","2");
         //分子
@@ -358,6 +337,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode","1");
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
+        //倒冲时机：入库倒冲
+        entry.put("FBackFlushType", "3");
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
         //需求日期
@@ -401,16 +382,13 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
         entityLinkEntry.put("FEntity_Link_FBaseStdQty",srcEntry.get("StdQty"));
         entry.put("FEntity__Link",entityLinkEntry);
-        //发料方式：直接倒冲（放在最后，避免金蝶 BOS 字段联动覆盖 FStockID）
-        entry.put("FIssueType", "2");
         return entry;
     }
 
-    private JSONObject createChangeAfterPpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter,Map<String, WarehouseStockInfoDTO> skuWarehouseMap) {
-        JSONObject entry = new JSONObject(new LinkedHashMap<>());
+    private JSONObject createChangeAfterPpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
+        JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
-        String entrySkuNo = null;
         Object kingdeeSkuId = srcEntry.get("MaterialID_Id");
         if (Objects.nonNull(kingdeeSkuId)) {
             Map<String, Object> skuViewMap = new HashMap<>();
@@ -421,8 +399,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                 skuJson.put("FNumber", skuView.get("Number"));
                 entry.put("FMaterialID", skuJson);
                 entry.put("FMaterialID2", skuJson);
-                //仅用于查 skuWarehouseMap 的 key，不影响 FNumber 序列化
-                entrySkuNo = Objects.toString(skuView.get("Number"), null);
             }
         }
 
@@ -443,8 +419,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //仓库与仓位（按仓库类型决定是否同步仓位）
-        applyWarehouseAndLocation(entry, skuWarehouseMap, entrySkuNo);
+        //发料方式
+        //发料方式：直接倒冲
+        entry.put("FIssueType", "2");
         //变更后
         entry.put("FChangeType","3");
         //分子
@@ -463,6 +440,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode","1");
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
+        //倒冲时机：入库倒冲
+        entry.put("FBackFlushType", "3");
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
         //需求日期
@@ -506,14 +485,12 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entityLinkEntry.put("FEntity_Link_FSId",srcEntry.get("BOMEntryID"));
         entityLinkEntry.put("FEntity_Link_FBaseStdQty",0);
         entry.put("FEntity__Link",entityLinkEntry);
-        //发料方式：直接倒冲（放在最后，避免金蝶 BOS 字段联动覆盖 FStockID）
-        entry.put("FIssueType", "2");
         return entry;
     }
 
-    private JSONObject createNewPpBomEntry(JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo, Map<String, WarehouseStockInfoDTO> skuWarehouseMap) {
+    private JSONObject createNewPpBomEntry(JSONArray ppBomEntries,SubcontractOrderEntity subcontractOrder,SubcontractOrderDetailEntity parentDetail,SubcontractOrderDetailEntity chilDetail,SysAccountingCompanyEntity sysAccountingCompany, String bomBillNo) {
         JSONObject entries = new JSONObject();
-        Map<String, Object> entry = new LinkedHashMap<>();
+        Map<String, Object> entry = new HashMap<>();
 
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -538,8 +515,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //仓库与仓位（按仓库类型决定是否同步仓位）
-        applyWarehouseAndLocation(entry, skuWarehouseMap, chilDetail.getSkuNo());
+        //发料方式
+        //发料方式：直接倒冲
+        entry.put("FIssueType", "2");
         //需求日期
         entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
@@ -564,8 +542,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (parentDetail.getRepairQty() == 1) {
             entry.put("FNumerator", parentDetail.getRepairQty());
         }
-        //发料方式：直接倒冲（放在最后，避免金蝶 BOS 字段联动覆盖 FStockID）
-        entry.put("FIssueType", "2");
 
         ppBomEntries.put(entry);
         entries.put("FEntity", ppBomEntries);
@@ -639,90 +615,6 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             updateKingdeeDetailId(jsonArray);
         }
         return  isAdd;
-    }
-
-    /**
-     * 根据委外订单子件明细构建 skuNo 到仓库信息的映射。
-     * 仓库类型为【供应商仓库】时，记录仓位用于同步金蝶；其它类型仅记录仓库代码。
-     */
-    private Map<String, WarehouseStockInfoDTO> buildSkuWarehouseInfoMap(List<SubcontractOrderDetailEntity> subcontractOrderDetails) {
-        if (CollectionUtils.isEmpty(subcontractOrderDetails)) {
-            return Collections.emptyMap();
-        }
-        //子件明细才承载发料仓库与仓位
-        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetails.stream()
-                .filter(item -> StringUtils.isNotBlank(item.getParentId()))
-                .filter(item -> StringUtils.isNotBlank(item.getSkuNo()))
-                .filter(item -> StringUtils.isNotBlank(item.getWarehouseId()))
-                .collect(Collectors.toList());
-        if (childList.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        List<String> warehouseIdList = childList.stream()
-                .map(SubcontractOrderDetailEntity::getWarehouseId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (warehouseIdList.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        //批量查询仓库
-        List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
-                .in(WarehouseEntity::getId, warehouseIdList)
-                .list();
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            return Collections.emptyMap();
-        }
-        Map<String, WarehouseEntity> warehouseEntityMap = warehouseList.stream()
-                .collect(Collectors.toMap(WarehouseEntity::getId, Function.identity(), (a, b) -> a));
-        //供应商仓库类型字典id（warehouseType=supplier）
-        List<DictBasicEntity> supplierTypeList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DICT_TYPE_WAREHOUSE_TYPE)
-                .eq(DictBasicEntity::getValue, WAREHOUSE_TYPE_SUPPLIER)
-                .list();
-        String supplierTypeId = supplierTypeList.stream()
-                .map(DictBasicEntity::getId)
-                .findFirst()
-                .orElse(null);
-        Map<String, WarehouseStockInfoDTO> result = new HashMap<>();
-        for (SubcontractOrderDetailEntity child : childList) {
-            WarehouseEntity warehouse = warehouseEntityMap.get(child.getWarehouseId());
-            if (Objects.isNull(warehouse) || StringUtils.isBlank(warehouse.getKingdeeWarehouseCode())) {
-                continue;
-            }
-            boolean isSupplierWarehouse = StringUtils.isNotBlank(supplierTypeId)
-                    && Objects.equals(supplierTypeId, warehouse.getTypeId());
-            //同 skuNo 多次出现以首条为准，避免相互覆盖
-            result.putIfAbsent(child.getSkuNo(),
-                    new WarehouseStockInfoDTO(warehouse.getKingdeeWarehouseCode(), child.getWarehouseLocation(), isSupplierWarehouse));
-        }
-        return result;
-    }
-
-    /**
-     * 按【供应商仓库】规则向分录写入 FStockID/FStockLOCID。
-     * - 供应商仓库：写入仓库与仓位
-     * - 其它仓库类型：仅写入仓库
-     * skuNo 缺失或仓库代码缺失时跳过；仓位缺失时仅跳过仓位。
-     */
-    private void applyWarehouseAndLocation(Map<String, Object> entry, Map<String, WarehouseStockInfoDTO> skuWarehouseMap, String skuNo) {
-        if (StringUtils.isBlank(skuNo) || skuWarehouseMap == null || skuWarehouseMap.isEmpty()) {
-            return;
-        }
-        WarehouseStockInfoDTO info = skuWarehouseMap.get(skuNo);
-        if (Objects.isNull(info) || StringUtils.isBlank(info.getKingdeeWarehouseCode())) {
-            return;
-        }
-        //仓库
-        JSONObject stockJson = new JSONObject();
-        stockJson.put("FNumber", info.getKingdeeWarehouseCode());
-        entry.put("FStockID", stockJson);
-        //仓位仅在供应商仓库下同步
-        if (info.isSupplierWarehouse() && StringUtils.isNotBlank(info.getWarehouseLocation())) {
-            JSONObject locField = new JSONObject();
-            locField.put("FNumber", info.getWarehouseLocation());
-            entry.put("FStockLOCID", locField);
-        }
     }
 
 }
