@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -25,6 +26,7 @@ import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseChannelPartitionRefEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
@@ -63,6 +65,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private CustomerFeign customerFeign;
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 批量新增
@@ -101,6 +105,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         //新增数据
         if (CollectionUtils.isNotEmpty(allChannelList)) {
             List<VirtualWarehouseChannelEntity> batchSaveDTOList = handleData(batchUpdateDTO, allChannelList);
+            checkSameWarehouseB2bForeignPlatform(virtualWarehouseId, batchSaveDTOList);
             //检查已启用虚拟仓是否存在重合配置 多虚拟仓校验
             if (Objects.nonNull(warehouseEntity.getDisabled()) && Boolean.FALSE.equals(warehouseEntity.getDisabled())){
                 checkBoundChannel(batchSaveDTOList, Boolean.TRUE);
@@ -552,11 +557,94 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     }
 
     /**
+     * 同一实体仓下不同虚拟仓不可重复配置B2B海外线下平台。
+     */
+    @Override
+    public void checkSameWarehouseB2bForeignPlatform(String virtualWarehouseId, List<VirtualWarehouseChannelEntity> curChannelEntitieList) {
+        if (CollUtil.isEmpty(curChannelEntitieList)) {
+            return;
+        }
+        String b2bForeignPlatform = PlatformDictEnum.B2B_FOREIGN.getCode();
+        boolean hasB2bForeign = curChannelEntitieList.stream()
+                .anyMatch(e -> CharSequenceUtil.equals(b2bForeignPlatform, e.getDictPlatform()));
+        if (!hasB2bForeign) {
+            return;
+        }
+        List<VirtualWarehouseRelationEntity> relations = virtualWarehouseRelationService.getByVirtualWarehouseId(virtualWarehouseId);
+        if (CollUtil.isEmpty(relations)) {
+            return;
+        }
+        List<String> warehouseIds = relations.stream()
+                .map(VirtualWarehouseRelationEntity::getWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return;
+        }
+        List<VirtualWarehouseRelationEntity> sameWarehouseRelations = virtualWarehouseRelationService.getByWarehouseId(warehouseIds);
+        List<String> otherVirtualWarehouseIds = sameWarehouseRelations.stream()
+                .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId)
+                .filter(id -> !CharSequenceUtil.equals(id, virtualWarehouseId))
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(otherVirtualWarehouseIds)) {
+            return;
+        }
+        List<VirtualWarehouseChannelEntity> conflictChannelList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>()
+                .in(VirtualWarehouseChannelEntity::getVirtualWarehouseId, otherVirtualWarehouseIds)
+                .eq(VirtualWarehouseChannelEntity::getDictPlatform, b2bForeignPlatform));
+        if (CollUtil.isEmpty(conflictChannelList)) {
+            return;
+        }
+        List<String> conflictVirtualWarehouseIds = conflictChannelList.stream()
+                .map(VirtualWarehouseChannelEntity::getVirtualWarehouseId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<VirtualWarehouseEntity> conflictVirtualWarehouses = virtualWarehouseService.listByIds(conflictVirtualWarehouseIds);
+        Map<String, String> conflictVmNameMap = conflictVirtualWarehouses.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName, (left, right) -> left));
+        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class, warehouseIds);
+        Map<String, String> warehouseNameMap = warehouseEntityList.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
+        List<DictBasicDTO.ViewDTO> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        String platformName = platformList.stream()
+                .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
+                .map(DictBasicDTO.ViewDTO::getName)
+                .findFirst()
+                .orElse(b2bForeignPlatform);
+        StringBuilder msg = new StringBuilder();
+        for (String conflictVirtualWarehouseId : conflictVirtualWarehouseIds) {
+            List<String> sharedWarehouseIds = sameWarehouseRelations.stream()
+                    .filter(r -> CharSequenceUtil.equals(r.getVirtualWarehouseId(), conflictVirtualWarehouseId))
+                    .map(VirtualWarehouseRelationEntity::getWarehouseId)
+                    .filter(warehouseIds::contains)
+                    .distinct()
+                    .collect(Collectors.toList());
+            String warehouseName = sharedWarehouseIds.stream()
+                    .map(warehouseNameMap::get)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse(CharSequenceUtil.EMPTY);
+            String conflictVmName = conflictVmNameMap.getOrDefault(conflictVirtualWarehouseId, CharSequenceUtil.EMPTY);
+            String format = MessageUtils.getMessage(ApiError.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR,
+                    warehouseName, conflictVmName, platformName);
+            if (!msg.toString().contains(format)) {
+                msg.append(format);
+            }
+        }
+        throw new ServiceException(msg.toString());
+    }
+
+    /**
      * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
-        List<String> skipPlatformList = customerFeign.getDictBasicByKey(VM_CHANNEL_SKIP_CHECK_PLATFORM).stream()
-                .map(DictBasicDTO.ViewDTO::getValue)
+        List<String> skipPlatformList = dictBasicService.getByKey(VM_CHANNEL_SKIP_CHECK_PLATFORM).stream()
+                .map(com.erp.model.wms.dto.DictBasicDTO.ListDTO::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
