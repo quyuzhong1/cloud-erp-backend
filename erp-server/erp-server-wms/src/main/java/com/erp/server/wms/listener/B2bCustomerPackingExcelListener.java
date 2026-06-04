@@ -71,13 +71,17 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             boxSeq = null;
         }
         Integer packingQty = null;
-        try {
-            packingQty = Integer.parseInt(row.getPackingQty().trim());
-            if (packingQty <= 0) {
-                errorMsgList.add("装箱数量必须为正整数");
+        if (CharSequenceUtil.isBlank(row.getPackingQty())) {
+            errorMsgList.add("装箱数量不能为空");
+        } else {
+            try {
+                packingQty = Integer.parseInt(row.getPackingQty().trim());
+                if (packingQty <= 0) {
+                    errorMsgList.add("装箱数量必须为正整数");
+                }
+            } catch (Exception e) {
+                errorMsgList.add("装箱数量格式不正确");
             }
-        } catch (Exception e) {
-            errorMsgList.add("装箱数量格式不正确");
         }
         if (CharSequenceUtil.isNotBlank(row.getLabelSize()) && !B2bPackingLabelSizeEnum.isValid(row.getLabelSize().trim())) {
             errorMsgList.add("标签尺寸不合法");
