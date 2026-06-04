@@ -1402,7 +1402,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             String detailId = CharSequenceUtil.trim(line.getDetailId());
             if (!submittedDetailKeys.add(detailId)) {
-                throw new ServiceException(CharSequenceUtil.format("装箱明细【{}】重复提交，请勿重复扫描同一箱唛明细行", detailId));
+                throw new ServiceException(CharSequenceUtil.format("箱唛【{}】已扫描，请勿重复扫描", code));
             }
         }
 
