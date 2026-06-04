@@ -407,7 +407,8 @@ public class PdfUtil {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            throw new ServiceException("PDF文件转换PNG失败：" + e.getMessage());
+            log.error("PDF文件转换PNG失败", e);
+            throw new ServiceException("PDF文件转换PNG失败，请检查文件格式");
         }
     }
 
@@ -430,7 +431,8 @@ public class PdfUtil {
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
-            throw new ServiceException("PDF文件尺寸读取失败：" + e.getMessage());
+            log.error("PDF文件尺寸读取失败", e);
+            throw new ServiceException("PDF文件尺寸读取失败，请检查文件格式");
         }
     }
 

@@ -279,7 +279,7 @@
 
     <!-- 列出库存SKU成本列表 -->
     <select id="listInventorySkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$InvSkuCostDTO">
-        select
+        select distinct on (isc.company_id, iscd.sku_id, iscd.warehouse_id)
             isc.company_id as orgId,
             isc.currency,
             isc.exchange_rate,
@@ -318,7 +318,7 @@
             and #{param.endAccountingMonth} > isc.accounting_month
         </if>
         and isc.status = 'approve'
-        order by isc.accounting_month desc, isc.create_time desc, isc.id desc
+        order by isc.company_id, iscd.sku_id, iscd.warehouse_id, isc.accounting_month desc, isc.create_time desc, isc.id desc
     </select>
 
 </mapper>
