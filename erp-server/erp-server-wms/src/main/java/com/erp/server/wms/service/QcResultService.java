@@ -30,6 +30,30 @@ public interface QcResultService extends SuperService<QcResultEntity> {
      */
     void add(String billId, QcResultDTO.AddDTO qcInfo);
 
+    /**
+     * 保存产品实物图片(QC_PRODUCT) / 箱唛图片(QC_BOX) 到 attachment 表，business_id = qc_result.id。
+     * <p>
+     * 仅在 完成质检 / 免检 / 批量完成质检（按需求传入）时调用；
+     * 新增（approveEnd 链路）与暂存（draft）场景不应调用本方法，避免覆盖或清空已落库数据。
+     * <p>
+     * 入参语义：
+     * <ul>
+     *     <li>productImgUrlList 传 null：跳过 QC_PRODUCT 类型，已有附件保持不变</li>
+     *     <li>productImgUrlList 传空集合：清空 QC_PRODUCT 类型的现有附件</li>
+     *     <li>productImgUrlList 非空：先删后插</li>
+     *     <li>boxImgUrlList 同上语义</li>
+     * </ul>
+     *
+     * @param qcResultId         qc_result.id
+     * @param productImgUrlList  产品实物图片 URL（按 index 与 names 对齐）
+     * @param productImgNameList 产品实物图片名称
+     * @param boxImgUrlList      箱唛图片 URL
+     * @param boxImgNameList     箱唛图片名称
+     */
+    void saveProductAndBoxImage(String qcResultId,
+                                List<String> productImgUrlList, List<String> productImgNameList,
+                                List<String> boxImgUrlList, List<String> boxImgNameList);
+
 
     /**
      * 获取到质检信息

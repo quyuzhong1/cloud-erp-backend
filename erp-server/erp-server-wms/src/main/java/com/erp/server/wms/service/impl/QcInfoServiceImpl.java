@@ -632,7 +632,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (result) {
             //质检产品 暂存
             qcProductService.add(billId, dto.getQcProduct(), skuId);
-            //质检信息 暂存
+            //质检信息 暂存（含产品实物图片 / 箱唛图片）
             qcResultService.add(billId, qcInfo);
             //质检报告 暂存
             qcReportDetailService.add(billId, dto.getReportDetailList());
@@ -1190,7 +1190,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             reWriteQcNotice(dto.getQcUserId(),sourceDetailId,qcResult.getTotalQty(),qcResult.getQcQty(),qcResult.getQcGoodQty(),qcResult.getQcBadQty());
             //质检产品 暂存
             qcProductService.add(id, dto.getQcProduct(), skuId);
-            //质检信息 暂存
+            //质检信息 暂存（含产品实物图片 / 箱唛图片）
             qcResultService.add(id, qcInfo);
             //质检报告 暂存
             qcReportDetailService.add(id, dto.getReportDetailList());

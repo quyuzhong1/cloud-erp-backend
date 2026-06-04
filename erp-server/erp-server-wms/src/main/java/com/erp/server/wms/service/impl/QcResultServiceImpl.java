@@ -154,6 +154,23 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveProductAndBoxImage(String qcResultId,
+                                       List<String> productImgUrlList, List<String> productImgNameList,
+                                       List<String> boxImgUrlList, List<String> boxImgNameList) {
+        if (CharSequenceUtil.isBlank(qcResultId)) {
+            return;
+        }
+        // null 表示"不动该 type 的附件"；非 null（含空集合）会触发 batchSave 内部"先删再插"
+        if (productImgUrlList != null) {
+            wmsAttachmentService.batchSave(productImgUrlList, productImgNameList, WmsConstant.QC_PRODUCT, qcResultId);
+        }
+        if (boxImgUrlList != null) {
+            wmsAttachmentService.batchSave(boxImgUrlList, boxImgNameList, WmsConstant.QC_BOX, qcResultId);
+        }
+    }
+
 
     /**
      * 计算比率
