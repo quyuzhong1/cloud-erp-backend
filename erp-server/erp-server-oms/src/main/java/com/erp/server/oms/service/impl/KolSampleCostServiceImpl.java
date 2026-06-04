@@ -85,6 +85,7 @@ import java.util.stream.Collectors;
 @Service
 public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapper, KolSampleCostEntity> implements KolSampleCostService {
     private static final int IMPORT_ALLOCATION_SCALE = 6;
+    private static final int PLM_SKU_COST_BATCH_SIZE = 200;
 
     @Autowired
     private OperateLogService operateLogService;
@@ -496,11 +497,14 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         if (CollUtil.isEmpty(skuIdList)) {
             return new HashMap<>();
         }
-        List<SkuVO> skuVOList = ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(skuIdList), CollUtil.newArrayList());
+        List<SkuVO> skuVOList = new ArrayList<>();
+        for (List<String> batchSkuIdList : Lists.partition(skuIdList, PLM_SKU_COST_BATCH_SIZE)) {
+            skuVOList.addAll(ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(batchSkuIdList), CollUtil.newArrayList()));
+        }
         return skuVOList.stream()
                 .filter(item -> ObjUtil.isNotEmpty(item) && CharSequenceUtil.isNotBlank(item.getSkuId()))
-                .filter(item -> isPositive(item.getNotTaxCostPrice()))
-                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getNotTaxCostPrice, (v1, v2) -> v1));
+                .filter(item -> isPositive(item.getActualTaxCost()))
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getActualTaxCost, (v1, v2) -> v1));
     }
 
     private void applyPurchaseAverageCost(KolSampleCostEntity kolSampleCostEntity, BigDecimal plmPurchaseAverageCost, String updateCostSourceMonth) {
@@ -510,7 +514,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             productCost = plmPurchaseAverageCost;
         }
         if (!isPositive(productCost)) {
-            log.warn("SKU采购平均成本为空或0，将使用0作为兜底成本。skuId={}, skuNo={}, soCode={}, sourceType={}, sourceDetailId={}",
+            log.warn("SKU含税采购平均成本为空或0，将使用0作为兜底成本。skuId={}, skuNo={}, soCode={}, sourceType={}, sourceDetailId={}",
                     kolSampleCostEntity.getSkuId(),
                     kolSampleCostEntity.getSkuNo(),
                     kolSampleCostEntity.getSoCode(),

@@ -769,7 +769,7 @@ public class NfeInvoiceService {
         }
     }
 
-    static GetDanfeDTO buildSimpleDanfeRequest(String uuid) {
+    private static GetDanfeDTO buildSimpleDanfeRequest(String uuid) {
         GetDanfeDTO getDanfeDTO = new GetDanfeDTO();
         getDanfeDTO.setUuid(uuid);
         getDanfeDTO.setAltura(DANFE_SIMPLE_HEIGHT_MM);
@@ -777,8 +777,8 @@ public class NfeInvoiceService {
         return getDanfeDTO;
     }
 
-    static String resolveDanfePdfUrl(GetDanfeResponseDTO.GetDanfeDataDTO danfeData) {
-        if (ObjUtil.isEmpty(danfeData)) {
+    private static String resolveDanfePdfUrl(GetDanfeResponseDTO.GetDanfeDataDTO danfeData) {
+        if (Objects.isNull(danfeData)) {
             return null;
         }
         // 开票清单展示使用简版 DANFE，普通版只作为服务商未返回简版时的兜底。

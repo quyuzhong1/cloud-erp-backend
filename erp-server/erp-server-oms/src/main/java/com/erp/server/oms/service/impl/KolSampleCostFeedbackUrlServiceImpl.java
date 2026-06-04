@@ -32,7 +32,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
             SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
 
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "feedback.sourceType,feedback.sourceDetailId")
+    @DistributeLocker(keyName = "feedback.sourceType,feedback.sourceDetailId", unlockAfterTx = true)
     @Override
     public void syncByFeedback(KolFeedbackEntity feedback) {
         if (!isValidSampleFeedback(feedback)) {

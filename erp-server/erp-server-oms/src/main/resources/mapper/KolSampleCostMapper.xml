@@ -112,26 +112,22 @@
             on ksc.source_type = 'kolB2cApplication'
             and ksc_ksbad.id = ksc.source_detail_id
             and ksc_ksbad.is_deleted = false
-        left join (
+        left join lateral (
             select
-                source_type,
-                source_detail_id,
                 array_to_string(array_agg(url order by sort, create_time, id), ',') as feedback_url
             from (
-                select distinct on (source_type, source_detail_id, url_hash)
-                    source_type,
-                    source_detail_id,
+                select distinct on (url_hash)
                     url,
                     sort,
                     create_time,
                     id
-                from kol_sample_cost_ref_feedback_url
-                where is_deleted = false
-                order by source_type, source_detail_id, url_hash, sort, create_time, id
+                from kol_sample_cost_ref_feedback_url kfur
+                where kfur.is_deleted = false
+                  and kfur.source_type = ksc.source_type
+                  and kfur.source_detail_id = coalesce(ksc_ksbad.source_detail_id, ksc.source_detail_id)
+                order by url_hash, sort, create_time, id
             ) kfu
-            group by source_type, source_detail_id
-        ) kfu_agg on kfu_agg.source_type = ksc.source_type
-            and kfu_agg.source_detail_id = coalesce(ksc_ksbad.source_detail_id, ksc.source_detail_id)
+        ) kfu_agg on true
     </sql>
 
     <!-- 分页查询 -->
@@ -208,7 +204,7 @@
             sba.partition_id,
             sba.type,
             sba.detail_id,
-            sbd.product_cost as purchase_average_cost,
+            sbd.tax_cost as purchase_average_cost,
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
