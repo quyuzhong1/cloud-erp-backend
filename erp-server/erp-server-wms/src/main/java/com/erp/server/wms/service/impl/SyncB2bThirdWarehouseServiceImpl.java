@@ -192,6 +192,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         String fileName = attachment.getAttachName();
         byte[] bytes;
         try {
+            // 任务调度层负责失败重试；这里下载失败直接抛出，避免继续推送缺失附件的三方仓单据。
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
             log.warn("B2B三方发货单附件下载异常，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
@@ -389,6 +390,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         byte[] bytes;
         try {
+            // 任务调度层负责失败重试；这里下载失败直接抛出，避免继续推送缺失标签的三方仓单据。
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
             log.warn("B2B三方发货单装箱标签附件下载异常，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl(), e);

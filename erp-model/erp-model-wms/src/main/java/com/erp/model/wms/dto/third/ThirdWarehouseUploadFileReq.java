@@ -19,9 +19,6 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 @SuperBuilder
 public class ThirdWarehouseUploadFileReq extends ThirdWarehouseAuth{
-    public static final String FILE_TYPE_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
-    public static final String FILE_TYPE_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
-    public static final String FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT = "SHIPMENT_LABEL_ATTACHMENT";
 
     private String orderCode;
     //文件类型

@@ -124,6 +124,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
+        // 导入接口仅解析回填页面、不落库；总装箱数量在保存/更新 B2B 三方发货单时由 validatePacking 统一校验。
         normalizeBoxLevelFields();
     }
 

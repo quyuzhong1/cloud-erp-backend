@@ -1108,6 +1108,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
 
         try {
+            // 创建三方仓订单前必须先取得三方附件ID；失败重试时 req 会保留已上传ID，避免重复上传。
             prepareCreateFbaOutboundAttachment(service, req);
             preparePackingShipmentFiles(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
@@ -1157,7 +1158,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
             // GoodCang 主装箱清单沿用历史 ORDER_ATTACHMENT useFor，避免影响已接入的 B2B 单据推送。
-            uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_ATTACHMENT);
+            uploadFileReq.setFileType(ThirdWarehouseFileTypeEnum.ORDER_ATTACHMENT.getCode());
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
@@ -1251,7 +1252,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         uploadFileReq.setFileData(shipmentFile.getShipmentFileBase64());
         uploadFileReq.setFileUrl(shipmentFile.getShipmentFileUrl());
         uploadFileReq.setFileName(shipmentFile.getShipmentFileName());
-        uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT);
+        uploadFileReq.setFileType(ThirdWarehouseFileTypeEnum.SHIPMENT_LABEL_ATTACHMENT.getCode());
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
         if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
             throw new ServiceException("上传B2B装箱货件标签失败:{}", uploadFileResult.getMsg());
@@ -1699,7 +1700,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
                 } finally {
                     try {
-                        Files.delete(file.toPath());
+                        Files.deleteIfExists(file.toPath());
                     } catch (IOException e) {
                         log.warn("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath());
                     }
@@ -1911,11 +1912,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         List<String> qtyErrors = new ArrayList<>();
         Map<String, Integer> packingQtyBySku = new HashMap<>();
+        Set<Integer> boxSeqSet = new HashSet<>();
 
         for (int i = 0; i < packingDetailList.size(); i++) {
             B2bCustomerPackingDTO.AddDTO box = packingDetailList.get(i);
             if (box.getBoxSeq() == null) {
                 throw new ServiceException("装箱明细第{}箱序号不能为空", i + 1);
+            }
+            if (!boxSeqSet.add(box.getBoxSeq())) {
+                throw new ServiceException("装箱明细序号【{}】重复", box.getBoxSeq());
             }
             if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType) && CharSequenceUtil.isBlank(box.getBoxMarkNo())) {
                 throw new ServiceException("装箱明细序号【{}】箱唛号不能为空", box.getBoxSeq());

@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * B2B三方发货单装箱标签尺寸
+ * goodCangCode 对应谷仓 B2B 货件标签尺寸枚举值，新增尺寸时需按谷仓文档补充唯一映射。
  */
 public enum B2bPackingLabelSizeEnum implements EnumMessage {
 

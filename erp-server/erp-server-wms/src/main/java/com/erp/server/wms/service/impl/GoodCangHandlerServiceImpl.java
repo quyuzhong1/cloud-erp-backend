@@ -13,6 +13,7 @@ import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.B2bPackingLabelSizeEnum;
 import com.erp.model.wms.enums.B2bPackingTypeEnum;
 import com.erp.model.wms.enums.B2bThirdWarehouseCancelResultEnum;
+import com.erp.model.wms.enums.ThirdWarehouseFileTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
@@ -194,9 +195,9 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private boolean isGoodCangB2bAttachment(String fileType) {
-        return ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_ATTACHMENT.equalsIgnoreCase(fileType)
-                || ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_PACKING_ATTACHMENT.equalsIgnoreCase(fileType)
-                || ThirdWarehouseUploadFileReq.FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT.equalsIgnoreCase(fileType);
+        return ThirdWarehouseFileTypeEnum.ORDER_ATTACHMENT.getCode().equalsIgnoreCase(fileType)
+                || ThirdWarehouseFileTypeEnum.ORDER_PACKING_ATTACHMENT.getCode().equalsIgnoreCase(fileType)
+                || ThirdWarehouseFileTypeEnum.SHIPMENT_LABEL_ATTACHMENT.getCode().equalsIgnoreCase(fileType);
     }
     @Override
     public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq){
