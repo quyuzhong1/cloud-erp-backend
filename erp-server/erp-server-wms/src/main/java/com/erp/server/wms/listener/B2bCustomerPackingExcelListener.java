@@ -14,6 +14,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +54,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
     public void invoke(B2bCustomerPackingImportExcelDTO row, AnalysisContext context) {
         rowCount++;
         if (rowCount > MAX_IMPORT_ROWS) {
-            throw new ServiceException("装箱明细导入最多支持{}行", MAX_IMPORT_ROWS);
+            throw new ServiceException("装箱明细导入最多支持{0}行", MAX_IMPORT_ROWS);
         }
         List<String> errorMsgList = new ArrayList<>();
         List<String> fieldErrors = FieldValidUtil.fieldValid(row);
@@ -129,7 +130,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new HashMap<>();
+        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new LinkedHashMap<>();
         List<B2bCustomerPackingImportExcelDTO> boxErrorList = new ArrayList<>();
         for (B2bCustomerPackingDTO.ViewDTO row : successList) {
             B2bCustomerPackingDTO.ViewDTO head = boxHeadMap.get(row.getBoxSeq());

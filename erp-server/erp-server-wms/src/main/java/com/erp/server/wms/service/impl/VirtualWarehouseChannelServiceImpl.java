@@ -635,7 +635,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                     warehouseName, conflictVmName, platformName);
             msgSet.add(format);
         }
-        throw new ServiceException(String.join(CharSequenceUtil.EMPTY, msgSet));
+        throw new ServiceException(String.join("；", msgSet));
     }
 
     /**

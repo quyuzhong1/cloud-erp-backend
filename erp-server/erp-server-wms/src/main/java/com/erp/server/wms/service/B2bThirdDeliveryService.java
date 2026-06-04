@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -128,6 +129,6 @@ public interface B2bThirdDeliveryService extends SuperService<B2bThirdDeliveryEn
 
     void downloadPackingTemplate(HttpServletResponse response);
 
-    B2bCustomerPackingDTO.ImportDTO importPackingDetail(B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO);
+    B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile);
 
 }

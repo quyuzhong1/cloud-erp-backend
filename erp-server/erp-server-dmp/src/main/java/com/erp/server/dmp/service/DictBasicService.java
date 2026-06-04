@@ -52,4 +52,5 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return 字典信息
      */
     List<DictBasicEntity> getByType(String type);
+
 }

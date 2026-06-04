@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -14,6 +15,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
 import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
@@ -23,11 +25,12 @@ import com.erp.server.wms.service.B2bThirdDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
@@ -305,8 +308,12 @@ public class B2bThirdDeliveryController extends BaseController {
     @PostMapping("/importPackingDetail")
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱明细")
     public ApiResult<B2bCustomerPackingDTO.ImportDTO> importPackingDetail(
-            @ModelAttribute @Validated B2bCustomerPackingDTO.PackingExcelImportDTO excelImportDTO) {
-        return success(b2bThirdDeliveryService.importPackingDetail(excelImportDTO));
+            @RequestParam("soId") String soId,
+            @RequestParam("excelFile") MultipartFile excelFile) {
+        if (CharSequenceUtil.isBlank(soId)) {
+            throw new ServiceException("销售订单id不能为空");
+        }
+        return success(b2bThirdDeliveryService.importPackingDetail(soId, excelFile));
     }
 
 }

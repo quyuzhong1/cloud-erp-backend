@@ -3,7 +3,6 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AttachDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -213,24 +212,6 @@ public class B2bCustomerPackingDTO implements Serializable {
          * 导入错误文件URL
          */
         private String errorUrl;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class PackingExcelImportDTO {
-
-        /**
-         * 销售订单id，用于查询订单明细并校验导入SKU
-         */
-        @NotBlank(message = "销售订单id不能为空")
-        private String soId;
-
-        /**
-         * 导入文件
-         */
-        @NotNull(message = "导入文件不能为空")
-        private MultipartFile excelFile;
-
     }
 
 }
