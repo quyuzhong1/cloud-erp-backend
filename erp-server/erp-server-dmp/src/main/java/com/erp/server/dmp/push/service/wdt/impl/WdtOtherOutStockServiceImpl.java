@@ -112,7 +112,7 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
         warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList)
                 ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList())
                 : new ArrayList<>());
-        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.IMPLEMENT_GROUP_NOTICE);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
