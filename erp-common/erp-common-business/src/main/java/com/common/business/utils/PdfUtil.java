@@ -41,6 +41,7 @@ import java.util.UUID;
 public class PdfUtil {
 
     private static final float DEFAULT_RENDER_DPI = 300F;
+    private static final long MAX_RENDER_PIXELS = 20_000_000L;
 
     private PdfUtil() {
     }
@@ -386,6 +387,7 @@ public class PdfUtil {
         try {
             pdfBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(pdfBase64));
         } catch (Exception e) {
+            log.warn("PDF文件Base64解析失败", e);
             throw new ServiceException("PDF文件Base64解析失败，无法转换PNG");
         }
         if (pdfBytes.length == 0) {
@@ -397,6 +399,7 @@ public class PdfUtil {
             if (document.getNumberOfPages() <= 0) {
                 throw new ServiceException("PDF文件页数为空，无法转换PNG");
             }
+            checkFirstPageRenderPixels(document);
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage image = renderer.renderImageWithDPI(0, DEFAULT_RENDER_DPI, ImageType.RGB);
             boolean writeResult = ImageIO.write(image, "png", outputStream);
@@ -420,6 +423,7 @@ public class PdfUtil {
         try {
             pdfBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(pdfBase64));
         } catch (Exception e) {
+            log.warn("PDF文件Base64解析失败", e);
             throw new ServiceException("PDF文件Base64解析失败，无法读取尺寸");
         }
         try (PDDocument document = PDDocument.load(pdfBytes)) {
@@ -438,6 +442,15 @@ public class PdfUtil {
 
     private static String cleanBase64DataUrlPrefix(String base64) {
         return base64.replaceFirst("(?i)^data:[^;]+;base64,", "").replaceAll("\\s", "");
+    }
+
+    private static void checkFirstPageRenderPixels(PDDocument document) {
+        PDRectangle mediaBox = document.getPage(0).getMediaBox();
+        long widthPixels = Math.round(mediaBox.getWidth() / 72F * DEFAULT_RENDER_DPI);
+        long heightPixels = Math.round(mediaBox.getHeight() / 72F * DEFAULT_RENDER_DPI);
+        if (widthPixels * heightPixels > MAX_RENDER_PIXELS) {
+            throw new ServiceException("PDF首页尺寸过大，无法转换PNG");
+        }
     }
 
     private static float pointsToMm(float points) {

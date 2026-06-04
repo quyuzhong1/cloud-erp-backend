@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.KolFeedbackEntity;
 import com.erp.model.oms.entity.KolSampleCostFeedbackUrlEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 寄样费用回片链接 服务类
@@ -20,6 +22,13 @@ public interface KolSampleCostFeedbackUrlService extends SuperService<KolSampleC
      * @param feedback 回片登记
      */
     void syncByFeedback(KolFeedbackEntity feedback);
+
+    /**
+     * 批量按回片登记同步寄样费用回片链接，供导入等批量场景减少逐条查询。
+     *
+     * @param feedbackList 回片登记列表
+     */
+    void syncByFeedbackList(List<KolFeedbackEntity> feedbackList);
 
     /**
      * 按回片登记删除寄样费用回片链接。

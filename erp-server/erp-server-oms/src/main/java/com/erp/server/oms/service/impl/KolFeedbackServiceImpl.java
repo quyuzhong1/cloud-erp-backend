@@ -396,6 +396,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 ));
 
         // 遍历数据进行校验和保存
+        List<KolFeedbackEntity> savedEntityList = new ArrayList<>();
         for (KolFeedbackExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
             
@@ -478,7 +479,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                     excelDTO.setErrorMsg("保存失败");
                     errorList2.add(excelDTO);
                 } else {
-                    kolSampleCostFeedbackUrlService.syncByFeedback(entity);
+                    savedEntityList.add(entity);
                 }
             } catch (Exception e) {
                 log.error("导入KOL回片列表数据失败", e);
@@ -486,6 +487,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
                 errorList2.add(excelDTO);
             }
         }
+        kolSampleCostFeedbackUrlService.syncByFeedbackList(savedEntityList);
     }
 
     @Override

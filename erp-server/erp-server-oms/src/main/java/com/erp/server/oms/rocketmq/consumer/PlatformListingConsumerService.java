@@ -62,6 +62,7 @@ import java.util.concurrent.TimeUnit;
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
+    private static final String OWNER_CODE_NOT_FOUND = "__NOT_FOUND__";
     private static final int IML_OWNER_CODE_CACHE_MAX_SIZE = 500;
     private static final Cache<String, String> IML_OWNER_CODE_CACHE = CacheBuilder.newBuilder()
             .maximumSize(IML_OWNER_CODE_CACHE_MAX_SIZE)
@@ -290,6 +291,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 
     private String getImlOwnerCode(String authId, String platformSkuNo) {
         String cachedOwnerCode = IML_OWNER_CODE_CACHE.getIfPresent(authId);
+        if (OWNER_CODE_NOT_FOUND.equals(cachedOwnerCode)) {
+            return null;
+        }
         if (StringUtils.isNotBlank(cachedOwnerCode)) {
             return cachedOwnerCode;
         }
@@ -303,7 +307,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             return null;
         }
         if (Objects.isNull(overseasProviderEntity) || StringUtils.isBlank(overseasProviderEntity.getOwnerCode())) {
-            IML_OWNER_CODE_CACHE.invalidate(authId);
+            IML_OWNER_CODE_CACHE.put(authId, OWNER_CODE_NOT_FOUND);
             log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
                     authId, platformSkuNo);
             return null;

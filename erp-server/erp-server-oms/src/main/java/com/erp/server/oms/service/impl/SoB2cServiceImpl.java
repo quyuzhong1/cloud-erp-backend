@@ -3041,6 +3041,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CharSequenceUtil.isBlank(pngUrl)) {
                 throw new ServiceException("安兔发票PNG上传失败");
             }
+            // 文件已上传但缓存记录保存失败时，下次会重新生成并上传，保证主流程不复用不完整缓存。
             omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
                     AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
                     pngUrl,
