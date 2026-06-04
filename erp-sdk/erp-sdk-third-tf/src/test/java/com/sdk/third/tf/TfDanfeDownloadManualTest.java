@@ -28,11 +28,8 @@ public class TfDanfeDownloadManualTest {
     private static final float DEFAULT_RENDER_DPI = 300F;
 
     public static void main(String[] args) throws Exception {
-        String token = "abe567ab0dbe4c028faa25cba85c6d60";
-        String appKey = defaultIfBlank(optional("TF_APP_KEY"), token);
-        String uuid = "a79ea377-bd83-440e-b067-3135c3d11814";
         String outputDir = defaultIfBlank(optional("TF_DANFE_OUTPUT_DIR"), "target/tf-danfe");
-        String localPdf = "C:\\Users\\Administrator\\Downloads\\35260526638419000167550030000006501040103963_100x150_simplie.pdf";
+        String localPdf = optional("TF_LOCAL_PDF");
         float renderDpi = Float.parseFloat(defaultIfBlank(optional("TF_DANFE_RENDER_DPI"), String.valueOf(DEFAULT_RENDER_DPI)));
         Path outputPath = Paths.get(outputDir);
         Files.createDirectories(outputPath);
@@ -43,9 +40,9 @@ public class TfDanfeDownloadManualTest {
             return;
         }
 
-        if (CharSequenceUtil.isBlank(uuid) ) {
-            throw new IllegalArgumentException("请传入TF_INVOICE_UUID或TF_INVOICE_CHAVE");
-        }
+        String token = required("TF_TOKEN");
+        String appKey = defaultIfBlank(optional("TF_APP_KEY"), token);
+        String uuid = required("TF_INVOICE_UUID");
 
         GetDanfeDTO dto = new GetDanfeDTO();
         dto.setUuid(uuid);

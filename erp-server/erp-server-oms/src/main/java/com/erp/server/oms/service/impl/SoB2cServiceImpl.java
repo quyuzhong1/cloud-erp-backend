@@ -2981,40 +2981,56 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(pdfAttachDTO) || CharSequenceUtil.isBlank(pdfAttachDTO.getId())) {
             throw new ServiceException("发票附件信息不完整，无法生成安兔PNG缓存");
         }
-        OmsAttachmentEntity pngAttachment = omsAttachmentService.lambdaQuery()
-                .eq(OmsAttachmentEntity::getBusinessId, pdfAttachDTO.getId())
-                .eq(OmsAttachmentEntity::getType, AttachmentTypeEnum.INVOICE_INFO_PNG.getCode())
-                .eq(OmsAttachmentEntity::getIsDeleted, false)
-                .isNotNull(OmsAttachmentEntity::getAttachUrl)
-                .ne(OmsAttachmentEntity::getAttachUrl, "")
-                .orderByDesc(OmsAttachmentEntity::getId)
-                .last("limit 1")
-                .one();
-        if (ObjectUtil.isNotEmpty(pngAttachment)) {
-            try {
-                byte[] pngBytes = fileFeign.downloadFile(pngAttachment.getAttachUrl());
-                if (pngBytes != null && pngBytes.length > 0) {
-                    return Base64.getEncoder().encodeToString(pngBytes);
+        String lockKey = "oms:so-b2c:invoice-png:" + pdfAttachDTO.getId();
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean locked = false;
+        try {
+            locked = lock.tryLock(3, 60, TimeUnit.SECONDS);
+            if (!locked) {
+                throw new ServiceException("安兔发票PNG缓存生成中，请稍后重试");
+            }
+            OmsAttachmentEntity pngAttachment = omsAttachmentService.lambdaQuery()
+                    .eq(OmsAttachmentEntity::getBusinessId, pdfAttachDTO.getId())
+                    .eq(OmsAttachmentEntity::getType, AttachmentTypeEnum.INVOICE_INFO_PNG.getCode())
+                    .eq(OmsAttachmentEntity::getIsDeleted, false)
+                    .isNotNull(OmsAttachmentEntity::getAttachUrl)
+                    .ne(OmsAttachmentEntity::getAttachUrl, "")
+                    .orderByDesc(OmsAttachmentEntity::getId)
+                    .last("limit 1")
+                    .one();
+            if (ObjectUtil.isNotEmpty(pngAttachment)) {
+                try {
+                    byte[] pngBytes = fileFeign.downloadFile(pngAttachment.getAttachUrl());
+                    if (pngBytes != null && pngBytes.length > 0) {
+                        return Base64.getEncoder().encodeToString(pngBytes);
+                    }
+                } catch (Exception e) {
+                    log.warn("读取安兔发票PNG缓存失败，重新生成, soCode:{}, attachUrl:{}", entity.getCode(), pngAttachment.getAttachUrl(), e);
                 }
-            } catch (Exception e) {
-                log.warn("读取安兔发票PNG缓存失败，重新生成, soCode:{}, attachUrl:{}", entity.getCode(), pngAttachment.getAttachUrl(), e);
+            }
+            String pngBase64 = PdfUtil.pdfBase64FirstPageToPngBase64(pdfBase64);
+            String pngFileName = buildInvoicePngFileName(entity, pdfAttachDTO);
+            String pngUrl = fileFeign.uploadFileByBase64(FileDTO.UploadBase64.builder()
+                    .base64(pngBase64)
+                    .fileName(pngFileName)
+                    .build());
+            if (CharSequenceUtil.isBlank(pngUrl)) {
+                throw new ServiceException("安兔发票PNG上传失败");
+            }
+            omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
+                    AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
+                    pngUrl,
+                    pngFileName,
+                    pdfAttachDTO.getId())));
+            return pngBase64;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException("安兔发票PNG缓存生成被中断");
+        } finally {
+            if (locked && lock.isHeldByCurrentThread()) {
+                lock.unlock();
             }
         }
-        String pngBase64 = PdfUtil.pdfBase64FirstPageToPngBase64(pdfBase64);
-        String pngFileName = buildInvoicePngFileName(entity, pdfAttachDTO);
-        String pngUrl = fileFeign.uploadFileByBase64(FileDTO.UploadBase64.builder()
-                .base64(pngBase64)
-                .fileName(pngFileName)
-                .build());
-        if (CharSequenceUtil.isBlank(pngUrl)) {
-            throw new ServiceException("安兔发票PNG上传失败");
-        }
-        omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
-                AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
-                pngUrl,
-                pngFileName,
-                pdfAttachDTO.getId())));
-        return pngBase64;
     }
 
     private String buildInvoicePngFileName(SoB2cEntity entity, InvoiceInfoDTO.AttachDTO pdfAttachDTO) {

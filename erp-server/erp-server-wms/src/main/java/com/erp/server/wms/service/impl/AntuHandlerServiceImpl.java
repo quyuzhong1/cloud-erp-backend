@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.PdfUtil;
@@ -55,6 +54,6 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
 
     private static boolean isPdfFile(ThirdWarehouseUploadFileReq uploadFileReq) {
         return FileTypeEnum.PDF.getCode().equalsIgnoreCase(uploadFileReq.getFileType())
-                || StrUtil.startWithIgnoreCase(uploadFileReq.getFileData(), "data:application/pdf;base64,");
+                || CharSequenceUtil.startWithIgnoreCase(uploadFileReq.getFileData(), "data:application/pdf;base64,");
     }
 }

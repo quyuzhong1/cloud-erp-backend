@@ -119,12 +119,6 @@
               </foreach>
             order by source_detail_id, url_hash, sort, create_time, id
         ) kfu
-        <where>
-            kfu.source_detail_id in
-            <foreach collection="sourceDetailIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </where>
         group by kfu.source_detail_id
     </select>
 
