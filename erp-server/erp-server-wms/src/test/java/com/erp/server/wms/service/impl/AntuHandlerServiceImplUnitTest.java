@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.FileTypeEnum;
 import com.common.business.utils.PdfUtil;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
 import com.lowagie.text.Document;
 import com.lowagie.text.PageSize;
@@ -12,6 +13,7 @@ import org.junit.Test;
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.Base64;
 
 public class AntuHandlerServiceImplUnitTest {
@@ -75,6 +77,18 @@ public class AntuHandlerServiceImplUnitTest {
         Assert.assertEquals(FileTypeEnum.PNG.getCode(), req.getFileType());
         Assert.assertEquals("other_documents_invoice", req.getModule());
         Assert.assertEquals(fileData, req.getFileData());
+    }
+
+    @Test(expected = ServiceException.class)
+    public void convertPdfAttachmentToPngRejectLargePdfAttachment() {
+        char[] oversizedBase64 = new char[AntuHandlerServiceImpl.MAX_PDF_BASE64_LENGTH + 1];
+        Arrays.fill(oversizedBase64, 'A');
+        ThirdWarehouseUploadFileReq req = new ThirdWarehouseUploadFileReq();
+        req.setModule("other_documents_invoice");
+        req.setFileType(FileTypeEnum.PDF.getCode());
+        req.setFileData(new String(oversizedBase64));
+
+        antuHandlerService.convertPdfAttachmentToPng(req);
     }
 
     @Test

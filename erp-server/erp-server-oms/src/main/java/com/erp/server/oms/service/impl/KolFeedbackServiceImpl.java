@@ -47,7 +47,6 @@ import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import com.erp.server.oms.service.KolSocialMediaService;
 import com.erp.server.oms.service.OperateLogService;
 import com.google.common.collect.Lists;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -112,7 +111,6 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     @Autowired
     private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(KolFeedbackDTO.AddDTO addDTO) {
@@ -141,7 +139,6 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     /**
     * 批量新增
     */
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> batchAdd(KolFeedbackDTO.BatchAddDTO dto) {

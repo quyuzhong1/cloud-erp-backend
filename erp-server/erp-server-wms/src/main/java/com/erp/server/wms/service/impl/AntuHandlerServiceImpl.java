@@ -5,6 +5,7 @@ import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.third.ThirdWarehouseConstants;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseUploadFileResponse;
@@ -25,6 +26,8 @@ import javax.validation.Valid;
 @Validated
 public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
 
+    static final int MAX_PDF_BASE64_LENGTH = 20 * 1024 * 1024;
+
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_ANTU;
@@ -40,7 +43,11 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         if (!needConvertPdfAttachment(uploadFileReq)) {
             return;
         }
-        uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(uploadFileReq.getFileData()));
+        String fileData = uploadFileReq.getFileData();
+        if (CharSequenceUtil.isNotBlank(fileData) && fileData.length() > MAX_PDF_BASE64_LENGTH) {
+            throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
+        }
+        uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));
         uploadFileReq.setFileType(FileTypeEnum.PNG.getCode());
         uploadFileReq.setModule(ThirdWarehouseConstants.MODULE_OTHER_DOCUMENTS_INVOICE);
     }

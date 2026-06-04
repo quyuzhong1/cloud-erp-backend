@@ -2986,7 +2986,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         RLock lock = redissonClient.getLock(lockKey);
         boolean locked = false;
         try {
-            locked = lock.tryLock(3, 60, TimeUnit.SECONDS);
+            locked = lock.tryLock(3, TimeUnit.SECONDS);
             if (!locked) {
                 throw new ServiceException("安兔发票PNG缓存生成中，请稍后重试");
             }
