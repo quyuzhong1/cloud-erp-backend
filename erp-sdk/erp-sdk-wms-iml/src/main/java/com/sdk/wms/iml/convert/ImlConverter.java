@@ -3,6 +3,7 @@ package com.sdk.wms.iml.convert;
 import com.common.business.dto.*;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
+import com.common.business.utils.ImlBarcodeUtil;
 import com.common.business.utils.MD5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.iml.dto.response.*;
@@ -109,16 +110,10 @@ public interface ImlConverter {
     }
 
     static String getProductBarcode(ImlProductResp sourceData) {
-        if (sourceData == null || sourceData.getProductSku() == null || sourceData.getProductSku().isEmpty()) {
+        if (sourceData == null) {
             return "";
         }
-        String companyCode = sourceData.getCompanyCode();
-        String productSku = sourceData.getProductSku();
-        if (companyCode == null || companyCode.isEmpty()) {
-            return productSku;
-        }
-        String ownerPrefix = companyCode + "-";
-        return productSku.startsWith(ownerPrefix) ? productSku : ownerPrefix + productSku;
+        return ImlBarcodeUtil.buildBarcode(sourceData.getProductSku(), sourceData.getCompanyCode());
     }
 
     static String getProvider(){

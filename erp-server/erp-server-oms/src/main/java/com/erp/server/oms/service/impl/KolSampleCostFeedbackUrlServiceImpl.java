@@ -33,12 +33,14 @@ import java.util.stream.Collectors;
 public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSampleCostFeedbackUrlMapper, KolSampleCostFeedbackUrlEntity>
         implements KolSampleCostFeedbackUrlService {
 
+    private static final String FEEDBACK_URL_LOCK_BUSINESS_TYPE = "kolSampleCostFeedbackUrl:syncByFeedback";
+
     private static final List<String> SAMPLE_SOURCE_TYPES = Arrays.asList(
             SourceTypeEnum.KOL_B2B_APPLICATION.getCode(),
             SourceTypeEnum.KOL_B2C_APPLICATION.getCode());
 
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(keyName = "feedback.sourceType,feedback.sourceDetailId", unlockAfterTx = true)
+    @DistributeLocker(keyName = "feedback.sourceType,feedback.sourceDetailId", businessType = FEEDBACK_URL_LOCK_BUSINESS_TYPE, unlockAfterTx = true)
     @Override
     public void syncByFeedback(KolFeedbackEntity feedback) {
         if (!isValidSampleFeedback(feedback)) {
@@ -62,6 +64,7 @@ public class KolSampleCostFeedbackUrlServiceImpl extends SuperServiceImpl<KolSam
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "feedbackList.sourceType,feedbackList.sourceDetailId", businessType = FEEDBACK_URL_LOCK_BUSINESS_TYPE, unlockAfterTx = true)
     @Override
     public void syncByFeedbackList(List<KolFeedbackEntity> feedbackList) {
         if (CollUtil.isEmpty(feedbackList)) {

@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.ImlBarcodeUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -284,9 +285,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         if (StringUtils.isBlank(ownerCode)) {
             return;
         }
-        String ownerPrefix = ownerCode + "-";
-        String platformSkuNo = dto.getPlatformSkuNo();
-        dto.setPlatformProductBarcode(platformSkuNo.startsWith(ownerPrefix) ? platformSkuNo : ownerPrefix + platformSkuNo);
+        dto.setPlatformProductBarcode(ImlBarcodeUtil.buildBarcode(dto.getPlatformSkuNo(), ownerCode));
     }
 
     private String getImlOwnerCode(String authId, String platformSkuNo) {

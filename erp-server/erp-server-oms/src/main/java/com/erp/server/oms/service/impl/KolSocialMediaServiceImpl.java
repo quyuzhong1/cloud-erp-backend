@@ -27,7 +27,9 @@ import com.common.core.exception.ServiceException;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.KolSocialMediaDTO;
 import javax.servlet.http.HttpServletResponse;
@@ -66,6 +68,9 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
 
     @Autowired
     private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
@@ -502,6 +507,10 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         if (StrUtil.isBlank(urlHash)) {
             return;
         }
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> doSyncFeedbackStatusByUrlHash(urlHash));
+    }
+
+    private void doSyncFeedbackStatusByUrlHash(String urlHash) {
         long socialMediaCount = lambdaQuery()
                 .eq(KolSocialMediaEntity::getUrlHash, urlHash)
                 .eq(KolSocialMediaEntity::getIsDeleted, false)

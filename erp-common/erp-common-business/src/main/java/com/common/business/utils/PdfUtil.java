@@ -40,7 +40,10 @@ import java.util.UUID;
 @Slf4j
 public class PdfUtil {
 
-    private static final float DEFAULT_RENDER_DPI = 300F;
+    private static final float DEFAULT_RENDER_DPI = 150F;
+    /**
+     * RGB 渲染下 20M 像素约占 60MB JVM 堆；叠加 PNG 输出和 Base64 字符串后单次峰值仍需控制。
+     */
     private static final long MAX_RENDER_PIXELS = 20_000_000L;
 
     private PdfUtil() {

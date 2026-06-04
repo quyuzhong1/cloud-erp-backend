@@ -194,7 +194,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     public static final String BAD_GATEWAY = "The server sent HTTP status code 502: Bad Gateway";
     private static final String THIRD_WAREHOUSE_EMPTY_RESPONSE = "接口返回为空";
-    private static final int MAX_INVOICE_PDF_BASE64_LENGTH = 20 * 1024 * 1024;
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
@@ -3015,7 +3014,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     log.warn("读取安兔发票PNG缓存失败，重新生成, soCode:{}, attachUrl:{}", entity.getCode(), pngAttachment.getAttachUrl(), e);
                 }
             }
-            if (CharSequenceUtil.isNotBlank(pdfBase64) && pdfBase64.length() > MAX_INVOICE_PDF_BASE64_LENGTH) {
+            if (CharSequenceUtil.isNotBlank(pdfBase64) && pdfBase64.length() > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
                 throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
             }
             String pngBase64 = PdfUtil.pdfBase64FirstPageToPngBase64(pdfBase64);

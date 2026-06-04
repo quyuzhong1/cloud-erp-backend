@@ -26,8 +26,6 @@ import javax.validation.Valid;
 @Validated
 public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
 
-    static final int MAX_PDF_BASE64_LENGTH = 20 * 1024 * 1024;
-
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_ANTU;
@@ -47,7 +45,7 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         if (CharSequenceUtil.isBlank(fileData)) {
             throw new ServiceException("安兔上传文件内容不能为空");
         }
-        if (fileData.length() > MAX_PDF_BASE64_LENGTH) {
+        if (fileData.length() > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
             throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
         }
         uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));
