@@ -480,11 +480,6 @@ public class LogisticsReconDTO implements Serializable {
          */
         @NotBlank(message = "校验状态不能为空")
         private String checkStatus;
-
-        /**
-         * 备注
-         */
-        private String remark;
     }
 
     /**
@@ -516,6 +511,10 @@ public class LogisticsReconDTO implements Serializable {
          */
         @NotBlank(message = "对账状态不能为空")
         private String reconciliationStatus;
+        /**
+         * 对账确认时间（状态为 confirmed 时传入；toBeConfirm 时不传）
+         */
+        private LocalDateTime confirmTime;
     }
 
     /**

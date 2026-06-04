@@ -702,7 +702,7 @@ public class LogisticsReconServiceImpl
                 results.add(BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE));
                 String msg = StrUtil.format("用户【{}】将{}【{}】校验状态切换为【{}】，备注：{}",
                         user.getUserName(), DOC_NAME, entity.getCode(),
-                        LogisticsReconCheckStatusEnum.getName(dto.getCheckStatus()), dto.getRemark());
+                        LogisticsReconCheckStatusEnum.getName(dto.getCheckStatus()));
                 operateLogService.addModuleOperateLog(msg, null, entity.getId(), "校验状态切换");
             } catch (Exception e) {
                 log.error("{}校验状态切换失败 id={}", DOC_NAME, entity.getId(), e);
@@ -761,13 +761,13 @@ public class LogisticsReconServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO confirmBill(String mainId, String reconciliationStatus) {
+    public BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime) {
         if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
                 && !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID);
         }
-        LocalDateTime confirmTime = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
-                ? LocalDateTime.now() : null;
+        LocalDateTime effectiveConfirmTime = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
+                ? confirmTime : null;
         LogisticsReconEntity entity = super.getByIdOpt(mainId)
                 .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
         if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
@@ -786,7 +786,7 @@ public class LogisticsReconServiceImpl
             throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND);
         }
         for (String logisticsBillCostId : logisticsBillCostIds) {
-            logisticsBillCostService.updateReconciliationStatus(logisticsBillCostId, reconciliationStatus, confirmTime);
+            logisticsBillCostService.updateReconciliationStatus(logisticsBillCostId, reconciliationStatus, effectiveConfirmTime);
         }
         logisticsReconRefLogisticsBillService.lambdaUpdate()
                 .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)

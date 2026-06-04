@@ -12,6 +12,7 @@ import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -108,9 +109,10 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @date: 2026/06/02
      * @param mainId 对账单 id
      * @param reconciliationStatus 目标对账状态
+     * @param confirmTime 对账确认时间（状态为 confirmed 时有效）
      * @return BatchResultDTO
      */
-    BatchResultDTO confirmBill(String mainId, String reconciliationStatus);
+    BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime);
 
     /**
      * 物流商对账单导入分批落库（供 Excel 监听器分批回调，每批单独事务）
