@@ -923,10 +923,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     ProductCustomsEntity getCustomsByCountry(String country, String skuId, List<ProductCustomsEntity> productCustomsList);
     SoOutstockDTO.GenerateB2cDTO getSoOutstockByIdAndWarehouseId(String id,String warehouseId);
 
-    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList
+    Boolean isOutStock(List<BomChildrenSkuDTO> bomChildrenList, Map<String, Integer> inventoryMap
             , SoB2cDetailDTO.ListDTO detailDTO, List<String> ignoreInventorySkuIds);
 
-    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList
+    void isVirtualOutStock(List<BomChildrenSkuDTO> bomChildrenList, Map<String, Integer> virtualInventoryMap
             , SoB2cDetailDTO.DetailLabelDTO detailLabelDTO, SoB2cDetailDTO.ListDTO detailDTO);
 
     /**
@@ -935,7 +935,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
-     * @param skuId
+     * @param soDetailEntity
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList
@@ -1203,8 +1203,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     void beforeDelivery(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cLogisticsEntity soB2cLogisticsEntity, LogisticsChannelDTO.BaseDTO baseDTO, SoB2cEntity soB2cEntity, WarehouseDTO.UpdateDTO updateDTO, List<SoB2cDetailEntity> detailEntityList, List<VirtualWarehouseRelationEntity> virtualWarehouseList);
 
-    BatchResultDTO deliveryWithNotOutbound(SoB2cDTO.DeliveryWithNotOutboundDTO dto, SoB2cEntity soB2cEntity, SoB2cLogisticsEntity soB2cLogisticsEntity, List<SoB2cDetailEntity> detailEntityList, SoB2cReceiverEntity soB2cReceiverEntity, LogisticsChannelDTO.BaseDTO baseDTO, List<String> noInventorySkuIdList, OverseasProviderWarehouseDTO.ViewDTO overseasWarehouse, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList);
-
     void rollbackBeforeDelivery(String soB2cId, SoB2cEntity oldSoB2cEntity, SoB2cLogisticsEntity oldLogisticsEntity, List<SoB2cDetailEntity> oldDetailEntityList);
 
     /**
@@ -1221,6 +1219,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void retryPlatformOutbound( List<String> ids);
 
     void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO b2cByPlatformOutboundDTO);
+
+    PagingVO<SoB2cDTO.ListDTO> fullyManagedPaging(PagingDTO<SoB2cDTO.PagingParamDTO> dto);
 
     void deleteB2cSoJob();
 

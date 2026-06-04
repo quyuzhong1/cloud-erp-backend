@@ -18,6 +18,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -74,7 +75,7 @@ public class TemuShipOrder extends AbstractShipOrder {
         }
 
         List<String> signShippedDetailList = new ArrayList<>();
-        List<DictBasicDTO.ListDTO> widList = dictBasicService.getByKey("LingXingWid");
+        List<DictBasicEntity> widList = dictBasicService.getByKey("LingXingWid");
         String wid = CollectionUtils.isNotEmpty(widList)?widList.get(0).getValue():"";
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在

@@ -47,4 +47,10 @@ public interface SysPartitionFeign {
     @PostMapping("feign/partition/listByAdvanceQuery")
     List<DictPartitionEntity> listByAdvanceQuery(@RequestBody AdvanceQueryContainer advanceQueryContainer);
 
+    /**
+     * 高级查询军区信息
+     */
+    @PostMapping("feign/partition/listByPartitionIds")
+    List<DictPartitionEntity> listByPartitionIds(@RequestBody List<String> partitionIds);
+
 }

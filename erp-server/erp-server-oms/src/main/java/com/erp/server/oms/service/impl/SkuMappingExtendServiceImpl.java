@@ -7,6 +7,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingExtendDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingExtendEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -60,7 +61,7 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
 
     @Override
     public Map<String, List<SkuMappingExtendDTO.ListDTO>> mapByMainIds(List<String> mainIds, boolean defaultNullThrow) {
-        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
+        List<DictBasicEntity> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
         if (CollectionUtils.isEmpty(defaultConfigList) && defaultNullThrow){
             throw new ServiceException("默认SKU仓库发货配置缺失");
         }

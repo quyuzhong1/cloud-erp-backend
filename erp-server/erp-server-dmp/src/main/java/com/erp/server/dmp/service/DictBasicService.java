@@ -35,5 +35,14 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return List<ViewDTO>
      */
-    List<DictBasicDTO.ViewDTO> getByKey(String key);
+    List<DictBasicEntity> getByKey(String key);
+
+    /**
+     * 根据key list 获取对应数据
+     * @author zdy
+     * @date 2023-03-20 14:24
+     * @param keyList
+     * @return java.util.List<DictBasicEntity>
+     */
+    List<DictBasicEntity> getByKeyList(List<String> keyList);
 }

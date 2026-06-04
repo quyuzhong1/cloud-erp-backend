@@ -12,10 +12,12 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
@@ -41,6 +43,7 @@ import com.erp.server.sys.service.DictGlobalAreaService;
 import com.erp.server.sys.service.ThirdpartyRefBusinessService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -55,6 +58,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_COUNTRY;
@@ -86,7 +91,8 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private RedisService redisService;
 
 
     @Override
@@ -98,6 +104,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#dto.code")
     public Boolean add(DictCountryDTO.AddDTO dto) {
         DictCountryEntity entity = new DictCountryEntity();
         entity.setNameCn(dto.getName());
@@ -121,6 +128,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#dto.id")
     public Boolean update(DictCountryDTO.UpdateDTO dto) {
         String id=dto.getId();
         DictCountryEntity entity = this.getById(id);
@@ -221,17 +229,45 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
     /**
      * 根据国家ids 获取信息
      *
-     * @param ids
+     * @param idList
      * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
      * @author yl
      * @date 2023-08-21 15:31
      */
     @Override
-    public List<DictCountryEntity> listCountryByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
+    public List<DictCountryEntity> listCountryByIds(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(DictCountryEntity::getId, ids).list();
+        List<String> ids = idList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<DictCountryEntity> result = new ArrayList<>();
+        List<String> missIds = new ArrayList<>();
+        for (String id : ids) {
+            String redisKey = String.format("cache:sys:country:id::%s", id);
+            DictCountryEntity cacheObject = redisService.getCacheObject(redisKey);
+            if (cacheObject != null) {
+                if (Objects.nonNull(cacheObject.getId())) {
+                    result.add(cacheObject);
+                }
+            } else {
+                missIds.add(id);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missIds)) {
+            List<DictCountryEntity> dbList = baseMapper.selectBatchIds(missIds);
+            Map<String, DictCountryEntity> dbMap = dbList.stream()
+                    .collect(Collectors.toMap(DictCountryEntity::getId, Function.identity(), (existing, replacement) -> existing));
+            for (String id : missIds) {
+                DictCountryEntity dto = dbMap.getOrDefault(id, new DictCountryEntity());
+                String redisKey = String.format("cache:sys:country:id::%s", id);
+                redisService.setCacheObject(redisKey, dto, 8L, TimeUnit.HOURS);
+                result.add(dto);
+            }
+        }
+        return result;
     }
 
     /**
@@ -451,6 +487,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = RedisCacheConstants.SYS_COUNTRY_BY_ID, key = "#id")
     public BatchResultDTO delete(String id) {
         DictCountryEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {

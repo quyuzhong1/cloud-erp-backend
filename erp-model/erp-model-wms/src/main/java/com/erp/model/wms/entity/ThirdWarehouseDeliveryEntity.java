@@ -41,6 +41,11 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     @TableField("so_id")
     private String soId;
     /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+    /**
     * 平台
     */
     @TableField("dict_platform")

@@ -9,6 +9,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.FullyManagedImportExcelDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -184,13 +185,13 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         List<String> warehouseNameList = dataList.stream().map(FullyManagedImportExcelDTO::getDeliveryWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
 
         //全托管平台类型
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
         //店铺列表
         List<ShopInfoDTO.ListDTO> shopList = shopInfoService.listShopByName(shopNameList);
         //币种列表
         List<DictCurrencyEntity> currencyEntityList = sysUserFeign.currencyList();
         //订单来源类型
-        List<DictBasicDTO.ViewDTO> orderSourceTypeList = dictBasicService.getByKey(DictBasicTypeEnum.ORDER_SOURCE_TYPE.getType());
+        List<DictBasicEntity> orderSourceTypeList = dictBasicService.getByKey(DictBasicTypeEnum.ORDER_SOURCE_TYPE.getType());
         //类目列表
         List<OrderCategoryDetailDTO.ListDTO> categoryList = orderCategoryDetailService.listOrderCategory();
         //渠道列表
@@ -213,7 +214,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
                 errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台类型");
             }
             //平台类型
-            String platform = dictList.stream().filter(v -> v.getName().equals(excelDTO.getDictPlatformName())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse(null);
+            String platform = dictList.stream().filter(v -> v.getName().equals(excelDTO.getDictPlatformName())).map(DictBasicEntity::getValue).findFirst().orElse(null);
             if(Objects.isNull(platform)){
                 errorMsgList.add("全托管平台类型不存在【"+excelDTO.getDictPlatformName()+"】");
             }else {
@@ -234,7 +235,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
                 excelDTO.setCurrency(currency.getId());
             }
             //订单来源类型
-            String orderSourceType = orderSourceTypeList.stream().filter(v -> v.getName().equals(excelDTO.getOrderSourceTypeName())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse(null);
+            String orderSourceType = orderSourceTypeList.stream().filter(v -> v.getName().equals(excelDTO.getOrderSourceTypeName())).map(DictBasicEntity::getValue).findFirst().orElse(null);
             if(Objects.isNull(orderSourceType)){
                 errorMsgList.add("订单来源类型不存在【"+excelDTO.getOrderSourceTypeName()+"】");
             }else {
