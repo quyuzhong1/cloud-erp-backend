@@ -611,13 +611,13 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         Map<String, String> warehouseNameMap = warehouseEntityList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
-        List<DictBasicEntity> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
-                .map(DictBasicEntity::getName)
+                .map(com.erp.model.wms.entity.DictBasicEntity::getName)
                 .findFirst()
                 .orElse(b2bForeignPlatform);
-        StringBuilder msg = new StringBuilder();
+        Set<String> msgSet = new LinkedHashSet<>();
         for (String conflictVirtualWarehouseId : conflictVirtualWarehouseIds) {
             List<String> sharedWarehouseIds = sameWarehouseRelations.stream()
                     .filter(r -> CharSequenceUtil.equals(r.getVirtualWarehouseId(), conflictVirtualWarehouseId))
@@ -633,11 +633,9 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             String conflictVmName = conflictVmNameMap.getOrDefault(conflictVirtualWarehouseId, CharSequenceUtil.EMPTY);
             String format = MessageUtils.getMessage(ApiError.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR,
                     warehouseName, conflictVmName, platformName);
-            if (!msg.toString().contains(format)) {
-                msg.append(format);
-            }
+            msgSet.add(format);
         }
-        throw new ServiceException(msg.toString());
+        throw new ServiceException(String.join(CharSequenceUtil.EMPTY, msgSet));
     }
 
     /**
