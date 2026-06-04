@@ -13,19 +13,14 @@ import java.util.List;
 
 @Mapper
 public interface WaveListMapper extends BaseMapper<WaveListEntity> {
-    List<String> listDeliveryIdByStatus(@Param("status") String status);
 
     List<WaveListDTO.PickingWaveDetailDTO> listDetailByMainId(@Param("waveId")String waveId, @Param("basketNo") String basketNo, @Param("skuId") String skuId);
 
-    int countDelivery( @Param("params") PermissionsDTO params);
-
-    IPage<WaveListEntity> paging(Page<Object> page, @Param("params") WaveListDTO.SearchParamDTO params);
+    IPage<WaveListDTO.ViewDTO> paging(Page<Object> page, @Param("params") WaveListDTO.SearchParamDTO params);
 
     List<WaveListDTO.TabDTO> listTab(@Param("params") WaveListDTO.SearchParamDTO params);
 
     List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(@Param("ids") List<String> ids);
-
-    List<String> listDeliveryIdBySql(@Param("sql") String compareCodeSplicingValueSql);
 
     List<WaveListDTO.WaveDeliveryStatusDTO> listDeliveryStatus(@Param("deliveryId") String deliveryId);
 }

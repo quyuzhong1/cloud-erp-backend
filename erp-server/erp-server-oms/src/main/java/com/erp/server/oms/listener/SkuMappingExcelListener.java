@@ -15,6 +15,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.ListingInfoPlatformStatusEnum;
@@ -60,7 +61,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
     /**
      * 对应平台的信息
      */
-    private List<DictBasicDTO.ViewDTO> dictBasicList;
+    private List<DictBasicEntity> dictBasicList;
 
     /**
      * 单位
@@ -70,7 +71,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
     /**
      * 原产地
      */
-    private  List<DictBasicDTO.ViewDTO> originList;
+    private  List<DictBasicEntity> originList;
 
     /**
      * listing 信息
@@ -120,10 +121,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
     private final List<Pair<String, String>> updateLogPairList = new ArrayList<>();
     public SkuMappingExcelListener(SkuMappingService skuMappingService,
                                    List<ProductUnitEntity> unitList,
-                                   List<DictBasicDTO.ViewDTO> originList,
+                                   List<DictBasicEntity> originList,
                                    List<SkuVO> skuList,
                                    ShopInfoService shopInfoService, List<SkuMappingEntity> skuMappingList,
-                                   List<DictBasicDTO.ViewDTO> dictBasicList,
+                                   List<DictBasicEntity> dictBasicList,
                                    List<ListingInfoEntity> listingInfoEntityList,
                                    ListingInfoService listingInfoService,
                                    OperateLogService operateLogService,
@@ -167,7 +168,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
         //平台名称
         String platformName = skuMappingImportExcelDTO.getPlatformName();
-        DictBasicDTO.ViewDTO platform = dictBasicList.stream()
+        DictBasicEntity platform = dictBasicList.stream()
                 .filter(s -> s.getName().equalsIgnoreCase(platformName) || s.getValue().equalsIgnoreCase(platformName))
                 .findFirst().orElse(null);
         if (null == platform) {
@@ -198,7 +199,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         //原产地
         String dictOrigin = "";
         if (CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getDictOriginNo())) {
-            DictBasicDTO.ViewDTO origin = originList.stream().filter(obj -> CharSequenceUtil.equals(obj.getRemark(), skuMappingImportExcelDTO.getDictOriginNo())).findFirst().orElse(null);
+            DictBasicEntity origin = originList.stream().filter(obj -> CharSequenceUtil.equals(obj.getRemark(), skuMappingImportExcelDTO.getDictOriginNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(origin)) {
                 errorMsgList.add("原产地不存在");
             } else {

@@ -31,6 +31,11 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     */
     Boolean add(SoB2cErrorDTO.AddDTO dto);
 
+    /**
+     * 新增异常记录，但不回写销售订单异常标识。
+     */
+    Boolean addWithoutSignError(SoB2cErrorDTO.AddDTO dto);
+
 
 
 
@@ -72,6 +77,11 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @create 2023-12-21 18:17
      */
     Boolean removeErrorOrder(String mainId, String type);
+
+    /**
+     * 删除异常记录，但不回写销售订单异常标识。
+     */
+    Boolean removeErrorOrderWithoutSignError(String mainId, String type);
 
     /**  删除异常订单
      * @description

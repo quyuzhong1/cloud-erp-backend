@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import io.seata.spring.annotation.GlobalTransactional;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -291,10 +292,10 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         }
 
         // 查询来源平台字典
-        List<DictBasicDTO.ViewDTO> mediaPlatformDictList = dictBasicService.getByKey("socialMediaPlatform");
+        List<DictBasicEntity> mediaPlatformDictList = dictBasicService.getByKey("socialMediaPlatform");
         Map<String, String> mediaPlatformNameMap = mediaPlatformDictList.stream()
-                .collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue,
-                        DictBasicDTO.ViewDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue,
+                        DictBasicEntity::getName, (v1, v2) -> v1));
 
         // 属性赋值
         for (KolSocialMediaDTO.ListDTO data : list) {

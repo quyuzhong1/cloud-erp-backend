@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
@@ -43,17 +44,7 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      * @param params params
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.listCount>
      **/
-    Integer listCount(@Param("params") SoReturnInstockDTO.PagingParam params);
-
-    /**
-     * 导出
-     * @Author Luo_WG
-     * @Date 2023/5/22 17:58
-     * @param dto dto
-     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PagingView>
-     **/
-    Page<SoReturnInstockDTO.PagingView> soReturnInstockExportExcel(@Param("page") Page<SoReturnInstockDTO.PagingView> page, @Param("params") SoReturnInstockDTO.PagingParam dto);
-
+    List<ApproveStatusQtyDTO> listCount(@Param("params") SoReturnInstockDTO.PagingParam params);
     /**
      * Pda:列表查询
      * @Author Luo_WG

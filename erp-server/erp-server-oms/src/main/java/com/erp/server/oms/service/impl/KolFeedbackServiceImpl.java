@@ -27,6 +27,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.KolFeedbackDTO;
 import com.erp.model.oms.dto.excel.KolFeedbackExcelDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.KolFeedbackEntity;
 import com.erp.model.oms.entity.KolPartnerInfoEntity;
 import com.erp.model.oms.entity.KolSocialMediaEntity;
@@ -386,11 +387,11 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
         }
 
         // 查询发布形式字典数据
-        List<com.erp.model.oms.dto.DictBasicDTO.ViewDTO> publishTypeDictList = dictBasicService.getByKey("publishType");
+        List<DictBasicEntity> publishTypeDictList = dictBasicService.getByKey("publishType");
         Map<String, String> publishTypeNameToValueMap = publishTypeDictList.stream()
                 .collect(Collectors.toMap(
-                        com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getName,
-                        com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getValue,
+                        DictBasicEntity::getName,
+                        DictBasicEntity::getValue,
                         (k1, k2) -> k1
                 ));
 
@@ -592,10 +593,10 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             return;
         }
         // 查询发布形式字典
-        List<com.erp.model.oms.dto.DictBasicDTO.ViewDTO> publishTypeDictList = dictBasicService.getByKey("publishType");
+        List<DictBasicEntity> publishTypeDictList = dictBasicService.getByKey("publishType");
         Map<String, String> publishTypeNameMap = publishTypeDictList.stream()
-                .collect(Collectors.toMap(com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getValue, 
-                        com.erp.model.oms.dto.DictBasicDTO.ViewDTO::getName, (v1, v2) -> v1));
+                .collect(Collectors.toMap(DictBasicEntity::getValue,
+                        DictBasicEntity::getName, (v1, v2) -> v1));
 
         // 属性赋值
         for (KolFeedbackDTO.ListDTO data : list) {

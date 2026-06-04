@@ -8,6 +8,7 @@ import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.server.oms.dht.DhtService;
 import com.erp.server.oms.dht.SyncDhtService;
@@ -116,7 +117,7 @@ public class DhtServiceImpl implements DhtService {
             throw new ServiceException("订货通客户账户信息为空，客户编码："+customerInfoEntity.getCode());
         }
         //查询账户Id配置
-        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("dhtAccountType");
+        List<DictBasicEntity> viewDTOList = dictBasicService.getByKey("dhtAccountType");
         String accountId = viewDTOList.stream().filter(v->v.getName().equals("现金账户")).findFirst().get().getValue();
         String rebateAccountId = viewDTOList.stream().filter(v->v.getName().equals("返利账户")).findFirst().get().getValue();
         String creditAccountId = viewDTOList.stream().filter(v->v.getName().equals("授信账户")).findFirst().get().getValue();

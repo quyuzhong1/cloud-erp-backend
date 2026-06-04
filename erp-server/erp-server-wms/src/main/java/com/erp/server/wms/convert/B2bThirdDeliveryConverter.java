@@ -95,6 +95,7 @@ public interface B2bThirdDeliveryConverter {
     @Mapping(target = "detailList", ignore = true)
     @Mapping(target = "customerOrderNo", source = "soInfoEntity.customerOrderNo")
     @Mapping(target = "customerId", source = "soInfoEntity.customerId")
+    @Mapping(target = "partitionId", source = "soInfoEntity.partitionId")
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "billDate", source = "entity.deliveryTime")
     @Mapping(target = "batchNo", ignore = true)

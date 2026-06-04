@@ -408,13 +408,13 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         ShippingCostNameEnum[] values = ShippingCostNameEnum.values();
         //折扣下拉
-        List<DictBasicDTO.ViewDTO> discountList = dictBasicService.getByKey(ShippingCostNameEnum.DISCOUNT_RATE.getCode());
+        List<DictBasicEntity> discountList = dictBasicService.getByKey(ShippingCostNameEnum.DISCOUNT_RATE.getCode());
         //燃油下拉
-        List<DictBasicDTO.ViewDTO> fuelSurchargeList = dictBasicService.getByKey(ShippingCostNameEnum.FUEL_SURCHARGE_RATE.getCode());
+        List<DictBasicEntity> fuelSurchargeList = dictBasicService.getByKey(ShippingCostNameEnum.FUEL_SURCHARGE_RATE.getCode());
         //边长下拉
-        List<DictBasicDTO.ViewDTO> sideList = dictBasicService.getByKey(ShippingCalculationMethodEnum.ENUM_SIDE.getCode());
+        List<DictBasicEntity> sideList = dictBasicService.getByKey(ShippingCalculationMethodEnum.ENUM_SIDE.getCode());
         //票下拉
-        List<DictBasicDTO.ViewDTO> voteList = dictBasicService.getByKey(ShippingCalculationMethodEnum.ENUM_VOTE.getCode());
+        List<DictBasicEntity> voteList = dictBasicService.getByKey(ShippingCalculationMethodEnum.ENUM_VOTE.getCode());
 
         List<ShippingTemplateOtherCostDTO.ViewDTO> list = new ArrayList<>();
         for (ShippingCostNameEnum shippingCostNameEnum : values) {
@@ -623,7 +623,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             if (CollectionUtils.isNotEmpty(costSettingEntityList)) {
                 List<ShippingTemplateCostSettingDTO.ViewDTO> costSettingList = BeanMapperUtils.copyList(ShippingTemplateCostSettingDTO.ViewDTO.class, costSettingEntityList);
                 //计算方式字典
-                List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(viewDTO.getCalculationMethod());
+                List<DictBasicEntity> dictList = dictBasicService.getByKey(viewDTO.getCalculationMethod());
                 for (ShippingTemplateCostSettingDTO.ViewDTO costSettingDTO : costSettingList) {
                     String name = dictList.stream().filter(obj -> obj.getCode().equals(costSettingDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     costSettingDTO.setName(name);
