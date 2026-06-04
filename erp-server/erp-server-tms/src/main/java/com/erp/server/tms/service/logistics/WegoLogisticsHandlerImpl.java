@@ -180,7 +180,7 @@ public class WegoLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * 构造 WEGO 渠道 code。
      * <p>
      * {@code platformWarehouseCode} 已在 entity 中单独保留，code 不再叠加，
-     * 仅由 transportationBusiness / transportationService / transportationType
+     * 仅由 transportationBusiness / transportationService
      * 组合保证同一仓库下唯一。
      */
     private String buildChannelCode(String transportationBusiness, String transportationService) {
