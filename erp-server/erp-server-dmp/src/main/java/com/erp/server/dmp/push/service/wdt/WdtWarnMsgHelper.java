@@ -4,7 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.service.DictBasicService;
@@ -62,9 +62,9 @@ public class WdtWarnMsgHelper {
         warnMsgInfo.setTableName(TABLE_NAME);
         warnMsgInfo.setTableId(CharSequenceUtil.nullToEmpty(tableId));
         warnMsgInfo.setKeyInfo(CharSequenceUtil.nullToEmpty(keyInfo));
-        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey(DICT_USER_KEY);
+        List<DictBasicEntity> viewDTOList = dictBasicService.getByKey(DICT_USER_KEY);
         warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList)
-                ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList())
+                ? viewDTOList.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList())
                 : new ArrayList<>());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
