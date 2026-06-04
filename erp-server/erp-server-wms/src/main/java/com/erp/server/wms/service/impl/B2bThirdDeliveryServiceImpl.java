@@ -759,6 +759,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (!ThirdDeliveryStatusEnum.FAILED.getCode().equals(entity.getStatus()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED);
         }
+        // BaseEntity.isDeleted has @TableLogic, so removeById performs logical delete rather than physical delete.
         this.removeById(entity.getId());
         b2bThirdDeliveryDetailService.deleteByMainIds(Collections.singletonList(entity.getId()));
         b2bCustomerPackingService.deleteByMainIds(Collections.singletonList(entity.getId()));
@@ -1155,8 +1156,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
-            // GoodCang B2B 主装箱清单上传使用独立 useFor，与每箱货件标签附件区分。
-            uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_PACKING_ATTACHMENT);
+            // GoodCang 主装箱清单沿用历史 ORDER_ATTACHMENT useFor，避免影响已接入的 B2B 单据推送。
+            uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_ATTACHMENT);
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());

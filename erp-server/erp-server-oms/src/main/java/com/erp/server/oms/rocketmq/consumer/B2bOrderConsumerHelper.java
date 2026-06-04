@@ -4,6 +4,9 @@ import com.common.business.dto.PlatformB2bOrderDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * 同包 B2B 订单消费者复用的客户默认值填充逻辑。
+ */
 final class B2bOrderConsumerHelper {
 
     private B2bOrderConsumerHelper() {

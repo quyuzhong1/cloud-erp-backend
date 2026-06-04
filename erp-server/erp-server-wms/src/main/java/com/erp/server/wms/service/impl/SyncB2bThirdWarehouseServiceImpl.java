@@ -194,12 +194,12 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         try {
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
-            log.warn("B2B三方发货单附件下载异常，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
-            return;
+            log.warn("B2B三方发货单附件下载异常，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
+            throw new ServiceException("B2B三方仓附件下载异常，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName());
         }
         if (Objects.isNull(bytes) || bytes.length == 0) {
-            log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
-            return;
+            log.warn("B2B三方发货单附件下载为空，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
+            throw new ServiceException("B2B三方仓附件下载为空，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName());
         }
         bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
         req.setFileName(fileName);

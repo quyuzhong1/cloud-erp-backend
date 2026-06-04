@@ -14,10 +14,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -154,6 +156,13 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             successLineList.clear();
             return;
         }
+        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
+        if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
+            errorList.addAll(duplicateLineErrorList);
+            successList.clear();
+            successLineList.clear();
+            return;
+        }
         Map<Integer, List<B2bCustomerPackingDTO.LineViewDTO>> lineMap = successLineList.stream()
                 .collect(Collectors.groupingBy(B2bCustomerPackingDTO.LineViewDTO::getBoxSeq));
         successList.clear();
@@ -161,6 +170,22 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             box.setPackingLineList(lineMap.getOrDefault(box.getBoxSeq(), new ArrayList<>()));
             successList.add(box);
         }
+    }
+
+    private List<B2bCustomerPackingImportExcelDTO> validateDuplicateBoxSkuLines() {
+        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = new ArrayList<>();
+        Set<String> boxSkuSet = new HashSet<>();
+        for (B2bCustomerPackingDTO.LineViewDTO line : successLineList) {
+            String key = line.getBoxSeq() + "|" + CharSequenceUtil.blankToDefault(line.getSkuNo(), "");
+            if (!boxSkuSet.add(key)) {
+                B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
+                error.setBoxSeq(String.valueOf(line.getBoxSeq()));
+                error.setSkuNo(line.getSkuNo());
+                error.setErrorMsg("相同序号内SKU不能重复");
+                duplicateLineErrorList.add(error);
+            }
+        }
+        return duplicateLineErrorList;
     }
 
     private String getFirstSkuNo(Integer boxSeq) {

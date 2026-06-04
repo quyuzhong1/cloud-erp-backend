@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
-    private static final String GOOD_CANG_ORDER_ATTACHMENT = "ORDER_ATTACHMENT";
+    private static final String GOOD_CANG_DEFAULT_PACKING_TYPE = "0";
 
     @Resource
     private GoodCangService goodCangService;
@@ -194,7 +194,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private boolean isGoodCangB2bAttachment(String fileType) {
-        return GOOD_CANG_ORDER_ATTACHMENT.equalsIgnoreCase(fileType)
+        return ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_ATTACHMENT.equalsIgnoreCase(fileType)
                 || ThirdWarehouseUploadFileReq.FILE_TYPE_ORDER_PACKING_ATTACHMENT.equalsIgnoreCase(fileType)
                 || ThirdWarehouseUploadFileReq.FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT.equalsIgnoreCase(fileType);
     }
@@ -492,7 +492,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     private GoodCangCreateB2bReq buildB2bOrderReq(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
         GoodCangCreateB2bReq goodCangCreateB2bReq = new GoodCangCreateB2bReq();
         goodCangCreateB2bReq.setReferenceNo(createOutboundReq.getReferenceNo());
-        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), "0");
+        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), GOOD_CANG_DEFAULT_PACKING_TYPE);
         goodCangCreateB2bReq.setPackingType(packingType);
         goodCangCreateB2bReq.setVerify(1);
         goodCangCreateB2bReq.setWarehouseCode(createOutboundReq.getThirdWarehouseCode());
@@ -536,8 +536,8 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private List<GoodCangCreateB2bReq.Item> buildGoodCangB2bItemList(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), "0");
-        if (!"0".equals(packingType) && CollUtil.isNotEmpty(createOutboundReq.getPackingDetailList())) {
+        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), GOOD_CANG_DEFAULT_PACKING_TYPE);
+        if (!GOOD_CANG_DEFAULT_PACKING_TYPE.equals(packingType) && CollUtil.isNotEmpty(createOutboundReq.getPackingDetailList())) {
             Map<String, Integer> qtyBySku = new LinkedHashMap<>();
             for (ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem packingItem : createOutboundReq.getPackingDetailList()) {
                 if (CharSequenceUtil.isBlank(packingItem.getWarehousePlatformSku()) || packingItem.getPackingQty() == null) {
@@ -574,8 +574,8 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     private List<GoodCangCreateB2bReq.Packing> buildGoodCangB2bPackingList(ThirdWarehouseCreateFbaOutboundReq createOutboundReq) {
-        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), "0");
-        if ("0".equals(packingType) || CollUtil.isEmpty(createOutboundReq.getPackingDetailList())) {
+        String packingType = CharSequenceUtil.blankToDefault(createOutboundReq.getPackingType(), GOOD_CANG_DEFAULT_PACKING_TYPE);
+        if (GOOD_CANG_DEFAULT_PACKING_TYPE.equals(packingType) || CollUtil.isEmpty(createOutboundReq.getPackingDetailList())) {
             return null;
         }
         boolean preStagedBox = B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType);

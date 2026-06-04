@@ -696,13 +696,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     private SoB2cDetailEntity getTemuSoB2cDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO) {
         if (StringUtils.isNotBlank(teMuSoOutStockDetailDTO.getPlatformSubSoCode())) {
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+            return soB2cDetailEntityList.stream()
                     .filter(v -> teMuSoOutStockDetailDTO.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
                     .findFirst()
                     .orElse(null);
-            if (Objects.nonNull(soB2cDetailEntity)) {
-                return soB2cDetailEntity;
-            }
         }
         return soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
     }
