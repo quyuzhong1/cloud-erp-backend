@@ -218,7 +218,7 @@
         WHERE rn = 1
     </select>
 
-    <!-- 列出库存SKU成本列表 -->
+    <!-- 列出库存SKU成本列表：按组织+SKU+仓库返回历史最新已审核成本，不再按核算月份过滤。 -->
     <select id="listInventorySkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$InvSkuCostDTO">
         select distinct on (isc.company_id, iscd.sku_id, iscd.warehouse_id)
             isc.company_id as orgId,
@@ -251,12 +251,6 @@
             <foreach collection="param.orgIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-        </if>
-        <if test="param.startAccountingMonth != null ">
-            and isc.accounting_month >= #{param.startAccountingMonth}
-        </if>
-        <if test="param.endAccountingMonth != null ">
-            and #{param.endAccountingMonth} > isc.accounting_month
         </if>
         and isc.status = 'approve'
         order by isc.company_id, iscd.sku_id, iscd.warehouse_id, isc.accounting_month desc, isc.create_time desc, isc.id desc

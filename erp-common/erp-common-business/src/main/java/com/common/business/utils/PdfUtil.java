@@ -23,8 +23,6 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +41,7 @@ public class PdfUtil {
     private static final float DEFAULT_RENDER_DPI = 150F;
     /**
      * RGB 渲染下 20M 像素约占 60MB JVM 堆；叠加 PNG 输出和 Base64 字符串后单次峰值仍需控制。
+     * PdfUtil 是静态工具类，会被测试和非 Spring 调用路径复用，因此这里保留固定安全阈值。
      */
     private static final long MAX_RENDER_PIXELS = 20_000_000L;
 
@@ -214,9 +213,8 @@ public class PdfUtil {
             return null;
         }
         List<byte[]> returnStrLists = new ArrayList<>();
-        BASE64Decoder decoder = new BASE64Decoder();
         for (String base64Str : base64Lists) {
-            byte[] fileBytes = decoder.decodeBuffer(base64Str);
+            byte[] fileBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(base64Str));
             returnStrLists.add(fileBytes);
         }
         return returnStrLists;
@@ -226,8 +224,6 @@ public class PdfUtil {
      *将文件输入流，转换为 base64 返回给请求端
      **/
     public static String base64ForPdf(InputStream fin) throws Exception {
-        BASE64Encoder encoder = new BASE64Encoder();
-
         BufferedInputStream bin = new BufferedInputStream(fin);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         BufferedOutputStream bout = new BufferedOutputStream(baos);
@@ -239,7 +235,7 @@ public class PdfUtil {
 
         bout.flush();
         byte[] bytes = baos.toByteArray();
-        String var11 = encoder.encodeBuffer(bytes).trim();
+        String var11 = Base64.getEncoder().encodeToString(bytes);
         return var11;
     }
 
@@ -272,10 +268,9 @@ public class PdfUtil {
             response.setContentType("application/pdf");
             // 设置 PDF 的显示方式和文件名
             response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\"");
-            BASE64Decoder decoder = new BASE64Decoder();
             try (OutputStream out = response.getOutputStream()) {
                 // 将 Base64 编码的字符串解码为字节数组
-                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                byte[] pdfBytes = Base64.getDecoder().decode(cleanBase64DataUrlPrefix(newMergePdfBase64));
                 // 将字节数组写入到响应输出流中
                 out.write(pdfBytes);
             } catch (IOException e) {

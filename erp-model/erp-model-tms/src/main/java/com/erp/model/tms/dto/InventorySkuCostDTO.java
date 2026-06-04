@@ -609,15 +609,6 @@ public class InventorySkuCostDTO implements Serializable {
          * 销售组织列表
          */
         private List<String> orgIdList;
-        /**
-         * 核算月份
-         */
-        private LocalDateTime  startAccountingMonth;
-
-        /**
-         * 核算月份
-         */
-        private LocalDateTime  endAccountingMonth;
     }
 
     /**
