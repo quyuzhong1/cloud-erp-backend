@@ -64,6 +64,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private static final long IML_OWNER_CODE_CACHE_TTL_MILLIS = 5 * 60 * 1000L;
     private static final int IML_OWNER_CODE_CACHE_MAX_SIZE = 500;
     private static final Map<String, OwnerCodeCache> IML_OWNER_CODE_CACHE = new ConcurrentHashMap<>();
+    private static final Object IML_OWNER_CODE_CACHE_LOCK = new Object();
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -295,6 +296,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         }
         OverseasProviderEntity overseasProviderEntity;
         try {
+            // FeignQuery 是项目框架提供的按 Entity 路由通用 RPC 查询能力，此处用于低频补齐 WMS 货主编码。
             overseasProviderEntity = FeignQuery.getById(OverseasProviderEntity.class, authId);
         } catch (Exception e) {
             log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 异常, authId={}, platformSkuNo={}, error={}",
@@ -308,9 +310,15 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             return null;
         }
         String ownerCode = overseasProviderEntity.getOwnerCode();
-        cleanupImlOwnerCodeCache();
-        IML_OWNER_CODE_CACHE.put(authId, new OwnerCodeCache(ownerCode));
+        cacheImlOwnerCode(authId, ownerCode);
         return ownerCode;
+    }
+
+    private void cacheImlOwnerCode(String authId, String ownerCode) {
+        synchronized (IML_OWNER_CODE_CACHE_LOCK) {
+            cleanupImlOwnerCodeCache();
+            IML_OWNER_CODE_CACHE.put(authId, new OwnerCodeCache(ownerCode));
+        }
     }
 
     private void cleanupImlOwnerCodeCache() {

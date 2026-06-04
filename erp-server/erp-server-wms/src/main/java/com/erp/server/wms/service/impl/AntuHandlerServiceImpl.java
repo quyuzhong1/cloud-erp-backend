@@ -36,7 +36,7 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         return super.uploadFile(uploadFileReq);
     }
 
-    public static void convertPdfAttachmentToPng(ThirdWarehouseUploadFileReq uploadFileReq) {
+    void convertPdfAttachmentToPng(ThirdWarehouseUploadFileReq uploadFileReq) {
         if (!needConvertPdfAttachment(uploadFileReq)) {
             return;
         }
@@ -45,7 +45,7 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         uploadFileReq.setModule(ThirdWarehouseConstants.MODULE_OTHER_DOCUMENTS_INVOICE);
     }
 
-    public static boolean needConvertPdfAttachment(ThirdWarehouseUploadFileReq uploadFileReq) {
+    boolean needConvertPdfAttachment(ThirdWarehouseUploadFileReq uploadFileReq) {
         if (uploadFileReq == null || CharSequenceUtil.isBlank(uploadFileReq.getModule()) || ThirdWarehouseConstants.MODULE_ORDER_LABEL.equalsIgnoreCase(uploadFileReq.getModule())) {
             return false;
         }

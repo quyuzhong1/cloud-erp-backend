@@ -16,6 +16,8 @@ import java.util.Base64;
 
 public class AntuHandlerServiceImplUnitTest {
 
+    private final AntuHandlerServiceImpl antuHandlerService = new AntuHandlerServiceImpl();
+
     @Test
     public void convertPdfAttachmentToPngUseOtherDocumentsInvoice() throws Exception {
         ThirdWarehouseUploadFileReq req = new ThirdWarehouseUploadFileReq();
@@ -23,7 +25,7 @@ public class AntuHandlerServiceImplUnitTest {
         req.setModule("order_attach");
         req.setFileData("data:application/pdf;base64," + buildPdfBase64(PageSize.A4.getWidth(), PageSize.A4.getHeight()));
 
-        AntuHandlerServiceImpl.convertPdfAttachmentToPng(req);
+        antuHandlerService.convertPdfAttachmentToPng(req);
 
         Assert.assertEquals(FileTypeEnum.PNG.getCode(), req.getFileType());
         Assert.assertEquals("other_documents_invoice", req.getModule());
@@ -39,7 +41,7 @@ public class AntuHandlerServiceImplUnitTest {
         req.setFileType(FileTypeEnum.PDF.getCode());
         req.setFileData(fileData);
 
-        AntuHandlerServiceImpl.convertPdfAttachmentToPng(req);
+        antuHandlerService.convertPdfAttachmentToPng(req);
 
         Assert.assertEquals(FileTypeEnum.PDF.getCode(), req.getFileType());
         Assert.assertEquals("order_label", req.getModule());
@@ -53,7 +55,7 @@ public class AntuHandlerServiceImplUnitTest {
         req.setFileType(FileTypeEnum.PDF.getCode());
         req.setFileData(fileData);
 
-        AntuHandlerServiceImpl.convertPdfAttachmentToPng(req);
+        antuHandlerService.convertPdfAttachmentToPng(req);
 
         Assert.assertEquals(FileTypeEnum.PDF.getCode(), req.getFileType());
         Assert.assertNull(req.getModule());
@@ -68,7 +70,7 @@ public class AntuHandlerServiceImplUnitTest {
         req.setFileType(FileTypeEnum.PNG.getCode());
         req.setFileData(fileData);
 
-        AntuHandlerServiceImpl.convertPdfAttachmentToPng(req);
+        antuHandlerService.convertPdfAttachmentToPng(req);
 
         Assert.assertEquals(FileTypeEnum.PNG.getCode(), req.getFileType());
         Assert.assertEquals("other_documents_invoice", req.getModule());
