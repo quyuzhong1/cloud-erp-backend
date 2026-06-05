@@ -113,7 +113,7 @@ public class LogisticsReconEntity extends BaseEntity<LogisticsReconEntity> {
     private Integer costCount;
 
     /**
-     * 对账总金额（logistics_recon_detail_sub.actual_amount 求和）
+     * 对账总金额（本位币：logistics_recon_detail_sub.local_amount 求和）
      * 说明：匹配状态 match_status / 已匹配行数 match_count 不在主表冗余存储，
      * 由列表/详情查询时实时聚合 logistics_recon_detail 派生，避免明细海量数据下每次匹配回写主表。
      */

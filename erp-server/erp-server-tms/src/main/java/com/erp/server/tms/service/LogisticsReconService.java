@@ -10,8 +10,12 @@ import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.entity.LogisticsReconDetailEntity;
+import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -108,12 +112,14 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @date: 2026/06/02
      * @param mainId 对账单 id
      * @param reconciliationStatus 目标对账状态
+     * @param confirmTime 对账确认时间（状态为 confirmed 时有效）
      * @return BatchResultDTO
      */
-    BatchResultDTO confirmBill(String mainId, String reconciliationStatus);
+    BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime);
 
     /**
-     * 物流商对账单导入分批落库（供 Excel 监听器分批回调，每批单独事务）
+     * 物流商对账单导入分批处理（供 Excel 监听器分批回调）
+     * 解析/校验/汇率换算在事务外完成，仅 detail+sub 落库走事务（{@link #saveImportDetailAndSub}）
      * @author Will
      * @date: 2026/06/03
      * @param rows 当前批次原始行数据
@@ -122,6 +128,7 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @param dto 导入参数（含 mainId）
      * @param importCfg 当前导入配置
      * @param cfgDetails 配置字段明细
+     * @param rateCache 文件级本位币汇率缓存（按币别，跨批次复用，避免重复远程调用）
      * @return 当前批次落库结果（校验失败行 + 落库统计）
      */
     LogisticsReconBatchResultDTO handleReconImportBatch(List<Map<Integer, String>> rows,
@@ -129,7 +136,19 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
                                                         int rowNoStart,
                                                         LogisticsReconDTO.ImportDTO dto,
                                                         CfgLogisticsCostImportEntity importCfg,
-                                                        List<CfgLogisticsCostImportDetailEntity> cfgDetails);
+                                                        List<CfgLogisticsCostImportDetailEntity> cfgDetails,
+                                                        Map<String, BigDecimal> rateCache);
+
+    /**
+     * 导入明细 + 费用项批量落库（单独事务，保证 detail/sub 原子写）
+     * @author Will
+     * @date: 2026/06/05
+     * @param detailList 对账明细
+     * @param subList 对账费用项
+     * @return void
+     */
+    void saveImportDetailAndSub(List<LogisticsReconDetailEntity> detailList,
+                                List<LogisticsReconDetailSubEntity> subList);
 
     /**
      * 物流商对账明细批量解绑匹配（按 detail 维度，逻辑删 ref）

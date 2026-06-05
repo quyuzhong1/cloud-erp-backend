@@ -10,6 +10,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
@@ -166,6 +167,7 @@ public class LogisticsReconDetailServiceImpl
         Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream()
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDetailDTO.ListDTO data : list) {
+            data.setReconciliationMonth(DateUtil.formatCnYearMonth(data.getReconciliationMonth()));
             data.setMatchStatusName(LogisticsReconDetailMatchStatusEnum.getName(data.getMatchStatus()));
             data.setReconciliationStatusName(
                     LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));

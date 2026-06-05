@@ -132,7 +132,7 @@ public class LogisticsReconImportExcelDTO implements Serializable {
      * 实际金额
      */
     @ExcelProperty(value = "实际金额", index = 16)
-    @FieldValid(fieldName = "实际金额", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "实际金额", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private String actualAmount;
 
     /**

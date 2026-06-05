@@ -75,6 +75,10 @@ public class LogisticsReconDetailSubDTO implements Serializable {
          */
         private BigDecimal settlementExchangeRate;
         /**
+         * 结算金额（原币金额 × 结算汇率，结算币计）
+         */
+        private BigDecimal settlementAmount;
+        /**
          * 本位币币别
          */
         private String localCurrency;
@@ -82,6 +86,10 @@ public class LogisticsReconDetailSubDTO implements Serializable {
          * 本位币汇率（原币 → 本位币）
          */
         private BigDecimal localExchangeRate;
+        /**
+         * 本位币金额（原币金额 × 本位币汇率，本位币计）
+         */
+        private BigDecimal localAmount;
         /**
          * 费用项匹配状态 unmatched / matching / matched / failed
          */

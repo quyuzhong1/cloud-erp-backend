@@ -192,7 +192,7 @@ public class LogisticsReconController extends BaseController {
         List<BatchResultDTO> results = new ArrayList<>(dto.getIds().size());
         for (String mainId : dto.getIds()) {
             try {
-                results.add(logisticsReconService.confirmBill(mainId, dto.getReconciliationStatus()));
+                results.add(logisticsReconService.confirmBill(mainId, dto.getReconciliationStatus(), dto.getConfirmTime()));
             } catch (Exception e) {
                 log.error("[batchConfirmBill] 失败 mainId={}", mainId, e);
                 String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();

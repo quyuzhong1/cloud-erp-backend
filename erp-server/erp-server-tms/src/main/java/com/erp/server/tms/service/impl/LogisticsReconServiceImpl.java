@@ -22,10 +22,12 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
@@ -45,6 +47,7 @@ import com.erp.model.tms.enums.LogisticsReconRefMatchTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.mapper.LogisticsReconMapper;
@@ -66,6 +69,7 @@ import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.ArrayList;
@@ -128,6 +132,15 @@ public class LogisticsReconServiceImpl
     @Resource
     private ImportHistoryRecordService importHistoryRecordService;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
+    /**
+     * 自注入：用于让分批落库的 saveImportDetailAndSub 走 Spring 事务代理
+     */
+    @Resource
+    private LogisticsReconService self;
+
 
     @Override
     public List<LogisticsReconDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -174,7 +187,7 @@ public class LogisticsReconServiceImpl
                 .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
         LogisticsReconDTO.ViewDTO data = new LogisticsReconDTO.ViewDTO();
         data.setId(entity.getId());
-        data.setReconciliationMonth(formatReconciliationMonth(entity.getReconciliationMonth()));
+        data.setReconciliationMonth(DateUtil.formatCnYearMonth(entity.getReconciliationMonth()));
         data.setSupplierName(entity.getSupplierName());
         data.setTotalAmountStr(formatAmount(entity.getTotalAmount(), currencySymbol(entity.getCurrency())));
         return data;
@@ -286,14 +299,14 @@ public class LogisticsReconServiceImpl
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public LogisticsReconBatchResultDTO handleReconImportBatch(List<Map<Integer, String>> rows,
                                                                Map<Integer, String> headMap,
                                                                int rowNoStart,
                                                                LogisticsReconDTO.ImportDTO dto,
                                                                CfgLogisticsCostImportEntity importCfg,
-                                                               List<CfgLogisticsCostImportDetailEntity> cfgDetails) {
+                                                               List<CfgLogisticsCostImportDetailEntity> cfgDetails,
+                                                               Map<String, BigDecimal> rateCache) {
         Map<String, Integer> headerIndexMap = buildHeaderIndexMap(headMap);
         List<LogisticsReconDetailEntity> detailList = new ArrayList<>();
         List<LogisticsReconDetailSubEntity> subList = new ArrayList<>();
@@ -311,8 +324,23 @@ public class LogisticsReconServiceImpl
                     continue;
                 }
                 LogisticsReconDetailEntity detail = buildReconDetail(dto, currentRowNo, excelDTO);
+                LogisticsReconDetailSubEntity sub = buildReconDetailSub(dto, detail, excelDTO);
+                // 原币按对账月份汇率换算本位币（人民币）；汇率缺失则该行收为错误，不落库
+                BigDecimal localRate = resolveLocalRate(sub.getCurrency(), dto.getReconciliationMonth(), rateCache);
+                if (localRate == null) {
+                    excelDTO.setErrorMsg(StrUtil.format("未找到币别【{}】在对账月份【{}】的汇率",
+                            StrUtil.blankToDefault(sub.getCurrency(), CurrencyEnum.CNY.getCurrencyCode()),
+                            dto.getReconciliationMonth()));
+                    errorList.add(excelDTO);
+                    continue;
+                }
+                sub.setLocalExchangeRate(localRate);
+                // 本位币金额冗余落库：原币金额 × 本位币汇率
+                BigDecimal actualAmount = ObjectUtil.isEmpty(sub.getActualAmount())
+                        ? BigDecimal.ZERO : sub.getActualAmount();
+                sub.setLocalAmount(actualAmount.multiply(localRate).setScale(4, RoundingMode.HALF_UP));
                 detailList.add(detail);
-                subList.add(buildReconDetailSub(dto, detail, excelDTO));
+                subList.add(sub);
             } catch (NumberFormatException e) {
                 // 金额/数字单元格格式非法：收为行级错误，不上抛中断整批（避免已成功行随事务回滚）
                 if (excelDTO == null) {
@@ -323,22 +351,59 @@ public class LogisticsReconServiceImpl
                 errorList.add(excelDTO);
             }
         }
+        // detail + sub 落库走独立事务（经自注入代理生效），保证两表原子写
+        self.saveImportDetailAndSub(detailList, subList);
+        // 主表合计取费用项本位币金额（local_amount）之和
+        BigDecimal batchAmount = subList.stream()
+                .map(LogisticsReconDetailSubEntity::getLocalAmount)
+                .filter(ObjectUtil::isNotEmpty)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(4, RoundingMode.HALF_UP);
+        // 主表币别取费用项本位币（local_currency），默认人民币
+        Set<String> currencies = subList.stream()
+                .map(LogisticsReconDetailSubEntity::getLocalCurrency)
+                .filter(StrUtil::isNotBlank)
+                .collect(Collectors.toCollection(HashSet::new));
+        return new LogisticsReconBatchResultDTO(errorList, detailList.size(), subList.size(),
+                batchAmount, currencies);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void saveImportDetailAndSub(List<LogisticsReconDetailEntity> detailList,
+                                       List<LogisticsReconDetailSubEntity> subList) {
         if (CollUtil.isNotEmpty(detailList)) {
             logisticsReconDetailService.saveBatch(detailList);
         }
         if (CollUtil.isNotEmpty(subList)) {
             logisticsReconDetailSubService.saveBatch(subList);
         }
-        BigDecimal batchAmount = subList.stream()
-                .map(LogisticsReconDetailSubEntity::getActualAmount)
-                .filter(ObjectUtil::isNotEmpty)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        Set<String> currencies = detailList.stream()
-                .map(LogisticsReconDetailEntity::getCurrency)
-                .filter(StrUtil::isNotBlank)
-                .collect(Collectors.toCollection(HashSet::new));
-        return new LogisticsReconBatchResultDTO(errorList, detailList.size(), subList.size(),
-                batchAmount, currencies);
+    }
+
+    /**
+     * 取原币 → 本位币（人民币）汇率，按对账月份查 DMP；按币别缓存避免重复远程调用
+     * @author Will
+     * @date: 2026/06/05
+     * @param currency 原币别（空按人民币处理）
+     * @param reconciliationMonth 对账月份 yyyy-MM
+     * @param cache 币别 → 汇率缓存
+     * @return 汇率；本位币为人民币时恒为 1；查不到返回 null
+     */
+    private BigDecimal resolveLocalRate(String currency, String reconciliationMonth, Map<String, BigDecimal> cache) {
+        String code = StrUtil.blankToDefault(currency, CurrencyEnum.CNY.getCurrencyCode());
+        if (cache.containsKey(code)) {
+            return cache.get(code);
+        }
+        BigDecimal rate;
+        if (CurrencyEnum.CNY.getCurrencyCode().equals(code)) {
+            rate = BigDecimal.ONE;
+        } else if (StrUtil.isBlank(reconciliationMonth)) {
+            rate = null;
+        } else {
+            rate = dmpTaskFeign.getMonthRate(reconciliationMonth + "-01", code);
+        }
+        cache.put(code, rate);
+        return rate;
     }
 
     /**
@@ -447,7 +512,9 @@ public class LogisticsReconServiceImpl
             applyImportExcelField(excelDTO, target, value, cfg);
         }
         if (StrUtil.isNotBlank(excelDTO.getActualAmount())) {
-            excelDTO.setActualAmountValue(parseAmount(excelDTO.getActualAmount(), false));
+            // 原币金额统一按 numeric(16,4) 规整
+            excelDTO.setActualAmountValue(
+                    parseAmount(excelDTO.getActualAmount(), false).setScale(4, RoundingMode.HALF_UP));
         }
         return excelDTO;
     }
@@ -506,6 +573,7 @@ public class LogisticsReconServiceImpl
                 .setActualAmount(excelDTO.getActualAmountValue())
                 .setEstimatedAmount(BigDecimal.ZERO)
                 .setCurrency(StrUtil.blankToDefault(detail.getCurrency(), ""))
+                .setLocalCurrency(CurrencyEnum.CNY.getCurrencyCode())
                 .setMatchStatus(LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
                 .setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
     }
@@ -714,7 +782,7 @@ public class LogisticsReconServiceImpl
                 results.add(BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE));
                 String msg = StrUtil.format("用户【{}】将{}【{}】校验状态切换为【{}】，备注：{}",
                         user.getUserName(), DOC_NAME, entity.getCode(),
-                        LogisticsReconCheckStatusEnum.getName(dto.getCheckStatus()), dto.getRemark());
+                        LogisticsReconCheckStatusEnum.getName(dto.getCheckStatus()));
                 operateLogService.addModuleOperateLog(msg, null, entity.getId(), "校验状态切换");
             } catch (Exception e) {
                 log.error("{}校验状态切换失败 id={}", DOC_NAME, entity.getId(), e);
@@ -775,13 +843,13 @@ public class LogisticsReconServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO confirmBill(String mainId, String reconciliationStatus) {
+    public BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime) {
         if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
                 && !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_RECONCILIATION_STATUS_INVALID);
         }
-        LocalDateTime confirmTime = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
-                ? LocalDateTime.now() : null;
+        LocalDateTime effectiveConfirmTime = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
+                ? confirmTime : null;
         LogisticsReconEntity entity = super.getByIdOpt(mainId)
                 .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
         if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
@@ -800,7 +868,7 @@ public class LogisticsReconServiceImpl
             throw new ServiceException(ApiError.LOGISTICS_RECON_MATCHED_BILL_COST_NOT_FOUND);
         }
         for (String logisticsBillCostId : logisticsBillCostIds) {
-            logisticsBillCostService.updateReconciliationStatus(logisticsBillCostId, reconciliationStatus, confirmTime);
+            logisticsBillCostService.updateReconciliationStatus(logisticsBillCostId, reconciliationStatus, effectiveConfirmTime);
         }
         logisticsReconRefLogisticsBillService.lambdaUpdate()
                 .eq(LogisticsReconRefLogisticsBillEntity::getMainId, mainId)
@@ -981,6 +1049,7 @@ public class LogisticsReconServiceImpl
         Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream()
                 .collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol, (first, second) -> first));
         for (LogisticsReconDTO.ListDTO data : list) {
+            data.setReconciliationMonth(DateUtil.formatCnYearMonth(data.getReconciliationMonth()));
             data.setCheckStatusName(LogisticsReconCheckStatusEnum.getName(data.getCheckStatus()));
             data.setReconciliationStatusName(
                     LogisticsReconReconciliationStatusEnum.getName(data.getReconciliationStatus()));
@@ -1011,28 +1080,6 @@ public class LogisticsReconServiceImpl
                 .findFirst()
                 .map(DictCurrencyEntity::getSymbol)
                 .orElse("¥");
-    }
-
-    /**
-     * 格式化对账月份展示文本
-     * @author Will
-     * @date 2026/6/1 15:55
-     * @param reconciliationMonth 对账月份 yyyy-MM
-     * @return String
-     */
-    private String formatReconciliationMonth(String reconciliationMonth) {
-        if (StrUtil.isBlank(reconciliationMonth)) {
-            return "";
-        }
-        String[] parts = reconciliationMonth.split("-");
-        if (parts.length != 2) {
-            return reconciliationMonth;
-        }
-        try {
-            return parts[0] + "年" + Integer.parseInt(parts[1]) + "月份";
-        } catch (NumberFormatException e) {
-            return reconciliationMonth;
-        }
     }
 
     /**

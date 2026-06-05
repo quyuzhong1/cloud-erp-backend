@@ -630,5 +630,26 @@ public class DateUtil {
         return systemLocalDateTime;
     }
 
+    /**
+     * 月份字符串转中文展示：yyyy-MM → yyyy年M月份
+     *
+     * @param yearMonth 月份字符串（yyyy-MM）
+     * @return 中文展示文本；入参为空或格式非法时原样返回
+     */
+    public static String formatCnYearMonth(String yearMonth) {
+        if (StringUtils.isBlank(yearMonth)) {
+            return "";
+        }
+        String[] parts = yearMonth.split("-");
+        if (parts.length != 2) {
+            return yearMonth;
+        }
+        try {
+            return parts[0] + "年" + Integer.parseInt(parts[1]) + "月份";
+        } catch (NumberFormatException e) {
+            return yearMonth;
+        }
+    }
+
 
 }
