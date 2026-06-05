@@ -54,7 +54,6 @@
             sbr.shop_id as shopId,
             sbr.amount as orderAmount,
             sbr.currency,
-            concat(sbr.amount ,sbr.currency) as completeOrderAmount,
             sbr.type,
             sbr.reason,
             sbr.status,

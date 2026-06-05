@@ -23,6 +23,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.SampleRecipientExcelDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SampleUsageScopeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -194,10 +195,10 @@ public class SampleRecipientExcelListener extends AnalysisEventListener<SampleRe
     private Map<String, String> getUsageNameToValueMap() {
         if (usageNameToValueMap == null) {
             try {
-                List<DictBasicDTO.ListDTO> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
+                List<DictBasicEntity> usageDictList = dictBasicService.getByKey(DictBasicEnum.SAMPLE_USAGE.getKey());
                 if (CollUtil.isNotEmpty(usageDictList)) {
                     usageNameToValueMap = usageDictList.stream()
-                            .collect(Collectors.toMap(DictBasicDTO.ListDTO::getName, DictBasicDTO.ListDTO::getValue, (v1, v2) -> v1));
+                            .collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getValue, (v1, v2) -> v1));
                 } else {
                     usageNameToValueMap = Collections.emptyMap();
                     log.warn("样品用途字典为空");

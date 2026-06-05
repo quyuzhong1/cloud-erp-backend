@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseIdsDTO;
+import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.SoB2cCoreDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -11,6 +12,7 @@ import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * sob2c额外类
@@ -53,6 +55,12 @@ public interface SoB2cCoreService {
      * @return Boolean
      */
     Boolean listPayMethodSetting(SoB2cEntity entity);
+
+    /**
+     * 批量查询支付方式配置，返回 key=平台-支付方式 的查找 Map，用于循环场景下避免重复查库
+     * @return Map<String, CfgSettingDTO.PayMethodDTO>
+     */
+    Map<String, CfgSettingDTO.PayMethodDTO> listPayMethodSettingMap();
 
     /**
      * 验证销售订单是否付款

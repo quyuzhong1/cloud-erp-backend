@@ -1,8 +1,10 @@
 package com.erp.server.dmp.factory;
 
 import com.erp.server.dmp.handler.*;
-import jnr.ffi.annotations.In;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -13,20 +15,24 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WebhookHandlerFactory {
+    private final Map<String, WebhookHandler> handlerMap = new HashMap<>();
+
+    public WebhookHandlerFactory() {
+        handlerMap.put("track123", new Track123WebhookHandler());
+        handlerMap.put("outbound", new OrderOutboundHandler());
+        handlerMap.put("inbound", new InboundHandler());
+        handlerMap.put("returnInstock", new ReturnInstockHandler());
+        handlerMap.put("jituOverseasInbound", new JituOverseasInboundHandler());
+        handlerMap.put("jituOutbound", new JituOutboundHandler());
+        handlerMap.put("qimenCallback", new QimenCallbackHandler());
+        handlerMap.put("shopee", new ShopeeWebhookHandler());
+    }
+
     public WebhookHandler getHandler(String service) {
-        switch (service) {
-            case "track123":
-                return new Track123WebhookHandler();
-            case "outbound":
-                return new OrderOutboundHandler();
-            case "inbound":
-                return new InboundHandler();
-            case "returnInstock":
-                return new ReturnInstockHandler();
-            case "shopee":
-                return new ShopeeWebhookHandler();
-            default:
-                throw new IllegalArgumentException("Unknown platform");
+        WebhookHandler handler = handlerMap.get(service);
+        if (handler == null) {
+            throw new IllegalArgumentException("Unknown platform");
         }
+        return handler;
     }
 }

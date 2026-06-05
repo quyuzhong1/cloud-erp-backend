@@ -245,6 +245,16 @@ public interface WorkflowFeign {
     ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> curApprover(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
 
     /**
+     * 轻量批量查询流程当前审批人（仅返回 businessId 与 curApproveName）。
+     * 当前专门服务于 WMS 的 SoOutstockServiceImpl.fillPaging 导出场景。
+     *
+     * @param dtoList 业务类型+业务id集合
+     * @return 轻量审批人信息
+     */
+    @PostMapping("/feign/process/batchCurApproverSimple")
+    ApiResult<List<ProcessManagementDTO.CurApproveSimpleDTO>> batchCurApproverSimple(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
+
+    /**
      * 批量查询当前待审核业务单据
      * @param dtoList
      * @return

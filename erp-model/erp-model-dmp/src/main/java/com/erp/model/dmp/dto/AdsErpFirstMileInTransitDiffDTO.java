@@ -1,24 +1,17 @@
 package com.erp.model.dmp.dto;
 
-import java.util.Date;
-
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.util.List;
-
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.*;
-
-import com.common.business.dto.AdvanceQueryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.*;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -1071,5 +1064,16 @@ public class AdsErpFirstMileInTransitDiffDTO implements Serializable {
          */
         private String updateUserName;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReCreateDTO{
+        /**
+         * 核算周期
+         */
+        @NotBlank(message = "核算周期不能为空")
+        private String checkMonth;
     }
 }

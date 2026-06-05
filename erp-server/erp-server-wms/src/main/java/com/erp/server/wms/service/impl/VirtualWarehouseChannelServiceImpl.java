@@ -14,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.Md5Util;
 import com.common.core.utils.MessageUtils;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -208,7 +209,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<DictPartitionEntity> partitionEntityList = FeignQuery.list(DictPartitionEntity.class);
 
         //平台信息
-        List<DictBasicDTO.ViewDTO> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
 
         for (VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDT : allChannelList) {
             List<VirtualWarehouseChannelDTO.DetailDTO> detailDTOList = channelAddDT.getDetailDTOList();
@@ -221,7 +222,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                         .distinct().sorted().collect(Collectors.joining(",")) ;
                 String msg;
                 //平台名称
-                String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+                String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
                 msg = CharSequenceUtil.format("{},按店铺({}),军区({})", platformName, shopName, partitionName);
                 oldChannelMsg.add(msg);
             }
@@ -246,7 +247,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                         .distinct().sorted().collect(Collectors.joining(",")) ;
                 String msg ;
                 //平台名称
-                String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+                String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
                 msg = CharSequenceUtil.format("{},按店铺({}),军区({})",platformName,shopName,partitionName);
                 newChannelMsg.add(msg);
                 if (!oldChannelMsg.contains(msg)) {
@@ -443,7 +444,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<String> channelIds = vmChannelEntityList.stream().map(VirtualWarehouseChannelEntity::getId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseChannelPartitionRefEntity> refEntityList = virtualWarehouseChannelPartitionRefService.listByMainIds(channelIds);
         //平台信息
-        List<DictBasicDTO.ViewDTO> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> platformList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         Map<String, List<VirtualWarehouseChannelEntity>> dictPlatformMap = vmChannelEntityList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
         //国内 渠道列表
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> internalChannelList = new ArrayList<>();
@@ -455,7 +456,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<ShopInfoEntity> shopInfoEntityList = FeignQuery.list(ShopInfoEntity.class);
         List<DictPartitionEntity> dictPartitionEntityList = FeignQuery.list(DictPartitionEntity.class);
         for (String dictPlatform : dictPlatformMap.keySet()){
-            DictBasicDTO.ViewDTO dictDTO = platformList.stream().filter(e -> Objects.equals(e.getValue(), dictPlatform)).findFirst().orElse(null);
+            DictBasicEntity dictDTO = platformList.stream().filter(e -> Objects.equals(e.getValue(), dictPlatform)).findFirst().orElse(null);
             if (Objects.isNull(dictDTO)){
                 continue;
             }
@@ -582,9 +583,9 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      * @return
      */
     private boolean areListsMutuallyContained(List<VirtualWarehouseDTO.BindChannelDto> list1, List<VirtualWarehouseDTO.BindChannelDto> list2, StringBuilder msg){
-        List<DictBasicDTO.ViewDTO> dictBasicByKey = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicByKey = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         //字典平台名称
-        Map<String, String> dictMap = dictBasicByKey.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+        Map<String, String> dictMap = dictBasicByKey.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
         //分区
         List<DictPartitionEntity> partitionEntityList = FeignQuery.list(DictPartitionEntity.class);
         Map<String, String> partitionMap = partitionEntityList.stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getName));

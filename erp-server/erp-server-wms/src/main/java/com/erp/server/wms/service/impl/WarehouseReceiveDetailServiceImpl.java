@@ -24,6 +24,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
@@ -34,10 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -370,6 +368,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         baseMapper.updateInfo(wrd.getId(),wrd.getInStockStatus());
     }
 
+    /**
+     * 重新计算待质检数量
+     * @param podIdList
+     * @param detailIdList
+     */
     @Override
     @DistributeLocker(keyName = "podIdList")
     public void recalculateWaitQcQty(List<String> podIdList, List<String> detailIdList) {
@@ -383,42 +386,49 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
         }
 
-        //查询采购订单下的质检批次合格数量汇总
+        //查询采购订单下的质检批次合格数量汇总  外验数量汇总
         List<QcResultDTO.TotalLotQualifiedQtyDTO> totalAllowInstockQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
-        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream().collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty));
-
-        //查询采购订单下的其他收货单的收货数量汇总
+        //入库质检总数量（包含入库质检与新品入库质检）
+        //filter 已保证非 null
+        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream()
+                .filter(e -> QcTypeEnum.STOCK_IN.getCode().equals(e.getQcType()) || QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode().equals(e.getQcType()))
+                .filter(e -> e.getTotalQty() != null)
+                .collect(Collectors.toMap(
+                        QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId,
+                        QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty,
+                        Integer::sum
+                ));
+        //外验允许入库量
+        Map<String, Integer> allowInstockQtyMap = totalAllowInstockQtyList.stream().filter(e -> QcTypeEnum.OUTSIDE_QC.getCode().equals(e.getQcType())).collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
+        //查询采购订单下的 收货数量汇总
         List<WarehouseReceiveDetailDTO.ReceiveQtyDTO> totalReceiveQtyList = baseMapper.getTotalReceiveQty(podIdList);
         Map<String, Integer> totalReceiveQtyMap = totalReceiveQtyList.stream().collect(Collectors.toMap(WarehouseReceiveDetailDTO.ReceiveQtyDTO::getPodId, WarehouseReceiveDetailDTO.ReceiveQtyDTO::getTotalReceiveQty));
 
-        //采购订单下退货数量
-        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIdList);
-
-        //查询采购订单下的其他收货单的收货数量汇总
+        //根据收货明细汇总待质检量
         List<WarehouseReceiveDetailDTO.WaitQcQtyDTO> totalWaitQcQtyList = baseMapper.getTotalWaitQcQty(podIdList);
 
         for (WarehouseReceiveDetailEntity receiveDetailEntity : receiveDetailLIst) {
-            //采购订单明细下的质检总数量汇总
-            Integer totalQty = totalQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
+            //入库质检总数量
+            Integer instockQctotalQty = totalQtyMap.getOrDefault(receiveDetailEntity.getPurchaseOrderDetailId(),MathUtil.ZERO);
+            //外验允许入库量
+            Integer outAllowInstockQty = allowInstockQtyMap.getOrDefault(receiveDetailEntity.getPurchaseOrderDetailId(),MathUtil.ZERO);
             //采购订单明细下的收货数量汇总
-            Integer totalReceiveQty = totalReceiveQtyMap.get(receiveDetailEntity.getPurchaseOrderDetailId());
-            //采购订单下的退货数量
-            Integer returnQty = poReturnDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPurchaseOrderDetailId(), receiveDetailEntity.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode()))
-                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-
+            Integer totalReceiveQty = totalReceiveQtyMap.getOrDefault(receiveDetailEntity.getPurchaseOrderDetailId(),MathUtil.ZERO);
             //采购订单明细下收货单的待质检数量汇总（不包括本单）
             Integer totalWaitQcQty = totalWaitQcQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPodId(), receiveDetailEntity.getPurchaseOrderDetailId()) && !CharSequenceUtil.equals(obj.getDetailId(), receiveDetailEntity.getId())).map(WarehouseReceiveDetailDTO.WaitQcQtyDTO::getTotalWaitQcQty).reduce(MathUtil.ZERO, Integer::sum);
-           //待质检量=∑收货数量-质检合格量-∑待质检量 -∑退货数量,小于0时默认为0
-            Integer waitQcQty =  totalReceiveQty - (ObjectUtil.isNull(totalQty) ? MathUtil.ZERO : totalQty) - totalWaitQcQty - returnQty;
-            if (waitQcQty < MathUtil.ZERO) {
-                waitQcQty = MathUtil.ZERO;
-            }
+            //公式：当前收货单待质检量 = max(0, 累计收货量 - 外验允许入库量 - 入库质检总数量 - 前序收货单待质检量)。
+            Integer waitQcQty = Math.max(MathUtil.ZERO, totalReceiveQty - instockQctotalQty - outAllowInstockQty - totalWaitQcQty);
             receiveDetailEntity.setWaitQcQty(waitQcQty);
         }
         super.updateBatchById(receiveDetailLIst);
     }
 
 
+    /**
+     * 更新待质检量
+     * @param qcIdList
+     * @param isFinishQc true 完成质检  false 撤销质检
+     */
     @Override
     public void updateWaitQcQty(List<String> qcIdList,Boolean isFinishQc) {
         List<QcResultDTO.LotQualifiedQtyDTO> allowInstockQtyList = qcResultService.getLotQualifiedQtyByMainIdList(qcIdList);
@@ -459,18 +469,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             if (ObjectUtil.isEmpty(receiveDetailEntity)) {
                 throw new ServiceException(ApiError.PO_RECEIPT_NOT_FOUND);
             }
-            Integer waitQcQty = MathUtil.ZERO;
-            if (isFinishQc) {
-                //待质检量=∑收货数量-质检单总量,小于0时默认为0
-                waitQcQty = receiveDetailEntity.getWaitQcQty() - lotQualifiedQtyDTO.getTotalQty();
-            } else {
-                //待质检量=∑收货数量+质检单总量,小于0时默认为0
-                waitQcQty = receiveDetailEntity.getWaitQcQty() + lotQualifiedQtyDTO.getTotalQty();
-            }
-            if (waitQcQty < MathUtil.ZERO) {
-                waitQcQty = MathUtil.ZERO;
-            }
-            receiveDetailEntity.setWaitQcQty(waitQcQty);
+            Integer currentWaitQcQty = Objects.nonNull(receiveDetailEntity.getWaitQcQty()) ? receiveDetailEntity.getWaitQcQty() : MathUtil.ZERO;
+            Integer totalQty = Objects.nonNull(lotQualifiedQtyDTO.getTotalQty()) ? lotQualifiedQtyDTO.getTotalQty() : MathUtil.ZERO;
+            //完成质检：待质检数量 = 待质检数量 - 本次质检合格数量
+            int waitQcQty = isFinishQc ? currentWaitQcQty  - totalQty : currentWaitQcQty  + totalQty;
+            receiveDetailEntity.setWaitQcQty(Math.max(waitQcQty, MathUtil.ZERO));
             receiveDetailList.add(receiveDetailEntity);
         }
         super.updateBatchById(receiveDetailList);

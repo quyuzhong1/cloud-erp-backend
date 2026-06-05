@@ -167,13 +167,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      */
     List<SoB2cDeliveryEntity> listBySourceIds(List<String> sourceIds, String notStatus);
     /**
-     * 回滚冻结的库存
+     * 取消发货并回滚库存：先将发货单状态更新为 cancelDelivery，再释放虚拟仓冻结、回滚实体仓占用。
      *
-     * @param ids
-     * @return void
-     * @Author Luo_WG
-     * @Date 2023/12/26 12:22
-     **/
+     * @param ids 发货单 id 列表
+     */
     void rollbackInventory(List<String> ids);
 
     /**
@@ -411,13 +408,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return Boolean
      */
     Boolean afreshOutFreezeVirtualInventory(String soId);
-
-    /**
-     * 导出发货单
-     * @param dto
-     * @return
-     */
-    PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto);
 
     /**
      * 回滚虚拟库存

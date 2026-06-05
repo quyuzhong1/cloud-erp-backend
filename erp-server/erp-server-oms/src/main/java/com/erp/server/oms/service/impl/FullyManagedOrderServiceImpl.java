@@ -32,10 +32,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.FullyManagedImportExcelDTO;
-import com.erp.model.oms.entity.CfgSettingEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cRefEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -201,8 +198,8 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         setting.setValue(JSONUtil.parseObj(timeOutSettingDTO).toString());
         cfgSettingService.saveOrUpdate(setting);
         //修改全托管订单的预警时间
-        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
-        List<String> platformList = dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<DictBasicEntity> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+        List<String> platformList = dtoList.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //更新全托管订单的预警时间
         this.baseMapper.updateTimeOutConfig(platformList,timeOutSettingDTO.getWarningTime().multiply(new BigDecimal(60)).intValue());
     }

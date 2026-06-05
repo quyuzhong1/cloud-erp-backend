@@ -35,12 +35,11 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        distinct sb2c.id,
+        sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
         sb2c.shop_id as shopId,
---         sb2c.shop_name as shopName,
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
         sb2c.bill_status as billStatus,
@@ -74,20 +73,12 @@
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.is_manual_delivery as isManualDelivery,
         sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
+        sb2c.shipping_fee as shippingFee,
         sb2cl.ioss_tax_no as iossTaxNo,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2cl.logistics_channel_id as logisticsChannelId,
         sb2cl.logistics_channel_name as logisticsChannelName,
-        sb2cr.customer_id as buyerId,
-        sb2cr.name as buyerName,
-        sb2cr.country_name as countryName,
-        sb2cr.country as country,
-        sb2cr.email as email,
-        sb2cr.tel_number as telNumber,
-        sb2cr.post_code as postCode,
-        sb2cr.province_name as provinceName,
-        sb2cr.city_name as cityName,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
@@ -100,18 +91,11 @@
         sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
         sb2cl.track_no as trackCode,
-        sbd.create_time as createDeliveryTime,
-		sbd.finish_print_time as finishPrintTime,
         sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
-        fdp.id as partitionId,
-        fdp.code as partitionCode,
-        fdp.name as partitionName,
         sb2c.create_user_name as createUserName,
         sb2c.vat_invoice_status as vatInvoiceStatus,
         sb2c.nfe_invoice_status as nfeInvoiceStatus,
-        sb2c.multi_channel_type as multiChannelType,
-        sbe.id as extendId,
-        sbe.required_delivery_time as requiredDeliveryTime
+        sb2c.multi_channel_type as multiChannelType
     </sql>
     <sql id="Full_Managed_Column_List">
         distinct sb2c.id,
@@ -388,17 +372,6 @@
         </if>
         from so_b2c sb2c
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
---         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-        left join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
-        <if test="params.dynamicDataSource != null and params.dynamicDataSource == 'doris'">
-        left join erp_wms.so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false and sbd.status != 'cancelDelivery'
-        left join erp_sys.dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
-        </if>
-        <if test="params.dynamicDataSource == null or params.dynamicDataSource != 'doris'">
-        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false and sbd.status != 'cancelDelivery'
-        left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
-        </if>
         where
         ${params.sqlMap.default}
         and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
@@ -1470,7 +1443,6 @@ SELECT DISTINCT so.* FROM so_b2c so
         from so_b2c sb2c
         inner join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
---         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sbd.is_deleted = false and sbd.status != 'cancelDelivery'
         where
         ${params.sqlMap.default}

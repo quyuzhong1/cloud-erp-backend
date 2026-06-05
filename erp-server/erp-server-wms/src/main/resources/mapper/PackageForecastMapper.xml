@@ -38,22 +38,21 @@
     </resultMap>
     <!--tab list-->
     <select id="tabList" resultType="com.erp.model.wms.dto.PackageForecastDTO$TabListDTO">
-        SELECT count(id) AS count,upload_status AS tabFlag FROM  package_forecast
+        SELECT count(id) AS count,upload_status AS tabFlag
+        FROM  package_forecast
         WHERE is_deleted = FALSE
         GROUP BY upload_status
-
     </select>
 
     <!--分页查询-->
     <select id="paging" resultMap="pagingMap">
         SELECT
-            distinct
         pf.id AS id,
         pf.bill_date AS billDate,
         pf.code,
         pf.handover_no AS handoverNo,
         pf.platform_package_no AS platformPackageNo,
-        COALESCE(pf.handover_no,'') || '/' || COALESCE(pf.platform_package_no,'') as platformNo,
+        pf.platform_no as platformNo,
         pf.logistics_supplier_id AS logisticsSupplierId,
         pf.logistics_supplier_name AS logisticsSupplierName,
         pf.transport_no AS transportNo,
@@ -67,8 +66,6 @@
         pf.create_user_name AS createUserName,
         pf.create_time AS createTime
         FROM package_forecast pf
-        LEFT JOIN package_forecast_detail pfd
-        ON pf.id = pfd.main_id AND pfd.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         and pf.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -188,24 +189,18 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     public List<PackageForecastDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<PackageForecastDTO.TabListDTO> resultList = new ArrayList<>(5);
         List<PackageForecastDTO.TabListDTO> tabListList = baseMapper.tabList();
-        PackageForecastDTO.TabListDTO all = new PackageForecastDTO.TabListDTO();
-        all.setTabFlag("all");
-        all.setTabName("全部");
-        Integer allCount = tabListList.stream().mapToInt(PackageForecastDTO.TabListDTO::getCount).sum();
-        all.setCount(allCount);
-        resultList.add(all);
+        Map<String, Integer> tabMap = tabListList.stream().collect(Collectors.toMap(PackageForecastDTO.TabListDTO::getTabFlag, PackageForecastDTO.TabListDTO::getCount));
         PackageUploadStatusEnum cancel = PackageUploadStatusEnum.CANCEL;
         for (PackageUploadStatusEnum item : PackageUploadStatusEnum.values()) {
-            if (!cancel.equals(item)) {
-                PackageForecastDTO.TabListDTO tabDTO = new PackageForecastDTO.TabListDTO();
-                String tabCode = item.getCode();
-                tabDTO.setTabFlag(item.getCode());
-                tabDTO.setTabName(item.getName());
-                Integer count = tabListList.stream().filter(t -> tabCode.equals(t.getTabFlag())).
-                        map(PackageForecastDTO.TabListDTO::getCount).findFirst().orElse(0);
-                tabDTO.setCount(count);
-                resultList.add(tabDTO);
+            if (cancel.equals(item)) {
+                continue;
             }
+            PackageForecastDTO.TabListDTO tabDTO = new PackageForecastDTO.TabListDTO();
+            String tabCode = item.getCode();
+            tabDTO.setTabFlag(item.getCode());
+            tabDTO.setTabName(item.getName());
+            tabDTO.setCount(tabMap.getOrDefault(tabCode, 0));
+            resultList.add(tabDTO);
         }
         return resultList;
     }
@@ -216,103 +211,41 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
-        List<PackageForecastDTO.PagingViewDTO> list = pageData.getRecords();
-        if(CollectionUtils.isEmpty(list)){
-            return new PagingVO<>();
-        }
         //处理分页数据
-        fillPaging(list);
-        //设置分页信息
-        PagingVO pagingVO = new PagingVO<>(pageData);
-        return pagingVO;
+        fillPaging(pageData.getRecords());
+        return new PagingVO<>(pageData);
 
     }
 
     private void fillPaging(List<PackageForecastDTO.PagingViewDTO> list) {
+        if(CollectionUtils.isEmpty(list)){
+            return;
+        }
+
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
-        List<String> soIds = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        Map<String, List<PackageForecastDetailEntity>> forecastDetailMap = CollUtil.isNotEmpty(allDetailEntityList) ? allDetailEntityList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId)) : Collections.emptyMap();
         List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
-        List<String> transferIds = transferDeclareDetailEntityList.stream().map(TransferDeclareDetailEntity::getMainId).collect(Collectors.toList());
+        Map<String, String> detailSoCodeMap = CollUtil.isNotEmpty(transferDeclareDetailEntityList) ? transferDeclareDetailEntityList.stream().collect(Collectors.toMap(
+                TransferDeclareDetailEntity::getSoCode,
+                TransferDeclareDetailEntity::getMainId,
+                (existing, replacement) -> replacement)) : Collections.emptyMap();
+        List<String> transferIds = new ArrayList<>(detailSoCodeMap.values());
         List<TransferDeclareEntity> transferDeclareEntityList = CollectionUtils.isNotEmpty(transferIds)?FeignQuery.create(TransferDeclareEntity.class).in(TransferDeclareEntity::getId,transferIds).list():new ArrayList<>();
-
-        for (PackageForecastDTO.PagingViewDTO pagingViewDTO : list) {
-            List<PackageForecastDetailEntity> detailEntityList = allDetailEntityList.stream().filter(v->v.getMainId().equals(pagingViewDTO.getId())).collect(Collectors.toList());
-            List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = new ArrayList<>();
-            for (PackageForecastDetailEntity packageForecastDetailEntity : detailEntityList) {
-                PackageForecastDTO.PagingDetailViewDTO pagingDetailViewDTO = new PackageForecastDTO.PagingDetailViewDTO();
-                pagingDetailViewDTO.setDetailId(packageForecastDetailEntity.getId());
-                pagingDetailViewDTO.setSoId(packageForecastDetailEntity.getSoId());
-                pagingDetailViewDTO.setSoCode(packageForecastDetailEntity.getSoCode());
-                pagingDetailViewDTO.setLogisticsChannelId(packageForecastDetailEntity.getLogisticsChannelId());
-                pagingDetailViewDTO.setLogisticsChannelName(packageForecastDetailEntity.getLogisticsChannelName());
-                pagingDetailViewDTO.setTrackNo(packageForecastDetailEntity.getTrackNo());
-                pagingDetailViewDTO.setMinPackageTransportNo(packageForecastDetailEntity.getTransportNo());
-                pagingDetailViewDTO.setWeight(packageForecastDetailEntity.getWeight());
-                pagingDetailViewDTO.setWeightUnit(packageForecastDetailEntity.getWeightUnit());
-                pagingDetailViewDTO.setMinPackageHandoverStatus(packageForecastDetailEntity.getHandoverStatus());
-                SoB2cEntity sourceSoB2cEntity = soB2cEntityList.stream()
-                        .filter(req -> req.getId().equals(packageForecastDetailEntity.getSoId()))
-                        .findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(sourceSoB2cEntity)) {
-                    pagingDetailViewDTO.setPlatformOrderCode(sourceSoB2cEntity.getPlatformCode());
-                }
-                SoB2cEntity soB2cEntity = soB2cEntityList.stream()
-                        .filter(req -> req.getId().equals(packageForecastDetailEntity.getSoId())
-                                && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
-                        .findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
-                    pagingDetailViewDTO.setOutstockStatusName("已出库");
-                } else {
-                    pagingDetailViewDTO.setOutstockStatusName("未出库");
-                }
-                detailViewDTOList.add(pagingDetailViewDTO);
-            }
-            pagingViewDTO.setDetailViewDTOList(detailViewDTOList);
-        }
+        Map<String, String> declareEntityMap = CollUtil.isNotEmpty(transferDeclareEntityList) ? transferDeclareEntityList.stream().collect(Collectors.toMap(TransferDeclareEntity::getId, TransferDeclareEntity::getCode)) : Collections.emptyMap();
         for (PackageForecastDTO.PagingViewDTO item : list) {
-            String soCode = CollectionUtils.isNotEmpty(item.getDetailViewDTOList())?item.getDetailViewDTOList().get(0).getSoCode():"";
-            TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v->v.getSoCode().equals(soCode)).findFirst().orElse(new TransferDeclareDetailEntity());
-            TransferDeclareEntity transferDeclareEntity = transferDeclareEntityList.stream().filter(v->v.getId().equals(transferDeclareDetailEntity.getMainId())).findFirst().orElse(new TransferDeclareEntity());
-            item.setTransferDeclareCode(transferDeclareEntity.getCode());
-            String uploadStatus = item.getUploadStatus();
-            String uploadStatusName = PackageUploadStatusEnum.getName(uploadStatus);
-            item.setUploadStatusName(uploadStatusName);
-            String printStatus = item.getPrintStatus();
-            String printStatusName = PackagePrintStatusEnum.getName(printStatus);
-            item.setPrintStatusName(printStatusName);
-            for(PackageForecastDTO.PagingDetailViewDTO detail : item.getDetailViewDTOList()){
-                //跟踪单号
-                String trackNo = detail.getTrackNo();
-                String minPackageTransportNo = detail.getMinPackageTransportNo();
-                if (CharSequenceUtil.isBlank(trackNo)) {
-                    trackNo = minPackageTransportNo;
-                }
-                String subHandoverStatus = detail.getMinPackageHandoverStatus();
-                String subHandoverStatusName= HandoverSubStatusEnum.getByCode(subHandoverStatus);
-                detail.setMinPackageHandoverStatusName(subHandoverStatusName);
-                detail.setTrackNo(trackNo);
-                BigDecimal weight = detail.getWeight();
-                String weightUnit = detail.getWeightUnit();
-                String weightStr = weight + weightUnit;
-                detail.setWeightStr(weightStr);
+            List<PackageForecastDetailEntity> detailEntityList = forecastDetailMap.get(item.getId());
+            if (CollUtil.isNotEmpty(detailEntityList)){
+                String soCode = detailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).filter(StringUtils::isNotBlank).findFirst().orElse("");
+                item.setDetailViewDTOList(PackageForecastConverter.INSTANCE.convertPagingDetailViewList(detailEntityList));
+                item.setTransferDeclareCode(declareEntityMap.getOrDefault(detailSoCodeMap.getOrDefault(soCode, ""), ""));
             }
-            String handoverStatus = item.getHandoverStatus();
-            String handoverStatusName= HandoverStatusEnum.getByCode(handoverStatus);
-            item.setHandoverStatusName(handoverStatusName);
-
-            //第三方交接单号
-            String handoverNo = item.getHandoverNo();
-            //第三方组包号
-            String platformPackageNo = item.getPlatformPackageNo();
-            String platformNo = handoverNo + "/" + platformPackageNo;
-            item.setPlatformNo(platformNo);
-            BigDecimal totalPackageWeight = item.getTotalPackageWeight();
-            String totalPackageWeightUnit = item.getTotalPackageWeightUnit();
-            String totalPackageWeightStr = totalPackageWeight + totalPackageWeightUnit;
-            item.setTotalPackageWeightStr(totalPackageWeightStr);
+            item.setUploadStatusName(PackageUploadStatusEnum.getName(item.getUploadStatus()));
+            item.setPrintStatusName(PackagePrintStatusEnum.getName(item.getPrintStatus()));
+            item.setHandoverStatusName(HandoverStatusEnum.getByCode(item.getHandoverStatus()));
+            item.setPlatformNo(item.getHandoverNo() + "/" + item.getPlatformPackageNo());
+            item.setTotalPackageWeightStr(item.getTotalPackageWeight() + item.getTotalPackageWeightUnit());
         }
     }
 

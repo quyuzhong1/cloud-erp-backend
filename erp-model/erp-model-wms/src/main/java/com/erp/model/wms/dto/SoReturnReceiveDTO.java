@@ -728,6 +728,18 @@ public class SoReturnReceiveDTO {
          */
         private Integer realQty;
         /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
          * 退货类型
          */
         private String returnTypeDict;

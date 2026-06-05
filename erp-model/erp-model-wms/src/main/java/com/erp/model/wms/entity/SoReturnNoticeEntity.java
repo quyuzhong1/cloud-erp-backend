@@ -193,6 +193,11 @@ public class SoReturnNoticeEntity extends BaseEntity<SoReturnNoticeEntity> {
     @TableField("so_id")
     private String soId;
     /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+    /**
      * 比重
      */
     @TableField("currency")

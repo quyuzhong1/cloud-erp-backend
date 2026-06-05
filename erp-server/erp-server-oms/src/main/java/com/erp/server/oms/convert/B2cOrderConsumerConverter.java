@@ -124,6 +124,16 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "length", source = "maxLength"),
             @Mapping(target = "width", source = "maxWidth"),
             @Mapping(target = "height", source = "totalHeight"),
+            @Mapping(target = "declareOrgId", ignore = true),
+            @Mapping(target = "iossTaxNo", ignore = true),
+            @Mapping(target = "isUserSystem", ignore = true),
+            @Mapping(target = "pushPlatformCode", ignore = true),
+            @Mapping(target = "sourceSystem", ignore = true),
+            @Mapping(target = "trackNo", ignore = true),
+            @Mapping(target = "transferLogisticsChannelId", ignore = true),
+            @Mapping(target = "transferLogisticsSupplierId", ignore = true),
+            @Mapping(target = "planPackageNo", source = "dto.planPackageNo"),
+            @Mapping(target = "planSupplierId", source = "dto.planSupplierId")
     })
     SoB2cLogisticsEntity convertNewLogistics(PlatformOrderLogisticsDTO dto, String mainId, BigDecimal allNetWeight, BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight);
 

@@ -218,9 +218,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         String useOrgCode = "100";//客户是分配机制，所以要固定传递到唯迹，然后进行分配
         //使用组织
         resultMap.put("useOrgCode", useOrgCode);
-        List<DictBasicDTO.ViewDTO> customerCompanyCategory = dictBasicService.getByKey("customerCompanyCategory");
+        List<DictBasicEntity> customerCompanyCategory = dictBasicService.getByKey("customerCompanyCategory");
         if (CollectionUtils.isNotEmpty(customerCompanyCategory)) {
-            DictBasicDTO.ViewDTO viewDTO = customerCompanyCategory.stream().filter(req -> req.getValue().equals(entity.getCompanyCategoryDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            DictBasicEntity viewDTO = customerCompanyCategory.stream().filter(req -> req.getValue().equals(entity.getCompanyCategoryDict())).findFirst().orElse(new DictBasicEntity());
             //公司类型
             resultMap.put("companyCategory", viewDTO.getRemark());
         }
@@ -301,8 +301,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
                 resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
             }
         }
-        List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
-        DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+        List<DictBasicEntity> settleModeList = dictBasicService.getByKey("settleMode");
+        DictBasicEntity settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicEntity());
         resultMap.put("settleModeCode", settleMode.getRemark());
         List<KingdeeReceiptConditionEntity> collectionTermsList = kingdeeReceiptConditionService.list();
         KingdeeReceiptConditionEntity collectionTerms = collectionTermsList.stream().filter(req -> req.getId().equals(entity.getConditionDict())).findFirst().orElse(new KingdeeReceiptConditionEntity());

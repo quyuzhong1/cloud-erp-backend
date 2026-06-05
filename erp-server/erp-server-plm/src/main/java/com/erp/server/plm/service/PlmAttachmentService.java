@@ -42,6 +42,9 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * @return void
      */
     List<PlmAttachmentEntity> listByBusinessIds(List<String> businessIdList);
+
+
+    void edit(AttachmentDTO.EditDTO editDTO);
     /**
      * @description: 上传
      * @author Will
@@ -75,4 +78,5 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
     List<AttachmentDTO.CommonDTO> getUrlById(String id);
 
     List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id, String businessId, LocalDateTime createTime);
+    List<PlmAttachmentEntity> listByBusinessIdAndType(String businessId,String type);
 }

@@ -608,14 +608,16 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         //上传nfe
         String uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        String remark = "";
         try  {
             nfeInvoiceService.uploadNfeInvoice(soB2cEntity);
         } catch (Exception e) {
             log.error("上传文件失败，返回信息{}", e.getMessage());
             uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
+            remark = e.getMessage();
         }
         //更新上传状态
-        this.updateInvoiceUploadStatus(invoiceId,uploadStatus);
+        this.updateInvoiceUploadStatus(invoiceId,uploadStatus,remark);
         //更新b2c上传状态
         soB2cService.updateNfeInvoiceStatus(soB2cEntity.getId(), uploadStatus);
 
@@ -631,9 +633,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
      * @return void
      */
     private void updateInvoiceUploadStatus (String id,String uploadStatus) {
+        updateInvoiceUploadStatus(id, uploadStatus, null);
+    }
+
+    private void updateInvoiceUploadStatus (String id,String uploadStatus, String remark) {
         lambdaUpdate().eq(InvoiceInfoEntity::getId,id)
                 .set(InvoiceInfoEntity::getUploadStatus,uploadStatus)
                 .set(InvoiceInfoEntity::getUploadTime,LocalDateTime.now())
+                .set(InvoiceInfoEntity::getRemark, CharSequenceUtil.nullToEmpty(remark))
                 .update();
     }
 

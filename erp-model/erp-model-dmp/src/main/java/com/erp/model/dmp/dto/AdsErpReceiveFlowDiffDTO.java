@@ -100,7 +100,14 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
       	/**
            * 核算周期
            */
+          @NotBlank(message = "核算周期不能为空")
           private String checkMonth;
+
+          /**
+           * 核对仓库,http://172.16.100.11:3002/project/119/interface/api/39485
+           */
+          @NotBlank(message = "核对仓库不能为空")
+          private String sourceSystem;
       }
       
       @Data
@@ -122,16 +129,6 @@ public class AdsErpReceiveFlowDiffDTO implements Serializable {
       @NoArgsConstructor
       @AllArgsConstructor
       public static class ExportParamDTO extends PagingParamDTO{
-      	/**
-           * 主键id
-           */
-          private List<String> ids;
-      }
-      
-      @Data
-      @NoArgsConstructor
-      @AllArgsConstructor
-      public static class UpdateErpDTO extends PagingParamDTO{
       	/**
            * 主键id
            */

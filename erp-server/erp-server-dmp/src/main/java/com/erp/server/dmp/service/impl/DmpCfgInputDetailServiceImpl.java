@@ -1,11 +1,26 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,26 +43,31 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpCfgInputExecSystemEnum;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.dmp.enums.InventoryMonthCheckEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.mapper.DmpCfgInputDetailMapper;
-import com.erp.server.dmp.service.*;
+import com.erp.server.dmp.service.AdsErpInventoryDiffFlowService;
+import com.erp.server.dmp.service.DmpBasicSystemService;
+import com.erp.server.dmp.service.DmpCfgInputDetailService;
+import com.erp.server.dmp.service.DmpCfgInputService;
+import com.erp.server.dmp.service.DmpCfgOutputDetailService;
+import com.erp.server.dmp.service.DmpInputTaskService;
+import com.erp.server.dmp.service.OperateLogService;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 /**
  * <p>
  * 拉取调度 服务实现类
@@ -73,6 +93,10 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     private DmpCfgInputService dmpCfgInputService;
     @Resource
     private DmpInputCreateFactory dmpInputCreateFactory;
+    @Resource
+    private DmpInputTaskService dmpInputTaskService;
+    @Resource
+    private AdsErpInventoryDiffFlowService adsErpInventoryDiffFlowService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -398,4 +422,75 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
         dmpInputHotfixCreateRequest.setNextExecTime(dto.getNextExecTime());
         return dmpInputHotfixCreateRequest;
     }
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public BatchResultDTO reCreateInventoryMonthCheck(InventoryMonthCheckEnum inventoryMonthCheckEnum, String checkMonth,
+			String sourceSystem) {
+		if(sourceSystem == null) {
+			sourceSystem = "";
+		}
+		String finCheckMonth = checkMonth.replace("-", "年") + "月";
+		String code = inventoryMonthCheckEnum.getCode();
+		Map<String, DmpCfgInputEntity> dmpCfgInputEntityMap = dmpCfgInputService.lambdaQuery().eq(DmpCfgInputEntity::getCode, code).list()
+				.stream().collect(Collectors.toMap(DmpCfgInputEntity::getId, d -> d));
+		List<DmpCfgInputDetailEntity> dmpCfgInputDetailEntityList = lambdaQuery().in(DmpCfgInputDetailEntity::getMainId, dmpCfgInputEntityMap.keySet())
+					 .eq(DmpCfgInputDetailEntity::getNextLevelId, sourceSystem)
+					 .list();
+		if(CollUtil.isEmpty(dmpCfgInputDetailEntityList)) {
+			ServiceException.runError(sourceSystem + "账号未配置重新生成任务");
+		}
+		DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpCfgInputDetailEntityList.get(0);
+		DmpCfgInputEntity dmpCfgInputEntity = dmpCfgInputEntityMap.get(dmpCfgInputDetailEntity.getMainId());
+		
+		String id = dmpCfgInputDetailEntity.getId();
+		
+		List<DmpInputTaskEntity> dmpInputTaskEntityList = dmpInputTaskService.lambdaQuery()
+				.eq(DmpInputTaskEntity::getCfgInputId, dmpCfgInputEntity.getId())
+				.eq(DmpInputTaskEntity::getNextLevelId, sourceSystem)
+				.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
+				.list().stream().filter(d -> StringUtils.isNotBlank(d.getExtendJson()) && d.getExtendJson().contains(finCheckMonth)).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(dmpInputTaskEntityList)) {
+			for(DmpInputTaskEntity dmpInputTaskEntity : dmpInputTaskEntityList) {
+				if(DmpInputTaskStatusEnum.ERROR.getCode().equals(dmpInputTaskEntity.getStatus())) {
+					dmpInputTaskService.lambdaUpdate()
+					.set(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.INIT.getCode())
+					.set(DmpInputTaskEntity::getErrorCount, 0)
+					.eq(DmpInputTaskEntity::getId, dmpInputTaskEntity.getId())
+					.update();
+					return BatchResultDTO.success(dmpInputTaskEntity.getId(), dmpInputTaskEntity.getId());
+				}
+			}
+			ServiceException.runError("此仓库的" + inventoryMonthCheckEnum.getName() + "在" + checkMonth + "已生成任务，正在等待执行，任务号：" 
+		+ dmpInputTaskEntityList.stream().map(DmpInputTaskEntity::getId).collect(Collectors.joining("、")));
+		}
+		
+		DmpCfgInputDetailDTO.DoTaskDTO dto = new DmpCfgInputDetailDTO.DoTaskDTO();
+		
+		dto.setIds(Arrays.asList(id));
+		dto.setStartTime(LocalDateTime.now());
+		dto.setEndTime(LocalDateTime.now().plusMinutes(1));
+		dto.setExecTimeout(3600);
+		
+		Map<String, Object> map = new HashMap<>();
+		map.put("checkMonth", finCheckMonth);
+		dto.setDetailExtendJson(JSON.toJSONString(map));
+		dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+		
+		BatchResultDTO doTask = doTask(id, dto, dmpCfgInputEntity, dmpCfgInputDetailEntity);
+		
+		String finSourceSystem = sourceSystem;
+		if (TransactionSynchronizationManager.isActualTransactionActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+				@Override
+	            public void afterCommit() {
+	            	adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
+	            }
+	        });
+		}else {
+			// 无事务时直接调用
+			adsErpInventoryDiffFlowService.updateReCreateInventoryMonthCheck(inventoryMonthCheckEnum, finCheckMonth, finSourceSystem);
+		}
+		return doTask;
+	}
 }
