@@ -38,40 +38,6 @@
         user_id, user_name, dept_id, dept_name, sku_no, product_name, use_user_id, use_user_name, qty
     </sql>
 
-    <sql id="SampleLedger_List_Column_List">
-            sl.id,
-            sl.create_user_id,
-            sl.create_user_name,
-            sl.create_time,
-            sl.update_user_id,
-            sl.update_user_name,
-            sl.update_time,
-            sl.version,
-            sl.is_deleted,
-            sl.user_id,
-            sl.user_name,
-            sl.dept_id,
-            sl.dept_name,
-            sl.sku_no,
-            sl.product_name,
-            ps.sale_state,
-            sl.use_user_id,
-            sl.use_user_name,
-            sl.qty,
-            sl.sku_id
-    </sql>
-
-    <sql id="Product_Sale_Join">
-        LEFT JOIN LATERAL (
-            SELECT sale_state
-            FROM product_sale
-            WHERE sku_id = sl.sku_id
-              AND is_deleted = FALSE
-            ORDER BY update_time DESC NULLS LAST, create_time DESC NULLS LAST, id DESC
-            LIMIT 1
-        ) ps ON TRUE
-    </sql>
-
     <sql id="listSku">
         SELECT
         sl.id as sampleLedgerId,
@@ -202,9 +168,28 @@
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
         SELECT
-        <include refid="SampleLedger_List_Column_List"/>
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            ps.sale_state,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
         FROM sample_ledger sl
-        <include refid="Product_Sale_Join"/>
+        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
@@ -246,9 +231,28 @@
     <!-- 分页导出Excel查询 -->
     <select id="listExport" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
         SELECT
-        <include refid="SampleLedger_List_Column_List"/>
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            ps.sale_state,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
         FROM sample_ledger sl
-        <include refid="Product_Sale_Join"/>
+        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
@@ -282,9 +286,28 @@
     <!-- 移动端分页查询 -->
     <select id="pagingApp" resultType="com.erp.model.wms.dto.SampleLedgerDTO$ListDTO">
         SELECT
-        <include refid="SampleLedger_List_Column_List"/>
+            sl.id,
+            sl.create_user_id,
+            sl.create_user_name,
+            sl.create_time,
+            sl.update_user_id,
+            sl.update_user_name,
+            sl.update_time,
+            sl.version,
+            sl.is_deleted,
+            sl.user_id,
+            sl.user_name,
+            sl.dept_id,
+            sl.dept_name,
+            sl.sku_no,
+            sl.product_name,
+            ps.sale_state,
+            sl.use_user_id,
+            sl.use_user_name,
+            sl.qty,
+            sl.sku_id
         FROM sample_ledger sl
-        <include refid="Product_Sale_Join"/>
+        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
