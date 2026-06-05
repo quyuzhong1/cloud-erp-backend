@@ -1173,6 +1173,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isValidAttachmentId(String attachmentId) {
+        // 历史页面可能把空附件ID序列化成字符串 "null"，这里保留兼容兜底。
         return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
     }
 
@@ -1671,6 +1672,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
         if (CollUtil.isEmpty(detailList)) {
+            // OMS Feign 契约直接返回明细 List，非 ApiResult 包装；null 表示调用异常或无有效返回。
             List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
             if (soDetailList == null) {
                 throw new ServiceException("获取销售订单明细失败，请稍后重试");

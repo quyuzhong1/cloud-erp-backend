@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
 import com.erp.model.wms.entity.B2bCustomerPackingEntity;
@@ -59,7 +60,10 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
                 entityList.add(toEntity(mainId, box, line, line.getSort() != null ? line.getSort() : sort++));
             }
         }
-        super.saveBatch(entityList, 500);
+        boolean saved = super.saveBatch(entityList, 500);
+        if (!saved) {
+            throw new ServiceException("B2B客户装箱明细批量保存失败");
+        }
         saveBoxAttachments(packingList, entityList);
         return entityList;
     }

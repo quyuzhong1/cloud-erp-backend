@@ -53,6 +53,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
+    // WMS 私有业务字典 type：配置店铺和军区均为全部时跳过重复绑定校验的平台编码。
     private static final String VM_CHANNEL_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
 
     @Resource
