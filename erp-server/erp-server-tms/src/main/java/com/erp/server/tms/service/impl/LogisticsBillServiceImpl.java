@@ -1097,7 +1097,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         for (LogisticsBillDetailEntity detailEntity : list) {
             addDTO.setLogisticsBillDetailId(detailEntity.getId());
             addDTO.setTrackNo(detailEntity.getTrackNo());
-            logisticsBillCostService.add(addDTO);
+            logisticsBillCostService.add(addDTO, null);
         }
     }
 
