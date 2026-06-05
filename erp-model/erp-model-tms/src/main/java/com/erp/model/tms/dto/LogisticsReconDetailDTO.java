@@ -80,6 +80,22 @@ public class LogisticsReconDetailDTO implements Serializable {
          */
         private String mainId;
         /**
+         * 对账月份（展示格式：yyyy年M月份）
+         */
+        private String reconciliationMonth;
+        /**
+         * 物流商/平台 id
+         */
+        private String supplierId;
+        /**
+         * 物流商/平台名称
+         */
+        private String supplierName;
+        /**
+         * 来源表（主表 sheet 名称）
+         */
+        private String sheetName;
+        /**
          * Excel 原始行号
          */
         private Integer rowNo;

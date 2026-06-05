@@ -23,8 +23,10 @@
         <result column="currency" property="currency"/>
         <result column="settlement_currency" property="settlementCurrency"/>
         <result column="settlement_exchange_rate" property="settlementExchangeRate"/>
+        <result column="settlement_amount" property="settlementAmount"/>
         <result column="local_currency" property="localCurrency"/>
         <result column="local_exchange_rate" property="localExchangeRate"/>
+        <result column="local_amount" property="localAmount"/>
         <result column="match_status" property="matchStatus"/>
         <result column="match_fail_reason" property="matchFailReason"/>
         <result column="reconciliation_status" property="reconciliationStatus"/>
@@ -33,7 +35,8 @@
     <sql id="Base_Column_List">
         id, main_id, detail_id, seq_no, cost_name, cfg_cost_id, cfg_cost_name,
         actual_amount, estimated_amount, currency,
-        settlement_currency, settlement_exchange_rate, local_currency, local_exchange_rate,
+        settlement_currency, settlement_exchange_rate, settlement_amount,
+        local_currency, local_exchange_rate, local_amount,
         match_status, match_fail_reason, reconciliation_status
     </sql>
 

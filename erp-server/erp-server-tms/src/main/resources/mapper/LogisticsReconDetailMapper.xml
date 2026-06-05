@@ -49,6 +49,10 @@
             sub.id AS id,
             sub.detail_id AS detailId,
             d.main_id AS mainId,
+            r.reconciliation_month AS reconciliationMonth,
+            r.supplier_id AS supplierId,
+            r.supplier_name AS supplierName,
+            r.sheet_name AS sheetName,
             d.row_no AS rowNo,
             sub.seq_no AS seqNo,
             d.so_code AS soCode,
@@ -81,6 +85,8 @@
         FROM logistics_recon_detail_sub sub
         INNER JOIN logistics_recon_detail d
             ON d.id = sub.detail_id AND d.is_deleted = false
+        INNER JOIN logistics_recon r
+            ON r.id = d.main_id AND r.is_deleted = false
         WHERE ${params.sqlMap.default}
         and sub.is_deleted = false
         AND d.main_id = #{params.mainId}

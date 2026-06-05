@@ -106,7 +106,7 @@ public class LogisticsReconDTO implements Serializable {
          */
         private String code;
         /**
-         * 对账月份 YYYY-MM
+         * 对账月份（展示格式：yyyy年M月份）
          */
         private String reconciliationMonth;
         /**

@@ -6,6 +6,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
+import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
 import com.erp.model.tms.dto.excel.LogisticsReconImportExcelDTO;
@@ -42,6 +43,11 @@ public class LogisticsReconExcelListener extends AnalysisEventListener<Map<Integ
 
     private final LogisticsReconService logisticsReconService = SpringUtil.getBean(LogisticsReconService.class);
     private final DownloadTaskFeign downloadTaskFeign = SpringUtil.getBean(DownloadTaskFeign.class);
+
+    /**
+     * 文件级本位币汇率缓存（按币别，跨批次复用，每种币别仅查一次 DMP）
+     */
+    private final Map<String, BigDecimal> rateCache = new HashMap<>();
 
     /**
      * 表头
@@ -160,7 +166,7 @@ public class LogisticsReconExcelListener extends AnalysisEventListener<Map<Integ
     private void flush() {
         int rowNoStart = flushedRows + 1;
         LogisticsReconBatchResultDTO result =
-                logisticsReconService.handleReconImportBatch(buffer, headMap, rowNoStart, dto, importCfg, cfgDetails);
+                logisticsReconService.handleReconImportBatch(buffer, headMap, rowNoStart, dto, importCfg, cfgDetails, rateCache);
         errorList.addAll(result.getErrorList());
         detailCount += result.getDetailCount();
         subCount += result.getSubCount();
@@ -178,7 +184,11 @@ public class LogisticsReconExcelListener extends AnalysisEventListener<Map<Integ
      * @return String
      */
     public String resolveCurrency() {
-        return currencies.size() == 1 ? currencies.iterator().next() : "";
+        if (currencies.size() == 1) {
+            return currencies.iterator().next();
+        }
+        // 无费用项本位币时默认人民币；存在多本位币时不武断回填，置空由后续处理
+        return currencies.isEmpty() ? CurrencyEnum.CNY.getCurrencyCode() : "";
     }
 
     /**

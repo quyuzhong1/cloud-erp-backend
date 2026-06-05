@@ -95,6 +95,13 @@ public class LogisticsReconDetailSubEntity extends BaseEntity<LogisticsReconDeta
     private BigDecimal settlementExchangeRate;
 
     /**
+     * 结算金额（冗余：原币金额 × 结算汇率，结算币计）
+     * TODO 待结算币/结算汇率逻辑接入后回填，当前导入暂不写入
+     */
+    @TableField("settlement_amount")
+    private BigDecimal settlementAmount;
+
+    /**
      * 本位币币别（沿用 ERP *_local_currency 命名，通常为公司本位币如 CNY）
      */
     @TableField("local_currency")
@@ -105,6 +112,12 @@ public class LogisticsReconDetailSubEntity extends BaseEntity<LogisticsReconDeta
      */
     @TableField("local_exchange_rate")
     private BigDecimal localExchangeRate;
+
+    /**
+     * 本位币金额（冗余：原币金额 × 本位币汇率，本位币计）
+     */
+    @TableField("local_amount")
+    private BigDecimal localAmount;
 
     /**
      * 费用项匹配状态  枚举：LogisticsReconDetailMatchStatusEnum
@@ -137,8 +150,10 @@ public class LogisticsReconDetailSubEntity extends BaseEntity<LogisticsReconDeta
     public static final String CURRENCY = "currency";
     public static final String SETTLEMENT_CURRENCY = "settlement_currency";
     public static final String SETTLEMENT_EXCHANGE_RATE = "settlement_exchange_rate";
+    public static final String SETTLEMENT_AMOUNT = "settlement_amount";
     public static final String LOCAL_CURRENCY = "local_currency";
     public static final String LOCAL_EXCHANGE_RATE = "local_exchange_rate";
+    public static final String LOCAL_AMOUNT = "local_amount";
     public static final String MATCH_STATUS = "match_status";
     public static final String MATCH_FAIL_REASON = "match_fail_reason";
     public static final String RECONCILIATION_STATUS = "reconciliation_status";
