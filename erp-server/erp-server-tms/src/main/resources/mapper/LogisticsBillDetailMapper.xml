@@ -41,6 +41,23 @@
         lbd.register_status,
         lbd.register_result
     </sql>
+
+    <sql id="thirdChannelRefColumns">
+        ltcr.id AS cfgId,
+        ltcr.create_time as cfgTime,
+        ltcr.platform_type as platformType,
+        ltcr.third_channel_name as thirdChannelName,
+        ltcr.is_push_mobile as isPushMobile,
+        ltcr.push_type as pushType
+    </sql>
+
+    <sql id="thirdChannelRefBaseWhere">
+        ltcr.disabled = false
+        AND ltcr.is_deleted = false
+        AND ltcr.platform_type = #{platformType}
+        AND ltcr.dict_platform = lb.sales_platform
+    </sql>
+
     <update id="updateTransportNo">
         update logistics_bill_detail
         set
@@ -153,53 +170,61 @@
             </if>
         </where>
     </select>
+
     <select id="listWaitingRegisterByConfig" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
         SELECT
-            lbd.id,
-            lbd.track_no,
-            lbd.platform_order_no,
-            lbd.register_status,
-            lb.carrier_id AS carrierId,
-            lb.tel_number AS telNumber,
-            lb.channel_id AS channelId,
-            lb.channel_name AS channelName,
-            lb.transport_no AS transportNo,
-            lb.sales_platform AS salesPlatform,
-            lb.shop_id AS shopId,
-            lc.track_query_type AS trackQueryType,
-            best_match.cfgId as thirdRefId,
-            best_match.cfgTime,
-            best_match.thirdChannelName,
-            best_match.isPushMobile,
-            best_match.pushType,
-            best_match.platformType,
-            lb.delivery_time
+        lbd.id,
+        lbd.track_no,
+        lbd.platform_order_no,
+        lbd.register_status,
+        lb.carrier_id AS carrierId,
+        lb.tel_number AS telNumber,
+        lb.channel_id AS channelId,
+        lb.channel_name AS channelName,
+        lb.transport_no AS transportNo,
+        lb.sales_platform AS salesPlatform,
+        lb.shop_id AS shopId,
+        lc.track_query_type AS trackQueryType,
+        best_match.cfgId as thirdRefId,
+        best_match.cfgTime,
+        best_match.thirdChannelName,
+        best_match.isPushMobile,
+        best_match.pushType,
+        best_match.platformType,
+        lb.delivery_time
         FROM logistics_bill_detail lbd
         INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
         INNER JOIN LATERAL (
-        SELECT ltcr.id AS cfgId,
-               ltcr.create_time as cfgTime,
-               ltcr.platform_type as platformType,
-               ltcr.third_channel_name as thirdChannelName ,
-               ltcr.is_push_mobile as isPushMobile,
-               ltcr.push_type as pushType
+        SELECT matched.cfgId,
+        matched.cfgTime,
+        matched.platformType,
+        matched.thirdChannelName,
+        matched.isPushMobile,
+        matched.pushType
+        FROM (
+        SELECT <include refid="thirdChannelRefColumns"/>,
+        1 as priority
         FROM logistics_third_channel_ref ltcr
-        WHERE  ltcr.disabled = false
-        AND ltcr.is_deleted = false
-        AND ltcr.platform_type = #{platformType}
-        AND ltcr.dict_platform = lb.sales_platform
-        AND (
-        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id) OR
-        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all') OR
-        (ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
-        )
-        ORDER BY
-        CASE
-        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id THEN 1
-        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all' THEN 2
-        WHEN ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all' THEN 3
-        END ASC
+        WHERE <include refid="thirdChannelRefBaseWhere"/>
+        AND ltcr.logistics_supplier_id = lb.logistics_supplier_id
+        AND ltcr.logistics_channel_id = lb.channel_id
+        UNION ALL
+        SELECT <include refid="thirdChannelRefColumns"/>,
+        2 as priority
+        FROM logistics_third_channel_ref ltcr
+        WHERE <include refid="thirdChannelRefBaseWhere"/>
+        AND ltcr.logistics_supplier_id = lb.logistics_supplier_id
+        AND ltcr.logistics_channel_id = 'all'
+        UNION ALL
+        SELECT <include refid="thirdChannelRefColumns"/>,
+        3 as priority
+        FROM logistics_third_channel_ref ltcr
+        WHERE <include refid="thirdChannelRefBaseWhere"/>
+        AND ltcr.logistics_supplier_id = 'all'
+        AND ltcr.logistics_channel_id = 'all'
+        ) matched
+        ORDER BY matched.priority
         LIMIT 1
         ) AS best_match ON TRUE
         WHERE lbd.is_deleted = false
@@ -209,36 +234,37 @@
         <if test="query.trackEndTime != null">
             and lbd.track_time  &lt; #{query.trackEndTime}
         </if>
-          <if test="query.registerStatus != null">
+        <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
-          </if>
-          <if test="query.trackEnable != null">
+        </if>
+        <if test="query.trackEnable != null">
             and lbd.track_enable = #{query.trackEnable}
-          </if>
-          AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
-          AND (lbd.track_no != '' OR lb.transport_no != '')
-          <if test="query.transportType != null and query.transportType == 'expressDelivery'">
-              AND lb.order_type IN ('B2B','B2C','AfterSale')
-          </if>
-          <if test="query.transportType != null and query.transportType == 'ocean'">
-              AND lb.order_type = 'firstMile'
-          </if>
-          <if test="query.trackNoList != null and query.trackNoList.size > 0">
-              AND lbd.track_no IN
-              <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
-                  #{item}
-              </foreach>
-          </if>
-          <if test="query.transportNoList != null and query.transportNoList.size > 0">
-              AND lb.transport_no IN
-              <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
-                  #{item}
-              </foreach>
-          </if>
-          <if test="query.salesPlatform != null and query.salesPlatform != ''">
-              and lb.sales_platform = #{query.salesPlatform}
-          </if>
-            AND lb.delivery_time &gt;= best_match.cfgTime
+        </if>
+        AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
+        AND (lbd.track_no != '' OR lb.transport_no != '')
+        <if test="query.transportType != null and query.transportType == 'expressDelivery'">
+            AND lb.order_type IN ('B2B','B2C','AfterSale')
+        </if>
+        <if test="query.transportType != null and query.transportType == 'ocean'">
+            AND lb.order_type = 'firstMile'
+        </if>
+        <if test="query.trackNoList != null and query.trackNoList.size > 0">
+            AND lbd.track_no IN
+            <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.transportNoList != null and query.transportNoList.size > 0">
+            AND lb.transport_no IN
+            <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.salesPlatform != null and query.salesPlatform != ''">
+            and lb.sales_platform = #{query.salesPlatform}
+        </if>
+        AND lb.delivery_time &gt;= best_match.cfgTime
         ORDER BY lbd.update_time,lbd.version
     </select>
+
 </mapper>

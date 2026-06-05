@@ -294,7 +294,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if(CollectionUtils.isEmpty(list)){
             return;
         }
-        List<DictBasicDTO.ViewDTO> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
+        List<DictBasicEntity> declareTypeDict = dictBasicService.getByKey(DictBasicEnum.DECLARE_DECLARE_TYPE.getType());
         List<String> sourceCodes = list.stream().map(TmsDeclareBillDTO.PagingVO::getSourceCode).collect(Collectors.toList());
         List<String> allMergeSourceIds = list.stream()
                 .map(obj -> obj.getMergeSourceId().split(","))
@@ -334,7 +334,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
 
         list.forEach(v->{
             v.setDeclareStatusName(EnumMessage.getNameByCode(com.erp.model.tms.enums.DeclareStatusEnum.class,v.getDeclareStatus()));
-            DictBasicDTO.ViewDTO declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            DictBasicEntity declareType = declareTypeDict.stream().filter(e->e.getCode().equals(v.getDeclareType())).findFirst().orElse(new DictBasicEntity());
             v.setDeclareTypeName(declareType.getName());
             List<String> sourceCodeList = new ArrayList<>();
             sourceCodeList.add(v.getSourceCode());

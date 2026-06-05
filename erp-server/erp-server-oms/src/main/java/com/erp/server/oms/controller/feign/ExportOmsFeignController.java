@@ -260,7 +260,7 @@ public class ExportOmsFeignController {
     )
     @WebAdvanceQuery
     public PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
-        return soB2cRefundService.exportRefund(dto);
+        return soB2cRefundService.paging(dto);
     }
 
     @PostMapping("/exportSoB2cReturn")

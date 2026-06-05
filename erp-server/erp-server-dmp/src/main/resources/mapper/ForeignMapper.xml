@@ -2,6 +2,23 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.dmp.mapper.ForeignMapper">
 
+
+    <sql id="thirdChannelRefColumns">
+        ltcr.id AS cfgId,
+        ltcr.create_time as cfgTime,
+        ltcr.platform_type as platformType,
+        ltcr.third_channel_name as thirdChannelName,
+        ltcr.is_push_mobile as isPushMobile,
+        ltcr.push_type as pushType
+    </sql>
+
+    <sql id="thirdChannelRefBaseWhere">
+        ltcr.disabled = false
+        AND ltcr.is_deleted = false
+        AND ltcr.platform_type = #{platformType}
+        AND ltcr.dict_platform = lb.sales_platform
+    </sql>
+
     <select id="listTrackDto" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
         select
         lbd.id,
@@ -77,28 +94,35 @@
         INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
         LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
         INNER JOIN LATERAL (
-        SELECT ltcr.id AS cfgId,
-        ltcr.create_time as cfgTime,
-        ltcr.platform_type as platformType,
-        ltcr.third_channel_name as thirdChannelName ,
-        ltcr.is_push_mobile as isPushMobile,
-        ltcr.push_type as pushType
+        SELECT matched.cfgId,
+        matched.cfgTime,
+        matched.platformType,
+        matched.thirdChannelName,
+        matched.isPushMobile,
+        matched.pushType
+        FROM (
+        SELECT <include refid="thirdChannelRefColumns"/>,
+        1 as priority
         FROM logistics_third_channel_ref ltcr
-        WHERE  ltcr.disabled = false
-        AND ltcr.is_deleted = false
-        AND ltcr.platform_type = #{platformType}
-        AND ltcr.dict_platform = lb.sales_platform
-        AND (
-        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id) OR
-        (ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all') OR
-        (ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all')
-        )
-        ORDER BY
-        CASE
-        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = lb.channel_id THEN 1
-        WHEN ltcr.logistics_supplier_id = lb.logistics_supplier_id AND ltcr.logistics_channel_id = 'all' THEN 2
-        WHEN ltcr.logistics_supplier_id = 'all' AND ltcr.logistics_channel_id = 'all' THEN 3
-        END ASC
+        WHERE <include refid="thirdChannelRefBaseWhere"/>
+        AND ltcr.logistics_supplier_id = lb.logistics_supplier_id
+        AND ltcr.logistics_channel_id = lb.channel_id
+        UNION ALL
+        SELECT <include refid="thirdChannelRefColumns"/>,
+        2 as priority
+        FROM logistics_third_channel_ref ltcr
+        WHERE <include refid="thirdChannelRefBaseWhere"/>
+        AND ltcr.logistics_supplier_id = lb.logistics_supplier_id
+        AND ltcr.logistics_channel_id = 'all'
+        UNION ALL
+        SELECT <include refid="thirdChannelRefColumns"/>,
+        3 as priority
+        FROM logistics_third_channel_ref ltcr
+        WHERE <include refid="thirdChannelRefBaseWhere"/>
+        AND ltcr.logistics_supplier_id = 'all'
+        AND ltcr.logistics_channel_id = 'all'
+        ) matched
+        ORDER BY matched.priority
         LIMIT 1
         ) AS best_match ON TRUE
         WHERE lbd.is_deleted = false

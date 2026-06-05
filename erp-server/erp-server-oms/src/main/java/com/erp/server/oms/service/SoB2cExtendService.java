@@ -63,4 +63,6 @@ public interface SoB2cExtendService extends SuperService<SoB2cExtendEntity> {
     List<FullyManagedDTO.WarningDTO> fullyManagedOrderMsgWarning(Integer offsetMinutes);
 
     void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
+
+    List<SoB2cExtendEntity> listByMainIds(List<String> ids);
 }

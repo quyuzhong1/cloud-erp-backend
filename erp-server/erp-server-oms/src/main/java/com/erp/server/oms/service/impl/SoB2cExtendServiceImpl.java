@@ -12,6 +12,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.FullyManagedDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cExtendEntity;
@@ -113,7 +114,7 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
     @Override
     public SoB2cExtendEntity getByMainId(String id) {
         if (CharSequenceUtil.isNotBlank(id)){
-            return lambdaQuery().eq(SoB2cExtendEntity::getMainId,id).one();
+            return lambdaQuery().eq(SoB2cExtendEntity::getMainId,id).last("limit 1 ").one();
         }
         return null;
     }
@@ -149,11 +150,11 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
 
     @Override
     public List<FullyManagedDTO.WarningDTO> fullyManagedOrderMsgWarning(Integer offsetMinutes) {
-        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+        List<DictBasicEntity> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
         if (CollUtil.isEmpty(dtoList)){
             return Collections.emptyList();
         }
-        return baseMapper.fullyManagedOrderMsgWarning(offsetMinutes,dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+        return baseMapper.fullyManagedOrderMsgWarning(offsetMinutes,dtoList.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
     }
 
     @Override
@@ -175,5 +176,13 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
             handleData(soB2cExtendEntity, mainEntity);
             super.updateById(soB2cExtendEntity);
         }
+    }
+
+    @Override
+    public List<SoB2cExtendEntity> listByMainIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoB2cExtendEntity::getMainId, ids).list();
     }
 }
