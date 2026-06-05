@@ -8,7 +8,6 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
@@ -159,18 +158,16 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                             errorMsgList.add("格式错误，正确格式如：运费/物流费用");
                         }else {
                             targetDetailFieldName = targetDetailFieldName.trim();
-                            String type ="";
-                            if(Objects.equals(businessType, SourceTypeEnum.LOGISTICS_BILL_COST.getCode())){
-                                type = DictCostAttributionEnum.SELF_DELIVER.getCode();
-                            }else {
-                                type = DictCostAttributionEnum.LAST_MILE.getCode();
-                            }
+                            // 审查说明：费用配置导入的尾程费用项统一从“尾程发货”归属查询，不改业务单据类型。
+                            String type = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
                             List<TmsCfgCostEntity> tmsCfgCostEntities = tmsCfgCostGroup.get(type);
 
                             List<String> list = Arrays.asList(targetDetailFieldName.split("/"));
                             AllocationFeeTypeEnum allocationFeeTypeCode = AllocationFeeTypeEnum.getByName(list.get(0));
                             if(Objects.isNull(allocationFeeTypeCode)){
                                 errorMsgList.add("【"+list.get(0)+"】不存在");
+                            }else if(CollUtil.isEmpty(tmsCfgCostEntities)){
+                                errorMsgList.add("费用管理尾程发货未配置费用项");
                             }else {
                                 TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostEntities.stream()
                                         .filter(e -> Objects.equals(allocationFeeTypeCode.getCode(), e.getDictCostCategory()) && Objects.equals(list.get(1), e.getCostName()))
@@ -230,6 +227,9 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                 String code = CfgLogisticsCostImportImportTypeEnum.getCode(s);
                 if(StringUtils.isBlank(code)){
                     errorMsgList.add("【"+s+"】不存在");
+                } else if (CfgLogisticsCostImportImportTypeEnum.isTemporarilyDisabled(code)) {
+                    // 审查说明：Excel 导入也禁止绕过页面选择“导入新增(按新单)”。
+                    errorMsgList.add("【导入新增(按新单)】暂不支持使用");
                 }
             }
             excelDTO.setImportTypeList(Arrays.stream(split)

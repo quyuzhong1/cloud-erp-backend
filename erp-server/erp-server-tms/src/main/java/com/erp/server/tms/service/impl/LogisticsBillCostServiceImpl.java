@@ -118,6 +118,7 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_B
 @Service
 public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBillCostMapper, LogisticsBillCostEntity> implements LogisticsBillCostService {
     private static final int IMPORT_CONFIRM_BATCH_SIZE = 1000;
+    private static final String LAST_MILE_FEE_ATTRIBUTION = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
     @Resource
     private OperateLogService operateLogService;
 
@@ -214,6 +215,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败");
         }
+        validateLastMileDeliveryCostConfig(addDTO.getCostDetailList());
         //添加费用明细
         tmsCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId(), DictCostAttributionEnum.SELF_DELIVER);
 
@@ -337,6 +339,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostEntity));
         }
+        validateLastMileDeliveryCostConfig(updateDTO.getCostDetailList());
         //更新费用明细
         tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER,isImport);
 
@@ -345,6 +348,27 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "尾程费用(自发货)");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillCostEntity, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), msg);
         return new BaseResultDTO.UpdateDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
+    }
+
+    private void validateLastMileDeliveryCostConfig(List<? extends TmsCostDetailDTO.CommonDTO> costDetailList) {
+        if (CollUtil.isEmpty(costDetailList)) {
+            return;
+        }
+        List<String> cfgCostIdList = costDetailList.stream()
+                .map(TmsCostDetailDTO.CommonDTO::getCfgCostId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgCostIdList)) {
+            return;
+        }
+        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
+        boolean hasInvalid = cfgCostList.size() != cfgCostIdList.size()
+                || cfgCostList.stream().anyMatch(cfgCost -> !CharSequenceUtil.equals(cfgCost.getDictCostAttribution(), LAST_MILE_FEE_ATTRIBUTION));
+        if (hasInvalid) {
+            // 审查说明：尾程自发货/三方发货编辑费用项必须来自“尾程发货”归属，主单 type 不在这里改变。
+            throw new ServiceException("尾程费用项必须选择【尾程发货】费用配置");
+        }
     }
 
     @Override
@@ -774,6 +798,28 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
     }
 
+    @Override
+    public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus) {
+        if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
+                && !ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
+            return null;
+        }
+        if (CharSequenceUtil.isBlank(logisticsCostId)) {
+            return null;
+        }
+        String costType = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
+                ? LogisticsBillCostTypeEnum.ACTUAL.getCode()
+                : LogisticsBillCostTypeEnum.ESTIMATED.getCode();
+        BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, importList, costType, null);
+        if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
+                return "账单确认总计实际金额必须大于0";
+            }
+            return "暂估确认总计暂估金额必须大于0";
+        }
+        return null;
+    }
+
     /**
      * 确认状态会进入后续对账、分摊和付款流程，目标状态对应金额合计必须大于 0。
      */
@@ -792,22 +838,49 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .in(TmsCostDetailEntity::getMainId, logisticsCostIdList)
                 .eq(TmsCostDetailEntity::getType, costType)
                 .list();
-        Map<String, BigDecimal> amountMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(detailList)) {
-            for (TmsCostDetailEntity detailEntity : detailList) {
-                BigDecimal costValue = ObjectUtil.defaultIfNull(detailEntity.getCostValue(), BigDecimal.ZERO);
-                amountMap.merge(detailEntity.getMainId(), costValue, BigDecimal::add);
+        Map<String, List<TmsCostDetailEntity>> existingDetailMap = CollUtil.isEmpty(detailList)
+                ? Collections.emptyMap()
+                : detailList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
+        for (String logisticsCostId : logisticsCostIdList) {
+            BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, null, costType, existingDetailMap);
+            if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
+                    throw new ServiceException("账单确认总计实际金额必须大于0");
+                }
+                throw new ServiceException("暂估确认总计暂估金额必须大于0");
             }
         }
-        boolean invalid = logisticsCostIdList.stream()
-                .map(id -> ObjectUtil.defaultIfNull(amountMap.get(id), BigDecimal.ZERO))
-                .anyMatch(amount -> amount.compareTo(BigDecimal.ZERO) <= 0);
-        if (invalid) {
-            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
-                throw new ServiceException("账单确认总计实际金额必须大于0");
-            }
-            throw new ServiceException("暂估确认总计暂估金额必须大于0");
+    }
+
+    private BigDecimal calcProjectedConfirmAmount(String logisticsCostId,
+                                                  List<TmsCostDetailDTO.UpdateDTO> importList,
+                                                  String costType,
+                                                  Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
+        Map<String, BigDecimal> cfgAmountMap = new LinkedHashMap<>();
+        List<TmsCostDetailEntity> existingList;
+        if (existingDetailMap != null && existingDetailMap.containsKey(logisticsCostId)) {
+            existingList = existingDetailMap.get(logisticsCostId);
+        } else {
+            existingList = tmsCostDetailService.lambdaQuery()
+                    .eq(TmsCostDetailEntity::getMainId, logisticsCostId)
+                    .eq(TmsCostDetailEntity::getType, costType)
+                    .list();
         }
+        if (CollUtil.isNotEmpty(existingList)) {
+            for (TmsCostDetailEntity detailEntity : existingList) {
+                cfgAmountMap.put(detailEntity.getCfgCostId(),
+                        ObjectUtil.defaultIfNull(detailEntity.getCostValue(), BigDecimal.ZERO));
+            }
+        }
+        if (CollUtil.isNotEmpty(importList)) {
+            for (TmsCostDetailDTO.UpdateDTO updateDTO : importList) {
+                if (CharSequenceUtil.equals(costType, updateDTO.getType())) {
+                    cfgAmountMap.put(updateDTO.getCfgCostId(),
+                            ObjectUtil.defaultIfNull(updateDTO.getCostValue(), BigDecimal.ZERO));
+                }
+            }
+        }
+        return cfgAmountMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
@@ -1367,13 +1440,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             List<TmsCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
             for (LogisticsBillCostExcelDTO excelDTO : value) {
                 List<String> costErrorMsgList = new ArrayList<>();
-                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), excelDTO.getCostName())).findFirst().orElse(null);
+                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream()
+                        .filter(obj -> CharSequenceUtil.equals(obj.getCostName(), excelDTO.getCostName())
+                                && CharSequenceUtil.equals(obj.getDictCostAttribution(), LAST_MILE_FEE_ATTRIBUTION))
+                        .findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
-                    costErrorMsgList.add("费用管理未找到该费用名称");
-                } else {
-                   if (!CharSequenceUtil.equals(tmsCfgCostEntity.getDictCostAttribution(), dictCostAttribution)) {
-                       costErrorMsgList.add("费用归属非自发货不支持导入");
-                   }
+                    // 审查说明：自发货尾程导入费用项统一从“尾程发货”归属查找，主单 type 仍由 dictCostAttribution 校验。
+                    costErrorMsgList.add("费用管理尾程发货未找到该费用名称");
                 }
                 String estimatedCostValue = excelDTO.getEstimatedCostValue();
                 String estimatedCurrency = excelDTO.getEstimatedCurrency();
@@ -1476,6 +1549,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     errorList.addAll(importSuccessList);
                     continue;
                 }
+                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, errorMsgList);
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
+                    errorList.addAll(importSuccessList);
+                    continue;
+                }
                 for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
                     LogisticsBillDTO.LogisticsBillVo logisticsBillVo = targetPair.getKey();
                     logisticsBillCostEntity = targetPair.getValue();
@@ -1503,6 +1582,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
+                if (Boolean.TRUE.equals(confirmStatus)) {
+                    String confirmMsg = validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateDetailList,
+                            ReconciliationStatusEnum.CONFIRMED.getCode());
+                    if (CharSequenceUtil.isNotBlank(confirmMsg)) {
+                        importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(Collections.singletonList(confirmMsg))));
+                        errorList.addAll(importSuccessList);
+                        continue;
+                    }
+                }
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, billCostExcelDTO, reconciliationMonth);
                 updateDataDTO.setCostDetailList(updateDetailList);
                 BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE);
@@ -1511,6 +1599,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //确认
             if (confirmStatus) {
                 pairList.forEach(obj -> this.updateReconciliationStatus(obj.getKey(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getValue()));
+            }
+        }
+    }
+
+    private void appendImportConfirmAmountErrors(Boolean confirmStatus,
+                                                 List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList,
+                                                 Map<String, List<TmsCostDetailDTO.UpdateDTO>> targetUpdateMap,
+                                                 List<String> errorMsgList) {
+        if (!Boolean.TRUE.equals(confirmStatus) || CollUtil.isEmpty(targetPairList)) {
+            return;
+        }
+        for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
+            String confirmMsg = validateImportConfirmAmountMsg(targetPair.getValue().getId(),
+                    targetUpdateMap.get(targetPair.getKey().getDetailId()),
+                    ReconciliationStatusEnum.CONFIRMED.getCode());
+            if (CharSequenceUtil.isNotBlank(confirmMsg)) {
+                errorMsgList.add(confirmMsg);
+                return;
             }
         }
     }

@@ -177,7 +177,8 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
 
     @Override
     public List<TmsCfgCostDTO.DropDownDTO> listDropDown(TmsCfgCostDTO.DropDownParamDTO dto) {
-        List<TmsCfgCostEntity> list = lambdaQuery().eq(CharSequenceUtil.isNotBlank(dto.getDictCostAttribution()), TmsCfgCostEntity::getDictCostAttribution, dto.getDictCostAttribution())
+        String dictCostAttribution = mapLastMileFeeAttribution(dto.getDictCostAttribution());
+        List<TmsCfgCostEntity> list = lambdaQuery().eq(CharSequenceUtil.isNotBlank(dictCostAttribution), TmsCfgCostEntity::getDictCostAttribution, dictCostAttribution)
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.EMPTY_LIST;
@@ -229,6 +230,15 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     */
     private void handleData(TmsCfgCostEntity tmsCfgCostEntity) {
     
+    }
+
+    private String mapLastMileFeeAttribution(String dictCostAttribution) {
+        if (CharSequenceUtil.equals(dictCostAttribution, DictCostAttributionEnum.SELF_DELIVER.getCode())
+                || CharSequenceUtil.equals(dictCostAttribution, DictCostAttributionEnum.LAST_MILE.getCode())) {
+            // 审查说明：尾程自发货/三方发货编辑费用项共用“尾程发货”配置，不改变物流费用主单 type。
+            return DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
+        }
+        return dictCostAttribution;
     }
 
     /**
