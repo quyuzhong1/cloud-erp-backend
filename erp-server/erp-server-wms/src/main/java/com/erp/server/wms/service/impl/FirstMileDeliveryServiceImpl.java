@@ -2880,6 +2880,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> taskEntityList = packingTaskService.listByIds(taskIds);
         Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
+        List<String> transferWarehouseIds = listPackingDetailDTOS.stream()
+                .map(WmsCartonDetailDTO.ListPackingDetailDTO::getTransferWarehouseIds)
+                .filter(StringUtils::isNotBlank)
+                .flatMap(ids -> Arrays.stream(ids.split(",")))
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, String> warehouseNameMap = CollectionUtils.isEmpty(transferWarehouseIds) ? Collections.emptyMap()
+                : warehouseService.listByIds(transferWarehouseIds).stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (oldValue, newValue) -> oldValue));
         //FBA货件新数据过滤掉没绑定的箱
         List<String> fbaCodes = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getBusinessCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(fbaCodes)){
@@ -2908,6 +2918,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             pagingViewDTO.setSourceCode(packingTaskEntity.getSourceCode());
             pagingViewDTO.setSourceType(packingTaskEntity.getSourceType());
             pagingViewDTO.setSourceTypeName(PickingSourceTypeEnum.getName(packingTaskEntity.getSourceType()));
+            if (StringUtils.isNotBlank(pagingViewDTO.getTransferWarehouseIds())) {
+                String transferWarehouseNames = Arrays.stream(pagingViewDTO.getTransferWarehouseIds().split(","))
+                        .map(warehouseNameMap::get)
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.joining(","));
+                pagingViewDTO.setTransferWarehouseNames(transferWarehouseNames);
+            }
             if (Objects.nonNull(statusDTO)){
                 String packingStatus = CharSequenceUtil.isBlank(statusDTO.getPackingStatus())? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
                 pagingViewDTO.setPackingTotalStatus(packingStatus);
@@ -2929,6 +2946,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 //同一个箱子以下字段不重复显示
                 pagingViewDTO.setDeliveryCode("");
                 pagingViewDTO.setBusinessCode("");
+                pagingViewDTO.setDestWarehouseName("");
+                pagingViewDTO.setTransferWarehouseNames("");
                 pagingViewDTO.setTaskCode("");
                 pagingViewDTO.setSourceCode("");
                 pagingViewDTO.setSourceTypeName("");
