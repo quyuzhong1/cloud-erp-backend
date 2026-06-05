@@ -239,6 +239,11 @@ public class SoReceiptDTO implements Serializable {
         private String thirdCode;
 
         /**
+        * 备注
+        */
+        private String remark;
+
+        /**
         * 客户Id
         */
         private String customerId;
@@ -349,10 +354,9 @@ public class SoReceiptDTO implements Serializable {
         private String approveUserName;
 
         /**
-        * 备注
+        * 明细备注
         */
-        private String remark;
-
+        private String detailRemark;
 
         /**
         * 创建时间
