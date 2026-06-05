@@ -66,8 +66,4 @@ public enum CfgLogisticsCostImportImportTypeEnum implements EnumMessage {
         }
         return "";
     }
-
-    public static boolean isTemporarilyDisabled(String code) {
-        return IMPORT_ADD_NEW.getCode().equals(code);
-    }
 }
