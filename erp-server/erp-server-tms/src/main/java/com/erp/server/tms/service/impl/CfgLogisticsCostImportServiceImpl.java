@@ -314,8 +314,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         if (CollUtil.isEmpty(importTypeList)) {
             return;
         }
-        if (importTypeList.stream().anyMatch(CfgLogisticsCostImportImportTypeEnum::isTemporarilyDisabled)) {
-            // 审查说明：import_add_new 历史逻辑保留，但费用配置新增/编辑暂不允许继续选择。
+        if (importTypeList.stream().anyMatch(code -> CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(code))) {
+            // import_add_new 历史逻辑保留，但费用配置新增/编辑暂不允许继续选择。
             throw new ServiceException("导入新增(按新单)暂不支持使用，请选择导入更新或导入新增(按原单)");
         }
     }

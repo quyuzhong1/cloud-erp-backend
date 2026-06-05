@@ -112,7 +112,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto, Boolean isImport) {
-        return logisticsBillCostService.update(dto, isImport);
+        return logisticsBillCostService.update(dto, isImport, null);
     }
 
     @Override
@@ -220,6 +220,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
         // 审查说明：导入费用项统一从“尾程发货”归属预加载，不改变费用单 type=lastMile 校验。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(LAST_MILE_FEE_ATTRIBUTION);
+        Map<String, TmsCfgCostEntity> cfgCostMap = CollUtil.isEmpty(cfgCostList) ? Collections.emptyMap()
+                : cfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, obj -> obj, (a, b) -> a));
         // 固定字段通过表头映射为 DTO 字段，费用项字段则通过费用配置动态识别。
         JSONObject headerNameJsonObject = getHeaderNameJsonObject();
         // 错误信息列由 Listener 追加，行级校验失败时直接写回该列供错误文件导出。
@@ -436,13 +438,13 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     updateDataDTO.setReconciliationMonth(reconciliationMonth);
                     if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType)){
                         List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,currentUpdateList);
-                        List<BaseResultDTO.AddDTO> addDTOS = logisticsBillCostService.addPayAndRefund(dtoList);
+                        List<BaseResultDTO.AddDTO> addDTOS = logisticsBillCostService.addPayAndRefund(dtoList, cfgCostMap);
                         pairList.addAll(addDTOS.stream()
                                 .map(obj -> new Pair<String, LocalDateTime>(obj.getId(), confirmTime))
                                 .collect(Collectors.toList()));
                     }else {
                         updateDataDTO.setCostDetailList(currentUpdateList);
-                        BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE);
+                        BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
                         pairList.add(new Pair<>(update.getId(),confirmTime));
                     }
                 }
@@ -472,7 +474,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, excelDTO,updateList);
                 updateDataDTO.setReconciliationMonth(reconciliationMonth);
                 updateDataDTO.setCostDetailList(updateList);
-                BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE);
+                BaseResultDTO.UpdateDTO update = logisticsBillCostService.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
                 pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             // 已确认状态是后续对账流程入口，只有用户选择导入并确认时才在本次导入末尾流转。

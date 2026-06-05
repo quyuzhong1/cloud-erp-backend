@@ -37,9 +37,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto, Map<String, TmsCfgCostEntity> cfgCostCache);
     
-    List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList);
+    List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList, Map<String, TmsCfgCostEntity> cfgCostCache);
     
     void addPayAndRefundConfirm(LogisticsBillCostDTO.ConfirmAddDataDTO dto);
 
@@ -50,7 +50,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @param dto
     * @return
     */
-    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO dto, Boolean isImport, Map<String, TmsCfgCostEntity> cfgCostCache);
     
     List<EditViewDTO> editView(String id);
     

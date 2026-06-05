@@ -227,8 +227,8 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                 String code = CfgLogisticsCostImportImportTypeEnum.getCode(s);
                 if(StringUtils.isBlank(code)){
                     errorMsgList.add("【"+s+"】不存在");
-                } else if (CfgLogisticsCostImportImportTypeEnum.isTemporarilyDisabled(code)) {
-                    // 审查说明：Excel 导入也禁止绕过页面选择“导入新增(按新单)”。
+                } else if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(code)) {
+                    // Excel 导入也禁止绕过页面选择“导入新增(按新单)”。
                     errorMsgList.add("【导入新增(按新单)】暂不支持使用");
                 }
             }

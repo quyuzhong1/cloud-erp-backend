@@ -127,7 +127,7 @@ public class LogisticsLastMileCostController extends BaseController {
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
-        logisticsBillCostService.update(dto,Boolean.FALSE);
+        logisticsBillCostService.update(dto,Boolean.FALSE, null);
         return success();
     }
     
@@ -271,7 +271,7 @@ public class LogisticsLastMileCostController extends BaseController {
          serviceClass = LogisticsBillCostService.class,
          keyIdName = "id")
      public ApiResult<Object> addPayAndRefund(@RequestBody @Validated List<LogisticsBillCostDTO.AddDataDTO> dto) {
-         logisticsBillCostService.addPayAndRefund(dto);
+         logisticsBillCostService.addPayAndRefund(dto, null);
          return success();
      }
      

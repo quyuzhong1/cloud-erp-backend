@@ -201,7 +201,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO addDTO, Map<String, TmsCfgCostEntity> cfgCostCache) {
         LogisticsBillCostEntity logisticsBillCostEntity = new LogisticsBillCostEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillCostEntity);
 
@@ -215,7 +215,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败");
         }
-        validateLastMileDeliveryCostConfig(addDTO.getCostDetailList());
+        validateLastMileDeliveryCostConfig(addDTO.getCostDetailList(), cfgCostCache);
         //添加费用明细
         tmsCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId(), DictCostAttributionEnum.SELF_DELIVER);
 
@@ -230,7 +230,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
+    public BaseResultDTO.UpdateDTO update(LogisticsBillCostDTO.UpdateDTO updateDTO, Boolean isImport, Map<String, TmsCfgCostEntity> cfgCostCache) {
         LogisticsBillCostEntity old = null;
         if (Objects.nonNull(updateDTO.getId())){
             old = super.getById(updateDTO.getId());
@@ -339,7 +339,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostEntity));
         }
-        validateLastMileDeliveryCostConfig(updateDTO.getCostDetailList());
+        validateLastMileDeliveryCostConfig(updateDTO.getCostDetailList(), cfgCostCache);
         //更新费用明细
         tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER,isImport);
 
@@ -350,7 +350,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return new BaseResultDTO.UpdateDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
     }
 
-    private void validateLastMileDeliveryCostConfig(List<? extends TmsCostDetailDTO.CommonDTO> costDetailList) {
+    private void validateLastMileDeliveryCostConfig(List<? extends TmsCostDetailDTO.CommonDTO> costDetailList,
+                                                    Map<String, TmsCfgCostEntity> cfgCostCache) {
         if (CollUtil.isEmpty(costDetailList)) {
             return;
         }
@@ -362,7 +363,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollUtil.isEmpty(cfgCostIdList)) {
             return;
         }
-        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
+        List<TmsCfgCostEntity> cfgCostList;
+        if (CollUtil.isEmpty(cfgCostCache)) {
+            cfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
+        } else {
+            cfgCostList = cfgCostIdList.stream()
+                    .map(cfgCostCache::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
         boolean hasInvalid = cfgCostList.size() != cfgCostIdList.size()
                 || cfgCostList.stream().anyMatch(cfgCost -> !CharSequenceUtil.equals(cfgCost.getDictCostAttribution(), LAST_MILE_FEE_ATTRIBUTION));
         if (hasInvalid) {
@@ -1391,6 +1400,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         //费用配置
         List<String> costNameList = successList.stream().map(LogisticsBillCostExcelDTO::getCostName).distinct().collect(Collectors.toList());
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostNameList(costNameList);
+        Map<String, TmsCfgCostEntity> cfgCostMap = CollUtil.isEmpty(tmsCfgCostList) ? Collections.emptyMap()
+                : tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, obj -> obj, (a, b) -> a));
 
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildBillVoIndex(logisticsBillVos);
         Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(
@@ -1563,13 +1574,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, billCostExcelDTO, reconciliationMonth);
                     if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType)){
                         List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,currentUpdateList);
-                        List<AddDTO> addDTOS = this.addPayAndRefund(dtoList);
+                        List<AddDTO> addDTOS = this.addPayAndRefund(dtoList, cfgCostMap);
                         pairList.addAll(addDTOS.stream()
                                 .map(obj -> new Pair<String, LocalDateTime>(obj.getId(), confirmTime))
                                 .collect(Collectors.toList()));
                     }else {
                         updateDataDTO.setCostDetailList(currentUpdateList);
-                        BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE);
+                        BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
                         pairList.add(new Pair<>(update.getId(),confirmTime));
                     }
                 }
@@ -1593,7 +1604,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, billCostExcelDTO, reconciliationMonth);
                 updateDataDTO.setCostDetailList(updateDetailList);
-                BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE);
+                BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
                 pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             //确认
@@ -2471,7 +2482,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	public List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
+	public List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList, Map<String, TmsCfgCostEntity> cfgCostCache) {
     	List<BaseResultDTO.AddDTO> addList = new ArrayList<>();
     	Map<String, List<AddDataDTO>> sourceIdDtoMaps = dtoList.stream().collect(Collectors.groupingBy(LogisticsBillCostDTO.AddDataDTO::getSourceId));
     	for(Map.Entry<String, List<AddDataDTO>> sourceIdDtoMap : sourceIdDtoMaps.entrySet()) {
@@ -2556,7 +2567,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		}
     		addDTO.setCostDetailList(costDetailList);
     		try {
-				addList.add(this.add(addDTO));
+				addList.add(this.add(addDTO, cfgCostCache));
 			} catch (ServiceException e) {
 				throw new ServiceException("物流运单号：" + logisticsBillCostEntity.getTransportNo() + e.getMessage());
 			}
@@ -2573,7 +2584,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		dto.setConfirmTime(LocalDateTime.now());
     	}
     	LocalDateTime confirmTime = dto.getConfirmTime();
-		List<AddDTO> dtoList = this.addPayAndRefund(dto.getAddDataDTOList());
+		List<AddDTO> dtoList = this.addPayAndRefund(dto.getAddDataDTOList(), null);
 		dtoList.forEach(addDTO -> this.updateReconciliationStatus(addDTO.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), confirmTime));
 	}
 
@@ -2720,7 +2731,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         updateDataDTO.setCostDetailList(updateDetailList);
-		this.update(updateDataDTO , false);
+		this.update(updateDataDTO , false, null);
 	}
 
 	@Transactional(rollbackFor = Exception.class)
