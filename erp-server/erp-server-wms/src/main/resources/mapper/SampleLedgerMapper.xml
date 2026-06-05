@@ -38,7 +38,6 @@
         user_id, user_name, dept_id, dept_name, sku_no, product_name, use_user_id, use_user_name, qty
     </sql>
 
-    <!-- 依赖 Product_Sale_Join 提供 ps 别名，使用时必须同时 include -->
     <sql id="SampleLedger_List_Column_List">
             sl.id,
             sl.create_user_id,
@@ -63,14 +62,14 @@
     </sql>
 
     <sql id="Product_Sale_Join">
-        LEFT JOIN (
-            SELECT DISTINCT ON (sku_id)
-                sku_id,
-                sale_state
+        LEFT JOIN LATERAL (
+            SELECT sale_state
             FROM product_sale
-            WHERE is_deleted = FALSE
-            ORDER BY sku_id, update_time DESC NULLS LAST, create_time DESC NULLS LAST, id DESC
-        ) ps ON ps.sku_id = sl.sku_id
+            WHERE sku_id = sl.sku_id
+              AND is_deleted = FALSE
+            ORDER BY update_time DESC NULLS LAST, create_time DESC NULLS LAST, id DESC
+            LIMIT 1
+        ) ps ON TRUE
     </sql>
 
     <sql id="listSku">
