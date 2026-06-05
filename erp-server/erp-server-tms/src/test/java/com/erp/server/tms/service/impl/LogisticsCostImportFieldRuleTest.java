@@ -238,6 +238,36 @@ public class LogisticsCostImportFieldRuleTest {
     }
 
     @Test
+    public void prepareImportRowValuesShouldCleanVerticalAmountsByCostItemRule() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity costItem = importDetail("costItem", "costItem", "费用项");
+        costItem.setSourceField("费用明细");
+        costItem.setSourceDetailField("自提附加费_B2C");
+        costItem.setEtlRuleList(Collections.singletonList(rule(CfgLogisticsCostImportEtlRuleTypeEnum.TO_NEGATIVE.getCode())));
+        CfgLogisticsCostImportDetailEntity actualAmount = importDetail("actualAmount", "actualAmount", "实际金额");
+        actualAmount.setSourceField("本期计算");
+        actualAmount.setEtlRuleList(Collections.singletonList(rule(CfgLogisticsCostImportEtlRuleTypeEnum.TO_POSITIVE.getCode())));
+        CfgLogisticsCostImportDetailEntity estimatedAmount = importDetail("estimatedAmount", "estimatedAmount", "预估金额");
+        estimatedAmount.setSourceField("本期费用小计");
+        estimatedAmount.setEtlRuleList(Collections.singletonList(rule(CfgLogisticsCostImportEtlRuleTypeEnum.TO_POSITIVE.getCode())));
+        List<CfgLogisticsCostImportDetailEntity> details = Arrays.asList(costItem, actualAmount, estimatedAmount);
+        Map<Integer, String> headMap = new HashMap<>();
+        headMap.put(0, "费用明细");
+        headMap.put(1, "本期计算");
+        headMap.put(2, "本期费用小计");
+        JSONObject rowData = new JSONObject();
+        rowData.set("0", "自提附加费_B2C");
+        rowData.set("1", "0.50");
+        rowData.set("2", "0.50");
+
+        invokePrivate(service, "prepareImportRowValues", new Class[]{List.class, Map.class, List.class}, details, headMap, Collections.singletonList(rowData));
+
+        assertEquals("自提附加费_B2C", getPrepared(service, rowData, costItem));
+        assertEquals("-0.5", getPrepared(service, rowData, actualAmount));
+        assertEquals("-0.5", getPrepared(service, rowData, estimatedAmount));
+    }
+
+    @Test
     public void cleanFileShouldProjectCleanedColumns() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
         CfgLogisticsCostImportDetailEntity detail = importDetail("amount", "actualAmount", "实际金额");

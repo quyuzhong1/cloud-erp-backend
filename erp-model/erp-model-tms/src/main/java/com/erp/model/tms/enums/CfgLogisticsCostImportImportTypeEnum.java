@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum CfgLogisticsCostImportImportTypeEnum implements EnumMessage {
 	IMPORT_UPDATE("import_update", "导入更新"),
 	IMPORT_ADD_OLD("import_add_old", "导入新增(按原单)"),
+    // 审查说明：按新单新增会创建新物流单/费用单，当前费用配置入口暂不对用户开放。
 	IMPORT_ADD_NEW("import_add_new", "导入新增(按新单)"),
     ;
     /**
@@ -64,5 +65,9 @@ public enum CfgLogisticsCostImportImportTypeEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static boolean isTemporarilyDisabled(String code) {
+        return IMPORT_ADD_NEW.getCode().equals(code);
     }
 }

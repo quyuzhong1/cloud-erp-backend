@@ -72,6 +72,8 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_TMS_LOGISTICS_L
 @Service
 public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostService {
 
+    private static final String LAST_MILE_FEE_ATTRIBUTION = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
+
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
     @Resource
@@ -125,9 +127,10 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean downloadTemplate(HttpServletResponse response) {
-        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE.getCode());
+        // 审查说明：模板费用项统一来自“尾程发货”配置，主单类型仍为 lastMile。
+        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(LAST_MILE_FEE_ATTRIBUTION);
         if (CollectionUtils.isEmpty(cfgCostList)) {
-            throw new ServiceException(ApiError.LOGISTICS_COST_CONFIG_NOT_FOUND,"尾程");
+            throw new ServiceException(ApiError.LOGISTICS_COST_CONFIG_NOT_FOUND,"尾程发货");
         }
         LinkedList<String> headerNameList = getHeaderNameList();
         LinkedList<String> costNameList = cfgCostList.stream().map(TmsCfgCostEntity::getCostName).distinct().collect(Collectors.toCollection(LinkedList::new));
@@ -215,8 +218,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         // 是否确认决定导入成功后是否直接把费用单流转为已确认。
         Boolean confirmStatus = (Boolean)extMap.get("confirmStatus");
 
-        // 只查询尾程费用项配置，避免自发货费用项出现在尾程模板中被误识别。
-        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE.getCode());
+        // 审查说明：导入费用项统一从“尾程发货”归属预加载，不改变费用单 type=lastMile 校验。
+        List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(LAST_MILE_FEE_ATTRIBUTION);
         // 固定字段通过表头映射为 DTO 字段，费用项字段则通过费用配置动态识别。
         JSONObject headerNameJsonObject = getHeaderNameJsonObject();
         // 错误信息列由 Listener 追加，行级校验失败时直接写回该列供错误文件导出。
@@ -263,9 +266,9 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 if (CharSequenceUtil.equals(field,"错误信息")) {
                     continue;
                 }
-                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), field) && CharSequenceUtil.equals(obj.getDictCostAttribution(),DictCostAttributionEnum.LAST_MILE.getCode())).findFirst().orElse(null);
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), field) && CharSequenceUtil.equals(obj.getDictCostAttribution(), LAST_MILE_FEE_ATTRIBUTION)).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity) && !getHeaderNameList().contains(field)) {
-                    errorMsgList.add(CharSequenceUtil.format("费用管理尾程未找到该费用名称【{}】",field));
+                    errorMsgList.add(CharSequenceUtil.format("费用管理尾程发货未找到该费用名称【{}】",field));
                     continue;
                 }
                 if (ObjectUtil.isNotEmpty(tmsCfgCostEntity)) {
@@ -409,6 +412,22 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     errorList.addAll(value);
                     continue;
                 }
+                if (Boolean.TRUE.equals(confirmStatus)) {
+                    for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
+                        String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(targetPair.getValue().getId(),
+                                targetUpdateMap.get(targetPair.getKey().getDetailId()),
+                                ReconciliationStatusEnum.CONFIRMED.getCode());
+                        if (CharSequenceUtil.isNotBlank(confirmMsg)) {
+                            errorMsgList.add(confirmMsg);
+                            break;
+                        }
+                    }
+                }
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList)));
+                    errorList.addAll(value);
+                    continue;
+                }
                 for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
                     LogisticsBillDTO.LogisticsBillVo logisticsBillVo = targetPair.getKey();
                     logisticsBillCostEntity = targetPair.getValue();
@@ -435,6 +454,15 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 }
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
+                if (Boolean.TRUE.equals(confirmStatus)) {
+                    String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateList,
+                            ReconciliationStatusEnum.CONFIRMED.getCode());
+                    if (CharSequenceUtil.isNotBlank(confirmMsg)) {
+                        value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(Collections.singletonList(confirmMsg))));
+                        errorList.addAll(value);
+                        continue;
+                    }
+                }
                 checkCategoryCurrency(updateList, logisticsBillCostEntity, cfgCostList, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList)));
