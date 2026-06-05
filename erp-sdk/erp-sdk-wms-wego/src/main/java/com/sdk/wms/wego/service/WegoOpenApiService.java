@@ -6,6 +6,7 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.WegoInOrderSaveDTO;
 import com.erp.model.wms.dto.WegoInventoryQueryDTO;
 import com.erp.model.wms.dto.WegoTransportQueryDTO;
 import com.erp.model.wms.dto.WegoSkuQueryDTO;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.Valid;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -124,6 +126,46 @@ public class WegoOpenApiService {
         Map<String, Object> bizParams = new HashMap<>();
         mergeBizParams(bizParams, dto.getBizParams(), "查询派送渠道", Collections.emptySet());
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TRANSPORT_GET, bizParams, "查询派送渠道");
+    }
+
+    /**
+     * 调用 WEGO inorder.save 创建或修改入库单。
+     * <p>
+     * 入参 {@link WegoInOrderSaveDTO.SaveReqDTO#getNo()} 为空时表示新增；非空时表示修改对应单据。
+     * <p>
+     * 注意：明细 {@code details} 会通过 fastjson 转为 {@code List<Map>} 后再参与签名，
+     * 与 {@link WeGoSignUtils#buildSignContent(Map)} 中对嵌套 Map 的递归 ASCII 排序保持一致，
+     * 避免 POJO 字段顺序导致客户端与服务端签名不一致。
+     *
+     * @param dto 入库单创建/修改请求，包含 accessToken / secret / 业务字段
+     * @return WEGO 接口原始响应解析后的 JSONObject（含 success / errorCode / errorMsg / serverTime / result 等字段）
+     */
+    public JSONObject saveInorder(@Valid WegoInOrderSaveDTO.SaveReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        putIfNotNull(bizParams, "no", dto.getNo());
+        putIfNotNull(bizParams, "warehouseBusiness", dto.getWarehouseBusiness());
+        putIfNotNull(bizParams, "warehouseCode", dto.getWarehouseCode());
+        putIfNotNull(bizParams, "warehouseDelivery", dto.getWarehouseDelivery());
+        putIfNotNull(bizParams, "inventoryType", dto.getInventoryType());
+        putIfNotNull(bizParams, "expectedArrivalDate", dto.getExpectedArrivalDate());
+        putIfNotNull(bizParams, "trackNumber", dto.getTrackNumber());
+        putIfNotNull(bizParams, "referenceNumber", dto.getReferenceNumber());
+        putIfNotNull(bizParams, "notes", dto.getNotes());
+        if (dto.getDetails() != null) {
+            // 将 POJO 列表转换为 JSONArray (List<JSONObject>)，保证签名时 Map key 可被递归排序
+            bizParams.put("details", JSON.parse(JSON.toJSONString(dto.getDetails())));
+        }
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.INORDER_SAVE, bizParams, "保存入库单");
+    }
+
+    /**
+     * 仅在 value 非 null 时写入 map，避免空字段参与签名导致 sign 不一致。
+     */
+    private void putIfNotNull(Map<String, Object> params, String key, Object value) {
+        if (value == null) {
+            return;
+        }
+        params.put(key, value);
     }
 
     /**
