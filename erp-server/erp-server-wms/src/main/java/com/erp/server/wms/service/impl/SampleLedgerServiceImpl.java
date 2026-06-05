@@ -520,7 +520,10 @@ public class SampleLedgerServiceImpl extends SuperServiceImpl<SampleLedgerMapper
             return;
         }
 
-        records.forEach(record -> record.setSaleStateName(SaleStateEnum.getNameByCode(record.getSaleState())));
+        records.forEach(record -> {
+            Integer saleState = record.getSaleState();
+            record.setSaleStateName(saleState != null ? SaleStateEnum.getNameByCode(saleState) : null);
+        });
 
         // 提取所有用户ID（包括userId和useUserId）
         List<String> userIds = records.stream()
