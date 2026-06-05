@@ -529,6 +529,8 @@
         ELSE
         owi.code
         END AS businessCode,
+        fmd.dest_warehouse_name AS destWarehouseName,
+        fmd.transfer_warehouse_ids AS transferWarehouseIds,
         fmdd.platform_sku_no AS platformSku,
         fmdd.fn_sku AS fnSku
         FROM
