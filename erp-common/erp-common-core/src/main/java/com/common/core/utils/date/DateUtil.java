@@ -647,6 +647,7 @@ public class DateUtil {
         try {
             return parts[0] + "年" + Integer.parseInt(parts[1]) + "月份";
         } catch (NumberFormatException e) {
+            log.warn("对账月份格式非法 yearMonth={}", yearMonth);
             return yearMonth;
         }
     }
