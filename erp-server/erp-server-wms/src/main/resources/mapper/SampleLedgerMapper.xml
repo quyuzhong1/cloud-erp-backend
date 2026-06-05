@@ -189,7 +189,14 @@
             sl.qty,
             sl.sku_id
         FROM sample_ledger sl
-        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
+        LEFT JOIN LATERAL (
+            SELECT sale_state
+            FROM product_sale
+            WHERE sku_id = sl.sku_id
+              AND is_deleted = FALSE
+            ORDER BY update_time DESC NULLS LAST, create_time DESC NULLS LAST, id DESC
+            LIMIT 1
+        ) ps ON TRUE
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
@@ -252,7 +259,14 @@
             sl.qty,
             sl.sku_id
         FROM sample_ledger sl
-        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
+        LEFT JOIN LATERAL (
+            SELECT sale_state
+            FROM product_sale
+            WHERE sku_id = sl.sku_id
+              AND is_deleted = FALSE
+            ORDER BY update_time DESC NULLS LAST, create_time DESC NULLS LAST, id DESC
+            LIMIT 1
+        ) ps ON TRUE
         WHERE
         ${params.sqlMap.default}
         AND sl.is_deleted = false
@@ -307,7 +321,14 @@
             sl.qty,
             sl.sku_id
         FROM sample_ledger sl
-        LEFT JOIN product_sale ps ON ps.sku_id = sl.sku_id AND ps.is_deleted = FALSE
+        LEFT JOIN LATERAL (
+            SELECT sale_state
+            FROM product_sale
+            WHERE sku_id = sl.sku_id
+              AND is_deleted = FALSE
+            ORDER BY update_time DESC NULLS LAST, create_time DESC NULLS LAST, id DESC
+            LIMIT 1
+        ) ps ON TRUE
         WHERE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
