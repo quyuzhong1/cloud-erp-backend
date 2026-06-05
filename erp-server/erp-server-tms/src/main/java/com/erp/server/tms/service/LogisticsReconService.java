@@ -87,14 +87,16 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
 
 
     /**
-     * 物流商对账单校验状态批量切换（待确认 ↔ 已确认）
+     * 物流商对账单校验状态单条切换（待确认 ↔ 已确认）
      * 前置：非导入中（check_status != importing）；已存在有效 ref 的不允许回退到待确认
+     * 单条独立事务 + 按对账单加分布式锁，批量切换由控制层循环调用
      * @author Will
      * @date: 2026/05/29
-     * @param dto
-     * @return List<BatchResultDTO>
+     * @param id 对账单 id
+     * @param checkStatus 目标校验状态
+     * @return BatchResultDTO
      */
-    List<BatchResultDTO> batchUpdateCheckStatus(LogisticsReconDTO.UpdateCheckStatusDTO dto);
+    BatchResultDTO updateCheckStatus(String id, String checkStatus);
 
     /**
      * 物流商对账单合并并匹配（按对账单整批触发）
@@ -160,13 +162,14 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     List<BatchResultDTO> batchUnbindMatch(LogisticsReconDTO.BatchUnbindMatchDTO dto);
 
     /**
-     * 物流商对账单批量删除（导入中 / 待确认可删，已确认不可删；级联 detail / detail_sub / ref）
+     * 物流商对账单单条删除（导入中 / 待确认可删，已确认不可删；级联 detail / detail_sub / ref）
+     * 单条独立事务 + 按对账单加分布式锁，批量删除由控制层循环调用
      * @author Will
      * @date: 2026/05/29
-     * @param ids
-     * @return List<BatchResultDTO>
+     * @param id 对账单 id
+     * @return BatchResultDTO
      */
-    List<BatchResultDTO> batchDelete(List<String> ids);
+    BatchResultDTO delete(String id);
 
     /**
      * 物流商对账单导出（异步：提交文件中心下载任务）

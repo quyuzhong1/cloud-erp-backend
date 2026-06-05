@@ -524,6 +524,12 @@ public class LogisticsReconDTO implements Serializable {
     @NoArgsConstructor
     public static class BatchUnbindMatchDTO {
         /**
+         * 对账单 id（用于按对账单加分布式锁，与确认/匹配/删除互斥）
+         */
+        @NotBlank(message = "对账单id不能为空")
+        private String mainId;
+
+        /**
          * 对账费用项 id 集合
          */
         @NotEmpty(message = "对账费用项id集合不能为空")
