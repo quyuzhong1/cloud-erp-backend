@@ -124,6 +124,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Lazy
     @Resource
     private FbaShipmentReceiveService fbaShipmentReceiveService;
     @Resource
