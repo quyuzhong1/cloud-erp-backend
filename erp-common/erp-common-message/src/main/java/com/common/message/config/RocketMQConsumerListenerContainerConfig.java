@@ -4,19 +4,18 @@ import cn.hutool.core.util.ReflectUtil;
 import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -83,11 +82,10 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
         }
 
         log.warn("RocketMQ consumer container [{}] is disabled by release.mq.consumer.enabled=false", beanName);
-        return Proxy.newProxyInstance(
-                bean.getClass().getClassLoader(),
-                bean.getClass().getInterfaces(),
-                new DisabledRocketMQConsumerInvocationHandler(container, beanName, this)
-        );
+        ProxyFactory proxyFactory = new ProxyFactory(container);
+        proxyFactory.setProxyTargetClass(true);
+        proxyFactory.addAdvice(new DisabledRocketMQConsumerMethodInterceptor(beanName, this));
+        return proxyFactory.getProxy(bean.getClass().getClassLoader());
     }
 
     @Override
@@ -138,48 +136,41 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
         }
     }
 
-    private static class DisabledRocketMQConsumerInvocationHandler implements InvocationHandler {
+    private static class DisabledRocketMQConsumerMethodInterceptor implements MethodInterceptor {
 
-        private final DefaultRocketMQListenerContainer target;
         private final String beanName;
         private final RocketMQConsumerListenerContainerConfig lifecycleConfig;
 
-        private DisabledRocketMQConsumerInvocationHandler(DefaultRocketMQListenerContainer target,
-                                                          String beanName,
+        private DisabledRocketMQConsumerMethodInterceptor(String beanName,
                                                           RocketMQConsumerListenerContainerConfig lifecycleConfig) {
-            this.target = target;
             this.beanName = beanName;
             this.lifecycleConfig = lifecycleConfig;
         }
 
         @Override
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            String methodName = method.getName();
+        public Object invoke(MethodInvocation invocation) throws Throwable {
+            String methodName = invocation.getMethod().getName();
             if ("isAutoStartup".equals(methodName)) {
                 return false;
             }
             if ("isRunning".equals(methodName)) {
-                return target.isRunning();
+                return invocation.proceed();
             }
             if ("start".equals(methodName)) {
                 if (lifecycleConfig.isMqConsumerEnabled()) {
-                    target.start();
+                    return invocation.proceed();
                 } else {
                     log.warn("Skip starting RocketMQ consumer container [{}]", beanName);
                 }
                 return null;
             }
             if ("stop".equals(methodName)) {
+                Object[] args = invocation.getArguments();
                 if (args != null && args.length == 1 && args[0] instanceof Runnable) {
-                    ((Runnable) args[0]).run();
+                    return invocation.proceed();
                 }
-                return null;
             }
-            try {
-                return method.invoke(target, args);
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
+            return invocation.proceed();
         }
     }
 }
