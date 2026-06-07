@@ -13,7 +13,10 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -30,6 +33,8 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
     private static final String LOCAL_VERSION_KEY = "release.version";
     private static final String ENVIRONMENT_CHANGE_EVENT = "org.springframework.cloud.context.environment.EnvironmentChangeEvent";
     private final List<DefaultRocketMQListenerContainer> listenerContainers = new CopyOnWriteArrayList<>();
+    private final Set<DefaultRocketMQListenerContainer> stoppedListenerContainers =
+            Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
     private Environment environment;
 
     /**
@@ -86,6 +91,7 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
         if (!isMqConsumerEnabled() && container.isRunning()) {
             log.warn("Stop RocketMQ consumer container [{}] after initialization by release control", beanName);
             container.stop();
+            stoppedListenerContainers.add(container);
         }
         return bean;
     }
@@ -129,13 +135,38 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
         boolean enabled = isMqConsumerEnabled();
         for (DefaultRocketMQListenerContainer container : listenerContainers) {
             if (enabled && !container.isRunning()) {
+                if (stoppedListenerContainers.contains(container)) {
+                    // RocketMQ PushConsumer cannot be started again after shutdown; restart the pod to re-enable it.
+                    log.warn("Skip start RocketMQ consumer container [{}] because it has been stopped by release control", container);
+                    continue;
+                }
                 log.warn("Start RocketMQ consumer container [{}] by {}=true", container, MQ_CONSUMER_ENABLED_KEY);
-                container.start();
+                try {
+                    container.start();
+                } catch (Exception e) {
+                    if (isShutdownAlready(e)) {
+                        stoppedListenerContainers.add(container);
+                    }
+                    log.warn("Failed to start RocketMQ consumer container [{}] by release control", container, e);
+                }
             } else if (!enabled && container.isRunning()) {
                 log.warn("Stop RocketMQ consumer container [{}] by {}=false", container, MQ_CONSUMER_ENABLED_KEY);
                 container.stop();
+                stoppedListenerContainers.add(container);
             }
         }
+    }
+
+    private boolean isShutdownAlready(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.contains("SHUTDOWN_ALREADY")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
 }
