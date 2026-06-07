@@ -1,5 +1,6 @@
 package com.common.business.config;
 
+import com.common.business.utils.ApplicationContextUtils;
 import com.netflix.loadbalancer.AbstractLoadBalancerRule;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
@@ -24,6 +25,10 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private final AtomicInteger position = new AtomicInteger(0);
     private final Environment environment;
+
+    public ReleaseAwareRibbonRule() {
+        this.environment = null;
+    }
 
     public ReleaseAwareRibbonRule(Environment environment) {
         this.environment = environment;
@@ -102,11 +107,25 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
     }
 
     private String getActiveColor() {
-        return environment == null ? null : environment.getProperty(ACTIVE_COLOR_KEY);
+        Environment env = getEnvironment();
+        return env == null ? null : env.getProperty(ACTIVE_COLOR_KEY);
     }
 
     private String getActiveVersion() {
-        return environment == null ? null : environment.getProperty(ACTIVE_VERSION_KEY);
+        Environment env = getEnvironment();
+        return env == null ? null : env.getProperty(ACTIVE_VERSION_KEY);
+    }
+
+    private Environment getEnvironment() {
+        if (environment != null) {
+            return environment;
+        }
+        try {
+            return ApplicationContextUtils.getBean(Environment.class);
+        } catch (Exception e) {
+            log.warn("Cannot get Environment for release-aware Ribbon rule, fallback to normal Ribbon choose.", e);
+            return null;
+        }
     }
 
     private int nextIndex(int size) {
