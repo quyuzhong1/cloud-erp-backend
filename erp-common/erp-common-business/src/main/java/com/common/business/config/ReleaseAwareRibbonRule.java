@@ -1,6 +1,7 @@
 package com.common.business.config;
 
 import com.common.business.utils.ApplicationContextUtils;
+import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.AbstractLoadBalancerRule;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
@@ -25,6 +26,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private final AtomicInteger position = new AtomicInteger(0);
     private final Environment environment;
+    private volatile String clientName;
 
     public ReleaseAwareRibbonRule() {
         this.environment = null;
@@ -50,8 +52,10 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
     }
 
     @Override
-    public void initWithNiwsConfig(com.netflix.client.config.IClientConfig clientConfig) {
-        // No extra NIWS config.
+    public void initWithNiwsConfig(IClientConfig clientConfig) {
+        if (clientConfig != null) {
+            this.clientName = clientConfig.getClientName();
+        }
     }
 
     private List<Server> filterByRelease(List<Server> servers) {
@@ -69,6 +73,11 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         for (Server server : servers) {
             Map<String, String> metadata = getMetadata(server);
             if (metadata.isEmpty()) {
+                continue;
+            }
+            if (!matchesService(metadata)) {
+                log.warn("Skip Ribbon server [{}] because service metadata does not match client [{}], metadata={}",
+                        server, clientName, metadata);
                 continue;
             }
             String releaseColor = firstText(metadata, "release.color", "release-color", "releaseColor", "color");
@@ -142,6 +151,17 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         return null;
     }
 
+    private boolean matchesService(Map<String, String> metadata) {
+        if (!hasText(clientName)) {
+            return true;
+        }
+        String serviceName = firstText(metadata, "service", "serviceName", "service-name", "spring.application.name");
+        if (!hasText(serviceName)) {
+            return true;
+        }
+        return normalizeServiceName(clientName).equalsIgnoreCase(normalizeServiceName(serviceName));
+    }
+
     private boolean matchesRelease(String activeColor, String activeVersion, String releaseColor, String releaseVersion) {
         boolean hasComparableMetadata = false;
         if (hasText(activeColor) && hasText(releaseColor)) {
@@ -157,6 +177,18 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
             }
         }
         return hasComparableMetadata;
+    }
+
+    private String normalizeServiceName(String serviceName) {
+        if (!hasText(serviceName)) {
+            return "";
+        }
+        String normalized = serviceName.trim();
+        int groupSeparator = normalized.indexOf("@@");
+        if (groupSeparator >= 0 && groupSeparator + 2 < normalized.length()) {
+            normalized = normalized.substring(groupSeparator + 2);
+        }
+        return normalized;
     }
 
     private boolean hasText(String value) {
