@@ -9,6 +9,10 @@ spring:
         namespace: prod
         file-extension: yml
         shared-configs: common.yml,db-srm.yml,druid-common.yml,erp-third-party.yml
+        extension-configs:
+          - data-id: erp-release-control.yml
+            group: DEFAULT_GROUP
+            refresh: true
 
 
 

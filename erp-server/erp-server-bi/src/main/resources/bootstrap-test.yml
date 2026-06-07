@@ -8,6 +8,10 @@ spring:
         server-addr: 172.16.100.60:32570
         namespace: test
         shared-configs: common.yml,db-dmp.yml,druid-common.yml
+        extension-configs:
+          - data-id: erp-release-control.yml
+            group: DEFAULT_GROUP
+            refresh: true
 
   #显示日期的
   jackson:
