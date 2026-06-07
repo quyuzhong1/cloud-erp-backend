@@ -4,12 +4,9 @@ import cn.hutool.core.util.ReflectUtil;
 import org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.aopalliance.intercept.MethodInterceptor;
-import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.EnvironmentAware;
@@ -66,6 +63,15 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
                 }
             }
         }
+        if (bean instanceof DefaultRocketMQListenerContainer && !isMqConsumerEnabled()) {
+            // 保留原始 Bean 类型，仅关闭自动启动，避免 DefaultRocketMQListenerContainer 被代理后类型不匹配。
+            try {
+                ReflectUtil.setFieldValue(bean, "autoStartup", false);
+                log.warn("RocketMQ consumer container [{}] auto startup disabled by release control", beanName);
+            } catch (Exception e) {
+                log.warn("Failed to disable RocketMQ consumer container [{}] auto startup by reflection", beanName, e);
+            }
+        }
         return bean;
     }
 
@@ -77,15 +83,11 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
 
         DefaultRocketMQListenerContainer container = (DefaultRocketMQListenerContainer) bean;
         listenerContainers.add(container);
-        if (isMqConsumerEnabled()) {
-            return bean;
+        if (!isMqConsumerEnabled() && container.isRunning()) {
+            log.warn("Stop RocketMQ consumer container [{}] after initialization by release control", beanName);
+            container.stop();
         }
-
-        log.warn("RocketMQ consumer container [{}] is disabled by release.mq.consumer.enabled=false", beanName);
-        ProxyFactory proxyFactory = new ProxyFactory(container);
-        proxyFactory.setProxyTargetClass(true);
-        proxyFactory.addAdvice(new DisabledRocketMQConsumerMethodInterceptor(beanName, this));
-        return proxyFactory.getProxy(bean.getClass().getClassLoader());
+        return bean;
     }
 
     @Override
@@ -136,41 +138,4 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
         }
     }
 
-    private static class DisabledRocketMQConsumerMethodInterceptor implements MethodInterceptor {
-
-        private final String beanName;
-        private final RocketMQConsumerListenerContainerConfig lifecycleConfig;
-
-        private DisabledRocketMQConsumerMethodInterceptor(String beanName,
-                                                          RocketMQConsumerListenerContainerConfig lifecycleConfig) {
-            this.beanName = beanName;
-            this.lifecycleConfig = lifecycleConfig;
-        }
-
-        @Override
-        public Object invoke(MethodInvocation invocation) throws Throwable {
-            String methodName = invocation.getMethod().getName();
-            if ("isAutoStartup".equals(methodName)) {
-                return false;
-            }
-            if ("isRunning".equals(methodName)) {
-                return invocation.proceed();
-            }
-            if ("start".equals(methodName)) {
-                if (lifecycleConfig.isMqConsumerEnabled()) {
-                    return invocation.proceed();
-                } else {
-                    log.warn("Skip starting RocketMQ consumer container [{}]", beanName);
-                }
-                return null;
-            }
-            if ("stop".equals(methodName)) {
-                Object[] args = invocation.getArguments();
-                if (args != null && args.length == 1 && args[0] instanceof Runnable) {
-                    return invocation.proceed();
-                }
-            }
-            return invocation.proceed();
-        }
-    }
 }

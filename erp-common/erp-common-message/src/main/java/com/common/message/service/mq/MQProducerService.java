@@ -38,11 +38,17 @@ public class MQProducerService<T> {
     /**
      * 直接注入使用，用于发送消息到broker服务器
      */
-    @Autowired
+    @Autowired(required = false)
     private RocketMQTemplate rocketMQTemplate;
 
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
+    private RocketMQTemplate getRocketMQTemplate() {
+        if (rocketMQTemplate == null) {
+            throw new IllegalStateException("RocketMQTemplate is not available. Please configure rocketmq.producer.group for MQ producer modules.");
+        }
+        return rocketMQTemplate;
+    }
 
 	private void sendMsg(MSG_TYPE msgType,String msgKey, String destination, Object payload, String msgSource){
         if(CharSequenceUtil.isBlank(msgKey)){
@@ -54,10 +60,10 @@ public class MQProducerService<T> {
         SendResult result = null;
         switch (msgType) {
             case ONEWAY:
-                rocketMQTemplate.sendOneWay(destination, message);
+                getRocketMQTemplate().sendOneWay(destination, message);
                 break;
             case ASYNC:
-                rocketMQTemplate.asyncSend(destination, message,new SendCallback() {
+                getRocketMQTemplate().asyncSend(destination, message,new SendCallback() {
                     @Override
                     public void onSuccess(SendResult sendResult) {
                     }
@@ -69,7 +75,7 @@ public class MQProducerService<T> {
                 });
                 break;
             case SYNC:
-                result = rocketMQTemplate.syncSend(destination, message);
+                result = getRocketMQTemplate().syncSend(destination, message);
                 break;
             default:
                 break;
@@ -141,7 +147,7 @@ public class MQProducerService<T> {
                         .setHeader(RocketMQHeaders.KEYS, IdUtil.getSnowflake())
                         .build())
                 .collect(Collectors.toList());
-        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), messageList);
+        return getRocketMQTemplate().syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), messageList);
     }
 
     /**
@@ -156,7 +162,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg);
+        return getRocketMQTemplate().syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg);
     }
 
     /**
@@ -172,7 +178,7 @@ public class MQProducerService<T> {
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
 
-        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, 6);
+        return getRocketMQTemplate().syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, 6);
     }
 
     /**
@@ -188,7 +194,7 @@ public class MQProducerService<T> {
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
 
-        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, delayLevel);
+        return getRocketMQTemplate().syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, delayLevel);
     }
 
 
@@ -204,7 +210,7 @@ public class MQProducerService<T> {
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
         String destination = CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
-        rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
+        getRocketMQTemplate().asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
             }
@@ -228,7 +234,7 @@ public class MQProducerService<T> {
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
         String destination = CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
-        rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
+        getRocketMQTemplate().asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
             }
@@ -259,7 +265,7 @@ public class MQProducerService<T> {
         String destination = CharSequenceUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
 
         if(Objects.equals(Boolean.TRUE, isSync)) {
-            return rocketMQTemplate.syncSend(destination, msgInfoDTO);
+            return getRocketMQTemplate().syncSend(destination, msgInfoDTO);
         } else {
             asyncClassMsg(topic, noticeTypeEnum.getMqTag(), (T) msgInfoDTO, key);
             return null;
@@ -297,7 +303,7 @@ public class MQProducerService<T> {
         String topic = RocketMqTopic.NOTICE_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
         String destination = CharSequenceUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
         Message<?> message = MessageBuilder.withPayload(msgInfoDTO).build();
-        return rocketMQTemplate.syncSend(destination, message,10000,delayTimeLevel);
+        return getRocketMQTemplate().syncSend(destination, message,10000,delayTimeLevel);
     }
 
     /**
