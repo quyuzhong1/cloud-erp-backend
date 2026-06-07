@@ -182,14 +182,14 @@ public class NacosSelfRegistrationChecker {
         if (StringUtils.isNotBlank(registrationInfo.getNamespace())) {
             builder.append("&namespaceId=").append(encode(registrationInfo.getNamespace()));
         }
-        Map<String, String> metadata = resolveMetadata();
+        Map<String, String> metadata = resolveMetadata(registrationInfo);
         if (!metadata.isEmpty()) {
             builder.append("&metadata=").append(encode(JSON.toJSONString(metadata)));
         }
         return builder.toString();
     }
 
-    private Map<String, String> resolveMetadata() {
+    private Map<String, String> resolveMetadata(RegistrationInfo registrationInfo) {
         Map<String, String> metadata = new LinkedHashMap<>();
         Map<String, String> discoveryMetadata = discoveryProperties.getMetadata();
         if (discoveryMetadata != null && !discoveryMetadata.isEmpty()) {
@@ -218,6 +218,19 @@ public class NacosSelfRegistrationChecker {
             metadata.put("version", version);
             metadata.put("release-version", version);
             metadata.put("release.version", version);
+        }
+        String serviceName = firstText(
+                metadata.get("service"),
+                metadata.get("serviceName"),
+                metadata.get("service-name"),
+                metadata.get("spring.application.name"),
+                registrationInfo == null ? null : registrationInfo.getServiceName(),
+                environment.getProperty("spring.application.name"));
+        if (StringUtils.isNotBlank(serviceName)) {
+            metadata.put("service", serviceName);
+            metadata.put("serviceName", serviceName);
+            metadata.put("service-name", serviceName);
+            metadata.put("spring.application.name", serviceName);
         }
         return metadata;
     }

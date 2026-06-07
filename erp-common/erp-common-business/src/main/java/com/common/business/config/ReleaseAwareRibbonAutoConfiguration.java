@@ -3,6 +3,7 @@ package com.common.business.config;
 import com.netflix.loadbalancer.IRule;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.netflix.ribbon.RibbonClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,7 @@ import org.springframework.core.env.Environment;
  */
 @Configuration
 @ConditionalOnClass({IRule.class, RibbonClients.class})
+@ConditionalOnProperty(prefix = "release.ribbon", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RibbonClients(defaultConfiguration = ReleaseAwareRibbonAutoConfiguration.ReleaseAwareRibbonRuleConfiguration.class)
 public class ReleaseAwareRibbonAutoConfiguration {
 

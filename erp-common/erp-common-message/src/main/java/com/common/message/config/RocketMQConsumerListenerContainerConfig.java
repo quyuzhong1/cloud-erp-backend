@@ -32,6 +32,8 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private static final String LOCAL_VERSION_KEY = "release.version";
     private static final String ENVIRONMENT_CHANGE_EVENT = "org.springframework.cloud.context.environment.EnvironmentChangeEvent";
+    private static final String APPLICATION_READY_EVENT = "org.springframework.boot.context.event.ApplicationReadyEvent";
+    private static final String CONTEXT_REFRESHED_EVENT = "org.springframework.context.event.ContextRefreshedEvent";
     private final List<DefaultRocketMQListenerContainer> listenerContainers = new CopyOnWriteArrayList<>();
     private final Set<DefaultRocketMQListenerContainer> stoppedListenerContainers =
             Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
@@ -68,15 +70,6 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
                 }
             }
         }
-        if (bean instanceof DefaultRocketMQListenerContainer && !isMqConsumerEnabled()) {
-            // 保留原始 Bean 类型，仅关闭自动启动，避免 DefaultRocketMQListenerContainer 被代理后类型不匹配。
-            try {
-                ReflectUtil.setFieldValue(bean, "autoStartup", false);
-                log.warn("RocketMQ consumer container [{}] auto startup disabled by release control", beanName);
-            } catch (Exception e) {
-                log.warn("Failed to disable RocketMQ consumer container [{}] auto startup by reflection", beanName, e);
-            }
-        }
         return bean;
     }
 
@@ -98,7 +91,10 @@ public class RocketMQConsumerListenerContainerConfig implements BeanPostProcesso
 
     @Override
     public void onApplicationEvent(ApplicationEvent event) {
-        if (ENVIRONMENT_CHANGE_EVENT.equals(event.getClass().getName())) {
+        String eventName = event.getClass().getName();
+        if (ENVIRONMENT_CHANGE_EVENT.equals(eventName)
+                || APPLICATION_READY_EVENT.equals(eventName)
+                || CONTEXT_REFRESHED_EVENT.equals(eventName)) {
             refreshMqConsumerState();
         }
     }
