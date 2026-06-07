@@ -1,6 +1,7 @@
 package com.common.business.health;
 
 import com.alibaba.cloud.nacos.NacosDiscoveryProperties;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -179,7 +182,56 @@ public class NacosSelfRegistrationChecker {
         if (StringUtils.isNotBlank(registrationInfo.getNamespace())) {
             builder.append("&namespaceId=").append(encode(registrationInfo.getNamespace()));
         }
+        Map<String, String> metadata = resolveMetadata();
+        if (!metadata.isEmpty()) {
+            builder.append("&metadata=").append(encode(JSON.toJSONString(metadata)));
+        }
         return builder.toString();
+    }
+
+    private Map<String, String> resolveMetadata() {
+        Map<String, String> metadata = new LinkedHashMap<>();
+        Map<String, String> discoveryMetadata = discoveryProperties.getMetadata();
+        if (discoveryMetadata != null && !discoveryMetadata.isEmpty()) {
+            metadata.putAll(discoveryMetadata);
+        }
+
+        String color = firstText(
+                metadata.get("color"),
+                metadata.get("release-color"),
+                metadata.get("release.color"),
+                environment.getProperty("RELEASE_COLOR"),
+                environment.getProperty("release.color"));
+        String version = firstText(
+                metadata.get("version"),
+                metadata.get("release-version"),
+                metadata.get("release.version"),
+                environment.getProperty("RELEASE_VERSION"),
+                environment.getProperty("release.version"));
+
+        if (StringUtils.isNotBlank(color)) {
+            metadata.put("color", color);
+            metadata.put("release-color", color);
+            metadata.put("release.color", color);
+        }
+        if (StringUtils.isNotBlank(version)) {
+            metadata.put("version", version);
+            metadata.put("release-version", version);
+            metadata.put("release.version", version);
+        }
+        return metadata;
+    }
+
+    private String firstText(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private String encode(String value) throws IOException {
