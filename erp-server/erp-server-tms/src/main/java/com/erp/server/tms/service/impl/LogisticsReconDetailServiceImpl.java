@@ -10,6 +10,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
@@ -25,12 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_RECON_DETAIL;
@@ -112,6 +110,13 @@ public class LogisticsReconDetailServiceImpl
         return lambdaQuery()
                 .in(LogisticsReconDetailEntity::getMainId, mainIds)
                 .list();
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/logisticsReconDetailTemplate.xlsx";
+        String excelName = "物流商对账明细导入模板.xlsx";
+        ExcelUtil.downloadTemplate(path, excelName, response);
     }
 
     @Transactional(rollbackFor = Exception.class)

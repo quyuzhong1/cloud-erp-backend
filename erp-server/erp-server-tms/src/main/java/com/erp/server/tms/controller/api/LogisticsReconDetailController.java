@@ -1,10 +1,8 @@
 package com.erp.server.tms.controller.api;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -20,12 +18,10 @@ import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -120,6 +116,22 @@ public class LogisticsReconDetailController extends BaseController {
     }
 
     /**
+     * 下载物流商对账明细导入模板
+     * @author will
+     * @date: 2026-05-29
+     * @param response
+     * @return ApiResult<Object>
+     */
+    @GetMapping("/downloadTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载物流商对账明细导入模板")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        logisticsReconDetailService.downloadTemplate(response);
+        return success();
+    }
+
+
+
+    /**
      * 物流商对账费用项导入匹配（按对账费用项批量触发合并 & 匹配）
      * @author Will
      * @date: 2026/05/29
@@ -163,4 +175,5 @@ public class LogisticsReconDetailController extends BaseController {
         logisticsReconDetailService.exportList(dto);
         return success(Boolean.TRUE);
     }
+
 }

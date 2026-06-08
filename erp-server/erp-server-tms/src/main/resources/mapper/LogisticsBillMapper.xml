@@ -787,10 +787,24 @@
         <trim prefix="AND (" suffix=")" prefixOverrides="OR">
             <foreach collection="paramMap" item="valueList" index="field" separator=" ">
                 <if test="valueList != null and valueList.size() > 0">
-                    OR ${field} IN
-                    <foreach collection="valueList" item="val" open="(" separator="," close=")">
-                        #{val}
-                    </foreach>
+                    <choose>
+                        <when test="'platformCode'.equals(field)">
+                            OR EXISTS (
+                                SELECT 1
+                                FROM unnest(regexp_split_to_array(COALESCE(${field}, ''), '[[:space:]]*,[[:space:]]*')) AS platform_code_item(code)
+                                WHERE trim(platform_code_item.code) IN
+                                <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                    #{val}
+                                </foreach>
+                            )
+                        </when>
+                        <otherwise>
+                            OR ${field} IN
+                            <foreach collection="valueList" item="val" open="(" separator="," close=")">
+                                #{val}
+                            </foreach>
+                        </otherwise>
+                    </choose>
                 </if>
             </foreach>
         </trim>

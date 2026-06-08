@@ -57,7 +57,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         log.info("开始新增查询option配置单");
         boolean save = super.save(cfgQueryOptionEntity);
         if(!save) {
-            throw new ServiceException("option配置单保存失败");
+            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "查询option配置");
         }
         return new BaseResultDTO.AddDTO(cfgQueryOptionEntity.getId(), cfgQueryOptionEntity.getId());
     }
@@ -72,12 +72,18 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "查询option配置单"));
         CfgQueryOptionEntity cfgQueryOptionEntity =  BeanMapperUtils.map(CfgQueryOptionEntity.class, updateDTO);
 
+        if (StringUtils.isBlank(cfgQueryOptionEntity.getSelectLabel())) {
+            cfgQueryOptionEntity.setSelectLabel(old.getSelectLabel());
+        }
+        if (StringUtils.isBlank(cfgQueryOptionEntity.getSelectValue())) {
+            cfgQueryOptionEntity.setSelectValue(old.getSelectValue());
+        }
         // 数据处理
         handleData(cfgQueryOptionEntity);
         log.info("编辑 开始修改查询option配置单数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgQueryOptionEntity);
         if(!save) {
-            throw new ServiceException("option配置单保存失败");
+            throw new ServiceException(ApiError.BILL_SAVE_FAIL, "查询option配置");
         }
         return Boolean.TRUE;
     }
@@ -99,6 +105,28 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     * 新增修改处理数据
     */
     private void handleData(CfgQueryOptionEntity cfgQueryOptionEntity) {
-    // TODO 验证数据 & 数据赋值
+        //数据唯一校验
+        checkUnique(cfgQueryOptionEntity);
+    }
+
+    /**
+     * 校验接口路径+下拉框绑定值+下拉框显示值唯一
+     */
+    private void checkUnique(CfgQueryOptionEntity cfgQueryOptionEntity) {
+        String apiUrl = cfgQueryOptionEntity.getApiUrl();
+        String selectValue = cfgQueryOptionEntity.getSelectValue();
+        String selectLabel = cfgQueryOptionEntity.getSelectLabel();
+        if (StringUtils.isAnyBlank(apiUrl, selectValue, selectLabel)) {
+            throw new ServiceException(ApiError.CFG_QUERY_OPTION_API_CONFIG_REQUIRED);
+        }
+        Integer count = lambdaQuery()
+                .eq(CfgQueryOptionEntity::getApiUrl, apiUrl)
+                .eq(CfgQueryOptionEntity::getSelectValue, selectValue)
+                .eq(CfgQueryOptionEntity::getSelectLabel, selectLabel)
+                .ne(StringUtils.isNotBlank(cfgQueryOptionEntity.getId()), CfgQueryOptionEntity::getId, cfgQueryOptionEntity.getId())
+                .count();
+        if (count != null && count > 0) {
+            throw new ServiceException(ApiError.CFG_QUERY_OPTION_API_CONFIG_DUPLICATE);
+        }
     }
 }
