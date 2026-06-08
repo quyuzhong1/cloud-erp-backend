@@ -3006,15 +3006,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CharSequenceUtil.isBlank(pngUrl)) {
             throw new ServiceException("安兔发票PNG上传失败");
         }
-        boolean uploadedCacheUsed = false;
+        boolean needDeleteTemporaryPng = true;
         String lockKey = "oms:so-b2c:invoice-png:" + pdfAttachDTO.getId();
         RLock lock = redissonClient.getLock(lockKey);
         boolean locked = false;
         try {
             locked = lock.tryLock(10, 10, TimeUnit.SECONDS);
             if (!locked) {
-                log.warn("安兔发票PNG缓存写入锁获取失败，本次仅使用内存PNG Base64，临时上传文件将在finally中清理, soCode:{}, pdfAttachId:{}",
+                log.warn("安兔发票PNG缓存写入锁获取失败，本次仅使用内存PNG Base64，并清理临时上传文件, soCode:{}, pdfAttachId:{}",
                         entity.getCode(), pdfAttachDTO.getId());
+                deleteTemporaryInvoicePng(pngUrl);
+                needDeleteTemporaryPng = false;
                 return pngBase64;
             }
             // 上传耗时较长，放在锁外；锁内只做 DB 二次检查和缓存记录写入。
@@ -3023,12 +3025,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     && ObjectUtil.isNotEmpty(latestAttachment)
                     && Objects.equals(cachedAttachment.getId(), latestAttachment.getId());
             if (ObjectUtil.isEmpty(latestAttachment) || sameInvalidCache) {
+                // batchAddOrUpdate 自带本地事务，缓存记录写入成功后才保留已上传的 PNG 文件。
                 omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
                         AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
                         pngUrl,
                         pngFileName,
                         pdfAttachDTO.getId())));
-                uploadedCacheUsed = true;
+                needDeleteTemporaryPng = false;
             }
             return pngBase64;
         } catch (InterruptedException e) {
@@ -3038,7 +3041,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (locked && lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
-            if (!uploadedCacheUsed) {
+            if (needDeleteTemporaryPng) {
                 deleteTemporaryInvoicePng(pngUrl);
             }
         }

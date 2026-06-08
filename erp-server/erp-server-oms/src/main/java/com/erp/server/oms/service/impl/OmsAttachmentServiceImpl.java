@@ -95,6 +95,7 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchAddOrUpdate(List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList) {
         if (CollUtil.isEmpty(addOrUpdateList)) {
             return;

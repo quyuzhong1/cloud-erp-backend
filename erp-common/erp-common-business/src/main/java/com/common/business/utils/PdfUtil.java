@@ -38,12 +38,12 @@ import java.util.UUID;
 @Slf4j
 public class PdfUtil {
 
-    private static final float DEFAULT_RENDER_DPI = 150F;
+    private static final float DEFAULT_RENDER_DPI = 300F;
     /**
-     * RGB 渲染下 20M 像素约占 60MB JVM 堆；叠加 PNG 输出和 Base64 字符串后单次峰值仍需控制。
+     * RGB 渲染下 10M 像素约占 30MB JVM 堆；叠加 PNG 输出和 Base64 字符串后单次峰值仍需控制。
      * PdfUtil 是静态工具类，会被测试和非 Spring 调用路径复用，因此这里保留固定安全阈值。
      */
-    private static final long MAX_RENDER_PIXELS = 20_000_000L;
+    private static final long MAX_RENDER_PIXELS = 10_000_000L;
 
     private PdfUtil() {
     }
