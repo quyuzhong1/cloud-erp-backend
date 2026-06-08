@@ -895,8 +895,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+            updateForApprove(entity.getId(), ApproveStatusEnum.APPROVE.getStatus());
+        } else {
+            // 审核不通过
+            updateForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
+            return Boolean.TRUE;
+        }
 
         List<QcNoticeDetailEntity> qcNoticeDetails = qcNoticeDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         //人员
