@@ -99,9 +99,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         }
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
             row.setErrorMsg(String.join(";", errorMsgList));
-            if (errorList.size() < MAX_ERROR_ROWS) {
-                errorList.add(row);
-            }
+            addImportError(row);
             return;
         }
         B2bCustomerPackingDTO.LineViewDTO viewDTO = new B2bCustomerPackingDTO.LineViewDTO();
@@ -137,7 +135,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             return;
         }
         Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new LinkedHashMap<>();
-        List<B2bCustomerPackingImportExcelDTO> boxErrorList = new ArrayList<>();
+        boolean hasBoxError = false;
         for (B2bCustomerPackingDTO.ViewDTO row : successList) {
             B2bCustomerPackingDTO.ViewDTO head = boxHeadMap.get(row.getBoxSeq());
             if (head == null) {
@@ -151,14 +149,12 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                     error.setBoxSeq(String.valueOf(row.getBoxSeq()));
                     error.setSkuNo(getFirstSkuNo(row.getBoxSeq()));
                     error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
-                    if (boxErrorList.size() < MAX_ERROR_ROWS) {
-                        boxErrorList.add(error);
-                    }
+                    addImportError(error);
+                    hasBoxError = true;
                 }
             }
         }
-        if (CollectionUtils.isNotEmpty(boxErrorList)) {
-            appendImportErrors(boxErrorList);
+        if (hasBoxError) {
             successList.clear();
             successLineList.clear();
             return;
@@ -189,20 +185,22 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                 error.setBoxSeq(String.valueOf(line.getBoxSeq()));
                 error.setSkuNo(line.getSkuNo());
                 error.setErrorMsg("相同序号内SKU不能重复");
-                if (duplicateLineErrorList.size() < MAX_ERROR_ROWS) {
-                    duplicateLineErrorList.add(error);
-                }
+                duplicateLineErrorList.add(error);
             }
         }
         return duplicateLineErrorList;
     }
 
+    private void addImportError(B2bCustomerPackingImportExcelDTO error) {
+        if (errorList.size() >= MAX_ERROR_ROWS) {
+            throw new ServiceException("导入错误行数过多（超过{0}行），请修正后重新导入", MAX_ERROR_ROWS);
+        }
+        errorList.add(error);
+    }
+
     private void appendImportErrors(List<B2bCustomerPackingImportExcelDTO> errors) {
         for (B2bCustomerPackingImportExcelDTO error : errors) {
-            if (errorList.size() >= MAX_ERROR_ROWS) {
-                break;
-            }
-            errorList.add(error);
+            addImportError(error);
         }
     }
 

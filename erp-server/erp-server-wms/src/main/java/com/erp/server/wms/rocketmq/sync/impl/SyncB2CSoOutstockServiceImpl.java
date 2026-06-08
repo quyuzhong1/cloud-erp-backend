@@ -602,7 +602,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    // Temu 出库同步按「平台订单+店铺」整单推送（MQ 单消息含多 SKU），订单+店铺级锁防重复建单；waiteTime=15s 仅约束抢锁等待，失败由 MQ 重试。
+    // Temu 出库同步按「平台订单+店铺」整单推送；@DistributeLocker 的 keyName 不支持集合字段解析，旧 key 含 detailList 时锁可能未生效。
     @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 15)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单

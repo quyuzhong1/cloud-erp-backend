@@ -205,7 +205,12 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(taskList);
+                try {
+                    dmpMqFeign.sendTask(taskList);
+                } catch (Exception e) {
+                    log.error("sendMTask失败(事务提交后Feign推送失败), 写入补偿消息", e);
+                    saveSendMTaskFailedPushMsg(taskList, "事务提交后Feign推送失败");
+                }
             }
         });
     }

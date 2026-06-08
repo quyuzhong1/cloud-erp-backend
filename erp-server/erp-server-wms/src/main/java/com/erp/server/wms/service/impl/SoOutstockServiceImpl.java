@@ -3178,7 +3178,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> outstockIds = outstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         List<SoOutstockDetailEntity> outstockDetailList = soOutstockDetailService.listByMainIds(outstockIds);
         if (CollectionUtils.isEmpty(outstockDetailList)) {
-            // 出库单头存在但明细为空时无法识别已出库 SKU，上游会按未出库处理；极端数据不一致场景需人工排查。
+            // 出库单头存在但明细为空时无法识别已出库 SKU，上游会按未出库处理；极端脏数据需运维排查。
+            log.error("平台仓出库单头存在但明细为空，数据不一致, soB2cId={}, outstockIds={}", soB2cId, outstockIds);
             return Collections.emptyList();
         }
         return outstockDetailList.stream()

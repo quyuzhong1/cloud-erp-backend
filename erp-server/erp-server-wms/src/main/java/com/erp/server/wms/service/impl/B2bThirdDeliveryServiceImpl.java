@@ -1707,18 +1707,20 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<B2bCustomerPackingImportExcelDTO> errorList = listener.getErrorList();
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "B2B客户装箱明细导入错误.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
-            if (file.isFile()) {
-                try {
+            File file = null;
+            try {
+                file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
+                if (file != null && file.isFile()) {
                     importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
-                } catch (Exception e) {
-                    log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
-                } finally {
-                    // deleteIfExists 失败时仅记录日志，不影响导入结果；临时文件依赖 OS/JVM 回收。
+                }
+            } catch (Exception e) {
+                log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
+            } finally {
+                if (file != null && file.exists()) {
                     try {
                         Files.deleteIfExists(file.toPath());
                     } catch (IOException e) {
-                        log.warn("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath());
+                        log.error("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath(), e);
                     }
                 }
             }
