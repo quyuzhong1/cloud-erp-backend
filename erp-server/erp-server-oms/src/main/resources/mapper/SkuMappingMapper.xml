@@ -97,6 +97,9 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
+        <if test="params.shopId != null and params.shopId != ''">
+            AND sm.shop_id = #{params.shopId}
+        </if>
         <!--权限-->
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
