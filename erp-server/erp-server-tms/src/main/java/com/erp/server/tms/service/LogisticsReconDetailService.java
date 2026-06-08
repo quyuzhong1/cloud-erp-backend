@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 import java.util.List;
 
@@ -95,4 +96,12 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
      * @return List<LogisticsReconDetailEntity>
      */
     List<LogisticsReconDetailEntity> listByMainIds(Collection<String> mainIds);
+    /**
+     * 下载物流商对账明细导入模板
+     * @author Will
+     * @date: 2026/06/08
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

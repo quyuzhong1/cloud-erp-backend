@@ -7,7 +7,9 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -73,6 +75,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -745,51 +748,27 @@ public class LogisticsReconServiceImpl
 
     // ============================== 校验状态流转 ==============================
 
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "id", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<BatchResultDTO> batchUpdateCheckStatus(LogisticsReconDTO.UpdateCheckStatusDTO dto) {
-        List<String> ids = dto.getIds();
-        List<BatchResultDTO> results = new ArrayList<>(ids.size());
-        List<LogisticsReconEntity> entities = lambdaQuery()
-                .in(LogisticsReconEntity::getId, ids)
-                .list();
-        Set<String> foundIds = entities.stream()
-                .map(LogisticsReconEntity::getId)
-                .collect(Collectors.toCollection(HashSet::new));
-        for (String id : ids) {
-            if (!foundIds.contains(id)) {
-                results.add(BatchResultDTO.fail(id, id,
-                        new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME).getMsg()));
-            }
-        }
-        for (LogisticsReconEntity entity : entities) {
-            try {
-                validateCheckStatusTransition(entity, dto.getCheckStatus());
-                LoginUser user = UserContext.getDefaultLoginUser();
-                lambdaUpdate()
-                        .eq(LogisticsReconEntity::getId, entity.getId())
-                        .set(LogisticsReconEntity::getCheckStatus, dto.getCheckStatus())
-                        .set(LogisticsReconEntity::getCheckUserId,
-                                LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(dto.getCheckStatus())
-                                        ? user.getUid() : "")
-                        .set(LogisticsReconEntity::getCheckUserName,
-                                LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(dto.getCheckStatus())
-                                        ? user.getUserName() : "")
-                        .set(LogisticsReconEntity::getCheckTime,
-                                LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(dto.getCheckStatus())
-                                        ? LocalDateTime.now() : null)
-                        .update(new LogisticsReconEntity());
-                results.add(BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE));
-                String msg = StrUtil.format("用户【{}】将{}【{}】校验状态切换为【{}】，备注：{}",
-                        user.getUserName(), DOC_NAME, entity.getCode(),
-                        LogisticsReconCheckStatusEnum.getName(dto.getCheckStatus()));
-                operateLogService.addModuleOperateLog(msg, null, entity.getId(), "校验状态切换");
-            } catch (Exception e) {
-                log.error("{}校验状态切换失败 id={}", DOC_NAME, entity.getId(), e);
-                results.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
-            }
-        }
-        return results;
+    public BatchResultDTO updateCheckStatus(String id, String checkStatus) {
+        LogisticsReconEntity entity = super.getByIdOpt(id)
+                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
+        validateCheckStatusTransition(entity, checkStatus);
+        LoginUser user = UserContext.getDefaultLoginUser();
+        boolean confirmed = LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(checkStatus);
+        lambdaUpdate()
+                .eq(LogisticsReconEntity::getId, entity.getId())
+                .set(LogisticsReconEntity::getCheckStatus, checkStatus)
+                .set(LogisticsReconEntity::getCheckUserId, confirmed ? user.getUid() : "")
+                .set(LogisticsReconEntity::getCheckUserName, confirmed ? user.getUserName() : "")
+                .set(LogisticsReconEntity::getCheckTime, confirmed ? LocalDateTime.now() : null)
+                .update(new LogisticsReconEntity());
+        String msg = StrUtil.format("用户【{}】将{}【{}】校验状态切换为【{}】",
+                user.getUserName(), DOC_NAME, entity.getCode(),
+                LogisticsReconCheckStatusEnum.getName(checkStatus));
+        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "校验状态切换");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
     private void validateCheckStatusTransition(LogisticsReconEntity entity, String targetStatus) {
@@ -814,6 +793,7 @@ public class LogisticsReconServiceImpl
 
     // ============================== 合并 & 匹配 ==============================
 
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "dto.ids", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto) {
@@ -841,6 +821,7 @@ public class LogisticsReconServiceImpl
         return results;
     }
 
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "mainId", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime) {
@@ -883,6 +864,7 @@ public class LogisticsReconServiceImpl
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "dto.mainId", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> batchUnbindMatch(LogisticsReconDTO.BatchUnbindMatchDTO dto) {
@@ -913,32 +895,23 @@ public class LogisticsReconServiceImpl
 
     // ============================== 删除 / 导出 ==============================
 
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "id", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<BatchResultDTO> batchDelete(List<String> ids) {
-        List<BatchResultDTO> results = new ArrayList<>(ids.size());
-        List<LogisticsReconEntity> entities = lambdaQuery()
-                .in(LogisticsReconEntity::getId, ids)
-                .list();
-        List<String> deletableIds = new ArrayList<>();
-        for (LogisticsReconEntity entity : entities) {
-            // 已确认的对账单不允许删除，导入中 / 待确认均可删
-            if (LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
-                results.add(BatchResultDTO.fail(entity.getId(), entity.getCode(),
-                        new ServiceException(ApiError.LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN).getMsg()));
-                continue;
-            }
-            deletableIds.add(entity.getId());
-            results.add(BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE));
+    public BatchResultDTO delete(String id) {
+        LogisticsReconEntity entity = super.getByIdOpt(id)
+                .orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, DOC_NAME));
+        // 已确认的对账单不允许删除，导入中 / 待确认均可删
+        if (LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(entity.getCheckStatus())) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_CONFIRMED_DELETE_FORBIDDEN);
         }
-        if (CollUtil.isNotEmpty(deletableIds)) {
-            // 级联逻辑删 detail / detail_sub / ref
-            logisticsReconRefLogisticsBillService.removeByMainIds(deletableIds);
-            logisticsReconDetailSubService.removeByMainIds(deletableIds);
-            logisticsReconDetailService.removeByMainIds(deletableIds);
-            super.removeByIds(deletableIds);
-        }
-        return results;
+        List<String> mainIds = Collections.singletonList(id);
+        // 级联逻辑删 detail / detail_sub / ref
+        logisticsReconRefLogisticsBillService.removeByMainIds(mainIds);
+        logisticsReconDetailSubService.removeByMainIds(mainIds);
+        logisticsReconDetailService.removeByMainIds(mainIds);
+        super.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override

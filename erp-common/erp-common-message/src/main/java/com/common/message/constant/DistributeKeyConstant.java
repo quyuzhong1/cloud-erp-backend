@@ -54,4 +54,8 @@ public class DistributeKeyConstant {
      * TMS 异步任务执行锁（按 taskId 互斥，防 MQ 重投并发）
      */
     public static final String TMS_ASYNC_TASK_EXEC_KEY = "TMS_ASYNC_TASK_EXEC";
+    /**
+     * 物流商对账单变更锁（确认 / 校验切换 / 匹配 / 解绑 / 删除按对账单 mainId 互斥）
+     */
+    public static final String TMS_LOGISTICS_RECON_KEY = "TMS_LOGISTICS_RECON";
 }

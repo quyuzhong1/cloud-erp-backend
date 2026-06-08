@@ -15,7 +15,9 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import cn.hutool.core.util.ObjectUtil;
 import com.erp.model.tms.dto.LogisticsReconDTO;
+import com.erp.model.tms.entity.LogisticsReconEntity;
 import com.erp.server.tms.query.LogisticsReconQueryHandler;
 import com.erp.server.tms.service.LogisticsReconService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 物流商对账单（主表）
@@ -147,7 +151,30 @@ public class LogisticsReconController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchUpdateCheckStatus(
             @RequestBody @Validated LogisticsReconDTO.UpdateCheckStatusDTO dto) {
-        List<BatchResultDTO> results = logisticsReconService.batchUpdateCheckStatus(dto);
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> results = new ArrayList<>(ids.size());
+        List<LogisticsReconEntity> list = logisticsReconService.lambdaQuery()
+                .in(LogisticsReconEntity::getId, ids)
+                .list();
+        Map<String, LogisticsReconEntity> idEntityMap = list.stream()
+                .collect(Collectors.toMap(LogisticsReconEntity::getId, w -> w));
+        // 控制层循环逐条切换，单条独立事务（缩小单次事务范围，失败不影响其它单）
+        for (String id : ids) {
+            BatchResultDTO result;
+            try {
+                result = logisticsReconService.updateCheckStatus(id, dto.getCheckStatus());
+            } catch (Exception e) {
+                log.error("物流商对账单校验状态切换失败 id={}", id, e);
+                LogisticsReconEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    results.add(BatchResultDTO.fail(id, id, "物流商对账单不存在, 校验状态切换失败"));
+                    continue;
+                }
+                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+            }
+            results.add(result);
+        }
         return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
     }
 
@@ -169,6 +196,10 @@ public class LogisticsReconController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchMatch(
             @RequestBody @Validated LogisticsReconDTO.BatchMatchDTO dto) {
+        // 统一按 id 自然排序，保证分布式多锁的获取顺序一致，避免交叉死锁
+        if (dto.getIds() != null) {
+            dto.getIds().sort(null);
+        }
         List<BatchResultDTO> results = logisticsReconService.batchMatch(dto);
         return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
     }
@@ -219,7 +250,31 @@ public class LogisticsReconController extends BaseController {
             serviceClass = LogisticsReconService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> results = logisticsReconService.batchDelete(dto.getIds());
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> results = new ArrayList<>(ids.size());
+        // 预查实体，删除失败时回填单号 / 区分不存在
+        List<LogisticsReconEntity> list = logisticsReconService.lambdaQuery()
+                .in(LogisticsReconEntity::getId, ids)
+                .list();
+        Map<String, LogisticsReconEntity> idEntityMap = list.stream()
+                .collect(Collectors.toMap(LogisticsReconEntity::getId, w -> w));
+        // 控制层循环逐条删除，单条独立事务（缩小单次事务范围，失败不影响其它单）
+        for (String id : ids) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = logisticsReconService.delete(id);
+            } catch (Exception e) {
+                log.error("物流商对账单删除失败 id={}", id, e);
+                LogisticsReconEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    results.add(BatchResultDTO.fail(id, id, "物流商对账单不存在, 删除失败"));
+                    continue;
+                }
+                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+            }
+            results.add(deleteResult);
+        }
         return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
     }
 
