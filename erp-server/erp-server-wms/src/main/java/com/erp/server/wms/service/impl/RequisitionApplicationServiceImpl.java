@@ -325,7 +325,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 仓库权限
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'awd' or ra.type = 'fbt' or ra.type = 'AliExpress') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and (((ra.type = 'fba' or ra.type = 'fbs' or ra.type = 'awd' or ra.type = 'fbt' or ra.type = 'AliExpress') {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
     }
 
     @Override
