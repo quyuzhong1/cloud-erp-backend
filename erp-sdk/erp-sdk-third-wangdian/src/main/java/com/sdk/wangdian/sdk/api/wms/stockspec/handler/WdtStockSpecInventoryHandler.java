@@ -42,7 +42,7 @@ public class WdtStockSpecInventoryHandler implements WdtStockSpecInventoryServic
         pager.setCalcTotal(true);
         try {
             StockSpecAPI stockSpecAPI = wangDianClientService.get(StockSpecAPI.class);
-            log.info("旺店通实体仓可用库存查询：warehouseNo={}，specNo={}", warehouseNo, specNo);
+            log.warn("旺店通实体仓可用库存查询：warehouseNo={}，specNo={}", warehouseNo, specNo);
             AvailableStockQueryResponse response = stockSpecAPI.search(request, pager);
             if (response == null) {
                 return MathUtil.ZERO;
@@ -63,7 +63,7 @@ public class WdtStockSpecInventoryHandler implements WdtStockSpecInventoryServic
                 BigDecimal num = stockDto.getNum();
                 totalQty += num == null ? 0 : num.intValue();
             }
-            log.info("旺店通实体仓可用库存查询结果：warehouseNo={}，specNo={}，qty={}", warehouseNo, specNo, totalQty);
+            log.warn("旺店通实体仓可用库存查询结果：warehouseNo={}，specNo={}，qty={}", warehouseNo, specNo, totalQty);
             return totalQty;
         } catch (WdtErpException e) {
             throw new ServiceException("调用旺店通" + SEARCH_AVAILABLE_STOCK_URL + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
