@@ -96,6 +96,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private static final String COST_ITEM_FIELD = "costItem";
     private static final String ACTUAL_AMOUNT_FIELD = "actualAmount";
     private static final String ESTIMATED_AMOUNT_FIELD = "estimatedAmount";
+    private static final String PLATFORM_CODE_FIELD = "platformCode";
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
@@ -1296,8 +1297,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return uniqueKeyList.stream().allMatch(uniqueKey -> {
             String importValue = String.valueOf(successJson.get(uniqueKey.getTargetField()));
             Object billValue = BeanUtil.getFieldValue(logisticsBillVo, uniqueKey.getTargetField());
+            if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, uniqueKey.getTargetField())) {
+                return matchesPlatformCodeUniqueKey(importValue, billValue);
+            }
             return CharSequenceUtil.equals(importValue, ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
         });
+    }
+
+    private boolean matchesPlatformCodeUniqueKey(String importValue, Object billValue) {
+        String platformCode = CharSequenceUtil.trim(importValue);
+        if (CharSequenceUtil.isBlank(platformCode) || ObjectUtil.isNull(billValue)) {
+            return false;
+        }
+        return Arrays.stream(String.valueOf(billValue).split(","))
+                .map(CharSequenceUtil::trim)
+                .anyMatch(item -> CharSequenceUtil.equals(platformCode, item));
     }
 
     /**
