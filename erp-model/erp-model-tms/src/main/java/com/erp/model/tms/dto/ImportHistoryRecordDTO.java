@@ -492,15 +492,8 @@ public class ImportHistoryRecordDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PreQueryResultDTO {
+        // sourceType、dictCostAttribution 已移除：费用项归属与主单 type 分别在 format/handleImportData 行级解析。
 
-        /**
-         * 来源类型
-         */
-        private String sourceType;
-        /**
-         * 费用归属
-         */
-        private String dictCostAttribution;
         /**
          * 物流信息
          */
