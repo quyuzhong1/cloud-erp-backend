@@ -2828,10 +2828,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String confirmUserId = UserContext.getDefaultLoginUser().getUid();
         String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
         List<ImportHistoryRecordDTO.ImportConfirmDTO> distinctConfirmList = new ArrayList<>(confirmMap.values());
-        List<String> logisticsCostIdList = distinctConfirmList.stream()
-                .map(ImportHistoryRecordDTO.ImportConfirmDTO::getLogisticsCostId)
-                .collect(Collectors.toList());
-        validateConfirmAmount(logisticsCostIdList, reconciliationStatus);
+        // 物流商费用导入已在行级通过 validateImportConfirmAmountMsg 校验，此处不再 validateConfirmAmount，避免整批抛异常
         int updateCount = 0;
         for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
             updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
