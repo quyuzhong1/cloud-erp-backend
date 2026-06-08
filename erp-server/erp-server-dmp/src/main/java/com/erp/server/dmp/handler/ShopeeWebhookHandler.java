@@ -3,6 +3,7 @@ package com.erp.server.dmp.handler;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.WebhookResult;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
@@ -42,9 +43,9 @@ public class ShopeeWebhookHandler implements WebhookHandler{
     }
 
     @Override
-    public String process(String data, Map<String, String> headers, String serviceFlag) {
+    public WebhookResult process(String data, Map<String, String> headers, String serviceFlag) {
         if(StringUtils.isBlank(data)){
-            return "";
+            return WebhookResult.isSuccess();
         }
         log.warn("虾皮webhook 获取数据,{}",data);
         try {
@@ -52,12 +53,12 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             Integer code = json.getInt("code");
             if (!Objects.equals(ORDER_STATUS_CODE, code)) {
                 log.info("虾皮webhook 忽略非订单状态事件，code={}", code);
-                return SUCCESS;
+                return WebhookResult.isSuccess();
             }
             JSONObject webhookData = json.getJSONObject("data");
             if (Objects.isNull(webhookData)) {
                 log.warn("虾皮webhook data为空，payload={}", data);
-                return SUCCESS;
+                return WebhookResult.isSuccess();
             }
             String ordersn = webhookData.getStr("ordersn");
             String status = webhookData.getStr("status");
@@ -66,7 +67,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             if (StringUtils.isBlank(ordersn) || StringUtils.isBlank(status) || Objects.isNull(updateTime) || StringUtils.isBlank(platformShopId)) {
                 log.warn("虾皮webhook 关键字段为空，ordersn={}，status={}，updateTime={}，shopId={}",
                         ordersn, status, updateTime, platformShopId);
-                return SUCCESS;
+                return WebhookResult.isSuccess();
             }
             DmpCfgInputEntity cfgInputEntity = dmpCfgInputService.lambdaQuery()
                     .eq(DmpCfgInputEntity::getCode, CFG_INPUT_CODE)
@@ -75,7 +76,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
                     .one();
             if (Objects.isNull(cfgInputEntity)) {
                 log.warn("虾皮webhook 未找到任务配置，code={}", CFG_INPUT_CODE);
-                return SUCCESS;
+                return WebhookResult.isSuccess();
             }
             DmpCfgInputDetailEntity detailEntity = dmpCfgInputDetailService.lambdaQuery()
                     .eq(DmpCfgInputDetailEntity::getMainId, cfgInputEntity.getId())
@@ -85,7 +86,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             if (Objects.isNull(detailEntity)) {
                 log.warn("虾皮webhook 未找到任务明细配置，cfgInputId={}，shopId={}",
                         cfgInputEntity.getId(), platformShopId);
-                return SUCCESS;
+                return WebhookResult.isSuccess();
             }
             json.set("platformShopId", platformShopId);
             ThirdWarehouseContext.setData(json.toString());
@@ -97,7 +98,7 @@ public class ShopeeWebhookHandler implements WebhookHandler{
         }finally {
             ThirdWarehouseContext.remove();
         }
-        return SUCCESS;
+        return WebhookResult.isSuccess();
     }
 
 }
