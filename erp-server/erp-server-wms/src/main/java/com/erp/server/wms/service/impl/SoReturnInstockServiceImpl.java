@@ -2426,12 +2426,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void importSoReturnInstockAdd(BaseDTO.ImportDTO dto) {
         setImportUserContext(dto);
         SoReturnStockExcelListener excelListenerUtil = new SoReturnStockExcelListener();
         try {
-            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            byte[] bytes = downloadImportFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("销售退货入库单导入格式错误！", e);
@@ -2447,12 +2446,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         finishImportTask(dto, excelDateList.size(), errorList, SoReturnStockImportExcelDTO.class, "销售退货入库单导入错误信息.xlsx");
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public void importSoReturnInstockUpdate(BaseDTO.ImportDTO dto) {
         setImportUserContext(dto);
         SoReturnStockUpdateExcelListener excelListenerUtil = new SoReturnStockUpdateExcelListener();
         try {
-            byte[] bytes = fileFeign.downloadFile(dto.getFileUrl());
+            byte[] bytes = downloadImportFile(dto.getFileUrl());
             EasyExcel.read(new ByteArrayInputStream(bytes), SoReturnStockUpdateImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (ExcelCommonException e) {
             log.error("销售退货入库单批量更新格式错误！", e);
@@ -2466,6 +2464,29 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnStockUpdateImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         handleImportSoReturnstockUpdateFile(successList, errorList);
         finishImportTask(dto, excelDateList.size(), errorList, SoReturnStockUpdateImportExcelDTO.class, "销售退货入库单批量更新错误信息.xlsx");
+    }
+
+    private byte[] downloadImportFile(String fileUrl) {
+        byte[] bytes = fileFeign.downloadFile(fileUrl);
+        if (bytes == null || bytes.length == 0) {
+            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, fileUrl);
+        }
+        return bytes;
+    }
+
+    private Map<String, BaseIdDTO.CodeDTO> buildEnabledAccountingCompanyMap() {
+        List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+        if (CollectionUtils.isEmpty(companyList)) {
+            return Collections.emptyMap();
+        }
+        return companyList.stream()
+                .filter(org -> !Boolean.TRUE.equals(org.getDisabled()))
+                .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getName, Function.identity(), (a, b) -> a));
+    }
+
+    private List<DictCurrencyEntity> listCurrencySafe() {
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        return currencyList == null ? Collections.emptyList() : currencyList;
     }
 
     private void setImportUserContext(BaseDTO.ImportDTO dto) {
@@ -2491,17 +2512,26 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         importResultDTO.setTaskId(dto.getTaskId());
         importResultDTO.setCount(totalCount);
         String url = "";
-        if (CollectionUtils.isNotEmpty(errorList)) {
-            File file = ExcelUtil.exportFile(errorFileName, "error", errorList, errorClass);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, errorFileName);
+        int errorCount = CollectionUtils.isEmpty(errorList) ? 0 : errorList.size();
+        if (errorCount > 0) {
+            try {
+                File file = ExcelUtil.exportFile(errorFileName, "error", errorList, errorClass);
+                if (!file.isDirectory()) {
+                    url = FastDFSClientUtil.uploadFile(file, errorFileName);
+                }
+            } catch (Exception e) {
+                log.error("销售退货入库单导入错误文件上传失败，taskId={}", dto.getTaskId(), e);
             }
         }
-        importResultDTO.setRemark("处理完成，失败" + errorList.size() + "条");
+        importResultDTO.setRemark("处理完成，失败" + errorCount + "条");
         importResultDTO.setErrorUrl(url);
         importResultDTO.setFinishTime(LocalDateTime.now());
         importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
-        downloadTaskFeign.updateTask(importResultDTO);
+        try {
+            downloadTaskFeign.updateTask(importResultDTO);
+        } catch (Exception e) {
+            log.error("销售退货入库单导入任务状态更新失败，taskId={}", dto.getTaskId(), e);
+        }
     }
 
     /**
@@ -2544,11 +2574,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream()
                 .collect(Collectors.groupingBy(CustomerInfoEntity::getName));
 
-        Map<String, BaseIdDTO.CodeDTO> inventoryOrgMap = sysUserFeign.getAccountingCompanyList(new ArrayList<>()).stream()
-                .filter(org -> !Boolean.TRUE.equals(org.getDisabled()))
-                .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getName, Function.identity(), (a, b) -> a));
+        Map<String, BaseIdDTO.CodeDTO> inventoryOrgMap = buildEnabledAccountingCompanyMap();
 
-        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        List<DictCurrencyEntity> currencyList = listCurrencySafe();
 
         List<Pair<SoReturnInstockEntity, SoReturnInstockEntity>> toUpdateList = new ArrayList<>();
         for (SoReturnStockUpdateImportExcelDTO row : successList) {
@@ -2817,7 +2845,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getName));
 
         //币种
-        List<DictCurrencyEntity> viewList = sysUserFeign.currencyList();
+        List<DictCurrencyEntity> viewList = listCurrencySafe();
 
         //sku
         List<String> skuNoList = successList.stream().map(SoReturnStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
