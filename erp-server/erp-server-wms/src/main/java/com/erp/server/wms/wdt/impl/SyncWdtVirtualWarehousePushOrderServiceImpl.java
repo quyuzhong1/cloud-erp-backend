@@ -84,13 +84,14 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
 
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 校验分货单调出明细是否存在未同步成功的数据
-     * @author will
-     * @date 2025/12/29 11:36
-     * @param checkDataList
-     * @return void
+     * 校验规则：旺店通虚拟仓可用库存 >= 待同步完成数 + 本次取消/调出数量
+     *
+     * @param checkDataList 待校验的明细数据
      */
     private void checkHandleDetailListRepeat(List<VirtualWarehousePushHandleDetailDTO.CheckDataDTO> checkDataList) {
         if (CollUtil.isEmpty(checkDataList)) {
@@ -151,6 +152,10 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         if (!VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType()) || CollUtil.isEmpty(detailEntityList)) {
             return;
         }
+        log.info("开始校验分货单旺店通库存，分货单：{}，明细数：{}，借调明细数：{}",
+                allocationEntity.getCode(), detailEntityList.size(),
+                CollUtil.isEmpty(transferWarehouseList) ? 0 : transferWarehouseList.size());
+
         List<String> toVirtualWarehouseIds = detailEntityList.stream()
                 .map(VirtualWarehouseAllocationDetailEntity::getToVirtualWarehouseId)
                 .filter(CharSequenceUtil::isNotBlank)
@@ -165,6 +170,8 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         }
         Map<String, ThirdMappingEntity> toMappingMap = toMappingList.stream()
                 .collect(Collectors.toMap(ThirdMappingEntity::getSysId, obj -> obj, (left, right) -> left));
+        log.debug("查询到调入虚拟仓映射：{}", toMappingMap.keySet());
+
         List<VirtualWarehouseAllocationDetailEntity> mappedDetailList = detailEntityList.stream()
                 .filter(obj -> toMappingMap.containsKey(obj.getToVirtualWarehouseId()))
                 .collect(Collectors.toList());
@@ -185,6 +192,7 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 .distinct()
                 .collect(Collectors.toList());
         Map<String, String> entityThirdWarehouseNoMap = buildEntityThirdWarehouseNoMap(entityWarehouseIds);
+        Map<String, String> warehouseNameMap = buildWarehouseNameMap(entityWarehouseIds);
         Map<String, Integer> entityAvailableStockCache = new HashMap<>();
 
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> groupedDetailMap = mappedDetailList.stream()
@@ -193,7 +201,9 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
             VirtualWarehouseAllocationDetailEntity firstDetail = groupDetailList.get(0);
             String thirdWarehouseNo = entityThirdWarehouseNoMap.get(firstDetail.getWarehouseId());
             if (CharSequenceUtil.isBlank(thirdWarehouseNo)) {
-                throw new ServiceException("分货实体仓未配置旺店通仓库映射，仓库ID：{}", firstDetail.getWarehouseId());
+                String warehouseName = warehouseNameMap.getOrDefault(firstDetail.getWarehouseId(),
+                        CharSequenceUtil.blankToDefault(firstDetail.getWarehouseName(), "未知"));
+                throw new ServiceException("分货实体仓【{}】未配置旺店通仓库映射，仓库ID：{}", warehouseName, firstDetail.getWarehouseId());
             }
 
             Map<String, Integer> currentPushQtyMap = groupDetailList.stream()
@@ -203,17 +213,25 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 String skuNo = skuPushEntry.getKey();
                 Integer currentPushQty = skuPushEntry.getValue();
                 Integer wdtInventoryQty = queryEntityAvailableStock(entityAvailableStockCache, thirdWarehouseNo, skuNo);
+                log.debug("查询实体仓库库存，仓库：{}，SKU：{}，库存：{}", thirdWarehouseNo, skuNo, wdtInventoryQty);
 
-                String borrowThirdWarehouseNo = groupDetailList.stream()
+                VirtualWarehouseAllocationDTO.TransferWarehouseDTO transferWarehouse = groupDetailList.stream()
                         .filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), skuNo))
                         .map(obj -> transferDetailMap.get(obj.getId()))
                         .filter(obj -> obj != null && CharSequenceUtil.isNotBlank(obj.getFromWarehouseId()))
-                        .map(obj -> entityThirdWarehouseNoMap.get(obj.getFromWarehouseId()))
-                        .filter(CharSequenceUtil::isNotBlank)
                         .findFirst().orElse(null);
+                String borrowThirdWarehouseNo = null;
                 Integer borrowWdtInventoryQty = 0;
-                if (CharSequenceUtil.isNotBlank(borrowThirdWarehouseNo)) {
+                if (transferWarehouse != null) {
+                    String borrowWarehouseId = transferWarehouse.getFromWarehouseId();
+                    borrowThirdWarehouseNo = entityThirdWarehouseNoMap.get(borrowWarehouseId);
+                    if (CharSequenceUtil.isBlank(borrowThirdWarehouseNo)) {
+                        String borrowWarehouseName = warehouseNameMap.getOrDefault(borrowWarehouseId, "未知");
+                        throw new ServiceException("借调实体仓【{}】未配置旺店通仓库映射，仓库ID：{}", borrowWarehouseName, borrowWarehouseId);
+                    }
                     borrowWdtInventoryQty = queryEntityAvailableStock(entityAvailableStockCache, borrowThirdWarehouseNo, skuNo);
+                    log.info("触发借调，叠加借调仓库存，原仓：{}({})，借调仓：{}({})，SKU：{}",
+                            thirdWarehouseNo, wdtInventoryQty, borrowThirdWarehouseNo, borrowWdtInventoryQty, skuNo);
                 }
                 Integer totalWdtInventoryQty = wdtInventoryQty + borrowWdtInventoryQty;
                 if (MathUtil.compareTo(totalWdtInventoryQty, currentPushQty) < 0) {
@@ -224,11 +242,26 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 }
             }
         }
+        log.info("分货单旺店通库存校验通过，分货单：{}", allocationEntity.getCode());
     }
 
     private Integer queryEntityAvailableStock(Map<String, Integer> stockCache, String thirdWarehouseNo, String skuNo) {
         String cacheKey = CharSequenceUtil.format("{}-{}", thirdWarehouseNo, skuNo);
         return stockCache.computeIfAbsent(cacheKey, key -> MathUtil.valueOfZero(wdtStockSpecInventoryService.queryAvailableStock(thirdWarehouseNo, skuNo)));
+    }
+
+    private Map<String, String> buildWarehouseNameMap(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)) {
+            return Collections.emptyMap();
+        }
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+        if (CollUtil.isEmpty(warehouseList)) {
+            return Collections.emptyMap();
+        }
+        return warehouseList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getId()))
+                .collect(Collectors.toMap(WarehouseEntity::getId,
+                        obj -> CharSequenceUtil.blankToDefault(obj.getName(), "未知"), (left, right) -> left));
     }
 
     private Map<String, String> buildEntityThirdWarehouseNoMap(List<String> warehouseIds) {
