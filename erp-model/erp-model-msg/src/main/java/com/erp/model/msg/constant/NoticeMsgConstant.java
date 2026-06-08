@@ -121,4 +121,9 @@ public class NoticeMsgConstant {
      * 质检通知消息头
      */
     public final static String SHOP_EXPIRE_NOTICE="店铺{}将于{}授权到期，请及时处理";
+
+    /**
+     * 海外仓SKU未匹配预警飞书卡片正文（%s=通知类型，%s=仓库简称）
+     */
+    public final static String FS_SKU_MAPPING_UNMATCH_CONTENT = "通知类型：%s\n仓库简称：%s";
 }

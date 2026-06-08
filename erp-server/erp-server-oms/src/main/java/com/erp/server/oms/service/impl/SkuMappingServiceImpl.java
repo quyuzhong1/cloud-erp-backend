@@ -2550,4 +2550,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .orderByDesc(SkuMappingEntity::getEffectiveTime)
                 .list();
     }
+
+    @Override
+    public List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(SkuMappingDTO.UnmatchQueryDTO dto) {
+        return baseMapper.countUnmatchedGroupByWarehouse(dto);
+    }
 }

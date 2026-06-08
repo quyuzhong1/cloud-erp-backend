@@ -124,4 +124,12 @@ public class SkuMappingFeignController extends BaseController {
                                                                               @RequestBody List<String> platformSkuNoList) {
         return skuMappingService.listByWarehouseAndPlatformSku(warehouseId, platformSkuNoList);
     }
+
+    /**
+     * 统计各海外仓未匹配SKU数量，供预警定时任务调用
+     */
+    @PostMapping("/countUnmatchedGroupByWarehouse")
+    public List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(@RequestBody SkuMappingDTO.UnmatchQueryDTO dto) {
+        return skuMappingService.countUnmatchedGroupByWarehouse(dto);
+    }
 }

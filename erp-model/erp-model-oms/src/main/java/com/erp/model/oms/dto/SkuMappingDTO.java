@@ -1833,4 +1833,34 @@ public class SkuMappingDTO implements Serializable {
 
     }
 
+    /**
+     * 海外仓未匹配SKU查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UnmatchQueryDTO {
+        /** 海外仓ID，为空时查询所有仓库 */
+        private String warehouseId;
+        /** 店铺ID，为空时不过滤 */
+        private String shopId;
+        /** 平台字典值，为空时不过滤 */
+        private String dictPlatform;
+        /** SKU映射类型：platform/warehouse/customer/b2bPlatform，为空时不过滤 */
+        private String type;
+    }
+
+    /**
+     * 海外仓未匹配SKU统计结果（按仓库分组）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UnmatchCountDTO {
+        /** 仓库ID */
+        private String warehouseId;
+        /** 仓库名称 */
+        private String warehouseName;
+        /** 未匹配SKU数量 */
+        private Long unmatchCount;
+    }
+
 }
