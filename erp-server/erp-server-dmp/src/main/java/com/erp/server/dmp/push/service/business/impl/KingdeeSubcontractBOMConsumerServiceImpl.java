@@ -11,6 +11,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.enums.KingdeeSubcontractBomBackFlushTypeEnum;
+import com.erp.model.dmp.enums.KingdeeSubcontractBomDosageTypeEnum;
+import com.erp.model.dmp.enums.KingdeeSubcontractBomIssueTypeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
@@ -32,6 +35,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -178,14 +182,14 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         if (Objects.isNull(sysAccountingCompany)) {
             throw new ServiceException(ApiError.COMMON_COMPANY_NOT_FOUND);
         }
-        int counter = 0;
+        int entryIndex = 0;
         //原数据行
         for (int i = 0; i < ppBomEntries.size(); i++) {
             if (Objects.nonNull(subcontractOrder)) {
                 JSONObject srcEntry = ppBomEntries.getJSONObject(i);
-                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter);
-                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,counter);
-                counter++;
+                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,entryIndex);
+                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,entryIndex);
+                entryIndex++;
                 FEntities.put(changeBeforPpBom);
                 FEntities.put(changeAfterPpBom);
             }
@@ -315,7 +319,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entries;
     }
 
-    private JSONObject createChangeBeforePpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
+    private JSONObject createChangeBeforePpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int entryIndex) {
         JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -351,7 +355,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式：直接倒冲
-        entry.put("FIssueType", "2");
+        entry.put("FIssueType", KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode());
         //变更前
         entry.put("FChangeType","2");
         //分子
@@ -363,8 +367,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //未领数量
         entry.put("FNoPickedQty",srcEntry.get("NoPickedQty"));
         //用量类型
-        //entry.put("FDosageType","1");
-        entry.put("FDosageType", (counter % 2 == 1) ? "2" : "1");
+        entry.put("FDosageType", resolveDosageType(srcEntry));
         //子项类型
         entry.put("FMaterialType","1");
         //标准用量
@@ -376,9 +379,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
         //倒冲时机：入库倒冲
-        entry.put("FBackFlushType", "3");
+        entry.put("FBackFlushType", KingdeeSubcontractBomBackFlushTypeEnum.INSTOCK_BACKFLUSH.getCode());
         //领料考虑最小发料批量
-        entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
+        entry.put("FISMinIssueQty", resolveConsiderMinIssueQty(srcEntry));
         //需求日期
         entry.put("FNeedDate2",srcEntry.get("NeedDate"));
         //用料清单类型
@@ -404,9 +407,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //行展开类型
         entry.put("FRowExpandType", 0);
         //工序
-        entry.put("FOperID", (counter % 2 == 1) ? 10 : 0);
+        entry.put("FOperID", resolveOperId(srcEntry));
         //项次
-        entry.put("FReplaceGroup", counter + 1);
+        entry.put("FReplaceGroup", resolveReplaceGroup(srcEntry, entryIndex));
         //金蝶工单补充字段
         entry.put("FSUBPPBOMEntrySeq", 1);
         entry.put("FSUBPPBOMEntryId", srcEntry.get("Id"));
@@ -423,7 +426,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         return entry;
     }
 
-    private JSONObject createChangeAfterPpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int counter) {
+    private JSONObject createChangeAfterPpBomEntry(JSONObject view,KingdeeApiUtils skuApiUtils,String platformId,JSONObject srcEntry, String bomBillNo,String subCode,SysAccountingCompanyEntity sysAccountingCompany,int entryIndex) {
         JSONObject entry = new JSONObject();
         //物料编码
         JSONObject skuJson = new JSONObject();
@@ -459,7 +462,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
         //发料方式：直接倒冲
-        entry.put("FIssueType", "2");
+        entry.put("FIssueType", KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode());
         //变更后
         entry.put("FChangeType","3");
         //分子
@@ -471,7 +474,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //未领数量
         entry.put("FNoPickedQty",1);
         //用量类型
-        entry.put("FDosageType", (counter % 2 == 1) ? "2" : "1");
+        entry.put("FDosageType", resolveDosageType(srcEntry));
         //需求数量
         entry.put("FNeedQty2",srcEntry.get("NeedQty2"));
         //超发控制方式
@@ -479,9 +482,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
         //倒冲时机：入库倒冲
-        entry.put("FBackFlushType", "3");
+        entry.put("FBackFlushType", KingdeeSubcontractBomBackFlushTypeEnum.INSTOCK_BACKFLUSH.getCode());
         //领料考虑最小发料批量
-        entry.put("FISMinIssueQty", (counter % 2 == 1) ? Boolean.FALSE : Boolean.TRUE);
+        entry.put("FISMinIssueQty", resolveConsiderMinIssueQty(srcEntry));
         //需求日期
         entry.put("FNeedDate2",srcEntry.get("NeedDate"));
         //用料清单类型
@@ -507,9 +510,9 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //行展开类型
         entry.put("FRowExpandType", 0);
         //工序
-        entry.put("FOperID", (counter % 2 == 1) ? 10 : 0);
+        entry.put("FOperID", resolveOperId(srcEntry));
         //项次
-        entry.put("FReplaceGroup", counter + 1);
+        entry.put("FReplaceGroup", resolveReplaceGroup(srcEntry, entryIndex));
         //金蝶工单补充字段
         entry.put("FSUBPPBOMEntrySeq", 1);
         entry.put("FSUBPPBOMEntryId", srcEntry.get("Id"));
@@ -544,7 +547,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         //委外用料清单编号
         entry.put("FSUBPPBOMNo", bomBillNo);
         //用料类型
-        entry.put("FDosageType", "2");
+        entry.put("FDosageType", KingdeeSubcontractBomDosageTypeEnum.VARIABLE.getCode());
         //子项类型
         entry.put("FMaterialType", "1");
         //超发控制方式
@@ -555,7 +558,7 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FSupplyOrg", supplyOrgJson);
         //发料方式
         //发料方式：直接倒冲
-        entry.put("FIssueType", "2");
+        entry.put("FIssueType", KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode());
         //需求日期
         entry.put("FNeedDate2",subcontractOrder.getBillDate().toString());
         //新增
@@ -653,6 +656,45 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             updateKingdeeDetailId(jsonArray);
         }
         return  isAdd;
+    }
+
+    private String resolveDosageType(JSONObject srcEntry) {
+        Object dosageType = srcEntry.get("DosageType");
+        if (dosageType != null && StringUtils.isNotBlank(String.valueOf(dosageType))) {
+            return String.valueOf(dosageType);
+        }
+        return KingdeeSubcontractBomDosageTypeEnum.VARIABLE.getCode();
+    }
+
+    private boolean resolveConsiderMinIssueQty(JSONObject srcEntry) {
+        Object isMinIssueQty = srcEntry.get("ISMinIssueQty");
+        if (isMinIssueQty instanceof Boolean) {
+            return (Boolean) isMinIssueQty;
+        }
+        if (isMinIssueQty != null && StringUtils.isNotBlank(String.valueOf(isMinIssueQty))) {
+            return Boolean.parseBoolean(String.valueOf(isMinIssueQty));
+        }
+        Object baseMinIssueQty = srcEntry.get("BaseMinIssueQty");
+        if (baseMinIssueQty == null || StringUtils.isBlank(String.valueOf(baseMinIssueQty))) {
+            return Boolean.TRUE;
+        }
+        return new BigDecimal(String.valueOf(baseMinIssueQty)).compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    private int resolveOperId(JSONObject srcEntry) {
+        Object operId = srcEntry.get("OperID");
+        if (operId != null && StringUtils.isNotBlank(String.valueOf(operId))) {
+            return Integer.parseInt(String.valueOf(operId));
+        }
+        return 0;
+    }
+
+    private int resolveReplaceGroup(JSONObject srcEntry, int entryIndex) {
+        Object replaceGroup = srcEntry.get("ReplaceGroup");
+        if (replaceGroup != null && StringUtils.isNotBlank(String.valueOf(replaceGroup))) {
+            return Integer.parseInt(String.valueOf(replaceGroup));
+        }
+        return entryIndex + 1;
     }
 
 }
