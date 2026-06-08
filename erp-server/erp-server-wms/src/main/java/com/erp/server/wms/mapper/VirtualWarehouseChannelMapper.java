@@ -58,4 +58,10 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
      * @date 2024/6/13 12:27
      */
     List<VirtualWarehouseChannelEntity> listVirtualWarehouseByPlatform(@Param("listPlatformDTO") VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
+
+    /**
+     * 查询同一实体仓下已配置 B2B 海外线下平台的其他虚拟仓冲突信息
+     */
+    List<VirtualWarehouseDTO.B2bForeignConflictDTO> findB2bForeignConflicts(@Param("virtualWarehouseId") String virtualWarehouseId,
+                                                                              @Param("b2bForeignPlatform") String b2bForeignPlatform);
 }

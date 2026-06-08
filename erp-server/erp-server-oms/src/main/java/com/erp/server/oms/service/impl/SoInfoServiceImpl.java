@@ -346,15 +346,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         //仓库id（B2B 手工新增：请求未带仓库时，用客户维护的默认发货仓库；前端已选仓库则以请求为准）
         String warehouseId = dto.getWarehouseId();
+        CustomerInfoEntity customerInfoEntity = StringUtils.isNotBlank(customerId) ? customerInfoService.getById(customerId) : null;
         if (OrderTypeEnum.B2B.getCode().equals(dto.getOrderType())
                 && StringUtils.isBlank(warehouseId)
-                && StringUtils.isNotBlank(customerId)) {
-            // 手工新增路径只持有 customerId，且仅在请求未带仓库时查询一次客户档案默认发货仓库。
-            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
-            if (customerInfoEntity != null && StringUtils.isNotBlank(customerInfoEntity.getDefaultShippingWarehouse())) {
-                warehouseId = customerInfoEntity.getDefaultShippingWarehouse();
-                addEntity.setWarehouseId(warehouseId);
-            }
+                && customerInfoEntity != null
+                && StringUtils.isNotBlank(customerInfoEntity.getDefaultShippingWarehouse())) {
+            warehouseId = customerInfoEntity.getDefaultShippingWarehouse();
+            addEntity.setWarehouseId(warehouseId);
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
         String warehouseOrgId = "";
@@ -382,7 +380,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 验证字典值
         checkDict(addEntity);
         //封装军区
-        this.buildPartition(addEntity);
+        this.buildPartition(addEntity, customerInfoEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
         //获取客户收货国家
@@ -429,11 +427,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     private void buildPartition(SoInfoEntity addEntity) {
+        buildPartition(addEntity, null);
+    }
+
+    private void buildPartition(SoInfoEntity addEntity, CustomerInfoEntity customerInfo) {
         String customerId = addEntity.getCustomerId();
         if (StringUtils.isBlank(customerId)) {
             return;
         }
-        CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+        if (customerInfo == null) {
+            customerInfo = customerInfoService.getById(customerId);
+        }
         if (Objects.nonNull(customerInfo)) {
             // 优先使用 CustomerInfo 中的 partitionId
             if (StringUtils.isNotBlank(customerInfo.getPartitionId())) {

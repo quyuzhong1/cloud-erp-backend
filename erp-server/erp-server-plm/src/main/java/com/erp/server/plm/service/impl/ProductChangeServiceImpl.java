@@ -937,6 +937,12 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
                 } catch (Exception e) {
                     log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+                    try {
+                        syncWangDianProductDetailService.saveSyncErrorPushMsg(productDetailEntity,
+                                String.format("【%s】产品变更审批后同步旺店通失败", productDetailEntity.getSkuNo()));
+                    } catch (Exception ex) {
+                        log.warn("产品变更审批后同步旺店失败补偿消息写入失败, productDetailId={}", productDetailEntity.getId(), ex);
+                    }
                 }
             }
         });

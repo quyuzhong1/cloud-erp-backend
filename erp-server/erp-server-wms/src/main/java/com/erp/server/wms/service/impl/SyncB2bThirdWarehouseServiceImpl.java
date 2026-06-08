@@ -196,10 +196,14 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
             log.warn("B2B三方发货单附件下载异常，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
+            saveAttachmentDownloadErrorMsg(req.getSourceId(), req.getReferenceNo(),
+                    StrUtil.format("B2B三方仓附件下载异常，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName()));
             throw new ServiceException("B2B三方仓附件下载异常，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName());
         }
         if (Objects.isNull(bytes) || bytes.length == 0) {
             log.warn("B2B三方发货单附件下载为空，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
+            saveAttachmentDownloadErrorMsg(req.getSourceId(), req.getReferenceNo(),
+                    StrUtil.format("B2B三方仓附件下载为空，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName()));
             throw new ServiceException("B2B三方仓附件下载为空，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName());
         }
         bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
@@ -326,6 +330,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             return;
         }
         Map<String, List<WmsAttachmentDTO.UpdateDTO>> shipmentFileMap = getShipmentFileMap(packingList);
+        validateBoxHeadShipmentFiles(entity, packingList, shipmentFileMap);
         List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {
             ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item = new ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem();
             item.setWarehousePlatformSku(p.getWarehousePlatformSku());
@@ -333,12 +338,34 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             item.setBoxMarkNo(p.getBoxMarkNo());
             item.setBoxMarkRefNo(p.getBoxMarkRefNo());
             item.setLabelSize(p.getLabelSize());
-            fillShipmentFiles(item, shipmentFileMap.get(p.getId()));
+            fillShipmentFiles(item, shipmentFileMap.get(p.getId()), entity.getId(), entity.getCode());
             item.setLabelingRequirement(p.getLabelingRequirement());
             item.setBoxSeq(p.getBoxSeq());
             return item;
         }).collect(Collectors.toList());
         req.setPackingDetailList(items);
+    }
+
+    private void validateBoxHeadShipmentFiles(B2bThirdDeliveryEntity entity,
+                                              List<B2bCustomerPackingEntity> packingList,
+                                              Map<String, List<WmsAttachmentDTO.UpdateDTO>> shipmentFileMap) {
+        Integer labelsPerBox = entity.getLabelsPerBox() != null ? entity.getLabelsPerBox() : 0;
+        String packingType = CharSequenceUtil.blankToDefault(entity.getPackingType(), B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
+        if (labelsPerBox <= 0 || !B2bPackingTypeEnum.requiresPackingDetail(packingType)) {
+            return;
+        }
+        Set<Integer> boxSeqSet = packingList.stream()
+                .map(B2bCustomerPackingEntity::getBoxSeq)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        for (Integer boxSeq : boxSeqSet) {
+            B2bCustomerPackingEntity boxHead = b2bCustomerPackingService.getBoxHead(packingList, boxSeq).orElse(null);
+            if (boxHead == null || CollUtil.isNotEmpty(shipmentFileMap.get(boxHead.getId()))) {
+                continue;
+            }
+            log.error("B2B三方发货单装箱标签附件缺失，箱序号：{}, mainId={}", boxSeq, entity.getId());
+            throw new ServiceException("装箱标签附件缺失，箱序号：{}", boxSeq);
+        }
     }
 
     private Map<String, List<WmsAttachmentDTO.UpdateDTO>> getShipmentFileMap(List<B2bCustomerPackingEntity> packingList) {
@@ -362,13 +389,16 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId, LinkedHashMap::new, Collectors.toList()));
     }
 
-    private void fillShipmentFiles(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item, List<WmsAttachmentDTO.UpdateDTO> attachments) {
+    private void fillShipmentFiles(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item,
+                                   List<WmsAttachmentDTO.UpdateDTO> attachments,
+                                   String sourceId,
+                                   String sourceCode) {
         if (CollUtil.isEmpty(attachments)) {
             return;
         }
         List<ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem> shipmentFiles = new ArrayList<>(attachments.size());
         for (WmsAttachmentDTO.UpdateDTO attachment : attachments) {
-            ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = buildShipmentFile(item, attachment);
+            ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem shipmentFile = buildShipmentFile(item, attachment, sourceId, sourceCode);
             if (Objects.isNull(shipmentFile)) {
                 throw new ServiceException("B2B三方发货单装箱标签附件构建结果不能为空，箱序号：{}", item.getBoxSeq());
             }
@@ -384,7 +414,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         item.setShipmentFileList(shipmentFiles);
     }
 
-    private ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem buildShipmentFile(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item, WmsAttachmentDTO.UpdateDTO attachment) {
+    private ThirdWarehouseCreateFbaOutboundReq.ShipmentFileItem buildShipmentFile(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item,
+                                                                                  WmsAttachmentDTO.UpdateDTO attachment,
+                                                                                  String sourceId,
+                                                                                  String sourceCode) {
         if (Objects.isNull(attachment) || CharSequenceUtil.isBlank(attachment.getAttachUrl())) {
             throw new ServiceException("B2B三方发货单装箱标签附件缺失，箱序号：{}", item.getBoxSeq());
         }
@@ -394,10 +427,14 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
             log.warn("B2B三方发货单装箱标签附件下载异常，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl(), e);
+            saveAttachmentDownloadErrorMsg(sourceId, sourceCode,
+                    StrUtil.format("B2B三方发货单装箱标签附件下载异常，箱序号：{}，附件：{}", item.getBoxSeq(), attachment.getAttachName()));
             throw new ServiceException("B2B三方发货单装箱标签附件下载异常，箱序号：{}，附件：{}", item.getBoxSeq(), attachment.getAttachName());
         }
         if (Objects.isNull(bytes) || bytes.length == 0) {
             log.warn("B2B三方发货单装箱标签附件下载为空，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl());
+            saveAttachmentDownloadErrorMsg(sourceId, sourceCode,
+                    StrUtil.format("B2B三方发货单装箱标签附件下载为空，箱序号：{}，附件：{}", item.getBoxSeq(), attachment.getAttachName()));
             throw new ServiceException("B2B三方发货单装箱标签附件下载为空，箱序号：{}，附件：{}", item.getBoxSeq(), attachment.getAttachName());
         }
         bytes = cleanAttachmentBytes(bytes, attachment.getAttachName(), attachment.getAttachUrl(), item.getBoxSeq() == null ? "" : String.valueOf(item.getBoxSeq()));
@@ -406,5 +443,28 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 .shipmentFileName(attachment.getAttachName())
                 .shipmentFileBase64(Base64.getEncoder().encodeToString(bytes))
                 .build();
+    }
+
+    /**
+     * 附件下载失败时写入本地补偿消息，便于运维人工介入；写入失败不影响主流程异常抛出。
+     */
+    private void saveAttachmentDownloadErrorMsg(String sourceId, String sourceCode, String remark) {
+        if (CharSequenceUtil.isBlank(sourceId)) {
+            return;
+        }
+        try {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setSourceId(sourceId);
+            wmsPushMsgEntity.setSourceCode(sourceCode);
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.B2B_THIRD_DELIVERY_CREATE.getCode());
+            wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+            wmsPushMsgEntity.setTargetPlatform(PlatformEnum.ERP.getName());
+            Map<String, String> pushData = new HashMap<>();
+            pushData.put("remark", remark);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        } catch (Exception e) {
+            log.warn("B2B三方发货单附件下载失败补偿消息写入失败, sourceId={}", sourceId, e);
+        }
     }
 }

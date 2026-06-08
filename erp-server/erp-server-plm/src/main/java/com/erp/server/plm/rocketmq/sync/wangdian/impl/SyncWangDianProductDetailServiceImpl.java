@@ -244,14 +244,19 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
 
     @Override
     public void addPlmPushMsg(ProductDetailEntity entity) {
-        Map<String, Object> pushData = new HashMap<>();
-        pushData.put("remark",String.format("【%s】删除，同步旺店通失败", entity.getSkuNo()));
+        saveSyncErrorPushMsg(entity, String.format("【%s】删除，同步旺店通失败", entity.getSkuNo()));
+    }
+
+    @Override
+    public void saveSyncErrorPushMsg(ProductDetailEntity entity, String remark) {
         PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
         plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
         plmPushMsgEntity.setSourceType(SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode());
         plmPushMsgEntity.setSourceId(entity.getId());
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+        Map<String, String> pushData = new HashMap<>();
+        pushData.put("remark", remark);
         plmPushMsgEntity.setPushData(JSON.toJSONString(pushData));
         plmPushMsgService.save(plmPushMsgEntity);
     }
