@@ -187,7 +187,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
-    private static final String GOOD_CANG_ORDER_PACKING_ATTACHMENT = "ORDER_PACKING_ATTACHMENT";
     private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
@@ -760,6 +759,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         if (!ThirdDeliveryStatusEnum.FAILED.getCode().equals(entity.getStatus()) && !ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.SO_THIRD_DELIVERY_DELETE_ONLY_FAILED_OR_CANCELED);
         }
+        // BaseEntity.isDeleted has @TableLogic, so removeById performs logical delete rather than physical delete.
         this.removeById(entity.getId());
         b2bThirdDeliveryDetailService.deleteByMainIds(Collections.singletonList(entity.getId()));
         b2bCustomerPackingService.deleteByMainIds(Collections.singletonList(entity.getId()));
@@ -1108,6 +1108,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
 
         try {
+            // 创建三方仓订单前必须先取得三方附件ID；失败重试时 req 会保留已上传ID，避免重复上传。
             prepareCreateFbaOutboundAttachment(service, req);
             preparePackingShipmentFiles(service, req);
             return service.createFbaOutboundBill(req, req.getAuthId());
@@ -1156,7 +1157,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             uploadFileReq.setFileType(getAttachmentExtension(req));
             uploadFileReq.setModule("order_attach");
         } else if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())) {
-            uploadFileReq.setFileType(GOOD_CANG_ORDER_PACKING_ATTACHMENT);
+            // GoodCang 主装箱清单沿用历史 ORDER_ATTACHMENT useFor，避免影响已接入的 B2B 单据推送。
+            uploadFileReq.setFileType(ThirdWarehouseFileTypeEnum.ORDER_ATTACHMENT.getCode());
         }
 
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
@@ -1171,6 +1173,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isValidAttachmentId(String attachmentId) {
+        // 历史页面可能把空附件ID序列化成字符串 "null"，这里保留兼容兜底。
         return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
     }
 
@@ -1250,7 +1253,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         uploadFileReq.setFileData(shipmentFile.getShipmentFileBase64());
         uploadFileReq.setFileUrl(shipmentFile.getShipmentFileUrl());
         uploadFileReq.setFileName(shipmentFile.getShipmentFileName());
-        uploadFileReq.setFileType(ThirdWarehouseUploadFileReq.FILE_TYPE_SHIPMENT_LABEL_ATTACHMENT);
+        uploadFileReq.setFileType(ThirdWarehouseFileTypeEnum.SHIPMENT_LABEL_ATTACHMENT.getCode());
         ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResult = service.uploadFile(uploadFileReq, req.getAuthId());
         if (!uploadFileResult.isSuccess() || Objects.isNull(uploadFileResult.getData()) || Objects.isNull(uploadFileResult.getData().getAttachId())) {
             throw new ServiceException("上传B2B装箱货件标签失败:{}", uploadFileResult.getMsg());
@@ -1669,7 +1672,11 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
         if (CollUtil.isEmpty(detailList)) {
+            // OMS Feign 契约直接返回明细 List，非 ApiResult 包装；null 表示调用异常或无有效返回。
             List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
+            if (soDetailList == null) {
+                throw new ServiceException("获取销售订单明细失败，请稍后重试");
+            }
             detailList = getPackingImportDetailList(soId, soDetailList);
         }
         B2bCustomerPackingExcelListener listener = new B2bCustomerPackingExcelListener(detailList);
@@ -1695,7 +1702,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
                 } finally {
                     try {
-                        Files.delete(file.toPath());
+                        Files.deleteIfExists(file.toPath());
                     } catch (IOException e) {
                         log.warn("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath());
                     }
@@ -1863,10 +1870,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isGoodCangWarehouse(String deliveryWarehouseId) {
-        if (CharSequenceUtil.isBlank(deliveryWarehouseId)) {
-            return false;
-        }
-        OverseasProviderEntity overseasProvider = overseasProviderService.getByWarehouseId(deliveryWarehouseId);
+        OverseasProviderEntity overseasProvider = getOverseasProviderByWarehouseId(deliveryWarehouseId);
         return Objects.nonNull(overseasProvider) && PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(overseasProvider.getCode());
     }
 
@@ -1910,11 +1914,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
 
         List<String> qtyErrors = new ArrayList<>();
         Map<String, Integer> packingQtyBySku = new HashMap<>();
+        Set<Integer> boxSeqSet = new HashSet<>();
 
         for (int i = 0; i < packingDetailList.size(); i++) {
             B2bCustomerPackingDTO.AddDTO box = packingDetailList.get(i);
             if (box.getBoxSeq() == null) {
                 throw new ServiceException("装箱明细第{}箱序号不能为空", i + 1);
+            }
+            if (!boxSeqSet.add(box.getBoxSeq())) {
+                throw new ServiceException("装箱明细序号【{}】重复", box.getBoxSeq());
             }
             if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType) && CharSequenceUtil.isBlank(box.getBoxMarkNo())) {
                 throw new ServiceException("装箱明细序号【{}】箱唛号不能为空", box.getBoxSeq());
@@ -1977,6 +1985,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                         Collectors.summingInt(e -> e.getSaleQty() != null ? e.getSaleQty() : 0)));
         int sort = 0;
         for (B2bCustomerPackingDTO.AddDTO box : packingDetailList) {
+            if (CollUtil.isEmpty(box.getPackingLineList())) {
+                continue;
+            }
             for (B2bCustomerPackingDTO.LineAddDTO row : box.getPackingLineList()) {
                 com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO product = skuMap.get(row.getSkuNo());
                 if (product != null) {
@@ -2019,11 +2030,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<WmsAttachmentDTO.UpdateDTO> allAttach = wmsAttachmentService.getByBusinessIds(packingIds, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode());
         Map<String, List<WmsAttachmentDTO.UpdateDTO>> attachMap = allAttach.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
         Map<Integer, List<B2bCustomerPackingEntity>> packingGroup = packingEntities.stream()
+                .filter(e -> e.getBoxSeq() != null)
                 .collect(Collectors.groupingBy(B2bCustomerPackingEntity::getBoxSeq, LinkedHashMap::new, Collectors.toList()));
         List<B2bCustomerPackingDTO.ViewDTO> packingViewList = new ArrayList<>();
         for (Map.Entry<Integer, List<B2bCustomerPackingEntity>> entry : packingGroup.entrySet()) {
             List<B2bCustomerPackingEntity> boxEntities = entry.getValue();
-            B2bCustomerPackingEntity boxHead = B2bCustomerPackingServiceImpl.getBoxHead(boxEntities, entry.getKey()).orElse(boxEntities.get(0));
+            B2bCustomerPackingEntity boxHead = b2bCustomerPackingService.getBoxHead(boxEntities, entry.getKey()).orElse(boxEntities.get(0));
             B2bCustomerPackingDTO.ViewDTO boxDTO = new B2bCustomerPackingDTO.ViewDTO();
             boxDTO.setMainId(boxHead.getMainId());
             boxDTO.setBoxSeq(boxHead.getBoxSeq());

@@ -307,11 +307,15 @@ public class B2bThirdDeliveryController extends BaseController {
      */
     @PostMapping("/importPackingDetail")
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱明细")
+    // 该接口仅解析上传文件并按 soId 的产品明细回填，不落库、不返回已有装箱数据；保存/编辑仍走 B2B 三方发货单权限链路。
     public ApiResult<B2bCustomerPackingDTO.ImportDTO> importPackingDetail(
             @RequestParam("soId") String soId,
             @RequestParam("excelFile") MultipartFile excelFile) {
         if (CharSequenceUtil.isBlank(soId)) {
             throw new ServiceException("销售订单id不能为空");
+        }
+        if (excelFile == null || excelFile.isEmpty()) {
+            throw new ServiceException("导入文件不能为空");
         }
         return success(b2bThirdDeliveryService.importPackingDetail(soId, excelFile));
     }

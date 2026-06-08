@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.threadlocal.UserContext;
@@ -91,7 +90,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         String msg = StrUtil.format("用户【{}】操作【{}】单据单号为【{}】异步拦截三方仓出库订单，等待三方仓处理/未同步三方仓", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单" , entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "【中台任务】发货拦截");
 
-        String thirdWarehouseProvideCode = resultMap.getOrDefault("thirdWarehouseProvideCode","").toString();
         if (CollUtil.isEmpty(list)) {
             //添加推送任务
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
@@ -194,14 +192,15 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         String fileName = attachment.getAttachName();
         byte[] bytes;
         try {
+            // 任务调度层负责失败重试；这里下载失败直接抛出，避免继续推送缺失附件的三方仓单据。
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
-            log.warn("B2B三方发货单附件下载异常，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
-            return;
+            log.warn("B2B三方发货单附件下载异常，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl(), e);
+            throw new ServiceException("B2B三方仓附件下载异常，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName());
         }
         if (Objects.isNull(bytes) || bytes.length == 0) {
-            log.warn("B2B三方发货单附件下载为空，跳过base64处理, sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
-            return;
+            log.warn("B2B三方发货单附件下载为空，sourceId={}, fileUrl={}", req.getSourceId(), attachment.getAttachUrl());
+            throw new ServiceException("B2B三方仓附件下载为空，单号：{}，附件：{}", req.getReferenceNo(), attachment.getAttachName());
         }
         bytes = cleanAttachmentBytes(bytes, fileName, attachment.getAttachUrl(), req.getSourceId());
         req.setFileName(fileName);
@@ -267,7 +266,6 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         String msg = StrUtil.format("用户【{}】操作【{}】单据单号为【{}】异步创建三方仓出库订单", UserContext.getDefaultLoginUser().getUserName(), "B2B三方发货单" , entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), entity.getId(), "【中台任务】创建三方仓出库订单");
 
-        String thirdWarehouseProvideCode = resultMap.getOrDefault("thirdWarehouseProvideCode","").toString();
         if (CollUtil.isEmpty(list)) {
             //添加推送任务
             DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
@@ -322,6 +320,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             req.setPackingType(B2bPackingTypeEnum.WAREHOUSE_SELF.getCode());
             return;
         }
+        req.setPackingType(entity.getPackingType());
         List<B2bCustomerPackingEntity> packingList = b2bCustomerPackingService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(packingList)) {
             return;
@@ -347,7 +346,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 .map(B2bCustomerPackingEntity::getBoxSeq)
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(boxSeq -> B2bCustomerPackingServiceImpl.getBoxHead(packingList, boxSeq).orElse(null))
+                .map(boxSeq -> b2bCustomerPackingService.getBoxHead(packingList, boxSeq).orElse(null))
                 .filter(Objects::nonNull)
                 .map(B2bCustomerPackingEntity::getId)
                 .collect(Collectors.toList());
@@ -391,6 +390,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         byte[] bytes;
         try {
+            // 任务调度层负责失败重试；这里下载失败直接抛出，避免继续推送缺失标签的三方仓单据。
             bytes = fileFeign.downloadFile(attachment.getAttachUrl());
         } catch (Exception e) {
             log.warn("B2B三方发货单装箱标签附件下载异常，boxSeq={}, fileUrl={}", item.getBoxSeq(), attachment.getAttachUrl(), e);

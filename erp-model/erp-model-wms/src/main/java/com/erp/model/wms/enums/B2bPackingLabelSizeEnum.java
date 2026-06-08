@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * B2B三方发货单装箱标签尺寸
+ * goodCangCode 对应谷仓 B2B 货件标签尺寸枚举值，新增尺寸时需按谷仓文档补充唯一映射。
  */
 public enum B2bPackingLabelSizeEnum implements EnumMessage {
 
@@ -51,6 +52,7 @@ public enum B2bPackingLabelSizeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return null;
         }
+        // 当前标签尺寸枚举很少，线性查找更直观；新增大量尺寸时再引入静态 Map。
         for (B2bPackingLabelSizeEnum value : values()) {
             if (value.code.equals(code) || String.valueOf(value.goodCangCode).equals(code)) {
                 return value.goodCangCode;

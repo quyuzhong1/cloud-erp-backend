@@ -804,7 +804,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setUseOrgName(useOrgName);
-        // 客户编辑为全量保存，前端传 null 表示主动清空这两个非必填默认值。
+        // 客户编辑为全量保存，编辑页会回显默认值；这两个字段按既有字符串字段语义用空串表示清空。
         customer.setDefaultShippingWarehouse(StringUtils.defaultString(dto.getDefaultShippingWarehouse()));
         customer.setDefaultReceiveAccount(StringUtils.defaultString(dto.getDefaultReceiveAccount()));
         Boolean updateResult = this.updateById(customer);
