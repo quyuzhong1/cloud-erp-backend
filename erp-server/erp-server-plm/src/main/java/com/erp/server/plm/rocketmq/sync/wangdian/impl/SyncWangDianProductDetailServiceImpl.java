@@ -26,6 +26,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -43,6 +44,7 @@ import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
 @Service
+@Slf4j
 public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProductDetailService {
 
     @Resource
@@ -186,16 +188,48 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     }
 
     private void sendMTask(List<DmpPushTaskEntity> dmpPushTask) {
+        List<DmpPushTaskEntity> taskList = dmpPushTask == null ? Collections.emptyList()
+                : dmpPushTask.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        if (CollUtil.isEmpty(taskList)) {
+            return;
+        }
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            dmpMqFeign.sendTask(dmpPushTask);
+            try {
+                dmpMqFeign.sendTask(taskList);
+            } catch (Exception e) {
+                log.error("sendMTask失败(无事务上下文), 写入补偿消息", e);
+                saveSendMTaskFailedPushMsg(taskList, "无事务上下文Feign推送失败");
+            }
             return;
         }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(dmpPushTask);
+                dmpMqFeign.sendTask(taskList);
             }
         });
+    }
+
+    private void saveSendMTaskFailedPushMsg(List<DmpPushTaskEntity> taskList, String reason) {
+        for (DmpPushTaskEntity task : taskList) {
+            if (StringUtils.isBlank(task.getSourceId())) {
+                continue;
+            }
+            try {
+                PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+                plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+                plmPushMsgEntity.setSourceType(SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode());
+                plmPushMsgEntity.setSourceId(task.getSourceId());
+                plmPushMsgEntity.setSourceCode(task.getSourceCode());
+                plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+                Map<String, String> pushData = new HashMap<>();
+                pushData.put("remark", String.format("旺店通MQ推送失败（%s）", reason));
+                plmPushMsgEntity.setPushData(JSON.toJSONString(pushData));
+                plmPushMsgService.save(plmPushMsgEntity);
+            } catch (Exception ex) {
+                log.warn("sendMTask补偿消息写入失败, sourceId={}", task.getSourceId(), ex);
+            }
+        }
     }
 
     /**

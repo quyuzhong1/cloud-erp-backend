@@ -1667,11 +1667,19 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    private static final long MAX_PACKING_IMPORT_FILE_SIZE = 5L * 1024 * 1024;
+
     /**
-     * 仅解析 Excel 并回填页面，不落库；行数上限见 {@link B2bCustomerPackingExcelListener}。
+     * 仅解析 Excel 并回填页面，不落库；行数上限见 {@link B2bCustomerPackingExcelListener}（最多 5000 行）。
      */
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
+        if (excelFile == null || excelFile.isEmpty()) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        if (excelFile.getSize() > MAX_PACKING_IMPORT_FILE_SIZE) {
+            throw new ServiceException("导入文件不能超过5MB");
+        }
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
         if (CollUtil.isEmpty(detailList)) {
             // OMS Feign 契约直接返回明细 List，非 ApiResult 包装；null 表示调用异常或无有效返回。
@@ -1706,6 +1714,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 } catch (Exception e) {
                     log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
                 } finally {
+                    // deleteIfExists 失败时仅记录日志，不影响导入结果；临时文件依赖 OS/JVM 回收。
                     try {
                         Files.deleteIfExists(file.toPath());
                     } catch (IOException e) {

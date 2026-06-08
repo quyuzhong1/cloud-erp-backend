@@ -463,7 +463,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return;
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
-        if (CollectionUtils.isEmpty(warehouseList) || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
+        if (warehouseList == null || warehouseList.isEmpty()) {
+            throw new ServiceException("{}不存在或已禁用", label);
+        }
+        if (Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
             throw new ServiceException("{}不存在或已禁用", label);
         }
     }

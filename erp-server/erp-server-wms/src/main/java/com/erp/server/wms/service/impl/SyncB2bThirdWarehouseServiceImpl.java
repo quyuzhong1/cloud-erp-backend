@@ -332,6 +332,15 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         Map<String, List<WmsAttachmentDTO.UpdateDTO>> shipmentFileMap = getShipmentFileMap(packingList);
         validateBoxHeadShipmentFiles(entity, packingList, shipmentFileMap);
         int attachmentCount = shipmentFileMap.values().stream().mapToInt(List::size).sum();
+        long boxCount = packingList.stream()
+                .map(B2bCustomerPackingEntity::getBoxSeq)
+                .filter(Objects::nonNull)
+                .distinct()
+                .count();
+        if (boxCount > 100 || attachmentCount > 200) {
+            log.warn("B2B三方发货单装箱标签数量较多，可能影响同步耗时, sourceId={}, boxCount={}, attachmentCount={}",
+                    entity.getId(), boxCount, attachmentCount);
+        }
         long downloadStartMs = System.currentTimeMillis();
         List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {
             ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item = new ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem();
@@ -473,7 +482,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
             wmsPushMsgService.save(wmsPushMsgEntity);
         } catch (Exception e) {
-            log.warn("B2B三方发货单附件下载失败补偿消息写入失败, sourceId={}", sourceId, e);
+            log.error("B2B三方发货单附件下载失败补偿消息写入失败, sourceId={}", sourceId, e);
         }
     }
 }

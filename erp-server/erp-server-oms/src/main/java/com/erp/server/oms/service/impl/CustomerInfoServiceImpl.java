@@ -2676,11 +2676,14 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
             List<WarehouseDTO.UpdateDTO> warehouseList;
             try {
                 warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(defaultShippingWarehouse));
-            } catch (Exception e) {
-                log.warn("校验默认发货仓库失败, warehouseId={}", defaultShippingWarehouse, e);
+            } catch (ServiceException e) {
+                log.warn("校验默认发货仓库失败(Feign调用异常), warehouseId={}", defaultShippingWarehouse, e);
                 throw new ServiceException("校验默认发货仓库失败，请稍后重试");
+            } catch (Exception e) {
+                log.error("校验默认发货仓库失败(未知异常), warehouseId={}", defaultShippingWarehouse, e);
+                throw new ServiceException("校验默认发货仓库失败，请联系管理员");
             }
-            if (CollectionUtils.isEmpty(warehouseList) || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
+            if (warehouseList == null || warehouseList.isEmpty() || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
                 throw new ServiceException("默认发货仓库不存在或已禁用");
             }
         }
