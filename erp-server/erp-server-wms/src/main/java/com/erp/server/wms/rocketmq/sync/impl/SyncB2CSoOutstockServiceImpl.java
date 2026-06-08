@@ -602,7 +602,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    // Temu MQ 按「平台订单+店铺」整单推送，锁粒度与推送维度一致；同订单多仓出库若并存需业务确认后再细化 key。
+    // Temu MQ 按「平台订单+店铺」整单推送；waiteTime=15s 仅约束抢锁等待，失败依赖 MQ 重试。
     @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 15)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
@@ -661,10 +661,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //不同仓库生成不同的出库单
         Map<String, TeMuSoOutStockDetailDTO> temuDetailBySubSoCode = detailList.stream()
                 .filter(d -> StringUtils.isNotBlank(d.getPlatformSubSoCode()))
-                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSubSoCode, d -> d, (left, right) -> left));
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSubSoCode, d -> d, (left, right) -> {
+                    log.warn("Temu出库明细重复platformSubSoCode={}, 保留首条, platformOrderCode={}",
+                            left.getPlatformSubSoCode(), entity.getPlatformOrderCode());
+                    return left;
+                }));
         Map<String, TeMuSoOutStockDetailDTO> temuDetailBySkuNo = detailList.stream()
                 .filter(d -> StringUtils.isNotBlank(d.getPlatformSkuNo()))
-                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSkuNo, d -> d, (left, right) -> left));
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSkuNo, d -> d, (left, right) -> {
+                    log.warn("Temu出库明细重复platformSkuNo={}, 保留首条, platformOrderCode={}",
+                            left.getPlatformSkuNo(), entity.getPlatformOrderCode());
+                    return left;
+                }));
         Map<String, List<SoB2cDetailEntity>> detailMap = handleDetailList.stream()
                 .filter(v -> StringUtils.isNotBlank(v.getWarehouseId()))
                 .collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));

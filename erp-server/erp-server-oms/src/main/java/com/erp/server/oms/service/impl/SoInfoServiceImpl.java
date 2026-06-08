@@ -466,7 +466,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (warehouseList == null || warehouseList.isEmpty()) {
             throw new ServiceException("{}不存在或已禁用", label);
         }
-        if (Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
+        WarehouseDTO.UpdateDTO warehouse = warehouseList.get(0);
+        if (warehouse == null || Boolean.TRUE.equals(warehouse.getDisabled())) {
             throw new ServiceException("{}不存在或已禁用", label);
         }
     }

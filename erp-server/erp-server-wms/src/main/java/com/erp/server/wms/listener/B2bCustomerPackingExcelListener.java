@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * B2B客户装箱明细导入
+ * B2B客户装箱明细导入。校验逻辑集中在此便于 EasyExcel 流式解析；拆至 Service 层属后续重构。
  */
 public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCustomerPackingImportExcelDTO> {
 

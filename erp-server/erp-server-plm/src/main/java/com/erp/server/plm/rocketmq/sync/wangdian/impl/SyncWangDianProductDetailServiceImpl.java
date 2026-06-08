@@ -10,6 +10,7 @@ import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -199,6 +200,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
             } catch (Exception e) {
                 log.error("sendMTask失败(无事务上下文), 写入补偿消息", e);
                 saveSendMTaskFailedPushMsg(taskList, "无事务上下文Feign推送失败");
+                throw new ServiceException("旺店通推送失败，已记录补偿消息，请稍后查看推送结果");
             }
             return;
         }

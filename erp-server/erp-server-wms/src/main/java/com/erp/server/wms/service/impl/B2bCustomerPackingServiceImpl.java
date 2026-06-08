@@ -70,6 +70,7 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
         return entityList;
     }
 
+    /** 按箱保存标签附件；B2B 装箱箱数通常有限，逐箱 batchSave 可接受，大批量合并保存属后续优化。 */
     private void saveBoxAttachments(List<B2bCustomerPackingDTO.AddDTO> packingList,
                                     List<B2bCustomerPackingEntity> entityList) {
         Map<Integer, B2bCustomerPackingEntity> boxHeadMap = buildBoxHeadMap(entityList);

@@ -1690,6 +1690,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             try {
                 soDetailList = soInfoFeign.listSoDetailByMainId(soId);
             } catch (Exception e) {
+                // FeignErrorDecoder 将远程异常解码为 ServiceException，非 FeignServiceException。
                 log.error("调用OMS服务获取销售订单明细异常, soId={}", soId, e);
                 throw new ServiceException("调用OMS服务异常，请稍后重试");
             }

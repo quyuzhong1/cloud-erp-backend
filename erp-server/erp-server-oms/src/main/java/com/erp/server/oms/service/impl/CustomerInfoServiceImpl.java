@@ -2685,7 +2685,11 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
                 log.error("校验默认发货仓库失败(未知异常), warehouseId={}", defaultShippingWarehouse, e);
                 throw new ServiceException("校验默认发货仓库失败，请联系管理员");
             }
-            if (warehouseList == null || warehouseList.isEmpty() || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
+            if (warehouseList == null || warehouseList.isEmpty()) {
+                throw new ServiceException("默认发货仓库不存在或已禁用");
+            }
+            WarehouseDTO.UpdateDTO warehouse = warehouseList.get(0);
+            if (warehouse == null || Boolean.TRUE.equals(warehouse.getDisabled())) {
                 throw new ServiceException("默认发货仓库不存在或已禁用");
             }
         }
