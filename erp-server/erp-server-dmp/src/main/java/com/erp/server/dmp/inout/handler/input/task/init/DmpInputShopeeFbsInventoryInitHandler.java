@@ -76,12 +76,12 @@ public class DmpInputShopeeFbsInventoryInitHandler extends DmpInputInitHandler {
 
         ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(nextLevelId);
         if (shopInfo == null || StringUtils.isBlank(shopInfo.getDictCountryCode())) {
-            log.warn("【Shopee FBS库存】店铺国家为空，跳过同步，shopId={}", nextLevelId);
+            log.info("【Shopee FBS库存】店铺国家为空，跳过同步，shopId={}", nextLevelId);
             return Collections.emptyList();
         }
         String whsRegion = shopInfo.getDictCountryCode().trim().toUpperCase();
         if (!WHS_REGIONS.contains(whsRegion)) {
-            log.warn("【Shopee FBS库存】店铺国家不在SBS区域白名单，shopId={}, whsRegion={}", nextLevelId, whsRegion);
+            log.info("【Shopee FBS库存】店铺国家不在SBS区域白名单，shopId={}, whsRegion={}", nextLevelId, whsRegion);
             return Collections.emptyList();
         }
 

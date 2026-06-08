@@ -20,7 +20,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -135,18 +137,26 @@ public class SoB2cDeliveryTypeFixJob {
     }
 
     private int updateDeliveryType(List<SoB2cEntity> records, Map<String, String> thirdWarehouseSoIdMap) {
-        int updated = 0;
+        Map<String, List<String>> deliveryTypeToIds = new HashMap<>();
         for (SoB2cEntity entity : records) {
             String deliveryType = resolveDeliveryType(entity, thirdWarehouseSoIdMap);
             if (StringUtils.equals(deliveryType, entity.getDeliveryType())) {
                 continue;
             }
-            boolean success = soB2cService.lambdaUpdate()
-                    .set(SoB2cEntity::getDeliveryType, deliveryType)
-                    .eq(SoB2cEntity::getId, entity.getId())
-                    .update();
-            if (success) {
-                updated++;
+            deliveryTypeToIds.computeIfAbsent(deliveryType, key -> new ArrayList<>()).add(entity.getId());
+        }
+        int updated = 0;
+        for (Map.Entry<String, List<String>> entry : deliveryTypeToIds.entrySet()) {
+            List<String> ids = entry.getValue();
+            for (int i = 0; i < ids.size(); i += 500) {
+                List<String> batch = ids.subList(i, Math.min(i + 500, ids.size()));
+                boolean success = soB2cService.lambdaUpdate()
+                        .set(SoB2cEntity::getDeliveryType, entry.getKey())
+                        .in(SoB2cEntity::getId, batch)
+                        .update();
+                if (success) {
+                    updated += batch.size();
+                }
             }
         }
         return updated;

@@ -83,7 +83,19 @@ public class DmpInputShopeeWebhookOrderDmpHandler extends DmpInputDbConvertDmpHa
             dmpSoInfoEntity.setDeliveryTime(LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTime), DEFAULT_ZONE));
             dmpSoInfoEntity.setInputTaskId(inputTaskId);
             dmpSoInfoEntity.setConvertId(convertId);
-            dmpSoInfoService.updateById(dmpSoInfoEntity);
+            boolean updated = dmpSoInfoService.lambdaUpdate()
+                    .eq(DmpSoInfoEntity::getId, dmpSoInfoEntity.getId())
+                    .eq(DmpSoInfoEntity::getVersion, dmpSoInfoEntity.getVersion())
+                    .set(DmpSoInfoEntity::getPlatformOriginalStatus, dmpSoInfoEntity.getPlatformOriginalStatus())
+                    .set(DmpSoInfoEntity::getDeliveryStatus, dmpSoInfoEntity.getDeliveryStatus())
+                    .set(DmpSoInfoEntity::getOrderStatus, dmpSoInfoEntity.getOrderStatus())
+                    .set(DmpSoInfoEntity::getDeliveryTime, dmpSoInfoEntity.getDeliveryTime())
+                    .set(DmpSoInfoEntity::getInputTaskId, dmpSoInfoEntity.getInputTaskId())
+                    .set(DmpSoInfoEntity::getConvertId, dmpSoInfoEntity.getConvertId())
+                    .update();
+            if (!updated) {
+                continue;
+            }
             resultList.add(dmpSoInfoEntity);
             changeConvertInputDmpBaseEntityList.add(dmpSoInfoEntity);
         }

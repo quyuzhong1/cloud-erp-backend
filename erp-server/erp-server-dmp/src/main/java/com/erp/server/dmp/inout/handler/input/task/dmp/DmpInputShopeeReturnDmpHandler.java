@@ -22,9 +22,6 @@ import java.util.TreeMap;
 @Scope("prototype")
 public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler {
 
-    public static final String SHOPEE_RETURN_LIST_DATA = "Shopee_returnList_data";
-    public static final String SHOPEE_RETURN_DETAIL_DATA = "Shopee_returnDetail_data";
-
     private static final int RETURN_SOLUTION_RETURN_AND_REFUND = 0;
 
     @Override

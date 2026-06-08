@@ -163,6 +163,6 @@ public class DmpOutputShopeeFbsInventoryRocketMQTaskHandler extends DmpOutputRoc
     }
 
     private int defaultInt(Integer value) {
-        return value == null ? 0 : value;
+        return java.util.Optional.ofNullable(value).orElse(0);
     }
 }

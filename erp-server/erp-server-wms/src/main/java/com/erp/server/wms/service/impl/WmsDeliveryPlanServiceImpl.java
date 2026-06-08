@@ -880,6 +880,13 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         return generateDeliver(list, Boolean.TRUE);
     }
 
+    private static final String FBS_DELIVERY_PLAN_ERROR_FILE_NAME = "FBS发货计划错误数据.xlsx";
+
+    @Override
+    public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
+        return importFile(excelFile, thirdSkuNoList, warehouseId, shopId, null, response);
+    }
+
     @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response) {
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
@@ -998,10 +1005,9 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
         if (CollUtil.isNotEmpty(errorList)) {
-            String fileName = "FBS发货计划错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailExportExcelDTO.class);
+            File file = ExcelUtil.exportFile(FBS_DELIVERY_PLAN_ERROR_FILE_NAME, "error", errorList, DeliveryPlanDetailExportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
+                url = FastDFSClientUtil.uploadFile(file, FBS_DELIVERY_PLAN_ERROR_FILE_NAME);
             }
         }
         this.fillData(successList);
