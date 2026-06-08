@@ -856,9 +856,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                                 String logisticsCostId,
                                                 List<TmsCostDetailDTO.UpdateDTO> currentUpdateList,
                                                 List<String> errorMsgList) {
-        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(), importDTO.getProcessingType())) {
-            return;
-        }
         String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(
                 logisticsCostId, currentUpdateList, ReconciliationStatusEnum.CONFIRMED.getCode());
         if (CharSequenceUtil.isNotBlank(confirmMsg)) {
