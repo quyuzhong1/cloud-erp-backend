@@ -26,6 +26,9 @@ public enum KingdeeSubcontractBomDosageTypeEnum {
     }
 
     public static KingdeeSubcontractBomDosageTypeEnum getByCode(String code) {
+        if (code == null) {
+            return null;
+        }
         for (KingdeeSubcontractBomDosageTypeEnum item : values()) {
             if (item.code.equals(code)) {
                 return item;
