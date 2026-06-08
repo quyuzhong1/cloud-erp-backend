@@ -508,9 +508,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         params.setDynamicDataSource(dynamicDataSource);
         List<AdvanceQueryDTO> advanceQueryDTOList = Optional.ofNullable(params.getAdvanceQueryDTOList()).orElse(Collections.emptyList());
-        Object isOutStockObj = advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Object isOutStockObj = advanceQueryDTOList.stream().filter(v -> "isOutStock".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
         Boolean isOutStock = isOutStockObj instanceof Boolean ? (Boolean) isOutStockObj : null;
-        Object isVirtualOutStockObj = advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        Object isVirtualOutStockObj = advanceQueryDTOList.stream().filter(v -> "isVirtualOutStock".equals(v.getField())).findAny().orElse(new AdvanceQueryDTO()).getValue();
         Boolean isVirtualOutStock = isVirtualOutStockObj instanceof Boolean ? (Boolean) isVirtualOutStockObj : null;
         if (Objects.nonNull(isOutStock)) {
             return this.filterIsOutStockList(pagingParamDTO, isOutStock);
@@ -540,7 +540,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private PagingVO filterIsVirtualOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isVirtualOutStock) {
         List<AdvanceQueryDTO> advanceQueryDTOList = Optional.ofNullable(pagingParamDTO.getParams().getAdvanceQueryDTOList()).orElse(Collections.emptyList());
         //必须选仓库而且只能选一个
-        List<String> warehouseIdList = CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.virtual_warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+        List<String> warehouseIdList = CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> "sb2cd.virtual_warehouse_id".equals(v.getField()) && (QueryConditionEnum.EQ.getCompareCode().equals(v.getCompare()) || QueryConditionEnum.IN_LIST.getCompareCode().equals(v.getCompare()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
         if (warehouseIdList.size() != 1) {
             throw new ServiceException("选择X缺条件必须选择虚拟仓库且只能选择一个仓库");
         }
@@ -576,7 +576,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private PagingVO filterIsOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isOutStock) {
         List<AdvanceQueryDTO> advanceQueryDTOList = Optional.ofNullable(pagingParamDTO.getParams().getAdvanceQueryDTOList()).orElse(Collections.emptyList());
         //必须选仓库而且只能选一个
-        List<String> warehouseIdList = CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
+        List<String> warehouseIdList = CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> "sb2cd.warehouse_id".equals(v.getField()) && (QueryConditionEnum.EQ.getCompareCode().equals(v.getCompare()) || QueryConditionEnum.IN_LIST.getCompareCode().equals(v.getCompare()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
         if (warehouseIdList.size() != 1) {
             throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
         }
@@ -1121,6 +1121,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        bomChildrenSkuDTOS = CollUtil.isNotEmpty(bomChildrenSkuDTOS) ? bomChildrenSkuDTOS : Collections.emptyList();
         //合并 子sku和父级sku获取 全量sku明细
         if (CollUtil.isNotEmpty(bomChildrenSkuDTOS)) {
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
@@ -1323,6 +1324,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        bomChildrenSkuDTOS = CollUtil.isNotEmpty(bomChildrenSkuDTOS) ? bomChildrenSkuDTOS : Collections.emptyList();
         //合并 子sku和父级sku获取 全量sku明细
         if (CollUtil.isNotEmpty(bomChildrenSkuDTOS)) {
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
@@ -3300,6 +3302,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         processSkuMapping(soDetailList, skuMappingList, warehouseManageType, isSelfBuild, wantSplitSkuIdList, wantSplitSkuIdAndPlatformList);
 
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(wantSplitSkuIdList);
+        bomChildrenSkuList = CollUtil.isNotEmpty(bomChildrenSkuList) ? bomChildrenSkuList : Collections.emptyList();
 
         populateResultList(soDetailList, wantSplitSkuIdAndPlatformList, bomChildrenSkuList, resultList);
 
@@ -4935,6 +4938,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //子sku
         List<String> skuIds = skuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> allBomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        allBomChildrenSkuDTOList = CollUtil.isNotEmpty(allBomChildrenSkuDTOList) ? allBomChildrenSkuDTOList : Collections.emptyList();
         allBomChildrenSkuDTOList = allBomChildrenSkuDTOList.stream().filter(v -> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
@@ -5154,7 +5158,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //产品信息
         List<String> skuIdList = list.stream().flatMap(obj -> Stream.of(allDetailList.stream().map(SoB2cDetailEntity::getSkuId).toArray(String[]::new))).distinct().collect(Collectors.toList());
         //根据SKU查询BOM判断是否是组合SKU
-        List<BomChildrenSkuDTO> bomChildrenList = CollUtil.isNotEmpty(skuIdList) ? plmTaskFeign.listBomChildBySkuIds(skuIdList) : new ArrayList<>();
+        List<BomChildrenSkuDTO> bomChildrenList = CollUtil.isNotEmpty(skuIdList) ? plmTaskFeign.listBomChildBySkuIds(skuIdList) : Collections.emptyList();
+        bomChildrenList = CollUtil.isNotEmpty(bomChildrenList) ? bomChildrenList : Collections.emptyList();
         List<String> childSkuIdList = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(childSkuIdList)) {
             skuIdList.addAll(childSkuIdList);
@@ -6171,6 +6176,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .collect(Collectors.toList());
         //根据SKU查询BOM判断是否是组合SKU
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        bomChildrenList = CollUtil.isNotEmpty(bomChildrenList) ? bomChildrenList : Collections.emptyList();
         String combination = BomTypeEnum.COMBINATION.getType();
         bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
         //汇总子sku 和父级sku全量ids
@@ -10392,6 +10398,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //根据SKU查询BOM判断是否是组合SKU
         bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        bomChildrenList = CollUtil.isNotEmpty(bomChildrenList) ? bomChildrenList : Collections.emptyList();
         List<String> childSkuIdList = bomChildrenList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSkuId()) && CharSequenceUtil.equals(BomTypeEnum.COMBINATION.getType(), obj.getType()))
                 .map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(childSkuIdList)) {
@@ -11003,6 +11010,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //        List<BomChildrenSkuDTO> skuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        bomChildrenSkuDTOS = CollUtil.isNotEmpty(bomChildrenSkuDTOS) ? bomChildrenSkuDTOS : Collections.emptyList();
         //合并 子sku和父级sku获取 全量sku明细
         if (CollUtil.isNotEmpty(bomChildrenSkuDTOS)) {
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
