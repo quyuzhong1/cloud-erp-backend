@@ -165,9 +165,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
         Boolean retryFlag = false;
-        // 跳过未作废的自发货无地址的订单
+        // 自发货无地址：非亚马逊平台记录订单拉取异常；亚马逊无地址不记异常（地址后续异步补全）
         // 待发货/已发货订单不生成异常
         if ( notPlatformOrderNotExistAddress(dto,oldBillStatus)
+                && !PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())
                 && null != dto.getInvalidStatus()
                 && !dto.getInvalidStatus()
                 && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
