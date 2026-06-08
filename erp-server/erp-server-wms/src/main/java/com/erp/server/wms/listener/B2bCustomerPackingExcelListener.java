@@ -29,6 +29,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     // EasyExcel 逐行回调时主动截断导入规模，避免异常大文件持续占用内存。
     private static final int MAX_IMPORT_ROWS = 5000;
+    private static final int MAX_ERROR_ROWS = 500;
 
     private final List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList;
     private final Map<String, B2bThirdDeliveryDetailDTO.AddDTO> skuDetailMap;
@@ -98,7 +99,9 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         }
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
             row.setErrorMsg(String.join(";", errorMsgList));
-            errorList.add(row);
+            if (errorList.size() < MAX_ERROR_ROWS) {
+                errorList.add(row);
+            }
             return;
         }
         B2bCustomerPackingDTO.LineViewDTO viewDTO = new B2bCustomerPackingDTO.LineViewDTO();

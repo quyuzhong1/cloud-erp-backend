@@ -430,6 +430,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         buildPartition(addEntity, null);
     }
 
+    /**
+     * 当调用方已查询客户档案时使用该重载，避免重复查库。
+     *
+     * @param customerInfo 可为 null，为 null 时内部按 customerId 查询
+     */
     private void buildPartition(SoInfoEntity addEntity, CustomerInfoEntity customerInfo) {
         String customerId = addEntity.getCustomerId();
         if (StringUtils.isBlank(customerId)) {

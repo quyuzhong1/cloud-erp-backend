@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -45,6 +46,7 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
     }
 
     @Override
+    @DistributeLocker(keyName = "mainId")
     @Transactional(rollbackFor = Exception.class)
     public List<B2bCustomerPackingEntity> batchSave(String mainId, List<B2bCustomerPackingDTO.AddDTO> packingList) {
         if (CharSequenceUtil.isNotBlank(mainId)) {

@@ -1667,6 +1667,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    /**
+     * 仅解析 Excel 并回填页面，不落库；行数上限见 {@link B2bCustomerPackingExcelListener}。
+     */
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);

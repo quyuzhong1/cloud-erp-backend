@@ -602,7 +602,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    // Temu 同一平台订单可能包含同 SKU 多子单，订单+店铺级锁用于串行化该订单的出库生成。
+    // Temu 同一平台订单可能含多 SKU/多子单，出库单按订单维度生成；订单+店铺级锁避免并发重复创建出库单。
     @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId",waiteTime = 60)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单

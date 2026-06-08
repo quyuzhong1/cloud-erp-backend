@@ -16,6 +16,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -2648,5 +2649,18 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
 
         return customerInfoEntity.getId();
+    }
+
+    @Override
+    public void applyB2bOrderCustomerDefaults(PlatformB2bOrderDTO dto, CustomerInfoEntity customerInfo) {
+        if (dto == null || customerInfo == null) {
+            return;
+        }
+        if (StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(customerInfo.getDefaultShippingWarehouse())) {
+            dto.setWarehouseId(customerInfo.getDefaultShippingWarehouse());
+        }
+        if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+            dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+        }
     }
 }
