@@ -850,6 +850,23 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
 
     /**
+     * 导入确认场景下行级校验确认金额，失败信息写入 errorMsgList 供匹配结果导出。
+     */
+    private void appendImportConfirmAmountError(ImportHistoryRecordDTO.ImportSyncDTO importDTO,
+                                                String logisticsCostId,
+                                                List<TmsCostDetailDTO.UpdateDTO> currentUpdateList,
+                                                List<String> errorMsgList) {
+        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(), importDTO.getProcessingType())) {
+            return;
+        }
+        String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(
+                logisticsCostId, currentUpdateList, ReconciliationStatusEnum.CONFIRMED.getCode());
+        if (CharSequenceUtil.isNotBlank(confirmMsg)) {
+            errorMsgList.add(confirmMsg);
+        }
+    }
+
+    /**
      * 校验费用分类下的币种是否一致
      * @author will
      * @date 2026/2/11 10:27
@@ -1244,6 +1261,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
                 //校验分类币别
                 checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, mainIdListMap, errorMsgList);
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    return importDataDTO;
+                }
+
+                appendImportConfirmAmountError(importDTO, logisticsBillCostEntity.getId(), currentUpdateList, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     return importDataDTO;
                 }
