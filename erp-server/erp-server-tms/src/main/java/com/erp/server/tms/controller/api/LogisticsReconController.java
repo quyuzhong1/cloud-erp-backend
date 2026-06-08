@@ -170,8 +170,7 @@ public class LogisticsReconController extends BaseController {
                     results.add(BatchResultDTO.fail(id, id, "物流商对账单不存在, 校验状态切换失败"));
                     continue;
                 }
-                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             results.add(result);
         }
@@ -226,8 +225,7 @@ public class LogisticsReconController extends BaseController {
                 results.add(logisticsReconService.confirmBill(mainId, dto.getReconciliationStatus(), dto.getConfirmTime()));
             } catch (Exception e) {
                 log.error("[batchConfirmBill] 失败 mainId={}", mainId, e);
-                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                results.add(BatchResultDTO.fail(mainId, mainId, msg));
+                results.add(BatchResultDTO.fail(mainId, mainId, e.getMessage()));
             }
         }
         return results.stream().allMatch(BatchResultDTO::getSuccess) ? success(results) : failure(results);
@@ -270,8 +268,7 @@ public class LogisticsReconController extends BaseController {
                     results.add(BatchResultDTO.fail(id, id, "物流商对账单不存在, 删除失败"));
                     continue;
                 }
-                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), msg);
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             results.add(deleteResult);
         }

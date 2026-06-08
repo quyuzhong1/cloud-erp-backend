@@ -759,6 +759,7 @@ public class LogisticsReconServiceImpl
         boolean confirmed = LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(checkStatus);
         lambdaUpdate()
                 .eq(LogisticsReconEntity::getId, entity.getId())
+                .eq(LogisticsReconEntity::getVersion, entity.getVersion())
                 .set(LogisticsReconEntity::getCheckStatus, checkStatus)
                 .set(LogisticsReconEntity::getCheckUserId, confirmed ? user.getUid() : "")
                 .set(LogisticsReconEntity::getCheckUserName, confirmed ? user.getUserName() : "")
