@@ -187,7 +187,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
-    private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
     @Resource
@@ -1886,7 +1885,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 throw new ServiceException("仓库自主装箱时每箱张贴货件标签数必须为0");
             }
         } else if (B2bPackingTypeEnum.requiresPackingDetail(packingType)) {
-            if (!ALLOWED_LABELS_PER_BOX.contains(labelsPerBox)) {
+            if (!B2bLabelsPerBoxEnum.isValid(labelsPerBox)) {
                 throw new ServiceException("客户指定装箱或已暂存箱发货时每箱张贴货件标签数必填且只能为1、2或4");
             }
         }

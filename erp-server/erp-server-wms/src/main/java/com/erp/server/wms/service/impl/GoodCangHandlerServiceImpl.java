@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
-    private static final String GOOD_CANG_DEFAULT_PACKING_TYPE = "0";
+    private static final String GOOD_CANG_DEFAULT_PACKING_TYPE = B2bPackingTypeEnum.WAREHOUSE_SELF.getCode();
 
     @Resource
     private GoodCangService goodCangService;
@@ -532,6 +532,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         try {
             return Integer.valueOf(attachmentId);
         } catch (NumberFormatException e) {
+            // ServiceException(String, Object...) 内部使用 CharSequenceUtil.format，{} 占位符会正确替换。
             throw new ServiceException("B2B三方发货单{}格式错误：{}", fieldName, attachmentId);
         }
     }

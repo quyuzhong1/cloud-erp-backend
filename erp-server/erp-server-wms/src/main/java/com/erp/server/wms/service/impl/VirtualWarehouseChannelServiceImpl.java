@@ -53,9 +53,6 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
-    // WMS 私有业务字典 type：配置店铺和军区均为全部时跳过重复绑定校验的平台编码。
-    private static final String VM_CHANNEL_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
-
     @Resource
     private OperateLogService operateLogService;
 
@@ -562,6 +559,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
 
     /**
      * 同一实体仓下不同虚拟仓不可重复配置B2B海外线下平台。
+     * 仅在虚拟仓渠道保存/启用时触发，非高频路径；字典查询已走 Redis 缓存，暂不合并为单次 SQL。
      */
     @Override
     public void checkSameWarehouseB2bForeignPlatform(String virtualWarehouseId, List<VirtualWarehouseChannelEntity> curChannelEntitieList) {
@@ -663,7 +661,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
         // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，避免保存/启用渠道时反复查库。
-        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(VM_CHANNEL_SKIP_CHECK_PLATFORM)).stream()
+        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.VM_CHANNEL_SKIP_CHECK_PLATFORM.getType())).stream()
                 .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
