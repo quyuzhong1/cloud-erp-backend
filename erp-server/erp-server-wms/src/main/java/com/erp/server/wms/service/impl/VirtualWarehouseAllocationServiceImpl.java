@@ -424,6 +424,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //分货处理
         if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
 
+            //提交前校验旺店通可用库存（触发借调时叠加借调仓库存）
+            syncWdtVirtualWarehousePushOrderService.checkAllocationWdtInventory(allocationEntity, detailEntityList, transferWarehouseList);
+
             //生成自动借调直接调拨单
             List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
@@ -452,7 +455,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             submitCheckQty(detailEntityList,allocationEntity);
 
             //生成平台新增分货同步单
-            virtualWarehousePushHandleService.addAllocationPush(allocationEntity,parentId);
+            virtualWarehousePushHandleService.addAllocationPush(allocationEntity, parentId);
 
         } else if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(allocationEntity.getType())) {
             //调拨分货
