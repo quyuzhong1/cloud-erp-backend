@@ -1190,6 +1190,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return FileUtil.getFileExtension(req.getFileUrl());
     }
 
+    /**
+     * 谷仓按箱上传货件标签；三方仓 API 暂无批量上传，箱数×标签数即为 RPC 次数，失败重试依赖任务层。
+     */
     private void preparePackingShipmentFiles(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
         if (!PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
                 || CollUtil.isEmpty(req.getPackingDetailList())) {
@@ -1670,7 +1673,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private static final long MAX_PACKING_IMPORT_FILE_SIZE = 5L * 1024 * 1024;
 
     /**
-     * 仅解析 Excel 并回填页面，不落库；行数上限见 {@link B2bCustomerPackingExcelListener}（最多 5000 行）。
+     * 仅解析 Excel 并回填页面，不落库、不写库，无需幂等；行数上限见 {@link B2bCustomerPackingExcelListener}（最多 5000 行）。
      */
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
@@ -1682,13 +1685,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
         if (CollUtil.isEmpty(detailList)) {
-            // OMS Feign 契约直接返回明细 List，非 ApiResult 包装；null 表示调用异常或无有效返回。
-            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
-            if (soDetailList == null) {
-                throw new ServiceException("调用OMS服务获取销售订单明细失败（订单ID:{}），请稍后重试", soId);
+            List<SoDetailEntity> soDetailList;
+            try {
+                soDetailList = soInfoFeign.listSoDetailByMainId(soId);
+            } catch (Exception e) {
+                log.error("调用OMS服务获取销售订单明细异常, soId={}", soId, e);
+                throw new ServiceException("调用OMS服务异常，请稍后重试");
             }
             if (CollUtil.isEmpty(soDetailList)) {
-                throw new ServiceException("销售订单无明细数据（订单ID:{}）", soId);
+                throw new ServiceException("销售订单明细不存在（订单ID:{}）", soId);
             }
             detailList = getPackingImportDetailList(soId, soDetailList);
         }
@@ -1714,7 +1719,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
                 }
             } catch (Exception e) {
-                log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
+                log.error("上传装箱明细导入错误文件失败", e);
+                throw new ServiceException("生成导入错误文件失败，请联系管理员");
             } finally {
                 if (file != null && file.exists()) {
                     try {
@@ -1847,8 +1853,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             try {
                 productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
             } catch (Exception e) {
-                log.warn("B2B装箱导入获取产品名称失败，跳过产品名称补全, skuIds={}", skuIds, e);
-                return productNameMap;
+                log.error("B2B装箱导入获取产品名称失败, skuIds={}", skuIds, e);
+                throw new ServiceException("获取产品信息失败，请稍后重试");
             }
             if (CollUtil.isNotEmpty(productDetailList)) {
                 for (ProductDetailEntity productDetail : productDetailList) {

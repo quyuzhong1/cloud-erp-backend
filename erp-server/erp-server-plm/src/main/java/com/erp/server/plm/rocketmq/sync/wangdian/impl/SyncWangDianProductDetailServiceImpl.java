@@ -232,7 +232,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
                 plmPushMsgEntity.setPushData(JSON.toJSONString(pushData));
                 plmPushMsgService.save(plmPushMsgEntity);
             } catch (Exception ex) {
-                log.warn("sendMTask补偿消息写入失败, sourceId={}", task.getSourceId(), ex);
+                log.error("sendMTask补偿消息写入失败, sourceId={}", task.getSourceId(), ex);
             }
         }
     }

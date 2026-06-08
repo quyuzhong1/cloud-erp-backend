@@ -46,6 +46,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
                 .collect(Collectors.toMap(B2bThirdDeliveryDetailDTO.AddDTO::getSkuNo, e -> e, (a, b) -> a));
         this.skuSaleQtyMap = new HashMap<>();
+        // 同一 SKU 多行明细为正常拆单，销售数量按 SKU 汇总供导入校验。
         for (B2bThirdDeliveryDetailDTO.AddDTO detail : this.productDetailList) {
             if (CharSequenceUtil.isBlank(detail.getSkuNo())) {
                 continue;
@@ -56,6 +57,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     @Override
     public void invoke(B2bCustomerPackingImportExcelDTO row, AnalysisContext context) {
+        // 错误文件未带 Excel 行号；加 rowIndex 需改 DTO/模板，当前靠序号+SKU 定位。
         rowCount++;
         if (rowCount > MAX_IMPORT_ROWS) {
             throw new ServiceException("装箱明细导入最多支持{0}行", MAX_IMPORT_ROWS);

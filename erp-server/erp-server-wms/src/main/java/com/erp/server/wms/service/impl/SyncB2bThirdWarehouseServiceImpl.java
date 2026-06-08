@@ -405,7 +405,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     }
 
     /**
-     * 填充箱货件标签附件。每箱标签数≤4，总下载次数≈箱数×每箱标签数，fileFeign 暂无批量下载接口。
+     * 填充箱货件标签附件。每箱标签数≤4，总下载次数≈箱数×每箱标签数；
+     * fileFeign 暂无批量下载，大批量依赖 fillPackingForOutboundReq 中的耗时/阈值日志观测，批量接口属后续优化。
      */
     private void fillShipmentFiles(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item,
                                    List<WmsAttachmentDTO.UpdateDTO> attachments,
@@ -464,7 +465,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     }
 
     /**
-     * 附件下载失败时写入本地补偿消息，便于运维人工介入；写入失败不影响主流程异常抛出。
+     * 附件下载失败时写入本地补偿消息；写入失败仅 error 日志，主流程仍抛异常，告警通道不在本 MR 范围。
      */
     private void saveAttachmentDownloadErrorMsg(String sourceId, String sourceCode, String remark) {
         if (CharSequenceUtil.isBlank(sourceId)) {

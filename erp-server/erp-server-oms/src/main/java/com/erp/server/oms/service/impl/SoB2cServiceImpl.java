@@ -5086,6 +5086,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> channelIds = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOList = CollectionUtils.isNotEmpty(channelIds) ? logisticsAuthFeign.listAuthChannelView(channelIds) : Collections.emptyList();
         Map<String, String> logisticsPlatformMap = authChannelViewDTOList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getChannelId()))
                 .collect(Collectors.toMap(
                         LogisticsSupplierDTO.AuthChannelViewDTO::getChannelId,
                         LogisticsSupplierDTO.AuthChannelViewDTO::getLogisticsPlatform,

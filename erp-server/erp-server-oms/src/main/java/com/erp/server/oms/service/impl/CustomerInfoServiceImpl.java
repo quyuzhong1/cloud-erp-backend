@@ -2672,6 +2672,7 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
     }
 
+    /** 默认仓库/账号有值时同步校验有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */
     private void validateCustomerDefaultFields(String defaultShippingWarehouse, String defaultReceiveAccount) {
         if (StringUtils.isNotBlank(defaultShippingWarehouse)) {
             List<WarehouseDTO.UpdateDTO> warehouseList;
