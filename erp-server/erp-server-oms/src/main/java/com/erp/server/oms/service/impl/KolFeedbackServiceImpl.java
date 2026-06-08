@@ -522,11 +522,11 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
-    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList) {
-        if (CollUtil.isEmpty(sourceDetailIdList)) {
+    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList, String sourceType) {
+        if (CollUtil.isEmpty(sourceDetailIdList) || StrUtil.isBlank(sourceType)) {
             return Collections.emptyList();
         }
-        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList, SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
+        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList, sourceType);
     }
 
     @Override

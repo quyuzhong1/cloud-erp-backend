@@ -129,9 +129,10 @@ public interface KolFeedbackService extends SuperService<KolFeedbackEntity> {
      * @author will
      * @date 2025/12/2 16:30
      * @param sourceDetailIdList
+     * @param sourceType 来源类型
      * @return List<FeedbackQtyDTO>
      */
-    List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList);
+    List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList, String sourceType);
     /**
      * 根据来源id查询回片列表
      * @author will

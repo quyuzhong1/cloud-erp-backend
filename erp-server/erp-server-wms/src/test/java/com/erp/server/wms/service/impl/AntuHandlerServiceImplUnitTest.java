@@ -102,6 +102,21 @@ public class AntuHandlerServiceImplUnitTest {
     }
 
     @Test
+    public void convertPdfAttachmentToPngFallbackToOriginalPdfWhenConvertFailed() {
+        String fileData = "data:application/pdf;base64,not-pdf";
+        ThirdWarehouseUploadFileReq req = new ThirdWarehouseUploadFileReq();
+        req.setModule("order_attach");
+        req.setFileType(FileTypeEnum.PDF.getCode());
+        req.setFileData(fileData);
+
+        antuHandlerService.convertPdfAttachmentToPng(req);
+
+        Assert.assertEquals(FileTypeEnum.PDF.getCode(), req.getFileType());
+        Assert.assertEquals("order_attach", req.getModule());
+        Assert.assertEquals(fileData, req.getFileData());
+    }
+
+    @Test
     public void getPdfFirstPageSizeMmReturnsApprox150By100() {
         float widthMm = 150F;
         float heightMm = 100F;

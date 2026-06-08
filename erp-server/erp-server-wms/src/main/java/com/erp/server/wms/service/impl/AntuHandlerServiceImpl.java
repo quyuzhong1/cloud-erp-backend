@@ -48,7 +48,13 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         if (fileData.length() > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
             throw new ServiceException("发票PDF文件过大，无法为安兔生成PNG");
         }
-        uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));
+        try {
+            uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));
+        } catch (Exception e) {
+            log.warn("安兔发票PDF转PNG失败，使用原始PDF格式上传, authId:{}, module:{}",
+                    uploadFileReq.getAuthId(), uploadFileReq.getModule(), e);
+            return;
+        }
         uploadFileReq.setFileType(FileTypeEnum.PNG.getCode());
         uploadFileReq.setModule(ThirdWarehouseConstants.MODULE_OTHER_DOCUMENTS_INVOICE);
     }

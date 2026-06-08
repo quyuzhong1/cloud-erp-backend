@@ -3013,10 +3013,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
             locked = lock.tryLock(10, 10, TimeUnit.SECONDS);
             if (!locked) {
-                log.warn("安兔发票PNG缓存写入锁获取失败，本次仅使用内存PNG Base64，并清理临时上传文件, soCode:{}, pdfAttachId:{}",
+                log.warn("安兔发票PNG缓存写入锁获取失败，本次仅使用内存PNG Base64，临时上传文件将在finally中清理, soCode:{}, pdfAttachId:{}",
                         entity.getCode(), pdfAttachDTO.getId());
-                deleteTemporaryInvoicePng(pngUrl);
-                needDeleteTemporaryPng = false;
                 return pngBase64;
             }
             // 上传耗时较长，放在锁外；锁内只做 DB 二次检查和缓存记录写入。
@@ -3024,7 +3022,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             boolean sameInvalidCache = ObjectUtil.isNotEmpty(cachedAttachment)
                     && ObjectUtil.isNotEmpty(latestAttachment)
                     && Objects.equals(cachedAttachment.getId(), latestAttachment.getId());
-            if (ObjectUtil.isEmpty(latestAttachment) || sameInvalidCache) {
+            String latestPngBase64 = null;
+            if (ObjectUtil.isNotEmpty(latestAttachment) && !sameInvalidCache) {
+                latestPngBase64 = downloadInvoicePngBase64(entity, latestAttachment);
+                if (CharSequenceUtil.isNotBlank(latestPngBase64)) {
+                    return latestPngBase64;
+                }
+            }
+            if (ObjectUtil.isEmpty(latestAttachment) || sameInvalidCache || CharSequenceUtil.isBlank(latestPngBase64)) {
                 // batchAddOrUpdate 自带本地事务，缓存记录写入成功后才保留已上传的 PNG 文件。
                 omsAttachmentService.batchAddOrUpdate(Collections.singletonList(new OmsAttachmentDTO.UpdateDTO(
                         AttachmentTypeEnum.INVOICE_INFO_PNG.getCode(),
