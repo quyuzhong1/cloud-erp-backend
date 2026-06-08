@@ -194,6 +194,11 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("label_json")
     private String labelJson;
     /**
+     * 发货类型：selfShipment自发货，platformWarehouse平台仓
+     */
+    @TableField("delivery_type")
+    private String deliveryType;
+    /**
      * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
      */
     @TableField
@@ -467,6 +472,8 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
 
     public static final String LABEL_JSON = "label_json";
 
+    public static final String DELIVERY_TYPE = "delivery_type";
+
     public static final String ABNORMAL_TYPE = "abnormal_type";
 
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
@@ -490,6 +497,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", totalTaxFee=" + totalTaxFee +
                 ", afterTaxAmount=" + afterTaxAmount +
                 ", totalDiscount=" + totalDiscount +
+                ", deliveryType='" + deliveryType + '\'' +
                 ", signOrderError=" + signOrderError +
                 '}';
     }

@@ -131,6 +131,12 @@ public class SoB2cReturnEntity extends BaseEntity<SoB2cReturnEntity> {
     @TableField("approve_time")
     private LocalDateTime approveTime;
 
+    /**
+     * 平台原始状态
+     */
+    @TableField("platform_status")
+    private String platformStatus;
+
     public static final String CODE = "code";
 
     public static final String PLATFORM_ORDER_NO = "platform_order_no";
@@ -158,6 +164,8 @@ public class SoB2cReturnEntity extends BaseEntity<SoB2cReturnEntity> {
     public static final String RETURN_INSTOCK_CODE = "return_instock_code";
 
     public static final String SYS_RETURN_TIME = "sys_return_time";
+
+    public static final String PLATFORM_STATUS = "platform_status";
 
     @Override
     public Serializable pkVal() {

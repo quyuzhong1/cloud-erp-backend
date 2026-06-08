@@ -104,6 +104,11 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     BatchResultDTO cancel(String id);
 
     /**
+     * 批量取消上传
+     */
+    List<BatchResultDTO> cancel(List<String> ids);
+
+    /**
      * 上传
      * @param id 组包预报单
      * @param collectMode 揽收方式
@@ -111,6 +116,11 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * @return
      */
     BatchResultDTO upload(String id, String collectMode, String collectAddressId);
+
+    /**
+     * 上传
+     */
+    List<BatchResultDTO> upload(PackageForecastDTO.UploadDTO dto);
 
     /**
      * 打印面单
@@ -175,4 +185,5 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto);
 
     List<BatchResultDTO> confirmDelivery(List<String> ids);
+
 }

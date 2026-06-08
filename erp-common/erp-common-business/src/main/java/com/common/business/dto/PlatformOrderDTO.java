@@ -1,7 +1,6 @@
 package com.common.business.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -161,6 +160,11 @@ public class PlatformOrderDTO extends UniqueDto {
      * 标签json
      */
     private String labelJson;
+
+    /**
+     * 发货类型：selfShipment自发货，platformWarehouse平台仓
+     */
+    private String deliveryType;
 
     /**
      * 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）

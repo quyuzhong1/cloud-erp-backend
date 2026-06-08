@@ -15,6 +15,10 @@ import org.apache.commons.lang3.StringUtils;
 public enum PackageForecastCollectModeEnum implements EnumMessage {
     TO_HOME("toHome", "上门揽收"),
     SELF_SEND("selfSend", "自送"),
+    SHOPEE_COURIER_DELIVERY("courier_delivery", "快递寄送（平台下单）"),
+    SHOPEE_PICKUP("pickup", "非快递寄送"),
+    SHOPEE_DROPOFF("dropoff", "集货点"),
+    SHOPEE_SELF_DELIVER("self_deliver", "卖家自送"),
     ;
 
     /**

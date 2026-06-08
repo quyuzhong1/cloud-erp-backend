@@ -111,10 +111,11 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			//过滤手工单
 			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
 			if(CollectionUtils.isNotEmpty(soB2cEntityList)){
-				soB2cEntity = soB2cEntityList.get(0);
+				soB2cEntity = resolveSoB2cEntity(dto, soB2cEntityList);
 			}
-			List<String> soIds = soB2cEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
-			soB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
+			if (Objects.nonNull(soB2cEntity)) {
+				soB2cDetailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(soB2cEntity.getId()));
+			}
 		}
 		if(Objects.isNull(soB2cEntity)){
 			log.warn("平台退货单消费:订单不存在:{}", dto.getPlatformOrderNo());
@@ -272,6 +273,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		soB2cReturnEntity.setCurrency(soB2cEntity.getCurrency());
 		soB2cReturnEntity.setType(ReturnTypeEnum.CUSTOMER_RETURNS.getCode());
 		soB2cReturnEntity.setReason(dto.getReason());
+		soB2cReturnEntity.setPlatformStatus(org.apache.commons.lang3.StringUtils.defaultString(dto.getPlatformStatus(), ""));
 		if (isToBeReturn(dto)) {
 			soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
 			soB2cReturnEntity.setSysReturnTime(null);
@@ -295,7 +297,57 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		}
 		String platform = org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
 		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)
-				||PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform);
+				|| PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)
+				|| PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(platform);
+	}
+
+	private SoB2cEntity resolveSoB2cEntity(PlatformReturnOrderDTO dto, List<SoB2cEntity> soB2cEntityList) {
+		if (CollectionUtils.isEmpty(soB2cEntityList)) {
+			return null;
+		}
+		if (soB2cEntityList.size() == 1) {
+			return soB2cEntityList.get(0);
+		}
+		String platform = org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
+		if (!PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(platform)) {
+			return soB2cEntityList.get(0);
+		}
+		List<String> soIds = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+		List<SoB2cDetailEntity> allDetails = soB2cDetailService.listByMainIds(soIds);
+		Map<String, List<SoB2cDetailEntity>> detailMap = allDetails.stream()
+				.collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
+		List<SoB2cEntity> matchedOrders = soB2cEntityList.stream()
+				.filter(so -> matchesReturnDetails(dto.getDetailList(), detailMap.get(so.getId())))
+				.collect(Collectors.toList());
+		if (CollectionUtils.isEmpty(matchedOrders)) {
+			return soB2cEntityList.stream()
+					.min(Comparator.comparing(SoB2cEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())))
+					.orElse(soB2cEntityList.get(0));
+		}
+		if (matchedOrders.size() == 1) {
+			return matchedOrders.get(0);
+		}
+		return matchedOrders.stream()
+				.min(Comparator.comparing(SoB2cEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())))
+				.orElse(matchedOrders.get(0));
+	}
+
+	private boolean matchesReturnDetails(List<PlatformReturnOrderDTO.Detail> returnDetails, List<SoB2cDetailEntity> soDetails) {
+		if (CollectionUtils.isEmpty(returnDetails) || CollectionUtils.isEmpty(soDetails)) {
+			return false;
+		}
+		for (PlatformReturnOrderDTO.Detail returnDetail : returnDetails) {
+			if (StringUtils.isBlank(returnDetail.getPlatformSkuNo())) {
+				continue;
+			}
+			boolean matched = soDetails.stream().anyMatch(soDetail ->
+					Objects.equals(soDetail.getPlatformSkuNo(), returnDetail.getPlatformSkuNo())
+							&& Objects.equals(soDetail.getQty(), returnDetail.getReturnQty()));
+			if (!matched) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

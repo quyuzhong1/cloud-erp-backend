@@ -2310,7 +2310,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         //只有备货类型等于备货海外仓时，才可以下推入库单，否则提示：只有备货海外仓的发货单允许下推入库单
         if (!FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(entity.getDemandType())
-        && !FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
+                && !FbaDemandTypeEnum.DEMAND_FBS_WAREHOUSE.getCode().equals(entity.getDemandType())
+                && !FbaDemandTypeEnum.DEMAND_ALIEXPRESS.getCode().equals(entity.getDemandType())) {
             throw new ServiceException(ApiError.FIRST_MILE_SHIPMENT_ONLY_FOR_OVERSEAS_WAREHOUSE);
         }
 

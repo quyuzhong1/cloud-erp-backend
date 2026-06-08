@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FbsInventoryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbsInventoryEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="shop_id" property="shopId" />
+        <result column="shop_name" property="shopName" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="warehouse_name" property="warehouseName" />
+        <result column="platform_sku" property="platformSku" />
+        <result column="platform_product_name" property="platformProductName" />
+        <result column="fbs_sku" property="fbsSku" />
+        <result column="spec_name" property="specName" />
+        <result column="sku_id" property="skuId" />
+        <result column="sku_no" property="skuNo" />
+        <result column="product_name" property="productName" />
+        <result column="purchase_mode" property="purchaseMode" />
+        <result column="recommended_replenishment_qty" property="recommendedReplenishmentQty" />
+        <result column="total_stock_qty" property="totalStockQty" />
+        <result column="stocked_inbound_qty" property="stockedInboundQty" />
+        <result column="transfer_asn_inbound_qty" property="transferAsnInboundQty" />
+        <result column="reserved_qty" property="reservedQty" />
+        <result column="unsellable_qty" property="unsellableQty" />
+        <result column="in_transit_qty" property="inTransitQty" />
+        <result column="turnover_days" property="turnoverDays" />
+        <result column="warehouse_inventory_coverage_days" property="warehouseInventoryCoverageDays" />
+        <result column="daily_avg_sales_qty" property="dailyAvgSalesQty" />
+        <result column="last_7_days_sales_qty" property="last7DaysSalesQty" />
+        <result column="last_15_days_sales_qty" property="last15DaysSalesQty" />
+        <result column="last_30_days_sales_qty" property="last30DaysSalesQty" />
+        <result column="last_60_days_sales_qty" property="last60DaysSalesQty" />
+        <result column="last_90_days_sales_qty" property="last90DaysSalesQty" />
+        <result column="stock_age_0_30_qty" property="stockAge030Qty" />
+        <result column="stock_age_31_60_qty" property="stockAge3160Qty" />
+        <result column="stock_age_61_90_qty" property="stockAge6190Qty" />
+        <result column="stock_age_91_120_qty" property="stockAge91120Qty" />
+        <result column="stock_age_121_180_qty" property="stockAge121180Qty" />
+        <result column="stock_age_over_180_qty" property="stockAgeOver180Qty" />
+        <result column="platform_update_time" property="platformUpdateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        shop_id,
+        shop_name,
+        warehouse_id,
+        warehouse_name,
+        platform_sku,
+        platform_product_name,
+        fbs_sku,
+        spec_name,
+        sku_id,
+        sku_no,
+        product_name,
+        purchase_mode,
+        recommended_replenishment_qty,
+        total_stock_qty,
+        stocked_inbound_qty,
+        transfer_asn_inbound_qty,
+        reserved_qty,
+        unsellable_qty,
+        in_transit_qty,
+        turnover_days,
+        warehouse_inventory_coverage_days,
+        daily_avg_sales_qty,
+        last_7_days_sales_qty,
+        last_15_days_sales_qty,
+        last_30_days_sales_qty,
+        last_60_days_sales_qty,
+        last_90_days_sales_qty,
+        stock_age_0_30_qty,
+        stock_age_31_60_qty,
+        stock_age_61_90_qty,
+        stock_age_91_120_qty,
+        stock_age_121_180_qty,
+        stock_age_over_180_qty,
+        platform_update_time
+    </sql>
+
+    <sql id="List_Column">
+        fi.id AS id,
+        fi.shop_id AS shopId,
+        fi.shop_name AS shopName,
+        fi.warehouse_id AS warehouseId,
+        fi.warehouse_name AS warehouseName,
+        fi.platform_sku AS platformSku,
+        fi.platform_product_name AS platformProductName,
+        fi.fbs_sku AS fbsSku,
+        fi.spec_name AS specName,
+        fi.sku_id AS skuId,
+        fi.sku_no AS skuNo,
+        fi.product_name AS productName,
+        fi.purchase_mode AS purchaseMode,
+        fi.recommended_replenishment_qty AS recommendedReplenishmentQty,
+        fi.total_stock_qty AS totalStockQty,
+        fi.stocked_inbound_qty AS stockedInboundQty,
+        fi.transfer_asn_inbound_qty AS transferAsnInboundQty,
+        fi.reserved_qty AS reservedQty,
+        fi.unsellable_qty AS unsellableQty,
+        fi.in_transit_qty AS inTransitQty,
+        fi.turnover_days AS turnoverDays,
+        fi.warehouse_inventory_coverage_days AS warehouseInventoryCoverageDays,
+        fi.daily_avg_sales_qty AS dailyAvgSalesQty,
+        fi.last_7_days_sales_qty AS last7DaysSalesQty,
+        fi.last_15_days_sales_qty AS last15DaysSalesQty,
+        fi.last_30_days_sales_qty AS last30DaysSalesQty,
+        fi.last_60_days_sales_qty AS last60DaysSalesQty,
+        fi.last_90_days_sales_qty AS last90DaysSalesQty,
+        fi.stock_age_0_30_qty AS stockAge030Qty,
+        fi.stock_age_31_60_qty AS stockAge3160Qty,
+        fi.stock_age_61_90_qty AS stockAge6190Qty,
+        fi.stock_age_91_120_qty AS stockAge91120Qty,
+        fi.stock_age_121_180_qty AS stockAge121180Qty,
+        fi.stock_age_over_180_qty AS stockAgeOver180Qty,
+        fi.platform_update_time AS platformUpdateTime
+    </sql>
+
+    <sql id="Common_Where">
+        FROM fbs_inventory fi
+        WHERE fi.is_deleted = FALSE
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <!--数据权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <!--是否显示0库存-->
+        <if test="params != null and params.isShowZeroInventory">
+            AND NOT (
+                fi.recommended_replenishment_qty = 0
+                AND fi.total_stock_qty = 0
+                AND fi.stocked_inbound_qty = 0
+                AND fi.transfer_asn_inbound_qty = 0
+                AND fi.reserved_qty = 0
+                AND fi.unsellable_qty = 0
+                AND fi.in_transit_qty = 0
+            )
+        </if>
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.FbsInventoryDTO$ListDTO">
+        SELECT
+            <include refid="List_Column" />
+        <include refid="Common_Where" />
+        ORDER BY
+        <if test="params != null and params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fi.create_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.FbsInventoryDTO$ListDTO">
+        SELECT
+            <include refid="List_Column" />
+        <include refid="Common_Where" />
+        <if test="params != null and params.ids != null and params.ids.size > 0">
+            AND fi.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY fi.create_time DESC
+    </select>
+
+    <select id="summaryNumber" resultType="com.erp.model.wms.dto.FbsInventoryDTO$SummaryNumber">
+        SELECT
+            COALESCE(SUM(fi.recommended_replenishment_qty), 0) AS recommendedReplenishmentQty,
+            COALESCE(SUM(fi.total_stock_qty), 0) AS totalStockQty,
+            COALESCE(SUM(fi.stocked_inbound_qty), 0) AS stockedInboundQty,
+            COALESCE(SUM(fi.transfer_asn_inbound_qty), 0) AS transferAsnInboundQty,
+            COALESCE(SUM(fi.reserved_qty), 0) AS reservedQty,
+            COALESCE(SUM(fi.unsellable_qty), 0) AS unsellableQty,
+            COALESCE(SUM(fi.in_transit_qty), 0) AS inTransitQty
+        <include refid="Common_Where" />
+    </select>
+</mapper>
