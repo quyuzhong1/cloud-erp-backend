@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SuperDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
@@ -347,18 +348,6 @@ public class LogisticsReconDTO implements Serializable {
         private String id;
     }
 
-    /**
-     * 模板下载
-     */
-    @Data
-    @NoArgsConstructor
-    public static class DownloadTemplateDTO {
-        /**
-         * 导入模板配置 id（cfg_logistics_cost_import.id），决定 sheet 与列
-         */
-        @NotBlank(message = "导入模板配置id不能为空")
-        private String cfgImportId;
-    }
 
     /**
      * 导入触发
@@ -369,6 +358,9 @@ public class LogisticsReconDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ImportDTO {
+
+
+
         /**
          * 文件中心任务 id（异步回调时由文件中心写入）
          */
@@ -436,31 +428,60 @@ public class LogisticsReconDTO implements Serializable {
          * 操作人 id（提交导入时捕获，用于异步回调落导入历史记录）
          */
         private String userId;
+
+        /**
+         * 由批量导入参数 + 单个文件参数组装单文件导入参数
+         * @param batch 批量导入公共参数
+         * @param file  单个文件参数
+         */
+        public ImportDTO(ImportBatchDTO batch, BaseDTO.ImportDTO file) {
+            this.businessType = batch.getBusinessType();
+            this.costType = batch.getCostType();
+            this.reconciliationMonth = batch.getReconciliationMonth();
+            this.processingType = batch.getProcessingType();
+            this.fileUrl = file.getFileUrl();
+            this.fileName = file.getFileName();
+            this.taskId = file.getTaskId();
+            this.userId = file.getUserId();
+        }
     }
 
     /**
-     * 预处理（试解析，不落库）
+     * 批量导入触发（前端一次可上传多个文件，控制层循环逐文件提交）
      */
     @Data
     @NoArgsConstructor
-    public static class PreprocessingDTO {
-        /**
-         * 导入模板配置 id
-         */
-        @NotBlank(message = "导入模板配置id不能为空")
-        private String cfgImportId;
+    public static class ImportBatchDTO {
 
         /**
-         * 文件 URL
+         * 导入文件列表
          */
-        @NotBlank(message = "文件URL不能为空")
-        private String fileUrl;
+        @NotEmpty(message = "导入文件不能为空")
+        private List<BaseDTO.ImportDTO> list;
 
         /**
-         * 文件名
+         * 业务类型
          */
-        @NotBlank(message = "文件名不能为空")
-        private String fileName;
+        @NotBlank(message = "业务类型不能为空")
+        private String businessType;
+
+        /**
+         * 费用类型 api / excel
+         */
+        private String costType = "excel";
+
+        /**
+         * 对账月份 YYYY-MM
+         */
+        @NotBlank(message = "对账月份不能为空")
+        @Size(max = 7, message = "对账月份最大长度不能超过7位")
+        private String reconciliationMonth;
+
+        /**
+         * 处理类型 importOnly / importCheck
+         */
+        @NotBlank(message = "处理类型不能为空")
+        private String processingType;
     }
 
     /**
