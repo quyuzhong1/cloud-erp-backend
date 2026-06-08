@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.enums.KolB2bApplicationTableEnum;
 import com.erp.model.oms.enums.KolB2bRefStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -22,6 +23,8 @@ import java.util.List;
  */
 @Component
 public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
+
+    private static final String[] SQL_DANGEROUS_TOKENS = {";", "--", "/*", "*/"};
 
     @Resource
     private CommonService commonService;
@@ -54,10 +57,22 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
         }
         if ("feedbackUrl".equals(field)) {
             // compareCodeSplicingValueSql 由 WebAdvanceQueryAspect/QueryUtils 统一校验和生成，这里只替换业务表关联。
+            checkGeneratedAdvancedQuerySql(compareCodeSplicingValueSql);
             return " exists (SELECT source_detail_id FROM kol_sample_cost_ref_feedback_url WHERE is_deleted = false and source_type = '" + SourceTypeEnum.KOL_B2B_APPLICATION.getCode() + "' and source_detail_id = kbad.id and url "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         return null;
+    }
+
+    private void checkGeneratedAdvancedQuerySql(String compareCodeSplicingValueSql) {
+        if (CharSequenceUtil.isBlank(compareCodeSplicingValueSql)) {
+            throw new ServiceException("非法查询条件");
+        }
+        for (String token : SQL_DANGEROUS_TOKENS) {
+            if (compareCodeSplicingValueSql.contains(token)) {
+                throw new ServiceException("非法查询条件");
+            }
+        }
     }
 
     /**

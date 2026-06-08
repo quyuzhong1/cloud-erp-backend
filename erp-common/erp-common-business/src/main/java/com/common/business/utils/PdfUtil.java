@@ -2,6 +2,7 @@ package com.common.business.utils;
 
 import cn.hutool.core.net.URLDecoder;
 import cn.hutool.core.util.RandomUtil;
+import com.common.business.constant.ThirdWarehouseConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
@@ -404,7 +405,11 @@ public class PdfUtil {
             if (!writeResult || outputStream.size() == 0) {
                 throw new ServiceException("PDF文件转换PNG失败");
             }
-            return Base64.getEncoder().encodeToString(outputStream.toByteArray());
+            byte[] pngBytes = outputStream.toByteArray();
+            if (estimateBase64Length(pngBytes.length) > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
+                throw new ServiceException("PDF转PNG后图片过大，无法转换");
+            }
+            return Base64.getEncoder().encodeToString(pngBytes);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
@@ -449,6 +454,10 @@ public class PdfUtil {
         if (widthPixels * heightPixels > MAX_RENDER_PIXELS) {
             throw new ServiceException("PDF首页尺寸过大，无法转换PNG");
         }
+    }
+
+    private static long estimateBase64Length(int byteLength) {
+        return ((long) (byteLength + 2) / 3) * 4;
     }
 
     private static float pointsToMm(float points) {
