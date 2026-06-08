@@ -2643,13 +2643,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             errorMsgList.add("无法识别退货入库单号，请确定编码是否正确或是否存在");
             return errorMsgList;
         }
-        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
-            errorMsgList.add("退货入库单已作废");
-            return errorMsgList;
-        }
-        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())
-                && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) {
-            errorMsgList.add(ApiError.BILL_EDIT_ALLOWED_STATUS_ONLY.getMsg());
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())
+                || !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus())) {
+            errorMsgList.add("只有单据状态为待提交且未作废的才允许修改");
             return errorMsgList;
         }
         if (!SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())
@@ -2659,6 +2655,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         if (CollUtil.isEmpty(customerMap.get(row.getCustomerName()))) {
             errorMsgList.add("未能找到客户，请确定客户是否正确/已启用");
+        } else if (isMappedToReturnOrder(entity)
+                && !CharSequenceUtil.equals(entity.getCustomerName(), row.getCustomerName())) {
+            errorMsgList.add("该退货入库单已映射退货单号，不允许修改退货客户");
         }
         if (ObjectUtil.isEmpty(inventoryOrgMap.get(row.getInventoryOrgName()))) {
             errorMsgList.add("未能找到库存组织，请确定库存组织是否正确/已启用");
@@ -2673,31 +2672,37 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         return errorMsgList;
     }
 
+    private boolean isMappedToReturnOrder(SoReturnInstockEntity entity) {
+        return CharSequenceUtil.isNotBlank(entity.getSoReturnCode()) || CharSequenceUtil.isNotBlank(entity.getSoReturnId());
+    }
+
     private void applyImportUpdate(SoReturnInstockEntity entity,
                                    SoReturnStockUpdateImportExcelDTO row,
                                    CustomerInfoEntity customerInfo,
                                    BaseIdDTO.CodeDTO inventoryOrg,
                                    List<DictCurrencyEntity> currencyList) {
-        entity.setCustomerId(customerInfo.getId());
-        entity.setCustomerName(customerInfo.getName());
-        entity.setSellerId(customerInfo.getSellerId());
-        entity.setSellerName(customerInfo.getSellerName());
-        if (StringUtils.isNotBlank(customerInfo.getSalesDeptId())) {
-            SysDepartmentDTO department = sysUserFeign.getUserDeptById(customerInfo.getSalesDeptId());
-            if (null != department) {
-                entity.setSalesDeptId(customerInfo.getSalesDeptId());
-                entity.setSalesDeptName(department.getName());
+        if (!isMappedToReturnOrder(entity)) {
+            entity.setCustomerId(customerInfo.getId());
+            entity.setCustomerName(customerInfo.getName());
+            entity.setSellerId(customerInfo.getSellerId());
+            entity.setSellerName(customerInfo.getSellerName());
+            if (StringUtils.isNotBlank(customerInfo.getSalesDeptId())) {
+                SysDepartmentDTO department = sysUserFeign.getUserDeptById(customerInfo.getSalesDeptId());
+                if (null != department) {
+                    entity.setSalesDeptId(customerInfo.getSalesDeptId());
+                    entity.setSalesDeptName(department.getName());
+                }
             }
-        }
-        List<BaseIdDTO.CodeDTO> salesOrgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(customerInfo.getUseOrgId()));
-        if (CollectionUtils.isNotEmpty(salesOrgList)) {
-            String salesOrgName = salesOrgList.stream()
-                    .filter(o -> customerInfo.getUseOrgId().equals(o.getId()))
-                    .findFirst()
-                    .map(BaseIdDTO.CodeDTO::getName)
-                    .orElse("");
-            entity.setSalesOrgName(salesOrgName);
-            entity.setSalesOrgId(customerInfo.getUseOrgId());
+            List<BaseIdDTO.CodeDTO> salesOrgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(customerInfo.getUseOrgId()));
+            if (CollectionUtils.isNotEmpty(salesOrgList)) {
+                String salesOrgName = salesOrgList.stream()
+                        .filter(o -> customerInfo.getUseOrgId().equals(o.getId()))
+                        .findFirst()
+                        .map(BaseIdDTO.CodeDTO::getName)
+                        .orElse("");
+                entity.setSalesOrgName(salesOrgName);
+                entity.setSalesOrgId(customerInfo.getUseOrgId());
+            }
         }
         entity.setInventoryOrgId(inventoryOrg.getId());
         entity.setInventoryOrgName(inventoryOrg.getName());
