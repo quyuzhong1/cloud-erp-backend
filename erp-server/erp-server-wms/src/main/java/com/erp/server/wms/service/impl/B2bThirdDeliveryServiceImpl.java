@@ -1172,8 +1172,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isValidAttachmentId(String attachmentId) {
-        // 历史页面可能把空附件ID序列化成字符串 "null"；前端序列化修复后可视情况移除。
-        return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
+        if (StrUtil.isBlank(attachmentId)) {
+            return false;
+        }
+        if ("null".equalsIgnoreCase(attachmentId.trim())) {
+            log.warn("检测到附件ID为字符串null的历史前端数据");
+            return false;
+        }
+        return true;
     }
 
     private boolean needUploadAttachment(String providerCode) {
@@ -1671,6 +1677,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private static final long MAX_PACKING_IMPORT_FILE_SIZE = 5L * 1024 * 1024;
+    private static final int MAX_PACKING_QTY_ERROR_ITEMS = 10;
 
     /**
      * 仅解析 Excel 并回填页面，不落库；由 Controller 独立调用，不在 add/update 的 @GlobalTransactional 内。
@@ -1718,6 +1725,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             try {
                 file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
                 if (file != null && file.isFile()) {
+                    file.deleteOnExit();
                     importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
                 }
             } catch (Exception e) {
@@ -1992,7 +2000,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         if (CollUtil.isNotEmpty(qtyErrors)) {
-            throw new ServiceException(String.join("；", qtyErrors));
+            int total = qtyErrors.size();
+            List<String> displayErrors = total > MAX_PACKING_QTY_ERROR_ITEMS
+                    ? qtyErrors.subList(0, MAX_PACKING_QTY_ERROR_ITEMS)
+                    : qtyErrors;
+            String message = String.join("；", displayErrors);
+            if (total > MAX_PACKING_QTY_ERROR_ITEMS) {
+                message = message + CharSequenceUtil.format("；…还有{}个SKU数量不匹配", total - MAX_PACKING_QTY_ERROR_ITEMS);
+            }
+            throw new ServiceException(message);
         }
     }
 

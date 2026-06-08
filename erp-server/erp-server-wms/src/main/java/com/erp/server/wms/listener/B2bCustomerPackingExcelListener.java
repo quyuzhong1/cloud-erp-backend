@@ -136,37 +136,75 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new LinkedHashMap<>();
-        boolean hasBoxError = false;
+        Set<Integer> conflictBoxSeqs = collectBoxFieldConflictBoxSeqs();
+        if (!conflictBoxSeqs.isEmpty()) {
+            for (Integer boxSeq : conflictBoxSeqs) {
+                appendBoxFieldConflictErrors(boxSeq);
+            }
+            removeBoxes(conflictBoxSeqs);
+            if (CollectionUtils.isEmpty(successList)) {
+                return;
+            }
+        }
+        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
+        if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
+            Set<Integer> duplicateBoxSeqs = duplicateLineErrorList.stream()
+                    .map(B2bCustomerPackingImportExcelDTO::getBoxSeq)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .map(Integer::valueOf)
+                    .collect(Collectors.toSet());
+            appendImportErrors(duplicateLineErrorList);
+            removeBoxes(duplicateBoxSeqs);
+            if (CollectionUtils.isEmpty(successList)) {
+                return;
+            }
+        }
+        assembleSuccessListByBox();
+    }
+
+    private Set<Integer> collectBoxFieldConflictBoxSeqs() {
+        Set<Integer> conflictBoxSeqs = new HashSet<>();
+        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new HashMap<>();
         for (B2bCustomerPackingDTO.ViewDTO row : successList) {
             B2bCustomerPackingDTO.ViewDTO head = boxHeadMap.get(row.getBoxSeq());
             if (head == null) {
                 boxHeadMap.put(row.getBoxSeq(), row);
-            } else {
-                if (!Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkNo(), ""))
-                        || !Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkRefNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), ""))
-                        || !Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelSize(), ""), CharSequenceUtil.blankToDefault(row.getLabelSize(), ""))
-                        || !Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelingRequirement(), ""), CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), ""))) {
-                    B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
-                    error.setBoxSeq(String.valueOf(row.getBoxSeq()));
-                    error.setSkuNo(getFirstSkuNo(row.getBoxSeq()));
-                    error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
-                    addImportError(error);
-                    hasBoxError = true;
-                }
+            } else if (!isSameBoxLevelFields(head, row)) {
+                conflictBoxSeqs.add(row.getBoxSeq());
             }
         }
-        if (hasBoxError) {
-            successList.clear();
-            successLineList.clear();
-            return;
+        return conflictBoxSeqs;
+    }
+
+    private boolean isSameBoxLevelFields(B2bCustomerPackingDTO.ViewDTO head, B2bCustomerPackingDTO.ViewDTO row) {
+        return Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkNo(), ""))
+                && Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkRefNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), ""))
+                && Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelSize(), ""), CharSequenceUtil.blankToDefault(row.getLabelSize(), ""))
+                && Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelingRequirement(), ""), CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), ""));
+    }
+
+    private void appendBoxFieldConflictErrors(Integer boxSeq) {
+        for (B2bCustomerPackingDTO.LineViewDTO line : successLineList) {
+            if (!Objects.equals(line.getBoxSeq(), boxSeq)) {
+                continue;
+            }
+            B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
+            error.setBoxSeq(String.valueOf(boxSeq));
+            error.setSkuNo(CharSequenceUtil.blankToDefault(line.getSkuNo(), ""));
+            error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
+            addImportError(error);
         }
-        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
-        if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
-            appendImportErrors(duplicateLineErrorList);
-            successList.clear();
-            successLineList.clear();
-            return;
+    }
+
+    private void removeBoxes(Set<Integer> boxSeqs) {
+        successLineList.removeIf(line -> boxSeqs.contains(line.getBoxSeq()));
+        successList.removeIf(box -> boxSeqs.contains(box.getBoxSeq()));
+    }
+
+    private void assembleSuccessListByBox() {
+        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new LinkedHashMap<>();
+        for (B2bCustomerPackingDTO.ViewDTO row : successList) {
+            boxHeadMap.putIfAbsent(row.getBoxSeq(), row);
         }
         Map<Integer, List<B2bCustomerPackingDTO.LineViewDTO>> lineMap = successLineList.stream()
                 .collect(Collectors.groupingBy(B2bCustomerPackingDTO.LineViewDTO::getBoxSeq));
@@ -204,15 +242,6 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         for (B2bCustomerPackingImportExcelDTO error : errors) {
             addImportError(error);
         }
-    }
-
-    private String getFirstSkuNo(Integer boxSeq) {
-        return successLineList.stream()
-                .filter(e -> Objects.equals(e.getBoxSeq(), boxSeq))
-                .map(B2bCustomerPackingDTO.LineViewDTO::getSkuNo)
-                .filter(CharSequenceUtil::isNotBlank)
-                .findFirst()
-                .orElse("");
     }
 
     public List<B2bCustomerPackingDTO.ViewDTO> getSuccessList() {

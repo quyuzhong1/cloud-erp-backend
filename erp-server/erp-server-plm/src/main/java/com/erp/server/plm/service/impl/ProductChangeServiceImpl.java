@@ -925,9 +925,8 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
     private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            log.warn("产品变更审批后同步旺店缺少事务上下文，写入补偿消息, productDetailId={}", productDetailEntity.getId());
-            saveWangDianSyncPendingPushMsg(productDetailEntity, "无事务上下文");
-            return;
+            log.error("产品变更审批缺少事务上下文，旺店通同步异常, productDetailId={}", productDetailEntity.getId());
+            throw new ServiceException("系统配置异常，请联系管理员");
         }
         runAfterTransactionCommit(() -> syncWangDianProductDetailWithFallback(productDetailEntity));
     }

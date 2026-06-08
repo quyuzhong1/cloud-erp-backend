@@ -338,9 +338,11 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 .distinct()
                 .count();
         if (boxCount > 100 || attachmentCount > 200) {
-            // 超阈值仅 warn 观测；硬熔断上限与 batch 下载不在本 MR 范围。
             log.warn("B2B三方发货单装箱标签数量较多，可能影响同步耗时, sourceId={}, boxCount={}, attachmentCount={}",
                     entity.getId(), boxCount, attachmentCount);
+        }
+        if (attachmentCount > 500) {
+            throw new ServiceException("装箱标签附件数量过多（{}个），请分批操作", attachmentCount);
         }
         long downloadStartMs = System.currentTimeMillis();
         List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {

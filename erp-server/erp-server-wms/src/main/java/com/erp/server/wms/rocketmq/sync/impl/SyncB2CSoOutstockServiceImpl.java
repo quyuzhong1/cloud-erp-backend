@@ -602,8 +602,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    // Temu MQ 按「平台订单+店铺」整单推送；waiteTime=15s 仅约束抢锁等待，失败依赖 MQ 重试；同订单多仓并存需业务确认后再细化 key。
-    @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 15)
+    // Temu MQ 按「平台订单+店铺」整单推送；waiteTime=60s 约束抢锁等待，失败依赖 MQ 重试；同订单多仓并存需业务确认后再细化 key。
+    @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 60)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(entity.getPlatformOrderCode()),PlatformDictEnum.TE_MU.getCode(),entity.getShopId(),"");
