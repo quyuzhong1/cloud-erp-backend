@@ -609,6 +609,18 @@ public class InventorySkuCostDTO implements Serializable {
          * 销售组织列表
          */
         private List<String> orgIdList;
+
+        /**
+         * 核算月份开始时间。仅用于兼容旧调用方，新寄样成本逻辑不再传该过滤条件。
+         */
+        @Deprecated
+        private LocalDateTime startAccountingMonth;
+
+        /**
+         * 核算月份结束时间。仅用于兼容旧调用方，新寄样成本逻辑不再传该过滤条件。
+         */
+        @Deprecated
+        private LocalDateTime endAccountingMonth;
     }
 
     /**
