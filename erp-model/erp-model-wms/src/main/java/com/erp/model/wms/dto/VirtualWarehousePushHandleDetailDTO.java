@@ -264,14 +264,6 @@ public class VirtualWarehousePushHandleDetailDTO implements Serializable {
          * 分货单拆单明细id
          */
         private String handleDetailId;
-        /**
-         * 借调实体仓ID（触发自动借调时填充）
-         */
-        private String borrowWarehouseId;
-        /**
-         * 借调实体仓第三方仓库编码（触发自动借调时填充）
-         */
-        private String thirdBorrowWarehouseNo;
     }
 
 
