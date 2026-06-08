@@ -331,6 +331,8 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         }
         Map<String, List<WmsAttachmentDTO.UpdateDTO>> shipmentFileMap = getShipmentFileMap(packingList);
         validateBoxHeadShipmentFiles(entity, packingList, shipmentFileMap);
+        int attachmentCount = shipmentFileMap.values().stream().mapToInt(List::size).sum();
+        long downloadStartMs = System.currentTimeMillis();
         List<ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem> items = packingList.stream().map(p -> {
             ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item = new ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem();
             item.setWarehousePlatformSku(p.getWarehousePlatformSku());
@@ -343,6 +345,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             item.setBoxSeq(p.getBoxSeq());
             return item;
         }).collect(Collectors.toList());
+        if (attachmentCount > 0) {
+            log.info("B2B三方发货单装箱标签附件下载完成, sourceId={}, attachmentCount={}, costMs={}",
+                    entity.getId(), attachmentCount, System.currentTimeMillis() - downloadStartMs);
+        }
         req.setPackingDetailList(items);
     }
 

@@ -602,7 +602,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    // Temu 同一平台订单可能含多 SKU/多子单，出库单按订单维度生成；订单+店铺级锁避免并发重复创建出库单。
+    // Temu 出库同步按「平台订单+店铺」整单推送（MQ 单消息含多 SKU），订单+店铺级锁防重复建单；waiteTime=15s 仅约束抢锁等待，失败由 MQ 重试。
     @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 15)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
@@ -659,22 +659,24 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         soB2cFeign.updateDetail(handleDetailList);
         //不同仓库生成不同的出库单
-        Map<String,List<SoB2cDetailEntity>> detailMap = handleDetailList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
-        detailMap.forEach((warehouseId,detailEntities)->{
+        Map<String, TeMuSoOutStockDetailDTO> temuDetailBySubSoCode = detailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getPlatformSubSoCode()))
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSubSoCode, d -> d, (left, right) -> left));
+        Map<String, TeMuSoOutStockDetailDTO> temuDetailBySkuNo = detailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getPlatformSkuNo()))
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSkuNo, d -> d, (left, right) -> left));
+        Map<String, List<SoB2cDetailEntity>> detailMap = handleDetailList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getWarehouseId()))
+                .collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
+        detailMap.forEach((warehouseId, detailEntities) -> {
             for (SoB2cDetailEntity detailEntity : detailEntities) {
                 TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO;
                 if (StringUtils.isNotBlank(detailEntity.getPlatformSubSoCode())) {
-                    teMuSoOutStockDetailDTO = detailList.stream()
-                            .filter(v -> detailEntity.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
-                            .findFirst()
-                            .orElse(null);
+                    teMuSoOutStockDetailDTO = temuDetailBySubSoCode.get(detailEntity.getPlatformSubSoCode());
                 } else {
-                    teMuSoOutStockDetailDTO = detailList.stream()
-                            .filter(v -> v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo()))
-                            .findFirst()
-                            .orElse(null);
+                    teMuSoOutStockDetailDTO = temuDetailBySkuNo.get(detailEntity.getPlatformSkuNo());
                 }
-                if(Objects.nonNull(teMuSoOutStockDetailDTO)){
+                if (Objects.nonNull(teMuSoOutStockDetailDTO)) {
                     detailEntity.setQty(teMuSoOutStockDetailDTO.getQty());
                 }
             }

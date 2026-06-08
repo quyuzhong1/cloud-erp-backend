@@ -1677,7 +1677,10 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             // OMS Feign 契约直接返回明细 List，非 ApiResult 包装；null 表示调用异常或无有效返回。
             List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
             if (soDetailList == null) {
-                throw new ServiceException("获取销售订单明细失败，请稍后重试");
+                throw new ServiceException("调用OMS服务获取销售订单明细失败（订单ID:{}），请稍后重试", soId);
+            }
+            if (CollUtil.isEmpty(soDetailList)) {
+                throw new ServiceException("销售订单无明细数据（订单ID:{}）", soId);
             }
             detailList = getPackingImportDetailList(soId, soDetailList);
         }
@@ -1722,7 +1725,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 .eq(B2bThirdDeliveryEntity::getSoId, soId)
                 .ne(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .orderByDesc(B2bThirdDeliveryEntity::getCreateTime)
-                .last("limit 1")
+                .last("LIMIT 1")
                 .one();
         if (Objects.isNull(deliveryEntity)) {
             return Collections.emptyList();

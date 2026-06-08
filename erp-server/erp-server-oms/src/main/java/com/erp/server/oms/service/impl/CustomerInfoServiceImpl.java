@@ -2673,8 +2673,13 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
 
     private void validateCustomerDefaultFields(String defaultShippingWarehouse, String defaultReceiveAccount) {
         if (StringUtils.isNotBlank(defaultShippingWarehouse)) {
-            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(
-                    Collections.singletonList(defaultShippingWarehouse));
+            List<WarehouseDTO.UpdateDTO> warehouseList;
+            try {
+                warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(defaultShippingWarehouse));
+            } catch (Exception e) {
+                log.warn("校验默认发货仓库失败, warehouseId={}", defaultShippingWarehouse, e);
+                throw new ServiceException("校验默认发货仓库失败，请稍后重试");
+            }
             if (CollectionUtils.isEmpty(warehouseList) || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
                 throw new ServiceException("默认发货仓库不存在或已禁用");
             }
