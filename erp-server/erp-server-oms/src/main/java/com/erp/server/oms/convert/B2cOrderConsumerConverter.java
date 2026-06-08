@@ -104,6 +104,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "sellerOrderCode",ignore = true),
             @Mapping(target = "nfeInvoiceStatus", source = "dto.nfeInvoiceStatus"),
             @Mapping(target = "platformDeliveryWarehouse", source = "dto.platformDeliveryWarehouse"),
+            @Mapping(target = "deliveryType", source = "dto.deliveryType"),
     })
     SoB2cEntity convertUpdateMainOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto);
 

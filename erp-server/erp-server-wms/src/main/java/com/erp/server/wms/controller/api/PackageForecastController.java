@@ -5,7 +5,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -19,6 +18,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.server.wms.query.PackageForecastQueryHandler;
+import com.erp.server.wms.service.adapter.ShopeePackageForecastAdapter;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +48,9 @@ public class PackageForecastController extends BaseController {
 
     @Resource
     private PackageForecastDetailService  packageForecastDetailService;
+
+    @Resource
+    private ShopeePackageForecastAdapter shopeePackageForecastAdapter;
 
     /**
      * 获取 tab列表
@@ -184,23 +187,7 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/cancel")
     @LogAction(value = LogActionEnum.CANCEL, desc = "组包预报单取消")
     public ApiResult<List<BatchResultDTO>> cancel(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = packageForecastService.cancel(id);
-            } catch (Exception e) {
-                log.error("组包预报单取消失败===>{}", e.getMessage());
-                PackageForecastEntity entity = packageForecastService.getById(id);
-                if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 取消失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
-                }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(deleteResult);
-        }
+        List<BatchResultDTO> resultDTOS = packageForecastService.cancel(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -225,29 +212,8 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/upload")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "上传组包预报")
     public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        if(dto.getDeliveryPlatform().equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
-            BatchResultDTO batchResultDTO = packageForecastService.uploadTikTokFully(dto);
-            return batchResultDTO.getSuccess()?success(Collections.singletonList(batchResultDTO)):failure(Collections.singletonList(batchResultDTO));
-        }else{
-            for (String id : dto.getIds()) {
-                BatchResultDTO deleteResult;
-                try {
-                    deleteResult = packageForecastService.upload(id, dto.getCollectMode(), dto.getCollectAddressId());
-                } catch (Exception e) {
-                    log.error("组包预报上传消失败===>{}", e);
-                    PackageForecastEntity entity = packageForecastService.getById(id);
-                    if (Objects.isNull(entity)) {
-                        deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
-                        resultDTOS.add(deleteResult);
-                        continue;
-                    }
-                    deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-                }
-                resultDTOS.add(deleteResult);
-            }
-            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-        }
+        List<BatchResultDTO> resultDTOS = packageForecastService.upload(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -337,6 +303,30 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/searchShippingProvider")
     public ApiResult<PackageForecastDTO.ShippingProviderDTO> searchShippingProvider(@RequestBody @Valid PackageForecastDTO.SearchShippingProviderDTO dto) {
         return success(packageForecastService.searchShippingProvider(dto));
+    }
+
+    /**
+     * Shopee 快递寄送下单初始化数据
+     */
+    @PostMapping("/shopee/courierDeliveryOptions")
+    public ApiResult<PackageForecastDTO.ShopeeCourierDeliveryOptionsDTO> shopeeCourierDeliveryOptions(@RequestBody @Valid PackageForecastDTO.ShopeeOptionParamDTO dto) {
+        return success(shopeePackageForecastAdapter.courierDeliveryOptions(dto));
+    }
+
+    /**
+     * Shopee 非快递/卖家自送物流渠道
+     */
+    @PostMapping("/shopee/firstMileChannelList")
+    public ApiResult<List<PackageForecastDTO.ShopeeFirstMileChannelDTO>> shopeeFirstMileChannelList(@RequestBody @Valid PackageForecastDTO.ShopeeOptionParamDTO dto) {
+        return success(shopeePackageForecastAdapter.firstMileChannelList(dto));
+    }
+
+    /**
+     * Shopee 可绑定揽收批次号
+     */
+    @PostMapping("/shopee/trackingNumberList")
+    public ApiResult<List<PackageForecastDTO.ShopeeTrackingNumberDTO>> shopeeTrackingNumberList(@RequestBody @Valid PackageForecastDTO.ShopeeOptionParamDTO dto) {
+        return success(shopeePackageForecastAdapter.trackingNumberList(dto));
     }
 
     /**

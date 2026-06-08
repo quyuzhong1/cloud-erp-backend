@@ -50,4 +50,10 @@ public interface PackageForecastMapper extends BaseMapper<PackageForecastEntity>
      * @return
      */
     List<PackageForecastEntity> getAliExpressHandoverList(@Param("dateTime") DateTime dateTime);
+
+    /**
+     * 获取订单查询列表（Shopee头程状态更新使用）
+     * @return
+     */
+    List<PackageForecastEntity> getShopeeHandoverList(@Param("dateTime") DateTime dateTime);
 }

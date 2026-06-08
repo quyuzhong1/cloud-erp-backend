@@ -224,6 +224,8 @@ public class ExportWmsFeignController {
     private AwdOutstockService awdOutstockService;
     @Resource
     private AwdInventoryService awdInventoryService;
+    @Resource
+    private FbsInventoryService fbsInventoryService;
 
     @Resource
     private QcApplicationService qcApplicationService;
@@ -1338,6 +1340,12 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = AwdInventoryQueryHandler.class)
     public PagingVO<AwdInventoryDTO.ListDTO> exportAwdInventory(@RequestBody @Validated PagingDTO<AwdInventoryDTO.PagingParamDTO> dto) {
         return awdInventoryService.paging(dto);
+    }
+
+    @PostMapping("/exportFbsInventory")
+    @WebAdvanceQuery(handler = FbsInventoryQueryHandler.class)
+    public PagingVO<FbsInventoryDTO.ListDTO> exportFbsInventory(@RequestBody @Validated PagingDTO<FbsInventoryDTO.PagingParamDTO> dto) {
+        return fbsInventoryService.paging(dto);
     }
 
     /**

@@ -3,6 +3,7 @@ package com.erp.model.oms.enums;
 public enum OrderLogisticTypeEnum {
     PLATFORM_WAREHOUSE("platformWarehouse",  "平台仓"),
     TRANSIT_WAREHOUSE("transitWarehouse",  "中转仓"),
+    THIRD_WAREHOUSE("thirdWarehouse",  "第三方仓"),
     SELF_SHIPMENT("selfShipment",  "自发货"),
     ;
 

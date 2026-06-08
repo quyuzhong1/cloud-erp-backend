@@ -26,6 +26,7 @@
        <result column="status" property="status" />
        <result column="return_instock_code" property="returnInstockCode" />
        <result column="sys_return_time" property="sysReturnTime" />
+       <result column="platform_status" property="platformStatus" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -39,7 +40,7 @@
         update_time,
         version,
         is_deleted,
-        code, platform_order_no, platform_return_no, so_id, so_code, dict_platform, shop_id, amount, currency, type, reason, status, return_instock_code, sys_return_time
+        code, platform_order_no, platform_return_no, so_id, so_code, dict_platform, shop_id, amount, currency, type, reason, status, return_instock_code, sys_return_time, platform_status
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.SoB2cReturnDTO$PagingViewDTO">
         SELECT
@@ -56,6 +57,7 @@
             sbr.type,
             sbr.reason,
             sbr.status,
+            sbr.platform_status as platformStatus,
             sbrd.id as detailId,
             sbrd.sku_id as skuId,
             sbrd.sku_no as skuNo,

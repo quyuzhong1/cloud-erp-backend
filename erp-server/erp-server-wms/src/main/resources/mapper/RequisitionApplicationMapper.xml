@@ -267,7 +267,7 @@
         ra.source_id as deliveryPlanId,
         rad.source_detail_id as deliveryPlanDetailId,
         case
-            when ra.type = 'fbt' then coalesce(nullif(rad.platform_fn_sku, ''), rad.platform_sku)
+            when ra.type = 'fbt' or ra.type = 'fbs' then coalesce(nullif(rad.platform_fn_sku, ''), rad.platform_sku)
             else rad.platform_fn_sku
         end as fnSku,
         rad.platform_spu as platformSpuNo,

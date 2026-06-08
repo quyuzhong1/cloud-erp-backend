@@ -26,6 +26,7 @@
             <result property="detailId" column="detailId"/>
             <result property="soId" column="soId"/>
             <result property="soCode" column="soCode"/>
+            <result property="platformOrderCode" column="platformOrderCode"/>
             <result property="logisticsChannelId" column="logisticsChannelId"/>
             <result property="logisticsChannelName" column="logisticsChannelName"/>
             <result property="trackNo" column="trackNo"/>
@@ -137,6 +138,28 @@
         from package_forecast pf
         where pf.handover_no != '' and pf.handover_status not in ('','signed_normal','closed','signed_failed')
         and pf.bill_date > #{dateTime}
+    </select>
+
+    <select id="getShopeeHandoverList" resultType="com.erp.model.wms.entity.PackageForecastEntity">
+        select distinct
+            pf.id,
+            pf.code,
+            pf.handover_no AS handoverNo,
+            pf.platform_package_no AS platformPackageNo,
+            pf.transport_no AS transportNo,
+            pf.handover_status AS handoverStatus,
+            pf.bill_date AS billDate,
+            sb.shop_id AS shopId
+        from package_forecast pf
+        inner join package_forecast_detail pfd
+            on pf.id = pfd.main_id and pfd.is_deleted = false
+        inner join so_b2c sb
+            on pfd.so_id = sb.id and sb.is_deleted = false
+        where pf.transport_no != ''
+          and sb.dict_platform = 'Shopee'
+          and COALESCE(pf.handover_status, '') not in ('SHOPEE_DELIVERED','CANCELED')
+          and pf.bill_date > #{dateTime}
+          and pf.is_deleted = false
     </select>
 
 

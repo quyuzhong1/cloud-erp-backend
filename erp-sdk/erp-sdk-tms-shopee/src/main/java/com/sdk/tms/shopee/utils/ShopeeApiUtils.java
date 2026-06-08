@@ -48,6 +48,28 @@ public class ShopeeApiUtils {
         return sign;
     }
 
+    public static String getMerchantSign(String path, String accessToken, long partnerId, String tmpPartnerKey, long merchantId) {
+        return getMerchantSign(path, accessToken, partnerId, tmpPartnerKey, merchantId, System.currentTimeMillis() / 1000L);
+    }
+
+    public static String getMerchantSign(String path, String accessToken, long partnerId, String tmpPartnerKey, long merchantId, long timestamp) {
+        String tmpBaseString = String.format("%s%s%s%s%s", partnerId, path, timestamp, accessToken, merchantId);
+        byte[] partnerKey;
+        byte[] baseString;
+        String sign = null;
+        try {
+            baseString = tmpBaseString.getBytes("UTF-8");
+            partnerKey = tmpPartnerKey.getBytes("UTF-8");
+            Mac mac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(partnerKey, "HmacSHA256");
+            mac.init(secretKey);
+            sign = String.format("%064x", new BigInteger(1, mac.doFinal(baseString)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return sign;
+    }
+
     /**
      * GET 请求
      *

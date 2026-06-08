@@ -84,6 +84,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             }
         } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
         ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)
+        ||DeliveryPlanTypeEnum.FBS.getCode().equals(type)
         ||DeliveryPlanTypeEnum.FBT.getCode().equals(type)) {
             Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
@@ -151,6 +152,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             }
         } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)
         ||DeliveryPlanTypeEnum.ALIEXPRESS.getCode().equals(type)
+        ||DeliveryPlanTypeEnum.FBS.getCode().equals(type)
         ||DeliveryPlanTypeEnum.FBT.getCode().equals(type)) {
             Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
                     .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));

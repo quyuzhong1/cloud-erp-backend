@@ -232,7 +232,7 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
      * @Author Luo_WG
      * @Date 2023/11/23 14:17
      **/
-    ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response);
+    ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, String type, HttpServletResponse response);
 
     /**
      * 修改发货状态
