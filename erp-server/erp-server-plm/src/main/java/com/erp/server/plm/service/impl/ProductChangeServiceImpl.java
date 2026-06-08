@@ -945,6 +945,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
         try {
             syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
         } catch (Exception e) {
+            // 失败写 plm_push_msg 补偿；站内信/企微通知不在本 MR 范围。
             log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
             saveWangDianSyncPendingPushMsg(productDetailEntity, "同步失败");
         }

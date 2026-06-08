@@ -1856,6 +1856,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             try {
                 productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
             } catch (Exception e) {
+                // FeignErrorDecoder 解码为 ServiceException，非 FeignServiceException。
                 log.error("B2B装箱导入获取产品名称失败, skuIds={}", skuIds, e);
                 throw new ServiceException("获取产品信息失败，请稍后重试");
             }
