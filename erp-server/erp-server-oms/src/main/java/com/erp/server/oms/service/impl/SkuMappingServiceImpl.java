@@ -1237,6 +1237,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         List<String> skuIdList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        List<String> skuNoList = list.stream().map(SkuMappingDTO.PagingViewDTO::getProductSkuNo)
+                .filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuNoVoList = CollectionUtils.isEmpty(skuNoList) ? Collections.emptyList() : plmTaskFeign.listBySkuNoList(skuNoList);
+        Map<String, SkuVO> skuNoVoMap = skuNoVoList.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity(), (k1, k2) -> k1));
         //子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
@@ -1249,6 +1254,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
+            SkuVO skuNoVo = skuNoVoMap.get(item.getProductSkuNo());
+            if (Objects.nonNull(skuNoVo)) {
+                item.setBoxQty(skuNoVo.getBoxQty());
+            }
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
