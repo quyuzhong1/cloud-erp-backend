@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,7 +72,7 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
     /** 按箱保存标签附件；B2B 装箱箱数通常有限，逐箱 batchSave 可接受，大批量合并保存属后续优化。 */
     private void saveBoxAttachments(List<B2bCustomerPackingDTO.AddDTO> packingList,
                                     List<B2bCustomerPackingEntity> entityList) {
-        Map<Integer, B2bCustomerPackingEntity> boxHeadMap = buildBoxHeadMap(entityList);
+        Map<Integer, B2bCustomerPackingEntity> boxHeadMap = getBoxHeadMap(entityList);
         for (B2bCustomerPackingDTO.AddDTO box : packingList) {
             List<AttachDTO> attachList = box.getAttachList();
             if (CollUtil.isNotEmpty(attachList)) {
@@ -83,33 +82,6 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
                 }
             }
         }
-    }
-
-    private Map<Integer, B2bCustomerPackingEntity> buildBoxHeadMap(List<B2bCustomerPackingEntity> entityList) {
-        Map<Integer, B2bCustomerPackingEntity> boxHeadMap = new HashMap<>();
-        for (B2bCustomerPackingEntity entity : entityList) {
-            B2bCustomerPackingEntity head = boxHeadMap.get(entity.getBoxSeq());
-            if (head == null || compareSort(entity, head) < 0) {
-                boxHeadMap.put(entity.getBoxSeq(), entity);
-            }
-        }
-        return boxHeadMap;
-    }
-
-    /**
-     * 比较装箱行的 sort 字段，用于确定箱内首行（箱头）；null 排在最后（视为最大值）。
-     */
-    private int compareSort(B2bCustomerPackingEntity left, B2bCustomerPackingEntity right) {
-        if (left.getSort() == null && right.getSort() == null) {
-            return 0;
-        }
-        if (left.getSort() == null) {
-            return 1;
-        }
-        if (right.getSort() == null) {
-            return -1;
-        }
-        return left.getSort().compareTo(right.getSort());
     }
 
     private B2bCustomerPackingEntity toEntity(String mainId, B2bCustomerPackingDTO.AddDTO box,

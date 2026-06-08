@@ -458,6 +458,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
     }
 
+    /** 同步 Feign 校验仓库有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */
     private void assertWarehouseAvailable(String warehouseId, String label) {
         if (StringUtils.isBlank(warehouseId)) {
             return;

@@ -370,12 +370,10 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
         if (labelsPerBox <= 0 || !B2bPackingTypeEnum.requiresPackingDetail(packingType)) {
             return;
         }
-        Set<Integer> boxSeqSet = packingList.stream()
-                .map(B2bCustomerPackingEntity::getBoxSeq)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-        for (Integer boxSeq : boxSeqSet) {
-            B2bCustomerPackingEntity boxHead = b2bCustomerPackingService.getBoxHead(packingList, boxSeq).orElse(null);
+        Map<Integer, B2bCustomerPackingEntity> boxHeadMap = b2bCustomerPackingService.getBoxHeadMap(packingList);
+        for (Map.Entry<Integer, B2bCustomerPackingEntity> entry : boxHeadMap.entrySet()) {
+            Integer boxSeq = entry.getKey();
+            B2bCustomerPackingEntity boxHead = entry.getValue();
             if (boxHead == null || CollUtil.isNotEmpty(shipmentFileMap.get(boxHead.getId()))) {
                 continue;
             }
@@ -385,12 +383,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
     }
 
     private Map<String, List<WmsAttachmentDTO.UpdateDTO>> getShipmentFileMap(List<B2bCustomerPackingEntity> packingList) {
-        List<String> boxHeadIds = packingList.stream()
-                .map(B2bCustomerPackingEntity::getBoxSeq)
-                .filter(Objects::nonNull)
-                .distinct()
-                .map(boxSeq -> b2bCustomerPackingService.getBoxHead(packingList, boxSeq).orElse(null))
-                .filter(Objects::nonNull)
+        List<String> boxHeadIds = b2bCustomerPackingService.getBoxHeadMap(packingList).values().stream()
                 .map(B2bCustomerPackingEntity::getId)
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(boxHeadIds)) {
@@ -484,7 +477,7 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
             wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
             wmsPushMsgService.save(wmsPushMsgEntity);
         } catch (Exception e) {
-            log.error("B2B三方发货单附件下载失败补偿消息写入失败, sourceId={}", sourceId, e);
+            log.error("B2B三方发货单附件下载失败补偿消息写入失败, sourceId={}, 原始错误={}", sourceId, remark, e);
         }
     }
 }

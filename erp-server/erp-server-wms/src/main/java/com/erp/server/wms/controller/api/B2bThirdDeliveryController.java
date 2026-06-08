@@ -317,6 +317,7 @@ public class B2bThirdDeliveryController extends BaseController {
         if (excelFile == null || excelFile.isEmpty()) {
             throw new ServiceException("导入文件不能为空");
         }
+        // 文件大小（5MB）与行数上限在 Service 层校验，避免 Controller/Listener 重复限制。
         return success(b2bThirdDeliveryService.importPackingDetail(soId, excelFile));
     }
 
