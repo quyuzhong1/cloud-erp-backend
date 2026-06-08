@@ -895,12 +895,18 @@
         ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
 
-    <!-- 统计各海外仓未匹配SKU数量（product_sku_id 为空即未匹配） -->
+    <!-- 统计未匹配SKU数量，按不同维度分组：
+         warehouse → 按仓库分组；platform/b2bPlatform → 按平台名分组；customer → 按平台名（客户名）分组 -->
     <select id="countUnmatchedGroupByWarehouse" resultType="com.erp.model.oms.dto.SkuMappingDTO$UnmatchCountDTO">
         SELECT
-            sm.warehouse_id     AS warehouseId,
-            sm.warehouse_name   AS warehouseName,
-            COUNT(*)            AS unmatchCount
+            sm.warehouse_id AS warehouseId,
+            COALESCE(NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库') AS warehouseName,
+            CASE
+                WHEN sm.type = 'warehouse'
+                    THEN COALESCE(NULLIF(sm.warehouse_name, ''), NULLIF(sm.warehouse_id, ''), '未知仓库')
+                ELSE COALESCE(NULLIF(sm.platform_name, ''), NULLIF(sm.dict_platform, ''), '未知')
+            END AS groupName,
+            COUNT(*) AS unmatchCount
         FROM sku_mapping sm
         WHERE sm.is_deleted = false
           AND sm.is_expire   = false
@@ -917,8 +923,9 @@
           <if test="params.type != null and params.type != ''">
               AND sm.type = #{params.type}
           </if>
-        GROUP BY sm.warehouse_id, sm.warehouse_name
+        GROUP BY sm.type, sm.warehouse_id, sm.warehouse_name, sm.platform_name, sm.dict_platform
         HAVING COUNT(*) > 0
+        ORDER BY unmatchCount DESC
     </select>
 
 </mapper>

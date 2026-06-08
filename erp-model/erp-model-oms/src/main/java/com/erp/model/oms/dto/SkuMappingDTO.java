@@ -1850,15 +1850,17 @@ public class SkuMappingDTO implements Serializable {
     }
 
     /**
-     * 海外仓未匹配SKU统计结果（按仓库分组）
+     * 海外仓未匹配SKU统计结果（按维度分组）
      */
     @Data
     @NoArgsConstructor
     public static class UnmatchCountDTO {
-        /** 仓库ID */
+        /** 仓库ID（warehouse 类型时有值） */
         private String warehouseId;
-        /** 仓库名称 */
+        /** 仓库名称（warehouse 类型时有值，保留兼容） */
         private String warehouseName;
+        /** 通用分组名称：仓库名/平台名/客户名 */
+        private String groupName;
         /** 未匹配SKU数量 */
         private Long unmatchCount;
     }

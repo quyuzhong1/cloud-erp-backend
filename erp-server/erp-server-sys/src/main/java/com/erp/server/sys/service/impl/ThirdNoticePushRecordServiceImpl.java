@@ -1577,16 +1577,16 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             }
         }
 
-        // 2. 查询各海外仓未匹配SKU数量
+        // 2. 查询各维度未匹配SKU数量
         List<SkuMappingDTO.UnmatchCountDTO> unmatchList;
         try {
             unmatchList = skuMappingFeign.countUnmatchedGroupByWarehouse(queryDTO);
         } catch (Exception e) {
-            log.error("海外仓SKU未匹配预警: 查询未匹配数量异常, 配置id:{}", noticeEntity.getId(), e);
+            log.error("SKU未匹配预警: 查询未匹配数量异常, 配置id:{}", noticeEntity.getId(), e);
             return;
         }
         if (CollUtil.isEmpty(unmatchList)) {
-            log.info("海外仓SKU未匹配预警: 当前无未匹配数据, 配置id:{}", noticeEntity.getId());
+            log.info("SKU未匹配预警: 当前无未匹配数据, 配置id:{}", noticeEntity.getId());
             return;
         }
 
@@ -1596,7 +1596,36 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return;
         }
 
-        // 4. 构造跳转按钮（url 取自通知配置中的跳转链接字段）
+        // 4. 根据 skuType 选择标题和内容模板，拼装汇总正文
+        String cardTitle;
+        String contentTemplate;
+        switch (skuType) {
+            case "platform":
+                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_TITLE;
+                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_CONTENT;
+                break;
+            case "customer":
+                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_TITLE;
+                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_CONTENT;
+                break;
+            case "b2bPlatform":
+                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_TITLE;
+                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_CONTENT;
+                break;
+            default:
+                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_TITLE;
+                contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
+                break;
+        }
+        StringBuilder lines = new StringBuilder();
+        for (SkuMappingDTO.UnmatchCountDTO dto : unmatchList) {
+            String groupName = StringUtils.isNotBlank(dto.getGroupName()) ? dto.getGroupName()
+                    : (StringUtils.isNotBlank(dto.getWarehouseName()) ? dto.getWarehouseName() : "未知");
+            lines.append(groupName).append("(").append(dto.getUnmatchCount()).append("个)\n");
+        }
+        String cardContent = String.format(contentTemplate, lines.toString().trim());
+
+        // 5. 构造跳转按钮（url 取自通知配置中的跳转链接字段）
         NoticeMsgCardButtonDTO buttonDTO = null;
         if (StringUtils.isNotBlank(noticeEntity.getUrl())) {
             buttonDTO = new NoticeMsgCardButtonDTO();
@@ -1604,12 +1633,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             buttonDTO.setUrl(noticeEntity.getUrl());
         }
 
-        // 5. 每个仓库单独发一张飞书卡片
-        for (SkuMappingDTO.UnmatchCountDTO unmatch : unmatchList) {
-            String cardContent = String.format(NoticeMsgConstant.FS_SKU_MAPPING_UNMATCH_CONTENT,
-                    noticeEntity.getNoticeType(), unmatch.getWarehouseName());
-            forSendByNoticeMethod(noticeEntity, userIdList, now, title, cardContent, delayLevel, buttonDTO);
-        }
+        // 6. 发送一条汇总飞书卡片
+        forSendByNoticeMethod(noticeEntity, userIdList, now, cardTitle, cardContent, delayLevel, buttonDTO);
     }
 
     /**
