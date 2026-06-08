@@ -77,6 +77,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
@@ -125,6 +126,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -231,6 +233,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private FileFeign fileFeign;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
     @Resource
     private AbstractWdtService abstractWdtService;
 
@@ -2604,8 +2610,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             for (SoReturnStockUpdateImportExcelDTO row : successList) {
                 if (duplicateCodes.contains(row.getCode())) {
                     row.setErrorMsg("1、退货入库单号在导入表中重复了，请调整");
-                    errorList.add(row);
+                } else {
+                    row.setErrorMsg("1、导入表中存在重复单号，整批未处理");
                 }
+                errorList.add(row);
             }
             return;
         }
@@ -2756,6 +2764,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     private void persistImportUpdate(SoReturnInstockEntity oldEntity, SoReturnInstockEntity entity) {
+        boolean inventoryOrgChanged = !CharSequenceUtil.equals(oldEntity.getInventoryOrgId(), entity.getInventoryOrgId());
+        boolean currencyChanged = !CharSequenceUtil.equals(oldEntity.getCurrency(), entity.getCurrency());
         operateLogService.addModuleOperateLogByObj(oldEntity, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
         if (!CharSequenceUtil.equals(oldEntity.getCustomerName(), entity.getCustomerName())) {
             operateLogService.addModuleOperateLog(
@@ -2765,6 +2775,47 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (!this.updateById(entity)) {
             throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
         }
+        if (inventoryOrgChanged || currencyChanged) {
+            syncImportUpdateDetails(entity, inventoryOrgChanged, currencyChanged);
+        }
+    }
+
+    private void syncImportUpdateDetails(SoReturnInstockEntity entity, boolean inventoryOrgChanged, boolean currencyChanged) {
+        List<SoReturnInstockDetailEntity> detailList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        if (inventoryOrgChanged) {
+            for (SoReturnInstockDetailEntity detail : detailList) {
+                detail.setWarehouseId("");
+                detail.setWarehouseName("");
+                detail.setWarehouseLocation("");
+            }
+        }
+        if (currencyChanged) {
+            BigDecimal exchangeRate = resolveImportExchangeRate(entity);
+            for (SoReturnInstockDetailEntity detail : detailList) {
+                detail.setCurrency(entity.getCurrency());
+                detail.setExchangeRate(exchangeRate);
+                if (detail.getReturnAmount() != null) {
+                    detail.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(exchangeRate, detail.getReturnAmount()));
+                }
+                if (detail.getTaxReturnAmount() != null) {
+                    detail.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(exchangeRate, detail.getTaxReturnAmount()));
+                }
+            }
+        }
+        if (!soReturnInstockDetailService.updateBatchById(detailList)) {
+            throw new ServiceException(ApiError.BILL_UPDATE_FAILED);
+        }
+    }
+
+    private BigDecimal resolveImportExchangeRate(SoReturnInstockEntity entity) {
+        LocalDate billDate = entity.getBillDate() != null ? entity.getBillDate() : LocalDate.now();
+        String dateStr = billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String currency = CharSequenceUtil.blankToDefault(entity.getCurrency(), "CNY");
+        BigDecimal exchangeRate = dmpTaskFeign.getRate(dateStr, currency);
+        return exchangeRate != null ? exchangeRate : MathUtil.BigDecimal_1;
     }
 
     @Override
