@@ -214,6 +214,15 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 throw new ServiceException("分货实体仓【{}】未配置旺店通仓库映射，仓库ID：{}", warehouseName, firstDetail.getWarehouseId());
             }
 
+            // 同一虚拟仓仅对应一个借调仓，组级解析一次即可
+            String borrowThirdWarehouseNo = groupDetailList.stream()
+                    .map(obj -> transferDetailMap.get(obj.getId()))
+                    .filter(obj -> obj != null && CharSequenceUtil.isNotBlank(obj.getFromWarehouseId()))
+                    .map(obj -> entityThirdWarehouseNoMap.get(obj.getFromWarehouseId()))
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .findFirst()
+                    .orElse(null);
+
             Map<String, Integer> totalPushQtyMap = groupDetailList.stream()
                     .collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo,
                             Collectors.summingInt(obj -> MathUtil.valueOfZero(obj.getQty()))));
@@ -223,13 +232,6 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 Integer wdtInventoryQty = queryEntityAvailableStock(entityAvailableStockCache, thirdWarehouseNo, skuNo);
                 log.warn("查询实体仓库库存，仓库：{}，SKU：{}，库存：{}，汇总分配数量：{}", thirdWarehouseNo, skuNo, wdtInventoryQty, totalPushQty);
 
-                String borrowThirdWarehouseNo = groupDetailList.stream()
-                        .filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), skuNo))
-                        .map(obj -> transferDetailMap.get(obj.getId()))
-                        .filter(obj -> obj != null && CharSequenceUtil.isNotBlank(obj.getFromWarehouseId()))
-                        .map(obj -> entityThirdWarehouseNoMap.get(obj.getFromWarehouseId()))
-                        .filter(CharSequenceUtil::isNotBlank)
-                        .findFirst().orElse(null);
                 Integer borrowWdtInventoryQty = 0;
                 if (CharSequenceUtil.isNotBlank(borrowThirdWarehouseNo)) {
                     borrowWdtInventoryQty = queryEntityAvailableStock(entityAvailableStockCache, borrowThirdWarehouseNo, skuNo);
