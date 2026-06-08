@@ -5087,7 +5087,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOList = CollectionUtils.isNotEmpty(channelIds) ? logisticsAuthFeign.listAuthChannelView(channelIds) : Collections.emptyList();
         Map<String, String> logisticsPlatformMap = authChannelViewDTOList.stream()
                 .collect(Collectors.toMap(
-                        LogisticsSupplierDTO.AuthChannelViewDTO::getId,
+                        LogisticsSupplierDTO.AuthChannelViewDTO::getChannelId,
                         LogisticsSupplierDTO.AuthChannelViewDTO::getLogisticsPlatform,
                         (existing, replacement) -> existing // 保留现有值，忽略重复键的值
                 ));
