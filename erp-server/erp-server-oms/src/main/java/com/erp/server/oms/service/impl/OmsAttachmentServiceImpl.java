@@ -18,6 +18,7 @@ import com.erp.server.oms.service.OmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -95,7 +96,7 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     public void batchAddOrUpdate(List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList) {
         if (CollUtil.isEmpty(addOrUpdateList)) {
             return;
