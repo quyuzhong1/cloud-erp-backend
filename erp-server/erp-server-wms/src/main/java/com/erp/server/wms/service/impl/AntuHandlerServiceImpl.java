@@ -51,7 +51,7 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         try {
             uploadFileReq.setFileData(PdfUtil.pdfBase64FirstPageToPngBase64(fileData));
         } catch (Exception e) {
-            log.warn("安兔发票PDF转PNG失败，使用原始PDF格式上传, authId:{}, module:{}",
+            log.error("安兔发票PDF转PNG失败，使用原始PDF格式上传, authId:{}, module:{}",
                     uploadFileReq.getAuthId(), uploadFileReq.getModule(), e);
             return;
         }

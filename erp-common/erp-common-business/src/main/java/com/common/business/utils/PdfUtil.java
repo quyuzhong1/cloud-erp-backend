@@ -41,8 +41,8 @@ public class PdfUtil {
 
     private static final float DEFAULT_RENDER_DPI = 300F;
     /**
-     * RGB 渲染下 10M 像素约占 30MB JVM 堆；叠加 PNG 输出和 Base64 字符串后单次峰值仍需控制。
-     * PdfUtil 是静态工具类，会被测试和非 Spring 调用路径复用，因此这里保留固定安全阈值。
+     * PDF 渲染最大像素数（宽×高），超过此值拒绝转换以防 OOM。
+     * 1000 万像素在 RGB 渲染下约占用 30MB 堆内存，不含 PNG 编码和 Base64 字符串。
      */
     private static final long MAX_RENDER_PIXELS = 10_000_000L;
 

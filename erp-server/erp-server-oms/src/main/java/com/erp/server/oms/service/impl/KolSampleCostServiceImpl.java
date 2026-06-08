@@ -413,6 +413,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         paramDTO.setSkuIdList(skuIdList);
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setOrgIdList(orgIdList);
+        // 新寄样成本逻辑不传月份，依赖 TMS 按销售组织+SKU+仓库返回最新已审核库存成本。
         return ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO), CollUtil.newArrayList());
     }
 
