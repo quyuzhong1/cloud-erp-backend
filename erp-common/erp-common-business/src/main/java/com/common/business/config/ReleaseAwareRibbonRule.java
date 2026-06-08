@@ -26,6 +26,7 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
     private static final String ACTIVE_VERSION_KEY = "release.active-version";
     private final AtomicInteger position = new AtomicInteger(0);
     private final Environment environment;
+    private volatile Environment applicationEnvironment;
     private volatile String clientName;
 
     public ReleaseAwareRibbonRule() {
@@ -42,10 +43,11 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
         if (loadBalancer == null) {
             return null;
         }
-        List<Server> candidates = filterByRelease(loadBalancer.getReachableServers());
+        List<Server> reachableServers = loadBalancer.getReachableServers();
+        List<Server> candidates = filterByRelease(reachableServers);
         if (candidates.isEmpty()) {
-            log.warn("No active release instance found for service={}, activeColor={}, activeVersion={}",
-                    loadBalancer, getActiveColor(), getActiveVersion());
+            log.warn("No active release instance found for client={}, loadBalancer={}, activeColor={}, activeVersion={}, reachableServers={}",
+                    clientName, loadBalancer, getActiveColor(), getActiveVersion(), reachableServers);
             return null;
         }
         return candidates.get(nextIndex(candidates.size()));
@@ -126,14 +128,19 @@ public class ReleaseAwareRibbonRule extends AbstractLoadBalancerRule {
     }
 
     private Environment getEnvironment() {
-        if (environment != null) {
-            return environment;
+        Environment env = applicationEnvironment;
+        if (env != null) {
+            return env;
         }
         try {
-            return ApplicationContextUtils.getBean(Environment.class);
+            env = ApplicationContextUtils.getBean(Environment.class);
+            applicationEnvironment = env;
+            return env;
         } catch (Exception e) {
-            log.warn("Cannot get Environment for release-aware Ribbon rule, fallback to normal Ribbon choose.", e);
-            return null;
+            if (environment == null) {
+                log.warn("Cannot get Environment for release-aware Ribbon rule, fallback to normal Ribbon choose.", e);
+            }
+            return environment;
         }
     }
 
