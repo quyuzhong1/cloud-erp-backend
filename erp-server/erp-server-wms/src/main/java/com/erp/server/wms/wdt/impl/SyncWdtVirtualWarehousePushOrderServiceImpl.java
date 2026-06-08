@@ -161,9 +161,6 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 .collect(Collectors.toMap(VirtualWarehouseAllocationDTO.TransferWarehouseDTO::getSourceDetailId, obj -> obj, (left, right) -> left));
         log.warn("开始校验分货单旺店通库存，分货单：{}，明细数：{}，借调明细数：{}",
                 allocationEntity.getCode(), detailEntityList.size(), transferDetailMap.size());
-        if (CollUtil.isEmpty(transferDetailMap)) {
-            return;
-        }
 
         Map<String, Boolean> virtualWarehouseWdtBoundCache = new HashMap<>();
         List<String> entityWarehouseIds = Stream.concat(
@@ -176,17 +173,19 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
         Map<String, String> warehouseNameMap = buildWarehouseNameMap(entityWarehouseIds);
         Map<String, Integer> entityAvailableStockCache = new HashMap<>();
 
-        // 仅触发借调时校验旺店通库存；未借调、虚拟仓未绑旺店通、借调仓未绑旺店通均跳过
-        List<VirtualWarehouseAllocationDetailEntity> checkDetailList = new ArrayList<>();
+        // 场景2：已绑旺店通且未借调；场景3：已绑旺店通且借调且借调仓已绑；场景1/4跳过
+        List<VirtualWarehouseAllocationDetailEntity> normalCheckDetailList = new ArrayList<>();
+        List<VirtualWarehouseAllocationDetailEntity> borrowCheckDetailList = new ArrayList<>();
         for (VirtualWarehouseAllocationDetailEntity detail : detailEntityList) {
-            VirtualWarehouseAllocationDTO.TransferWarehouseDTO transferWarehouse = transferDetailMap.get(detail.getId());
-            if (transferWarehouse == null) {
-                continue;
-            }
             if (CharSequenceUtil.isBlank(detail.getToVirtualWarehouseId())
                     || !isVirtualWarehouseBoundToWdt(detail.getToVirtualWarehouseId(), virtualWarehouseWdtBoundCache)) {
                 log.warn("调入虚拟仓未绑定旺店通，跳过旺店通库存校验，分货单：{}，明细ID：{}，SKU：{}",
                         allocationEntity.getCode(), detail.getId(), detail.getSkuNo());
+                continue;
+            }
+            VirtualWarehouseAllocationDTO.TransferWarehouseDTO transferWarehouse = transferDetailMap.get(detail.getId());
+            if (transferWarehouse == null) {
+                normalCheckDetailList.add(detail);
                 continue;
             }
             String borrowThirdWarehouseNo = entityThirdWarehouseNoMap.get(transferWarehouse.getFromWarehouseId());
@@ -195,14 +194,35 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                         allocationEntity.getCode(), detail.getId(), detail.getSkuNo());
                 continue;
             }
-            checkDetailList.add(detail);
+            borrowCheckDetailList.add(detail);
         }
-        if (CollUtil.isEmpty(checkDetailList)) {
+        if (CollUtil.isEmpty(normalCheckDetailList) && CollUtil.isEmpty(borrowCheckDetailList)) {
             log.warn("分货单旺店通库存校验通过（无可校验明细），分货单：{}", allocationEntity.getCode());
             return;
         }
 
-        // 按分货实体仓+调入虚拟仓分组，组内按SKU汇总；同一虚拟仓仅对应一个借调仓，避免多借调仓库存无条件叠加
+        validateAllocationEntityWdtInventory(allocationEntity, normalCheckDetailList, transferDetailMap,
+                entityThirdWarehouseNoMap, warehouseNameMap, entityAvailableStockCache, false);
+        validateAllocationEntityWdtInventory(allocationEntity, borrowCheckDetailList, transferDetailMap,
+                entityThirdWarehouseNoMap, warehouseNameMap, entityAvailableStockCache, true);
+        log.warn("分货单旺店通库存校验通过，分货单：{}", allocationEntity.getCode());
+    }
+
+    /**
+     * 按分货实体仓+调入虚拟仓分组校验旺店通实体仓可用库存
+     *
+     * @param includeBorrowStock true 时叠加借调仓库存（场景3），false 时仅校验分货实体仓（场景2）
+     */
+    private void validateAllocationEntityWdtInventory(VirtualWarehouseAllocationEntity allocationEntity,
+                                                      List<VirtualWarehouseAllocationDetailEntity> checkDetailList,
+                                                      Map<String, VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferDetailMap,
+                                                      Map<String, String> entityThirdWarehouseNoMap,
+                                                      Map<String, String> warehouseNameMap,
+                                                      Map<String, Integer> entityAvailableStockCache,
+                                                      boolean includeBorrowStock) {
+        if (CollUtil.isEmpty(checkDetailList)) {
+            return;
+        }
         Map<String, List<VirtualWarehouseAllocationDetailEntity>> groupedDetailMap = checkDetailList.stream()
                 .collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}", obj.getWarehouseId(), obj.getToVirtualWarehouseId())));
         for (List<VirtualWarehouseAllocationDetailEntity> groupDetailList : groupedDetailMap.values()) {
@@ -214,14 +234,16 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 throw new ServiceException("分货实体仓【{}】未配置旺店通仓库映射，仓库ID：{}", warehouseName, firstDetail.getWarehouseId());
             }
 
-            // 同一虚拟仓仅对应一个借调仓，组级解析一次即可
-            String borrowThirdWarehouseNo = groupDetailList.stream()
-                    .map(obj -> transferDetailMap.get(obj.getId()))
-                    .filter(obj -> obj != null && CharSequenceUtil.isNotBlank(obj.getFromWarehouseId()))
-                    .map(obj -> entityThirdWarehouseNoMap.get(obj.getFromWarehouseId()))
-                    .filter(CharSequenceUtil::isNotBlank)
-                    .findFirst()
-                    .orElse(null);
+            String borrowThirdWarehouseNo = null;
+            if (includeBorrowStock) {
+                borrowThirdWarehouseNo = groupDetailList.stream()
+                        .map(obj -> transferDetailMap.get(obj.getId()))
+                        .filter(obj -> obj != null && CharSequenceUtil.isNotBlank(obj.getFromWarehouseId()))
+                        .map(obj -> entityThirdWarehouseNoMap.get(obj.getFromWarehouseId()))
+                        .filter(CharSequenceUtil::isNotBlank)
+                        .findFirst()
+                        .orElse(null);
+            }
 
             Map<String, Integer> totalPushQtyMap = groupDetailList.stream()
                     .collect(Collectors.groupingBy(VirtualWarehouseAllocationDetailEntity::getSkuNo,
@@ -230,10 +252,11 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 String skuNo = skuPushEntry.getKey();
                 Integer totalPushQty = skuPushEntry.getValue();
                 Integer wdtInventoryQty = queryEntityAvailableStock(entityAvailableStockCache, thirdWarehouseNo, skuNo);
-                log.warn("查询实体仓库库存，仓库：{}，SKU：{}，库存：{}，汇总分配数量：{}", thirdWarehouseNo, skuNo, wdtInventoryQty, totalPushQty);
+                log.warn("查询实体仓库库存，仓库：{}，SKU：{}，库存：{}，汇总分配数量：{}，叠加借调：{}",
+                        thirdWarehouseNo, skuNo, wdtInventoryQty, totalPushQty, includeBorrowStock);
 
                 Integer borrowWdtInventoryQty = 0;
-                if (CharSequenceUtil.isNotBlank(borrowThirdWarehouseNo)) {
+                if (includeBorrowStock && CharSequenceUtil.isNotBlank(borrowThirdWarehouseNo)) {
                     borrowWdtInventoryQty = queryEntityAvailableStock(entityAvailableStockCache, borrowThirdWarehouseNo, skuNo);
                     log.warn("触发借调，叠加借调仓库存，原仓：{}({})，借调仓：{}({})，SKU：{}",
                             thirdWarehouseNo, wdtInventoryQty, borrowThirdWarehouseNo, borrowWdtInventoryQty, skuNo);
@@ -247,7 +270,6 @@ public class SyncWdtVirtualWarehousePushOrderServiceImpl implements SyncWdtVirtu
                 }
             }
         }
-        log.warn("分货单旺店通库存校验通过，分货单：{}", allocationEntity.getCode());
     }
 
     /**
