@@ -17,6 +17,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.enums.CfgLogisticsCostImportBusinessTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -230,7 +231,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         // 导入历史记录保存原文件、清洗文件和匹配数量，是预处理后继续导入/确认的业务入口。
         ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
         addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
-        addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
+        addOrUpdateDTO.setBusinessType(CfgLogisticsCostImportBusinessTypeEnum.LAST_MILE_DELIVERY.getCode());
         addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
         addOrUpdateDTO.setFileName(importDTO.getFileName());
         // 清洗文件在原 Excel 后追加“匹配结果”和“错误信息”，用户可据此修正失败数据。
