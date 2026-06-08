@@ -352,6 +352,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 && customerInfoEntity != null
                 && StringUtils.isNotBlank(customerInfoEntity.getDefaultShippingWarehouse())) {
             warehouseId = customerInfoEntity.getDefaultShippingWarehouse();
+            assertWarehouseAvailable(warehouseId, "客户默认发货仓库");
             addEntity.setWarehouseId(warehouseId);
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -454,6 +455,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String country = customerInfo.getCountryId();
                 addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
             }
+        }
+    }
+
+    private void assertWarehouseAvailable(String warehouseId, String label) {
+        if (StringUtils.isBlank(warehouseId)) {
+            return;
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
+        if (CollectionUtils.isEmpty(warehouseList) || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
+            throw new ServiceException("{}不存在或已禁用", label);
         }
     }
 

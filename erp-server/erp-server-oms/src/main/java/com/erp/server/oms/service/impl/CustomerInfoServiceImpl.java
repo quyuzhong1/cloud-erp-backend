@@ -47,12 +47,14 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.dht.DhtService;
@@ -171,6 +173,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private BankAccountService bankAccountService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -805,6 +811,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setUseOrgName(useOrgName);
+        validateCustomerDefaultFields(dto.getDefaultShippingWarehouse(), dto.getDefaultReceiveAccount());
         // 客户编辑为全量保存，编辑页会回显默认值；这两个字段按既有字符串字段语义用空串表示清空。
         customer.setDefaultShippingWarehouse(StringUtils.defaultString(dto.getDefaultShippingWarehouse()));
         customer.setDefaultReceiveAccount(StringUtils.defaultString(dto.getDefaultReceiveAccount()));
@@ -2661,6 +2668,22 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
         if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
             dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+        }
+    }
+
+    private void validateCustomerDefaultFields(String defaultShippingWarehouse, String defaultReceiveAccount) {
+        if (StringUtils.isNotBlank(defaultShippingWarehouse)) {
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(
+                    Collections.singletonList(defaultShippingWarehouse));
+            if (CollectionUtils.isEmpty(warehouseList) || Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
+                throw new ServiceException("默认发货仓库不存在或已禁用");
+            }
+        }
+        if (StringUtils.isNotBlank(defaultReceiveAccount)) {
+            BankAccountEntity account = bankAccountService.getById(defaultReceiveAccount);
+            if (account == null || Boolean.TRUE.equals(account.getDisabled())) {
+                throw new ServiceException("默认收款账号不存在或已禁用");
+            }
         }
     }
 }

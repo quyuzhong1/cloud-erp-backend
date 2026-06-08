@@ -389,6 +389,9 @@ public class SyncB2bThirdWarehouseServiceImpl implements SyncB2bThirdWarehouseSe
                 .collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId, LinkedHashMap::new, Collectors.toList()));
     }
 
+    /**
+     * 填充箱货件标签附件。每箱标签数≤4，总下载次数≈箱数×每箱标签数，fileFeign 暂无批量下载接口。
+     */
     private void fillShipmentFiles(ThirdWarehouseCreateFbaOutboundReq.PackingDetailItem item,
                                    List<WmsAttachmentDTO.UpdateDTO> attachments,
                                    String sourceId,

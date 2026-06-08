@@ -151,19 +151,21 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                     error.setBoxSeq(String.valueOf(row.getBoxSeq()));
                     error.setSkuNo(getFirstSkuNo(row.getBoxSeq()));
                     error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
-                    boxErrorList.add(error);
+                    if (boxErrorList.size() < MAX_ERROR_ROWS) {
+                        boxErrorList.add(error);
+                    }
                 }
             }
         }
         if (CollectionUtils.isNotEmpty(boxErrorList)) {
-            errorList.addAll(boxErrorList);
+            appendImportErrors(boxErrorList);
             successList.clear();
             successLineList.clear();
             return;
         }
         List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
         if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
-            errorList.addAll(duplicateLineErrorList);
+            appendImportErrors(duplicateLineErrorList);
             successList.clear();
             successLineList.clear();
             return;
@@ -187,10 +189,21 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                 error.setBoxSeq(String.valueOf(line.getBoxSeq()));
                 error.setSkuNo(line.getSkuNo());
                 error.setErrorMsg("相同序号内SKU不能重复");
-                duplicateLineErrorList.add(error);
+                if (duplicateLineErrorList.size() < MAX_ERROR_ROWS) {
+                    duplicateLineErrorList.add(error);
+                }
             }
         }
         return duplicateLineErrorList;
+    }
+
+    private void appendImportErrors(List<B2bCustomerPackingImportExcelDTO> errors) {
+        for (B2bCustomerPackingImportExcelDTO error : errors) {
+            if (errorList.size() >= MAX_ERROR_ROWS) {
+                break;
+            }
+            errorList.add(error);
+        }
     }
 
     private String getFirstSkuNo(Integer boxSeq) {

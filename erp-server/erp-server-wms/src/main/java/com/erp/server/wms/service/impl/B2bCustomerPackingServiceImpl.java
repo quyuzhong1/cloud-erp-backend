@@ -95,6 +95,9 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
         return boxHeadMap;
     }
 
+    /**
+     * 比较装箱行的 sort 字段，用于确定箱内首行（箱头）；null 排在最后（视为最大值）。
+     */
     private int compareSort(B2bCustomerPackingEntity left, B2bCustomerPackingEntity right) {
         if (left.getSort() == null && right.getSort() == null) {
             return 0;
