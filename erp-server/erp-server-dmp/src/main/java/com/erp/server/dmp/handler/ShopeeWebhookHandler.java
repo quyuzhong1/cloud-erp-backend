@@ -94,8 +94,9 @@ public class ShopeeWebhookHandler implements WebhookHandler{
             dmpInputHotfixCreateRequest.setCfgInputId(cfgInputEntity.getId());
             dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(detailEntity.getId()));
             dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-
-        }finally {
+        } catch (Exception e) {
+            log.error("【Shopee Webhook】处理失败，data={}，错误={}", data, e.getMessage(), e);
+        } finally {
             ThirdWarehouseContext.remove();
         }
         return WebhookResult.isSuccess();

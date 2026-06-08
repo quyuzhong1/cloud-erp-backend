@@ -7858,7 +7858,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     private String resolveDeliveryType(SoB2cEntity entity) {
-        return Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder()) ? OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode() : OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+        if (Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder())) {
+            return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+        }
+        ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
+        if (Objects.nonNull(thirdWarehouseDelivery)
+                && !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
+            return OrderLogisticTypeEnum.THIRD_WAREHOUSE.getCode();
+        }
+        return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
     }
 
     private boolean isTikTokPlatformWarehouseOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto) {

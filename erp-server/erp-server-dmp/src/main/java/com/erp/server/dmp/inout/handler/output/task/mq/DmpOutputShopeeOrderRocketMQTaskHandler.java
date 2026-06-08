@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,23 +115,34 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 			}
 		}
 		
+		Set<String> missingDetailIds = changeIds.stream()
+				.filter(id -> !dmpSoDetailEntityMap.containsKey(id))
+				.collect(Collectors.toSet());
+		if (CollUtil.isNotEmpty(missingDetailIds)) {
+			List<DmpSoDetailEntity> detailEntityList = dmpSoDetailService.lambdaQuery()
+					.in(DmpSoDetailEntity::getMainId, missingDetailIds)
+					.eq(DmpSoDetailEntity::getIsDeleted, Boolean.FALSE)
+					.list();
+			detailEntityList.stream()
+					.collect(Collectors.groupingBy(DmpSoDetailEntity::getMainId))
+					.forEach(dmpSoDetailEntityMap::put);
+		}
+		Set<String> missingReceiverIds = changeIds.stream()
+				.filter(id -> !dmpSoReceiverEntityMap.containsKey(id))
+				.collect(Collectors.toSet());
+		if (CollUtil.isNotEmpty(missingReceiverIds)) {
+			List<DmpSoReceiverEntity> receiverEntityList = dmpSoReceiverService.lambdaQuery()
+					.in(DmpSoReceiverEntity::getMainId, missingReceiverIds)
+					.eq(DmpSoReceiverEntity::getIsDeleted, Boolean.FALSE)
+					.list();
+			receiverEntityList.stream()
+					.collect(Collectors.groupingBy(DmpSoReceiverEntity::getMainId))
+					.forEach(dmpSoReceiverEntityMap::put);
+		}
+
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		for(String changId : changeIds) {
-			if (!dmpSoDetailEntityMap.containsKey(changId)) {
-				List<DmpSoDetailEntity> detailEntityList = dmpSoDetailService.lambdaQuery()
-						.eq(DmpSoDetailEntity::getMainId, changId)
-						.eq(DmpSoDetailEntity::getIsDeleted, Boolean.FALSE)
-						.list();
-				dmpSoDetailEntityMap.put(changId, detailEntityList);
-			}
-			if (!dmpSoReceiverEntityMap.containsKey(changId)) {
-				List<DmpSoReceiverEntity> receiverEntityList = dmpSoReceiverService.lambdaQuery()
-						.eq(DmpSoReceiverEntity::getMainId, changId)
-						.eq(DmpSoReceiverEntity::getIsDeleted, Boolean.FALSE)
-						.list();
-				dmpSoReceiverEntityMap.put(changId, receiverEntityList);
-			}
 			PlatformOrderDTO orderDTO = this.convert(dmpSoInfoEntityMap.get(changId), dmpSoDetailEntityMap.get(changId) 
 					, dmpSoReceiverEntityMap.get(changId) , cfgOutputId);
 			if(orderDTO != null) {

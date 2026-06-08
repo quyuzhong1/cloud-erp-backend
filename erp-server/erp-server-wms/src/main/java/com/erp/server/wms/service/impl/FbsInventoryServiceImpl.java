@@ -1,8 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -62,6 +64,7 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
         return baseMapper.summaryNumber(pagingParamDTO.getParams());
     }
 
+    @DataIdempotent(keyIdName = "addDTO.shopId,addDTO.warehouseId,addDTO.fbsSku", businessType = "fbsInventoryAdd")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(FbsInventoryDTO.AddDTO addDTO) {
@@ -71,8 +74,6 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
                 .eq(FbsInventoryEntity::getFbsSku, addDTO.getFbsSku())
                 .one();
         if (Objects.nonNull(existEntity)) {
-            log.info("FBS库存开始更新，shopId={}, warehouseId={}, fbsSku={}",
-                    addDTO.getShopId(), addDTO.getWarehouseId(), addDTO.getFbsSku());
             boolean update = this.lambdaUpdate()
                     .set(FbsInventoryEntity::getShopName, defaultString(addDTO.getShopName()))
                     .set(FbsInventoryEntity::getWarehouseName, defaultString(addDTO.getWarehouseName()))
@@ -105,20 +106,19 @@ public class FbsInventoryServiceImpl extends SuperServiceImpl<FbsInventoryMapper
                     .set(FbsInventoryEntity::getStockAge121180Qty, defaultInt(addDTO.getStockAge121180Qty()))
                     .set(FbsInventoryEntity::getStockAgeOver180Qty, defaultInt(addDTO.getStockAgeOver180Qty()))
                     .set(FbsInventoryEntity::getPlatformUpdateTime, addDTO.getPlatformUpdateTime())
-                    .eq(FbsInventoryEntity::getShopId, addDTO.getShopId())
-                    .eq(FbsInventoryEntity::getWarehouseId, addDTO.getWarehouseId())
-                    .eq(FbsInventoryEntity::getFbsSku, addDTO.getFbsSku())
+                    .eq(FbsInventoryEntity::getId, existEntity.getId())
+                    .eq(FbsInventoryEntity::getVersion, existEntity.getVersion())
                     .update();
             if (!update) {
-                throw new ServiceException("FBS库存更新失败");
+                throw new ServiceException(CharSequenceUtil.format(
+                        "FBS库存更新失败，数据可能已被其他操作修改，shopId={}，warehouseId={}，fbsSku={}",
+                        addDTO.getShopId(), addDTO.getWarehouseId(), addDTO.getFbsSku()));
             }
             return new BaseResultDTO.AddDTO(existEntity.getId(), existEntity.getId());
         }
 
         FbsInventoryEntity entity = new FbsInventoryEntity();
         BeanUtils.copyProperties(addDTO, entity);
-        log.info("FBS库存开始新增，shopId={}, warehouseId={}, fbsSku={}",
-                addDTO.getShopId(), addDTO.getWarehouseId(), addDTO.getFbsSku());
         if (!super.save(entity)) {
             throw new ServiceException("FBS库存保存失败");
         }

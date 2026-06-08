@@ -6,6 +6,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.Objects;
 /**
  * 虾皮订单状态 webhook 初始化数据。
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
@@ -29,8 +31,15 @@ public class DmpInputShopeeWebhookInitHandler extends DmpInputInitHandler {
         if (StringUtils.isBlank(data)) {
             return Collections.emptyList();
         }
-        JSONObject payload = JSONUtil.parseObj(data);
-        JSONObject webhookData = payload.getJSONObject("data");
+        JSONObject payload;
+        JSONObject webhookData;
+        try {
+            payload = JSONUtil.parseObj(data);
+            webhookData = payload.getJSONObject("data");
+        } catch (Exception e) {
+            log.error("虾皮 webhook 数据解析失败，data={}", data, e);
+            return Collections.emptyList();
+        }
         if (Objects.isNull(webhookData)) {
             return Collections.emptyList();
         }

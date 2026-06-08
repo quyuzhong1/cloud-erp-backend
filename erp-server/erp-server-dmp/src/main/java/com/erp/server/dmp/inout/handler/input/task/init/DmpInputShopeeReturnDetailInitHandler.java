@@ -67,7 +67,12 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             return new ArrayList<>();
         }
 
-        String shopId = Objects.toString(parentMongoData.get(0).get("nextLevelId"), nextLevelId);
+        // nextLevelId 来自父任务 init 上下文；mongo 行内 nextLevelId 优先
+        String shopId = parentMongoData.stream()
+                .map(item -> Objects.toString(item.get("nextLevelId"), ""))
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(this.nextLevelId);
         CfgAppClientEntity cfgAppClientEntity = loadShopeeAppClient();
         ShopAuthEntity shopAuthEntity = loadShopAuth(shopId);
 

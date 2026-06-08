@@ -4,9 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
+import com.common.core.exception.ServiceException;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.wms.dto.FbsInventoryDTO;
 import com.erp.server.wms.service.FbsInventoryService;
+import org.apache.commons.lang3.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -36,6 +38,9 @@ public class PlatformNewFbsInventoryConsumerService extends AbstractNewPlatformC
     @Override
     public void handle(String data) {
         FbsInventoryDTO.AddDTO dto = JSON.parseObject(data, FbsInventoryDTO.AddDTO.class);
+        if (dto == null || StringUtils.isAnyBlank(dto.getShopId(), dto.getWarehouseId(), dto.getFbsSku())) {
+            throw new ServiceException("FBS库存MQ消息缺少必要字段");
+        }
         fbsInventoryService.add(dto);
     }
 }

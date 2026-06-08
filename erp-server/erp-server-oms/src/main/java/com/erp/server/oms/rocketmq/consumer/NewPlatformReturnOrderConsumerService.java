@@ -295,10 +295,18 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		if (dto == null) {
 			return false;
 		}
-		String platform = org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
+		String platform = resolvePlatformCode(dto);
 		return PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)
 				|| PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)
 				|| PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(platform);
+	}
+
+	private String resolvePlatformCode(PlatformReturnOrderDTO dto) {
+		return org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
+	}
+
+	private boolean isShopeePlatform(PlatformReturnOrderDTO dto) {
+		return PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(resolvePlatformCode(dto));
 	}
 
 	private SoB2cEntity resolveSoB2cEntity(PlatformReturnOrderDTO dto, List<SoB2cEntity> soB2cEntityList) {
@@ -308,8 +316,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		if (soB2cEntityList.size() == 1) {
 			return soB2cEntityList.get(0);
 		}
-		String platform = org.apache.commons.lang3.StringUtils.defaultIfBlank(dto.getDictPlatform(), dto.getPlatform());
-		if (!PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(platform)) {
+		if (!isShopeePlatform(dto)) {
 			return soB2cEntityList.get(0);
 		}
 		List<String> soIds = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
@@ -320,9 +327,12 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 				.filter(so -> matchesReturnDetails(dto.getDetailList(), detailMap.get(so.getId())))
 				.collect(Collectors.toList());
 		if (CollectionUtils.isEmpty(matchedOrders)) {
-			return soB2cEntityList.stream()
+			SoB2cEntity fallback = soB2cEntityList.stream()
 					.min(Comparator.comparing(SoB2cEntity::getCreateTime, Comparator.nullsLast(Comparator.naturalOrder())))
 					.orElse(soB2cEntityList.get(0));
+			log.warn("【Shopee退货】未匹配到明细一致的订单，platformCode={}，降级选择最早订单 id={}",
+					dto.getDictPlatform(), fallback.getId());
+			return fallback;
 		}
 		if (matchedOrders.size() == 1) {
 			return matchedOrders.get(0);
@@ -342,12 +352,14 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			}
 			boolean matched = soDetails.stream().anyMatch(soDetail ->
 					Objects.equals(soDetail.getPlatformSkuNo(), returnDetail.getPlatformSkuNo())
-							&& Objects.equals(soDetail.getQty(), returnDetail.getReturnQty()));
-			if (!matched) {
-				return false;
+							&& (returnDetail.getReturnQty() == null
+							|| soDetail.getQty() == null
+							|| returnDetail.getReturnQty() <= soDetail.getQty()));
+			if (matched) {
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 }
