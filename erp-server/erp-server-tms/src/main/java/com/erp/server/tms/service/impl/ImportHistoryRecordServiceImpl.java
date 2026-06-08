@@ -500,7 +500,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         List<String> logisticsBillDetailIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
-        return new ImportHistoryRecordDTO.PreQueryResultDTO(null, null, logisticsBillVos, mainIdListMap, logisticsBillCostList, cfgCostList);
+        return new ImportHistoryRecordDTO.PreQueryResultDTO(logisticsBillVos, mainIdListMap, logisticsBillCostList, cfgCostList);
     }
 
     // 判断是否为纵向费用项
@@ -1209,7 +1209,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 List<TmsCostDetailDTO.UpdateDTO> currentUpdateList = logisticsBillVoList.size() > 1
                         ? allocatedCostMap.getOrDefault(logisticsBillVo.getDetailId(), Collections.emptyList())
                         : updateList;
-                //物流费用数据验证
+                // 返回 import_update/import_add_old，用于匹配费用单与落库分支；与 selfDeliver/lastMile 费用归属无关。
                 String thisImportType = checkCostImportData(excelDTO, logisticsBillCostList, logisticsBillVo, costImportEntity, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     return importDataDTO;
@@ -1780,14 +1780,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * @param excelDTO
-     * @param logisticsBillCostList
-     * @param logisticsBillVo
-     * @param costImportEntity
-     * @return List<String>
-     * @description: 导入数据处理
-     * @author Will
-     * @date: 2024/5/11 14:24
+     * 校验物流费用单是否可导入，并判定导入处理类型（更新 / 按原单新增）。
+     * 返回值供 findMatchedLogisticsBillCost 与落库分支使用，不是物流费用主单 type（selfDeliver/lastMile）。
      */
     private String checkCostImportData(ImportHistoryRecordExcelDTO excelDTO,
                                      List<LogisticsBillCostEntity> logisticsBillCostList,
