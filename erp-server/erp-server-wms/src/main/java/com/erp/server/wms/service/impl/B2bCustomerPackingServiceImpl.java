@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
 import com.erp.model.wms.entity.B2bCustomerPackingEntity;
@@ -11,16 +12,15 @@ import com.erp.server.wms.mapper.B2bCustomerPackingMapper;
 import com.erp.server.wms.service.B2bCustomerPackingService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,9 +33,6 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
-    @Lazy
-    @Resource
-    private B2bCustomerPackingService b2bCustomerPackingService;
 
     @Override
     public List<B2bCustomerPackingEntity> listByMainIds(List<String> mainIds) {
@@ -50,7 +47,9 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<B2bCustomerPackingEntity> batchSave(String mainId, List<B2bCustomerPackingDTO.AddDTO> packingList) {
-        deleteByMainId(mainId);
+        if (CharSequenceUtil.isNotBlank(mainId)) {
+            deleteExistingByMainIds(Collections.singletonList(mainId));
+        }
         if (CollUtil.isEmpty(packingList)) {
             return Collections.emptyList();
         }
@@ -61,29 +60,50 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
                 entityList.add(toEntity(mainId, box, line, line.getSort() != null ? line.getSort() : sort++));
             }
         }
-        saveBatch(entityList);
+        boolean saved = super.saveBatch(entityList, 500);
+        if (!saved) {
+            throw new ServiceException("B2B客户装箱明细批量保存失败");
+        }
         saveBoxAttachments(packingList, entityList);
         return entityList;
     }
 
     private void saveBoxAttachments(List<B2bCustomerPackingDTO.AddDTO> packingList,
                                     List<B2bCustomerPackingEntity> entityList) {
+        Map<Integer, B2bCustomerPackingEntity> boxHeadMap = buildBoxHeadMap(entityList);
         for (B2bCustomerPackingDTO.AddDTO box : packingList) {
             List<AttachDTO> attachList = box.getAttachList();
             if (CollUtil.isNotEmpty(attachList)) {
-                getBoxHead(entityList, box.getBoxSeq()).ifPresent(entity ->
-                        wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId()));
+                B2bCustomerPackingEntity entity = boxHeadMap.get(box.getBoxSeq());
+                if (entity != null) {
+                    wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId());
+                }
             }
         }
     }
 
-    public static java.util.Optional<B2bCustomerPackingEntity> getBoxHead(List<B2bCustomerPackingEntity> entityList, Integer boxSeq) {
-        if (CollUtil.isEmpty(entityList)) {
-            return java.util.Optional.empty();
+    private Map<Integer, B2bCustomerPackingEntity> buildBoxHeadMap(List<B2bCustomerPackingEntity> entityList) {
+        Map<Integer, B2bCustomerPackingEntity> boxHeadMap = new HashMap<>();
+        for (B2bCustomerPackingEntity entity : entityList) {
+            B2bCustomerPackingEntity head = boxHeadMap.get(entity.getBoxSeq());
+            if (head == null || compareSort(entity, head) < 0) {
+                boxHeadMap.put(entity.getBoxSeq(), entity);
+            }
         }
-        return entityList.stream()
-                .filter(entity -> Objects.equals(boxSeq, entity.getBoxSeq()))
-                .min(Comparator.comparing(B2bCustomerPackingEntity::getSort, Comparator.nullsLast(Integer::compareTo)));
+        return boxHeadMap;
+    }
+
+    private int compareSort(B2bCustomerPackingEntity left, B2bCustomerPackingEntity right) {
+        if (left.getSort() == null && right.getSort() == null) {
+            return 0;
+        }
+        if (left.getSort() == null) {
+            return 1;
+        }
+        if (right.getSort() == null) {
+            return -1;
+        }
+        return left.getSort().compareTo(right.getSort());
     }
 
     private B2bCustomerPackingEntity toEntity(String mainId, B2bCustomerPackingDTO.AddDTO box,
@@ -108,6 +128,10 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByMainIds(List<String> mainIds) {
+        deleteExistingByMainIds(mainIds);
+    }
+
+    private void deleteExistingByMainIds(List<String> mainIds) {
         if (CollUtil.isEmpty(mainIds)) {
             return;
         }
@@ -120,11 +144,5 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
                 .in(B2bCustomerPackingEntity::getMainId, mainIds)
                 .set(B2bCustomerPackingEntity::getIsDeleted, Boolean.TRUE)
                 .update();
-    }
-
-    private void deleteByMainId(String mainId) {
-        if (CharSequenceUtil.isNotBlank(mainId)) {
-            b2bCustomerPackingService.deleteByMainIds(Collections.singletonList(mainId));
-        }
     }
 }

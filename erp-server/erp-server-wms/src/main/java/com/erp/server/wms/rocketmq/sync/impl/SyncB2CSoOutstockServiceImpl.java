@@ -602,6 +602,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
+    // Temu 同一平台订单可能包含同 SKU 多子单，订单+店铺级锁用于串行化该订单的出库生成。
     @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId",waiteTime = 60)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
@@ -696,13 +697,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     private SoB2cDetailEntity getTemuSoB2cDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO) {
         if (StringUtils.isNotBlank(teMuSoOutStockDetailDTO.getPlatformSubSoCode())) {
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream()
+            return soB2cDetailEntityList.stream()
                     .filter(v -> teMuSoOutStockDetailDTO.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
                     .findFirst()
                     .orElse(null);
-            if (Objects.nonNull(soB2cDetailEntity)) {
-                return soB2cDetailEntity;
-            }
         }
         return soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
     }

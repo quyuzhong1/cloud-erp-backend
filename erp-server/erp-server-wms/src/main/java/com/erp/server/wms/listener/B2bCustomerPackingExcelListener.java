@@ -14,10 +14,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
  */
 public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCustomerPackingImportExcelDTO> {
 
+    // EasyExcel 逐行回调时主动截断导入规模，避免异常大文件持续占用内存。
     private static final int MAX_IMPORT_ROWS = 5000;
 
     private final List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList;
@@ -61,20 +64,19 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         if (CollectionUtils.isNotEmpty(fieldErrors)) {
             errorMsgList.addAll(fieldErrors);
         }
-        Integer boxSeq;
-        try {
-            boxSeq = Integer.parseInt(row.getBoxSeq().trim());
-            if (boxSeq <= 0) {
-                errorMsgList.add("序号必须为正整数");
+        Integer boxSeq = null;
+        if (CharSequenceUtil.isNotBlank(row.getBoxSeq())) {
+            try {
+                boxSeq = Integer.parseInt(row.getBoxSeq().trim());
+                if (boxSeq <= 0) {
+                    errorMsgList.add("序号必须为正整数");
+                }
+            } catch (Exception e) {
+                errorMsgList.add("序号格式不正确");
             }
-        } catch (Exception e) {
-            errorMsgList.add("序号格式不正确");
-            boxSeq = null;
         }
         Integer packingQty = null;
-        if (CharSequenceUtil.isBlank(row.getPackingQty())) {
-            errorMsgList.add("装箱数量不能为空");
-        } else {
+        if (CharSequenceUtil.isNotBlank(row.getPackingQty())) {
             try {
                 packingQty = Integer.parseInt(row.getPackingQty().trim());
                 if (packingQty <= 0) {
@@ -123,6 +125,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
+        // 导入接口仅解析回填页面、不落库；总装箱数量在保存/更新 B2B 三方发货单时由 validatePacking 统一校验。
         normalizeBoxLevelFields();
     }
 
@@ -155,6 +158,13 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             successLineList.clear();
             return;
         }
+        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
+        if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
+            errorList.addAll(duplicateLineErrorList);
+            successList.clear();
+            successLineList.clear();
+            return;
+        }
         Map<Integer, List<B2bCustomerPackingDTO.LineViewDTO>> lineMap = successLineList.stream()
                 .collect(Collectors.groupingBy(B2bCustomerPackingDTO.LineViewDTO::getBoxSeq));
         successList.clear();
@@ -162,6 +172,22 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
             box.setPackingLineList(lineMap.getOrDefault(box.getBoxSeq(), new ArrayList<>()));
             successList.add(box);
         }
+    }
+
+    private List<B2bCustomerPackingImportExcelDTO> validateDuplicateBoxSkuLines() {
+        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = new ArrayList<>();
+        Set<String> boxSkuSet = new HashSet<>();
+        for (B2bCustomerPackingDTO.LineViewDTO line : successLineList) {
+            String key = line.getBoxSeq() + "|" + CharSequenceUtil.blankToDefault(line.getSkuNo(), "");
+            if (!boxSkuSet.add(key)) {
+                B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
+                error.setBoxSeq(String.valueOf(line.getBoxSeq()));
+                error.setSkuNo(line.getSkuNo());
+                error.setErrorMsg("相同序号内SKU不能重复");
+                duplicateLineErrorList.add(error);
+            }
+        }
+        return duplicateLineErrorList;
     }
 
     private String getFirstSkuNo(Integer boxSeq) {

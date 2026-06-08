@@ -53,6 +53,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
+    // WMS 私有业务字典 type：配置店铺和军区均为全部时跳过重复绑定校验的平台编码。
     private static final String VM_CHANNEL_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
 
     @Resource
@@ -68,6 +69,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     private CustomerFeign customerFeign;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 批量新增
@@ -603,15 +606,26 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+        Set<String> msgSet = buildSameWarehouseB2bForeignMessages(b2bForeignPlatform, warehouseIds,
+                sameWarehouseRelations, conflictVirtualWarehouseIds);
+        // 多条业务错误使用中文分号分隔，前端可直接展示完整提示。
+        throw new ServiceException(String.join("；", msgSet));
+    }
+
+    private Set<String> buildSameWarehouseB2bForeignMessages(String b2bForeignPlatform,
+                                                             List<String> warehouseIds,
+                                                             List<VirtualWarehouseRelationEntity> sameWarehouseRelations,
+                                                             List<String> conflictVirtualWarehouseIds) {
         List<VirtualWarehouseEntity> conflictVirtualWarehouses = virtualWarehouseService.listByIds(conflictVirtualWarehouseIds);
         Map<String, String> conflictVmNameMap = conflictVirtualWarehouses.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName, (left, right) -> left));
-        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class, warehouseIds);
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
         Map<String, String> warehouseNameMap = warehouseEntityList.stream()
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
-        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，这里不会每次直查字典表。
+        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.SALES_PLATFORM.getType()));
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
                 .map(com.erp.model.wms.entity.DictBasicEntity::getName)
@@ -619,31 +633,38 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 .orElse(b2bForeignPlatform);
         Set<String> msgSet = new LinkedHashSet<>();
         for (String conflictVirtualWarehouseId : conflictVirtualWarehouseIds) {
-            List<String> sharedWarehouseIds = sameWarehouseRelations.stream()
-                    .filter(r -> CharSequenceUtil.equals(r.getVirtualWarehouseId(), conflictVirtualWarehouseId))
-                    .map(VirtualWarehouseRelationEntity::getWarehouseId)
-                    .filter(warehouseIds::contains)
-                    .distinct()
-                    .collect(Collectors.toList());
-            String warehouseName = sharedWarehouseIds.stream()
-                    .map(warehouseNameMap::get)
-                    .filter(CharSequenceUtil::isNotBlank)
-                    .findFirst()
-                    .orElse(CharSequenceUtil.EMPTY);
+            String warehouseName = getSharedWarehouseName(sameWarehouseRelations, warehouseIds,
+                    warehouseNameMap, conflictVirtualWarehouseId);
             String conflictVmName = conflictVmNameMap.getOrDefault(conflictVirtualWarehouseId, CharSequenceUtil.EMPTY);
             String format = MessageUtils.getMessage(ApiError.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR,
                     warehouseName, conflictVmName, platformName);
             msgSet.add(format);
         }
-        throw new ServiceException(String.join("；", msgSet));
+        return msgSet;
+    }
+
+    private String getSharedWarehouseName(List<VirtualWarehouseRelationEntity> sameWarehouseRelations,
+                                          List<String> warehouseIds,
+                                          Map<String, String> warehouseNameMap,
+                                          String conflictVirtualWarehouseId) {
+        return sameWarehouseRelations.stream()
+                .filter(r -> CharSequenceUtil.equals(r.getVirtualWarehouseId(), conflictVirtualWarehouseId))
+                .map(VirtualWarehouseRelationEntity::getWarehouseId)
+                .filter(warehouseIds::contains)
+                .distinct()
+                .map(warehouseNameMap::get)
+                .filter(CharSequenceUtil::isNotBlank)
+                .findFirst()
+                .orElse(CharSequenceUtil.EMPTY);
     }
 
     /**
      * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
-        List<String> skipPlatformList = dictBasicService.getByKey(VM_CHANNEL_SKIP_CHECK_PLATFORM).stream()
-                .map(e -> e.getValue())
+        // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，避免保存/启用渠道时反复查库。
+        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(VM_CHANNEL_SKIP_CHECK_PLATFORM)).stream()
+                .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());

@@ -135,7 +135,7 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			dto.setCountryId(customerAddressEntity.getCountryId());
 			dto.setCountryName(customerAddressEntity.getCountryName());
 		}
-		applyCustomerDefaults(dto, customerInfo);
+		B2bOrderConsumerHelper.applyCustomerDefaults(dto, customerInfo);
 
 		dto.setDictPlatform(customerInfo.getPlatformType());
 		dto.setAddressType(CustomerAddressTypeEnum.FORWARDER.getCode());
@@ -197,7 +197,7 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 				dto.setTelNumber(customerAddressEntity.getTelNumber());
 			}
 			dto.setIsDeclare(false);
-			applyCustomerDefaults(dto, customerInfo);
+			B2bOrderConsumerHelper.applyCustomerDefaults(dto, customerInfo);
 		}
 		//过滤掉明细已删除和已作废
 		if(CollectionUtils.isNotEmpty(dto.getDetail())) {
@@ -260,15 +260,5 @@ public class PlatformB2bOrderRestCloudConsumerService extends AbstractRestCloudP
 			}
 		}
 	}
-
-	private void applyCustomerDefaults(PlatformB2bOrderDTO dto, CustomerInfoEntity customerInfo) {
-		if (StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(customerInfo.getDefaultShippingWarehouse())) {
-			dto.setWarehouseId(customerInfo.getDefaultShippingWarehouse());
-		}
-		if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
-			dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
-		}
-	}
-
 
 }
