@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.KingdeeParamDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.ConvertUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -661,7 +662,11 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
     private String resolveDosageType(JSONObject srcEntry) {
         Object dosageType = srcEntry.get("DosageType");
         if (dosageType != null && StringUtils.isNotBlank(String.valueOf(dosageType))) {
-            return String.valueOf(dosageType);
+            String code = String.valueOf(dosageType).trim();
+            if (KingdeeSubcontractBomDosageTypeEnum.getByCode(code) != null) {
+                return code;
+            }
+            log.warn("委外用料清单用量类型无效: {}, 使用默认值: {}", code, KingdeeSubcontractBomDosageTypeEnum.VARIABLE.getCode());
         }
         return KingdeeSubcontractBomDosageTypeEnum.VARIABLE.getCode();
     }
@@ -676,25 +681,18 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         }
         Object baseMinIssueQty = srcEntry.get("BaseMinIssueQty");
         if (baseMinIssueQty == null || StringUtils.isBlank(String.valueOf(baseMinIssueQty))) {
-            return Boolean.TRUE;
+            return Boolean.FALSE;
         }
-        return new BigDecimal(String.valueOf(baseMinIssueQty)).compareTo(BigDecimal.ZERO) > 0;
+        BigDecimal minIssueQty = ConvertUtil.toBigDecimal(baseMinIssueQty, BigDecimal.ZERO);
+        return minIssueQty.compareTo(BigDecimal.ZERO) > 0;
     }
 
     private int resolveOperId(JSONObject srcEntry) {
-        Object operId = srcEntry.get("OperID");
-        if (operId != null && StringUtils.isNotBlank(String.valueOf(operId))) {
-            return Integer.parseInt(String.valueOf(operId));
-        }
-        return 0;
+        return ConvertUtil.toInt(srcEntry.get("OperID"), 0);
     }
 
     private int resolveReplaceGroup(JSONObject srcEntry, int entryIndex) {
-        Object replaceGroup = srcEntry.get("ReplaceGroup");
-        if (replaceGroup != null && StringUtils.isNotBlank(String.valueOf(replaceGroup))) {
-            return Integer.parseInt(String.valueOf(replaceGroup));
-        }
-        return entryIndex + 1;
+        return ConvertUtil.toInt(srcEntry.get("ReplaceGroup"), entryIndex + 1);
     }
 
 }

@@ -24,4 +24,13 @@ public enum KingdeeSubcontractBomDosageTypeEnum {
     public String getName() {
         return name;
     }
+
+    public static KingdeeSubcontractBomDosageTypeEnum getByCode(String code) {
+        for (KingdeeSubcontractBomDosageTypeEnum item : values()) {
+            if (item.code.equals(code)) {
+                return item;
+            }
+        }
+        return null;
+    }
 }

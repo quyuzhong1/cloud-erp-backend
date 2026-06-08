@@ -212,13 +212,17 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("billDate",LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
             //仓库编码
-            if (CollectionUtils.isNotEmpty(warehouseList)) {
-                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
-                jsonObject.set("kingdeeWarehouseCode",updateDTO.getKingdeeWarehouseCode());
+            if (StringUtils.isNotBlank(detailEntity.getWarehouseId())) {
+                WarehouseDTO.UpdateDTO updateDTO = CollectionUtils.isEmpty(warehouseList) ? null
+                        : warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(updateDTO)) {
+                    throw new ServiceException(ApiError.WH_PARAM_NOT_FOUND, detailEntity.getWarehouseId());
+                }
+                jsonObject.set("kingdeeWarehouseCode", updateDTO.getKingdeeWarehouseCode());
                 //库存组织
                 if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                     String inStockOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
-                    jsonObject.set("inStockOrgCode",inStockOrgCode);
+                    jsonObject.set("inStockOrgCode", inStockOrgCode);
                 }
             }
             //采购组织编码
