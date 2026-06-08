@@ -57,16 +57,6 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     LogisticsReconDTO.ViewDTO view(String id);
 
     /**
-     * 物流商对账单预处理导入（试解析，不落库；用于前端预览校验）
-     * TODO 当前依赖 ImportHistoryRecordServiceImpl 的 Excel 解析链路，后续重构后再接入
-     * @author Will
-     * @date: 2026/05/29
-     * @param dto
-     * @return List<BatchResultDTO>
-     */
-    List<BatchResultDTO> preprocessingImportExcel(LogisticsReconDTO.PreprocessingDTO dto);
-
-    /**
      * 物流商对账单导入 Excel（processingType=importOnly，仅落对账单 + 明细）
      * TODO 当前依赖 ImportHistoryRecordServiceImpl 的 Excel 解析链路，后续重构后再接入
      * @author Will

@@ -197,13 +197,6 @@ public class LogisticsReconServiceImpl
     }
 
 
-    @Override
-    public List<BatchResultDTO> preprocessingImportExcel(LogisticsReconDTO.PreprocessingDTO dto) {
-        // TODO 预处理：调用重构后的 buildSupplierBillDetailList（仅 ETL 清洗 + 校验，不落库）
-        //  现阶段不复用 ImportHistoryRecordServiceImpl#importFile，原方法需重构后再接入
-        throw new ServiceException(ApiError.LOGISTICS_RECON_PREPROCESS_IMPORT_NOT_READY);
-    }
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO importExcel(LogisticsReconDTO.ImportDTO dto) {
@@ -759,6 +752,7 @@ public class LogisticsReconServiceImpl
         boolean confirmed = LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(checkStatus);
         lambdaUpdate()
                 .eq(LogisticsReconEntity::getId, entity.getId())
+                .eq(LogisticsReconEntity::getVersion, entity.getVersion())
                 .set(LogisticsReconEntity::getCheckStatus, checkStatus)
                 .set(LogisticsReconEntity::getCheckUserId, confirmed ? user.getUid() : "")
                 .set(LogisticsReconEntity::getCheckUserName, confirmed ? user.getUserName() : "")
