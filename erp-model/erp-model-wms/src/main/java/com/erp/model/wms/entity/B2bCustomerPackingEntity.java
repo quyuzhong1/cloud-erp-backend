@@ -18,6 +18,13 @@ import java.io.Serializable;
 @TableName("b2b_customer_packing")
 public class B2bCustomerPackingEntity extends BaseEntity<B2bCustomerPackingEntity> {
 
+    /** 与表字段 box_mark_no 长度一致，校验时引用 */
+    public static final int BOX_MARK_NO_MAX_LENGTH = 50;
+    /** 与表字段 box_mark_ref_no 长度一致，校验时引用 */
+    public static final int BOX_MARK_REF_NO_MAX_LENGTH = 50;
+    /** 与表字段 labeling_requirement 长度一致，校验时引用 */
+    public static final int LABELING_REQUIREMENT_MAX_LENGTH = 200;
+
     @TableField("main_id")
     private String mainId;
 

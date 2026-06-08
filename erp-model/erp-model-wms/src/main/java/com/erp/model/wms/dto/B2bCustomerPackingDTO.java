@@ -52,7 +52,7 @@ public class B2bCustomerPackingDTO implements Serializable {
          */
         private String labelingRequirement;
         /**
-         * 货件标签附件
+         * 货件标签附件（查询回显为 WmsAttachmentDTO；新增/编辑入参 AddDTO 使用 AttachDTO，勿直接互转）
          */
         private List<WmsAttachmentDTO.UpdateDTO> attachList;
         /**

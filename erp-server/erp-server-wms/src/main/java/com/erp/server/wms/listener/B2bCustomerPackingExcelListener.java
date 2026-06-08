@@ -23,12 +23,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * B2B客户装箱明细导入
+ * B2B客户装箱明细导入。校验逻辑集中在此便于 EasyExcel 流式解析；拆至 Service 层属后续重构。
  */
 public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCustomerPackingImportExcelDTO> {
 
     // EasyExcel 逐行回调时主动截断导入规模，避免异常大文件持续占用内存。
     private static final int MAX_IMPORT_ROWS = 5000;
+    private static final int MAX_ERROR_ROWS = 500;
 
     private final List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList;
     private final Map<String, B2bThirdDeliveryDetailDTO.AddDTO> skuDetailMap;
@@ -45,6 +46,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()))
                 .collect(Collectors.toMap(B2bThirdDeliveryDetailDTO.AddDTO::getSkuNo, e -> e, (a, b) -> a));
         this.skuSaleQtyMap = new HashMap<>();
+        // 同一 SKU 多行明细为正常拆单，销售数量按 SKU 汇总供导入校验。
         for (B2bThirdDeliveryDetailDTO.AddDTO detail : this.productDetailList) {
             if (CharSequenceUtil.isBlank(detail.getSkuNo())) {
                 continue;
@@ -55,6 +57,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     @Override
     public void invoke(B2bCustomerPackingImportExcelDTO row, AnalysisContext context) {
+        // 错误文件未带 Excel 行号；加 rowIndex 需改 DTO/模板，当前靠序号+SKU 定位。
         rowCount++;
         if (rowCount > MAX_IMPORT_ROWS) {
             throw new ServiceException("装箱明细导入最多支持{0}行", MAX_IMPORT_ROWS);
@@ -98,7 +101,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         }
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
             row.setErrorMsg(String.join(";", errorMsgList));
-            errorList.add(row);
+            addImportError(row);
             return;
         }
         B2bCustomerPackingDTO.LineViewDTO viewDTO = new B2bCustomerPackingDTO.LineViewDTO();
@@ -133,37 +136,75 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new LinkedHashMap<>();
-        List<B2bCustomerPackingImportExcelDTO> boxErrorList = new ArrayList<>();
+        Set<Integer> conflictBoxSeqs = collectBoxFieldConflictBoxSeqs();
+        if (!conflictBoxSeqs.isEmpty()) {
+            for (Integer boxSeq : conflictBoxSeqs) {
+                appendBoxFieldConflictErrors(boxSeq);
+            }
+            removeBoxes(conflictBoxSeqs);
+            if (CollectionUtils.isEmpty(successList)) {
+                return;
+            }
+        }
+        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
+        if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
+            Set<Integer> duplicateBoxSeqs = duplicateLineErrorList.stream()
+                    .map(B2bCustomerPackingImportExcelDTO::getBoxSeq)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .map(Integer::valueOf)
+                    .collect(Collectors.toSet());
+            appendImportErrors(duplicateLineErrorList);
+            removeBoxes(duplicateBoxSeqs);
+            if (CollectionUtils.isEmpty(successList)) {
+                return;
+            }
+        }
+        assembleSuccessListByBox();
+    }
+
+    private Set<Integer> collectBoxFieldConflictBoxSeqs() {
+        Set<Integer> conflictBoxSeqs = new HashSet<>();
+        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new HashMap<>();
         for (B2bCustomerPackingDTO.ViewDTO row : successList) {
             B2bCustomerPackingDTO.ViewDTO head = boxHeadMap.get(row.getBoxSeq());
             if (head == null) {
                 boxHeadMap.put(row.getBoxSeq(), row);
-            } else {
-                if (!Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkNo(), ""))
-                        || !Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkRefNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), ""))
-                        || !Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelSize(), ""), CharSequenceUtil.blankToDefault(row.getLabelSize(), ""))
-                        || !Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelingRequirement(), ""), CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), ""))) {
-                    B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
-                    error.setBoxSeq(String.valueOf(row.getBoxSeq()));
-                    error.setSkuNo(getFirstSkuNo(row.getBoxSeq()));
-                    error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
-                    boxErrorList.add(error);
-                }
+            } else if (!isSameBoxLevelFields(head, row)) {
+                conflictBoxSeqs.add(row.getBoxSeq());
             }
         }
-        if (CollectionUtils.isNotEmpty(boxErrorList)) {
-            errorList.addAll(boxErrorList);
-            successList.clear();
-            successLineList.clear();
-            return;
+        return conflictBoxSeqs;
+    }
+
+    private boolean isSameBoxLevelFields(B2bCustomerPackingDTO.ViewDTO head, B2bCustomerPackingDTO.ViewDTO row) {
+        return Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkNo(), ""))
+                && Objects.equals(CharSequenceUtil.blankToDefault(head.getBoxMarkRefNo(), ""), CharSequenceUtil.blankToDefault(row.getBoxMarkRefNo(), ""))
+                && Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelSize(), ""), CharSequenceUtil.blankToDefault(row.getLabelSize(), ""))
+                && Objects.equals(CharSequenceUtil.blankToDefault(head.getLabelingRequirement(), ""), CharSequenceUtil.blankToDefault(row.getLabelingRequirement(), ""));
+    }
+
+    private void appendBoxFieldConflictErrors(Integer boxSeq) {
+        for (B2bCustomerPackingDTO.LineViewDTO line : successLineList) {
+            if (!Objects.equals(line.getBoxSeq(), boxSeq)) {
+                continue;
+            }
+            B2bCustomerPackingImportExcelDTO error = new B2bCustomerPackingImportExcelDTO();
+            error.setBoxSeq(String.valueOf(boxSeq));
+            error.setSkuNo(CharSequenceUtil.blankToDefault(line.getSkuNo(), ""));
+            error.setErrorMsg("相同序号行的箱唛号/箱唛参考号/标签尺寸/贴标要求须一致");
+            addImportError(error);
         }
-        List<B2bCustomerPackingImportExcelDTO> duplicateLineErrorList = validateDuplicateBoxSkuLines();
-        if (CollectionUtils.isNotEmpty(duplicateLineErrorList)) {
-            errorList.addAll(duplicateLineErrorList);
-            successList.clear();
-            successLineList.clear();
-            return;
+    }
+
+    private void removeBoxes(Set<Integer> boxSeqs) {
+        successLineList.removeIf(line -> boxSeqs.contains(line.getBoxSeq()));
+        successList.removeIf(box -> boxSeqs.contains(box.getBoxSeq()));
+    }
+
+    private void assembleSuccessListByBox() {
+        Map<Integer, B2bCustomerPackingDTO.ViewDTO> boxHeadMap = new LinkedHashMap<>();
+        for (B2bCustomerPackingDTO.ViewDTO row : successList) {
+            boxHeadMap.putIfAbsent(row.getBoxSeq(), row);
         }
         Map<Integer, List<B2bCustomerPackingDTO.LineViewDTO>> lineMap = successLineList.stream()
                 .collect(Collectors.groupingBy(B2bCustomerPackingDTO.LineViewDTO::getBoxSeq));
@@ -190,13 +231,17 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
         return duplicateLineErrorList;
     }
 
-    private String getFirstSkuNo(Integer boxSeq) {
-        return successLineList.stream()
-                .filter(e -> Objects.equals(e.getBoxSeq(), boxSeq))
-                .map(B2bCustomerPackingDTO.LineViewDTO::getSkuNo)
-                .filter(CharSequenceUtil::isNotBlank)
-                .findFirst()
-                .orElse("");
+    private void addImportError(B2bCustomerPackingImportExcelDTO error) {
+        if (errorList.size() >= MAX_ERROR_ROWS) {
+            throw new ServiceException("导入错误行数过多（超过{0}行），请修正后重新导入", MAX_ERROR_ROWS);
+        }
+        errorList.add(error);
+    }
+
+    private void appendImportErrors(List<B2bCustomerPackingImportExcelDTO> errors) {
+        for (B2bCustomerPackingImportExcelDTO error : errors) {
+            addImportError(error);
+        }
     }
 
     public List<B2bCustomerPackingDTO.ViewDTO> getSuccessList() {

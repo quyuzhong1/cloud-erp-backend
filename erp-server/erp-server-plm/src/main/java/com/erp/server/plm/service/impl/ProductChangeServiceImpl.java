@@ -927,18 +927,41 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
 
     private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            // 兼容无事务调用方：此时没有可注册的提交回调，只能立即触发外部同步。
-            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
-            return;
+            log.error("产品变更审批缺少事务上下文，旺店通同步异常, productDetailId={}", productDetailEntity.getId());
+            throw new ServiceException("系统配置异常，请联系管理员");
         }
-        // 旺店同步是外部补偿动作，审批主事务提交后再执行，避免第三方失败回滚已审批的产品变更。
+        runAfterTransactionCommit(() -> syncWangDianProductDetailWithFallback(productDetailEntity));
+    }
+
+    private void saveWangDianSyncPendingPushMsg(ProductDetailEntity productDetailEntity, String reason) {
+        try {
+            syncWangDianProductDetailService.saveSyncErrorPushMsg(productDetailEntity,
+                    String.format("【%s】产品变更审批后待同步旺店通（%s）", productDetailEntity.getSkuNo(), reason));
+        } catch (Exception ex) {
+            log.error("产品变更审批后同步旺店补偿消息写入失败, productDetailId={}", productDetailEntity.getId(), ex);
+        }
+    }
+
+    private void syncWangDianProductDetailWithFallback(ProductDetailEntity productDetailEntity) {
+        try {
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+        } catch (Exception e) {
+            // 失败写 plm_push_msg 补偿；站内信/企微通知不在本 MR 范围。
+            log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+            saveWangDianSyncPendingPushMsg(productDetailEntity, "同步失败");
+        }
+    }
+
+    /** 外部同步统一在事务提交后执行；回调异常仅记录日志，避免影响事务框架。 */
+    private void runAfterTransactionCommit(Runnable action) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
                 try {
-                    syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+                    action.run();
                 } catch (Exception e) {
-                    log.error("产品变更审批后同步旺店失败, productDetailId={}", productDetailEntity.getId(), e);
+                    log.error("事务提交后回调执行失败", e);
+                    // 回调内 syncWangDianProductDetailWithFallback 已有补偿；告警通道不在本 MR 范围。
                 }
             }
         });

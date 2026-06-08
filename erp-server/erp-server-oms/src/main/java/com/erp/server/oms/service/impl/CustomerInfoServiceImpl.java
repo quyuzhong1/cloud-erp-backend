@@ -16,6 +16,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.PlatformB2bOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -46,12 +47,14 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.*;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.dht.DhtService;
@@ -170,6 +173,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private BankAccountService bankAccountService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -804,6 +811,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String useOrgName = orgList.stream().filter(d -> d.getId().equals(useOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setUseOrgName(useOrgName);
+        // 默认仓库/账号有值时才做实时校验；Feign 不可用时会阻断保存，属有意设计以保证默认值有效。
+        validateCustomerDefaultFields(dto.getDefaultShippingWarehouse(), dto.getDefaultReceiveAccount());
         // 客户编辑为全量保存，编辑页会回显默认值；这两个字段按既有字符串字段语义用空串表示清空。
         customer.setDefaultShippingWarehouse(StringUtils.defaultString(dto.getDefaultShippingWarehouse()));
         customer.setDefaultReceiveAccount(StringUtils.defaultString(dto.getDefaultReceiveAccount()));
@@ -2648,5 +2657,47 @@ revokeDTO.setExecuteSystem(dto.getExecuteSystem());
         }
 
         return customerInfoEntity.getId();
+    }
+
+    @Override
+    public void applyB2bOrderCustomerDefaults(PlatformB2bOrderDTO dto, CustomerInfoEntity customerInfo) {
+        if (dto == null || customerInfo == null) {
+            return;
+        }
+        if (StringUtils.isBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(customerInfo.getDefaultShippingWarehouse())) {
+            dto.setWarehouseId(customerInfo.getDefaultShippingWarehouse());
+        }
+        if (StringUtils.isBlank(dto.getReceiveAccount()) && StringUtils.isNotBlank(customerInfo.getDefaultReceiveAccount())) {
+            dto.setReceiveAccount(customerInfo.getDefaultReceiveAccount());
+        }
+    }
+
+    /** 默认仓库/账号有值时同步校验有效性；WMS 不可用会阻断保存，属有意设计，异步校验需产品方案后再改。 */
+    private void validateCustomerDefaultFields(String defaultShippingWarehouse, String defaultReceiveAccount) {
+        if (StringUtils.isNotBlank(defaultShippingWarehouse)) {
+            List<WarehouseDTO.UpdateDTO> warehouseList;
+            try {
+                warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(defaultShippingWarehouse));
+            } catch (ServiceException e) {
+                log.warn("校验默认发货仓库失败(Feign调用异常), warehouseId={}", defaultShippingWarehouse, e);
+                throw new ServiceException("校验默认发货仓库失败，请稍后重试");
+            } catch (Exception e) {
+                log.error("校验默认发货仓库失败(未知异常), warehouseId={}", defaultShippingWarehouse, e);
+                throw new ServiceException("校验默认发货仓库失败，请联系管理员");
+            }
+            if (warehouseList == null || warehouseList.isEmpty()) {
+                throw new ServiceException("默认发货仓库不存在或已禁用");
+            }
+            WarehouseDTO.UpdateDTO warehouse = warehouseList.get(0);
+            if (warehouse == null || Boolean.TRUE.equals(warehouse.getDisabled())) {
+                throw new ServiceException("默认发货仓库不存在或已禁用");
+            }
+        }
+        if (StringUtils.isNotBlank(defaultReceiveAccount)) {
+            BankAccountEntity account = bankAccountService.getById(defaultReceiveAccount);
+            if (account == null || Boolean.TRUE.equals(account.getDisabled())) {
+                throw new ServiceException("默认收款账号不存在或已禁用");
+            }
+        }
     }
 }

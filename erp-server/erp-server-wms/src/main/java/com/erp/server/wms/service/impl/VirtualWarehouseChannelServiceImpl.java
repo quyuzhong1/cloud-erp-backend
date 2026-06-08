@@ -53,9 +53,6 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<VirtualWarehouseChannelMapper, VirtualWarehouseChannelEntity> implements VirtualWarehouseChannelService {
-    // WMS 私有业务字典 type：配置店铺和军区均为全部时跳过重复绑定校验的平台编码。
-    private static final String VM_CHANNEL_SKIP_CHECK_PLATFORM = "vmChannelSkipCheckPlatform";
-
     @Resource
     private OperateLogService operateLogService;
 
@@ -574,88 +571,33 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (!hasB2bForeign) {
             return;
         }
-        List<VirtualWarehouseRelationEntity> relations = virtualWarehouseRelationService.getByVirtualWarehouseId(virtualWarehouseId);
-        if (CollUtil.isEmpty(relations)) {
+        List<VirtualWarehouseDTO.B2bForeignConflictDTO> conflictList = baseMapper.findB2bForeignConflicts(virtualWarehouseId, b2bForeignPlatform);
+        if (CollUtil.isEmpty(conflictList)) {
             return;
         }
-        List<String> warehouseIds = relations.stream()
-                .map(VirtualWarehouseRelationEntity::getWarehouseId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(warehouseIds)) {
-            return;
-        }
-        List<VirtualWarehouseRelationEntity> sameWarehouseRelations = virtualWarehouseRelationService.getByWarehouseId(warehouseIds);
-        List<String> otherVirtualWarehouseIds = sameWarehouseRelations.stream()
-                .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId)
-                .filter(id -> !CharSequenceUtil.equals(id, virtualWarehouseId))
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(otherVirtualWarehouseIds)) {
-            return;
-        }
-        List<VirtualWarehouseChannelEntity> conflictChannelList = baseMapper.selectList(new LambdaQueryWrapper<VirtualWarehouseChannelEntity>()
-                .in(VirtualWarehouseChannelEntity::getVirtualWarehouseId, otherVirtualWarehouseIds)
-                .eq(VirtualWarehouseChannelEntity::getDictPlatform, b2bForeignPlatform));
-        if (CollUtil.isEmpty(conflictChannelList)) {
-            return;
-        }
-        List<String> conflictVirtualWarehouseIds = conflictChannelList.stream()
-                .map(VirtualWarehouseChannelEntity::getVirtualWarehouseId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        Set<String> msgSet = buildSameWarehouseB2bForeignMessages(b2bForeignPlatform, warehouseIds,
-                sameWarehouseRelations, conflictVirtualWarehouseIds);
-        // 多条业务错误使用中文分号分隔，前端可直接展示完整提示。
+        Set<String> msgSet = buildSameWarehouseB2bForeignMessages(b2bForeignPlatform, conflictList);
         throw new ServiceException(String.join("；", msgSet));
     }
 
     private Set<String> buildSameWarehouseB2bForeignMessages(String b2bForeignPlatform,
-                                                             List<String> warehouseIds,
-                                                             List<VirtualWarehouseRelationEntity> sameWarehouseRelations,
-                                                             List<String> conflictVirtualWarehouseIds) {
-        List<VirtualWarehouseEntity> conflictVirtualWarehouses = virtualWarehouseService.listByIds(conflictVirtualWarehouseIds);
-        Map<String, String> conflictVmNameMap = conflictVirtualWarehouses.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(VirtualWarehouseEntity::getId, VirtualWarehouseEntity::getName, (left, right) -> left));
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
-        Map<String, String> warehouseNameMap = warehouseEntityList.stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (left, right) -> left));
+                                                             List<VirtualWarehouseDTO.B2bForeignConflictDTO> conflictList) {
         // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，这里不会每次直查字典表。
         List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.SALES_PLATFORM.getType()));
         String platformName = platformList.stream()
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
                 .map(com.erp.model.wms.entity.DictBasicEntity::getName)
                 .findFirst()
+                // 字典未配置时回退 code，可读性较差；友好名称依赖字典维护。
                 .orElse(b2bForeignPlatform);
         Set<String> msgSet = new LinkedHashSet<>();
-        for (String conflictVirtualWarehouseId : conflictVirtualWarehouseIds) {
-            String warehouseName = getSharedWarehouseName(sameWarehouseRelations, warehouseIds,
-                    warehouseNameMap, conflictVirtualWarehouseId);
-            String conflictVmName = conflictVmNameMap.getOrDefault(conflictVirtualWarehouseId, CharSequenceUtil.EMPTY);
+        for (VirtualWarehouseDTO.B2bForeignConflictDTO conflict : conflictList) {
             String format = MessageUtils.getMessage(ApiError.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR,
-                    warehouseName, conflictVmName, platformName);
+                    CharSequenceUtil.blankToDefault(conflict.getWarehouseName(), CharSequenceUtil.EMPTY),
+                    CharSequenceUtil.blankToDefault(conflict.getVirtualWarehouseName(), CharSequenceUtil.EMPTY),
+                    platformName);
             msgSet.add(format);
         }
         return msgSet;
-    }
-
-    private String getSharedWarehouseName(List<VirtualWarehouseRelationEntity> sameWarehouseRelations,
-                                          List<String> warehouseIds,
-                                          Map<String, String> warehouseNameMap,
-                                          String conflictVirtualWarehouseId) {
-        return sameWarehouseRelations.stream()
-                .filter(r -> CharSequenceUtil.equals(r.getVirtualWarehouseId(), conflictVirtualWarehouseId))
-                .map(VirtualWarehouseRelationEntity::getWarehouseId)
-                .filter(warehouseIds::contains)
-                .distinct()
-                .map(warehouseNameMap::get)
-                .filter(CharSequenceUtil::isNotBlank)
-                .findFirst()
-                .orElse(CharSequenceUtil.EMPTY);
     }
 
     /**
@@ -663,7 +605,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      */
     private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
         // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，避免保存/启用渠道时反复查库。
-        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(VM_CHANNEL_SKIP_CHECK_PLATFORM)).stream()
+        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.VM_CHANNEL_SKIP_CHECK_PLATFORM.getType())).stream()
                 .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
                 .filter(CharSequenceUtil::isNotBlank)
                 .distinct()

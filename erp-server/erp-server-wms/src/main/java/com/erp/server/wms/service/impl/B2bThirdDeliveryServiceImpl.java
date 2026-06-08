@@ -187,7 +187,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
     private static final int MAX_RETRY_COUNT = 3;
     private static final long RETRY_DELAY_SECONDS = 10000;
-    private static final Set<Integer> ALLOWED_LABELS_PER_BOX = new HashSet<>(Arrays.asList(1, 2, 4));
     private static final String CANCEL_ACCEPTED_QUERY_FAILED_MSG = "拦截请求已提交三方仓，立即查询状态失败，请稍后刷新确认拦截结果";
 
     @Resource
@@ -1173,8 +1172,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isValidAttachmentId(String attachmentId) {
-        // 历史页面可能把空附件ID序列化成字符串 "null"，这里保留兼容兜底。
-        return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
+        if (StrUtil.isBlank(attachmentId)) {
+            return false;
+        }
+        if ("null".equalsIgnoreCase(attachmentId.trim())) {
+            log.warn("检测到附件ID为字符串null的历史前端数据");
+            return false;
+        }
+        return true;
     }
 
     private boolean needUploadAttachment(String providerCode) {
@@ -1191,6 +1196,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return FileUtil.getFileExtension(req.getFileUrl());
     }
 
+    /**
+     * 谷仓按箱上传货件标签；三方仓 API 暂无批量上传，箱数×标签数即为 RPC 次数，失败重试依赖任务层。
+     */
     private void preparePackingShipmentFiles(ThirdWarehouseService service, ThirdWarehouseCreateFbaOutboundReq req) {
         if (!PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(req.getThirdWarehouseProvideCode())
                 || CollUtil.isEmpty(req.getPackingDetailList())) {
@@ -1668,14 +1676,33 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         }
     }
 
+    private static final long MAX_PACKING_IMPORT_FILE_SIZE = 5L * 1024 * 1024;
+    private static final int MAX_PACKING_QTY_ERROR_ITEMS = 10;
+
+    /**
+     * 仅解析 Excel 并回填页面，不落库；由 Controller 独立调用，不在 add/update 的 @GlobalTransactional 内。
+     * 行数上限见 {@link B2bCustomerPackingExcelListener}（最多 5000 行）。
+     */
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
+        if (excelFile == null || excelFile.isEmpty()) {
+            throw new ServiceException(ApiError.FILE_DATA_REQUIRED);
+        }
+        if (excelFile.getSize() > MAX_PACKING_IMPORT_FILE_SIZE) {
+            throw new ServiceException("导入文件不能超过5MB");
+        }
         List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList = getExistingDeliveryImportDetailList(soId);
         if (CollUtil.isEmpty(detailList)) {
-            // OMS Feign 契约直接返回明细 List，非 ApiResult 包装；null 表示调用异常或无有效返回。
-            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soId);
-            if (soDetailList == null) {
-                throw new ServiceException("获取销售订单明细失败，请稍后重试");
+            List<SoDetailEntity> soDetailList;
+            try {
+                soDetailList = soInfoFeign.listSoDetailByMainId(soId);
+            } catch (Exception e) {
+                // FeignErrorDecoder 将远程异常解码为 ServiceException，非 FeignServiceException。
+                log.error("调用OMS服务获取销售订单明细异常, soId={}", soId, e);
+                throw new ServiceException("调用OMS服务异常，请稍后重试");
+            }
+            if (CollUtil.isEmpty(soDetailList)) {
+                throw new ServiceException("销售订单明细不存在（订单ID:{}）", soId);
             }
             detailList = getPackingImportDetailList(soId, soDetailList);
         }
@@ -1694,17 +1721,23 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         List<B2bCustomerPackingImportExcelDTO> errorList = listener.getErrorList();
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "B2B客户装箱明细导入错误.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
-            if (file.isFile()) {
-                try {
+            File file = null;
+            try {
+                file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
+                if (file != null && file.isFile()) {
+                    file.deleteOnExit();
                     importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
-                } catch (Exception e) {
-                    log.error("上传装箱明细导入错误文件失败，将不返回错误文件链接", e);
-                } finally {
+                }
+            } catch (Exception e) {
+                log.error("上传装箱明细导入错误文件失败", e);
+                throw new ServiceException("生成导入错误文件失败，请联系管理员");
+            } finally {
+                // 删除失败仅打日志；依赖 OS 回收，定时清理任务不在本 MR 范围。
+                if (file != null && file.exists()) {
                     try {
                         Files.deleteIfExists(file.toPath());
                     } catch (IOException e) {
-                        log.warn("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath());
+                        log.error("删除装箱明细导入错误临时文件失败，file={}", file.getAbsolutePath(), e);
                     }
                 }
             }
@@ -1720,7 +1753,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 .eq(B2bThirdDeliveryEntity::getSoId, soId)
                 .ne(B2bThirdDeliveryEntity::getStatus, ThirdDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
                 .orderByDesc(B2bThirdDeliveryEntity::getCreateTime)
-                .last("limit 1")
+                .last("LIMIT 1")
                 .one();
         if (Objects.isNull(deliveryEntity)) {
             return Collections.emptyList();
@@ -1831,8 +1864,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             try {
                 productDetailList = plmTaskFeign.getByIdList(new ArrayList<>(skuIds));
             } catch (Exception e) {
-                log.warn("B2B装箱导入获取产品名称失败，跳过产品名称补全, skuIds={}", skuIds, e);
-                return productNameMap;
+                // FeignErrorDecoder 解码为 ServiceException，非 FeignServiceException。
+                log.error("B2B装箱导入获取产品名称失败, skuIds={}", skuIds, e);
+                throw new ServiceException("获取产品信息失败，请稍后重试");
             }
             if (CollUtil.isNotEmpty(productDetailList)) {
                 for (ProductDetailEntity productDetail : productDetailList) {
@@ -1886,7 +1920,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 throw new ServiceException("仓库自主装箱时每箱张贴货件标签数必须为0");
             }
         } else if (B2bPackingTypeEnum.requiresPackingDetail(packingType)) {
-            if (!ALLOWED_LABELS_PER_BOX.contains(labelsPerBox)) {
+            if (!B2bLabelsPerBoxEnum.isValid(labelsPerBox)) {
                 throw new ServiceException("客户指定装箱或已暂存箱发货时每箱张贴货件标签数必填且只能为1、2或4");
             }
         }
@@ -1927,14 +1961,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType) && CharSequenceUtil.isBlank(box.getBoxMarkNo())) {
                 throw new ServiceException("装箱明细序号【{}】箱唛号不能为空", box.getBoxSeq());
             }
-            if (CharSequenceUtil.length(box.getBoxMarkNo()) > 50) {
-                throw new ServiceException("箱唛号长度不能超过50");
+            if (CharSequenceUtil.length(box.getBoxMarkNo()) > B2bCustomerPackingEntity.BOX_MARK_NO_MAX_LENGTH) {
+                throw new ServiceException("箱唛号长度不能超过{}", B2bCustomerPackingEntity.BOX_MARK_NO_MAX_LENGTH);
             }
-            if (CharSequenceUtil.length(box.getBoxMarkRefNo()) > 50) {
-                throw new ServiceException("箱唛参考号长度不能超过50");
+            if (CharSequenceUtil.length(box.getBoxMarkRefNo()) > B2bCustomerPackingEntity.BOX_MARK_REF_NO_MAX_LENGTH) {
+                throw new ServiceException("箱唛参考号长度不能超过{}", B2bCustomerPackingEntity.BOX_MARK_REF_NO_MAX_LENGTH);
             }
-            if (CharSequenceUtil.length(box.getLabelingRequirement()) > 200) {
-                throw new ServiceException("贴标要求长度不能超过200");
+            if (CharSequenceUtil.length(box.getLabelingRequirement()) > B2bCustomerPackingEntity.LABELING_REQUIREMENT_MAX_LENGTH) {
+                throw new ServiceException("贴标要求长度不能超过{}", B2bCustomerPackingEntity.LABELING_REQUIREMENT_MAX_LENGTH);
             }
             if (CharSequenceUtil.isNotBlank(box.getLabelSize()) && !B2bPackingLabelSizeEnum.isValid(box.getLabelSize())) {
                 throw new ServiceException("标签尺寸不合法");
@@ -1966,7 +2000,15 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             }
         }
         if (CollUtil.isNotEmpty(qtyErrors)) {
-            throw new ServiceException(String.join("；", qtyErrors));
+            int total = qtyErrors.size();
+            List<String> displayErrors = total > MAX_PACKING_QTY_ERROR_ITEMS
+                    ? qtyErrors.subList(0, MAX_PACKING_QTY_ERROR_ITEMS)
+                    : qtyErrors;
+            String message = String.join("；", displayErrors);
+            if (total > MAX_PACKING_QTY_ERROR_ITEMS) {
+                message = message + CharSequenceUtil.format("；…还有{}个SKU数量不匹配", total - MAX_PACKING_QTY_ERROR_ITEMS);
+            }
+            throw new ServiceException(message);
         }
     }
 
@@ -2004,6 +2046,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return packingDetailList;
     }
 
+    /** 装箱视图组装；单订单百级行数下多次 stream 可接受，合并遍历属后续优化。 */
     private void fillPackingView(B2bThirdDeliveryDTO.ViewDTO viewDTO, B2bThirdDeliveryEntity entity,
                                  List<B2bThirdDeliveryDetailEntity> detailEntityList,
                                  OverseasProviderEntity overseasProvider) {
