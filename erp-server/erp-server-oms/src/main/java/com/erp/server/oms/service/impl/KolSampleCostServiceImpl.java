@@ -166,6 +166,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateCost(KolSampleCostDTO.UpdateCostDTO dto) {
         String date = dto.getDate();
         LocalDate localDate = LocalDateTimeUtil.parseDate(date, DateTimeFormatter.ofPattern("yyyy-MM"));
@@ -521,8 +522,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             }
         }
         if (failedBatchCount > 0) {
-            log.error("PLM SKU成本查询存在失败批次，寄样费用SKU成本可能降级为0，总批次={}, 失败批次={}, sku数量={}",
-                    totalBatchCount, failedBatchCount, skuIdList.size());
+            double failureRate = (double) failedBatchCount / totalBatchCount;
+            log.error("PLM SKU成本查询存在失败批次，寄样费用SKU成本可能降级为0，总批次={}, 失败批次={}, 失败率={}%, sku数量={}",
+                    totalBatchCount, failedBatchCount, String.format("%.2f", failureRate * 100), skuIdList.size());
+            if (failureRate > 0.5D) {
+                throw new ServiceException("PLM SKU成本查询失败率过高(" + String.format("%.2f%%", failureRate * 100) + ")，中断费用更新以防成本核算错误");
+            }
         }
         return skuVOList.stream()
                 .filter(item -> ObjUtil.isNotEmpty(item) && CharSequenceUtil.isNotBlank(item.getSkuId()))

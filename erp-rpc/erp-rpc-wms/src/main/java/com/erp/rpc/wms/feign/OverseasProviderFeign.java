@@ -42,6 +42,9 @@ public interface OverseasProviderFeign {
     @GetMapping("/feign/overseasProvider/listProviderWarehouseBySql")
     List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
 
+    /**
+     * 根据授权ID查询货主编码。返回 null 表示未找到授权信息或未维护货主编码，调用方需按空值处理。
+     */
     @GetMapping("/feign/overseasProvider/getOwnerCodeByAuthId")
     String getOwnerCodeByAuthId(@RequestParam("authId") String authId);
 

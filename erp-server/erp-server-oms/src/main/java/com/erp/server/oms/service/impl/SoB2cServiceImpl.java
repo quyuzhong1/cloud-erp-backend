@@ -3011,7 +3011,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         RLock lock = redissonClient.getLock(lockKey);
         boolean locked = false;
         try {
-            locked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+            locked = lock.tryLock(10, 10, TimeUnit.SECONDS);
             if (!locked) {
                 log.warn("安兔发票PNG缓存写入锁获取失败，本次仅使用内存PNG Base64，临时上传文件将在finally中清理, soCode:{}, pdfAttachId:{}",
                         entity.getCode(), pdfAttachDTO.getId());
