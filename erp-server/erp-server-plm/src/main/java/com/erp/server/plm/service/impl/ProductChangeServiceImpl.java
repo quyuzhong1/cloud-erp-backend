@@ -924,6 +924,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
     }
 
     private void syncDataToWangDianAfterCommit(ProductDetailEntity productDetailEntity) {
+        // approveEnd 带 @Transactional，无事务上下文说明 AOP 失效，抛异常暴露配置问题而非静默写脏补偿。
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             log.error("产品变更审批缺少事务上下文，旺店通同步异常, productDetailId={}", productDetailEntity.getId());
             throw new ServiceException("系统配置异常，请联系管理员");

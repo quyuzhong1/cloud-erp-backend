@@ -5090,7 +5090,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .collect(Collectors.toMap(
                         LogisticsSupplierDTO.AuthChannelViewDTO::getChannelId,
                         LogisticsSupplierDTO.AuthChannelViewDTO::getLogisticsPlatform,
-                        (existing, replacement) -> existing // channelId 业务上唯一，重复时保留首条
+                        (existing, replacement) -> existing // channelId 理论唯一；重复多为授权数据异常，保留首条避免账单查询中断
                 ));
         List<LogisticsBillDTO.LogisticsBillVo> billVos = list.stream()
                 .filter(bill -> StringUtils.isNotBlank(bill.getTrackCode()))
