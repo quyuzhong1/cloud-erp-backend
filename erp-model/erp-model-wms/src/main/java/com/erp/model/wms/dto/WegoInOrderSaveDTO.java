@@ -126,6 +126,11 @@ public class WegoInOrderSaveDTO implements Serializable {
         private Integer boxQty;
 
         /**
+         * 单箱内 SKU 总件数（= products 数组中所有 qty 之和）
+         */
+        private Integer skuQty;
+
+        /**
          * 箱唛，为空时系统自动生成
          */
         private String boxLabel;

@@ -123,6 +123,17 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     /**
      * 构造 WEGO inorder.save 请求 DTO。
+     * <p>
+     * details 字段的传输策略：
+     * <ul>
+     *     <li>新增场景（{@code no} 为空）：完整传 details，由 WEGO 落库为入库单明细；</li>
+     *     <li>修改场景（{@code no} 非空）：<b>不传 details</b>。
+     *         {@code OverseasWarehouseInboundServiceImpl#update} 仅允许修改单据头部信息（如运输方式、跟踪号等），
+     *         ERP 侧入库单明细一旦生成即不可修改，故修改请求中不携带 details 字段，
+     *         避免与 WEGO 服务端已有明细产生冲突或被全量覆盖。</li>
+     * </ul>
+     * 入参 details 在 SDK 层（{@code WegoOpenApiService#saveInorder}）通过
+     * {@code putIfNotNull} 控制，null 时不参与签名、不出现在请求体。
      *
      * @param createInboundReq ERP 统一入库单请求
      * @param no               WEGO 单号；新增传 null，修改传已有单号
@@ -137,6 +148,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
             throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
         }
+        boolean isCreate = CharSequenceUtil.isBlank(no);
         return WegoInOrderSaveDTO.SaveReqDTO.builder()
                 .accessToken(accessToken)
                 .secret(secret)
@@ -151,7 +163,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         createInboundReq.getDeliveryCode()))
                 .referenceNumber(createInboundReq.getReferenceNo())
                 .notes(createInboundReq.getRemark())
-                .details(buildDetails(createInboundReq))
+                .details(isCreate ? buildDetails(createInboundReq) : null)
                 .build();
     }
 
@@ -252,16 +264,18 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<WegoInOrderSaveDTO.Detail> details = new ArrayList<>(boxMap.size());
         boxMap.forEach((boxNo, list) -> {
             WmsCartonSpecDTO.PackingItemDTO first = list.get(0);
+            List<WegoInOrderSaveDTO.Product> products = buildProductsFromPackingList(list);
             WegoInOrderSaveDTO.Detail detail = WegoInOrderSaveDTO.Detail.builder()
                     .inOrderDetailId(null)
                     .boxQty(1)
+                    .skuQty(sumSkuQty(products))
                     .boxLabel(null)
                     .boxLength(toIntegerCm(first.getBoxLength()))
                     .boxWidth(toIntegerCm(first.getBoxWidth()))
                     .boxHeight(toIntegerCm(first.getBoxHeight()))
                     .boxWeight(toIntegerKg(first.getPackageWeight(), first.getWeightUnit()))
                     .deletedFlag(false)
-                    .products(buildProductsFromPackingList(list))
+                    .products(products)
                     .build();
             details.add(detail);
         });
@@ -308,16 +322,18 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<WegoInOrderSaveDTO.Detail> details = new ArrayList<>(boxItemMap.size());
         boxItemMap.forEach((boxNo, itemList) -> {
             ThirdWarehouseCreateInboundReq.Item firstItem = itemList.get(0);
+            List<WegoInOrderSaveDTO.Product> products = buildProductsFromItems(itemList);
             WegoInOrderSaveDTO.Detail detail = WegoInOrderSaveDTO.Detail.builder()
                     .inOrderDetailId(null)
                     .boxQty(1)
+                    .skuQty(sumSkuQty(products))
                     .boxLabel(null)
                     .boxLength(toIntegerCm(firstItem.getBoxLength()))
                     .boxWidth(toIntegerCm(firstItem.getBoxWidth()))
                     .boxHeight(toIntegerCm(firstItem.getBoxHeight()))
                     .boxWeight(toIntegerKg(firstItem.getPackageWeight(), firstItem.getWeightUnit()))
                     .deletedFlag(false)
-                    .products(buildProductsFromItems(itemList))
+                    .products(products)
                     .build();
             details.add(detail);
         });
@@ -341,6 +357,25 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .qty(qty)
                 .build()));
         return products;
+    }
+
+    /**
+     * 汇总单箱 SKU 总件数：对应 WEGO Detail.skuQty 字段。
+     * <p>
+     * 取 products 列表中所有 {@link WegoInOrderSaveDTO.Product#getQty()} 之和，
+     * 空列表或全空 qty 时返回 0。
+     */
+    private Integer sumSkuQty(List<WegoInOrderSaveDTO.Product> products) {
+        if (products == null || products.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (WegoInOrderSaveDTO.Product product : products) {
+            if (product != null && product.getQty() != null) {
+                total += product.getQty();
+            }
+        }
+        return total;
     }
 
     /**

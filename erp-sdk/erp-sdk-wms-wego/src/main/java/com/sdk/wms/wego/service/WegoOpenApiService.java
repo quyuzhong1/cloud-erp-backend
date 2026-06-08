@@ -152,14 +152,23 @@ public class WegoOpenApiService {
         putIfNotNull(bizParams, "referenceNumber", dto.getReferenceNumber());
         putIfNotNull(bizParams, "notes", dto.getNotes());
         if (dto.getDetails() != null) {
-            // 将 POJO 列表转换为 JSONArray (List<JSONObject>)，保证签名时 Map key 可被递归排序
+            // 将 POJO 列表转换为 JSONArray (List<JSONObject>)，让内层 Map 统一为 LinkedHashMap：
+            // 这样后续两次 fastjson 序列化（实际发送 + 签名计算）输出的字段顺序完全一致，
+            // 与服务端 Jackson writeValueAsString(JsonNode) 保留原始顺序的行为对齐。
             bizParams.put("details", JSON.parse(JSON.toJSONString(dto.getDetails())));
         }
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.INORDER_SAVE, bizParams, "保存入库单");
     }
 
     /**
-     * 仅在 value 非 null 时写入 map，避免空字段参与签名导致 sign 不一致。
+     * 仅在 value 非 null 时写入 map。
+     * <p>
+     * 说明：根据 WEGO 官方示例 {@code signRequest} 的实现，服务端对所有非 null 顶层字段
+     * （含空字符串）都参与签名（{@code JsonNode.asText()} 对空串返回 {@code ""}），
+     * 因此客户端只过滤 null，空字符串字段需要保留并参与签名 / 透传，与服务端字段集对齐。
+     * <p>
+     * fastjson 默认不会把 null 字段序列化到请求体，所以这里跳过 null 后，
+     * 「实际发送的字段集」与「签名计算的字段集」严格一致。
      */
     private void putIfNotNull(Map<String, Object> params, String key, Object value) {
         if (value == null) {

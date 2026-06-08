@@ -5,26 +5,34 @@ import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * WEGO 海外仓 API 签名工具。
  * <p>
- * 签名算法（sign_method=md5）：
+ * 签名算法（sign_method=md5），严格按 WEGO 官方示例 {@code signRequest} 实现：
  * <ol>
- *     <li>取出全部请求参数（含公共参数与业务参数），剔除 sign 字段。</li>
- *     <li>按参数名以 ASCII 升序排序；嵌套 Map / 复杂结构体内部同样按 ASCII 升序递归排序。</li>
- *     <li>按 key+value 顺序无分隔符拼接成长串：
+ *     <li>取出全部请求参数（含公共参数与业务参数），剔除 {@code sign} 字段；</li>
+ *     <li>外层按参数名 ASCII 升序排序（{@code TreeMap}）；</li>
+ *     <li>按 key + value 顺序无分隔符拼接成长串：
  *         <ul>
- *             <li>基础类型直接 toString，BigDecimal 使用 toPlainString 避免科学计数法。</li>
- *             <li>复杂结构体（Map / Collection / 数组）转为递归排序后的紧凑 JSON 字符串。</li>
+ *             <li>简单类型直接 {@link Object#toString()}；
+ *                 {@link BigDecimal} 使用 {@link BigDecimal#toPlainString()} 避免科学计数法；</li>
+ *             <li>复杂结构体（{@link Map} / {@link Collection} / 数组）<b>直接序列化为紧凑 JSON 字符串，
+ *                 保留传入对象的原始字段顺序，不做内层 ASCII 排序</b>。
+ *                 服务端示例用 {@code Jackson.writeValueAsString(JsonNode)} 处理，
+ *                 也仅保留请求 JSON 中字段的原始顺序；如果客户端强行对内层做字典序排序，
+ *                 会导致两侧内层 JSON 字符串不同、MD5 不一致；</li>
+ *             <li>空字符串字段也参与签名（{@code key + ""}），与服务端 {@code asText()} 行为一致。</li>
  *         </ul>
  *     </li>
- *     <li>在长串首尾各拼接一次 secret。</li>
- *     <li>对完整字符串以 UTF-8 字节做 MD5，转 32 位大写 16 进制即为 sign。</li>
+ *     <li>在长串首尾各拼接一次 secret；</li>
+ *     <li>对完整字符串以 UTF-8 字节做 MD5，转 32 位大写 16 进制即为 {@code sign}。</li>
  * </ol>
  *
  * <pre>
@@ -109,6 +117,14 @@ public final class WeGoSignUtils {
     /**
      * 拼接 MD5 加密前的待签名长串（不含首尾 secret）。
      * <p>
+     * 跳过规则（与 WEGO 服务端验签保持一致）：
+     * <ul>
+     *     <li>{@code sign} 字段不参与签名；</li>
+     *     <li>value 为 {@code null} 的字段不参与签名（fastjson 默认也不会把 null 字段序列化到请求体，
+     *         与服务端收到的 JSON 字段集保持一致）；</li>
+     *     <li><b>空字符串字段参与签名</b>（拼接 {@code key + ""}），
+     *         与服务端 {@code JsonNode.asText()} 对空串的处理一致。</li>
+     * </ul>
      * 主要用于联调时排查签名失败问题。
      *
      * @param params 请求参数
@@ -132,6 +148,15 @@ public final class WeGoSignUtils {
 
     /**
      * 将 value 转换为参与签名拼接的字符串。
+     * <p>
+     * 处理优先级：
+     * <ol>
+     *     <li>{@link BigDecimal}：使用 {@link BigDecimal#toPlainString()} 避免科学计数法；</li>
+     *     <li>复杂结构（{@link Map} / {@link Collection} / 数组）：使用 fastjson 直接序列化为紧凑 JSON 字符串，
+     *         <b>保留原始字段顺序，不做内层 ASCII 排序</b>，与 WEGO 服务端 Jackson
+     *         {@code writeValueAsString(JsonNode)} 输出对齐；</li>
+     *     <li>其他类型：使用 {@link Object#toString()}。</li>
+     * </ol>
      */
     private static String stringifyValue(Object value) {
         if (value == null) {
@@ -141,46 +166,18 @@ public final class WeGoSignUtils {
             return ((BigDecimal) value).toPlainString();
         }
         if (isComplex(value)) {
-            return JSON.toJSONString(deepSort(value));
+            return JSON.toJSONString(value);
         }
         return value.toString();
     }
 
+    /**
+     * 判断 value 是否为复杂结构（Map / Collection / 数组）。
+     * 复杂结构在签名时整体序列化为紧凑 JSON 字符串。
+     */
     private static boolean isComplex(Object value) {
         return value instanceof Map
                 || value instanceof Collection
                 || (value != null && value.getClass().isArray());
-    }
-
-    /**
-     * 深度排序：Map 转 TreeMap 保证 key 升序；List/数组保持原始顺序，仅递归处理元素。
-     */
-    @SuppressWarnings("unchecked")
-    private static Object deepSort(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Map) {
-            TreeMap<String, Object> sorted = new TreeMap<>();
-            ((Map<Object, Object>) value).forEach((k, v) -> sorted.put(String.valueOf(k), deepSort(v)));
-            return sorted;
-        }
-        if (value instanceof Collection) {
-            Collection<?> coll = (Collection<?>) value;
-            List<Object> list = new ArrayList<>(coll.size());
-            for (Object item : coll) {
-                list.add(deepSort(item));
-            }
-            return list;
-        }
-        if (value.getClass().isArray()) {
-            int len = Array.getLength(value);
-            List<Object> list = new ArrayList<>(len);
-            for (int i = 0; i < len; i++) {
-                list.add(deepSort(Array.get(value, i)));
-            }
-            return list;
-        }
-        return value;
     }
 }
