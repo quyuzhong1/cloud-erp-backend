@@ -79,7 +79,6 @@ public class ImportHistoryRecordDTO implements Serializable {
         /**
          * 业务类型，自发货费用/尾程费用
          */
-        @NotBlank(message = "业务类型不能为空")
         private String businessType;
 
     }
