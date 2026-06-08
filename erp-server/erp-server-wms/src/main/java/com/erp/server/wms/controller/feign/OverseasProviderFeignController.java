@@ -1,5 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
@@ -70,8 +72,11 @@ public class OverseasProviderFeignController {
     }
 
     @GetMapping("/getOwnerCodeByAuthId")
-    public String getOwnerCodeByAuthId(@RequestParam("authId") String authId) {
-        return overseasProviderService.getOwnerCodeByAuthId(authId);
+    public ApiResult<String> getOwnerCodeByAuthId(@RequestParam("authId") String authId) {
+        if (CharSequenceUtil.isBlank(authId)) {
+            return ApiResult.error("authId不能为空");
+        }
+        return ApiResult.success(overseasProviderService.getOwnerCodeByAuthId(authId));
     }
 
     @PostMapping("/refreshToken")

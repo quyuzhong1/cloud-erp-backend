@@ -510,23 +510,12 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             return new HashMap<>();
         }
         List<SkuVO> skuVOList = new ArrayList<>();
-        int totalBatchCount = 0;
-        int failedBatchCount = 0;
         for (List<String> batchSkuIdList : Lists.partition(skuIdList, PLM_SKU_COST_BATCH_SIZE)) {
-            totalBatchCount++;
             try {
                 skuVOList.addAll(ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(batchSkuIdList), CollUtil.newArrayList()));
             } catch (Exception e) {
-                failedBatchCount++;
-                log.warn("PLM SKU成本批量查询失败，本批降级为空, skuIds={}", batchSkuIdList, e);
-            }
-        }
-        if (failedBatchCount > 0) {
-            double failureRate = (double) failedBatchCount / totalBatchCount;
-            log.error("PLM SKU成本查询存在失败批次，寄样费用SKU成本可能降级为0，总批次={}, 失败批次={}, 失败率={}%, sku数量={}",
-                    totalBatchCount, failedBatchCount, String.format("%.2f", failureRate * 100), skuIdList.size());
-            if (failureRate > 0.5D) {
-                throw new ServiceException("PLM SKU成本查询失败率过高(" + String.format("%.2f%%", failureRate * 100) + ")，中断费用更新以防成本核算错误");
+                log.error("PLM SKU成本批量查询失败，中断寄样费用更新, skuIds={}", batchSkuIdList, e);
+                throw new ServiceException("PLM SKU成本查询失败，中断费用更新以防成本核算错误");
             }
         }
         return skuVOList.stream()
