@@ -232,6 +232,7 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
                 plmPushMsgEntity.setPushData(JSON.toJSONString(pushData));
                 plmPushMsgService.save(plmPushMsgEntity);
             } catch (Exception ex) {
+                // 补偿写入失败仅 error 日志；本地文件/告警兜底不在本 MR 范围。
                 log.error("sendMTask补偿消息写入失败, sourceId={}", task.getSourceId(), ex);
             }
         }

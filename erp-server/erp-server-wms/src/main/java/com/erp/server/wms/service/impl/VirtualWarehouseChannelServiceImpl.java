@@ -587,6 +587,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
                 .map(com.erp.model.wms.entity.DictBasicEntity::getName)
                 .findFirst()
+                // 字典未配置时回退 code，可读性较差；友好名称依赖字典维护。
                 .orElse(b2bForeignPlatform);
         Set<String> msgSet = new LinkedHashSet<>();
         for (VirtualWarehouseDTO.B2bForeignConflictDTO conflict : conflictList) {

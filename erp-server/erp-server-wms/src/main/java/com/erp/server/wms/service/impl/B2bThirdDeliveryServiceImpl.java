@@ -1172,7 +1172,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     }
 
     private boolean isValidAttachmentId(String attachmentId) {
-        // 历史页面可能把空附件ID序列化成字符串 "null"，这里保留兼容兜底。
+        // 历史页面可能把空附件ID序列化成字符串 "null"；前端序列化修复后可视情况移除。
         return StrUtil.isNotBlank(attachmentId) && !"null".equalsIgnoreCase(attachmentId.trim());
     }
 
@@ -1673,7 +1673,8 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private static final long MAX_PACKING_IMPORT_FILE_SIZE = 5L * 1024 * 1024;
 
     /**
-     * 仅解析 Excel 并回填页面，不落库、不写库，无需幂等；行数上限见 {@link B2bCustomerPackingExcelListener}（最多 5000 行）。
+     * 仅解析 Excel 并回填页面，不落库；由 Controller 独立调用，不在 add/update 的 @GlobalTransactional 内。
+     * 行数上限见 {@link B2bCustomerPackingExcelListener}（最多 5000 行）。
      */
     @Override
     public B2bCustomerPackingDTO.ImportDTO importPackingDetail(String soId, MultipartFile excelFile) {
@@ -1722,6 +1723,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                 log.error("上传装箱明细导入错误文件失败", e);
                 throw new ServiceException("生成导入错误文件失败，请联系管理员");
             } finally {
+                // 删除失败仅打日志；依赖 OS 回收，定时清理任务不在本 MR 范围。
                 if (file != null && file.exists()) {
                     try {
                         Files.deleteIfExists(file.toPath());
@@ -1949,14 +1951,14 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             if (B2bPackingTypeEnum.PRE_STAGED_BOX.getCode().equals(packingType) && CharSequenceUtil.isBlank(box.getBoxMarkNo())) {
                 throw new ServiceException("装箱明细序号【{}】箱唛号不能为空", box.getBoxSeq());
             }
-            if (CharSequenceUtil.length(box.getBoxMarkNo()) > 50) {
-                throw new ServiceException("箱唛号长度不能超过50");
+            if (CharSequenceUtil.length(box.getBoxMarkNo()) > B2bCustomerPackingEntity.BOX_MARK_NO_MAX_LENGTH) {
+                throw new ServiceException("箱唛号长度不能超过{}", B2bCustomerPackingEntity.BOX_MARK_NO_MAX_LENGTH);
             }
-            if (CharSequenceUtil.length(box.getBoxMarkRefNo()) > 50) {
-                throw new ServiceException("箱唛参考号长度不能超过50");
+            if (CharSequenceUtil.length(box.getBoxMarkRefNo()) > B2bCustomerPackingEntity.BOX_MARK_REF_NO_MAX_LENGTH) {
+                throw new ServiceException("箱唛参考号长度不能超过{}", B2bCustomerPackingEntity.BOX_MARK_REF_NO_MAX_LENGTH);
             }
-            if (CharSequenceUtil.length(box.getLabelingRequirement()) > 200) {
-                throw new ServiceException("贴标要求长度不能超过200");
+            if (CharSequenceUtil.length(box.getLabelingRequirement()) > B2bCustomerPackingEntity.LABELING_REQUIREMENT_MAX_LENGTH) {
+                throw new ServiceException("贴标要求长度不能超过{}", B2bCustomerPackingEntity.LABELING_REQUIREMENT_MAX_LENGTH);
             }
             if (CharSequenceUtil.isNotBlank(box.getLabelSize()) && !B2bPackingLabelSizeEnum.isValid(box.getLabelSize())) {
                 throw new ServiceException("标签尺寸不合法");
@@ -2026,6 +2028,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         return packingDetailList;
     }
 
+    /** 装箱视图组装；单订单百级行数下多次 stream 可接受，合并遍历属后续优化。 */
     private void fillPackingView(B2bThirdDeliveryDTO.ViewDTO viewDTO, B2bThirdDeliveryEntity entity,
                                  List<B2bThirdDeliveryDetailEntity> detailEntityList,
                                  OverseasProviderEntity overseasProvider) {

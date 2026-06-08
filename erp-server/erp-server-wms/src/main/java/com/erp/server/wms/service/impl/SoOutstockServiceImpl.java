@@ -3178,6 +3178,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> outstockIds = outstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         List<SoOutstockDetailEntity> outstockDetailList = soOutstockDetailService.listByMainIds(outstockIds);
         if (CollectionUtils.isEmpty(outstockDetailList)) {
+            // 头有明细无视为脏数据：抛异常阻断，优先避免重复生成出库单（与仅 warn 返回空列表相比）。
             log.error("平台仓出库单头存在但明细为空，数据不一致, soB2cId={}, outstockIds={}", soB2cId, outstockIds);
             throw new ServiceException("平台仓出库单数据异常（订单ID:{}），请联系管理员排查", soB2cId);
         }

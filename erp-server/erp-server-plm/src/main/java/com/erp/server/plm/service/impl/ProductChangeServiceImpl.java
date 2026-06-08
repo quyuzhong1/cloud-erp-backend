@@ -959,6 +959,7 @@ public class ProductChangeServiceImpl extends SuperServiceImpl<ProductChangeMapp
                     action.run();
                 } catch (Exception e) {
                     log.error("事务提交后回调执行失败", e);
+                    // 回调内 syncWangDianProductDetailWithFallback 已有补偿；告警通道不在本 MR 范围。
                 }
             }
         });
