@@ -77,6 +77,8 @@ public enum ApiError implements Serializable {
     QUERY_BETWEEN_ERROR(704, "介于条件需要填起始时间和开始时间"),
     QUERY_ILLEGAL_DATE_FORMAT(705, "非法日期格式"),
     QUERY_NOT_EXTEND_CLASS(706,"扩展字段没有配置处理类"),
+    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(707,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
+    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(708,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
 
     /**
      * COMMON 从1000 - 2000 开始 与业务域无直接关联提示
@@ -1972,8 +1974,6 @@ public enum ApiError implements Serializable {
     QC_APPLICATION_SOURCE_PO_NOT_OPTION(16008,"采购订单/自建质检申请单不允许操作"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_DISAPPROVE(16009,"质检申请单已下推质检通知单，不支持反审核"),
     QC_APPLICATION_PUSH_QC_NOTICE_NOT_PUSH(16010,"质检申请单已下推质检通知单，不支持再次下推"),
-    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(16011,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
-    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(16012,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
     CFG_QC_USER_NOT_EXIST(16011,"未找到质检员配置"),
     CFG_QC_USER_SUPPLIER_DUPLICATE(16012,"供应商【{0}】仓库【{1}】已配置质检员，不允许重复添加"),
     CFG_QC_USER_SUPPLIER_REQUIRED(16013,"供应商编码不能为空"),
