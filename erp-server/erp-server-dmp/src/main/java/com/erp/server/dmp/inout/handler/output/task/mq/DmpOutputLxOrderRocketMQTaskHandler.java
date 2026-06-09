@@ -298,7 +298,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         detailDTO.setPlatformSkuNo(item.getPlatformSku());
         // 平台产品ID
         detailDTO.setPlatformSkuId(item.getPlatformSkuId());
-
+        detailDTO.setPlatformSubSoCode(item.getPlatformSubSoCode());
         // 平台产品id
         detailDTO.setPlatformSpuNo(item.getPlatformSpuNo());
         // 库存sku编号

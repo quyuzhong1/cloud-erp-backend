@@ -568,8 +568,8 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         
         if (CollUtil.isNotEmpty(assetCategoryList)) {
             // 调用字典服务获取资产类别名称
-            List<DictBasicDTO.DropDownDTO> assetCategory = dictBasicService.listByType("assetCategory", null);
-            assetCategoryMap=assetCategory.stream().collect(Collectors.toMap(DictBasicDTO.DropDownDTO::getCode, DictBasicDTO.DropDownDTO::getName,(v1,v2)->v1));
+            List<DictBasicEntity> assetCategory = dictBasicService.getByKey("assetCategory");
+            assetCategoryMap=assetCategory.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(v1,v2)->v1));
         }
         
         final Map<String, String> finalAssetCategoryMap = assetCategoryMap;
@@ -673,10 +673,10 @@ public class AssetProfitLossServiceImpl extends SuperServiceImpl<AssetProfitLoss
         
         // 获取资产类别字典
         Map<String, String> assetCategoryMap = new HashMap<>();
-        List<DictBasicDTO.DropDownDTO> assetCategoryList = dictBasicService.listByType("assetCategory","");
+        List<DictBasicEntity> assetCategoryList = dictBasicService.getByKey("assetCategory");
         if (CollUtil.isNotEmpty(assetCategoryList)) {
             assetCategoryMap = assetCategoryList.stream()
-                    .collect(Collectors.toMap(DictBasicDTO.DropDownDTO::getCode, DictBasicDTO.DropDownDTO::getName, (v1, v2) -> v1));
+                    .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (v1, v2) -> v1));
         }
         
         // 获取所有实际资产位置ID

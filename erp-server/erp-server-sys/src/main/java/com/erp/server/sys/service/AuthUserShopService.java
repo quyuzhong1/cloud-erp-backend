@@ -1,9 +1,9 @@
 package com.erp.server.sys.service;
+
+import com.common.business.service.SuperService;
+import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserShopEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.AuthUserShopDTO;
 
 import java.util.List;
 
@@ -18,25 +18,6 @@ import java.util.List;
 public interface AuthUserShopService extends SuperService<AuthUserShopEntity> {
 
     /**
-    * 新增
-    * @author zdy
-    * @date: 2025-02-27
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(AuthUserShopDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author zdy
-    * @date: 2025-02-27
-    * @param dto
-    * @return
-    */
-    Boolean update(AuthUserShopDTO.UpdateDTO dto);
-
-
-    /**
      * 根据用户获取店铺权限
      * @param userId
      * @return
@@ -48,11 +29,6 @@ public interface AuthUserShopService extends SuperService<AuthUserShopEntity> {
      * @return
      */
     String getShopPermissionSql(String shopTableField , String dynamicDataSource);
-
-    /**
-     * 同步权限数据
-     */
-    void initShopDataOmsToSys();
 
     /**
      * 获取用户权限列表

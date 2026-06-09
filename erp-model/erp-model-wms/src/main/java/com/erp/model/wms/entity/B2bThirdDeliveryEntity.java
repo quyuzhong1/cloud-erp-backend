@@ -209,6 +209,18 @@ public class B2bThirdDeliveryEntity extends BaseEntity<B2bThirdDeliveryEntity> {
     @TableField("address3")
     private String address3;
 
+    /**
+     * 装箱类型 B2bPackingTypeEnum
+     */
+    @TableField("packing_type")
+    private String packingType;
+
+    /**
+     * 每箱张贴货件标签数 0/1/2/4
+     */
+    @TableField("labels_per_box")
+    private Integer labelsPerBox;
+
     public static final String CODE = "code";
 
     public static final String STATUS = "status";

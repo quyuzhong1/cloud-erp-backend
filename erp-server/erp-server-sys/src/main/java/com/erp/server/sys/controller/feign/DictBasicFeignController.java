@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.DictBasicAllDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.entity.DictBasicEntity;
 import com.erp.server.sys.service.DictBasicAllService;
 import com.erp.server.sys.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
@@ -28,14 +29,4 @@ public class DictBasicFeignController extends BaseController {
     private DictBasicService dictBasicService;
     @Resource
     private DictBasicAllService dictBasicAllService;
-
-    /**
-     * 获取字典数据 根据属性
-     * @param type
-     * @return
-     */
-    @GetMapping("/getByType")
-    public List<DictBasicDTO.ViewDTO> getByType(@RequestParam(value = "type") String type) {
-        return  dictBasicService.listByType(type);
-    }
 }

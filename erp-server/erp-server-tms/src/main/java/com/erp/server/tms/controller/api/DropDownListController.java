@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.server.tms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,7 +53,7 @@ public class DropDownListController extends BaseController {
      */
     @GetMapping("/dict/list")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(key);
+        List<DictBasicEntity> list = dictBasicService.getByKey(key);
         List<BaseDropDownDTO.CommonDTO> result = list.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getCode(), x.getName()))
                 .collect(Collectors.toList());
