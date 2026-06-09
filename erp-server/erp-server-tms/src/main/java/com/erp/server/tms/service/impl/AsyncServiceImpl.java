@@ -8,6 +8,7 @@ import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.service.*;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -58,9 +59,9 @@ public class AsyncServiceImpl implements AsyncService {
             ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
             chanelQueryVO.setAuthMap(authMap);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
-            if (channels.isSuccess()) {
+            if (channels.isSuccess() && CollectionUtils.isNotEmpty(channels.getData())) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
-                    if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform)){
+                    if (isAliExpressLogisticsPlatform(logisticsPlatform)){
                         logisticsSaleChannelEntity.setServicePlatform("tms");
                     }
                     logisticsSaleChannelService.saveOrUpdateSaleChannel(logisticsSaleChannelEntity);
@@ -88,5 +89,10 @@ public class AsyncServiceImpl implements AsyncService {
         } else {
             log.error("同步中转物流商渠道异常：{}", shippingMethodList.getMsg());
         }
+    }
+
+    private boolean isAliExpressLogisticsPlatform(String logisticsPlatform) {
+        return LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equals(logisticsPlatform);
     }
 }

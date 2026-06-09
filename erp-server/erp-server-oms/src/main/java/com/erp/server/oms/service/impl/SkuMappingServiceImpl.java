@@ -505,7 +505,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (skuMapping.getProductSkuId().equalsIgnoreCase(productSkuId) && dto.getEffectiveTime().equals(skuMapping.getEffectiveTime())) {
             // 检查仓库发货配置
             skuMappingExtendService.checkAndSave(skuMapping, dto.getExtendList());
-            if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(skuMapping.getDictPlatform())){
+            if(isAliExpressApiPlatform(skuMapping.getDictPlatform())){
                 //更新发货设置信息
                 List<ListingInfoEntity> listingInfoEntities = listingInfoService.lambdaQuery()
                         .eq(ListingInfoEntity::getPlatformSkuNo,listing.getPlatformSkuNo())
@@ -551,7 +551,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 检查仓库发货配置
         skuMappingExtendService.checkAndSave(addSkuMaping, dto.getExtendList());
         //速卖通相同店铺，skuNo,平台产品ID 有多个listingInfo, 需要同步映射关系
-        if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(skuMapping.getDictPlatform())){
+        if(isAliExpressApiPlatform(skuMapping.getDictPlatform())){
             listingInfoService.handleAliExpress(addSkuMaping,skuVOList.get(0),listing);
         }
 
@@ -1563,7 +1563,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return mappingDTOList.get(0);
         }
         // 美客多同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-        if (StringUtils.isBlank(platformSpuNo) && (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+        if (StringUtils.isBlank(platformSpuNo) && (isAliExpressApiPlatform(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dictPlatform)
@@ -1658,7 +1658,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             ServiceException.runError("参数异常:平台sku和平台spu都为空");
         }
 
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+        if (isAliExpressApiPlatform(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
@@ -1680,7 +1680,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+        if (isAliExpressApiPlatform(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
@@ -2549,5 +2549,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 .eq(SkuMappingEntity::getIsExpire,true)
                 .orderByDesc(SkuMappingEntity::getEffectiveTime)
                 .list();
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 }

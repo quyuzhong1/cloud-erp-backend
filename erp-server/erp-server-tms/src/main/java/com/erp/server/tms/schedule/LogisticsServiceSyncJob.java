@@ -17,9 +17,11 @@ import com.erp.server.tms.service.LogisticsService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +60,18 @@ public class LogisticsServiceSyncJob {
      */
     @XxlJob("syncLogisticsService")
     public void syncLogisticsService() {
-        String logisticsPlatform = LogisticsPlatformEnum.ALI_EXPRESS.getCode();
+        List<String> logisticsPlatformList = Arrays.asList(
+                LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode()
+        );
+        for (String logisticsPlatform : logisticsPlatformList) {
+            syncLogisticsService(logisticsPlatform);
+        }
+    }
+
+    private void syncLogisticsService(String logisticsPlatform) {
         ApiResult<List<ShopAuthEntity>> shopResult = shopInfoFeign.getAuthShopByPlatformType(logisticsPlatform);
-        if (shopResult.isSuccess()) {
+        if (Objects.nonNull(shopResult) && shopResult.isSuccess()) {
             List<ShopAuthEntity> authList = shopResult.getData();
             if (CollectionUtils.isEmpty(authList)) {
                 return;
@@ -82,14 +93,18 @@ public class LogisticsServiceSyncJob {
                     map.put("logisticsPlatform", logisticsPlatform);
                     map.put("clientSecret", cfgAppClient.getClientSecret());
                     map.put("clientId", cfgAppClient.getClientId());
-                    map.put("token", authEntity.getToken());
+                    map.put("token", getShopToken(authEntity));
+                    map.put("url", cfgAppClient.getUrl());
                     ApiResult<List<LogisticsServiceResponseVO>> apiResult = logisticsService.listLogisticsService(map);
-                    if (apiResult.isSuccess()) {
+                    if (apiResult.isSuccess() && CollectionUtils.isNotEmpty(apiResult.getData())) {
                         List<LogisticsServiceResponseVO> responseList = apiResult.getData();
                         List<LogisticsSaleChannelEntity> dbList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform, "oms");
                         List<String> codeList = dbList.stream().map(LogisticsSaleChannelEntity::getCode).collect(Collectors.toList());
                         List<LogisticsServiceResponseVO> needList = responseList.stream().
                                 filter(r -> !codeList.contains(r.getLogisticsType())).collect(Collectors.toList());
+                        if (CollectionUtils.isEmpty(needList)) {
+                            continue;
+                        }
                         List<LogisticsSaleChannelEntity> addList = LogisticsServiceConverter.INSTANCE.convertLogisticsService(needList);
                         addList.forEach(obj -> {
                             obj.setServicePlatform("oms");
@@ -102,6 +117,15 @@ public class LogisticsServiceSyncJob {
                 }
             }
         }
+    }
 
+    private String getShopToken(ShopAuthEntity authEntity) {
+        if (Objects.isNull(authEntity)) {
+            return "";
+        }
+        if (StringUtils.isNotBlank(authEntity.getAccessToken())) {
+            return authEntity.getAccessToken();
+        }
+        return authEntity.getToken();
     }
 }

@@ -30,6 +30,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -149,10 +150,7 @@ public class PullAliExpressJob {
             return ReturnT.SUCCESS;
         }
         // 根据状态查询
-        ShopInfoDTO.ListParamDTO conditionDTO = new ShopInfoDTO.ListParamDTO();
-        conditionDTO.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
-        conditionDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        List<ShopInfoEntity> list = shopInfoFeign.listByParams(conditionDTO);
+        List<ShopInfoEntity> list = listAuthorizedAliExpressShops();
 
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
@@ -202,7 +200,7 @@ public class PullAliExpressJob {
             return ReturnT.SUCCESS;
         }
         // 根据状态查询
-        List<ShopInfoEntity> list = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS.getCode(), null));
+        List<ShopInfoEntity> list = listAuthorizedAliExpressShops();
 
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
@@ -251,7 +249,7 @@ public class PullAliExpressJob {
             return ReturnT.SUCCESS;
         }
         // 根据状态查询
-        List<ShopInfoEntity> list = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS.getCode(), null));
+        List<ShopInfoEntity> list = listAuthorizedAliExpressShops();
 
         // 根据groupId分组店铺id
         Map<String, List<PlatformApiTaskEntity>> taskGroupMap = taskList.stream().collect(Collectors.groupingBy(PlatformApiTaskEntity::getGroupId));
@@ -277,5 +275,18 @@ public class PullAliExpressJob {
         }
         XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务结束");
         return ReturnT.SUCCESS;
+    }
+
+    private List<ShopInfoEntity> listAuthorizedAliExpressShops() {
+        List<ShopInfoEntity> shopList = new ArrayList<>();
+        List<ShopInfoEntity> aliExpressShopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS.getCode(), null));
+        if (CollectionUtils.isNotEmpty(aliExpressShopList)) {
+            shopList.addAll(aliExpressShopList);
+        }
+        List<ShopInfoEntity> overseasManagedShopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode(), null));
+        if (CollectionUtils.isNotEmpty(overseasManagedShopList)) {
+            shopList.addAll(overseasManagedShopList);
+        }
+        return shopList;
     }
 }

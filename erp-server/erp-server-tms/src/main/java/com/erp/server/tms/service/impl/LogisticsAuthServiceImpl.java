@@ -400,6 +400,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
         if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
                 || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)

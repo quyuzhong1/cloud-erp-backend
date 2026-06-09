@@ -250,6 +250,26 @@ public class AliExpressShipperService {
         return response;
     }
 
+    public IopResponse getOverseasManagedSellerAddress(Map<String, String> authMap,
+                                                       String addressType,
+                                                       String locale) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.asf.local.supply.seller.address.get");
+        request.addApiParameter("addressType", addressType);
+        request.addApiParameter("locale", locale);
+        request.addApiParameter("simplify", "true");
+        return client.execute(request, token, Protocol.TOP);
+    }
+
     public IopResponse getLogisticsService(Map<String, String> authMap, QueryLogisticsRequest queryLogisticsRequest) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
@@ -268,6 +288,45 @@ public class AliExpressShipperService {
         IopResponse response = client.execute(request, token, Protocol.TOP);
         System.out.println(response.getBody());
         return response;
+    }
+
+    public IopResponse getGlobalSellerRelation(Map<String, String> authMap, String businessType) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("global.seller.relation.query");
+        request.addApiParameter("business_type", businessType);
+        request.addApiParameter("simplify", "true");
+        return client.execute(request, token, Protocol.TOP);
+    }
+
+    public IopResponse getOverseasManagedShippingService(Map<String, String> authMap,
+                                                         String tradeOrderId,
+                                                         String tradeOrderItemIdList,
+                                                         String sellerId) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.asf.local.supply.shipping.service.get");
+        request.addApiParameter("tradeOrderId", tradeOrderId);
+        request.addApiParameter("tradeOrderItemIdList", tradeOrderItemIdList);
+        request.addApiParameter("sellerId", sellerId);
+        request.addApiParameter("simplify", "true");
+        return client.execute(request, token, Protocol.TOP);
     }
 
     public IopResponse getSellerInfo(Map<String, String> authMap) throws ApiException {

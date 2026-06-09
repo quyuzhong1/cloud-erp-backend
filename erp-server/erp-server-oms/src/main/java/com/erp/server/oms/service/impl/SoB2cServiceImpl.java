@@ -702,7 +702,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         bean.checkProductRegistrationAndUpdate(id, "");
 
         //速卖通平台仓订单不走任何规则
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
+        if (isAliExpressApiPlatform(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
             return add.getId();
         }
 
@@ -967,6 +967,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<DictBasicEntity> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
         //是否包含对应的销售平台
         return dtoList.stream().map(DictBasicEntity::getValue).collect(Collectors.toList()).contains(platform);
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 
     private CustomerB2CDTO.AddDTO buildB2cCustomerAddDTO(SoB2cDTO.AddDTO addDTO, String id) {
@@ -2487,9 +2491,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setLogisticType(soB2cLogisticsEntity.getLogisticType());
         result.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         result.setOrderId(id);
-        String aliExpress = PlatformDictEnum.ALI_EXPRESS.getCode();
         String logisticsPlatform = auth.getLogisticsPlatform();
-        Boolean isAliExpress = aliExpress.equals(logisticsPlatform);
+        Boolean isAliExpress = isAliExpressApiPlatform(logisticsPlatform);
         String shopId = entity.getShopId();
         //扩展字段
         String extendData = entity.getExtendData();
@@ -2843,7 +2846,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.SO_B2C_LOGISTICS_CHANNEL_AND_NO_REQUIRED, soCode);
             }
         }
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform()) || PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) || PlatformDictEnum.SHOPIFY.getCode().equals(entity.getDictPlatform()) || PlatformDictEnum.AMAZON.getCode().equals(entity.getDictPlatform())) {
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform()) || isAliExpressApiPlatform(entity.getDictPlatform()) || PlatformDictEnum.SHOPIFY.getCode().equals(entity.getDictPlatform()) || PlatformDictEnum.AMAZON.getCode().equals(entity.getDictPlatform())) {
             //物流映射列表
             List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingFeign.listByChannelIdAndType(logisticsChannelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
             if (CollUtil.isEmpty(mappingList)) {
@@ -7564,7 +7567,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //速卖通
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            if (isAliExpressApiPlatform(dto.getDictPlatform())) {
                 if ("IN_CANCEL".equals(platformOrderStatus)
                         || "IN_FROZEN".equals(platformOrderStatus)
                         || "RISK_CONTROL".equals(platformOrderStatus)) {
@@ -7791,7 +7794,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
         listingInfoParamDTO.setPlatformSkuNoList(Collections.singletonList(detailEntity.getPlatformSkuNo()));
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
+        if (isAliExpressApiPlatform(entity.getDictPlatform()) ||
                 PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
                 PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
                 PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform()) ||
@@ -9624,7 +9627,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> platformSkuList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).collect(Collectors.toList());
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())
+        if (isAliExpressApiPlatform(entity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform())
@@ -10873,7 +10876,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
         String country = Objects.nonNull(receiverEntity) ? Objects.nonNull(receiverEntity.getCountry()) ? receiverEntity.getCountry() : "" : "";
         //判断是否是速卖通  来源平台
-        Boolean isAliExpress = PlatformDictEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform);
+        Boolean isAliExpress = isAliExpressApiPlatform(logisticsPlatform);
 
         List<LogisticsDeclareProductDTO> declareProductDTOS = new ArrayList<>();
         List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
@@ -12236,7 +12239,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             } else {
                 errorMsgList.add("订单金额包含非数字字符");
             }
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())) {
+            if (isAliExpressApiPlatform(soB2cEntity.getDictPlatform())) {
                 // 速卖通手工订单税后金额=订单金额
                 soB2cEntity.setAfterTaxAmount(soB2cEntity.getAmount());
             } else {
@@ -12464,7 +12467,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(soB2cEntity.getId(), "");
                     //速卖通平台仓订单不走任何规则
-                    if (!(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) && soB2cEntity.hasPlatformWarehouseOrder())) {
+                    if (!(isAliExpressApiPlatform(soB2cEntity.getDictPlatform()) && soB2cEntity.hasPlatformWarehouseOrder())) {
                         SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(soB2cEntity.getId());
                         //匹配成功
                         Boolean ruleMatch = orderRuleResult.getIsRuleMatch();

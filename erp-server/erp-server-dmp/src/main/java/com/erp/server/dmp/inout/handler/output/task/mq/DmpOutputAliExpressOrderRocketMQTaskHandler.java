@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.business.dto.*;
+import com.common.business.wrapper.FeignQuery;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -27,6 +28,7 @@ import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -47,6 +49,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 		Map<String, String> dmpSoOutstockIdMap = new HashMap<>();
 		Map<String, List<DmpSoOutstockDetailEntity>> dmpSoOutstockDetailEntityMap = new HashMap<>();
 		Map<String, List<DmpLogisticInfoEntity>> dmpLogisticInfoEntityMap = new HashMap<>();
+		Set<String> shopIdSet = new HashSet<>();
 		
 		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
 			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
@@ -56,6 +59,9 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 					for(BaseEntity v : value) {
 						DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
 						dmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
+						if (StringUtils.isNotBlank(dmpSoInfoEntity.getShopId())) {
+							shopIdSet.add(dmpSoInfoEntity.getShopId());
+						}
 					}
 				}else if("dmp_so_detail".equals(storageName)) {
 					for(BaseEntity v : value) {
@@ -116,6 +122,8 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 				}
 			}
 		}
+
+		Map<String, String> shopPlatformMap = getShopPlatformMap(shopIdSet);
 		
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
 		Set<String> changeIds = new HashSet<>(); 
@@ -171,7 +179,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 				}
 			}
 			PlatformOrderDTO orderDTO = this.convert(dmpSoInfoEntityMap.get(changId), dmpSoDetailEntityMap.get(changId) 
-					, dmpSoReceiverEntityMap.get(changId) , dmpSoOutstockEntityList , dmpSoOutstockDetailEntityList , dmpLogisticInfoEntityMap.get(changId) , cfgOutputId);
+					, dmpSoReceiverEntityMap.get(changId) , dmpSoOutstockEntityList , dmpSoOutstockDetailEntityList , dmpLogisticInfoEntityMap.get(changId) , cfgOutputId, shopPlatformMap);
 			if(orderDTO != null) {
 				map.put(changId, JSON.toJSONString(orderDTO));
 			}
@@ -182,8 +190,8 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 	/**
      * 解析订单数据
      **/
-    public PlatformOrderDTO convert(DmpSoInfoEntity dmpSoInfoEntity , List<DmpSoDetailEntity> dmpSoDetailEntityList , List<DmpSoReceiverEntity> dmpSoReceiverEntityList
-    		, List<DmpSoOutstockEntity> dmpSoOutstockEntityList , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , List<DmpLogisticInfoEntity> dmpLogisticInfoEntityList , String cfgOutputId) {
+	public PlatformOrderDTO convert(DmpSoInfoEntity dmpSoInfoEntity , List<DmpSoDetailEntity> dmpSoDetailEntityList , List<DmpSoReceiverEntity> dmpSoReceiverEntityList
+			, List<DmpSoOutstockEntity> dmpSoOutstockEntityList , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , List<DmpLogisticInfoEntity> dmpLogisticInfoEntityList , String cfgOutputId, Map<String, String> shopPlatformMap) {
     	if(this.validateDataBlack(dmpSoInfoEntity, cfgOutputId)) {
     		return null;
     	}
@@ -197,7 +205,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 		orderDTO.setPlatformOrderCreateTime(platformCreateTime);
 		String thirdCode = dmpSoInfoEntity.getThirdCode();
 		orderDTO.setPlatformCode(thirdCode);
-		orderDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+		orderDTO.setDictPlatform(getOrderPlatform(dmpSoInfoEntity, shopPlatformMap));
 		orderDTO.setShopId(dmpSoInfoEntity.getShopId());
 		
 		orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
@@ -434,8 +442,30 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         financeDTO.setShippingCost(shippingAmount);
         financeDTO.setLogisticsCost(shippingAmount);
         orderDTO.setFinances(financeDTO);
-        return orderDTO;
-    }
+		return orderDTO;
+	}
+
+	private Map<String, String> getShopPlatformMap(Set<String> shopIdSet) {
+		if (CollectionUtils.isEmpty(shopIdSet)) {
+			return new HashMap<>();
+		}
+		List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdSet);
+		if (CollectionUtils.isEmpty(shopList)) {
+			return new HashMap<>();
+		}
+		return shopList.stream()
+				.filter(shop -> StringUtils.isNotBlank(shop.getId()))
+				.filter(shop -> StringUtils.isNotBlank(shop.getDictPlatform()))
+				.collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getDictPlatform, (oldValue, newValue) -> oldValue));
+	}
+
+	private String getOrderPlatform(DmpSoInfoEntity dmpSoInfoEntity, Map<String, String> shopPlatformMap) {
+		String shopPlatform = shopPlatformMap.get(dmpSoInfoEntity.getShopId());
+		if (StringUtils.isNotBlank(shopPlatform)) {
+			return shopPlatform;
+		}
+		return PlatformDictEnum.ALI_EXPRESS.getCode();
+	}
 
     @Override
     protected List<String> getSourceCodeKeys() {

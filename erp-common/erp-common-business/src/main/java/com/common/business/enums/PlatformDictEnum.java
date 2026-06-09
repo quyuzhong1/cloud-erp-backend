@@ -22,6 +22,7 @@ public enum PlatformDictEnum implements EnumMessage {
     AMAZON("Amazon", "Amazon", "亚马逊", "100"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004"),
     ALI_EXPRESS("AliExpress", "速卖通", "速卖通", "002"),
+    ALI_EXPRESS_OVERSEAS_MANAGED("AliExpressOverseasManaged", "速卖通海外托管", "速卖通海外托管", "002"),
     SHOPEE("Shopee", "Shopee", "虾皮", "003"),
     NASDAQ_JD("JD", "京东", "京东", "007"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018"),
@@ -184,7 +185,7 @@ public enum PlatformDictEnum implements EnumMessage {
      * 已接入平台列表
      */
     public static List<String> hasConnectionPlatform(){
-        return Stream.of(AMAZON, ALI_EXPRESS, SHOPIFY, SHOPEE, WALMART)
+        return Stream.of(AMAZON, ALI_EXPRESS, ALI_EXPRESS_OVERSEAS_MANAGED, SHOPIFY, SHOPEE, WALMART)
                 .map(PlatformDictEnum::getCode)
                 .collect(Collectors.toList());
 
@@ -194,9 +195,22 @@ public enum PlatformDictEnum implements EnumMessage {
      * 平台列表名称
      */
     public static List<String> hasConnectionPlatformName(){
-        return Stream.of(AMAZON, ALI_EXPRESS, SHOPIFY, SHOPEE, WALMART)
+        return Stream.of(AMAZON, ALI_EXPRESS, ALI_EXPRESS_OVERSEAS_MANAGED, SHOPIFY, SHOPEE, WALMART)
                 .map(PlatformDictEnum::getDesc)
                 .collect(Collectors.toList());
 
+    }
+
+    /**
+     * 平台对外展示可独立，但调用平台接口时可复用同一套接口能力。
+     */
+    public static String getApiPlatformCode(String code) {
+        if (code == null) {
+            return null;
+        }
+        if (ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(code)) {
+            return ALI_EXPRESS.getCode();
+        }
+        return code;
     }
 }

@@ -372,7 +372,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
     private DmpInoutDTO.CreateInputDTO createAliExpressInputDTO(SoB2cEntity e) {
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setNextLevelId(e.getShopId());
-        dto.setSystemCode(e.getDictPlatform());
+        dto.setSystemCode(PlatformDictEnum.getApiPlatformCode(e.getDictPlatform()));
         dto.setBillType(BusinessTypeEnum.ORDER.getCode());
         //  DmpInputTaskTaskTypeEnum	HISTORY("history", "历史任务"),
         dto.setTaskType(HISTORY);

@@ -2,10 +2,8 @@ package com.erp.server.tms.schedule;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.service.LogisticsAddressService;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsService;
-import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -43,21 +41,9 @@ public class LogisticsAddressJob {
      */
     @XxlJob("syncLogisticsAddress")
     public ReturnT syncLogisticsAddress() {
-        XxlJobHelper.log("====开始同步速卖通卖家地址====");
         try {
-            LogisticsService service = logisticsRegistry.getHandler(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
-            List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(LogisticsPlatformEnum.ALI_EXPRESS.getCode());
-            String jobParam = XxlJobHelper.getJobParam();
-            if (CollectionUtils.isNotEmpty(mapList)) {
-                mapList.forEach(map -> {
-                    if (StringUtils.isNotEmpty(jobParam)){
-                        String[] split = jobParam.split(",");
-                        map.put("orderId", split[0]);
-                        map.put("childOrderId",split[1]);
-                    }
-                    logisticsBaseService.syncLogisticsAddress(map);
-                });
-            }
+            syncAliExpressLogisticsAddress(LogisticsPlatformEnum.ALI_EXPRESS);
+            syncAliExpressLogisticsAddress(LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED);
         }catch (Exception e){
             XxlJobHelper.log("====同步速卖通卖家地址失败====",e);
             log.error("同步速卖通卖家地址失败", e);
@@ -77,5 +63,27 @@ public class LogisticsAddressJob {
         }
         XxlJobHelper.log("====结束同步TikTok全托管卖家地址====");
         return ReturnT.SUCCESS;
+    }
+
+    private void syncAliExpressLogisticsAddress(LogisticsPlatformEnum platformEnum) {
+        XxlJobHelper.log("====开始同步{}卖家地址====", platformEnum.getName());
+        LogisticsService service = logisticsRegistry.getHandler(platformEnum.getCode());
+        List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformEnum.getCode());
+        String jobParam = XxlJobHelper.getJobParam();
+        if (CollectionUtils.isNotEmpty(mapList)) {
+            mapList.forEach(map -> {
+                if (StringUtils.isNotEmpty(jobParam)){
+                    String[] split = jobParam.split(",");
+                    if (split.length > 0) {
+                        map.put("orderId", split[0]);
+                    }
+                    if (split.length > 1) {
+                        map.put("childOrderId", split[1]);
+                    }
+                }
+                logisticsBaseService.syncLogisticsAddress(map);
+            });
+        }
+        XxlJobHelper.log("====结束同步{}卖家地址====", platformEnum.getName());
     }
 }

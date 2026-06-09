@@ -34,6 +34,7 @@ import com.erp.server.tms.convert.LogisticsAddressConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.*;
 import com.erp.tms.aliexpress.api.IopResponse;
+import com.erp.tms.aliexpress.model.address.OverseasManagedSellerAddressResponse;
 import com.erp.tms.aliexpress.model.address.SellerResponse;
 import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
@@ -60,6 +61,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsBaseServiceImpl implements LogisticsBaseService {
+    private static final String OVERSEAS_MANAGED_ADDRESS_RESPONSE_KEY = "aliexpress_asf_local_supply_seller_address_get_response";
+    private static final String ADDRESS_TYPE_PICKUP = "pickup";
+    private static final String ADDRESS_TYPE_REFUND = "refund";
+    private static final String DEFAULT_OVERSEAS_MANAGED_ADDRESS_LOCALE = "en_US";
+
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
@@ -88,7 +94,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         ApiResult<List<ShopAuthEntity>> shopeeShopList = null;
         if (LogisticsPlatformEnum.SHOPEE.getCode().equalsIgnoreCase(platform)) {
             return syncShoppeeChannel(platform);
-        } else if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)) {
+        } else if (isAliExpressLogisticsPlatform(platform)) {
             return syncAliExpressChannel(platform, new HashMap<>());
         } else if (LogisticsPlatformEnum.SHOPIFY.getCode().equalsIgnoreCase(platform)) {
             return syncShopifyChannel(platform);
@@ -601,7 +607,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             //把结果存储数据库
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
-                    if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                    if (isAliExpressLogisticsPlatform(platform)){
                         logisticsSaleChannelEntity.setServicePlatform("tms");
                     }
                     logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
@@ -647,7 +653,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
-                        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                        if (isAliExpressLogisticsPlatform(platform)){
                             logisticsSaleChannelEntity.setServicePlatform("tms");
                         }
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
@@ -704,7 +710,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
                 if (channels.isSuccess() && Objects.nonNull(channels.getData())) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
-                        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                        if (isAliExpressLogisticsPlatform(platform)){
                             logisticsSaleChannelEntity.setServicePlatform("tms");
                         }
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
@@ -719,6 +725,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         log.info("{}渠道同步结束", platform);
         return batchResultDTOS;
+    }
+
+    private boolean isAliExpressLogisticsPlatform(String platform) {
+        return LogisticsPlatformEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(platform)
+                || LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(platform);
     }
 
     @Override
@@ -754,7 +765,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
             if (channels.isSuccess()) {
                 channels.getData().forEach(logisticsSaleChannelEntity -> {
-                    if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                    if (isAliExpressLogisticsPlatform(platform)){
                         logisticsSaleChannelEntity.setServicePlatform("tms");
                     }
                     logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
@@ -773,6 +784,12 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     @Override
     public void syncLogisticsAddress(Map<String, String> authMap) {
+        if (Objects.nonNull(authMap)
+                && LogisticsPlatformEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equals(authMap.get("logisticsPlatform"))) {
+            syncAliExpressOverseasManagedLogisticsAddress(authMap);
+            return;
+        }
+
         IopResponse sellerInfo = null;
         String shopId = authMap.get("shopId");
         String shopName = authMap.get("shopName");
@@ -819,6 +836,168 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(list)) {
             logisticsAddressService.batchSaveOrUpdateLogisticsAddress(list);
+        }
+    }
+
+    private void syncAliExpressOverseasManagedLogisticsAddress(Map<String, String> authMap) {
+        String shopId = authMap.get("shopId");
+        String shopName = authMap.get("shopName");
+        String locale = firstNotBlank(authMap.get("locale"), DEFAULT_OVERSEAS_MANAGED_ADDRESS_LOCALE);
+        List<LogisticsAddressEntity> list = new ArrayList<>();
+        appendOverseasManagedAddress(authMap, ADDRESS_TYPE_PICKUP, locale, LogisticsAddressTypeEnum.COLLECT, shopId, shopName, list);
+        appendOverseasManagedAddress(authMap, ADDRESS_TYPE_REFUND, locale, LogisticsAddressTypeEnum.REFUND, shopId, shopName, list);
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(list)) {
+            logisticsAddressService.batchSaveOrUpdateLogisticsAddress(list);
+        }
+    }
+
+    private void appendOverseasManagedAddress(Map<String, String> authMap,
+                                             String addressType,
+                                             String locale,
+                                             LogisticsAddressTypeEnum logisticsAddressType,
+                                             String shopId,
+                                             String shopName,
+                                             List<LogisticsAddressEntity> result) {
+        try {
+            IopResponse iopResponse = aliExpressShipperService.getOverseasManagedSellerAddress(authMap, addressType, locale);
+            OverseasManagedSellerAddressResponse response = parseOverseasManagedSellerAddressResponse(Objects.nonNull(iopResponse) ? iopResponse.getBody() : null);
+            if (!isOverseasManagedAddressSuccess(response)) {
+                XxlJobHelper.log("获取店铺:{}速卖通海外托管{}地址失败：{}", shopId, addressType, getOverseasManagedAddressError(response));
+                return;
+            }
+            OverseasManagedSellerAddressResponse.DataDTO data = response.getResult().getData();
+            List<OverseasManagedSellerAddressResponse.SellerAddressDTO> addressList = ADDRESS_TYPE_REFUND.equals(addressType)
+                    ? data.getRefundSellerAddressList()
+                    : data.getPickupSellerAddressList();
+            if (org.apache.commons.collections4.CollectionUtils.isEmpty(addressList)) {
+                return;
+            }
+            addressList.stream()
+                    .filter(Objects::nonNull)
+                    .map(address -> buildOverseasManagedLogisticsAddress(address, logisticsAddressType, shopId, shopName, locale))
+                    .filter(Objects::nonNull)
+                    .forEach(result::add);
+        } catch (ApiException e) {
+            XxlJobHelper.log("获取店铺:{}速卖通海外托管{}地址异常：{}", shopId, addressType, e.getMessage());
+        }
+    }
+
+    private OverseasManagedSellerAddressResponse parseOverseasManagedSellerAddressResponse(String body) {
+        if (StringUtils.isBlank(body)) {
+            return null;
+        }
+        JSONObject root = JSON.parseObject(body);
+        JSONObject payload = root.getJSONObject(OVERSEAS_MANAGED_ADDRESS_RESPONSE_KEY);
+        if (Objects.isNull(payload)) {
+            payload = root;
+        } else {
+            putIfAbsent(payload, "code", root.getString("code"));
+            putIfAbsent(payload, "request_id", root.getString("request_id"));
+        }
+        if (Objects.isNull(payload.getJSONObject("result")) && Objects.nonNull(payload.get("data"))) {
+            JSONObject result = new JSONObject();
+            result.put("data", payload.get("data"));
+            result.put("success", payload.get("success"));
+            result.put("errorMessage", payload.get("errorMessage"));
+            result.put("errorCode", payload.get("errorCode"));
+            payload.put("result", result);
+        }
+        return payload.toJavaObject(OverseasManagedSellerAddressResponse.class);
+    }
+
+    private boolean isOverseasManagedAddressSuccess(OverseasManagedSellerAddressResponse response) {
+        if (Objects.isNull(response) || Objects.isNull(response.getResult())) {
+            return false;
+        }
+        Object success = response.getResult().getSuccess();
+        boolean successFlag = !Boolean.FALSE.equals(success) && !"false".equalsIgnoreCase(String.valueOf(success));
+        return "0".equals(response.getCode()) && successFlag
+                && StringUtils.isBlank(response.getResult().getErrorCode())
+                && Objects.nonNull(response.getResult().getData());
+    }
+
+    private String getOverseasManagedAddressError(OverseasManagedSellerAddressResponse response) {
+        if (Objects.isNull(response) || Objects.isNull(response.getResult())) {
+            return "接口返回为空";
+        }
+        return firstNotBlank(response.getResult().getErrorMessage(), response.getResult().getErrorCode(), "获取卖家地址失败");
+    }
+
+    private LogisticsAddressEntity buildOverseasManagedLogisticsAddress(OverseasManagedSellerAddressResponse.SellerAddressDTO address,
+                                                                        LogisticsAddressTypeEnum type,
+                                                                        String shopId,
+                                                                        String shopName,
+                                                                        String locale) {
+        if (StringUtils.isBlank(address.getAddressId())) {
+            return null;
+        }
+        LogisticsAddressEntity entity = new LogisticsAddressEntity();
+        entity.setType(type);
+        entity.setIsBySync(true);
+        entity.setShopId(shopId);
+        entity.setName(buildAddressName(address.getName(), shopName, address.getAddressId()));
+        entity.setContact(address.getName());
+        entity.setEmail(address.getEmail());
+        entity.setTelNumber(address.getPhone());
+        entity.setCountry(address.getCountry());
+        entity.setCountryName(address.getCountry());
+        entity.setProvinceName(address.getProvince());
+        entity.setCityName(address.getCity());
+        entity.setDistrictName(address.getArea());
+        entity.setAddressFirst(joinAddress(address.getStreet(), address.getLocalityIdentifier(), address.getStreetAddress()));
+        entity.setAddressSecond(address.getLocalityIdentifier());
+        entity.setZipCode(address.getPostCode());
+        entity.setStreet(address.getStreet());
+        entity.setAddressId(address.getAddressId());
+        entity.setIsDefault(toDefaultFlag(address.getDefaultAddress()));
+        entity.setLanguage(locale);
+        return entity;
+    }
+
+    private String buildAddressName(String name, String shopName, String addressId) {
+        String addressName = firstNotBlank(name, addressId);
+        if (StringUtils.isBlank(shopName)) {
+            return addressName;
+        }
+        return addressName + "-" + shopName;
+    }
+
+    private String joinAddress(String... values) {
+        if (Objects.isNull(values)) {
+            return "";
+        }
+        return Arrays.stream(values)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(" "));
+    }
+
+    private int toDefaultFlag(Object defaultAddress) {
+        if (Objects.isNull(defaultAddress)) {
+            return 0;
+        }
+        if (defaultAddress instanceof Boolean) {
+            return Boolean.TRUE.equals(defaultAddress) ? 1 : 0;
+        }
+        String value = String.valueOf(defaultAddress);
+        return "true".equalsIgnoreCase(value) || "1".equals(value) || "Y".equalsIgnoreCase(value) ? 1 : 0;
+    }
+
+    private String firstNotBlank(String... values) {
+        if (Objects.isNull(values)) {
+            return "";
+        }
+        for (String value : values) {
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private void putIfAbsent(JSONObject jsonObject, String key, String value) {
+        if (Objects.nonNull(jsonObject) && !jsonObject.containsKey(key) && StringUtils.isNotBlank(value)) {
+            jsonObject.put(key, value);
         }
     }
 
@@ -885,7 +1064,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);
                 if (channels.isSuccess()) {
                     channels.getData().forEach(logisticsSaleChannelEntity -> {
-                        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform)){
+                        if (isAliExpressLogisticsPlatform(platform)){
                             logisticsSaleChannelEntity.setServicePlatform("tms");
                         }
                         logisticsSaleChannelEntity.setChannelStatus(MathUtil.ZERO);
