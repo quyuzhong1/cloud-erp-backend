@@ -1,7 +1,9 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.dmp.mapper.ForeignMapper;
 import com.erp.server.dmp.service.ForeignService;
 import org.springframework.stereotype.Service;
@@ -16,14 +18,9 @@ public class ForeignServiceImpl implements ForeignService {
     @Resource
     private ForeignMapper foreignMapper;
 
-
     @Override
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return foreignMapper.listTrackDto(query);
     }
 
-    @Override
-    public List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType) {
-        return foreignMapper.listWaitingRegisterByConfig(query, platformType);
-    }
 }

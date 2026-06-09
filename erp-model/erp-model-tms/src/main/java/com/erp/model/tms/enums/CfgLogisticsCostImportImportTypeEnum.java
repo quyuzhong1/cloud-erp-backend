@@ -15,8 +15,11 @@ import org.apache.commons.lang3.StringUtils;
 public enum CfgLogisticsCostImportImportTypeEnum implements EnumMessage {
 	IMPORT_UPDATE("import_update", "导入更新"),
 	IMPORT_ADD_OLD("import_add_old", "导入新增(按原单)"),
-    // 审查说明：按新单新增会创建新物流单/费用单，当前费用配置入口暂不对用户开放。
-	IMPORT_ADD_NEW("import_add_new", "导入新增(按新单)"),
+    /**
+     * 已下线，仅保留枚举值兼容历史配置数据。
+     * 按新单会新建物流单/费用单，同一导入文件无法可靠区分自发货与尾程归属，业务入口已禁用。
+     */
+//	IMPORT_ADD_NEW("import_add_new", "导入新增(按新单)"),
     ;
     /**
      * 类型

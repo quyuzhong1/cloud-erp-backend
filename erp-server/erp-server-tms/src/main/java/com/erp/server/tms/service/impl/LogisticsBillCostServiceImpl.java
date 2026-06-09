@@ -215,7 +215,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败");
         }
-        validateLastMileDeliveryCostConfig(addDTO.getCostDetailList(), cfgCostCache);
         //添加费用明细
         tmsCostDetailService.batchAdd(addDTO.getCostDetailList(),logisticsBillCostEntity.getId(), DictCostAttributionEnum.SELF_DELIVER);
 
@@ -339,7 +338,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(!save) {
             throw new ServiceException("尾程费用(自发货)保存失败：{}", JSONUtil.toJsonStr(logisticsBillCostEntity));
         }
-        validateLastMileDeliveryCostConfig(updateDTO.getCostDetailList(), cfgCostCache);
         //更新费用明细
         tmsCostDetailService.batchUpdate(updateDTO.getCostDetailList(),logisticsBillCostEntity.getId(),DictCostAttributionEnum.SELF_DELIVER,isImport);
 
@@ -348,36 +346,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillCostEntity.getId(), "尾程费用(自发货)");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillCostEntity, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), logisticsBillCostEntity.getId(), msg);
         return new BaseResultDTO.UpdateDTO(logisticsBillCostEntity.getId(), logisticsBillCostEntity.getId());
-    }
-
-    private void validateLastMileDeliveryCostConfig(List<? extends TmsCostDetailDTO.CommonDTO> costDetailList,
-                                                    Map<String, TmsCfgCostEntity> cfgCostCache) {
-        if (CollUtil.isEmpty(costDetailList)) {
-            return;
-        }
-        List<String> cfgCostIdList = costDetailList.stream()
-                .map(TmsCostDetailDTO.CommonDTO::getCfgCostId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(cfgCostIdList)) {
-            return;
-        }
-        List<TmsCfgCostEntity> cfgCostList;
-        if (CollUtil.isEmpty(cfgCostCache)) {
-            cfgCostList = tmsCfgCostService.listByIds(cfgCostIdList);
-        } else {
-            cfgCostList = cfgCostIdList.stream()
-                    .map(cfgCostCache::get)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        }
-        boolean hasInvalid = cfgCostList.size() != cfgCostIdList.size()
-                || cfgCostList.stream().anyMatch(cfgCost -> !CharSequenceUtil.equals(cfgCost.getDictCostAttribution(), LAST_MILE_FEE_ATTRIBUTION));
-        if (hasInvalid) {
-            // 审查说明：尾程自发货/三方发货编辑费用项必须来自“尾程发货”归属，主单 type 不在这里改变。
-            throw new ServiceException("尾程费用项必须选择【尾程发货】费用配置");
-        }
     }
 
     @Override
@@ -1438,21 +1406,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             List<String> errorMsgList = new ArrayList<>();
             List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
-                if (CollUtil.isNotEmpty(logisticsBillVoList)) {
-                    errorMsgList.add("单号已存在无法新增，请核查单号");
-                }
-                if (CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo())) {
-                    errorMsgList.add("物流单号不能为空");
-                }
-                if (CharSequenceUtil.isBlank(billCostExcelDTO.getLogisticsSupplierName())) {
-                    errorMsgList.add("物流商不能为空");
-                }
-            } else {
-                if (CollUtil.isEmpty(logisticsBillVoList)) {
-                    errorMsgList.add("未找到对应物流单");
-                }
+            /*
+             * IMPORT_ADD_NEW 已下线，原按新单校验如下。
+             * 原因：按新单会新建物流单/费用单，自发货标准导入无法可靠区分自发货与尾程归属。
+             */
+            // if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
+            //     if (CollUtil.isNotEmpty(logisticsBillVoList)) {
+            //         errorMsgList.add("单号已存在无法新增，请核查单号");
+            //     }
+            //     if (CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo())) {
+            //         errorMsgList.add("物流单号不能为空");
+            //     }
+            //     if (CharSequenceUtil.isBlank(billCostExcelDTO.getLogisticsSupplierName())) {
+            //         errorMsgList.add("物流商不能为空");
+            //     }
+            // } else {
+            if (CollUtil.isEmpty(logisticsBillVoList)) {
+                errorMsgList.add("未找到对应物流单");
             }
+            // }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 value.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                 errorList.addAll(value);

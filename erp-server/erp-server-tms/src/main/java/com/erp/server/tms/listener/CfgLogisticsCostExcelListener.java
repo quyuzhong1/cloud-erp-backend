@@ -227,10 +227,14 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                 String code = CfgLogisticsCostImportImportTypeEnum.getCode(s);
                 if(StringUtils.isBlank(code)){
                     errorMsgList.add("【"+s+"】不存在");
-                } else if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(code)) {
-                    // Excel 导入也禁止绕过页面选择“导入新增(按新单)”。
-                    errorMsgList.add("【导入新增(按新单)】暂不支持使用");
                 }
+                /*
+                 * IMPORT_ADD_NEW 已下线，原枚举判断如下。
+                 * 原因：按新单会新建物流单/费用单，同一费用模板无法可靠区分自发货与尾程归属，且页面入口已禁用该类型。
+                 */
+                // } else if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(code)) {
+                //     errorMsgList.add("【导入新增(按新单)】暂不支持使用");
+                // }
             }
             excelDTO.setImportTypeList(Arrays.stream(split)
                     .map(CfgLogisticsCostImportImportTypeEnum::getCode).collect(Collectors.toList()));
