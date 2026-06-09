@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -18,7 +19,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
-import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
+import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import com.erp.server.tms.mapper.CfgLogisticsCostImportDetailMapper;
 import com.erp.server.tms.service.CfgLogisticsCostImportService;
 import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
@@ -55,11 +56,16 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
     @Resource
     private CfgLogisticsCostImportService cfgLogisticsCostImportService;
 
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgLogisticsCostImportDetailDTO.UpdateDTO addDTO) {
-        validateMainDetailList(addDTO, false);
+        Set<String> validCurrencyKeys = cfgLogisticsCostImportService.loadValidCurrencyKeySet();
+        return ApplicationContextUtils.getBean(CfgLogisticsCostImportDetailServiceImpl.class).addInTransaction(addDTO, validCurrencyKeys);
+    }
+
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    @Transactional(rollbackFor = Exception.class)
+    public BaseResultDTO.AddDTO addInTransaction(CfgLogisticsCostImportDetailDTO.UpdateDTO addDTO, Set<String> validCurrencyKeys) {
+        validateMainDetailList(addDTO, false, validCurrencyKeys);
         CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity = new CfgLogisticsCostImportDetailEntity();
         BeanMapperUtils.copy(addDTO, cfgLogisticsCostImportDetailEntity);
 
@@ -84,16 +90,21 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
     /**
     * 修改
     */
-    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgLogisticsCostImportDetailDTO.UpdateDTO addOrUpdateDTO) {
+        Set<String> validCurrencyKeys = cfgLogisticsCostImportService.loadValidCurrencyKeySet();
+        return ApplicationContextUtils.getBean(CfgLogisticsCostImportDetailServiceImpl.class).updateInTransaction(addOrUpdateDTO, validCurrencyKeys);
+    }
+
+    @DistributeLocker(keyName = "addOrUpdateDTO.getId()")
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateInTransaction(CfgLogisticsCostImportDetailDTO.UpdateDTO addOrUpdateDTO, Set<String> validCurrencyKeys) {
         CfgLogisticsCostImportDetailEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "费用项配置字段配置"));
         if (StrUtil.isBlank(addOrUpdateDTO.getMainId())) {
             addOrUpdateDTO.setMainId(old.getMainId());
         }
-        validateMainDetailList(addOrUpdateDTO, true);
+        validateMainDetailList(addOrUpdateDTO, true, validCurrencyKeys);
         CfgLogisticsCostImportDetailEntity cfgLogisticsCostImportDetailEntity =  BeanMapperUtils.map(CfgLogisticsCostImportDetailEntity.class, addOrUpdateDTO);
 
         // 数据处理
@@ -175,7 +186,7 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
      * @author jack
      * @date 2026/05/22
      */
-    private void validateMainDetailList(CfgLogisticsCostImportDetailDTO.UpdateDTO currentDetail, boolean update) {
+    private void validateMainDetailList(CfgLogisticsCostImportDetailDTO.UpdateDTO currentDetail, boolean update, Set<String> validCurrencyKeys) {
         if (StrUtil.isBlank(currentDetail.getMainId())) {
             throw new ServiceException("主单id不能为空");
         }
@@ -191,7 +202,7 @@ public class CfgLogisticsCostImportDetailServiceImpl extends SuperServiceImpl<Cf
                 .map(detail -> BeanMapperUtils.map(CfgLogisticsCostImportDetailDTO.UpdateDTO.class, detail))
                 .collect(Collectors.toList());
         detailList.add(currentDetail);
-        cfgLogisticsCostImportService.validateDetailList(main.getBusinessType(), detailList);
+        cfgLogisticsCostImportService.validateDetailList(main.getBusinessType(), detailList, validCurrencyKeys);
     }
 
     /**
