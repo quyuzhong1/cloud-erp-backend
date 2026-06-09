@@ -36,6 +36,7 @@ public enum CleanDataTableEnum {
     //无忧
     ALI_EXPRESS_ORDER("AliExpress", "third_system_AliExpress_order","third_system", "order","无忧订单数据", PlatformAliExpressOrderDTO.class),
     ALI_EXPRESS_PRODUCT("AliExpress", "third_system_AliExpress_product","third_system", "product","无忧产品数据", PlatformAliExpressListingDTO.class),
+    ALI_EXPRESS_OVERSEAS_MANAGED_PRODUCT("AliExpressOverseasManaged", "third_system_AliExpressOverseasManaged_product","third_system", "product","速卖通海外托管产品数据", PlatformAliExpressListingDTO.class),
     //shopify
     SHOPIFY_ORDER("Shopify", "third_system_Shopify_order","third_system", "order","Shopify订单数据", PlatformShopifyOrderDTO.class),
     SHOPIFY_PRODUCT("Shopify", "third_system_Shopify_product","third_system", "product","Shopify产品数据", PlatformShopifyListingDTO.class),

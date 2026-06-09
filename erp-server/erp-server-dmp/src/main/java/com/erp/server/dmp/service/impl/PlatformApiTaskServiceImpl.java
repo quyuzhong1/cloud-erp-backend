@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -92,15 +93,17 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean createOrEnablePlatformTask(PlatformTaskDTO.AddDTO dto) {
-        String taskPlatform = getTaskPlatform(dto.getDictPlatform());
-        List<PlatformApiEntity> entityList = platformApiService.listByPlatform(taskPlatform);
+        List<PlatformApiEntity> entityList = listTaskPlatformApi(dto.getDictPlatform());
         if (CollectionUtil.isEmpty(entityList)) {
             return Boolean.TRUE;
         }
+        Set<String> taskPlatforms = entityList.stream()
+                .map(PlatformApiEntity::getDictPlatform)
+                .collect(Collectors.toSet());
         // 根据店铺id查询是否已经存在任务
         List<PlatformApiTaskEntity> taskEntity = lambdaQuery()
                 .eq(PlatformApiTaskEntity::getShopId, dto.getShopId())
-                .eq(PlatformApiTaskEntity::getDictPlatform, taskPlatform)
+                .in(PlatformApiTaskEntity::getDictPlatform, taskPlatforms)
                 .list();
         // 对比当前店铺不存在的任务
         Set<String> existApiIds = taskEntity.stream().map(PlatformApiTaskEntity::getPlatformApiId).collect(Collectors.toSet());
@@ -176,7 +179,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Override
     public List<PlatformApiTaskEntity> listByPlatformAndShop(String dictPlatform, String shopId) {
         return lambdaQuery()
-                .eq(PlatformApiTaskEntity::getDictPlatform, getTaskPlatform(dictPlatform))
+                .in(PlatformApiTaskEntity::getDictPlatform, getShopTaskPlatforms(dictPlatform))
                 .eq(PlatformApiTaskEntity::getShopId, shopId)
                 .list();
     }
@@ -196,7 +199,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Transactional(rollbackFor = Exception.class)
     public Boolean removePlatformTask(PlatformTaskDTO.AddDTO dto) {
         LambdaQueryWrapper<PlatformApiTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(PlatformApiTaskEntity::getDictPlatform, getTaskPlatform(dto.getDictPlatform()));
+        queryWrapper.in(PlatformApiTaskEntity::getDictPlatform, getShopTaskPlatforms(dto.getDictPlatform()));
         queryWrapper.eq(PlatformApiTaskEntity::getShopId, dto.getShopId());
         return this.remove(queryWrapper);
     }
@@ -204,7 +207,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean disabledPlatformTask(PlatformTaskDTO.DisabledDTO dto) {
-        return lambdaUpdate().eq(PlatformApiTaskEntity::getDictPlatform, getTaskPlatform(dto.getDictPlatform()))
+        return lambdaUpdate().in(PlatformApiTaskEntity::getDictPlatform, getShopTaskPlatforms(dto.getDictPlatform()))
                 .eq(PlatformApiTaskEntity::getShopId, dto.getShopId())
                 .ne(PlatformApiTaskEntity::getDisabled, dto.getDisabled())
                 .set(PlatformApiTaskEntity::getDisabled, dto.getDisabled())
@@ -288,7 +291,7 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
     @Override
     public List<PlatformApiTaskEntity> listByPlatformAndBillType(String dictPlatform, String billType) {
         return lambdaQuery()
-                .eq(PlatformApiTaskEntity::getDictPlatform, getTaskPlatform(dictPlatform))
+                .eq(PlatformApiTaskEntity::getDictPlatform, getTaskPlatform(dictPlatform, billType))
                 .eq(PlatformApiTaskEntity::getBillType, billType)
                 .eq(PlatformApiTaskEntity::getIsDeleted, Boolean.FALSE)
                 .eq(PlatformApiTaskEntity::getDisabled, Boolean.FALSE)
@@ -349,7 +352,39 @@ public class PlatformApiTaskServiceImpl extends SuperServiceImpl<PlatformApiTask
         this.checkAndClosedPlatformShop(shopInfoEntity);
     }
 
+    private List<PlatformApiEntity> listTaskPlatformApi(String dictPlatform) {
+        if (!PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(dictPlatform)) {
+            return platformApiService.listByPlatform(PlatformDictEnum.getApiPlatformCode(dictPlatform));
+        }
+        List<PlatformApiEntity> result = new ArrayList<>();
+        result.addAll(platformApiService.listByPlatform(PlatformDictEnum.ALI_EXPRESS.getCode()).stream()
+                .filter(item -> !BusinessTypeEnum.PRODUCT.getCode().equals(item.getBillType()))
+                .collect(Collectors.toList()));
+        result.addAll(platformApiService.listByPlatform(PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode()));
+        return result;
+    }
+
     private static String getTaskPlatform(String dictPlatform) {
         return PlatformDictEnum.getApiPlatformCode(dictPlatform);
+    }
+
+    private static String getTaskPlatform(String dictPlatform, String billType) {
+        if (PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(dictPlatform)
+                && BusinessTypeEnum.PRODUCT.getCode().equals(billType)) {
+            return dictPlatform;
+        }
+        return getTaskPlatform(dictPlatform);
+    }
+
+    private static List<String> getShopTaskPlatforms(String dictPlatform) {
+        if (PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(dictPlatform)) {
+            List<String> platforms = new ArrayList<>();
+            platforms.add(PlatformDictEnum.ALI_EXPRESS.getCode());
+            platforms.add(PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode());
+            return platforms;
+        }
+        List<String> platforms = new ArrayList<>();
+        platforms.add(PlatformDictEnum.getApiPlatformCode(dictPlatform));
+        return platforms;
     }
 }

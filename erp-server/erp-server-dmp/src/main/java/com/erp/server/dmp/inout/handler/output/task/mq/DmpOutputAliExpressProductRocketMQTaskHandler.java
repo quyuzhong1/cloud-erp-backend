@@ -80,6 +80,9 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
 		for(String changId : changeIds) {
 			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
 			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+			if (dmpProductInfoEntity == null || CollUtil.isEmpty(dmpSkuInfoEntityList)) {
+				continue;
+			}
 			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
 				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
 				if(product != null) {
@@ -105,8 +108,9 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
         // 平台sku 名
         String spuName = dmpProductInfoEntity.getSpuName();
 		product.setPlatformProductName(spuName);
-        String skuNo = dmpSkuInfoEntity.getSkuNo();
+		String skuNo = dmpSkuInfoEntity.getSkuNo();
 		product.setPlatformSkuNo(StringUtils.isBlank(skuNo)? "" : skuNo);
+		product.setProductSpec(dmpSkuInfoEntity.getName());
 
         product.setPlatformSkuName(spuName);
         // 类型 platform 平台  warehouse 仓库
@@ -124,6 +128,8 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
         product.setProductPacking(packing);
         product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
         product.setPlatformSkuId(dmpSkuInfoEntity.getSkuId());
+        product.setPlatformParentSpuNo(dmpSkuInfoEntity.getPlatformParentSpuNo());
+        product.setPlatformStatus(dmpSkuInfoEntity.getStatus());
 
         // 平台唯一标识=平台skuId + 店铺ID
         String uniqueId = StrUtil.format("{}_{}", dmpSkuInfoEntity.getSkuId(), dmpProductInfoEntity.getNextLevelId());
