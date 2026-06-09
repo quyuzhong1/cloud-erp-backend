@@ -77,6 +77,8 @@ public enum ApiError implements Serializable {
     QUERY_BETWEEN_ERROR(704, "介于条件需要填起始时间和开始时间"),
     QUERY_ILLEGAL_DATE_FORMAT(705, "非法日期格式"),
     QUERY_NOT_EXTEND_CLASS(706,"扩展字段没有配置处理类"),
+    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(707,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
+    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(708,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
 
     /**
      * COMMON 从1000 - 2000 开始 与业务域无直接关联提示
