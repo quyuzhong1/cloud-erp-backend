@@ -602,7 +602,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
     @Override
-    @DistributeLocker(keyName = "entity.platformOrderCode,entity.detailList.platformSkuNo",waiteTime = 60)
+    // Temu MQ 按「平台订单+店铺」整单推送，单店铺不支持多仓并发；waiteTime=60s，失败依赖 MQ 重试。
+    @DistributeLocker(keyName = "entity.platformOrderCode,entity.shopId", waiteTime = 60)
     public void syncTemuSoOutStock(TeMuSoOutStockDTO entity) {
         //查询销售出库单
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(Collections.singletonList(entity.getPlatformOrderCode()),PlatformDictEnum.TE_MU.getCode(),entity.getShopId(),"");
@@ -626,7 +627,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<SoB2cDetailEntity> handleDetailList = new ArrayList<>();
         for (TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO : detailList) {
             String erpWarehouseId = warehouseMappingDTOS.stream().filter(v->v.getThirdWarehouseCode().equals(teMuSoOutStockDetailDTO.getPlatformWarehouseCode())).map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).findFirst().orElse(null);
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
+            SoB2cDetailEntity soB2cDetailEntity = matchTemuSoB2cDetail(soB2cDetailEntityList, teMuSoOutStockDetailDTO);
             if(Objects.isNull(soB2cDetailEntity)){
                 log.warn("同步temu销售出库单失败，未查询到对应的销售订单明细，平台订单号：{}，平台sku编号：{}", entity.getPlatformOrderCode(), teMuSoOutStockDetailDTO.getPlatformSkuNo());
                 continue;
@@ -658,11 +659,33 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         soB2cFeign.updateDetail(handleDetailList);
         //不同仓库生成不同的出库单
-        Map<String,List<SoB2cDetailEntity>> detailMap = handleDetailList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
-        detailMap.forEach((warehouseId,detailEntities)->{
+        // MQ 偶发重复推送时保留首条；若需严格唯一应在上游去重。
+        Map<String, TeMuSoOutStockDetailDTO> temuDetailBySubSoCode = detailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getPlatformSubSoCode()))
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSubSoCode, d -> d, (left, right) -> {
+                    log.warn("Temu出库明细重复platformSubSoCode={}, 保留首条, platformOrderCode={}",
+                            left.getPlatformSubSoCode(), entity.getPlatformOrderCode());
+                    return left;
+                }));
+        Map<String, TeMuSoOutStockDetailDTO> temuDetailBySkuNo = detailList.stream()
+                .filter(d -> StringUtils.isNotBlank(d.getPlatformSkuNo()))
+                .collect(Collectors.toMap(TeMuSoOutStockDetailDTO::getPlatformSkuNo, d -> d, (left, right) -> {
+                    log.warn("Temu出库明细重复platformSkuNo={}, 保留首条, platformOrderCode={}",
+                            left.getPlatformSkuNo(), entity.getPlatformOrderCode());
+                    return left;
+                }));
+        Map<String, List<SoB2cDetailEntity>> detailMap = handleDetailList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getWarehouseId()))
+                .collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
+        detailMap.forEach((warehouseId, detailEntities) -> {
             for (SoB2cDetailEntity detailEntity : detailEntities) {
-                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO = detailList.stream().filter(v->v.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())).findFirst().orElse(null);
-                if(Objects.nonNull(teMuSoOutStockDetailDTO)){
+                TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO;
+                if (StringUtils.isNotBlank(detailEntity.getPlatformSubSoCode())) {
+                    teMuSoOutStockDetailDTO = temuDetailBySubSoCode.get(detailEntity.getPlatformSubSoCode());
+                } else {
+                    teMuSoOutStockDetailDTO = temuDetailBySkuNo.get(detailEntity.getPlatformSkuNo());
+                }
+                if (Objects.nonNull(teMuSoOutStockDetailDTO)) {
                     detailEntity.setQty(teMuSoOutStockDetailDTO.getQty());
                 }
             }
@@ -681,6 +704,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
 
+    }
+
+    /**
+     * 匹配 Temu 出库明细与 ERP 订单行：优先 platformSubSoCode，缺失时回退 platformSkuNo（历史 MQ 无子单号）。
+     */
+    private SoB2cDetailEntity matchTemuSoB2cDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, TeMuSoOutStockDetailDTO teMuSoOutStockDetailDTO) {
+        if (StringUtils.isNotBlank(teMuSoOutStockDetailDTO.getPlatformSubSoCode())) {
+            return soB2cDetailEntityList.stream()
+                    .filter(v -> teMuSoOutStockDetailDTO.getPlatformSubSoCode().equals(v.getPlatformSubSoCode()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return soB2cDetailEntityList.stream().filter(v->v.getPlatformSkuNo().equals(teMuSoOutStockDetailDTO.getPlatformSkuNo())).findFirst().orElse(null);
     }
 
     @Override

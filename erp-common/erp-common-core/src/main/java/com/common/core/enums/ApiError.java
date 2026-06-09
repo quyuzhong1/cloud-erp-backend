@@ -77,6 +77,8 @@ public enum ApiError implements Serializable {
     QUERY_BETWEEN_ERROR(704, "介于条件需要填起始时间和开始时间"),
     QUERY_ILLEGAL_DATE_FORMAT(705, "非法日期格式"),
     QUERY_NOT_EXTEND_CLASS(706,"扩展字段没有配置处理类"),
+    CFG_QUERY_OPTION_API_CONFIG_REQUIRED(707,"接口路径、下拉框绑定值、下拉框显示值不能为空"),
+    CFG_QUERY_OPTION_API_CONFIG_DUPLICATE(708,"接口路径、下拉框绑定值、下拉框显示值的组合已存在"),
 
     /**
      * COMMON 从1000 - 2000 开始 与业务域无直接关联提示
@@ -1623,6 +1625,7 @@ public enum ApiError implements Serializable {
     VM_NO_SYNC_INFO(12521,"暂无可同步信息"),
     VM_CHECK_OUT_VIRTUAL_INVENTORY(12522,"SKU【{0}】实体仓【{1}】虚拟仓库存已分配【{2}】，出库数量不能超过【{3}】"),
     VM_CHANNEL_RELATION_ERROR(12523,"平台【{0}】店铺【{1}】军区【{2}】已绑定虚拟仓【{3}】\n"),
+    VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR(12525,"实体仓【{0}】下虚拟仓【{1}】已配置平台【{2}】，同一实体仓的不同虚拟仓不可重复配置"),
     VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER(12524,"虚拟仓【{0}】库存不足"),
     VM_FROM_WAREHOUSE_NOT_BLANK(92290,"启动自动借调时，借调仓不能为空"),
     VM_NOT_CONTAINS_FROM_WAREHOUSE(92291,"虚拟仓关联实体仓不能包含借调仓"),

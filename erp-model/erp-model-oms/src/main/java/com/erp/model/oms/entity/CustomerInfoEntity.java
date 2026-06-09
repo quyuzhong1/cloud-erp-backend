@@ -203,6 +203,18 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String customerProperty;
 
     /**
+     * 默认发货仓库。详情/保存走 MyBatis-Plus 自动映射全列；导出 SQL 见 CustomerInfoMapper.listExport。
+     */
+    @TableField("default_shipping_warehouse")
+    private String defaultShippingWarehouse;
+
+    /**
+     * 默认收款账号。详情/保存走 MyBatis-Plus 自动映射全列；导出 SQL 见 CustomerInfoMapper.listExport。
+     */
+    @TableField("default_receive_account")
+    private String defaultReceiveAccount;
+
+    /**
      * 通讯地址
      */
     @TableField("mail_address")
