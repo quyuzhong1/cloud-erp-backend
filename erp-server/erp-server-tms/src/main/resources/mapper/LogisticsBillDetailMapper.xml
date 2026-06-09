@@ -263,8 +263,79 @@
         <if test="query.salesPlatform != null and query.salesPlatform != ''">
             and lb.sales_platform = #{query.salesPlatform}
         </if>
-        AND lb.delivery_time &gt;= best_match.cfgTime
+        AND lb.delivery_time >= best_match.cfgTime
         ORDER BY lbd.update_time,lbd.version
+    </select>
+
+    <select id="listRegisterByConfig" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
+        SELECT
+        lbd.id,
+        lbd.track_no,
+        lbd.platform_order_no,
+        lbd.register_status,
+        lb.carrier_id AS carrierId,
+        lb.tel_number AS telNumber,
+        lb.channel_id AS channelId,
+        lb.channel_name AS channelName,
+        lb.transport_no AS transportNo,
+        lb.sales_platform AS salesPlatform,
+        lb.shop_id AS shopId,
+        lc.track_query_type AS trackQueryType,
+        ltcr.id as thirdRefId,
+        ltcr.create_time as cfgTime,
+        ltcr.third_channel_name as thirdChannelName,
+        ltcr.is_push_mobile as isPushMobile,
+        ltcr.push_type as pushType,
+        ltcr.platform_type as platformType,
+        lb.delivery_time
+        FROM logistics_bill_detail lbd
+        INNER JOIN logistics_bill lb ON lbd.main_id = lb.id AND lb.is_deleted = false
+        LEFT JOIN logistics_channel lc ON lb.channel_id = lc.id AND lc.is_deleted = false
+        INNER JOIN logistics_third_channel_ref ltcr ON ltcr.id = lbd.third_ref_id
+            AND ltcr.is_deleted = false
+            AND ltcr.disabled = false
+            AND ltcr.platform_type = #{platformType}
+        WHERE lbd.is_deleted = false
+        AND lbd.third_ref_id IS NOT NULL
+        AND lbd.third_ref_id != ''
+        <if test="query.trackTime != null">
+            and lbd.track_time > #{query.trackTime}
+        </if>
+        <if test="query.trackEndTime != null">
+            and lbd.track_time  &lt; #{query.trackEndTime}
+        </if>
+        <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+        </if>
+        AND lbd.track_status NOT IN ('sign','manualComplete','systemComplete','deliveryFail')
+        AND (lbd.track_no != '' OR lb.transport_no != '')
+        <if test="query.transportType != null and query.transportType == 'expressDelivery'">
+            AND lb.order_type IN ('B2B','B2C','AfterSale')
+        </if>
+        <if test="query.transportType != null and query.transportType == 'ocean'">
+            AND lb.order_type = 'firstMile'
+        </if>
+        <if test="query.trackNoList != null and query.trackNoList.size > 0">
+            AND lbd.track_no IN
+            <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.transportNoList != null and query.transportNoList.size > 0">
+            AND lb.transport_no IN
+            <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.salesPlatform != null and query.salesPlatform != ''">
+            and lb.sales_platform = #{query.salesPlatform}
+        </if>
+        AND lb.delivery_time >= ltcr.create_time
+        ORDER BY lbd.update_time,lbd.version
+        LIMIT #{query.size}
     </select>
 
 </mapper>
