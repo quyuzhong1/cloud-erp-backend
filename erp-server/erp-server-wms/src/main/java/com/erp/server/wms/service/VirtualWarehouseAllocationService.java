@@ -119,6 +119,11 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @return
      */
     BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto);
+
+    /**
+     * 保存并提交（事务内：保存与提交同生共死）
+     */
+    BatchResultDTO saveAndSubmitTransactional(VirtualWarehouseAllocationDTO.UpdateDTO dto);
     /**
      * 展示作废信息
      *
