@@ -80,10 +80,10 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
             try {
                 jsonObject = JSON.parseObject(addressExtendJson);
             } catch (Exception e) {
-                throw new ServiceException("DMP输入配置extendJson.requestAddr配置错误：" + e.getMessage());
+                throw new ServiceException("DMP输入配置extendJson解析失败：" + e.getMessage());
             }
             if (null == jsonObject) {
-                ServiceException.runError("DMP输入配置extendJson.requestAddr配置错误：extendJson为空对象");
+                throw new ServiceException("DMP输入配置extendJson配置错误：extendJson为空对象");
             }
             Boolean cfgRequestAddr = jsonObject.getBoolean("requestAddr");
             if (null != cfgRequestAddr) {
