@@ -1215,7 +1215,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
-    		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
+    		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getIsDeleted,Boolean.FALSE).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
     			throw new ServiceException("小包物流单已生成");
     		}
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
