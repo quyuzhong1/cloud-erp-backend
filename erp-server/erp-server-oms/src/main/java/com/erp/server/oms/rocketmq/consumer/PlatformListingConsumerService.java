@@ -299,7 +299,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
         }
         String ownerCode;
         try {
-            ownerCode = overseasProviderFeign.getOwnerCodeByAuthId(authId);
+            ApiResult<String> ownerCodeResult = overseasProviderFeign.getOwnerCodeByAuthId(authId);
+            if (ownerCodeResult == null || !ownerCodeResult.isSuccess()) {
+                log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 失败, authId={}, platformSkuNo={}, msg={}",
+                        authId, platformSkuNo, ownerCodeResult == null ? "返回为空" : ownerCodeResult.getMsg());
+                return null;
+            }
+            ownerCode = ownerCodeResult.getData();
         } catch (Exception e) {
             log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 异常, authId={}, platformSkuNo={}, error={}",
                     authId, platformSkuNo, e.getMessage());

@@ -813,7 +813,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         customer.setUseOrgName(useOrgName);
         // 默认仓库/账号有值时才做实时校验；Feign 不可用时会阻断保存，属有意设计以保证默认值有效。
         validateCustomerDefaultFields(dto.getDefaultShippingWarehouse(), dto.getDefaultReceiveAccount());
-        // 客户编辑为全量保存，编辑页会回显默认值；这两个字段按既有字符串字段语义用空串表示清空。
+        // 客户编辑为全量保存，编辑页会回显默认值；前端须传空串表示清空，null 亦按空串落库（与既有字符串字段一致）。
         customer.setDefaultShippingWarehouse(StringUtils.defaultString(dto.getDefaultShippingWarehouse()));
         customer.setDefaultReceiveAccount(StringUtils.defaultString(dto.getDefaultReceiveAccount()));
         Boolean updateResult = this.updateById(customer);

@@ -374,4 +374,11 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      */
     List<BatchResultDTO> syncPlatformProductByOne(SkuMappingDTO.SyncPlatformProductDTO dto);
 
+    /**
+     * 统计各海外仓未匹配SKU数量，供定时预警任务调用
+     * @param dto 查询条件（warehouseId/shopId/dictPlatform 均可为空）
+     * @return 按仓库分组的未匹配数量列表，仅返回有未匹配的仓库
+     */
+    List<SkuMappingDTO.UnmatchCountDTO> countUnmatchedGroupByWarehouse(SkuMappingDTO.UnmatchQueryDTO dto);
+
 }

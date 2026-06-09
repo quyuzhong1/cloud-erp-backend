@@ -2,6 +2,7 @@ package com.common.business.utils;
 
 import cn.hutool.core.net.URLDecoder;
 import cn.hutool.core.util.RandomUtil;
+import com.common.business.constant.ThirdWarehouseConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
@@ -38,12 +39,12 @@ import java.util.UUID;
 @Slf4j
 public class PdfUtil {
 
-    private static final float DEFAULT_RENDER_DPI = 150F;
+    private static final float DEFAULT_RENDER_DPI = 300F;
     /**
-     * RGB 渲染下 20M 像素约占 60MB JVM 堆；叠加 PNG 输出和 Base64 字符串后单次峰值仍需控制。
-     * PdfUtil 是静态工具类，会被测试和非 Spring 调用路径复用，因此这里保留固定安全阈值。
+     * PDF 渲染最大像素数（宽×高），超过此值拒绝转换以防 OOM。
+     * 1000 万像素在 RGB 渲染下约占用 30MB 堆内存，不含 PNG 编码和 Base64 字符串。
      */
-    private static final long MAX_RENDER_PIXELS = 20_000_000L;
+    private static final long MAX_RENDER_PIXELS = 10_000_000L;
 
     private PdfUtil() {
     }
@@ -404,7 +405,11 @@ public class PdfUtil {
             if (!writeResult || outputStream.size() == 0) {
                 throw new ServiceException("PDF文件转换PNG失败");
             }
-            return Base64.getEncoder().encodeToString(outputStream.toByteArray());
+            byte[] pngBytes = outputStream.toByteArray();
+            if (estimateBase64Length(pngBytes.length) > ThirdWarehouseConstants.MAX_INVOICE_PDF_BASE64_LENGTH) {
+                throw new ServiceException("PDF转PNG后图片过大，无法转换");
+            }
+            return Base64.getEncoder().encodeToString(pngBytes);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
@@ -449,6 +454,10 @@ public class PdfUtil {
         if (widthPixels * heightPixels > MAX_RENDER_PIXELS) {
             throw new ServiceException("PDF首页尺寸过大，无法转换PNG");
         }
+    }
+
+    private static long estimateBase64Length(int byteLength) {
+        return ((long) (byteLength + 2) / 3) * 4;
     }
 
     private static float pointsToMm(float points) {

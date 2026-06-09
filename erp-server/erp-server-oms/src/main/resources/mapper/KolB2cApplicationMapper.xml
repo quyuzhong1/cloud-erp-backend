@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.KolB2cApplicationMapper">
+    <sql id="SourceType_Bind">
+        <bind name="kolB2cApplicationSourceType" value="@com.common.business.enums.SourceTypeEnum@KOL_B2C_APPLICATION.getCode()" />
+    </sql>
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolB2cApplicationEntity">
        <result column="id" property="id" />
@@ -114,6 +117,7 @@ ksba.platform_order_code AS platformOrderCode
     </sql>
 
     <select id="paging" resultType="com.erp.model.oms.dto.KolB2cApplicationDTO$ListDTO">
+        <include refid="SourceType_Bind" />
         SELECT
         <include refid="Base_Column_List"></include>
             ,
@@ -134,7 +138,6 @@ ksba.platform_order_code AS platformOrderCode
         kol_b2c_application kba
         left join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
         left join kol_sub_b2c_application ksba on kbad.partner_id = ksba.partner_id and kba.id = ksba.source_id and ksba.is_deleted = false
-        <!-- 固定查询 B2C KOL 来源，取值与 SourceTypeEnum.KOL_B2C_APPLICATION.getCode() 保持一致。 -->
         left join (
             SELECT
                 kfu.source_id,
@@ -147,7 +150,7 @@ ksba.platform_order_code AS platformOrderCode
             WHERE
             kfu.is_deleted = FALSE
             AND kfu.source_id != ''
-            AND kfu.source_type = 'kolB2cApplication'
+            AND kfu.source_type = #{kolB2cApplicationSourceType}
             GROUP BY
                 kfu.source_id,
                 kfu.partner_id
@@ -167,12 +170,13 @@ ksba.platform_order_code AS platformOrderCode
                     id
                 FROM kol_sample_cost_ref_feedback_url
                 WHERE is_deleted = false
-                  AND source_type = 'kolB2cApplication'
+                  AND source_type = #{kolB2cApplicationSourceType}
                 ORDER BY source_detail_id, partner_id, url_hash, sort, create_time, id
             ) kfu_ordered
             GROUP BY source_detail_id, partner_id
         ) as kfu on kfu.partner_id = ksba.partner_id and kbad.id = kfu.source_detail_id
         WHERE
+        <!-- params.sqlMap.default 由 @WebAdvanceQuery/WebAdvanceQueryAspect 根据高级查询字段生成，非前端原始 SQL。 -->
         ${params.sqlMap.default}
         AND kba.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">

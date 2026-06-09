@@ -50,6 +50,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     DA_MAI("damai", "大卖仓", "大卖仓", "","Y","N"),
     WILDBERRIES("wildberries", "Wildberries", "Wildberries", "","Y","N"),
     TONG_YOU_WAREHOUSE("tongyou", "通邮海外仓", "通邮海外仓", "","Y","N"),
+    WEGO("wego", "WEGO", "WEGO", "","Y","N"),
 
     ;
 
