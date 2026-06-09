@@ -35,6 +35,16 @@ public class WegoSkuSyncDTO implements Serializable {
         private String platform;
 
         /**
+         * 系统仓库ID（overseas_provider_warehouse.warehouse_id），由 DMP 层查询后传入
+         */
+        private String warehouseId;
+
+        /**
+         * 系统仓库名称，由 DMP 层查询后传入
+         */
+        private String warehouseName;
+
+        /**
          * SKU 列表
          */
         @Valid
