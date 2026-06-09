@@ -1292,7 +1292,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 ? matchedLogisticsBillVos
                 : resolveMatchedLogisticsBillVoList(uniqueKeyList, successJson, logisticsBillVos, costImportEntity);
 
-        // import_add_new 暂不在此处理：按新单无法区分自发货/尾程归属，且费用配置入口已禁用该类型；未匹配到物流单直接报错。
+        // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，且配置入口已禁用；未匹配到物流单直接报错（原 getAddImportLogisticBill 分支已注释）。
         if (CollUtil.isEmpty(logisticsBillVoList)) {
             errorMsgList.add("未找到对应物流单");
         }
@@ -1737,11 +1737,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 按新单（import_add_new）格式化待新增的物流单与明细。
-     * 方法保留供后续若恢复按新单导入时复用；handleImportData 已移除对应分支，因混合 selfDeliver/尾程 同文件导入时无法判定新单归属。
-     * @author will
-     * @date 2026/1/22 20:04
+     * IMPORT_ADD_NEW 已下线，原按新单（import_add_new）格式化待新增物流单逻辑保留注释供恢复参考。
+     * 原因：模板导入同一文件可能混合自发货/尾程，按新单无法可靠判定费用归属；handleImportData 已移除对应分支。
      */
+    /*
     private void getAddImportLogisticBill (LogisticsBillCostDTO.ImportDataDTO importDataDTO,ImportHistoryRecordExcelDTO excelDTO,String costAttribution) {
         //新增物流单，格式化物流费用
         LogisticsBillEntity addBillEntity = new LogisticsBillEntity();
@@ -1813,6 +1812,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         importDataDTO.setLogisticsBillEntity(addBillEntity);
         importDataDTO.setLogisticsBillDetailList(Collections.singletonList(addBillDetailEntity));
     }
+    */
 
     /**
      * 数据处理

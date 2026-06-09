@@ -108,7 +108,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
-        validateImportTypeList(dto.getImportTypeList());
         // 验证明细列表
         validateDetailList(dto.getBusinessType(),dto.getDetailList());
 
@@ -189,7 +188,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),dto.getId());
-        validateImportTypeList(dto.getImportTypeList());
 
         // 验证明细列表
         validateDetailList(dto.getBusinessType(),dto.getDetailList());
@@ -304,16 +302,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
                 .count();
         if(count > 0){
             throw new ServiceException(ApiError.COMMON_HAS_EXIST, "费用配置");
-        }
-    }
-
-    private void validateImportTypeList(List<String> importTypeList) {
-        if (CollUtil.isEmpty(importTypeList)) {
-            return;
-        }
-        if (importTypeList.stream().anyMatch(code -> CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(code))) {
-            // import_add_new 历史逻辑保留，但费用配置新增/编辑暂不允许继续选择。
-            throw new ServiceException("导入新增(按新单)暂不支持使用，请选择导入更新或导入新增(按原单)");
         }
     }
 

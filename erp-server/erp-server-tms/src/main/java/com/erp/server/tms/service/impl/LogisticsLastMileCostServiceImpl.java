@@ -323,17 +323,22 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             LogisticsLastMileCostExcelDTO excelDTO = rowExcelMap.get(value.get(0));
             List<String> errorMsgList = new ArrayList<>();
             List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
-                if (CollUtil.isNotEmpty(logisticsBillVoList)) {
-                    errorMsgList.add("单号已存在无法新增，请核查单号");
-                }
-                if (CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
-                    errorMsgList.add("物流单号不能为空");
-                }
-                if (CharSequenceUtil.isBlank(excelDTO.getLogisticsSupplierName())) {
-                    errorMsgList.add("物流商不能为空");
-                }
-            } else if (CollUtil.isEmpty(logisticsBillVoList)) {
+            /*
+             * IMPORT_ADD_NEW 已下线，原按新单校验如下。
+             * 原因：按新单会新建物流单/费用单，尾程标准导入无法可靠区分自发货与尾程归属。
+             */
+            // if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
+            //     if (CollUtil.isNotEmpty(logisticsBillVoList)) {
+            //         errorMsgList.add("单号已存在无法新增，请核查单号");
+            //     }
+            //     if (CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
+            //         errorMsgList.add("物流单号不能为空");
+            //     }
+            //     if (CharSequenceUtil.isBlank(excelDTO.getLogisticsSupplierName())) {
+            //         errorMsgList.add("物流商不能为空");
+            //     }
+            // } else
+            if (CollUtil.isEmpty(logisticsBillVoList)) {
                 errorMsgList.add("未找到对应物流单");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
