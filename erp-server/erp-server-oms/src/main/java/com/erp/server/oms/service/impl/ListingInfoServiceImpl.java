@@ -769,8 +769,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingEntity.setProductName("");
             skuMappingEntity.setType(RuleTypeEnum.WAREHOUSE);
             skuMappingEntity.setListingId(listingInfoEntity.getId());
-            skuMappingEntity.setWarehouseId("");
-            skuMappingEntity.setWarehouseName("");
+            skuMappingEntity.setWarehouseId(dto.getWarehouseId() != null ? dto.getWarehouseId() : "");
+            skuMappingEntity.setWarehouseName(dto.getWarehouseName() != null ? dto.getWarehouseName() : "");
             skuMappingEntity.setHasMappingAll(Boolean.FALSE);
             skuMappingEntity.setIsExpire(Boolean.FALSE);
             skuMappingEntity.setEffectiveTime(effectiveTime);

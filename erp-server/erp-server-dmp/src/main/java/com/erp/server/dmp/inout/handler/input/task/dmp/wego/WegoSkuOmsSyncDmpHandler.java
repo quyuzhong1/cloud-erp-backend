@@ -4,8 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WegoSkuSyncDTO;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputBaseDmpHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,6 +37,9 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
 
     @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
+
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
 
     /**
      * 覆写父类的 DMP 写入逻辑，改为调用 OMS 未匹配 SKU 同步接口。
@@ -74,9 +79,32 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             return new ArrayList<>();
         }
 
+        // 通过 authId 查询绑定的系统仓库，填充到同步请求中
+        String warehouseId = "";
+        String warehouseName = "";
+        try {
+            List<OverseasProviderDTO.ListWithWarehouseDTO> allProviders = overseasProviderFeign.listAllMatch();
+            if (CollUtil.isNotEmpty(allProviders)) {
+                for (OverseasProviderDTO.ListWithWarehouseDTO p : allProviders) {
+                    if (authId.equals(p.getId()) && p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
+                        warehouseId = p.getWarehouseId();
+                        warehouseName = p.getWarehouseName() != null ? p.getWarehouseName() : "";
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[WEGO SKU OMS同步] 查询服务商仓库信息失败，warehouseId将为空，authId={}: {}", authId, e.getMessage());
+        }
+        if (warehouseId.isEmpty()) {
+            log.warn("[WEGO SKU OMS同步] 服务商[authId={}]未绑定系统仓库，sku_mapping.warehouse_id将为空", authId);
+        }
+
         WegoSkuSyncDTO.SyncReqDTO syncReqDTO = new WegoSkuSyncDTO.SyncReqDTO();
         syncReqDTO.setAuthId(authId);
         syncReqDTO.setPlatform(OmsPlatformEnum.WE_GO.getCode());
+        syncReqDTO.setWarehouseId(warehouseId);
+        syncReqDTO.setWarehouseName(warehouseName);
         syncReqDTO.setSkuList(skuItems);
 
         try {
