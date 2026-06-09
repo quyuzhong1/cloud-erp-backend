@@ -177,6 +177,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param cfClientId
      */
     Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId);
+
+    /**
+     * 更新授权信息；mainShop 非空时用于主账号授权新建子店铺（继承主店字段并建客户/权限）
+     */
+    Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId, ShopInfoEntity mainShop);
     /**
      * 根据平台查询店铺
      * @author will

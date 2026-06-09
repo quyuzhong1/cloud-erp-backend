@@ -1299,7 +1299,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         this.getMerchantName(cfgAppClient, String.valueOf(merchantId), shopeeResponse.getAccess_token(), shopInfo1);
                         shopInfo1.setAccount(shopInfo.getAccount());
                         //存在部分授权成功 部分失败可能
-                        flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo1, cfgAppClient.getId());
+                        flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.MERCHANT.getCode(), String.valueOf(merchantId), shopInfo1, cfgAppClient.getId(), shopInfo);
 
                     }
                 }
@@ -1321,13 +1321,88 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                         this.getShopName(cfgAppClient, String.valueOf(shopId), shopeeResponse.getAccess_token(), shopInfo1);
                         shopInfo1.setAccount(shopInfo.getAccount());
                         //存在部分授权成功 部分失败可能
-                        flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo1, cfgAppClient.getId());
+                        flag = saveOrUpdateShopee(shopeeResponse, AuthTypeEnum.SHOP.getCode(), String.valueOf(shopId), shopInfo1, cfgAppClient.getId(), shopInfo);
 
                     }
                 }
             }
         }
         return flag;
+    }
+
+    /**
+     * 主账号授权子店铺继承主店业务字段（不含仓库配置）
+     */
+    private void fillShopeeChildFromMain(ShopInfoEntity child, ShopInfoEntity main) {
+        if (Objects.isNull(child) || Objects.isNull(main)) {
+            return;
+        }
+        if (StringUtils.isBlank(child.getSalesOrgId())) {
+            child.setSalesOrgId(main.getSalesOrgId());
+            child.setSalesOrgName(main.getSalesOrgName());
+        }
+        if (StringUtils.isBlank(child.getChargeId())) {
+            child.setChargeId(main.getChargeId());
+            child.setChargeName(main.getChargeName());
+        }
+        if (StringUtils.isBlank(child.getDictAreaCode())) {
+            child.setDictAreaCode(main.getDictAreaCode());
+        }
+        if (StringUtils.isBlank(child.getSettlementCurrency())) {
+            child.setSettlementCurrency(main.getSettlementCurrency());
+        }
+        if (StringUtils.isBlank(child.getTradeCurrency())) {
+            child.setTradeCurrency(main.getTradeCurrency());
+        }
+        if (Objects.isNull(child.getEnableTime())) {
+            child.setEnableTime(Objects.nonNull(main.getEnableTime()) ? main.getEnableTime() : LocalDateTime.now());
+        }
+        if (StringUtils.isBlank(child.getOrderRouteType())) {
+            child.setOrderRouteType(StringUtils.isNotBlank(main.getOrderRouteType())
+                    ? main.getOrderRouteType() : ShopOrderRouteEnum.B2C.getCode());
+        }
+        if (StringUtils.isBlank(child.getType())) {
+            child.setType(main.getType());
+        }
+        if (StringUtils.isBlank(child.getAccount())) {
+            child.setAccount(main.getAccount());
+        }
+    }
+
+    /**
+     * 主账号授权新建子店铺后置：建客户、复制主店用户权限；失败不回滚店铺授权
+     */
+    private void afterShopeeChildShopCreated(String childShopId, String mainShopId) {
+        try {
+            ShopInfoEntity childShop = this.getById(childShopId);
+            if (Objects.isNull(childShop) || StringUtils.isNotBlank(childShop.getCustomerId())) {
+                return;
+            }
+            this.saveCustom(childShop);
+        } catch (Exception e) {
+            log.warn("虾皮子店铺创建客户失败, childShopId={}, mainShopId={}", childShopId, mainShopId, e);
+        }
+        try {
+            copyMainShopUserAuth(mainShopId, childShopId);
+        } catch (Exception e) {
+            log.warn("虾皮子店铺复制用户权限失败, childShopId={}, mainShopId={}", childShopId, mainShopId, e);
+        }
+    }
+
+    private void copyMainShopUserAuth(String mainShopId, String childShopId) {
+        if (StringUtils.isAnyBlank(mainShopId, childShopId)) {
+            return;
+        }
+        List<String> userIds = authDataFeign.listUserIdByShopIdList(Collections.singletonList(mainShopId));
+        if (CollectionUtils.isEmpty(userIds)) {
+            return;
+        }
+        for (String userId : userIds) {
+            AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+            addUserShopAuthDTO.setUserId(userId);
+            addUserShopAuthDTO.setShopIdList(Collections.singletonList(childShopId));
+            authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+        }
     }
 
     private void getShopName(CfgAppClientEntity cfgAppClient, String shopeeId, String accessToken, ShopInfoEntity shopInfo) {
@@ -1389,6 +1464,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      */
     @Override
     public Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeResponse, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId) {
+        return saveOrUpdateShopee(shopeeResponse, type, shopeeId, shopInfo, cfClientId, null);
+    }
+
+    @Override
+    public Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeResponse, String type, String shopeeId, ShopInfoEntity shopInfo,
+                                      String cfClientId, ShopInfoEntity mainShop) {
         if (StringUtils.isNotEmpty(shopeeResponse.getError())) {
             log.error("授权异常：{}", shopeeResponse);
             return Boolean.FALSE;
@@ -1413,6 +1494,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 shopInfoEntity = new ShopInfoEntity();
             }
         }
+        boolean isNewShop = StringUtils.isBlank(shopInfoEntity.getId());
+        if (Objects.nonNull(mainShop)) {
+            fillShopeeChildFromMain(shopInfoEntity, mainShop);
+        }
         if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getName())) {
             shopInfoEntity.setName(shopInfo.getName());
         } else {
@@ -1427,6 +1512,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.nonNull(shopInfo) && StringUtils.isNotEmpty(shopInfo.getAccount())) {
             shopInfoEntity.setAccount(shopInfo.getAccount());
         }
+        shopInfoEntity.setPlatformShopCode(shopeeId);
         shopInfoEntity.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shopInfoEntity.setDictPlatform(PlatformDictEnum.SHOPEE.getCode());
         shopInfoEntity.setAuthTime(LocalDateTime.now());
@@ -1447,6 +1533,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
         shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
+        if (isNewShop && Objects.nonNull(mainShop)) {
+            afterShopeeChildShopCreated(shopId, mainShop.getId());
+        }
         return Boolean.TRUE;
     }
 
