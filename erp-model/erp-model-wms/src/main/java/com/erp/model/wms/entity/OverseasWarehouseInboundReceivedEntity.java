@@ -59,6 +59,11 @@ public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasW
      */
     @TableField("flow_id")
     private String flowId;
+    /**
+     * 是否不良品 true 是 false 否
+     */
+    @TableField("defective_product_flag")
+    private Boolean defectiveProductFlag;
 
 
     public static final String DETAIL_ID = "detail_id";
@@ -68,5 +73,7 @@ public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasW
     public static final String RECEIVE_QTY = "receive_qty";
 
     public static final String RECEIVE_TIME = "receive_time";
+
+    public static final String DEFECTIVE_PRODUCT_FLAG = "defective_product_flag";
 
 }
