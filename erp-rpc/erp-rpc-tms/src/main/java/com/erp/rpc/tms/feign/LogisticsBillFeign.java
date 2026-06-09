@@ -73,7 +73,7 @@ public interface LogisticsBillFeign {
     List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@RequestBody LogisticsBillDetailQueryDTO query);
 
     /**
-     * 根据第三方配置映射表，查询待注册的物流单详情
+     * 查询已注册的物流单详情
      *
      * @param query 查询条件
      * @param platformType 第三方平台类型

@@ -18,9 +18,6 @@ public class ForeignServiceImpl implements ForeignService {
     @Resource
     private ForeignMapper foreignMapper;
 
-    @Resource
-    private LogisticsBillFeign logisticsBillFeign;
-
     @Override
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return foreignMapper.listTrackDto(query);
