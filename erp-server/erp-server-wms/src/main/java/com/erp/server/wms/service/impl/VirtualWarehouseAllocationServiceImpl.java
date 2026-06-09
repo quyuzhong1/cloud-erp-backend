@@ -716,6 +716,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
         String id = dto.getId();
         if (CharSequenceUtil.isBlank(id)) {
@@ -727,6 +729,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             service.update(dto);
         }
         VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
+        // 保存并提交同生共死：旺店通校验在 submit 内执行，处于同一全局事务，失败时保存一并回滚
         return service.submit(allocationEntity);
     }
 
