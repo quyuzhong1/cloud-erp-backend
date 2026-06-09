@@ -271,6 +271,14 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public BatchResultDTO updateStatus(String id, String status) {
+        FirstMileEstimatedBillEntity entity = getById(id);
+        if (Objects.isNull(entity)) {
+            return BatchResultDTO.fail(id, id, "头程暂估账单不存在, 更新状态失败");
+        }
+        List<FirstMileCostAllocationEntity> costAllocationList = firstMileCostAllocationService.listByLogisticsBillIds(Collections.singletonList(entity.getLogisticsBillId()));
+        if (CollUtil.isNotEmpty(costAllocationList)) {
+            return BatchResultDTO.fail(id, id, "存在头程费用分摊，不支持更新状态");
+        }
         if(status.equals(ConfirmStatusEnum.CONFIRM.getCode())){
             this.lambdaUpdate().set(FirstMileEstimatedBillEntity::getStatus, status).set(FirstMileEstimatedBillEntity::getConfirmTime, LocalDateTime.now()).eq(FirstMileEstimatedBillEntity::getId, id).update();
         }
