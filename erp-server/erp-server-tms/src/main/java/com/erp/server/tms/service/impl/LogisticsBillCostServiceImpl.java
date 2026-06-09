@@ -850,8 +850,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                                                   Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
         Map<String, BigDecimal> cfgAmountMap = new LinkedHashMap<>();
         List<TmsCostDetailEntity> existingList;
-        if (existingDetailMap != null && existingDetailMap.containsKey(logisticsCostId)) {
-            existingList = existingDetailMap.get(logisticsCostId);
+        if (existingDetailMap != null) {
+            existingList = existingDetailMap.getOrDefault(logisticsCostId, Collections.emptyList());
         } else {
             existingList = tmsCostDetailService.lambdaQuery()
                     .eq(TmsCostDetailEntity::getMainId, logisticsCostId)
@@ -1433,9 +1433,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
         if(CollUtil.isNotEmpty(logisticsBillVos)) {
-            List<String> logisticsBillCostIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getLogisticsBillCostId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-            List<TmsCostDetailEntity> listByMainIdList = tmsCostDetailService.listByMainIdList(logisticsBillCostIdList);
-        	mainIdListMap = CollUtil.isEmpty(listByMainIdList) ? new HashMap<>() : listByMainIdList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
+            List<String> logisticsBillCostIdList = logisticsBillVos.stream()
+                    .map(LogisticsBillDTO.LogisticsBillVo::getLogisticsBillCostId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            logisticsBillCostIdList.forEach(id -> mainIdListMap.put(id, Collections.emptyList()));
+            if (CollUtil.isNotEmpty(logisticsBillCostIdList)) {
+                List<TmsCostDetailEntity> listByMainIdList = tmsCostDetailService.listByMainIdList(logisticsBillCostIdList);
+                if (CollUtil.isNotEmpty(listByMainIdList)) {
+                    mainIdListMap.putAll(listByMainIdList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId)));
+                }
+            }
         }
 
         for ( Map.Entry<String, List<LogisticsBillCostExcelDTO>> entry : map.entrySet()) {
@@ -1582,7 +1591,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     continue;
                 }
                 // 勾选导入确认时，校验合并明细后实际金额合计大于 0
-                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, errorMsgList);
+                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, mainIdListMap, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                     errorList.addAll(importSuccessList);
@@ -1618,7 +1627,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 // 新增物流单分支：勾选导入确认时校验实际金额合计
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateDetailList,
-                            ReconciliationStatusEnum.CONFIRMED.getCode());
+                            ReconciliationStatusEnum.CONFIRMED.getCode(), Collections.emptyMap());
                     if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                         importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(Collections.singletonList(confirmMsg))));
                         errorList.addAll(importSuccessList);
@@ -1644,6 +1653,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private void appendImportConfirmAmountErrors(Boolean confirmStatus,
                                                  List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList,
                                                  Map<String, List<TmsCostDetailDTO.UpdateDTO>> targetUpdateMap,
+                                                 Map<String, List<TmsCostDetailEntity>> mainIdListMap,
                                                  List<String> errorMsgList) {
         if (!Boolean.TRUE.equals(confirmStatus) || CollUtil.isEmpty(targetPairList)) {
             return;
@@ -1652,7 +1662,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 合并库内已有明细与本次导入明细后校验实际金额合计
             String confirmMsg = validateImportConfirmAmountMsg(targetPair.getValue().getId(),
                     targetUpdateMap.get(targetPair.getKey().getDetailId()),
-                    ReconciliationStatusEnum.CONFIRMED.getCode());
+                    ReconciliationStatusEnum.CONFIRMED.getCode(), mainIdListMap);
             if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                 errorMsgList.add(confirmMsg);
                 return;

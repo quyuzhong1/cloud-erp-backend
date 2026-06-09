@@ -247,6 +247,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         // 尾程费用更新依赖物流单明细 ID 定位费用单，先批量查询可更新的费用单集合。
         List<String> logisticsBillDetailIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
+        Map<String, List<TmsCostDetailEntity>> mainIdListMap = buildCostDetailPreloadMap(logisticsBillCostList);
 
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildBillVoIndex(logisticsBillVos);
         Map<String, List<JSONObject>> importGroupMap = new LinkedHashMap<>();
@@ -438,7 +439,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                         errorMsgList.add("未找到对应物流费用单");
                         break;
                     }
-                    checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, errorMsgList);
+                    checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, mainIdListMap, errorMsgList);
                     if (CollectionUtils.isNotEmpty(errorMsgList)) {
                         break;
                     }
@@ -455,7 +456,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
                         String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(targetPair.getValue().getId(),
                                 targetUpdateMap.get(targetPair.getKey().getDetailId()),
-                                ReconciliationStatusEnum.CONFIRMED.getCode());
+                                ReconciliationStatusEnum.CONFIRMED.getCode(), mainIdListMap);
                         if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                             errorMsgList.add(confirmMsg);
                             break;
@@ -496,14 +497,14 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 // 新增物流单分支：勾选导入确认时校验实际金额合计
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateList,
-                            ReconciliationStatusEnum.CONFIRMED.getCode());
+                            ReconciliationStatusEnum.CONFIRMED.getCode(), Collections.emptyMap());
                     if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                         value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(Collections.singletonList(confirmMsg))));
                         errorList.addAll(value);
                         continue;
                     }
                 }
-                checkCategoryCurrency(updateList, logisticsBillCostEntity, cfgCostList, errorMsgList);
+                checkCategoryCurrency(updateList, logisticsBillCostEntity, cfgCostList, Collections.emptyMap(), errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList)));
                     errorList.addAll(value);
@@ -706,15 +707,36 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         return copyDTO;
     }
 
+    private Map<String, List<TmsCostDetailEntity>> buildCostDetailPreloadMap(List<LogisticsBillCostEntity> logisticsBillCostList) {
+        Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
+        if (CollUtil.isEmpty(logisticsBillCostList)) {
+            return mainIdListMap;
+        }
+        List<String> logisticsBillCostIdList = logisticsBillCostList.stream()
+                .map(LogisticsBillCostEntity::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        logisticsBillCostIdList.forEach(id -> mainIdListMap.put(id, Collections.emptyList()));
+        if (CollUtil.isNotEmpty(logisticsBillCostIdList)) {
+            List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.listByMainIdList(logisticsBillCostIdList);
+            if (CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
+                mainIdListMap.putAll(tmsCostDetailEntityList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId)));
+            }
+        }
+        return mainIdListMap;
+    }
+
     /**
      * 校验导入费用和存量费用在同一费用分类下的币种一致性。
      */
     private void checkCategoryCurrency(List<TmsCostDetailDTO.UpdateDTO> updateList,
                                        LogisticsBillCostEntity logisticsBillCostEntity,
                                        List<TmsCfgCostEntity> cfgCostList,
+                                       Map<String, List<TmsCostDetailEntity>> mainIdListMap,
                                        List<String> errorMsgList) {
         List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
-        List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.listByMainIdList(Collections.singletonList(logisticsBillCostEntity.getId()));
+        List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.getOrDefault(logisticsBillCostEntity.getId(), Collections.emptyList());
         if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
             List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
