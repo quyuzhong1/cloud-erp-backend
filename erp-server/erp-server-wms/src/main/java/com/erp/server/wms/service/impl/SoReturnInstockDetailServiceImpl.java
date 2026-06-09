@@ -12,7 +12,12 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -117,7 +122,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.getSoReturnInstockByReturnIds(Collections.singletonList(soReturnId));
             List<SoDetailEntity> soDetailEntityList = new ArrayList<>();
             if(Objects.nonNull(soReturn) && StringUtils.isNotBlank(soReturn.getSourceId())){
-                soDetailEntityList = soInfoFeign.listSoDetailByMainId(soReturn.getSourceId());
+                List<SoDetailEntity> remote = soInfoFeign.listSoDetailByMainId(soReturn.getSourceId());
+                soDetailEntityList = remote != null ? remote : Collections.emptyList();
             }
             //sku
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -253,7 +259,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             if(Objects.nonNull(soB2cReturnEntity)){
                 returnIds.add(soB2cReturnEntity.getId());
                 if(StringUtils.isNotBlank(soB2cReturnEntity.getSoId())){
-                    soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cReturnEntity.getSoId()));
+                    List<SoB2cDetailEntity> remote = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cReturnEntity.getSoId()));
+                    soB2cDetailEntityList = remote != null ? remote : Collections.emptyList();
                 }
             }
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnIds);
@@ -509,7 +516,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.getSoReturnInstockByReturnIds(Collections.singletonList(soReturnId));
             List<SoDetailEntity> soDetailEntityList = new ArrayList<>();
             if(Objects.nonNull(soReturn) && StringUtils.isNotBlank(soReturn.getSourceId())){
-                soDetailEntityList = soInfoFeign.listSoDetailByMainId(soReturn.getSourceId());
+                List<SoDetailEntity> remote = soInfoFeign.listSoDetailByMainId(soReturn.getSourceId());
+                soDetailEntityList = remote != null ? remote : Collections.emptyList();
             }
             //sku
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList());
@@ -734,7 +742,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class, dto.getSoReturnId());
             List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
             if (Objects.nonNull(soB2cReturnEntity) && StringUtils.isNotBlank(soB2cReturnEntity.getSoId())) {
-                soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cReturnEntity.getSoId()));
+                List<SoB2cDetailEntity> remote = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cReturnEntity.getSoId()));
+                soB2cDetailEntityList = remote != null ? remote : Collections.emptyList();
             }
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
             //原明细数据
@@ -1121,7 +1130,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     resolveExchangeRate(detailDto, dto), soB2cDetailList);
         } else {
             fillB2bPrice(detailEntity, detailDto.getSkuId(), detailDto.getSourceDetailId(), detailDto.getSoReturnDetailId(),
-                    detailDto.getRealQty(), detailEntity.getExchangeRate(), returnDetailList, soDetailList);
+                    detailDto.getRealQty(), resolveExchangeRate(detailDto, dto), returnDetailList, soDetailList);
         }
     }
 
@@ -1194,6 +1203,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                               Integer realQty, BigDecimal exchangeRate, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList) {
         SoDetailEntity soDetailEntity = findSoDetail(skuId, sourceDetailId, soReturnDetailId, returnDetailList, soDetailList);
         if (Objects.isNull(soDetailEntity)) {
+            log.warn("B2B退货入库找不到源销售订单明细，skuId={}, sourceDetailId={}, soReturnDetailId={}", skuId, sourceDetailId, soReturnDetailId);
             return;
         }
         setPriceAndAmount(detailEntity, soDetailEntity.getPrice(), soDetailEntity.getTaxRate(), soDetailEntity.getTaxPrice(),
@@ -1207,6 +1217,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 .findFirst()
                 .orElse(null);
         if (Objects.isNull(soB2cDetailEntity)) {
+            log.warn("B2C退货入库找不到源销售订单明细，skuId={}", skuId);
             return;
         }
         setPriceAndAmount(detailEntity, soB2cDetailEntity.getPrice(), BigDecimal.ZERO, soB2cDetailEntity.getPrice(),
@@ -1239,6 +1250,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         BigDecimal qty = BigDecimal.valueOf(Objects.nonNull(realQty) ? realQty : 0);
         BigDecimal safePrice = Objects.nonNull(price) ? price : BigDecimal.ZERO;
         BigDecimal safeTaxPrice = Objects.nonNull(taxPrice) ? taxPrice : safePrice;
+        if (Objects.isNull(exchangeRate)) {
+            log.warn("退货入库汇率为空，按 1:1 兜底，skuId={}", detailEntity.getSkuId());
+        }
         BigDecimal safeExchangeRate = Objects.nonNull(exchangeRate) ? exchangeRate : BigDecimal.ONE;
         detailEntity.setPrice(safePrice);
         detailEntity.setTaxRate(Objects.nonNull(taxRate) ? taxRate : BigDecimal.ZERO);

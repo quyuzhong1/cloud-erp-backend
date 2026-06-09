@@ -155,7 +155,7 @@ public class DataRecoveryJob {
             LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.select(SoOutstockEntity::getId);
             if (Boolean.TRUE.equals(approveOnly)) {
-                queryWrapper.eq(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE);
+                queryWrapper.eq(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
             }
             if (Objects.nonNull(startDate)) {
                 queryWrapper.ge(SoOutstockEntity::getBillDate, startDate);

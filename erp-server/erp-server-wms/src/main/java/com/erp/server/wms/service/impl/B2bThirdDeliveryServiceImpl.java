@@ -479,8 +479,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     viewDTO.setThirdWarehouseCode(overseasProvider.getCode());
                 }
             }
-//            viewDTO.setPlatformOrderCode(CharSequenceUtil.EMPTY);
-
             return viewDTO;
         }
     }

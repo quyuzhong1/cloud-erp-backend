@@ -38,11 +38,7 @@
             srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
-        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
-        WHERE
-        ${params.sqlMap.default}
-         and   srn.is_deleted = FALSE
-
+        WHERE ${params.sqlMap.default} and srn.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -55,72 +51,17 @@
         srn.create_time desc
     </select>
 
-    <select id="listCount" resultType="java.lang.Integer">
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select
-        count(distinct srn.id)
-        FROM so_return_notice_detail srnd
-        INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
-        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
+        srn.approve_status as approveStatus,
+        count(distinct srn.id) as count
+        FROM so_return_notice srn
+        INNER JOIN so_return_notice_detail srnd ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
-        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and srn.approve_status in
-            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-    </select>
-
-    <select id="soReturnNoticeExportExcel" resultType="com.erp.model.wms.dto.SoReturnNoticeDTO$PagingView">
-        SELECT
-        srn.id,
-        srn.source_id AS sourceId,
-        srnd.source_detail_id AS sourceDetailId,
-        srn.code,
-        srn.source_code AS sourceCode,
-        srn.so_code AS soCode,
-        srn.approve_status AS approveStatus,
-        srn.invalid_status AS invalidStatus,
-        srn.customer_id AS customerId,
-        srn.customer_name AS customerName,
-        srn.inventory_org_id AS inventoryOrgId,
-        srn.inventory_org_name AS inventoryOrgName,
-        srn.seller_name AS sellerName,
-        srnd.sku_id AS skuId,
-        srnd.sku_no AS skuNo,
-        srnd.return_qty AS returnQty,
-        srn.bill_date AS billDate,
-        srn.approve_user_name AS approveUserName,
-        srn.create_user_name AS createUserName,
-        srnd.return_type_dict AS returnTypeDict,
-        srnd.return_reason_dict AS returnReasonDict,
-        srn.create_time AS createTime,
-        srn.return_logistic_code as returnLogisticCode,
-        srn.currency,
-        srn.currency_symbol,
-        srnd.exchange_rate ,
-        srnd.return_amount ,
-        srnd.tax_return_amount ,
-        srnd.return_amount_local_currency ,
-        srnd.tax_return_amount_local_currency
-        FROM so_return_notice_detail srnd
-        INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
-        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
-        WHERE
-        ${params.sqlMap.default}
-        and    srn.is_deleted = FALSE
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        srn.create_time desc
+        group by srn.approve_status
     </select>
 
     <select id="generateSoDeliveryView" resultType="com.erp.model.wms.dto.SoReturnNoticeDTO$GenerateSoReturnReceiveView">

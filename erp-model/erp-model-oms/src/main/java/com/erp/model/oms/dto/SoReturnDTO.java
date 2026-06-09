@@ -49,6 +49,190 @@ public class SoReturnDTO {
     }
 
     /**
+     * 已审核退货单列表返回
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoReturnListVO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 乐观锁版本号
+         */
+        private Integer version;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 单据类型
+         */
+        private String type;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
+         * 退货日期
+         */
+        private LocalDate billDate;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+        /**
+         * 收货人
+         */
+        private String receiverName;
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
+        /**
+         * 交货方式
+         */
+        private String deliveryModeDict;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 是否含税
+         */
+        private Boolean isTax;
+        /**
+         * 地址类型
+         */
+        private String addressTypeDict;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 作废描述
+         */
+        private String invalidRemark;
+        /**
+         * 审核人id
+         */
+        private String approveUserId;
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 库存组织
+         */
+        private String inventoryOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String inventoryOrgName;
+        /**
+         * 同步金蝶id
+         */
+        private String syncKingdeeId;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
+         * 第三方编号
+         */
+        private String thirdCode;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
+    }
+
+    /**
      * 分页信息
      */
     @Data
@@ -783,6 +967,18 @@ public class SoReturnDTO {
          *含税退货金额（本位币）
          */
         private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
     }
 
 

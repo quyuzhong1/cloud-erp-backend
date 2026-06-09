@@ -124,7 +124,13 @@ public class WdtSellOrderInfoHandler extends AbstractSoOutStockHandler<WangDianO
                 detail.setAmount(detailItem.getSellPrice());
                 detail.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 detail.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-                BigDecimal sharePrice = detailItem.getSharePrice() != null ? detailItem.getSharePrice() : detailItem.getSellPrice();
+                BigDecimal sellPrice = detailItem.getSellPrice() != null ? detailItem.getSellPrice() : BigDecimal.ZERO;
+                // 旺店通 sharePrice 是按订单分摊后的"行总价"。下游 taxAmount / allAmountLocalCurrency 同样按
+                // 行总价聚合（参考 SyncB2CSoOutstockServiceImpl 中 reduce/sum 语义），因此 sharePrice 缺失时
+                // 回退必须用 sellPrice × actualQty（单价 × 数量 = 行总价），不能直接使用单价 sellPrice。
+                BigDecimal sharePrice = detailItem.getSharePrice() != null
+                        ? detailItem.getSharePrice()
+                        : sellPrice.multiply(new BigDecimal(actualQty));
                 detail.setTaxAmount(sharePrice);
                 detail.setAllAmountLocalCurrency(sharePrice);
                 detail.setExchangeRate(new BigDecimal(1));

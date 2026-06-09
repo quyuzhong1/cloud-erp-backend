@@ -795,8 +795,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         resultDTO.setCustomsTypeName(OverseasCustomsTypeNewEnum.getNameByCode(resultDTO.getCustomsType()));
         // 交货方式名称
         resultDTO.setDeliveryModeName(OverseasDeliveryModeEnum.getNameByCode(resultDTO.getDeliveryMode()));
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey("imlDeclareType");
-        resultDTO.setDeclareTypeName(dictList.stream().filter(v->v.getValue().equals(resultDTO.getDeclareType())).findFirst().orElse(new DictBasicDTO.ListDTO()).getName());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey("imlDeclareType");
+        resultDTO.setDeclareTypeName(dictList.stream().filter(v->v.getValue().equals(resultDTO.getDeclareType())).findFirst().orElse(new DictBasicEntity()).getName());
         // 查询详情信息
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = overseasWarehouseInboundDetailService.getByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailEntityList)) {
@@ -1036,8 +1036,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //校验目的仓是否为FBA第三方仓
-        List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("warehouseType");
-        DictBasicDTO.ListDTO listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
+        List<com.erp.model.wms.entity.DictBasicEntity> warehouseTypes = dictBasicService.getByKey("warehouseType");
+        com.erp.model.wms.entity.DictBasicEntity listDTO = warehouseTypes.stream().filter(req -> "FBA".equals(req.getValue())).findFirst().orElse(null);
         //如果是FBA第三方仓
         if (listDTO.getId().equals(destWarehouse.getTypeId())) {
 

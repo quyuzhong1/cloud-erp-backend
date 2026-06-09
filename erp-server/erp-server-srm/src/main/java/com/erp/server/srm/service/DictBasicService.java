@@ -21,14 +21,6 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
 	
 	boolean updateJsonObject(List<JSONObject> jsonObjects);
 
-    /**
-    * 修改
-    * @author Lambda
-    * @date: 2023-11-02
-    * @param dto
-    * @return
-    */
-    Boolean update(DictBasicDTO.UpdateDTO dto);
 
     /**
      * 保存或者修改字典信息
@@ -46,7 +38,7 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @param key
      * @return java.util.List<com.erp.model.srm.dto.DictBasicDTO>
      */
-    List<DictBasicDTO.ViewDTO> getByKey(String key);
+    List<DictBasicEntity> getByKey(String key);
 
 
     /**

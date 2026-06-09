@@ -1,19 +1,31 @@
 package com.sdk.wms.tongyou.utils;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.tongyou.dto.response.TongYouBaseResp;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 public class TongYouUtils {
+    private static final String EMPTY_RESPONSE_MESSAGE = "通邮接口返回为空";
+
     private TongYouUtils() {
         throw new IllegalStateException("Utility TongYouUtils class");
+    }
+
+    private static void assertResponseNotBlank(String jsonStr) {
+        if (CharSequenceUtil.isBlank(jsonStr)) {
+            throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+        }
     }
 
     /**
@@ -24,7 +36,14 @@ public class TongYouUtils {
      */
     public static <T> TongYouBaseResp<T> parseToTongYouResp(String jsonStr, Class<T> clazz) {
         try {
-            return JSON.parseObject(jsonStr, new TypeReference<TongYouBaseResp<T>>(clazz) {});
+            assertResponseNotBlank(jsonStr);
+            TongYouBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<TongYouBaseResp<T>>(clazz) {});
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -39,11 +58,41 @@ public class TongYouUtils {
      */
     public static <T> TongYouBaseResp<T> parseToTongYouResp(String jsonStr, TypeReference<TongYouBaseResp<T>> typeRef) {
         try {
-            return JSON.parseObject(jsonStr, typeRef);
+            assertResponseNotBlank(jsonStr);
+            TongYouBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
         }
     }
+
+
+    /**
+     * 解析通邮列表响应：兼容标准包装格式与直接返回 JSON 数组两种结构
+     */
+    public static <T> TongYouBaseResp<List<T>> parseToTongYouListResp(String jsonStr, Class<T> itemClass,
+                                                                      TypeReference<TongYouBaseResp<List<T>>> typeRef) {
+        try {
+            String trimmed = jsonStr == null ? "" : jsonStr.trim();
+            if (trimmed.startsWith("[")) {
+                List<T> data = JSON.parseArray(trimmed, itemClass);
+                TongYouBaseResp<List<T>> resp = new TongYouBaseResp<>();
+                resp.setError("T");
+                resp.setData(data);
+                return resp;
+            }
+            return JSON.parseObject(jsonStr, typeRef);
+        } catch (Exception e) {
+            log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr, e);
+            return TongYouBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr, e);
+        }
+    }
+
 
 }

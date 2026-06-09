@@ -146,6 +146,7 @@ public class PackageForecastJob {
                             entity.setPlatformPackageNo(subLogisticCode);
                             entity.setTransportNo(transportNo);
                             entity.setHandoverStatus(logisticsOrder.getStatus());
+                            entity.setPlatformNo(entity.getHandoverNo() + "/" + entity.getPlatformPackageNo());
                         }
                         updateList.addAll(packageForecast);
                     }

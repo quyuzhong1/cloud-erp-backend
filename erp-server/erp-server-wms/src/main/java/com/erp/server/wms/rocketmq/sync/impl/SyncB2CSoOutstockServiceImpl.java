@@ -334,6 +334,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
             soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
             soOutstock.setDictPlatform(customerInfo.getPlatformType());
+            soOutstock.setPartitionId(customerInfo.getPartitionId());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -517,6 +518,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     			return detailList;
     		}
 
+    		// 此处 skuPriceMap.get(skuNo) 不会为 null：上方 506–518 行已保证
+    		// suiteSkuSet 中的所有 SKU 都存在于 skuPriceMap，缺失时直接 sendWarnMsg + return。
     		for(Map.Entry<String, List<WdtSoOutStockDetailDTO>> suiteInfo : suiteMap.entrySet()) {
     			List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOList = suiteInfo.getValue();
     			BigDecimal totalStd = BigDecimal.ZERO;
@@ -527,10 +530,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     				totalAllAmountLocalCurrency = totalAllAmountLocalCurrency.add(wdtSoOutStockDetailDTO.getAllAmountLocalCurrency());
     				totalAmount = totalAmount.add(wdtSoOutStockDetailDTO.getAmount());
     			}
-    			if(totalStd.compareTo(BigDecimal.ZERO) != 0) {
+    		if(totalStd.compareTo(BigDecimal.ZERO) != 0) {
+    				BigDecimal totalTaxAmount = wdtSoOutStockDetailDTOList.stream()
+    						.map(WdtSoOutStockDetailDTO::getTaxAmount)
+    						.filter(Objects::nonNull)
+    						.reduce(BigDecimal.ZERO, BigDecimal::add);
     				int index = 0;
     				BigDecimal currTotalAllAmountLocalCurrency = BigDecimal.ZERO;
     				BigDecimal currTotalAmount = BigDecimal.ZERO;
+    				BigDecimal currTotalTaxAmount = BigDecimal.ZERO;
     				for(WdtSoOutStockDetailDTO wdtSoOutStockDetailDTO : wdtSoOutStockDetailDTOList) {
     					index = index + 1;
     					if(index != wdtSoOutStockDetailDTOList.size()) {
@@ -539,7 +547,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         							.multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
         							.divide(totalStd , 4 , RoundingMode.DOWN);
     						currTotalAllAmountLocalCurrency = currTotalAllAmountLocalCurrency.add(allAmountLocalCurrency);
-                            wdtSoOutStockDetailDTO.setTaxAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            BigDecimal taxAmount = totalTaxAmount
+                                    .multiply(skuPriceMap.get(wdtSoOutStockDetailDTO.getSkuNo()))
+                                    .multiply(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty().toString()))
+                                    .divide(totalStd , 4 , RoundingMode.DOWN);
+                            currTotalTaxAmount = currTotalTaxAmount.add(taxAmount);
+                            wdtSoOutStockDetailDTO.setTaxAmount(taxAmount);
                             wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(allAmountLocalCurrency);
 
         					BigDecimal amount = totalAmount
@@ -550,7 +563,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 							wdtSoOutStockDetailDTO.setAmount(amount);
     					}else {
     						wdtSoOutStockDetailDTO.setAllAmountLocalCurrency(totalAllAmountLocalCurrency.subtract(currTotalAllAmountLocalCurrency));
-                            wdtSoOutStockDetailDTO.setTaxAmount(wdtSoOutStockDetailDTOList.stream().map(WdtSoOutStockDetailDTO::getTaxAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add));
+                            wdtSoOutStockDetailDTO.setTaxAmount(totalTaxAmount.subtract(currTotalTaxAmount));
                             wdtSoOutStockDetailDTO.setAmount(totalAmount.subtract(currTotalAmount));
     					}
     					wdtSoOutStockDetailDTO.setPrice(wdtSoOutStockDetailDTO.getAmount().divide(new BigDecimal(wdtSoOutStockDetailDTO.getActualQty()), 4, RoundingMode.HALF_UP));
@@ -754,6 +767,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCustomerName(customerInfo.getName());
         soOutstock.setSellerId(customerInfo.getSellerId());
         soOutstock.setSellerName(customerInfo.getSellerName());
+        soOutstock.setPartitionId(customerInfo.getPartitionId());
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
         soOutstock.setOrderType(OrderTypeEnum.B2C.getCode());
@@ -914,6 +928,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCode(code);
         //金蝶无店铺id
         soOutstock.setShopId("");
+        soOutstock.setPartitionId("");
         //运输单号
         soOutstock.setTrackNo(entity.getFCarriageNO());
         //第三方单据编号

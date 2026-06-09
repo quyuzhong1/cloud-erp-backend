@@ -34,6 +34,7 @@ import com.erp.model.oms.enums.SoB2cAbnormalTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
@@ -73,6 +74,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -213,14 +215,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
-        List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        Map<String, String> shopNameMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(shopIdList)){
-            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
-            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        if(CollectionUtils.isEmpty(records)){
+            return;
         }
+        //获取产品信息
+        List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, SkuVO> skuVOMap = CollUtil.isNotEmpty(skuVOS) ? skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity())) : Collections.emptyMap();
+        //获取店铺信息
+        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopList = CollUtil.isNotEmpty(shopIdList) ? FeignQuery.getByIds(ShopInfoEntity.class, shopIdList) : Collections.emptyList();
+        Map<String, String> shopNameMap = CollUtil.isNotEmpty(shopList) ? shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName)) : Collections.emptyMap();
         for (SoB2cDeliveryInterceptDTO.ListDTO record : records) {
             //取消状态名称
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
@@ -234,10 +239,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             record.setBillTypeName(OrderTypeEnum.getName(record.getBillType()));
             record.setSourceTypeName(SoB2cDeliveryInterceptSourceTypeEnum.getName(record.getSourceType()));
             //产品信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(req -> req.getId().equals(record.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                record.setSkuNo(productDetailEntity.getSkuNo());
-                record.setProductName(productDetailEntity.getName());
+            SkuVO skuVO = skuVOMap.get(record.getSkuId());
+            if (ObjectUtil.isNotEmpty(skuVO)) {
+                record.setSkuNo(skuVO.getSkuNo());
+                record.setProductName(skuVO.getSkuName());
             }
             //店铺名称
             record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
@@ -659,8 +664,58 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         entity.setHandleTime(LocalDateTime.now());
         entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
         entity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
-        this.updateById(entity);
+        boolean updated = this.lambdaUpdate()
+                .set(SoB2cDeliveryInterceptEntity::getHandleResult, HandleResultEnum.SUCCESS.getCode())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
+                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, remark)
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, entity.getHandleTime())
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                .set(SoB2cDeliveryInterceptEntity::getCancelStatus, CancelStatusEnum.SUCCESS.getCode())
+                .eq(SoB2cDeliveryInterceptEntity::getId, entity.getId())
+                .eq(SoB2cDeliveryInterceptEntity::getVersion, entity.getVersion())
+                .update();
+        if (!updated) {
+            throw new ServiceException("并发操作，请刷新后重试");
+        }
         operateLogService.addModuleOperateLog("API拦截成功，备注：" + (CharSequenceUtil.isBlank(remark) ? "" : remark), ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "拦截成功");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO apiHandleFailure(String id, String remark) {
+        SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException("拦截单为空"));
+        if (!SoB2cDeliveryInterceptSourceTypeEnum.API.getCode().equals(entity.getSourceType())) {
+            throw new ServiceException("发货拦截单来源类型错误");
+        }
+        if (SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus().equals(entity.getHandleStatus())) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "拦截单已取消，不可操作");
+        }
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            if (HandleResultEnum.FAILURE.getCode().equals(entity.getHandleResult())) {
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "已处理不可重复操作");
+        }
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        LocalDateTime handleTime = LocalDateTime.now();
+        boolean updated = this.lambdaUpdate()
+                .set(SoB2cDeliveryInterceptEntity::getHandleResult, HandleResultEnum.FAILURE.getCode())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserId, userInfo.getUid())
+                .set(SoB2cDeliveryInterceptEntity::getHandleUserName, userInfo.getUserName())
+                .set(SoB2cDeliveryInterceptEntity::getHandleRemark, remark)
+                .set(SoB2cDeliveryInterceptEntity::getHandleTime, handleTime)
+                .set(SoB2cDeliveryInterceptEntity::getHandleStatus, SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus())
+                .set(SoB2cDeliveryInterceptEntity::getCancelStatus, CancelStatusEnum.FAILURE.getCode())
+                .set(SoB2cDeliveryInterceptEntity::getInterceptStatus, InterceptStatusEnum.FAILURE.getCode())
+                .eq(SoB2cDeliveryInterceptEntity::getId, entity.getId())
+                .eq(SoB2cDeliveryInterceptEntity::getVersion, entity.getVersion())
+                .update();
+        if (!updated) {
+            throw new ServiceException("并发操作，请刷新后重试");
+        }
+        operateLogService.addModuleOperateLog("API拦截失败，备注：" + (CharSequenceUtil.isBlank(remark) ? "" : remark), ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "拦截失败");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "处理成功");
     }
 
@@ -1077,6 +1132,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             if(Objects.nonNull(thirdWarehouseDeliveryEntity)){
                 soB2cDeliveryInterceptEntity.setSoDeliveryCode(thirdWarehouseDeliveryEntity.getCode());
                 soB2cDeliveryInterceptEntity.setDeliveryId(thirdWarehouseDeliveryEntity.getId());
+                soB2cDeliveryInterceptEntity.setShopId(thirdWarehouseDeliveryEntity.getShopId());
+                soB2cDeliveryInterceptEntity.setPlatformCode(thirdWarehouseDeliveryEntity.getPlatformCode());
             }
         }
 
@@ -1084,6 +1141,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(Objects.nonNull(soB2cDelivery)){
             soB2cDeliveryInterceptEntity.setDeliveryId(soB2cDelivery.getId());
             soB2cDeliveryInterceptEntity.setSoDeliveryCode(soB2cDelivery.getCode());
+            soB2cDeliveryInterceptEntity.setShopId(soB2cDelivery.getShopId());
+            soB2cDeliveryInterceptEntity.setPlatformCode(soB2cDelivery.getPlatformCode());
         }
     }
 

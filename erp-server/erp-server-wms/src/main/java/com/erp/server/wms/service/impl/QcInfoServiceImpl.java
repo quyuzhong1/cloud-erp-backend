@@ -713,7 +713,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     .count();
 
             long finishCount = freshDetails.stream()
-                    .filter(d -> d.getQcStatus() == QcBillStatusEnum.FINISH_QC)
+                    .filter(d -> d.getQcStatus() == QcBillStatusEnum.FINISH_QC
+                            || d.getQcStatus() == QcBillStatusEnum.EXEMPTION)
                     .count();
 
             // 更新主表状态
