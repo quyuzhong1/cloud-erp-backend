@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.entity.KolSocialMediaEntity;
 import com.erp.server.oms.mapper.KolSocialMediaMapper;
 import com.erp.server.oms.mapper.KolFeedbackMapper;
+import com.erp.server.oms.service.KolSampleCostFeedbackUrlService;
 import com.erp.server.oms.service.KolSocialMediaService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -27,6 +28,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.KolSocialMediaDTO;
 import javax.servlet.http.HttpServletResponse;
@@ -62,6 +64,12 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
 
     @Autowired
     private KolFeedbackMapper kolFeedbackMapper;
+
+    @Autowired
+    private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
@@ -498,6 +506,11 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
         if (StrUtil.isBlank(urlHash)) {
             return;
         }
+        // 同步 kol_feedback 与寄样费用回片 URL 必须在同一事务内完成，避免两张表 feedback_status 不一致。
+        transactionTemplate.executeWithoutResult(status -> doSyncFeedbackStatusByUrlHash(urlHash));
+    }
+
+    private void doSyncFeedbackStatusByUrlHash(String urlHash) {
         long socialMediaCount = lambdaQuery()
                 .eq(KolSocialMediaEntity::getUrlHash, urlHash)
                 .eq(KolSocialMediaEntity::getIsDeleted, false)
@@ -510,6 +523,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
                 .eq(KolFeedbackEntity::getIsDeleted, false)
                 .set(KolFeedbackEntity::getFeedbackStatus, feedbackStatus);
         int updateCount = kolFeedbackMapper.update(null, updateWrapper);
+        kolSampleCostFeedbackUrlService.syncFeedbackStatusByUrlHash(urlHash, feedbackStatus);
         log.info("同步回片状态：urlHash=【{}】，状态=【{}】，更新数量=【{}】", urlHash, feedbackStatus, updateCount);
     }
 }
