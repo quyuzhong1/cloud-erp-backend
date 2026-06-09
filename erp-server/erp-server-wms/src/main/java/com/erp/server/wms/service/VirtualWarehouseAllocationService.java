@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -9,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -65,6 +67,15 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @return
      */
     BatchResultDTO submit(VirtualWarehouseAllocationEntity ids);
+
+    /**
+     * 提交事务内处理（状态更新、借调单生成、推送等）
+     */
+    BatchResultDTO doSubmitTransactional(VirtualWarehouseAllocationEntity allocationEntity,
+                                         List<VirtualWarehouseAllocationDetailEntity> detailEntityList,
+                                         List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList,
+                                         Map<String, String> warehouseMap,
+                                         String statusCode);
 
     /**
      * 作废
