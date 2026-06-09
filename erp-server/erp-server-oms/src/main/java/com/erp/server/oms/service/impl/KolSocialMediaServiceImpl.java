@@ -27,7 +27,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +69,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
     private KolSampleCostFeedbackUrlService kolSampleCostFeedbackUrlService;
 
     @Autowired
-    private PlatformTransactionManager transactionManager;
+    private TransactionTemplate transactionTemplate;
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
@@ -508,7 +507,7 @@ public class KolSocialMediaServiceImpl extends SuperServiceImpl<KolSocialMediaMa
             return;
         }
         // 同步 kol_feedback 与寄样费用回片 URL 必须在同一事务内完成，避免两张表 feedback_status 不一致。
-        new TransactionTemplate(transactionManager).executeWithoutResult(status -> doSyncFeedbackStatusByUrlHash(urlHash));
+        transactionTemplate.executeWithoutResult(status -> doSyncFeedbackStatusByUrlHash(urlHash));
     }
 
     private void doSyncFeedbackStatusByUrlHash(String urlHash) {

@@ -1,13 +1,15 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
-import org.apache.xpath.operations.Bool;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -15,6 +17,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/feign/overseasProvider")
+@Validated
 public class OverseasProviderFeignController {
 
     @Resource
@@ -70,8 +73,8 @@ public class OverseasProviderFeignController {
     }
 
     @GetMapping("/getOwnerCodeByAuthId")
-    public String getOwnerCodeByAuthId(@RequestParam("authId") String authId) {
-        return overseasProviderService.getOwnerCodeByAuthId(authId);
+    public ApiResult<String> getOwnerCodeByAuthId(@RequestParam(value = "authId") String authId) {
+        return ApiResult.success(overseasProviderService.getOwnerCodeByAuthId(authId));
     }
 
     @PostMapping("/refreshToken")

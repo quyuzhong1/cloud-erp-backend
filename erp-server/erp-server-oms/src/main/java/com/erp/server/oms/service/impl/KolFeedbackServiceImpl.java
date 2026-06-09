@@ -82,6 +82,9 @@ import static com.common.business.enums.FileTaskEventEnum.IMPORT_OMS_KOL_FEEDBAC
 @Slf4j
 @Service
 public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, KolFeedbackEntity> implements KolFeedbackService {
+
+    private static final int SAME_ACTIVE_FEEDBACK_QUERY_BATCH_SIZE = 20;
+
     @Autowired
     private OperateLogService operateLogService;
 
@@ -519,11 +522,11 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
     }
 
     @Override
-    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList) {
-        if (CollUtil.isEmpty(sourceDetailIdList)) {
+    public List<KolFeedbackDTO.FeedbackQtyDTO> listFeedbackQtyBySourceDetailIdList(List<String> sourceDetailIdList, String sourceType) {
+        if (CollUtil.isEmpty(sourceDetailIdList) || StrUtil.isBlank(sourceType)) {
             return Collections.emptyList();
         }
-        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList, SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
+        return baseMapper.listFeedbackQtyBySourceDetailIdList(sourceDetailIdList, sourceType);
     }
 
     @Override
@@ -752,7 +755,7 @@ public class KolFeedbackServiceImpl extends SuperServiceImpl<KolFeedbackMapper, 
             return result;
         }
         Set<String> activeFeedbackKeySet = new HashSet<>();
-        for (List<KolFeedbackEntity> partitionList : Lists.partition(validDeleteList, 100)) {
+        for (List<KolFeedbackEntity> partitionList : Lists.partition(validDeleteList, SAME_ACTIVE_FEEDBACK_QUERY_BATCH_SIZE)) {
             LambdaQueryWrapper<KolFeedbackEntity> wrapper = new LambdaQueryWrapper<KolFeedbackEntity>()
                     .eq(KolFeedbackEntity::getIsDeleted, false)
                     .notIn(CollUtil.isNotEmpty(deleteIdSet), KolFeedbackEntity::getId, deleteIdSet)

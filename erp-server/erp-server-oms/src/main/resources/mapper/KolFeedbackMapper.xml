@@ -68,6 +68,7 @@
             kf.create_user_name AS createUserName
         FROM kol_feedback kf
         WHERE
+        <!-- params.sqlMap.default 由 @WebAdvanceQuery/WebAdvanceQueryAspect 根据高级查询字段生成，非前端原始 SQL。 -->
         ${params.sqlMap.default}
         AND kf.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">

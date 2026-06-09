@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.KolSampleCostMapper">
+    <sql id="SourceType_Bind">
+        <bind name="kolB2bApplicationSourceType" value="@com.common.business.enums.SourceTypeEnum@KOL_B2B_APPLICATION.getCode()" />
+        <bind name="kolB2cApplicationSourceType" value="@com.common.business.enums.SourceTypeEnum@KOL_B2C_APPLICATION.getCode()" />
+    </sql>
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolSampleCostEntity">
        <result column="id" property="id" />
@@ -160,10 +164,9 @@
           ksc.other_cost as otherCost
     </sql>
 
-    <!-- source_type 字面量与 com.common.business.enums.SourceTypeEnum.KOL_B2C_APPLICATION.getCode() 保持一致；XML 中用于固定来源标识。 -->
     <sql id="FeedbackUrl_Page_Join">
         left join kol_sub_b2c_application_detail ksc_ksbad
-            on ksc.source_type = 'kolB2cApplication'
+            on ksc.source_type = #{kolB2cApplicationSourceType}
             and ksc_ksbad.id = ksc.source_detail_id
             and ksc_ksbad.is_deleted = false
         <!-- LATERAL 按当前 ksc.source_type/source_detail_id 关联查询，DDL 中的 idx_kscfu_lateral_source_url 负责兜底。 -->
@@ -187,11 +190,13 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.KolSampleCostDTO$ListDTO">
+        <include refid="SourceType_Bind" />
         select
             <include refid="Base_Column_List" />
         from kol_sample_cost ksc
         <include refid="FeedbackUrl_Page_Join" />
         <where>
+            <!-- params.sqlMap.default 由 @WebAdvanceQuery/WebAdvanceQueryAspect 根据高级查询字段生成，非前端原始 SQL。 -->
             ${params.sqlMap.default}
             and ksc.is_deleted = false
             <!--权限-->
@@ -226,6 +231,7 @@
 
     <!-- 根据出库单明细ID列表查询样品费用列表 -->
     <select id="listKolSampleCostBySoDetailIdList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+        <include refid="SourceType_Bind" />
         WITH sampleBase as (
             select
                 sba.source_code,
@@ -240,7 +246,7 @@
                 kba.code as source_code,
                 kba.id as source_id,
                 kbad.id as source_detail_id,
-                'kolB2bApplication' as source_type,
+                #{kolB2bApplicationSourceType} as source_type,
                 kba.type,
                 sd.id as so_detail_id,
                 si.code as so_code,
@@ -259,7 +265,7 @@
                 kba.code as source_code,
                 kba.id as source_id,
                 ksbad.id as source_detail_id,
-                'kolB2cApplication' as source_type,
+                #{kolB2cApplicationSourceType} as source_type,
                 kba.sample_type as type,
                 sbd.id as so_detail_id,
                 sb.code as so_code,
@@ -331,11 +337,12 @@
             kfb.url as feedback_url
         from sampleBase sba
         left join kolFeedback kfb on sba.source_type = kfb.source_type and sba.detail_id = kfb.source_detail_id
-        left join so_b2c_detail sbd on sba.source_type = 'kolB2cApplication' and sbd.id = sba.so_detail_id and sbd.is_deleted = false
+        left join so_b2c_detail sbd on sba.source_type = #{kolB2cApplicationSourceType} and sbd.id = sba.so_detail_id and sbd.is_deleted = false
     </select>
 
     <!-- 根据旺店通KOL平台单号列表查询样品费用映射 -->
     <select id="listKolSampleCostByWdtPlatformCodeList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
+        <include refid="SourceType_Bind" />
         WITH sampleBase as (
             select
                 wdt.source_code,
@@ -353,7 +360,7 @@
                     kba.code as match_source_code,
                     kba.id as source_id,
                     kbad.id as source_detail_id,
-                    'kolB2bApplication' as source_type,
+                    #{kolB2bApplicationSourceType} as source_type,
                     kba.type,
                     '' as partition_id,
                     kbad.sku_no,
@@ -370,7 +377,7 @@
                     kba.code as match_source_code,
                     kba.id as source_id,
                     ksbad.id as source_detail_id,
-                    'kolB2cApplication' as source_type,
+                    #{kolB2cApplicationSourceType} as source_type,
                     kba.sample_type as type,
                     '' as partition_id,
                     ksbad.sku_no,
@@ -388,7 +395,7 @@
                     ksba.code as match_source_code,
                     kba.id as source_id,
                     ksbad.id as source_detail_id,
-                    'kolB2cApplication' as source_type,
+                    #{kolB2cApplicationSourceType} as source_type,
                     kba.sample_type as type,
                     '' as partition_id,
                     ksbad.sku_no,

@@ -361,6 +361,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public String getOwnerCodeByAuthId(String authId) {
+        if (CharSequenceUtil.isBlank(authId)) {
+            return null;
+        }
         OverseasProviderEntity overseasProviderEntity = this.getById(authId);
         return Objects.isNull(overseasProviderEntity) ? null : overseasProviderEntity.getOwnerCode();
     }
