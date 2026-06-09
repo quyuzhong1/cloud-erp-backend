@@ -325,12 +325,6 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Override
     public List<VirtualInventoryDTO.VirtualInventoryQtyDTO> listInventoryQty(VirtualInventoryDTO.VirtualInventoryParamDTO params) {
-        if (ObjectUtil.isEmpty(params)
-                || CollectionUtils.isEmpty(params.getSkuIdList())
-                || CollectionUtils.isEmpty(params.getWarehouseIdList())
-                || CollectionUtils.isEmpty(params.getVirtualWarehouseIdList())) {
-            return Collections.emptyList();
-        }
         return baseMapper.listInventoryQty(params);
     }
 
@@ -350,9 +344,6 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
     @Override
     public List<VirtualInventoryDTO.WarehouseInventoryQtyDTO> listInventoryQtyByWarehouseId(List<String> warehouseIdList, List<String> skuIdList) {
-        if (CollectionUtils.isEmpty(warehouseIdList) || CollectionUtils.isEmpty(skuIdList)) {
-            return Collections.emptyList();
-        }
         return baseMapper.listInventoryQtyByWarehouseId(warehouseIdList, skuIdList);
     }
 
