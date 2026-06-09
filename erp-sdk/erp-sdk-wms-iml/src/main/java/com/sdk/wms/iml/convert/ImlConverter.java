@@ -3,6 +3,7 @@ package com.sdk.wms.iml.convert;
 import com.common.business.dto.*;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
+import com.common.business.utils.ImlBarcodeUtil;
 import com.common.business.utils.MD5Util;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.sdk.wms.iml.dto.response.*;
@@ -26,6 +27,7 @@ public interface ImlConverter {
             @Mapping(target = "platformType", constant = "warehouse"),
             @Mapping(target = "platformSkuNo", source = "productSku"),
             @Mapping(target = "platformSkuName", source = "productTitle"),
+            @Mapping(target = "platformProductBarcode", expression = "java(ImlConverter.getProductBarcode(sourceData))"),
             @Mapping(target = "productImageUrl", source = "productDescUrl"),
             @Mapping(target = "productSpec", source = "productModel"),
             @Mapping(target = "type", expression ="java(ImlConverter.getType())"),
@@ -105,6 +107,13 @@ public interface ImlConverter {
 
     static String getUniqueKey(ImlProductResp sourceData){
         return MD5Util.toMD5("iml"+sourceData.getProductSku());
+    }
+
+    static String getProductBarcode(ImlProductResp sourceData) {
+        if (sourceData == null) {
+            return "";
+        }
+        return ImlBarcodeUtil.buildBarcode(sourceData.getProductSku(), sourceData.getCompanyCode());
     }
 
     static String getProvider(){

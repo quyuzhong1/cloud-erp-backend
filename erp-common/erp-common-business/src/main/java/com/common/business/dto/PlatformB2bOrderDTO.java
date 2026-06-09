@@ -207,6 +207,10 @@ public class PlatformB2bOrderDTO {
      */
     private String receiveCondition;
     /**
+     * 收款账号（ERP；平台未传时可由客户默认收款账号带出）
+     */
+    private String receiveAccount;
+    /**
      * 是否报关
      */
     private Boolean isDeclare;

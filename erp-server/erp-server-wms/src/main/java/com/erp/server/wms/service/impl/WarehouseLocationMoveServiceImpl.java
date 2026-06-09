@@ -818,6 +818,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (ApproveType.PASS.equals(dto.getType())) {
             WarehouseLocationMoveEntity infoEntity = this.getById(entity.getId());
             List<WarehouseLocationMoveDetailEntity> detailEntityList = warehouseLocationMoveDetailService.listByMainIds(Collections.singletonList(infoEntity.getId()));
+            validateAllocationInventoryOnApprove(infoEntity, detailEntityList, dto);
 
             List<TransferDTO> transferDTOList = new ArrayList<>();
             for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
@@ -899,6 +900,60 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 仓位移动审核可分配库存校验：
+     * 调出库存状态为可用时，校验调出数量 <= 可分配库存（实体仓可用+冻结-虚拟仓可用-冻结）
+     */
+    private void validateAllocationInventoryOnApprove(WarehouseLocationMoveEntity infoEntity, List<WarehouseLocationMoveDetailEntity> detailEntityList, ApproveOneDTO dto) {
+        if (CollUtil.isEmpty(detailEntityList) || SourceTypeEnum.isStocktaking(infoEntity.getSourceType())) {
+            return;
+        }
+        // pcShow 包装类型，dto.getPcShow() 直接拆箱可能 NPE，统一用 Boolean.TRUE.equals
+        boolean pcShow = Boolean.TRUE.equals(dto.getPcShow());
+        // key = warehouseId + "@@" + skuId（用不会出现在ID中的分隔符规避UUID自带"-"导致的截断）
+        Map<String, Integer> requestQtyMap = new HashMap<>();
+        Map<String, WarehouseLocationMoveDetailEntity> detailMap = new HashMap<>();
+        Map<String, String> keyToWarehouseId = new HashMap<>();
+        // 收集每个仓库下涉及的 SKU，便于批量查询可分配库存
+        Map<String, Set<String>> warehouseSkuMap = new HashMap<>();
+        for (WarehouseLocationMoveDetailEntity detailEntity : detailEntityList) {
+            if (!CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), detailEntity.getOutInventoryStatus())) {
+                continue;
+            }
+            String warehouseId = pcShow
+                    ? CharSequenceUtil.blankToDefault(detailEntity.getWarehouseId(), infoEntity.getWarehouseId())
+                    : infoEntity.getWarehouseId();
+            if (CharSequenceUtil.isBlank(warehouseId) || CharSequenceUtil.isBlank(detailEntity.getSkuId())) {
+                continue;
+            }
+            String key = warehouseId + "@@" + detailEntity.getSkuId();
+            requestQtyMap.merge(key, MathUtil.valueOfZero(detailEntity.getQty()), Integer::sum);
+            detailMap.putIfAbsent(key, detailEntity);
+            keyToWarehouseId.putIfAbsent(key, warehouseId);
+            warehouseSkuMap.computeIfAbsent(warehouseId, k -> new HashSet<>()).add(detailEntity.getSkuId());
+        }
+        if (requestQtyMap.isEmpty()) {
+            return;
+        }
+        // 一次性按多仓维度批量预取可分配库存，避免按仓循环造成的 N+1（同组织虚拟仓列表只查一次）
+        Map<String, Map<String, Integer>> allocatableQtyByWarehouse =
+                inventoryService.getRecipientAvailableQtyBatch(warehouseSkuMap);
+        for (Map.Entry<String, Integer> entry : requestQtyMap.entrySet()) {
+            String key = entry.getKey();
+            Integer requestQty = entry.getValue();
+            WarehouseLocationMoveDetailEntity detail = detailMap.get(key);
+            String warehouseId = keyToWarehouseId.get(key);
+            Integer allocatableQty = allocatableQtyByWarehouse.getOrDefault(warehouseId, Collections.emptyMap())
+                    .getOrDefault(detail.getSkuId(), 0);
+            if (MathUtil.compareTo(allocatableQty, requestQty) < 0) {
+                String warehouseName = pcShow
+                        ? CharSequenceUtil.blankToDefault(detail.getWarehouseName(), infoEntity.getWarehouseName())
+                        : infoEntity.getWarehouseName();
+                throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, detail.getSkuNo(), warehouseName, allocatableQty);
+            }
+        }
     }
 
     @Override

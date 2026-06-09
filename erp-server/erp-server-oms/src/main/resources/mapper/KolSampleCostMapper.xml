@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.KolSampleCostMapper">
+    <sql id="SourceType_Bind">
+        <bind name="kolB2bApplicationSourceType" value="@com.common.business.enums.SourceTypeEnum@KOL_B2B_APPLICATION.getCode()" />
+        <bind name="kolB2cApplicationSourceType" value="@com.common.business.enums.SourceTypeEnum@KOL_B2C_APPLICATION.getCode()" />
+    </sql>
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.KolSampleCostEntity">
        <result column="id" property="id" />
@@ -15,6 +19,7 @@
        <result column="source_id" property="sourceId" />
        <result column="source_code" property="sourceCode" />
        <result column="source_type" property="sourceType" />
+       <result column="source_detail_id" property="sourceDetailId" />
        <result column="type" property="type" />
        <result column="partner_id" property="partnerId" />
        <result column="partner_nickname" property="partnerNickname" />
@@ -42,69 +47,156 @@
        <result column="exchange_rate" property="exchangeRate" />
        <result column="total_cost" property="totalCost" />
        <result column="product_cost" property="productCost" />
+       <result column="cost_source" property="costSource" />
+       <result column="cost_source_month" property="costSourceMonth" />
        <result column="first_mile_shipping_cost" property="firstMileShippingCost" />
        <result column="clearance_customs_tax" property="clearanceCustomsTax" />
        <result column="shipping_cost" property="shippingCost" />
+       <result column="fee_source" property="feeSource" />
        <result column="customs_tax" property="customsTax" />
        <result column="other_cost" property="otherCost" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id as  createUserId,
-        create_user_name as createUserName,
-        create_time as createTime,
-        update_user_id as updateUserId,
-        update_user_name as updateUserName,
-        update_time as updateTime,
-        version,
-        is_deleted as isDeleted,
-        source_id as sourceId,
-          source_code as sourceCode,
-          source_type as sourceType,
-          type,
-          partner_id as partnerId,
-          partner_nickname as partnerNickname,
-          feedback_url as feedbackUrl ,
-          so_code as soCode,
-          so_id as soId,
-          so_detail_id as soDetailId,
-          so_org_id as soOrgId,
-          so_org_name as soOrgName,
-          so_outstock_id as soOutstockId,
-          so_outstock_detail_id as soOutstockDetailId,
-          so_outstock_code as soOutstockCode,
-          logistics_supplier_id as logisticsSupplierId,
-          logistics_supplier_name as logisticsSupplierName,
-          logistics_channel_id as logisticsChannelId,
-          logistics_channel_name as logisticsChannelName,
-          so_outstock_date as soOutstockDate,
-          warehouse_id as warehouseId,
-          warehouse_name as warehouseName,
-          partition_id as partitionId,
-          partition_name as partitionName,
-          sku_id as skuId,
-          sku_no as skuNo,
-          qty,
-          currency,
-          currency_symbol as currencySymbol,
-          exchange_rate as exchangeRate,
-          total_cost as totalCost,
-          product_cost as productCost,
-          first_mile_shipping_cost as firstMileShippingCost,
-          clearance_customs_tax as clearanceCustomsTax,
-          shipping_cost as shippingCost,
-          customs_tax as customsTax,
-          other_cost as otherCost
+        ksc.id,
+        ksc.create_user_id as  createUserId,
+        ksc.create_user_name as createUserName,
+        ksc.create_time as createTime,
+        ksc.update_user_id as updateUserId,
+        ksc.update_user_name as updateUserName,
+        ksc.update_time as updateTime,
+        ksc.version,
+        ksc.is_deleted as isDeleted,
+        ksc.source_id as sourceId,
+          ksc.source_code as sourceCode,
+          ksc.source_type as sourceType,
+          ksc.type,
+          ksc.partner_id as partnerId,
+          ksc.partner_nickname as partnerNickname,
+          ksc.source_detail_id as sourceDetailId,
+          kfu_agg.feedback_url as feedbackUrl ,
+          ksc.so_code as soCode,
+          ksc.so_id as soId,
+          ksc.so_detail_id as soDetailId,
+          ksc.so_org_id as soOrgId,
+          ksc.so_org_name as soOrgName,
+          ksc.so_outstock_id as soOutstockId,
+          ksc.so_outstock_detail_id as soOutstockDetailId,
+          ksc.so_outstock_code as soOutstockCode,
+          ksc.logistics_supplier_id as logisticsSupplierId,
+          ksc.logistics_supplier_name as logisticsSupplierName,
+          ksc.logistics_channel_id as logisticsChannelId,
+          ksc.logistics_channel_name as logisticsChannelName,
+          ksc.so_outstock_date as soOutstockDate,
+          ksc.warehouse_id as warehouseId,
+          ksc.warehouse_name as warehouseName,
+          ksc.partition_id as partitionId,
+          ksc.partition_name as partitionName,
+          ksc.sku_id as skuId,
+          ksc.sku_no as skuNo,
+          ksc.qty,
+          ksc.currency,
+          ksc.currency_symbol as currencySymbol,
+          ksc.exchange_rate as exchangeRate,
+          ksc.total_cost as totalCost,
+          ksc.product_cost as productCost,
+          ksc.cost_source as costSource,
+          ksc.cost_source_month as costSourceMonth,
+          ksc.first_mile_shipping_cost as firstMileShippingCost,
+          ksc.clearance_customs_tax as clearanceCustomsTax,
+          ksc.shipping_cost as shippingCost,
+          ksc.fee_source as feeSource,
+          ksc.customs_tax as customsTax,
+          ksc.other_cost as otherCost
+    </sql>
+
+    <sql id="Base_Column_List_No_Feedback_Join">
+        ksc.id,
+        ksc.create_user_id as  createUserId,
+        ksc.create_user_name as createUserName,
+        ksc.create_time as createTime,
+        ksc.update_user_id as updateUserId,
+        ksc.update_user_name as updateUserName,
+        ksc.update_time as updateTime,
+        ksc.version,
+        ksc.is_deleted as isDeleted,
+        ksc.source_id as sourceId,
+          ksc.source_code as sourceCode,
+          ksc.source_type as sourceType,
+          ksc.source_detail_id as sourceDetailId,
+          ksc.type,
+          ksc.partner_id as partnerId,
+          ksc.partner_nickname as partnerNickname,
+          ksc.feedback_url as feedbackUrl ,
+          ksc.so_code as soCode,
+          ksc.so_id as soId,
+          ksc.so_detail_id as soDetailId,
+          ksc.so_org_id as soOrgId,
+          ksc.so_org_name as soOrgName,
+          ksc.so_outstock_id as soOutstockId,
+          ksc.so_outstock_detail_id as soOutstockDetailId,
+          ksc.so_outstock_code as soOutstockCode,
+          ksc.logistics_supplier_id as logisticsSupplierId,
+          ksc.logistics_supplier_name as logisticsSupplierName,
+          ksc.logistics_channel_id as logisticsChannelId,
+          ksc.logistics_channel_name as logisticsChannelName,
+          ksc.so_outstock_date as soOutstockDate,
+          ksc.warehouse_id as warehouseId,
+          ksc.warehouse_name as warehouseName,
+          ksc.partition_id as partitionId,
+          ksc.partition_name as partitionName,
+          ksc.sku_id as skuId,
+          ksc.sku_no as skuNo,
+          ksc.qty,
+          ksc.currency,
+          ksc.currency_symbol as currencySymbol,
+          ksc.exchange_rate as exchangeRate,
+          ksc.total_cost as totalCost,
+          ksc.product_cost as productCost,
+          ksc.cost_source as costSource,
+          ksc.cost_source_month as costSourceMonth,
+          ksc.first_mile_shipping_cost as firstMileShippingCost,
+          ksc.clearance_customs_tax as clearanceCustomsTax,
+          ksc.shipping_cost as shippingCost,
+          ksc.fee_source as feeSource,
+          ksc.customs_tax as customsTax,
+          ksc.other_cost as otherCost
+    </sql>
+
+    <sql id="FeedbackUrl_Page_Join">
+        left join kol_sub_b2c_application_detail ksc_ksbad
+            on ksc.source_type = #{kolB2cApplicationSourceType}
+            and ksc_ksbad.id = ksc.source_detail_id
+            and ksc_ksbad.is_deleted = false
+        <!-- LATERAL 按当前 ksc.source_type/source_detail_id 关联查询，DDL 中的 idx_kscfu_lateral_source_url 负责兜底。 -->
+        left join lateral (
+            select
+                array_to_string(array_agg(url order by sort, create_time, id), ',') as feedback_url
+            from (
+                select distinct on (url_hash)
+                    url,
+                    sort,
+                    create_time,
+                    id
+                from kol_sample_cost_ref_feedback_url kfur
+                where kfur.is_deleted = false
+                  and kfur.source_type = ksc.source_type
+                  and kfur.source_detail_id = coalesce(ksc_ksbad.source_detail_id, ksc.source_detail_id)
+                order by url_hash, sort, create_time, id
+            ) kfu
+        ) kfu_agg on true
     </sql>
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.oms.dto.KolSampleCostDTO$ListDTO">
+        <include refid="SourceType_Bind" />
         select
             <include refid="Base_Column_List" />
         from kol_sample_cost ksc
+        <include refid="FeedbackUrl_Page_Join" />
         <where>
+            <!-- params.sqlMap.default 由 @WebAdvanceQuery/WebAdvanceQueryAspect 根据高级查询字段生成，非前端原始 SQL。 -->
             ${params.sqlMap.default}
             and ksc.is_deleted = false
             <!--权限-->
@@ -124,7 +216,7 @@
     <!-- 按时间范围查询列表 -->
     <select id="listByTime" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
         select
-            <include refid="Base_Column_List" />
+            <include refid="Base_Column_List_No_Feedback_Join" />
         from kol_sample_cost ksc
         <where>
             ksc.is_deleted = false
@@ -139,14 +231,96 @@
 
     <!-- 根据出库单明细ID列表查询样品费用列表 -->
     <select id="listKolSampleCostBySoDetailIdList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
-        WITH kolFeedback as (
-        select
-            array_to_string(array_agg(DISTINCT partner_id),',') as partner_id,
-            array_to_string(array_agg(DISTINCT partner_nickname),',') as partner_nickname,
-            array_to_string(array_agg(DISTINCT url),',') as url,
-            source_detail_id
-            from kol_feedback
-            where is_deleted = false group by source_detail_id
+        <include refid="SourceType_Bind" />
+        WITH sampleBase as (
+            select
+                sba.source_code,
+                sba.source_id,
+                sba.source_detail_id,
+                sba.source_type,
+                sba.so_detail_id,
+                sba.partition_id,
+                sba.type,
+                sba.detail_id
+            from (select
+                kba.code as source_code,
+                kba.id as source_id,
+                kbad.id as source_detail_id,
+                #{kolB2bApplicationSourceType} as source_type,
+                kba.type,
+                sd.id as so_detail_id,
+                si.code as so_code,
+                si.partition_id,
+                kbad.id as detail_id
+            from kol_b2b_application kba
+            inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+            inner join so_info si on si.source_id = kba.id and si.is_deleted = false
+            inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
+            where kba.is_deleted = false
+            and kba.approve_status = 'approve'
+
+            union
+
+            select
+                kba.code as source_code,
+                kba.id as source_id,
+                ksbad.id as source_detail_id,
+                #{kolB2cApplicationSourceType} as source_type,
+                kba.sample_type as type,
+                sbd.id as so_detail_id,
+                sb.code as so_code,
+                sbr.partition_id,
+                kbad.id as detail_id
+            from
+            kol_b2c_application kba
+            inner join kol_b2c_application_detail kbad on
+            kba.id = kbad.main_id
+            and kbad.is_deleted = false
+            inner join kol_sub_b2c_application_detail ksbad on
+            kbad.id = ksbad.source_detail_id
+            and ksbad.is_deleted = false
+            inner join so_b2c_detail sbd on
+            sbd.source_detail_id = ksbad.id
+            and sbd.is_deleted = false
+            inner join so_b2c sb on
+            sb.id = sbd.main_id
+            and sb.is_deleted = false
+            inner join so_b2c_receiver sbr on
+            sbd.main_id = sbr.main_id
+            and sbr.is_deleted = false
+            where kba.is_deleted = false
+            and kba.approve_status = 'approve'
+            ) sba
+            where sba.so_detail_id in
+            <foreach collection="soDetailIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        ),
+        kolFeedback as (
+            select
+                source_type,
+                source_detail_id,
+                array_to_string(array_agg(DISTINCT partner_id),',') as partner_id,
+                array_to_string(array_agg(DISTINCT partner_nickname),',') as partner_nickname,
+                array_to_string(array_agg(url order by sort, create_time, id),',') as url
+            from (
+                select distinct on (source_type, source_detail_id, url_hash)
+                    source_type,
+                    source_detail_id,
+                    partner_id,
+                    partner_nickname,
+                    url,
+                    sort,
+                    create_time,
+                    id
+                from kol_sample_cost_ref_feedback_url
+                where is_deleted = false
+                  and (source_type, source_detail_id) in (
+                      select source_type, detail_id from sampleBase
+                  )
+                order by source_type, source_detail_id, url_hash, sort, create_time, id
+            ) kfu
+            group by source_type, source_detail_id
         )
         select
             sba.source_code,
@@ -157,76 +331,112 @@
             sba.partition_id,
             sba.type,
             sba.detail_id,
+            sbd.tax_cost as "purchaseAverageCost",
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
-            from (select
-            kba.code as source_code,
-            kba.id as source_id,
-            kbad.id as source_detail_id,
-            'kolB2bApplication' as source_type,
-            kba.type,
-            sd.id as so_detail_id,
-            si.code as so_code,
-            si.partition_id,
-            kbad.id as detail_id
-        from kol_b2b_application kba
-        inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
-        inner join so_info si on si.source_id = kba.id and si.is_deleted = false
-        inner join so_detail sd on sd.source_detail_id = kbad.id and sd.is_deleted = false
-        where kba.is_deleted = false
-        and kba.approve_status = 'approve'
-
-        union
-
-        select
-            kba.code as source_code,
-            kba.id as source_id,
-            ksbad.id as source_detail_id,
-            'kolB2cApplication' as source_type,
-            kba.sample_type as type,
-            sbd.id as so_detail_id,
-            sb.code as so_code,
-            sbr.partition_id,
-            kbad.id as detail_id
-        from
-        kol_b2c_application kba
-        inner join kol_b2c_application_detail kbad on
-        kba.id = kbad.main_id
-        and kbad.is_deleted = false
-        inner join kol_sub_b2c_application_detail ksbad on
-        kbad.id = ksbad.source_detail_id
-        and ksbad.is_deleted = false
-        inner join so_b2c_detail sbd on
-        sbd.source_detail_id = ksbad.id
-        and sbd.is_deleted = false
-        inner join so_b2c sb on
-        sb.id = sbd.main_id
-        and sb.is_deleted = false
-        inner join so_b2c_receiver sbr on
-        sbd.main_id = sbr.main_id
-        and sbr.is_deleted = false
-        where kba.is_deleted = false
-        and kba.approve_status = 'approve'
-        ) sba
-        left join kolFeedback kfb on sba.detail_id = kfb.source_detail_id
-        where sba.so_detail_id in 
-        <foreach collection="soDetailIdList" item="id" open="(" separator="," close=")">
-             #{id}
-         </foreach>
+        from sampleBase sba
+        left join kolFeedback kfb on sba.source_type = kfb.source_type and sba.detail_id = kfb.source_detail_id
+        left join so_b2c_detail sbd on sba.source_type = #{kolB2cApplicationSourceType} and sbd.id = sba.so_detail_id and sbd.is_deleted = false
     </select>
 
     <!-- 根据旺店通KOL平台单号列表查询样品费用映射 -->
     <select id="listKolSampleCostByWdtPlatformCodeList" resultType="com.erp.model.oms.entity.KolSampleCostEntity">
-        WITH kolFeedback as (
+        <include refid="SourceType_Bind" />
+        WITH sampleBase as (
             select
+                wdt.source_code,
+                wdt.match_source_code,
+                wdt.source_id,
+                wdt.source_detail_id,
+                wdt.source_type,
+                wdt.type,
+                wdt.partition_id,
+                wdt.sku_no,
+                wdt.detail_id
+            from (
+                select
+                    kba.code as source_code,
+                    kba.code as match_source_code,
+                    kba.id as source_id,
+                    kbad.id as source_detail_id,
+                    #{kolB2bApplicationSourceType} as source_type,
+                    kba.type,
+                    '' as partition_id,
+                    kbad.sku_no,
+                    kbad.id as detail_id
+                from kol_b2b_application kba
+                inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+                where kba.is_deleted = false
+                  and kba.approve_status = 'approve'
+
+                union
+
+                select
+                    kba.code as source_code,
+                    kba.code as match_source_code,
+                    kba.id as source_id,
+                    ksbad.id as source_detail_id,
+                    #{kolB2cApplicationSourceType} as source_type,
+                    kba.sample_type as type,
+                    '' as partition_id,
+                    ksbad.sku_no,
+                    kbad.id as detail_id
+                from kol_b2c_application kba
+                inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+                inner join kol_sub_b2c_application_detail ksbad on kbad.id = ksbad.source_detail_id and ksbad.is_deleted = false
+                where kba.is_deleted = false
+                  and kba.approve_status = 'approve'
+
+                union
+
+                select
+                    kba.code as source_code,
+                    ksba.code as match_source_code,
+                    kba.id as source_id,
+                    ksbad.id as source_detail_id,
+                    #{kolB2cApplicationSourceType} as source_type,
+                    kba.sample_type as type,
+                    '' as partition_id,
+                    ksbad.sku_no,
+                    kbad.id as detail_id
+                from kol_b2c_application kba
+                inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
+                inner join kol_sub_b2c_application_detail ksbad on kbad.id = ksbad.source_detail_id and ksbad.is_deleted = false
+                inner join kol_sub_b2c_application ksba on ksbad.main_id = ksba.id and ksba.is_deleted = false and ksba.source_id = kba.id
+                where kba.is_deleted = false
+                  and kba.approve_status = 'approve'
+            ) wdt
+            where wdt.source_code in
+            <foreach collection="platformCodeList" item="code" open="(" separator="," close=")">
+                #{code}
+            </foreach>
+        ),
+        kolFeedback as (
+            select
+                source_type,
+                source_detail_id,
                 array_to_string(array_agg(DISTINCT partner_id),',') as partner_id,
                 array_to_string(array_agg(DISTINCT partner_nickname),',') as partner_nickname,
-                array_to_string(array_agg(DISTINCT url),',') as url,
-                source_detail_id
-            from kol_feedback
-            where is_deleted = false
-            group by source_detail_id
+                array_to_string(array_agg(url order by sort, create_time, id),',') as url
+            from (
+                select distinct on (source_type, source_detail_id, url_hash)
+                    source_type,
+                    source_detail_id,
+                    partner_id,
+                    partner_nickname,
+                    url,
+                    sort,
+                    create_time,
+                    id
+                from kol_sample_cost_ref_feedback_url
+                where is_deleted = false
+                  and (source_type, source_detail_id) in (
+                      select source_type, detail_id from sampleBase
+                  )
+                order by source_type, source_detail_id, url_hash, sort, create_time, id
+            ) kfu
+            group by source_type, source_detail_id
         )
         select
             wdt.source_code,
@@ -240,65 +450,8 @@
             kfb.partner_id,
             kfb.partner_nickname,
             kfb.url as feedback_url
-        from (
-            select
-                kba.code as source_code,
-                kba.code as match_source_code,
-                kba.id as source_id,
-                kbad.id as source_detail_id,
-                'kolB2bApplication' as source_type,
-                kba.type,
-                '' as partition_id,
-                kbad.sku_no,
-                kbad.id as detail_id
-            from kol_b2b_application kba
-            inner join kol_b2b_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
-            where kba.is_deleted = false
-              and kba.approve_status = 'approve'
-
-            union
-
-            select
-                kba.code as source_code,
-                kba.code as match_source_code,
-                kba.id as source_id,
-                ksbad.id as source_detail_id,
-                'kolB2cApplication' as source_type,
-                kba.sample_type as type,
-                '' as partition_id,
-                ksbad.sku_no,
-                kbad.id as detail_id
-            from kol_b2c_application kba
-            inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
-            inner join kol_sub_b2c_application_detail ksbad on kbad.id = ksbad.source_detail_id and ksbad.is_deleted = false
-            where kba.is_deleted = false
-              and kba.approve_status = 'approve'
-
-            union
-
-            select
-                kba.code as source_code,
-                ksba.code as match_source_code,
-                kba.id as source_id,
-                ksbad.id as source_detail_id,
-                'kolB2cApplication' as source_type,
-                kba.sample_type as type,
-                '' as partition_id,
-                ksbad.sku_no,
-                kbad.id as detail_id
-            from kol_b2c_application kba
-            inner join kol_b2c_application_detail kbad on kba.id = kbad.main_id and kbad.is_deleted = false
-            inner join kol_sub_b2c_application_detail ksbad on kbad.id = ksbad.source_detail_id and ksbad.is_deleted = false
-            inner join kol_sub_b2c_application ksba on ksbad.main_id = ksba.id and ksba.is_deleted = false and ksba.source_id = kba.id
-            where kba.is_deleted = false
-              and kba.approve_status = 'approve'
-        ) wdt
-        left join kolFeedback kfb on wdt.detail_id = kfb.source_detail_id
-        where wdt.source_code in
-        <foreach collection="platformCodeList" item="code" open="(" separator="," close=")">
-            #{code}
-        </foreach>
+        from sampleBase wdt
+        left join kolFeedback kfb on wdt.source_type = kfb.source_type and wdt.detail_id = kfb.source_detail_id
     </select>
-
 
 </mapper>
