@@ -9,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.B2bCustomerPackingDTO;
 import com.erp.model.wms.entity.B2bCustomerPackingEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.server.wms.mapper.B2bCustomerPackingMapper;
 import com.erp.server.wms.service.B2bCustomerPackingService;
 import com.erp.server.wms.service.WmsAttachmentService;
@@ -69,18 +70,32 @@ public class B2bCustomerPackingServiceImpl extends SuperServiceImpl<B2bCustomerP
         return entityList;
     }
 
-    /** 按箱保存标签附件；B2B 装箱箱数通常有限，逐箱 batchSave 可接受，大批量合并保存属后续优化。 */
+    /** 新建装箱行后写入箱头标签；主表 deleteExisting 已清旧附件，此处一次性 saveBatch 等价于逐箱 batchSave。 */
     private void saveBoxAttachments(List<B2bCustomerPackingDTO.AddDTO> packingList,
                                     List<B2bCustomerPackingEntity> entityList) {
         Map<Integer, B2bCustomerPackingEntity> boxHeadMap = getBoxHeadMap(entityList);
+        String type = ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode();
+        List<WmsAttachmentEntity> addList = new ArrayList<>();
         for (B2bCustomerPackingDTO.AddDTO box : packingList) {
             List<AttachDTO> attachList = box.getAttachList();
-            if (CollUtil.isNotEmpty(attachList)) {
-                B2bCustomerPackingEntity entity = boxHeadMap.get(box.getBoxSeq());
-                if (entity != null) {
-                    wmsAttachmentService.batchSave(attachList, ModuleTypeEnum.B2B_CUSTOMER_PACKING_LABEL.getCode(), entity.getId());
-                }
+            if (CollUtil.isEmpty(attachList)) {
+                continue;
             }
+            B2bCustomerPackingEntity entity = boxHeadMap.get(box.getBoxSeq());
+            if (entity == null) {
+                continue;
+            }
+            for (AttachDTO attach : attachList) {
+                WmsAttachmentEntity attachmentEntity = new WmsAttachmentEntity();
+                attachmentEntity.setAttachUrl(attach.getAttachUrl());
+                attachmentEntity.setAttachName(attach.getAttachName());
+                attachmentEntity.setType(type);
+                attachmentEntity.setBusinessId(entity.getId());
+                addList.add(attachmentEntity);
+            }
+        }
+        if (CollUtil.isNotEmpty(addList)) {
+            wmsAttachmentService.saveBatch(addList);
         }
     }
 

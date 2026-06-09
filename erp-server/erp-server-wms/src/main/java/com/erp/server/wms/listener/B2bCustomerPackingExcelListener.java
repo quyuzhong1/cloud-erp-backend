@@ -39,6 +39,7 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
     private final List<B2bCustomerPackingDTO.ViewDTO> successList = new ArrayList<>();
     private final List<B2bCustomerPackingImportExcelDTO> errorList = new ArrayList<>();
     private int rowCount;
+    private boolean errorLimitReached;
 
     public B2bCustomerPackingExcelListener(List<B2bThirdDeliveryDetailDTO.AddDTO> productDetailList) {
         this.productDetailList = CollectionUtils.isEmpty(productDetailList) ? new ArrayList<>() : productDetailList;
@@ -57,6 +58,9 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     @Override
     public void invoke(B2bCustomerPackingImportExcelDTO row, AnalysisContext context) {
+        if (errorLimitReached) {
+            return;
+        }
         // 错误文件未带 Excel 行号；加 rowIndex 需改 DTO/模板，当前靠序号+SKU 定位。
         rowCount++;
         if (rowCount > MAX_IMPORT_ROWS) {
@@ -233,7 +237,8 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     private void addImportError(B2bCustomerPackingImportExcelDTO error) {
         if (errorList.size() >= MAX_ERROR_ROWS) {
-            throw new ServiceException("导入错误行数过多（超过{0}行），请修正后重新导入", MAX_ERROR_ROWS);
+            errorLimitReached = true;
+            return;
         }
         errorList.add(error);
     }
@@ -250,5 +255,9 @@ public class B2bCustomerPackingExcelListener extends AnalysisEventListener<B2bCu
 
     public List<B2bCustomerPackingImportExcelDTO> getErrorList() {
         return errorList;
+    }
+
+    public boolean isErrorLimitReached() {
+        return errorLimitReached;
     }
 }

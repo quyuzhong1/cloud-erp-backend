@@ -166,6 +166,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateCost(KolSampleCostDTO.UpdateCostDTO dto) {
         String date = dto.getDate();
         LocalDate localDate = LocalDateTimeUtil.parseDate(date, DateTimeFormatter.ofPattern("yyyy-MM"));
@@ -412,6 +413,7 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
         paramDTO.setSkuIdList(skuIdList);
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setOrgIdList(orgIdList);
+        // 新寄样成本逻辑不传月份，依赖 TMS 按销售组织+SKU+仓库返回最新已审核库存成本。
         return ObjUtil.defaultIfNull(tmsFirstMileLogisticFeign.listInventorySkuCost(paramDTO), CollUtil.newArrayList());
     }
 
@@ -513,7 +515,8 @@ public class KolSampleCostServiceImpl extends SuperServiceImpl<KolSampleCostMapp
             try {
                 skuVOList.addAll(ObjUtil.defaultIfNull(plmTaskFeign.listSkuCostByIds(batchSkuIdList), CollUtil.newArrayList()));
             } catch (Exception e) {
-                log.warn("PLM SKU成本批量查询失败，本批降级为空, skuIds={}", batchSkuIdList, e);
+                log.error("PLM SKU成本批量查询失败，中断寄样费用更新, skuIds={}", batchSkuIdList, e);
+                throw new ServiceException("PLM SKU成本查询失败，中断费用更新以防成本核算错误");
             }
         }
         return skuVOList.stream()

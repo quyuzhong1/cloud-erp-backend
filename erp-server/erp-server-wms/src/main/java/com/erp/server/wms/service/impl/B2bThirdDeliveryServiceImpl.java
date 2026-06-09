@@ -220,7 +220,6 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
         // 新增明细
         List<B2bThirdDeliveryDetailEntity> detailEntityList = b2bThirdDeliveryDetailService.batchAdd(b2bThirdDeliveryEntity.getId(), addDTO.getDetailList());
         b2bCustomerPackingService.batchSave(b2bThirdDeliveryEntity.getId(), enrichPackingDetailList(addDTO.getDetailList(), addDTO.getPackingDetailList()));
-        //新增附件
         wmsAttachmentService.batchSave(addDTO.getAttachList(), ModuleTypeEnum.B2B_THIRD_DELIVERY.getCode(), b2bThirdDeliveryEntity.getId());
         // 发送B2b三方仓推送任务
         sendB2bThirdWarehousePushTask(b2bThirdDeliveryEntity, detailEntityList, SyncOperateEnum.OPERATE_ADD.getCode());
@@ -1725,14 +1724,12 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
             try {
                 file = ExcelUtil.exportFile(fileName, "error", errorList, B2bCustomerPackingImportExcelDTO.class);
                 if (file != null && file.isFile()) {
-                    file.deleteOnExit();
                     importDTO.setErrorUrl(FastDFSClientUtil.uploadFile(file, fileName));
                 }
             } catch (Exception e) {
                 log.error("上传装箱明细导入错误文件失败", e);
                 throw new ServiceException("生成导入错误文件失败，请联系管理员");
             } finally {
-                // 删除失败仅打日志；依赖 OS 回收，定时清理任务不在本 MR 范围。
                 if (file != null && file.exists()) {
                     try {
                         Files.deleteIfExists(file.toPath());
@@ -1741,6 +1738,9 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
                     }
                 }
             }
+        }
+        if (listener.isErrorLimitReached()) {
+            log.warn("装箱明细导入错误行数超过500，仅导出前500条错误记录");
         }
         return importDTO;
     }
@@ -2015,6 +2015,7 @@ public class B2bThirdDeliveryServiceImpl extends SuperServiceImpl<B2bThirdDelive
     private List<B2bCustomerPackingDTO.AddDTO> enrichPackingDetailList(
             List<com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO.AddDTO> detailList,
             List<B2bCustomerPackingDTO.AddDTO> packingDetailList) {
+        // 仅从发货明细回填 SKU/产品名，不调用 PLM Feign；PLM 查询仅在 importPackingDetail 独立接口中。
         if (CollUtil.isEmpty(packingDetailList)) {
             return Collections.emptyList();
         }
