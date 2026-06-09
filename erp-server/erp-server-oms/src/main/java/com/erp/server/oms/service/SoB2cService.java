@@ -878,6 +878,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean autoCancelOrderForecast(SoB2cEntity mainEntity);
 
     /**
+     * 平台取消预报后持久化本地 SO/error 状态（仅本地 DB，不含 Feign）
+     */
+    void persistAutoCancelOrderForecastLocalState(SoB2cEntity updateEntity, List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors);
+
+    /**
      * 申报信息规则信息整理
      *
      * @param id
