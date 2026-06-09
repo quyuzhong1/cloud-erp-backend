@@ -374,40 +374,46 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @return
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submit(VirtualWarehouseAllocationEntity allocationEntity) {
         String existStatus = allocationEntity.getStatus();
         String code = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
         if (Objects.equals(existStatus, code)) {
             throw new ServiceException("存在相同的状态");
         }
-        //查询明细信息
         List<VirtualWarehouseAllocationDetailEntity> detailEntityList = virtualWarehouseAllocationDetailService.list(new LambdaQueryWrapper<VirtualWarehouseAllocationDetailEntity>()
                 .eq(VirtualWarehouseAllocationDetailEntity::getMainId, allocationEntity.getId()));
         if (CollUtil.isEmpty(detailEntityList)) {
             throw new ServiceException(ApiError.VM_ALLOCATION_NOT_FOUND);
         }
-        //实体仓信息
         List<WarehouseEntity> list = warehouseService.list();
         Map<String, String> warehouseMap = CollUtil.isEmpty(list) ? new HashMap<>() :
                 list.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
 
-        //校验明细库存数据，并且生成借调信息
-        List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList = transferAndCheckVirtualInventoryQty(allocationEntity,detailEntityList,warehouseMap);
-        allocationEntity.setStatus(code);
+        List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList = transferAndCheckVirtualInventoryQty(allocationEntity, detailEntityList, warehouseMap);
+        // 旺店通库存为外部接口调用，放在事务外执行，避免拉长 @GlobalTransactional 持锁时间
+        if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
+            syncWdtVirtualWarehousePushOrderService.checkAllocationWdtInventory(allocationEntity, detailEntityList, transferWarehouseList);
+        }
+        return service.doSubmitTransactional(allocationEntity, detailEntityList, transferWarehouseList, warehouseMap, code);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public BatchResultDTO doSubmitTransactional(VirtualWarehouseAllocationEntity allocationEntity,
+                                                List<VirtualWarehouseAllocationDetailEntity> detailEntityList,
+                                                List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList,
+                                                Map<String, String> warehouseMap,
+                                                String statusCode) {
+        allocationEntity.setStatus(statusCode);
         allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
-        //处理分货推送
-        this.submitHandlePush(allocationEntity,detailEntityList,transferWarehouseList,warehouseMap);
+        this.submitHandlePush(allocationEntity, detailEntityList, transferWarehouseList, warehouseMap);
 
-        // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
         String msg = CharSequenceUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.SUBMIT);
     }
-
 
     /**
      * 处理分货推送
@@ -423,10 +429,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                                    List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList,Map<String, String> warehouseMap) {
         //分货处理
         if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
-
-            //提交前校验旺店通可用库存（触发借调时叠加借调仓库存）
-            syncWdtVirtualWarehousePushOrderService.checkAllocationWdtInventory(allocationEntity, detailEntityList, transferWarehouseList);
-
             //生成自动借调直接调拨单
             List<String> transferIdList = generateAutoTransferInfo(allocationEntity, transferWarehouseList);
 
