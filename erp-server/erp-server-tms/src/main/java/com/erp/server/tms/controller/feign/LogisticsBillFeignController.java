@@ -155,7 +155,7 @@ public class LogisticsBillFeignController {
     }
 
     /**
-     * 根据第三方配置映射表，查询已注册物流单详情
+     * 查询已注册的物流单详情
      */
     @PostMapping("/listRegisterByConfig")
     public List<LogisticsTrackDTO.UpdateTrackDTO> listRegisterByConfig(@RequestBody LogisticsBillDetailQueryDTO query,
