@@ -370,7 +370,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                                     DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
 
                                     // 国家名称
-                                    String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
+                                    String countryName = null == countryEntity ? "" : countryEntity.getNameCn();
                                     // 区域编码
                                     String regionCode = null == countryEntity ? "" : countryEntity.getRegionCode();
 
@@ -665,7 +665,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
 
                 // 国家名称
-                String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
+                String countryName = null == countryEntity ? "" : countryEntity.getNameCn();
                 // 区域编码
                 String regionCode = null == countryEntity ? "" : countryEntity.getRegionCode();
 
