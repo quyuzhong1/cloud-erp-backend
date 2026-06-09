@@ -825,10 +825,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
                         Boolean save = insertBatch(Arrays.asList(recordEntity));
                         if(Boolean.TRUE.equals(save)){
-                            boolean uat = BusinessCommonConstants.hasProfile("uat");
-                            boolean dev = BusinessCommonConstants.hasProfile("dev");
-                            boolean test = BusinessCommonConstants.hasProfile("test");
-                            boolean prod = BusinessCommonConstants.hasProfile("prod");
+                            boolean uat = BusinessCommonConstants.hasProfile(BusinessCommonConstants.UAT);
+                            boolean dev = BusinessCommonConstants.hasProfile(BusinessCommonConstants.DEV);
+                            boolean test = BusinessCommonConstants.hasProfile(BusinessCommonConstants.TEST);
+                            boolean prod = BusinessCommonConstants.hasProfile(BusinessCommonConstants.PROD);
                             //根据环境进行消息发送
                             if(dev||test||uat){//开发、测试、uat环境
                                 log.error("通知配置消费者：走开发、测试、uat环境");
@@ -1755,12 +1755,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 if (!(unionMap.containsKey(userId) && StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId()))) {
                     recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
                     recordEntity.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
+                    save(recordEntity);
+                    continue;
                 }
                 boolean saved = save(recordEntity);
                 if (Boolean.TRUE.equals(saved)) {
-                    boolean uat = BusinessCommonConstants.hasProfile("uat");
-                    boolean dev = BusinessCommonConstants.hasProfile("dev");
-                    boolean test = BusinessCommonConstants.hasProfile("test");
+                    boolean uat = BusinessCommonConstants.hasProfile(BusinessCommonConstants.UAT);
+                    boolean dev = BusinessCommonConstants.hasProfile(BusinessCommonConstants.DEV);
+                    boolean test = BusinessCommonConstants.hasProfile(BusinessCommonConstants.TEST);
                     if (dev || test || uat) {
                         log.info("通知配置消费者（SKU预警）：走开发、测试、uat环境");
                         FsBatchSendMessageDTO fsMessage = new FsBatchSendMessageDTO();
