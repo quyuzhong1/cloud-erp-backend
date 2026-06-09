@@ -31,11 +31,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -120,6 +116,16 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
      */
     @Override
     public void invoke(Map<Integer,String>  map, AnalysisContext analysisContext) {
+        //无表头数据报错
+        if (ObjectUtil.isEmpty(headMap)) {
+            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
+        }
+        //忽略公式错误值(#REF!/#VALUE! 等)，统一按空处理，避免脏单元格被录入或参与匹配
+        sanitizeErrorCellValues(map);
+        //整行无任何有效数据则跳过（含 EasyExcel 解析 .xls 公式错误单元格时多产生的幽灵空行），不计入进度也不写入清洗结果
+        if (isBlankDataRow(map)) {
+            return;
+        }
         count += 1;
         //已经导入的数据跳过进度
         if (Objects.nonNull(importCount) && count < importCount){
@@ -144,6 +150,48 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             successList.clear();
             updateTask(count);
         }
+    }
+
+    /**
+     * Excel 公式错误值集合（POI 读取公式错误单元格时返回的文本），这些值按空处理。
+     */
+    private static final Set<String> EXCEL_ERROR_VALUES = new HashSet<>(Arrays.asList(
+            "#REF!", "#VALUE!", "#DIV/0!", "#NAME?", "#N/A", "#NUM!", "#NULL!",
+            "#GETTING_DATA", "#SPILL!", "#CALC!"));
+
+    /**
+     * 将单元格中的 Excel 公式错误值清成空字符串。
+     * 典型场景：源文件「核对/差异」等列是跨表公式，引用的表缺失后整列变成 #REF!，
+     * EasyExcel 解析 .xls 时会因这些错误单元格额外吐出只含该列、其余全空的幽灵行。
+     */
+    private void sanitizeErrorCellValues(Map<Integer,String> map) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<Integer,String> entry : map.entrySet()) {
+            String value = entry.getValue();
+            if (value == null) {
+                continue;
+            }
+            if (EXCEL_ERROR_VALUES.contains(value.trim().toUpperCase(Locale.ROOT))) {
+                entry.setValue("");
+            }
+        }
+    }
+
+    /**
+     * 判断当前行是否没有任何有效业务数据（所有单元格清洗后均为空）。
+     */
+    private boolean isBlankDataRow(Map<Integer,String> map) {
+        if (map == null || map.isEmpty()) {
+            return true;
+        }
+        for (String value : map.values()) {
+            if (CharSequenceUtil.isNotBlank(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
