@@ -16,7 +16,7 @@ import com.erp.model.tms.enums.CfgLogisticsCostImportEtlReplaceModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlRuleTypeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSubstringModeEnum;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlSymbolPositionEnum;
-import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
+import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import org.junit.Test;
 
 import java.lang.reflect.Method;

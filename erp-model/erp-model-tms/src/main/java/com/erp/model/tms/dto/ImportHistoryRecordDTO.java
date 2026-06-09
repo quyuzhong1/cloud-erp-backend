@@ -14,7 +14,9 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -509,7 +511,26 @@ public class ImportHistoryRecordDTO implements Serializable {
          * 费用配置列表
          */
         private List<TmsCfgCostEntity> cfgCostList;
+        /**
+         * 物流单明细id对应的订单重量
+         */
+        private Map<String, BigDecimal> orderWeightMap;
+        /**
+         * 物流单明细id对应的重量预查询错误
+         */
+        private Map<String, List<String>> orderWeightErrorMap;
 
+        public PreQueryResultDTO(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                 Map<String, List<TmsCostDetailEntity>> mainIdListMap,
+                                 List<LogisticsBillCostEntity> logisticsBillCostList,
+                                 List<TmsCfgCostEntity> cfgCostList) {
+            this.logisticsBillVoList = logisticsBillVoList;
+            this.mainIdListMap = mainIdListMap;
+            this.logisticsBillCostList = logisticsBillCostList;
+            this.cfgCostList = cfgCostList;
+            this.orderWeightMap = new HashMap<>();
+            this.orderWeightErrorMap = new HashMap<>();
+        }
 
     }
 

@@ -538,6 +538,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         boolean update = this.lambdaUpdate().set(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .set(SoOutstockEntity::getApproveUserName, "")
                 .set(SoOutstockEntity::getApproveTime, null)
+                .set(SoOutstockEntity::getVersion, entity.getVersion() + 1)
                 .eq(SoOutstockEntity::getId, entity.getId())
                 .eq(SoOutstockEntity::getVersion, entity.getVersion())
                 .update();
