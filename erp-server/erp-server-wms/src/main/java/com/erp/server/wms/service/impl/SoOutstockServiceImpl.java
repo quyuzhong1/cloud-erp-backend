@@ -530,20 +530,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 throw new ServiceException(ApiError.SO_INTERCEPTED_STATUS_NOT_UPDATE, soB2cEntity.getCode());
             }
         }
-
+        //更新审核状态
+        boolean update = this.lambdaUpdate().set(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .set(SoOutstockEntity::getApproveUserName, "")
+                .set(SoOutstockEntity::getApproveTime, null)
+                .eq(SoOutstockEntity::getId, entity.getId())
+                .eq(SoOutstockEntity::getVersion, entity.getVersion())
+                .update();
+        if (!update) {
+            throw new ServiceException(ApiError.BILL_SUBMIT_FAILED, entity.getCode());
+        }
         //提交流程
         if(isNeedProcess){
             startProcess(entity);
         }
         //操作日志
         operateLogService.addModuleOperateLog(String.format("提交了一个发货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_OUT_STOCK.getCode(),entity.getId(), "提交操作");
-
-        //更新审核状态
-        lambdaUpdate().set(SoOutstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
-                .set(SoOutstockEntity::getApproveUserName,"")
-                .set(SoOutstockEntity::getApproveTime,null)
-                .eq(SoOutstockEntity::getId, entity.getId())
-                .update();
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
