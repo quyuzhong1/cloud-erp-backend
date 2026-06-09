@@ -164,7 +164,7 @@ public class WegoInboundResp implements Serializable {
         private String warehouseDelivery;
 
         /**
-         * 库存类型：1 - 2B 库存；2 - 2C 库存
+         * 库存类型：0 - 2C库存；1 - 2B库存
          */
         @JSONField(name = "inventoryType")
         private Integer inventoryType;
