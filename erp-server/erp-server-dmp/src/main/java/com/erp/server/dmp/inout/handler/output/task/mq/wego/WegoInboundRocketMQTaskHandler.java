@@ -13,6 +13,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
 import com.sdk.wms.wego.dto.response.WegoInboundResp;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ import java.util.stream.Collectors;
  * </ul>
  */
 @Service
+@Slf4j
 @Scope("prototype")
 public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
@@ -121,6 +123,10 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changeId : changeIds) {
             DmpThirdInboundEntity dmpThirdInboundEntity = dmpThirdInboundEntityMap.get(changeId);
+            if (dmpThirdInboundEntity == null) {
+                log.warn("WegoInbound: changeId={} 未在convert map中找到, cfgOutputId={}", changeId, cfgOutputId);
+                continue;
+            }
             PlatformInboundDTO platformInboundDTO = this.convert(dmpThirdInboundEntity, cfgOutputId);
             if (platformInboundDTO != null) {
                 map.put(dmpThirdInboundEntity.getId(), JSON.toJSONString(platformInboundDTO));
