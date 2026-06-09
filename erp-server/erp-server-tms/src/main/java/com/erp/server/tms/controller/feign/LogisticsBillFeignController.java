@@ -154,6 +154,14 @@ public class LogisticsBillFeignController {
         return logisticsBillDetailService.listTrackDto(query);
     }
 
+    /**
+     * 根据第三方配置映射表，查询已注册物流单详情
+     */
+    @PostMapping("/listRegisterByConfig")
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listRegisterByConfig(@RequestBody LogisticsBillDetailQueryDTO query,
+                                                                              @RequestParam("platformType") String platformType) {
+        return logisticsBillDetailService.listRegisterByConfig(query, platformType);
+    }
 
     /**
      * 更改运单号

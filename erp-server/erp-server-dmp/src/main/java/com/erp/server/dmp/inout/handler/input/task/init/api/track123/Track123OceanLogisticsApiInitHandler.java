@@ -45,15 +45,14 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
     private static long pageSize = 100;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-//    @Resource
-//    private LogisticsBillFeign logisticsBillFeign;
     @Resource
     private TrackShipperService trackShipperService;
 
     @Resource
     private RedisUtil redisUtil;
+
     @Resource
-    private ForeignService foreignService;
+    private LogisticsBillFeign logisticsBillFeign;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -183,7 +182,7 @@ public class Track123OceanLogisticsApiInitHandler implements DmpInputApiInitHand
      * 分页查询
      */
     private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
-        return foreignService.listWaitingRegisterByConfig(query,query.getTrackQueryMode());
+        return logisticsBillFeign.listRegisterByConfig(query,query.getTrackQueryMode());
     }
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
