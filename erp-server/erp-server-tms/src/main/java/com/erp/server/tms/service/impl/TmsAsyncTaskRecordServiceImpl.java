@@ -235,7 +235,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     public String addAutoTask(String businessType, String methodType, String json,String startTimeStr){
         //默认8小时
         Integer execTimeout = null;
-        Integer errorCount = null;
         //获取分摊配置--任务超时时间
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
         if(Objects.nonNull(cfgSettingEntity) && Objects.nonNull(cfgSettingEntity.getDataJson())){
@@ -286,9 +285,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if(Objects.nonNull(execTimeout)){
             entity.setExecTimeout(execTimeout);
         }
-        if(Objects.nonNull(errorCount)){
-            entity.setErrorCount(errorCount);
-        }
         return save(entity) ? entity.getId() : null;
     }
 
@@ -315,26 +311,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .set(TmsAsyncTaskRecordEntity::getErrorCount, 1)
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
-    }
-
-    @Override
-    public void finishTaskOnMainRecord(String taskId) {
-        TmsAsyncTaskRecordEntity task = getById(taskId);
-        boolean clearErrorData = task == null || task.getErrorCount() == null || task.getErrorCount() == 0;
-        if (clearErrorData) {
-            lambdaUpdate()
-                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
-                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, "")
-                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                .update();
-        } else {
-            lambdaUpdate()
-                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
-                .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                .update();
-        }
     }
 
     @Override

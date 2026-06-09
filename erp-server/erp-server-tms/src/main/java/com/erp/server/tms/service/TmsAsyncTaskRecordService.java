@@ -43,11 +43,6 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     void finishTaskWithError(String taskId, String errorMsg);
 
     /**
-     * 主表驱动任务正常收尾：FINISH + endTime，保留主表已有 detailCount/errorCount
-     */
-    void finishTaskOnMainRecord(String taskId);
-
-    /**
      * 加载批次配置；缺失时标记任务失败并返回 null
      */
     CfgSettingValueDTO.BillBatchParamsDTO loadBillBatchParams(String taskId);
