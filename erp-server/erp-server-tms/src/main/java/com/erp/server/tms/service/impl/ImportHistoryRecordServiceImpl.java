@@ -1975,7 +1975,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode();
             }
         }else {
-            //
+            //付款类型不一致的情况下走IMPORT_ADD_OLD的逻辑
             logisticsBillCostEntityList = logisticsBillCostList.stream()
                     .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                             && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
@@ -2006,6 +2006,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add("出库单和运输单号对应对账类型的物流费用单无可更新的数据，请核查");
                 }
             } else {
+                //只需要对Excel相同payType进行校验
+                logisticsBillCostEntityList = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType())).collect(Collectors.toList());
+
                 //新增时判断是否已存在相同对账月份
                 long hasCount = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth())).count();
                 if (hasCount > 0) {
@@ -2028,11 +2031,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add("暂估确认物流费用单已下推费用分摊，不支持更新");
                 }
             } else{
-                if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
-                    errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
-                }
-                if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
-                    errorMsgList.add("已存在未确认的物流费用单，不支持新增");
+                //只需要对Excel相同payType进行校验
+                if(CharSequenceUtil.equals(excelDTO.getPayType(),logisticsBillCostEntity.getPayType())){
+                    if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
+                        errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
+                    }
+                    if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+                        errorMsgList.add("已存在未确认的物流费用单，不支持新增");
+                    }
                 }
             }
         }
