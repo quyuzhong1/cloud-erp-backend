@@ -39,7 +39,3 @@ erp-common/erp-common-business/.mvn/
 rebel.xml
 .claude/settings.local.json
 /.agents
-
-### Cursor ###
-.cursor/mcp.json
-.cursor/settings.local.json
