@@ -72,6 +72,25 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         if (null != dmpInputTaskEntity && StringUtils.isNotBlank(dmpInputTaskEntity.getParentTaskId())){
             parentDmpInputTaskEntity = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
         }
+        // 兼容当前应用没有PII权限不请求地址
+        boolean requestAddr = true;
+        String addressExtendJson = dmpCfgInputEntity.getExtendJson();
+        if (StringUtils.isNotBlank(addressExtendJson)) {
+            JSONObject jsonObject;
+            try {
+                jsonObject = JSON.parseObject(addressExtendJson);
+            } catch (Exception e) {
+                throw new ServiceException("DMP输入配置extendJson.requestAddr配置错误：" + e.getMessage());
+            }
+            if (null == jsonObject) {
+                ServiceException.runError("DMP输入配置extendJson.requestAddr配置错误：extendJson为空对象");
+            }
+            Boolean cfgRequestAddr = jsonObject.getBoolean("requestAddr");
+            if (null != cfgRequestAddr) {
+                requestAddr = cfgRequestAddr;
+            }
+        }
+
 
         // 主单信息
         List<Map<String, Object>> mainMongoDataList = getMainOrderMongoDate(findMongoData, shopInfoDTO.getPlatformShopCode());
@@ -86,9 +105,15 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
             String amazonOrderId = checkAndGetMongoValue(mongoData, "amazonOrderId");
             // 主单mongo信息
             Map<String, Object> mainMongo = checkAndGetMainMongoMap(mainMongoDataList, amazonOrderId);
+            // 判断当前订单类型是否需要请求地址的接口
+            boolean isPlatformWarehouseOrder = orderOtherCheckCanDoNextRequest(mainMongo, amazonOrderId);
             // 检查是否查询
-            if (orderOtherCheckCanDoNextRequest(mainMongo, amazonOrderId)) {
-                log.warn("FBA或多渠道订单不请求接口获取地址信息:{}", amazonOrderId);
+            if (isPlatformWarehouseOrder || !requestAddr) {
+                if (isPlatformWarehouseOrder){
+                    log.warn("FBA或多渠道订单不请求接口获取地址信息:{}", amazonOrderId);
+                } else {
+                    log.warn("因当前应用没有PII权限，不请求接口获取地址信息:{}", amazonOrderId);
+                }
                 // 解析主单买家信息和地址
                 JSONObject jsonObject = parseBuyerAndAddressByOrder(mainMongo, amazonOrderId, shopInfoDTO.getPlatformShopCode());
                 if (null != jsonObject){
