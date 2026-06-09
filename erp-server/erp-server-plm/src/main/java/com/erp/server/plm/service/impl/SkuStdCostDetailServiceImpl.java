@@ -401,15 +401,6 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
     }
 
-    private InventorySkuCostDTO.SkuCostCNYDTO getAutoFetchSkuCost(String skuId, String orgId, String warehouseId) {
-        InventorySkuCostDTO.SkuCostCNYQueryDTO queryDTO = InventorySkuCostDTO.SkuCostCNYQueryDTO.builder()
-                .skuIds(Collections.singletonList(skuId))
-                .warehouseIds(Collections.singletonList(warehouseId))
-                .orgId(orgId)
-                .build();
-        return resolveAutoFetchSkuCost(logisticsFeign.getSkuCostInCNYForStdCost(queryDTO));
-    }
-
     InventorySkuCostDTO.SkuCostCNYDTO resolveAutoFetchSkuCost(List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList) {
         if (CollectionUtils.isEmpty(skuCostList)) {
             throw new ServiceException("未找到最新已审核SKU成本");

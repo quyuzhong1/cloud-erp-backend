@@ -92,6 +92,15 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      */
     String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus);
 
+    /**
+     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * <p>传入 {@code existingDetailMap} 时复用预查明细，避免循环内逐单查库。</p>
+     *
+     * @param existingDetailMap 预查的费用明细，key 为费用单 ID；可为 null
+     */
+    String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
+                                          String reconciliationStatus, Map<String, List<TmsCostDetailEntity>> existingDetailMap);
+
     BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
     
     BatchResultDTO delete(String id);

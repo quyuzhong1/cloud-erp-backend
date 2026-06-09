@@ -421,17 +421,36 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public Boolean logisticsBillBatchSave(List<LogisticsBillDTO.AddDTO> addDTOList) {
         List<String> sourceIds = addDTOList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> billEntityList = this.listBySourceIds(sourceIds);
+        List<String> outstockIds = addDTOList.stream()
+                .filter(dto -> !CharSequenceUtil.equals(dto.getOrderType(), OrderTypeEnum.B2B.getCode()))
+                .filter(dto -> CharSequenceUtil.isBlank(dto.getPlatformCode()))
+                .map(LogisticsBillDTO.AddDTO::getOutstockId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(outstockIds)) {
+            List<SoOutstockDetailEntity> allOutstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                    .in(SoOutstockDetailEntity::getMainId, outstockIds)
+                    .list();
+            if (CollUtil.isNotEmpty(allOutstockDetailList)) {
+                outstockDetailMap = allOutstockDetailList.stream()
+                        .collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+            }
+        }
         for (LogisticsBillDTO.AddDTO addDTO : addDTOList) {
             LogisticsBillEntity saveEntity = new LogisticsBillEntity();
             BeanMapper.copy(addDTO, saveEntity);
             this.handleData(saveEntity);
             // 非 B2B：平台订单号取销售出库明细 platform_code，多条英文逗号拼接
-            if (!CharSequenceUtil.equals(saveEntity.getOrderType(), OrderTypeEnum.B2B.getCode())
-                    && CharSequenceUtil.isNotBlank(saveEntity.getOutstockId())) {
-                List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
-                        .eq(SoOutstockDetailEntity::getMainId, saveEntity.getOutstockId())
-                        .list();
-                saveEntity.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(outstockDetailList));
+            if (!CharSequenceUtil.equals(saveEntity.getOrderType(), OrderTypeEnum.B2B.getCode())) {
+                if (CharSequenceUtil.isNotBlank(addDTO.getPlatformCode())) {
+                    saveEntity.setPlatformCode(addDTO.getPlatformCode());
+                } else if (CharSequenceUtil.isNotBlank(saveEntity.getOutstockId())) {
+                    List<SoOutstockDetailEntity> outstockDetailList = outstockDetailMap.getOrDefault(
+                            saveEntity.getOutstockId(), Collections.emptyList());
+                    saveEntity.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(outstockDetailList));
+                }
             }
             LogisticsBillEntity logisticsBillEntity = billEntityList.stream().filter(req -> req.getSourceId().equals(addDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(logisticsBillEntity)) {
