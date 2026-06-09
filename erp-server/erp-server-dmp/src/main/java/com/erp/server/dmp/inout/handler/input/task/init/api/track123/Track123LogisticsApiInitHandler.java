@@ -20,6 +20,7 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
@@ -55,11 +56,9 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
     @Resource
     private TrackShipperService trackShipperService;
     @Resource
-    private RedisUtil redisUtil;
-    @Resource
-    private ForeignService foreignService;
-    @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
 
@@ -168,7 +167,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
      * 分页查询
      */
     private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
-        return foreignService.listWaitingRegisterByConfig(query,query.getTrackQueryMode());
+        return logisticsBillFeign.listRegisterByConfig(query,query.getTrackQueryMode());
     }
 
     private static int getPageSizeValue(DmpInputApiInitRequest dmpInputApiInitRequest) {
