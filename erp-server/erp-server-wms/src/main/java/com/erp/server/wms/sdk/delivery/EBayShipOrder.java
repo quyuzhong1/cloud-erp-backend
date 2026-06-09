@@ -18,6 +18,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -72,7 +73,7 @@ public class EBayShipOrder extends AbstractShipOrder {
         if(Objects.isNull(thirdView)){
             throw new ServiceException("未配置{}渠道信息",PlatformDictEnum.LING_XING.getName());
         }
-        List<DictBasicDTO.ListDTO> widList = dictBasicService.getByKey("LingXingWid");
+        List<DictBasicEntity> widList = dictBasicService.getByKey("LingXingWid");
         String wid = CollectionUtils.isNotEmpty(widList)?widList.get(0).getValue():"";
 
         List<String> signShippedDetailList = new ArrayList<>();

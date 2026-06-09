@@ -7,6 +7,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
+import com.common.business.utils.ImlBarcodeUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -26,11 +27,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SkuMappingService;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +47,7 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 下载平台商品消费服务
@@ -56,6 +61,13 @@ import java.util.Objects;
         consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_products_consumer",
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
+
+    private static final String OWNER_CODE_CACHE_MISS_MARKER = "CACHE_MISS";
+    private static final int IML_OWNER_CODE_CACHE_MAX_SIZE = 500;
+    private static final Cache<String, String> IML_OWNER_CODE_CACHE = CacheBuilder.newBuilder()
+            .maximumSize(IML_OWNER_CODE_CACHE_MAX_SIZE)
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build();
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -76,6 +88,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private ShopInfoService shopInfoService;
     @Resource
     private FileFeign fileFeign;
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -163,6 +177,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             if(dto.getMatchResult() != null){
                 dto.setMatchResultStr(String.valueOf(dto.getMatchResult()));
             }
+            fillImlProductBarcode(dto);
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
             //上传图片到文件服务器
@@ -202,7 +217,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 //若父平台skuid 不为空则更新对应的父平台sku的标识为true
                 updatePlateformParentSku(entity.getPlatformParentSpuNo());
             } else {
-                // 是否修改
                 if (!oldEntity.toString().equals(entity.toString())) {
                     ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
@@ -259,6 +273,52 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
             }
         return ApiResult.success();
+    }
+
+    private void fillImlProductBarcode(PlatformProductDTO dto) {
+        if (!PlatformDictEnum.IML.getCode().equalsIgnoreCase(dto.getPlatform())
+                || !RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())
+                || StringUtils.isBlank(dto.getAuthId())
+                || StringUtils.isBlank(dto.getPlatformSkuNo())) {
+            return;
+        }
+        String ownerCode = getImlOwnerCode(dto.getAuthId(), dto.getPlatformSkuNo());
+        if (StringUtils.isBlank(ownerCode)) {
+            return;
+        }
+        dto.setPlatformProductBarcode(ImlBarcodeUtil.buildBarcode(dto.getPlatformSkuNo(), ownerCode));
+    }
+
+    private String getImlOwnerCode(String authId, String platformSkuNo) {
+        String cachedOwnerCode = IML_OWNER_CODE_CACHE.getIfPresent(authId);
+        if (OWNER_CODE_CACHE_MISS_MARKER.equals(cachedOwnerCode)) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(cachedOwnerCode)) {
+            return cachedOwnerCode;
+        }
+        String ownerCode;
+        try {
+            ApiResult<String> ownerCodeResult = overseasProviderFeign.getOwnerCodeByAuthId(authId);
+            if (ownerCodeResult == null || !ownerCodeResult.isSuccess()) {
+                log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 失败, authId={}, platformSkuNo={}, msg={}",
+                        authId, platformSkuNo, ownerCodeResult == null ? "返回为空" : ownerCodeResult.getMsg());
+                return null;
+            }
+            ownerCode = ownerCodeResult.getData();
+        } catch (Exception e) {
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 查询 OverseasProvider 异常, authId={}, platformSkuNo={}, error={}",
+                    authId, platformSkuNo, e.getMessage());
+            return null;
+        }
+        if (StringUtils.isBlank(ownerCode)) {
+            IML_OWNER_CODE_CACHE.put(authId, OWNER_CODE_CACHE_MISS_MARKER);
+            log.warn("[Listing] 艾姆勒商品条码补值失败: 货主编码为空, authId={}, platformSkuNo={}",
+                    authId, platformSkuNo);
+            return null;
+        }
+        IML_OWNER_CODE_CACHE.put(authId, ownerCode);
+        return ownerCode;
     }
 
     //若父平台skuid 不为空则更新对应的父平台sku的标识为true

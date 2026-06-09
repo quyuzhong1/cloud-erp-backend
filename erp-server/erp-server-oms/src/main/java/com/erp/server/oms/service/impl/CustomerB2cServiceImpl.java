@@ -1090,12 +1090,12 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
     public Boolean processData() {
         List<CustomerB2cEntity> list = this.list();
         String type = DictBasicTypeEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(type);
         for (CustomerB2cEntity item : list) {
             String platformType = item.getPlatformType();
             String platformTypeName = PlatformDictEnum.getByCode(platformType).getName();
             String newPlatformType = dictList.stream().filter(d -> d.getName().equals(platformTypeName)).
-                    findFirst().map(DictBasicDTO.ViewDTO::getValue).orElse("");
+                    findFirst().map(DictBasicEntity::getValue).orElse("");
             item.setPlatformType(newPlatformType);
         }
         return this.updateBatchById(list);
@@ -1119,14 +1119,14 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         Map<String, List<DictCountryDTO.ListDTO>> countryNameMap = countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
         // 平台类型
-        List<DictBasicDTO.ViewDTO> platFormList = dictBasicService.getByKey(DictBasicTypeEnum.PLATFORM.getType());
-        Map<String, DictBasicDTO.ViewDTO> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<DictBasicEntity> platFormList = dictBasicService.getByKey(DictBasicTypeEnum.PLATFORM.getType());
+        Map<String, DictBasicEntity> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
         // 客户类别
-        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
-        Map<String, DictBasicDTO.ViewDTO> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<DictBasicEntity> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        Map<String, DictBasicEntity> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
         // 结算方式
-        List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
-        Map<String, DictBasicDTO.ViewDTO> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        List<DictBasicEntity> settleModeList = dictBasicService.getByKey("settleMode");
+        Map<String, DictBasicEntity> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicEntity::getName, Function.identity()));
         // 币别
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         Map<String, DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));

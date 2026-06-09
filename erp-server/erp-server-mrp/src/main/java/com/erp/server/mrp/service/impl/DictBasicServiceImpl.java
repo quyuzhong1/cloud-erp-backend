@@ -51,6 +51,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
 
     @Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.MRP_DICT_BASIC_BY_TYPE,
+            key = "#jsonObject.getString('type')"
+    )
 	public boolean saveJsonObject(JSONObject jsonObject) {
 		DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
 		LocalDateTime now = LocalDateTime.now();
@@ -68,6 +72,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 	}
 	
 	@Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.MRP_DICT_BASIC_BY_TYPE,
+            key = "#jsonObjects[0].getString('type')"
+    )
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
 		List<DictBasicEntity> entityList = new ArrayList<>();
 		for(JSONObject jsonObject : jsonObjects) {
@@ -112,6 +120,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.MRP_DICT_BASIC_BY_TYPE,
+            key = "#list[0].type"
+    )
     public Boolean saveOrUpdateDict(List<DictBasicDTO.AddOrUpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
@@ -130,9 +142,12 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 14:16
      */
     @Override
-    public List<DictBasicDTO.ViewDTO> getByKey(String key) {
-        List<DictBasicEntity> list = listByKey(key);
-        return BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
+    @Cacheable(
+            cacheNames = RedisCacheConstants.MRP_DICT_BASIC_BY_TYPE,
+            key = "#key"
+    )
+    public List<DictBasicEntity> getByKey(String key) {
+        return listByKey(key);
     }
 
 
@@ -146,12 +161,38 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      */
     @Override
     public List<DictBasicEntity> getByKeyList(List<String> keyList) {
-        if (CollectionUtils.isEmpty(keyList)) {
+        if (CollectionUtils.isEmpty(typeList)) {
             return new ArrayList<>();
         }
-        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DictBasicEntity::getType, keyList);
-        return this.list(queryWrapper);
+        List<String> types = typeList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<DictBasicEntity> result = new ArrayList<>();
+        List<String> missTypes = new ArrayList<>();
+        for (String type : types) {
+            String redisKey = String.format("cache:%s:dict:type::%s", "mrp", type);
+            List<DictBasicEntity> cacheList = redisService.getCacheObject(redisKey);
+            if (cacheList != null) {
+                result.addAll(cacheList);
+            } else {
+                missTypes.add(type);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missTypes)) {
+            List<DictBasicEntity> dbList = this.lambdaQuery()
+                    .in(DictBasicEntity::getType, missTypes)
+                    .list();
+            Map<String, List<DictBasicEntity>> dbMap = dbList.stream()
+                    .collect(Collectors.groupingBy(DictBasicEntity::getType));
+            for (String type : missTypes) {
+                List<DictBasicEntity> list = dbMap.getOrDefault(type, new ArrayList<>());
+                String redisKey = String.format("cache:%s:dict:type::%s", "mrp", type);
+                redisService.setCacheObject(redisKey, list, 8L, TimeUnit.HOURS);
+                result.addAll(list);
+            }
+        }
+        return result;
     }
 
 

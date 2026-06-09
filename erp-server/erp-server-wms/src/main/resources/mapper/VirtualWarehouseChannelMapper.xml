@@ -102,4 +102,29 @@
             </foreach>
         </where>
     </select>
+
+    <select id="findB2bForeignConflicts" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$B2bForeignConflictDTO">
+        SELECT DISTINCT
+            vw.id AS virtualWarehouseId,
+            vw.name AS virtualWarehouseName,
+            w.id AS warehouseId,
+            w.name AS warehouseName
+        FROM virtual_warehouse_relation vwr_self
+        INNER JOIN virtual_warehouse_relation vwr_other
+            ON vwr_self.warehouse_id = vwr_other.warehouse_id
+            AND vwr_other.virtual_warehouse_id != #{virtualWarehouseId}
+            AND vwr_other.is_deleted = false
+        INNER JOIN virtual_warehouse_channel vwc
+            ON vwc.virtual_warehouse_id = vwr_other.virtual_warehouse_id
+            AND vwc.dict_platform = #{b2bForeignPlatform}
+            AND vwc.is_deleted = false
+        INNER JOIN virtual_warehouse vw
+            ON vw.id = vwr_other.virtual_warehouse_id
+            AND vw.is_deleted = false
+        INNER JOIN warehouse w
+            ON w.id = vwr_self.warehouse_id
+            AND w.is_deleted = false
+        WHERE vwr_self.virtual_warehouse_id = #{virtualWarehouseId}
+          AND vwr_self.is_deleted = false
+    </select>
 </mapper>

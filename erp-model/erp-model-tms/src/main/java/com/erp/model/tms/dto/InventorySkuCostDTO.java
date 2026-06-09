@@ -614,15 +614,18 @@ public class InventorySkuCostDTO implements Serializable {
          * 销售组织列表
          */
         private List<String> orgIdList;
-        /**
-         * 核算月份
-         */
-        private LocalDateTime  startAccountingMonth;
 
         /**
-         * 核算月份
+         * 核算月份开始时间。仅用于兼容旧调用方，新寄样成本逻辑不再传该过滤条件。
          */
-        private LocalDateTime  endAccountingMonth;
+        @Deprecated
+        private LocalDateTime startAccountingMonth;
+
+        /**
+         * 核算月份结束时间。仅用于兼容旧调用方，新寄样成本逻辑不再传该过滤条件。
+         */
+        @Deprecated
+        private LocalDateTime endAccountingMonth;
     }
 
     /**
@@ -667,6 +670,11 @@ public class InventorySkuCostDTO implements Serializable {
          * 清关税费（6位小数）
          */
         private BigDecimal clearanceCustomsTax;
+
+        /**
+         * 核算月份
+         */
+        private LocalDate accountingMonth;
 
         /**
          * 创建时间

@@ -348,6 +348,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             //原始禁用状态变成启用时，校验当前虚拟仓绑定的渠道是否已被选择
             List<VirtualWarehouseChannelEntity> channelEntityList = virtualWarehouseChannelService.getByVirtualWarehouseId(vwEntity.getId());
             virtualWarehouseChannelService.checkBoundChannel(channelEntityList, Boolean.FALSE);
+            virtualWarehouseChannelService.checkSameWarehouseB2bForeignPlatform(vwEntity.getId(), channelEntityList);
         }
         VirtualWarehouseEntity virtualWarehouseEntity = new VirtualWarehouseEntity();
         virtualWarehouseEntity.setId(updateStateDTO.getId());
