@@ -1301,11 +1301,6 @@ public class LogisticsBillCostDTO implements Serializable {
          * 费用项更新列表
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList;
-
-        /**
-         * 识别号分组下 Excel 平台订单号（多值英文逗号拼接），仅用于物流单 platform_code 为空时回写
-         */
-        private String syncPlatformCode;
     }
 
     @Data

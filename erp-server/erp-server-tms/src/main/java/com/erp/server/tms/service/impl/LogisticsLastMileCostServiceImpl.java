@@ -414,6 +414,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     errorList.addAll(value);
                     continue;
                 }
+                // 勾选导入确认时，校验合并明细后实际金额合计大于 0
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
                         String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(targetPair.getValue().getId(),
@@ -456,6 +457,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 }
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
+                // 新增物流单分支：勾选导入确认时校验实际金额合计
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateList,
                             ReconciliationStatusEnum.CONFIRMED.getCode());

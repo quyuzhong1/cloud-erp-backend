@@ -803,6 +803,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
     }
 
+    /**
+     * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
+     * <p>仅在对账状态为账单确认（CONFIRMED）或暂估确认（ESTIMATE_CONFIRM）时生效；
+     * 分别校验实际金额、暂估金额合计。供物流商模板导入（confirmImport）及标准导入勾选确认场景使用，
+     * 返回错误文案供行级收集，不抛异常。</p>
+     *
+     * @param logisticsCostId      目标物流费用单 ID
+     * @param importList           本次导入待合并的费用明细，可为 null（仅校验库内已有明细）
+     * @param reconciliationStatus 目标对账状态，非确认类状态直接返回 null
+     * @return 不满足时返回错误文案，否则返回 null
+     */
     @Override
     public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus) {
         if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
@@ -816,7 +827,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 ? LogisticsBillCostTypeEnum.ACTUAL.getCode()
                 : LogisticsBillCostTypeEnum.ESTIMATED.getCode();
         BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, importList, costType, null);
-        if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
             if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
                 return "账单确认总计实际金额必须大于0";
             }
@@ -848,7 +859,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 : detailList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
         for (String logisticsCostId : logisticsCostIdList) {
             BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, null, costType, existingDetailMap);
-            if (totalAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
                 if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
                     throw new ServiceException("账单确认总计实际金额必须大于0");
                 }
@@ -1556,6 +1567,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     errorList.addAll(importSuccessList);
                     continue;
                 }
+                // 勾选导入确认时，校验合并明细后实际金额合计大于 0
                 appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
@@ -1589,6 +1601,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 logisticsBillCostEntity = logisticsBillCost.get(0);
 
+                // 新增物流单分支：勾选导入确认时校验实际金额合计
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateDetailList,
                             ReconciliationStatusEnum.CONFIRMED.getCode());
@@ -1610,6 +1623,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
     }
 
+    /**
+     * 标准导入勾选确认时，对匹配到的多张物流费用单逐单校验账单确认金额。
+     * <p>未勾选确认（confirmStatus=false）时直接跳过。</p>
+     */
     private void appendImportConfirmAmountErrors(Boolean confirmStatus,
                                                  List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList,
                                                  Map<String, List<TmsCostDetailDTO.UpdateDTO>> targetUpdateMap,
@@ -1618,6 +1635,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return;
         }
         for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
+            // 合并库内已有明细与本次导入明细后校验实际金额合计
             String confirmMsg = validateImportConfirmAmountMsg(targetPair.getValue().getId(),
                     targetUpdateMap.get(targetPair.getKey().getDetailId()),
                     ReconciliationStatusEnum.CONFIRMED.getCode());
@@ -2824,7 +2842,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String confirmUserId = UserContext.getDefaultLoginUser().getUid();
         String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
         List<ImportHistoryRecordDTO.ImportConfirmDTO> distinctConfirmList = new ArrayList<>(confirmMap.values());
-        // 物流商费用导入已在行级通过 validateImportConfirmAmountMsg 校验，此处不再 validateConfirmAmount，避免整批抛异常
+        // confirmImport 场景下行级已通过 validateImportConfirmAmountMsg 校验，此处不再 validateConfirmAmount，避免整批抛异常
         int updateCount = 0;
         for (List<ImportHistoryRecordDTO.ImportConfirmDTO> batch : ListUtil.partition(distinctConfirmList, IMPORT_CONFIRM_BATCH_SIZE)) {
             updateCount += baseMapper.batchConfirmImport(batch, reconciliationStatus, confirmUserId, confirmUserName);
