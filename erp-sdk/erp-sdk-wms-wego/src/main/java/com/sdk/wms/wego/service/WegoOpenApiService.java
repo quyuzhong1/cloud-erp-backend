@@ -6,12 +6,15 @@ import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
+import com.erp.model.wms.dto.WegoInOrderCancelDTO;
+import com.erp.model.wms.dto.WegoInOrderQueryPageDTO;
 import com.erp.model.wms.dto.WegoInOrderSaveDTO;
 import com.erp.model.wms.dto.WegoInventoryQueryDTO;
 import com.erp.model.wms.dto.WegoTransportQueryDTO;
 import com.erp.model.wms.dto.WegoSkuQueryDTO;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.sdk.wms.wego.constants.WeGoConstants;
+import com.sdk.wms.wego.dto.response.WegoInboundResp;
 import com.sdk.wms.wego.utils.WeGoSignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -158,6 +161,54 @@ public class WegoOpenApiService {
             bizParams.put("details", JSON.parse(JSON.toJSONString(dto.getDetails())));
         }
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.INORDER_SAVE, bizParams, "保存入库单");
+    }
+
+    /**
+     * 调用 WEGO inorder.queryPage 分页查询入库单。
+     * <p>
+     * 服务端约束：单页最大 {@value WegoInOrderQueryPageDTO#MAX_PAGE_SIZE} 条；
+     * 调用方需根据响应 {@link WegoInboundResp.PageResultDTO#getPages()} 字段判断是否还有下一页，
+     * 当 {@code pageNum >= pages} 或 {@code list} 为空时结束分页。
+     *
+     * @param dto 入参，包含 accessToken / secret / 日期范围 / pageNum / pageSize
+     * @return WEGO 接口原始响应解析后的强类型 {@link WegoInboundResp}
+     */
+    public WegoInboundResp queryInorderPage(@Valid WegoInOrderQueryPageDTO.QueryReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("pageNum", dto.getPageNum());
+        bizParams.put("pageSize", dto.getPageSize());
+        putIfNotNull(bizParams, "finishDateBegin", dto.getFinishDateBegin());
+        putIfNotNull(bizParams, "finishDateEnd", dto.getFinishDateEnd());
+        putIfNotNull(bizParams, "orderDateBegin", dto.getOrderDateBegin());
+        putIfNotNull(bizParams, "orderDateEnd", dto.getOrderDateEnd());
+        putIfNotNull(bizParams, "upDateBegin", dto.getUpDateBegin());
+        putIfNotNull(bizParams, "upDateEnd", dto.getUpDateEnd());
+        JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
+                WeGoConstants.INORDER_QUERY_PAGE, bizParams, "分页查询入库单");
+        if (response == null) {
+            return null;
+        }
+        try {
+            return response.toJavaObject(WegoInboundResp.class);
+        } catch (Exception ex) {
+            log.error("[WEGO分页查询入库单] 响应JSON转换WegoInboundResp失败, response={}", response, ex);
+            throw new ServiceException("WEGO 分页查询入库单接口响应转换失败: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * 调用 WEGO inorder.cancel 取消入库单。
+     * <p>
+     * WEGO 服务端按 {@code no} 定位入库单并执行取消，仅支持未发起作业的单据。
+     * 业务侧应保证传入的单号已在本地切换为取消状态，避免远端取消成功后本地状态不一致。
+     *
+     * @param dto 入库单取消请求，包含 accessToken / secret / no
+     * @return WEGO 接口原始响应解析后的 JSONObject（含 success / errorCode / errorMsg / serverTime / result 等字段）
+     */
+    public JSONObject cancelInorder(@Valid WegoInOrderCancelDTO.CancelReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("no", dto.getNo());
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.INORDER_CANCEL, bizParams, "取消入库单");
     }
 
     /**

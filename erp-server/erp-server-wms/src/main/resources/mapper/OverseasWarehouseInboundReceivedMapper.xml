@@ -16,6 +16,7 @@
        <result column="receive_user" property="receiveUser" />
        <result column="receive_qty" property="receiveQty" />
        <result column="receive_time" property="receiveTime" />
+       <result column="defective_product_flag" property="defectiveProductFlag" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -29,7 +30,7 @@
         update_user_id,
         version,
         is_deleted,
-        detail_id, receive_user, receive_qty, receive_time
+        detail_id, receive_user, receive_qty, receive_time, defective_product_flag
     </sql>
 
 
