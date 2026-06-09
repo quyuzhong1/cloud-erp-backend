@@ -1953,9 +1953,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
             QcResultEntity matchedQcResult = qcResultMap.get(qcInfoView.getQcBillId());
             Integer noticeQcQty = qcInfoView.getQcQty() == null ? 0 : qcInfoView.getQcQty();
-            Integer noticeTotalQty = matchedQcResult != null && matchedQcResult.getTotalQty() != null
-                    ? matchedQcResult.getTotalQty()
-                    : (qcInfoView.getQcNoticeQty() == null ? 0 : qcInfoView.getQcNoticeQty());
+            Integer noticeTotalQty = matchedQcResult == null || matchedQcResult.getTotalQty() == null
+                    ? 0
+                    : matchedQcResult.getTotalQty();
             qcNoticeDetailEntity.setQcQty(noticeQcQty);
             qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
             qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
