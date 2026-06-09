@@ -10304,7 +10304,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 平台取消后对单笔订单自动取消预报（非批量循环）；本地 SO 状态与入库预报同步分步提交，Feign 失败不回滚本地。
+     * 平台取消后对单笔订单自动取消预报（非批量循环）。
+     * 本地 SO 先提交；后置入库预报 Feign 失败不回滚本地（保宏取消可能已成功）。
+     * 当前无自动补偿/告警，同步失败仅 error 日志，需人工排查或修数。
      */
     @Override
     public Boolean autoCancelOrderForecast(SoB2cEntity mainEntity) {
@@ -10391,7 +10393,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cService.persistAutoCancelOrderForecastLocalState(updateEntity, deleteErrorIds, addOrUpdateErrors);
         operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), latestEntity.getId(), "取消预报");
 
-        // 本地已提交后同步入库预报；Feign 失败不回滚本地（保宏取消已成功），仅告警，后续可人工或任务补偿
+        // 本地已提交后同步入库预报；失败不回滚本地。无 MQ/定时补偿，与 orderForecast 批量路径一致不校验 Boolean 返回值
         if (CollUtil.isNotEmpty(updateInstockForcastList)) {
             try {
                 transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
