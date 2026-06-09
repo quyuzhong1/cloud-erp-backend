@@ -79,25 +79,24 @@ public class WegoSkuOmsSyncDmpHandler extends DmpInputBaseDmpHandler {
             return new ArrayList<>();
         }
 
-        // 通过 authId 查询绑定的系统仓库，填充到同步请求中
+        // 查询 provider 绑定的系统仓库：
+        //   - Feign 调用抛异常 → 直接上抛，终止本次同步，避免写入空 warehouse_id 的脏数据，等待任务重试
+        //   - 调用成功但未找到绑定仓库 → 属于配置缺失，跳过同步并 warn，同样不写脏数据
+        List<OverseasProviderDTO.ListWithWarehouseDTO> allProviders = overseasProviderFeign.listAllMatch();
         String warehouseId = "";
         String warehouseName = "";
-        try {
-            List<OverseasProviderDTO.ListWithWarehouseDTO> allProviders = overseasProviderFeign.listAllMatch();
-            if (CollUtil.isNotEmpty(allProviders)) {
-                for (OverseasProviderDTO.ListWithWarehouseDTO p : allProviders) {
-                    if (authId.equals(p.getId()) && p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
-                        warehouseId = p.getWarehouseId();
-                        warehouseName = p.getWarehouseName() != null ? p.getWarehouseName() : "";
-                        break;
-                    }
+        if (CollUtil.isNotEmpty(allProviders)) {
+            for (OverseasProviderDTO.ListWithWarehouseDTO p : allProviders) {
+                if (authId.equals(p.getId()) && p.getWarehouseId() != null && !p.getWarehouseId().isEmpty()) {
+                    warehouseId = p.getWarehouseId();
+                    warehouseName = p.getWarehouseName() != null ? p.getWarehouseName() : "";
+                    break;
                 }
             }
-        } catch (Exception e) {
-            log.warn("[WEGO SKU OMS同步] 查询服务商仓库信息失败，warehouseId将为空，authId={}: {}", authId, e.getMessage());
         }
         if (warehouseId.isEmpty()) {
-            log.warn("[WEGO SKU OMS同步] 服务商[authId={}]未绑定系统仓库，sku_mapping.warehouse_id将为空", authId);
+            log.warn("[WEGO SKU OMS同步] 服务商[authId={}]未绑定系统仓库，跳过本次同步，请在海外物流商页面完成仓库绑定", authId);
+            return new ArrayList<>();
         }
 
         WegoSkuSyncDTO.SyncReqDTO syncReqDTO = new WegoSkuSyncDTO.SyncReqDTO();
