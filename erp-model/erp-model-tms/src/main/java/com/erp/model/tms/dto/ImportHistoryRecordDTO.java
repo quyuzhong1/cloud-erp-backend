@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
@@ -406,6 +407,25 @@ public class ImportHistoryRecordDTO implements Serializable {
          */
         @NotBlank(message = "对账月份不能为空")
         private String reconciliationMonth;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ImportGroupContextDTO {
+        /**
+         * 导入分组行数据，key 为识别分组键。
+         */
+        private Map<String, List<JSONObject>> groupRowMap;
+        /**
+         * 每行预匹配到的物流单集合。
+         */
+        private Map<JSONObject, List<LogisticsBillDTO.LogisticsBillVo>> rowMatchedBillMap;
+        /**
+         * 每个分组预匹配到的物流单集合。
+         */
+        private Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupMatchedBillMap;
     }
 
 
