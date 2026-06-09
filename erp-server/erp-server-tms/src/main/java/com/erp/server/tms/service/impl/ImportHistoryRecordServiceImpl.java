@@ -514,94 +514,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .collect(Collectors.joining("_"));
     }
 
-    /**
-     * 汇总识别号分组内 Excel 平台订单号，多值按英文逗号去重拼接。
-     */
-    private String buildGroupPlatformCode(List<JSONObject> groupRows) {
-        if (CollUtil.isEmpty(groupRows)) {
-            return null;
-        }
-        LinkedHashSet<String> platformCodes = new LinkedHashSet<>();
-        for (JSONObject row : groupRows) {
-            addPlatformCodes(platformCodes, row.get(PLATFORM_CODE_FIELD));
-        }
-        return platformCodes.isEmpty() ? null : String.join(",", platformCodes);
-    }
-
-    private void addPlatformCodes(Set<String> platformCodes, Object rawValue) {
-        if (ObjectUtil.isNull(rawValue)) {
-            return;
-        }
-        Arrays.stream(String.valueOf(rawValue).split(","))
-                .map(CharSequenceUtil::trim)
-                .filter(CharSequenceUtil::isNotBlank)
-                .forEach(platformCodes::add);
-    }
-
-    private String mergePlatformCodeValues(String existing, String incoming) {
-        LinkedHashSet<String> platformCodes = new LinkedHashSet<>();
-        addPlatformCodes(platformCodes, existing);
-        addPlatformCodes(platformCodes, incoming);
-        return platformCodes.isEmpty() ? null : String.join(",", platformCodes);
-    }
-
-    private Map<String, String> buildSyncPlatformCodeMap(List<LogisticsBillCostDTO.ImportDataDTO> importDataList) {
-        Map<String, String> platformCodeMap = new LinkedHashMap<>();
-        for (LogisticsBillCostDTO.ImportDataDTO importData : importDataList) {
-            if (CharSequenceUtil.isBlank(importData.getSyncPlatformCode())) {
-                continue;
-            }
-            if (CollUtil.isNotEmpty(importData.getAddBillCostList())) {
-                for (LogisticsBillCostDTO.AddDTO addDTO : importData.getAddBillCostList()) {
-                    mergeSyncPlatformCode(platformCodeMap, addDTO.getLogisticsBillId(), importData.getSyncPlatformCode());
-                }
-            }
-            if (CollUtil.isNotEmpty(importData.getUpdateBillCostList())) {
-                for (LogisticsBillCostDTO.UpdateDTO updateDTO : importData.getUpdateBillCostList()) {
-                    mergeSyncPlatformCode(platformCodeMap, updateDTO.getLogisticsBillId(), importData.getSyncPlatformCode());
-                }
-            }
-        }
-        return platformCodeMap;
-    }
-
-    private void mergeSyncPlatformCode(Map<String, String> platformCodeMap, String logisticsBillId, String syncPlatformCode) {
-        if (CharSequenceUtil.isBlank(logisticsBillId) || CharSequenceUtil.isBlank(syncPlatformCode)) {
-            return;
-        }
-        platformCodeMap.merge(logisticsBillId, syncPlatformCode, this::mergePlatformCodeValues);
-    }
-
-    /**
-     * 物流单 platform_code 为空时，用识别号分组汇总后的 Excel 平台订单号回写。
-     */
-    private void syncImportPlatformCodeIfBlank(Map<String, String> platformCodeMap) {
-        if (CollUtil.isEmpty(platformCodeMap)) {
-            return;
-        }
-        List<LogisticsBillEntity> logisticsBillList = logisticsBillService.listByIds(new ArrayList<>(platformCodeMap.keySet()));
-        if (CollUtil.isEmpty(logisticsBillList)) {
-            return;
-        }
-        List<LogisticsBillEntity> updateList = new ArrayList<>();
-        for (LogisticsBillEntity logisticsBill : logisticsBillList) {
-            if (CharSequenceUtil.isNotBlank(logisticsBill.getPlatformCode())) {
-                continue;
-            }
-            String syncPlatformCode = platformCodeMap.get(logisticsBill.getId());
-            if (CharSequenceUtil.isBlank(syncPlatformCode)) {
-                continue;
-            }
-            LogisticsBillEntity updateEntity = new LogisticsBillEntity();
-            updateEntity.setId(logisticsBill.getId());
-            updateEntity.setPlatformCode(syncPlatformCode);
-            updateList.add(updateEntity);
-        }
-        if (CollUtil.isNotEmpty(updateList)) {
-            logisticsBillService.updateBatchById(updateList);
-        }
-    }
-
     // 纵向费用项处理（多线程）
     private List<LogisticsBillCostDTO.ImportDataDTO> processVerticalCostItems(
             List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
@@ -654,12 +566,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
                                 preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getMainIdListMap());
                         if (importDataDTO != null) {
-                            importDataDTO.setSyncPlatformCode(buildGroupPlatformCode(costSuccessList));
                             importDataList.add(importDataDTO);
                         }
                     } catch (Exception e) {
-                        log.error("数据处理失败 ,e = {}", e.getMessage());
-                        mainErrorMsgList.add(e.getMessage());
+                        log.error("数据处理失败", e);
+                        mainErrorMsgList.add(ObjectUtil.defaultIfNull(e.getMessage(), e.toString()));
                     }
                     synchronized (matchImportList) { updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList); } ;
                 }
@@ -726,12 +637,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
                                 preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getMainIdListMap());
                         if (importDataDTO != null) {
-                            importDataDTO.setSyncPlatformCode(buildGroupPlatformCode(costSuccessList));
                             importDataList.add(importDataDTO);
                         }
                     } catch (Exception e) {
-                        log.error("数据处理失败 ,e = {}", e.getMessage());
-                        mainErrorMsgList.add(e.getMessage());
+                        log.error("数据处理失败", e);
+                        mainErrorMsgList.add(ObjectUtil.defaultIfNull(e.getMessage(), e.toString()));
                     }
                     synchronized (matchImportList) { updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList); } ;
                 }
@@ -762,7 +672,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isEmpty(importDataList)) {
             return Collections.emptyList();
         }
-        syncImportPlatformCodeIfBlank(buildSyncPlatformCodeMap(importDataList));
         //新增物流单
         List<LogisticsBillEntity> logisticsBillList = importDataList.stream().map(LogisticsBillCostDTO.ImportDataDTO::getLogisticsBillEntity).filter(ObjectUtil::isNotNull).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(logisticsBillList)) {
@@ -915,12 +824,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
 
     /**
-     * 导入确认场景下行级校验确认金额，失败信息写入 errorMsgList 供匹配结果导出。
+     * 物流商模板导入（confirmImport）场景下行级校验账单确认金额。
+     * <p>仅 processingType 为 confirmImport 时执行；正式导入（import）只落库费用，不校验确认金额。</p>
+     *
+     * @param importDTO          导入上下文，用于判断 processingType
+     * @param logisticsCostId    目标物流费用单 ID
+     * @param currentUpdateList  本行待落库的费用明细
+     * @param errorMsgList       校验失败时追加错误文案，供匹配结果导出
      */
     private void appendImportConfirmAmountError(ImportHistoryRecordDTO.ImportSyncDTO importDTO,
                                                 String logisticsCostId,
                                                 List<TmsCostDetailDTO.UpdateDTO> currentUpdateList,
                                                 List<String> errorMsgList) {
+        if (!CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.CONFIRM_IMPORT.getCode(),
+                importDTO.getProcessingType())) {
+            return;
+        }
         String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(
                 logisticsCostId, currentUpdateList, ReconciliationStatusEnum.CONFIRMED.getCode());
         if (CharSequenceUtil.isNotBlank(confirmMsg)) {
@@ -1327,6 +1246,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     return importDataDTO;
                 }
 
+                // confirmImport 时校验合并导入明细后的实际金额合计，正式导入不触发
                 appendImportConfirmAmountError(importDTO, logisticsBillCostEntity.getId(), currentUpdateList, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     return importDataDTO;
@@ -1352,7 +1272,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     getLogisticsBillCostAddData(addDataDTO, logisticsBillCostEntity, dtoList, rowSourceType);
                     List<LogisticsBillCostDTO.AddDTO> currentAddBillCostList = addDataDTO.getAddBillCostList();
                     if (CollUtil.isNotEmpty(currentAddBillCostList)) {
-                        currentAddBillCostList.forEach(addDTO -> addDTO.setPlatformCode(logisticsBillVo.getPlatformCode()));
                         addBillCostList.addAll(currentAddBillCostList);
                     }
                     addCfgCostList.addAll(ObjectUtil.defaultIfNull(addDataDTO.getAddCfgCostList(), Collections.emptyList()));
