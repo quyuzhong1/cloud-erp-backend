@@ -7693,6 +7693,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Boolean.TRUE.equals(entity.hasPlatformWarehouseOrder())) {
             return OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
         }
+        // 平台拉单新增时尚未落库，无 soId，不可能存在三方仓发货记录
+        if (StringUtils.isBlank(entity.getId())) {
+            return OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+        }
         ThirdWarehouseDeliveryEntity thirdWarehouseDelivery = thirdWarehouseDeliveryFeign.getLatestBySoId(entity.getId());
         if (Objects.nonNull(thirdWarehouseDelivery)
                 && !SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(thirdWarehouseDelivery.getStatus())) {
