@@ -10,6 +10,7 @@ import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -91,14 +92,20 @@ public interface CfgLogisticsCostImportService extends SuperService<CfgLogistics
     void exportList(CfgLogisticsCostImportDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
+     * 预加载有效货币字典键集合，须在事务外调用。
+     */
+    Set<String> loadValidCurrencyKeySet();
+
+    /**
      * 校验物流费用导入配置明细。
      *
      * @param businessType 业务类型
      * @param detailList 明细列表
+     * @param validCurrencyKeys 预加载的有效货币键集合
      * @return 无
      * @throws com.common.core.exception.ServiceException 明细配置不合法时抛出
      * @author jack
      * @date 2026/05/22
      */
-    void validateDetailList(String businessType, List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList);
+    void validateDetailList(String businessType, List<CfgLogisticsCostImportDetailDTO.UpdateDTO> detailList, Set<String> validCurrencyKeys);
 }

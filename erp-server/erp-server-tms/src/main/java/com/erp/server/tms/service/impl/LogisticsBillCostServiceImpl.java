@@ -788,6 +788,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     @Override
     public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList, String reconciliationStatus) {
+        return validateImportConfirmAmountMsg(logisticsCostId, importList, reconciliationStatus, null);
+    }
+
+    @Override
+    public String validateImportConfirmAmountMsg(String logisticsCostId, List<TmsCostDetailDTO.UpdateDTO> importList,
+                                                 String reconciliationStatus,
+                                                 Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
         if (!ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
                 && !ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
             return null;
@@ -798,7 +805,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String costType = ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
                 ? LogisticsBillCostTypeEnum.ACTUAL.getCode()
                 : LogisticsBillCostTypeEnum.ESTIMATED.getCode();
-        BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, importList, costType, null);
+        BigDecimal totalAmount = calcProjectedConfirmAmount(logisticsCostId, importList, costType, existingDetailMap);
         if (totalAmount.compareTo(BigDecimal.ZERO) == 0) {
             if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
                 return "账单确认总计实际金额必须大于0";
@@ -846,8 +853,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                                                   Map<String, List<TmsCostDetailEntity>> existingDetailMap) {
         Map<String, BigDecimal> cfgAmountMap = new LinkedHashMap<>();
         List<TmsCostDetailEntity> existingList;
-        if (existingDetailMap != null && existingDetailMap.containsKey(logisticsCostId)) {
-            existingList = existingDetailMap.get(logisticsCostId);
+        if (existingDetailMap != null) {
+            existingList = existingDetailMap.getOrDefault(logisticsCostId, Collections.emptyList());
         } else {
             existingList = tmsCostDetailService.lambdaQuery()
                     .eq(TmsCostDetailEntity::getMainId, logisticsCostId)
@@ -856,6 +863,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         if (CollUtil.isNotEmpty(existingList)) {
             for (TmsCostDetailEntity detailEntity : existingList) {
+                if (!CharSequenceUtil.equals(costType, detailEntity.getType())) {
+                    continue;
+                }
                 cfgAmountMap.put(detailEntity.getCfgCostId(),
                         ObjectUtil.defaultIfNull(detailEntity.getCostValue(), BigDecimal.ZERO));
             }
@@ -1393,11 +1403,51 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         map.forEach((key, rows) ->
                 groupLogisticsBillVoMap.put(key, matchImportLogisticsBillVos(rows.get(0), logisticsBillVos, billVoIndex)));
 
+        // 多物流单费用分摊前批量预加载出库明细与SKU包装信息，避免分组循环内 N+1 Feign 调用
+        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
+        Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
+        List<String> allocationOutstockIdList = groupLogisticsBillVoMap.values().stream()
+                .filter(list -> list.size() > 1)
+                .flatMap(list -> list.stream())
+                .map(LogisticsBillDTO.LogisticsBillVo::getOutstockId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(allocationOutstockIdList)) {
+            List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                    .in(SoOutstockDetailEntity::getMainId, allocationOutstockIdList).list();
+            if (CollUtil.isNotEmpty(outstockDetailList)) {
+                outstockDetailMap = outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+                List<String> skuIdList = outstockDetailList.stream()
+                        .map(SoOutstockDetailEntity::getSkuId)
+                        .filter(CharSequenceUtil::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(skuIdList)) {
+                    List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class)
+                            .in(ProductPackEntity::getSkuId, skuIdList).list();
+                    if (CollUtil.isNotEmpty(productPackList)) {
+                        productPackMap = productPackList.stream()
+                                .collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
+                    }
+                }
+            }
+        }
+
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
         if(CollUtil.isNotEmpty(logisticsBillVos)) {
-            List<String> logisticsBillCostIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getLogisticsBillCostId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-            List<TmsCostDetailEntity> listByMainIdList = tmsCostDetailService.listByMainIdList(logisticsBillCostIdList);
-        	mainIdListMap = CollUtil.isEmpty(listByMainIdList) ? new HashMap<>() : listByMainIdList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
+            List<String> logisticsBillCostIdList = logisticsBillVos.stream()
+                    .map(LogisticsBillDTO.LogisticsBillVo::getLogisticsBillCostId)
+                    .filter(CharSequenceUtil::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            logisticsBillCostIdList.forEach(id -> mainIdListMap.put(id, Collections.emptyList()));
+            if (CollUtil.isNotEmpty(logisticsBillCostIdList)) {
+                List<TmsCostDetailEntity> listByMainIdList = tmsCostDetailService.listByMainIdList(logisticsBillCostIdList);
+                if (CollUtil.isNotEmpty(listByMainIdList)) {
+                    mainIdListMap.putAll(listByMainIdList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId)));
+                }
+            }
         }
 
         for ( Map.Entry<String, List<LogisticsBillCostExcelDTO>> entry : map.entrySet()) {
@@ -1493,7 +1543,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                 Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = new HashMap<>();
                 if (logisticsBillVoList.size() > 1) {
-                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList);
+                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList, outstockDetailMap, productPackMap);
                     if (CollectionUtils.isNotEmpty(errorMsgList)) {
                         importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                         errorList.addAll(importSuccessList);
@@ -1544,7 +1594,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     continue;
                 }
                 // 勾选导入确认时，校验合并明细后实际金额合计大于 0
-                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, errorMsgList);
+                appendImportConfirmAmountErrors(confirmStatus, targetPairList, targetUpdateMap, mainIdListMap, errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                     errorList.addAll(importSuccessList);
@@ -1580,7 +1630,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 // 新增物流单分支：勾选导入确认时校验实际金额合计
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateDetailList,
-                            ReconciliationStatusEnum.CONFIRMED.getCode());
+                            ReconciliationStatusEnum.CONFIRMED.getCode(), Collections.emptyMap());
                     if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                         importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(Collections.singletonList(confirmMsg))));
                         errorList.addAll(importSuccessList);
@@ -1606,6 +1656,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private void appendImportConfirmAmountErrors(Boolean confirmStatus,
                                                  List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList,
                                                  Map<String, List<TmsCostDetailDTO.UpdateDTO>> targetUpdateMap,
+                                                 Map<String, List<TmsCostDetailEntity>> mainIdListMap,
                                                  List<String> errorMsgList) {
         if (!Boolean.TRUE.equals(confirmStatus) || CollUtil.isEmpty(targetPairList)) {
             return;
@@ -1614,7 +1665,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 合并库内已有明细与本次导入明细后校验实际金额合计
             String confirmMsg = validateImportConfirmAmountMsg(targetPair.getValue().getId(),
                     targetUpdateMap.get(targetPair.getKey().getDetailId()),
-                    ReconciliationStatusEnum.CONFIRMED.getCode());
+                    ReconciliationStatusEnum.CONFIRMED.getCode(), mainIdListMap);
             if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                 errorMsgList.add(confirmMsg);
                 return;
@@ -1637,7 +1688,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 updateDetailMap.put(key, updateDTO);
                 continue;
             }
-            existsDTO.setCostValue(existsDTO.getCostValue().add(updateDTO.getCostValue()));
+            existsDTO.setCostValue(ObjectUtil.defaultIfNull(existsDTO.getCostValue(), BigDecimal.ZERO).add(ObjectUtil.defaultIfNull(updateDTO.getCostValue(), BigDecimal.ZERO)));
         }
         return new ArrayList<>(updateDetailMap.values());
     }
@@ -1718,26 +1769,23 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     /**
      * 订单重量 = SKU毛重(g) * 上游出库单实发数量，多物流单匹配时作为费用分摊依据。
      */
-    private Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList, List<String> errorMsgList) {
+    private Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                                        List<String> errorMsgList,
+                                                        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap,
+                                                        Map<String, ProductPackEntity> productPackMap) {
         Map<String, BigDecimal> weightMap = new HashMap<>();
-        List<String> outstockIdList = logisticsBillVoList.stream().map(LogisticsBillDTO.LogisticsBillVo::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (logisticsBillVoList.stream().anyMatch(vo -> CharSequenceUtil.isBlank(vo.getOutstockId()))) {
             errorMsgList.add("无法获取上游出库单用于重量分摊");
             return weightMap;
         }
-        List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class).in(SoOutstockDetailEntity::getMainId, outstockIdList).list();
-        if (CollUtil.isEmpty(outstockDetailList)) {
+        if (CollUtil.isEmpty(outstockDetailMap)) {
             errorMsgList.add("无法获取上游出库明细用于重量分摊");
             return weightMap;
         }
-        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
-        List<String> skuIdList = outstockDetailList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (CollUtil.isEmpty(skuIdList)) {
+        if (CollUtil.isEmpty(productPackMap)) {
             errorMsgList.add("出库明细缺少SKU信息，无法按重量分摊");
             return weightMap;
         }
-        List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class).in(ProductPackEntity::getSkuId, skuIdList).list();
-        Map<String, ProductPackEntity> productPackMap = CollUtil.isEmpty(productPackList) ? new HashMap<>() : productPackList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
         for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
             List<SoOutstockDetailEntity> detailList = outstockDetailMap.get(logisticsBillVo.getOutstockId());
             if (CollUtil.isEmpty(detailList)) {

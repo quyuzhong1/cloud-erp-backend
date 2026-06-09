@@ -376,6 +376,17 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     @Override
     public BatchResultDTO submit(VirtualWarehouseAllocationEntity allocationEntity) {
+        VirtualWarehouseAllocationDTO.SubmitPrepareDTO prepareResult = prepareSubmit(allocationEntity);
+        // 单独 submit：旺店通校验在 doSubmitTransactional 全局事务外，避免远程调用拉长持锁
+        if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
+            syncWdtVirtualWarehousePushOrderService.checkAllocationWdtInventory(allocationEntity,
+                    prepareResult.getDetailEntityList(), prepareResult.getTransferWarehouseList());
+        }
+        return service.doSubmitTransactional(allocationEntity, prepareResult.getDetailEntityList(),
+                prepareResult.getTransferWarehouseList(), prepareResult.getWarehouseMap(), prepareResult.getStatusCode());
+    }
+
+    private VirtualWarehouseAllocationDTO.SubmitPrepareDTO prepareSubmit(VirtualWarehouseAllocationEntity allocationEntity) {
         String existStatus = allocationEntity.getStatus();
         String code = VirtualWarehouseAllocationStatusEnum.HANDLE.getCode();
         if (Objects.equals(existStatus, code)) {
@@ -391,13 +402,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 list.stream().collect(Collectors.toMap(WarehouseEntity::getId, e -> e));
         Map<String, String> warehouseMap = CollUtil.isEmpty(list) ? new HashMap<>() :
                 list.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
-
-        List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList = transferAndCheckVirtualInventoryQty(allocationEntity, detailEntityList, warehouseEntityMap);
-        // 外部接口调用放在事务外执行，避免拉长 @GlobalTransactional 持锁时间
-        if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
-            syncWdtVirtualWarehousePushOrderService.checkAllocationWdtInventory(allocationEntity, detailEntityList, transferWarehouseList);
-        }
-        return service.doSubmitTransactional(allocationEntity, detailEntityList, transferWarehouseList, warehouseMap, code);
+        List<VirtualWarehouseAllocationDTO.TransferWarehouseDTO> transferWarehouseList =
+                transferAndCheckVirtualInventoryQty(allocationEntity, detailEntityList, warehouseEntityMap);
+        return new VirtualWarehouseAllocationDTO.SubmitPrepareDTO(detailEntityList, transferWarehouseList, warehouseMap, code);
     }
 
     @Override
@@ -729,8 +736,14 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             service.update(dto);
         }
         VirtualWarehouseAllocationEntity allocationEntity = this.getById(id);
-        // 保存并提交同生共死：旺店通校验在 submit 内执行，处于同一全局事务，失败时保存一并回滚
-        return service.submit(allocationEntity);
+        VirtualWarehouseAllocationDTO.SubmitPrepareDTO prepareResult = prepareSubmit(allocationEntity);
+        // saveAndSubmit：保存、旺店通校验、落库同属本方法 @GlobalTransactional，任一步失败整体回滚
+        if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(allocationEntity.getType())) {
+            syncWdtVirtualWarehousePushOrderService.checkAllocationWdtInventory(allocationEntity,
+                    prepareResult.getDetailEntityList(), prepareResult.getTransferWarehouseList());
+        }
+        return service.doSubmitTransactional(allocationEntity, prepareResult.getDetailEntityList(),
+                prepareResult.getTransferWarehouseList(), prepareResult.getWarehouseMap(), prepareResult.getStatusCode());
     }
 
     /**

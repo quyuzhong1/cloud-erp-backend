@@ -1584,6 +1584,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //回写修改装载质检通知单
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
+            if (qcNoticeDetailEntity == null) {
+                throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
+            }
             Integer fullTotalQty = qcResultView.getTotalQty() == null ? 0 : qcResultView.getTotalQty();
             Integer fullQcQty = qcResultView.getQcQty() == null ? 0 : qcResultView.getQcQty();
             qcNoticeDetailEntity.setQcQty(fullQcQty);
@@ -1951,6 +1954,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             // 回写修改装载质检通知单
             QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
+            if (qcNoticeDetailEntity == null) {
+                throw new ServiceException(ApiError.PO_QC_NOTICE_DETAIL_NOT_FOUND);
+            }
             QcResultEntity matchedQcResult = qcResultMap.get(qcInfoView.getQcBillId());
             Integer noticeQcQty = qcInfoView.getQcQty() == null ? 0 : qcInfoView.getQcQty();
             Integer noticeTotalQty = matchedQcResult == null || matchedQcResult.getTotalQty() == null

@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
@@ -14,7 +15,9 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -410,6 +413,25 @@ public class ImportHistoryRecordDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class ImportGroupContextDTO {
+        /**
+         * 导入分组行数据，key 为识别分组键。
+         */
+        private Map<String, List<JSONObject>> groupRowMap;
+        /**
+         * 每行预匹配到的物流单集合。
+         */
+        private Map<JSONObject, List<LogisticsBillDTO.LogisticsBillVo>> rowMatchedBillMap;
+        /**
+         * 每个分组预匹配到的物流单集合。
+         */
+        private Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupMatchedBillMap;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ImportSyncDTO extends BaseDTO.ImportDTO{
         /**
          * 批次号
@@ -509,7 +531,26 @@ public class ImportHistoryRecordDTO implements Serializable {
          * 费用配置列表
          */
         private List<TmsCfgCostEntity> cfgCostList;
+        /**
+         * 物流单明细id对应的订单重量
+         */
+        private Map<String, BigDecimal> orderWeightMap;
+        /**
+         * 物流单明细id对应的重量预查询错误
+         */
+        private Map<String, List<String>> orderWeightErrorMap;
 
+        public PreQueryResultDTO(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                 Map<String, List<TmsCostDetailEntity>> mainIdListMap,
+                                 List<LogisticsBillCostEntity> logisticsBillCostList,
+                                 List<TmsCfgCostEntity> cfgCostList) {
+            this.logisticsBillVoList = logisticsBillVoList;
+            this.mainIdListMap = mainIdListMap;
+            this.logisticsBillCostList = logisticsBillCostList;
+            this.cfgCostList = cfgCostList;
+            this.orderWeightMap = new HashMap<>();
+            this.orderWeightErrorMap = new HashMap<>();
+        }
 
     }
 

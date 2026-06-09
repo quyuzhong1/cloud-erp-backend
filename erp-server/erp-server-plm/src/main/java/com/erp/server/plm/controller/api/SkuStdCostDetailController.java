@@ -136,7 +136,7 @@ public class SkuStdCostDetailController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "plm:skuStdCost:autoFetch",
-            serviceClass = SkuStdCostService.class,
+            serviceClass = SkuStdCostDetailService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> autoFetch(@RequestBody @Validated SkuStdCostDTO.AutoFetchBatchDTO dto) {
         List<BatchResultDTO> resultDTOS = skuStdCostDetailService.autoFetchBatch(dto);

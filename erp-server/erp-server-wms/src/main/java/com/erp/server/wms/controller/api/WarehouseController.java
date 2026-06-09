@@ -365,7 +365,7 @@ public class WarehouseController extends BaseController {
         }
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
         //根据名称排序
-        list.sort(Comparator.comparing(WarehouseDTO.ListDTO::getName));
+        list.sort(Comparator.comparing(WarehouseDTO.ListDTO::getName, Comparator.nullsLast(Comparator.naturalOrder())));
         return success(list);
     }
 

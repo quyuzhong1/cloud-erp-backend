@@ -247,6 +247,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         // 尾程费用更新依赖物流单明细 ID 定位费用单，先批量查询可更新的费用单集合。
         List<String> logisticsBillDetailIdList = logisticsBillVos.stream().map(LogisticsBillDTO.LogisticsBillVo::getDetailId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
+        Map<String, List<TmsCostDetailEntity>> mainIdListMap = buildCostDetailPreloadMap(logisticsBillCostList);
 
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildBillVoIndex(logisticsBillVos);
         Map<String, List<JSONObject>> importGroupMap = new LinkedHashMap<>();
@@ -318,6 +319,37 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             groupLogisticsBillVoMap.computeIfAbsent(groupKey, k -> matchImportLogisticsBillVos(excelDTO, logisticsBillVos, billVoIndex));
         }
 
+        // 多物流单费用分摊前批量预加载出库明细与SKU包装信息，避免分组循环内 N+1 Feign 调用
+        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
+        Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
+        List<String> allocationOutstockIdList = groupLogisticsBillVoMap.values().stream()
+                .filter(list -> list.size() > 1)
+                .flatMap(list -> list.stream())
+                .map(LogisticsBillDTO.LogisticsBillVo::getOutstockId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(allocationOutstockIdList)) {
+            List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                    .in(SoOutstockDetailEntity::getMainId, allocationOutstockIdList).list();
+            if (CollUtil.isNotEmpty(outstockDetailList)) {
+                outstockDetailMap = outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+                List<String> skuIdList = outstockDetailList.stream()
+                        .map(SoOutstockDetailEntity::getSkuId)
+                        .filter(CharSequenceUtil::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(skuIdList)) {
+                    List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class)
+                            .in(ProductPackEntity::getSkuId, skuIdList).list();
+                    if (CollUtil.isNotEmpty(productPackList)) {
+                        productPackMap = productPackList.stream()
+                                .collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
+                    }
+                }
+            }
+        }
+
         for (Map.Entry<String, List<JSONObject>> entry : importGroupMap.entrySet()) {
             List<JSONObject> value = entry.getValue();
             LogisticsLastMileCostExcelDTO excelDTO = rowExcelMap.get(value.get(0));
@@ -371,7 +403,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                 Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = new HashMap<>();
                 if (logisticsBillVoList.size() > 1) {
-                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList);
+                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList, outstockDetailMap, productPackMap);
                     if (CollectionUtils.isEmpty(errorMsgList)) {
                         allocatedCostMap = allocateCostDetailMap(updateList, logisticsBillVoList, weightMap);
                     }
@@ -407,7 +439,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                         errorMsgList.add("未找到对应物流费用单");
                         break;
                     }
-                    checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, errorMsgList);
+                    checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, mainIdListMap, errorMsgList);
                     if (CollectionUtils.isNotEmpty(errorMsgList)) {
                         break;
                     }
@@ -424,7 +456,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     for (Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity> targetPair : targetPairList) {
                         String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(targetPair.getValue().getId(),
                                 targetUpdateMap.get(targetPair.getKey().getDetailId()),
-                                ReconciliationStatusEnum.CONFIRMED.getCode());
+                                ReconciliationStatusEnum.CONFIRMED.getCode(), mainIdListMap);
                         if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                             errorMsgList.add(confirmMsg);
                             break;
@@ -465,14 +497,14 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 // 新增物流单分支：勾选导入确认时校验实际金额合计
                 if (Boolean.TRUE.equals(confirmStatus)) {
                     String confirmMsg = logisticsBillCostService.validateImportConfirmAmountMsg(logisticsBillCostEntity.getId(), updateList,
-                            ReconciliationStatusEnum.CONFIRMED.getCode());
+                            ReconciliationStatusEnum.CONFIRMED.getCode(), Collections.emptyMap());
                     if (CharSequenceUtil.isNotBlank(confirmMsg)) {
                         value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(), FieldValidUtil.getMsgSort(Collections.singletonList(confirmMsg))));
                         errorList.addAll(value);
                         continue;
                     }
                 }
-                checkCategoryCurrency(updateList, logisticsBillCostEntity, cfgCostList, errorMsgList);
+                checkCategoryCurrency(updateList, logisticsBillCostEntity, cfgCostList, Collections.emptyMap(), errorMsgList);
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     value.forEach(jsonObject -> jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList)));
                     errorList.addAll(value);
@@ -593,26 +625,23 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     /**
      * 订单重量 = SKU毛重(g) * 上游出库单实发数量，多物流单匹配时作为费用分摊依据。
      */
-    private Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList, List<String> errorMsgList) {
+    private Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                                        List<String> errorMsgList,
+                                                        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap,
+                                                        Map<String, ProductPackEntity> productPackMap) {
         Map<String, BigDecimal> weightMap = new HashMap<>();
-        List<String> outstockIdList = logisticsBillVoList.stream().map(LogisticsBillDTO.LogisticsBillVo::getOutstockId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (logisticsBillVoList.stream().anyMatch(vo -> CharSequenceUtil.isBlank(vo.getOutstockId()))) {
             errorMsgList.add("无法获取上游出库单用于重量分摊");
             return weightMap;
         }
-        List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class).in(SoOutstockDetailEntity::getMainId, outstockIdList).list();
-        if (CollUtil.isEmpty(outstockDetailList)) {
+        if (CollUtil.isEmpty(outstockDetailMap)) {
             errorMsgList.add("无法获取上游出库明细用于重量分摊");
             return weightMap;
         }
-        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
-        List<String> skuIdList = outstockDetailList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (CollUtil.isEmpty(skuIdList)) {
+        if (CollUtil.isEmpty(productPackMap)) {
             errorMsgList.add("出库明细缺少SKU信息，无法按重量分摊");
             return weightMap;
         }
-        List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class).in(ProductPackEntity::getSkuId, skuIdList).list();
-        Map<String, ProductPackEntity> productPackMap = CollUtil.isEmpty(productPackList) ? new HashMap<>() : productPackList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
         for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
             List<SoOutstockDetailEntity> detailList = outstockDetailMap.get(logisticsBillVo.getOutstockId());
             if (CollUtil.isEmpty(detailList)) {
@@ -678,15 +707,36 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         return copyDTO;
     }
 
+    private Map<String, List<TmsCostDetailEntity>> buildCostDetailPreloadMap(List<LogisticsBillCostEntity> logisticsBillCostList) {
+        Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
+        if (CollUtil.isEmpty(logisticsBillCostList)) {
+            return mainIdListMap;
+        }
+        List<String> logisticsBillCostIdList = logisticsBillCostList.stream()
+                .map(LogisticsBillCostEntity::getId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        logisticsBillCostIdList.forEach(id -> mainIdListMap.put(id, Collections.emptyList()));
+        if (CollUtil.isNotEmpty(logisticsBillCostIdList)) {
+            List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.listByMainIdList(logisticsBillCostIdList);
+            if (CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
+                mainIdListMap.putAll(tmsCostDetailEntityList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId)));
+            }
+        }
+        return mainIdListMap;
+    }
+
     /**
      * 校验导入费用和存量费用在同一费用分类下的币种一致性。
      */
     private void checkCategoryCurrency(List<TmsCostDetailDTO.UpdateDTO> updateList,
                                        LogisticsBillCostEntity logisticsBillCostEntity,
                                        List<TmsCfgCostEntity> cfgCostList,
+                                       Map<String, List<TmsCostDetailEntity>> mainIdListMap,
                                        List<String> errorMsgList) {
         List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
-        List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.listByMainIdList(Collections.singletonList(logisticsBillCostEntity.getId()));
+        List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.getOrDefault(logisticsBillCostEntity.getId(), Collections.emptyList());
         if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
             List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
@@ -700,8 +750,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             String[] split = validateCategory.split("_");
             List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
             for(UpdateDTO remove : removeList) {
-                String costName = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null).getCostName();
-                costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null);
+                if(Objects.nonNull(tmsCfgCostEntity)){
+                    String costName = tmsCfgCostEntity.getCostName();
+                    costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
+                }
             }
         }
         errorMsgList.addAll(costIdTypeListMap.values());

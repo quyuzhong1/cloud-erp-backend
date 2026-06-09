@@ -29,7 +29,16 @@ public class BusinessCommonConstants {
 
     // 开发环境
     public static final String DEV = "dev";
-    
+
+    // 测试环境
+    public static final String TEST = "test";
+
+    // UAT 环境
+    public static final String UAT = "uat";
+
+    // 生产环境
+    public static final String PROD = "prod";
+
     // 归档环境
     public static final String ARCHIVE = "archive";
 

@@ -825,10 +825,10 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
                         Boolean save = insertBatch(Arrays.asList(recordEntity));
                         if(Boolean.TRUE.equals(save)){
-                            boolean uat = BusinessCommonConstants.hasProfile("uat");
-                            boolean dev = BusinessCommonConstants.hasProfile("dev");
-                            boolean test = BusinessCommonConstants.hasProfile("test");
-                            boolean prod = BusinessCommonConstants.hasProfile("prod");
+                            boolean uat = BusinessCommonConstants.hasProfile(BusinessCommonConstants.UAT);
+                            boolean dev = BusinessCommonConstants.hasProfile(BusinessCommonConstants.DEV);
+                            boolean test = BusinessCommonConstants.hasProfile(BusinessCommonConstants.TEST);
+                            boolean prod = BusinessCommonConstants.hasProfile(BusinessCommonConstants.PROD);
                             //根据环境进行消息发送
                             if(dev||test||uat){//开发、测试、uat环境
                                 log.error("通知配置消费者：走开发、测试、uat环境");
@@ -1761,24 +1761,40 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 if (!(unionMap.containsKey(userId) && StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId()))) {
                     recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
                     recordEntity.setErrorReason(ApiError.AUTH_FS_USER_NOT_BIND.getMsg());
+                    save(recordEntity);
+                    continue;
                 }
                 boolean saved = save(recordEntity);
                 if (Boolean.TRUE.equals(saved)) {
-                    SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-                    sendMessage.setThirdNoticePushRecordEntity(recordEntity);
-                    sendMessage.setTitle(title);
-                    sendMessage.setContent(content);
-                    sendMessage.setReceiverUserIds(Arrays.asList(userId));
-                    sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
-                    sendMessage.setNoticeMsgCardButtonDTO(buttonDTO);
-                    SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(
-                            RocketMqTopic.SEND_THIRD_NOTICE_TOPIC,
-                            RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(),
-                            sendMessage, recordEntity.getId(), delayLevel);
-                    if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                        log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                    boolean uat = BusinessCommonConstants.hasProfile(BusinessCommonConstants.UAT);
+                    boolean dev = BusinessCommonConstants.hasProfile(BusinessCommonConstants.DEV);
+                    boolean test = BusinessCommonConstants.hasProfile(BusinessCommonConstants.TEST);
+                    if (dev || test || uat) {
+                        log.info("通知配置消费者（SKU预警）：走开发、测试、uat环境");
+                        FsBatchSendMessageDTO fsMessage = new FsBatchSendMessageDTO();
+                        String thirdUnionId = unionMap.get(userId).getThirdUnionId();
+                        fsMessage.setUnionIds(Arrays.asList(thirdUnionId));
+                        fsMessage.setContentMap(fsService.getCardMessageMap(title, content,
+                                buttonDTO == null ? "" : buttonDTO.getUrl()));
+                        oldSend(fsMessage, recordEntity);
                     } else {
-                        log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                        log.info("通知配置消费者（SKU预警）：走生产环境");
+                        SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
+                        sendMessage.setThirdNoticePushRecordEntity(recordEntity);
+                        sendMessage.setTitle(title);
+                        sendMessage.setContent(content);
+                        sendMessage.setReceiverUserIds(Arrays.asList(userId));
+                        sendMessage.setNoticeTypeEnum(NoticeTypeEnum.SYS_TASK);
+                        sendMessage.setNoticeMsgCardButtonDTO(buttonDTO);
+                        SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(
+                                RocketMqTopic.SEND_THIRD_NOTICE_TOPIC,
+                                RocketMqTagEnum.SEND_THIRD_NOTICE_TAG.getName(),
+                                sendMessage, recordEntity.getId(), delayLevel);
+                        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                            log.error("消息发送结果失败：{}", JSONObject.toJSONString(sendResult));
+                        } else {
+                            log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+                        }
                     }
                 }
             }

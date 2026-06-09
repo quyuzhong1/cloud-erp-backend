@@ -160,6 +160,15 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
             "#GETTING_DATA", "#SPILL!", "#CALC!"));
 
     /**
+     * 唯一键列在 headMap 中的列下标集合，解析表头后初始化一次。
+     * 判断一行是否为有效数据行时，只看这些「业务唯一键列」（如单号），
+     * 而不是看整行所有单元格——因为源文件里 核对/差异 等跨表公式列会被一路向下填充到很大的行范围，
+     * 在没有真实数据的行上仍会被算出 0、0.8 等结果或 #REF! 错误值，
+     * 仅凭「整行是否全空」无法识别这类幽灵行，必须以唯一键列是否有值为准。
+     */
+    private Set<Integer> uniqueKeyColumnKeys = Collections.emptySet();
+
+    /**
      * 将单元格中的 Excel 公式错误值清成空字符串。
      * 典型场景：源文件「核对/差异」等列是跨表公式，引用的表缺失后整列变成 #REF!，
      * EasyExcel 解析 .xls 时会因这些错误单元格额外吐出只含该列、其余全空的幽灵行。
@@ -180,10 +189,22 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
     }
 
     /**
-     * 判断当前行是否没有任何有效业务数据（所有单元格清洗后均为空）。
+     * 判断当前行是否没有任何有效业务数据。
+     * 优先以「业务唯一键列」（来自导入配置 isUniqueKey 的字段，如单号）是否有值为准：
+     * 只要任一唯一键列有值即视为有效数据行；唯一键列全空则视为幽灵/空行跳过。
+     * 这样可以正确剔除 核对/差异 等公式列被填充到空行区、算出 0 或脏值而产生的幽灵行，
+     * 且不依赖写死的列名关键字。若未能解析到任何唯一键列（兜底），退回到「整行是否全空」的判断。
      */
     private boolean isBlankDataRow(Map<Integer,String> map) {
         if (map == null || map.isEmpty()) {
+            return true;
+        }
+        if (CollectionUtils.isNotEmpty(uniqueKeyColumnKeys)) {
+            for (Integer key : uniqueKeyColumnKeys) {
+                if (CharSequenceUtil.isNotBlank(map.get(key))) {
+                    return false;
+                }
+            }
             return true;
         }
         for (String value : map.values()) {
@@ -319,6 +340,29 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         map.put(size + 1,ERROR_MSG);
         this.headMap = map;
         this.headList = headList;
+        //根据导入配置解析唯一键列下标，供空行/幽灵行判断使用
+        this.uniqueKeyColumnKeys = resolveUniqueKeyColumnKeys(map);
+    }
+
+    /**
+     * 根据导入配置（isUniqueKey 的字段）解析唯一键列在表头中的列下标集合。
+     * 唯一键来自数据库配置 cfgImportDetailList，按 sourceField 与表头名称匹配，不依赖写死列名。
+     */
+    private Set<Integer> resolveUniqueKeyColumnKeys(Map<Integer,String> headMap) {
+        if (ObjectUtil.isEmpty(headMap) || CollectionUtils.isEmpty(cfgImportDetailList)) {
+            return Collections.emptySet();
+        }
+        Set<Integer> keys = new HashSet<>();
+        for (CfgLogisticsCostImportDetailEntity cfgDetail : cfgImportDetailList) {
+            if (cfgDetail == null || !Boolean.TRUE.equals(cfgDetail.getIsUniqueKey())) {
+                continue;
+            }
+            Integer columnIndex = getMapKey(headMap, cfgDetail.getSourceField());
+            if (columnIndex != null) {
+                keys.add(columnIndex);
+            }
+        }
+        return keys;
     }
 
     private void writeMatchResult(List<JSONObject> batchMatchList) {
