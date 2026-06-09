@@ -19,6 +19,7 @@
        <result column="title" property="title" />
        <result column="notice_type" property="noticeType" />
        <result column="url" property="url" />
+       <result column="url_type" property="urlType" />
        <result column="cron" property="cron" />
        <result column="role_type" property="roleType" />
        <result column="specific_person" property="specificPerson" />
@@ -37,7 +38,7 @@
         update_time,
         version,
         is_deleted,
-        business_type, notice_node, method, notice_status, title, notice_type, url, cron, role_type, specific_person, notice_method,apply_scope
+        business_type, notice_node, method, notice_status, title, notice_type, url, url_type, cron, role_type, specific_person, notice_method,apply_scope
     </sql>
     <select id="tabList" resultType="com.erp.model.sys.dto.CfgThirdNoticeDTO$TabListDTO">
         SELECT
@@ -69,6 +70,7 @@
         ctn.title as title,
         ctn.notice_type as noticeType,
         ctn.url as url,
+        ctn.url_type as urlType,
         ctn.cron as cron,
         ctn.role_type as roleType,
         ctn.specific_person as specificPerson,

@@ -20,6 +20,7 @@ import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.sdk.wms.wego.service.WegoOpenApiService;
+import com.sdk.wms.wego.utils.WeGoSignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -50,6 +51,21 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * WEGO 授权 JSON 中的 secret 字段，仅用于本地签名
      */
     private static final String AUTH_KEY_APP_SECRET = "appSecret";
+
+    /**
+     * WEGO 请求 DTO 中的敏感字段：第三方授权 Token，禁止落日志
+     */
+    private static final String DTO_FIELD_ACCESS_TOKEN = "accessToken";
+
+    /**
+     * WEGO 请求 DTO 中的敏感字段：本地签名密钥，禁止落日志
+     */
+    private static final String DTO_FIELD_SECRET = "secret";
+
+    /**
+     * 日志脱敏占位符
+     */
+    private static final String LOG_MASK = "***";
 
     /**
      * 默认库存类型：0=2C库存
@@ -98,7 +114,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         WegoInOrderSaveDTO.SaveReqDTO request = buildInorderSaveDto(createInboundReq, null);
-        log.warn("{}创建入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
+        log.warn("{}创建入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.saveInorder(request);
         log.warn("{}创建入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (!isSuccess(resp)) {
@@ -113,7 +129,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             throw new ServiceException("WEGO入库单号不能为空");
         }
         WegoInOrderSaveDTO.SaveReqDTO request = buildInorderSaveDto(createInboundReq, createInboundReq.getReceivingCode());
-        log.warn("{}修改入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
+        log.warn("{}修改入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.saveInorder(request);
         log.warn("{}修改入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (!isSuccess(resp)) {
@@ -411,7 +427,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             throw new ServiceException("WEGO入库单号不能为空");
         }
         WegoInOrderCancelDTO.CancelReqDTO request = buildInorderCancelDto(cancelInboundReq);
-        log.warn("{}取消入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
+        log.warn("{}取消入库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.cancelInorder(request);
         log.warn("{}取消入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         if (!isSuccess(resp)) {
@@ -557,5 +573,28 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private String toStr(Object value) {
         return value == null ? null : value.toString();
+    }
+
+    /**
+     * 把 WEGO 请求 DTO 序列化为日志可输出的 JSON，
+     * 对 accessToken（第三方授权）与 secret（本地签名密钥）做掩码处理，
+     * 避免敏感凭据明文落到日志文件中。
+     */
+    private String toLogSafeJson(Object request) {
+        if (request == null) {
+            return "";
+        }
+        String raw = JSONUtil.toJsonStr(request);
+        JSONObject json = JSONObject.parseObject(raw);
+        if (json == null) {
+            return raw;
+        }
+        if (json.containsKey(DTO_FIELD_ACCESS_TOKEN)) {
+            json.put(DTO_FIELD_ACCESS_TOKEN, LOG_MASK);
+        }
+        if (json.containsKey(DTO_FIELD_SECRET)) {
+            json.put(DTO_FIELD_SECRET, LOG_MASK);
+        }
+        return json.toJSONString();
     }
 }

@@ -79,6 +79,12 @@ public class CfgThirdNoticeDTO implements Serializable {
         private String url;
 
         /**
+         * 跳转链接类型：custom=自定义路径，menu=选择菜单
+         * 枚举：CfgThirdNoticeUrlTypeEnum
+         */
+        private String urlType;
+
+        /**
         * cron
         */
         private String cron;
@@ -205,6 +211,13 @@ public class CfgThirdNoticeDTO implements Serializable {
         private String url;
 
         /**
+         * 跳转链接类型：custom=自定义路径，menu=选择菜单
+         * 枚举：CfgThirdNoticeUrlTypeEnum
+         */
+        @NotBlank(message = "跳转链接类型不能为空")
+        private String urlType;
+
+        /**
         * cron
         */
         private String cron;
@@ -296,6 +309,12 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 通知类型
          */
         private String noticeType;
+
+        /**
+         * 跳转链接类型：custom=自定义路径，menu=选择菜单
+         * 枚举：CfgThirdNoticeUrlTypeEnum
+         */
+        private String urlType;
 
         /**
          * 岗位
