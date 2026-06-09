@@ -10,6 +10,7 @@ import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.WegoInOrderCancelDTO;
 import com.erp.model.wms.dto.WegoInOrderSaveDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.third.*;
@@ -406,7 +407,40 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        return failure("WEGO暂不支持取消入库单，请前往WEGO后台操作");
+        if (CharSequenceUtil.isBlank(cancelInboundReq.getReceivingCode())) {
+            throw new ServiceException("WEGO入库单号不能为空");
+        }
+        WegoInOrderCancelDTO.CancelReqDTO request = buildInorderCancelDto(cancelInboundReq);
+        log.warn("{}取消入库单请求:{}", getPlatForm().getName(), JSONUtil.toJsonStr(request));
+        JSONObject resp = wegoOpenApiService.cancelInorder(request);
+        log.warn("{}取消入库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        if (!isSuccess(resp)) {
+            return failure(buildErrorMessage(resp));
+        }
+        return success(cancelInboundReq.getReceivingCode());
+    }
+
+    /**
+     * 构造 WEGO inorder.cancel 请求 DTO。
+     * <p>
+     * 授权信息 {@code accessToken / secret} 取自 {@link ThirdWarehouseContext#getAuthMap()}，
+     * {@code no} 取 {@link ThirdWarehouseCancelInboundReq#getReceivingCode()}（即 ERP 侧落库的 WEGO 单号）。
+     */
+    private WegoInOrderCancelDTO.CancelReqDTO buildInorderCancelDto(ThirdWarehouseCancelInboundReq cancelInboundReq) {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
+        if (authMap == null || authMap.isEmpty()) {
+            throw new ServiceException("WEGO授权信息为空");
+        }
+        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
+        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
+        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
+            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+        }
+        return WegoInOrderCancelDTO.CancelReqDTO.builder()
+                .accessToken(accessToken)
+                .secret(secret)
+                .no(cancelInboundReq.getReceivingCode())
+                .build();
     }
 
     @Override

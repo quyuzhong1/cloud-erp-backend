@@ -38,3 +38,7 @@ erp-common/erp-common-business/mvnw.cmd
 erp-common/erp-common-business/.mvn/
 rebel.xml
 /.agents
+
+### Cursor ###
+.cursor/mcp.json
+.cursor/settings.local.json

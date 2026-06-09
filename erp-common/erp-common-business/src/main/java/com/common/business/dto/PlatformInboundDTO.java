@@ -104,6 +104,9 @@ public class PlatformInboundDTO extends UniqueDto {
         //签收水流明细ID
         private String thirdId;
 
+        //是否不良品 true 是 false 否（WEGO 等支持不良品标记的平台使用，其他平台留空即可）
+        private Boolean defectiveProductFlag;
+
     }
 
 }

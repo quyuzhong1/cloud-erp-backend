@@ -1315,6 +1315,12 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 receivedEntity.setFlowId(StringUtil.isBlank(receiving.getThirdId()) ? "" : receiving.getThirdId());
                 receivedEntity.setCreateUserId(dto.getAuthId());
+                // WEGO 等平台会回传签收人 / 不良品标记；其他平台默认为空，保持原行为
+                if (StringUtil.isNotBlank(receiving.getReceiveUser())) {
+                    receivedEntity.setReceiveUser(receiving.getReceiveUser());
+                }
+                receivedEntity.setDefectiveProductFlag(
+                        Boolean.TRUE.equals(receiving.getDefectiveProductFlag()));
                 insertReceiveEntityList.add(receivedEntity);
                 if (isDaMaiReceivedFlow) {
                     Integer thisSignQty = Optional.ofNullable(receiving.getReceiveQty()).orElse(0);

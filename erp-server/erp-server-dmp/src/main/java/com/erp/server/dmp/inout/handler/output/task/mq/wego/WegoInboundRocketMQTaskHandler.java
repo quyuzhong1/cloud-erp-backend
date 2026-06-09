@@ -3,8 +3,6 @@ package com.erp.server.dmp.inout.handler.output.task.mq.wego;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.PlatformInboundDTO.Receiving;
 import com.common.business.enums.OverseasInstockStatusEnum;
@@ -14,12 +12,13 @@ import com.erp.model.dmp.entity.DmpThirdInboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
+import com.sdk.wms.wego.dto.response.WegoInboundResp;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,22 +32,64 @@ import java.util.stream.Collectors;
 /**
  * WEGO 海外仓入库 DMP 输出 MQ 任务处理器。
  * <p>
- * 与 {@code JiFengInboundRocketMQTaskHandler} 对齐：
+ * 与 {@code JiFengInboundRocketMQTaskHandler} 链路一致，但解析协议按 WEGO 真实字段实现：
  * <ol>
  *   <li>从 DMP 层产出（{@code convertInputDmpBaseEntityListMaps}）中收集 {@code dmp_third_inbound} 实体；</li>
  *   <li>仅推送本次发生变更（{@code changeConvertInputDmpBaseEntityListMaps}）的记录；</li>
- *   <li>转换为统一的 {@link PlatformInboundDTO}，由父类发送到 {@code dmp_cfg_mq} 配置的 topic/tag
- *       （即 {@code DMP_PLATFORM_INBOUND_TO_WMS_TOPIC} / {@code DMP_PLATFORM_INBOUND_TO_WMS_TAG}）。</li>
+ *   <li>把 {@code detail_list_json}（{@link WegoInboundResp.InstockDTO} 列表）按
+ *       「instocks[] × products[]」笛卡尔展开生成 {@link Receiving} 流水，每条流水保留
+ *       {@code defectiveProductFlag} / {@code receiveUser} / {@code receiveTime} / {@code thirdId}；</li>
+ *   <li>设置 {@code hasReceivedData=true}，让下游 {@code OverseasWarehouseInboundServiceImpl.handlePlatformMessage}
+ *       直接按流水落 {@code overseas_warehouse_inbound_received}，而非按 SKU 差量推断。</li>
  * </ol>
  * <p>
- * 说明：明细 JSON 字段名（{@code sku} / {@code putawayCount} / {@code putawayLastTime}）与状态码（0/3/4）
- * 暂沿用 jifeng 的接口契约，等 WEGO 入库回执接口接入后按实际字段调整。
+ * 说明：
+ * <ul>
+ *   <li>WEGO 的 {@code createTime} 字段格式为 {@code yyyy-MM-dd HH:mm:ss}（仓侧本地时间），
+ *       不需要做 UTC 时区转换；{@code batch} 为 {@code yyyy-MM-dd} 入库批次。</li>
+ *   <li>幂等：流水 ID 取 {@code inOrderDetailId + '_' + batch + '_' + sku}，
+ *       与下游 {@code receivedEntityMap} 的 {@code detailId + receiveQty + receiveTime} 联合去重一致。</li>
+ *   <li>整箱不良品标记 {@code defectiveProductFlag} 来自 {@link WegoInboundResp.InstockDTO}，
+ *       由箱内所有 {@code products} 共享。</li>
+ * </ul>
  */
 @Service
 @Scope("prototype")
 public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     private static final String STORAGE_NAME = "dmp_third_inbound";
+
+    /**
+     * WEGO 入库批次 {@code createTime} / {@code updateTime} 格式，与服务端返回保持一致。
+     */
+    private static final DateTimeFormatter WEGO_DATETIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * WEGO 入库批次 {@code batch} 格式（仅日期）。
+     */
+    private static final DateTimeFormatter WEGO_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    /**
+     * WEGO {@link WegoInboundResp.InstockDTO#getStatus()} 已上架枚举值（与服务端约定值对齐）。
+     */
+    private static final int INSTOCK_STATUS_DONE = 2;
+
+    /**
+     * WEGO {@link WegoInboundResp.InorderDTO#getStatus()} 已完结枚举值。
+     */
+    private static final int INORDER_STATUS_FINISHED = 4;
+
+    /**
+     * WEGO {@link WegoInboundResp.InorderDTO#getStatus()} 上架中枚举值。
+     */
+    private static final int INORDER_STATUS_PUTAWAY = 3;
+
+    /**
+     * WEGO {@link WegoInboundResp.InorderDTO#getStatus()} 待入库枚举值，
+     * 对齐 jifeng 中 {@code status == 0} 的「待发货」语义。
+     */
+    private static final int INORDER_STATUS_TO_SHIP = 1;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -65,8 +106,7 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
             }
         }
 
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps =
-                dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> entry : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = entry.getValue();
@@ -105,53 +145,147 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         platformInboundDTO.setPlatform(sourcePlatform);
         platformInboundDTO.setProvider(sourcePlatform);
 
-        JSONArray skuArray = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson());
-        platformInboundDTO.setReceivingStatus(
-                this.convertStatus(Integer.valueOf(dmpThirdInboundEntity.getReceivingStatus()), skuArray));
+        List<WegoInboundResp.InstockDTO> instockList = parseInstockList(dmpThirdInboundEntity.getDetailListJson());
 
-        List<Receiving> receivingDataList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(skuArray)) {
-            for (Object obj : skuArray) {
-                JSONObject sku = (JSONObject) obj;
-                Receiving receiving = new Receiving();
-                String putawayLastTime = sku.getString("putawayLastTime");
-                LocalDateTime receiveTime = parseUtcToLocal(putawayLastTime);
-                platformInboundDTO.setDownloadTime(receiveTime);
-                receiving.setProductSku(sku.getString("sku"));
-                Integer putawayCount = sku.getInteger("putawayCount");
-                receiving.setReceiveQty(Objects.isNull(putawayCount) ? 0 : putawayCount);
-                receiving.setReceiveTime(receiveTime);
-                receivingDataList.add(receiving);
+        // 入库单状态：用 inorder.status 优先映射；instockList 仅作为「是否已经有上架明细」的辅助判断
+        platformInboundDTO.setReceivingStatus(this.convertStatus(
+                parseInt(dmpThirdInboundEntity.getReceivingStatus()), instockList));
+
+        List<Receiving> receivingDataList = buildReceivingList(instockList);
+        if (CollUtil.isNotEmpty(receivingDataList)) {
+            platformInboundDTO.setHasReceivedData(true);
+            platformInboundDTO.setReceivingDataList(receivingDataList);
+            // 取最新一次入库时间作为下载时间，保证下游主表 receive_time 单调递增
+            LocalDateTime latest = receivingDataList.stream()
+                    .map(Receiving::getReceiveTime)
+                    .filter(Objects::nonNull)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
+            if (latest != null) {
+                platformInboundDTO.setDownloadTime(latest);
             }
+        } else {
+            platformInboundDTO.setReceivingDataList(new ArrayList<>());
         }
-        platformInboundDTO.setReceivingDataList(receivingDataList);
 
-        this.groupBySku(platformInboundDTO);
+        this.groupBySku(platformInboundDTO, receivingDataList);
         return platformInboundDTO;
     }
 
     /**
-     * 将 UTC 字符串时间转为系统默认时区的 {@link LocalDateTime}。
+     * 反序列化 {@code detail_list_json} 为 WEGO 入库批次明细列表。
+     * <p>
+     * 失败返回空列表，避免 NPE；上层会兜底为「无签收流水」继续推送状态。
      */
-    private LocalDateTime parseUtcToLocal(String time) {
-        if (time == null || time.isEmpty()) {
-            return null;
+    private List<WegoInboundResp.InstockDTO> parseInstockList(String detailListJson) {
+        if (StringUtils.isBlank(detailListJson)) {
+            return new ArrayList<>();
         }
-        LocalDateTime localDateTime = LocalDateTime.parse(time);
-        ZonedDateTime utcZoned = localDateTime.atZone(ZoneId.of("UTC"));
-        ZonedDateTime systemZoned = utcZoned.withZoneSameInstant(ZoneId.systemDefault());
-        return systemZoned.toLocalDateTime();
+        try {
+            List<WegoInboundResp.InstockDTO> list =
+                    JSON.parseArray(detailListJson, WegoInboundResp.InstockDTO.class);
+            return list == null ? new ArrayList<>() : list;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 把 {@link WegoInboundResp.InstockDTO} 列表按「批次 × 箱内 SKU」笛卡尔展开为签收流水。
+     * <ul>
+     *   <li>过滤 {@code deletedFlag = true} 的入库批次；</li>
+     *   <li>每条流水的 {@code defectiveProductFlag} 来自所属批次；</li>
+     *   <li>{@code receiveUser} 优先取 {@code upUserName}，缺省回退 {@code createUserName}；</li>
+     *   <li>{@code receiveTime} 优先取 {@code createTime} 字符串解析，缺省回退 {@code batch} 当日 00:00:00；</li>
+     *   <li>{@code thirdId}（流水ID）取 {@code inOrderDetailId + '_' + batch + '_' + sku}，
+     *       与下游基于 {@code detailId + receiveQty + receiveTime} 的去重共同保证幂等。</li>
+     * </ul>
+     */
+    private List<Receiving> buildReceivingList(List<WegoInboundResp.InstockDTO> instockList) {
+        List<Receiving> receivingList = new ArrayList<>();
+        if (CollUtil.isEmpty(instockList)) {
+            return receivingList;
+        }
+        for (WegoInboundResp.InstockDTO instock : instockList) {
+            if (instock == null || Boolean.TRUE.equals(instock.getDeletedFlag())) {
+                continue;
+            }
+            List<WegoInboundResp.ProductDTO> products = instock.getProducts();
+            if (CollUtil.isEmpty(products)) {
+                continue;
+            }
+            LocalDateTime receiveTime = resolveReceiveTime(instock);
+            String receiveUser = resolveReceiveUser(instock);
+            Boolean defectiveProductFlag = instock.getDefectiveProductFlag();
+            String batch = StringUtils.defaultString(instock.getBatch());
+            String inOrderDetailIdStr = instock.getInOrderDetailId() == null
+                    ? "" : instock.getInOrderDetailId().toString();
+            for (WegoInboundResp.ProductDTO product : products) {
+                if (product == null || StringUtils.isBlank(product.getSku())) {
+                    continue;
+                }
+                Receiving receiving = new Receiving();
+                receiving.setProductSku(product.getSku());
+                receiving.setReceiveQty(product.getQty() == null ? 0 : product.getQty());
+                receiving.setReceiveTime(receiveTime);
+                receiving.setReceiveUser(receiveUser);
+                receiving.setDefectiveProductFlag(defectiveProductFlag);
+                receiving.setThirdId(inOrderDetailIdStr + "_" + batch + "_" + product.getSku());
+                receivingList.add(receiving);
+            }
+        }
+        return receivingList;
+    }
+
+    /**
+     * 解析 WEGO 入库批次的签收时间，优先取 {@code createTime}，缺省回退 {@code batch} 00:00:00。
+     */
+    private LocalDateTime resolveReceiveTime(WegoInboundResp.InstockDTO instock) {
+        String createTime = instock.getCreateTime();
+        if (StringUtils.isNotBlank(createTime)) {
+            try {
+                return LocalDateTime.parse(createTime.trim(), WEGO_DATETIME_FORMATTER);
+            } catch (Exception ignore) {
+                // 解析失败时继续尝试 batch
+            }
+        }
+        String batch = instock.getBatch();
+        if (StringUtils.isNotBlank(batch)) {
+            try {
+                return java.time.LocalDate.parse(batch.trim(), WEGO_DATE_FORMATTER).atStartOfDay();
+            } catch (Exception ignore) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 解析操作员：上架人优先，回退创建人。
+     */
+    private String resolveReceiveUser(WegoInboundResp.InstockDTO instock) {
+        if (StringUtils.isNotBlank(instock.getUpUserName())) {
+            return instock.getUpUserName();
+        }
+        if (StringUtils.isNotBlank(instock.getCreateUserName())) {
+            return instock.getCreateUserName();
+        }
+        return null;
     }
 
     /**
      * 按 SKU 汇总每个 sku 的实际签收数量，写入 {@link PlatformInboundDTO#setItems(List)}。
      */
-    private void groupBySku(PlatformInboundDTO dto) {
-        if (CollUtil.isEmpty(dto.getReceivingDataList())) {
+    private void groupBySku(PlatformInboundDTO dto, List<Receiving> receivingDataList) {
+        if (CollUtil.isEmpty(receivingDataList)) {
+            dto.setItems(new ArrayList<>());
             return;
         }
-        Map<String, Integer> receivedQuantityMap = dto.getReceivingDataList().stream()
-                .collect(Collectors.groupingBy(Receiving::getProductSku, Collectors.summingInt(Receiving::getReceiveQty)));
+        Map<String, Integer> receivedQuantityMap = receivingDataList.stream()
+                .filter(r -> StringUtils.isNotBlank(r.getProductSku()))
+                .collect(Collectors.groupingBy(
+                        Receiving::getProductSku,
+                        Collectors.summingInt(r -> r.getReceiveQty() == null ? 0 : r.getReceiveQty())));
         List<PlatformInboundDTO.Item> items = receivedQuantityMap.entrySet().stream()
                 .map(entry -> new PlatformInboundDTO.Item(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
@@ -159,33 +293,51 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     }
 
     /**
-     * 入库单状态映射，等 WEGO 状态枚举确定后按实际取值调整。
+     * 入库单状态映射：以订单状态为主，兼容存在已上架批次的过渡状态。
      */
-    private String convertStatus(Integer status, JSONArray skuArray) {
-        if (status == null) {
+    private String convertStatus(Integer inorderStatus, List<WegoInboundResp.InstockDTO> instockList) {
+        if (inorderStatus == null) {
             return OverseasInstockStatusEnum.TO_BE_SIGNED.getCode();
         }
-        if (status == 4) {
+        if (inorderStatus == INORDER_STATUS_FINISHED) {
             return OverseasInstockStatusEnum.SIGNED.getCode();
         }
-        if (status == 3 && CollUtil.isNotEmpty(skuArray) && hasAnyPutaway(skuArray)) {
+        if (inorderStatus == INORDER_STATUS_PUTAWAY && hasAnyInstockDone(instockList)) {
             return OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode();
         }
-        if (status == 0) {
+        if (inorderStatus == INORDER_STATUS_TO_SHIP) {
             return OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode();
         }
         return OverseasInstockStatusEnum.TO_BE_SIGNED.getCode();
     }
 
-    private boolean hasAnyPutaway(JSONArray skuArray) {
-        for (Object obj : skuArray) {
-            JSONObject sku = (JSONObject) obj;
-            Integer putawayCount = sku.getInteger("putawayCount");
-            if (putawayCount != null && putawayCount > 0) {
+    /**
+     * 是否存在任何一条已上架的批次（{@link WegoInboundResp.InstockDTO#getStatus()} == 2）。
+     */
+    private boolean hasAnyInstockDone(List<WegoInboundResp.InstockDTO> instockList) {
+        if (CollUtil.isEmpty(instockList)) {
+            return false;
+        }
+        for (WegoInboundResp.InstockDTO instock : instockList) {
+            if (instock == null || Boolean.TRUE.equals(instock.getDeletedFlag())) {
+                continue;
+            }
+            if (instock.getStatus() != null && instock.getStatus() == INSTOCK_STATUS_DONE) {
                 return true;
             }
         }
         return false;
+    }
+
+    private int parseInt(String text) {
+        if (StringUtils.isBlank(text)) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(text.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     @Override
