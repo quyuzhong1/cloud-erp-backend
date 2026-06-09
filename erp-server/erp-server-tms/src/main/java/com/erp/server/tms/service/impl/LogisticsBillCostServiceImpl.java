@@ -1438,21 +1438,25 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             List<String> errorMsgList = new ArrayList<>();
             List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
-            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
-                if (CollUtil.isNotEmpty(logisticsBillVoList)) {
-                    errorMsgList.add("单号已存在无法新增，请核查单号");
-                }
-                if (CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo())) {
-                    errorMsgList.add("物流单号不能为空");
-                }
-                if (CharSequenceUtil.isBlank(billCostExcelDTO.getLogisticsSupplierName())) {
-                    errorMsgList.add("物流商不能为空");
-                }
-            } else {
-                if (CollUtil.isEmpty(logisticsBillVoList)) {
-                    errorMsgList.add("未找到对应物流单");
-                }
+            /*
+             * IMPORT_ADD_NEW 已下线，原按新单校验如下。
+             * 原因：按新单会新建物流单/费用单，自发货标准导入无法可靠区分自发货与尾程归属。
+             */
+            // if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
+            //     if (CollUtil.isNotEmpty(logisticsBillVoList)) {
+            //         errorMsgList.add("单号已存在无法新增，请核查单号");
+            //     }
+            //     if (CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo())) {
+            //         errorMsgList.add("物流单号不能为空");
+            //     }
+            //     if (CharSequenceUtil.isBlank(billCostExcelDTO.getLogisticsSupplierName())) {
+            //         errorMsgList.add("物流商不能为空");
+            //     }
+            // } else {
+            if (CollUtil.isEmpty(logisticsBillVoList)) {
+                errorMsgList.add("未找到对应物流单");
             }
+            // }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 value.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                 errorList.addAll(value);

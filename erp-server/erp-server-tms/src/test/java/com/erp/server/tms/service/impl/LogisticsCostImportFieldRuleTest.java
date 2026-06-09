@@ -4,6 +4,10 @@ import cn.hutool.json.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.CfgLogisticsCostImportDetailDTO;
 import com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO;
+import com.erp.model.tms.dto.ImportHistoryRecordDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
 import com.erp.model.tms.enums.CfgLogisticsCostImportEtlFillModeEnum;
@@ -16,6 +20,7 @@ import com.erp.model.tms.util.CfgLogisticsCostImportEtlRuleHelper;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -366,6 +371,94 @@ public class LogisticsCostImportFieldRuleTest {
         assertEquals("300", getPrepared(service, rowData, amount));
     }
 
+    @Test
+    public void platformCodeGroupKeyShouldUseMatchedLogisticsBillSet() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity platformCode = importDetail("platformCode", "platformCode", "平台订单号");
+        platformCode.setIsUniqueKey(true);
+        JSONObject firstRow = new JSONObject();
+        JSONObject secondRow = new JSONObject();
+        setPrepared(service, firstRow, platformCode, "6200001");
+        setPrepared(service, secondRow, platformCode, "6200002");
+        ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult = new ImportHistoryRecordDTO.PreQueryResultDTO(
+                Collections.singletonList(billVo("B1", "D1", "6200001,6200002", null, null)),
+                Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
+
+        String firstGroupKey = (String) invokePrivate(service, "buildImportRowGroupKey",
+                new Class[]{JSONObject.class, List.class, ImportHistoryRecordDTO.PreQueryResultDTO.class, CfgLogisticsCostImportEntity.class},
+                firstRow, Collections.singletonList(platformCode), preQueryResult, new CfgLogisticsCostImportEntity());
+        String secondGroupKey = (String) invokePrivate(service, "buildImportRowGroupKey",
+                new Class[]{JSONObject.class, List.class, ImportHistoryRecordDTO.PreQueryResultDTO.class, CfgLogisticsCostImportEntity.class},
+                secondRow, Collections.singletonList(platformCode), preQueryResult, new CfgLogisticsCostImportEntity());
+
+        assertEquals(firstGroupKey, secondGroupKey);
+        assertTrue(firstGroupKey.contains("D1"));
+    }
+
+    @Test
+    public void nonPlatformGroupShouldResolveMultipleBillsForAllocation() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportDetailEntity trackNo = importDetail("trackNo", "trackNo", "物流单号");
+        trackNo.setIsUniqueKey(true);
+        JSONObject firstRow = new JSONObject();
+        JSONObject secondRow = new JSONObject();
+        setPrepared(service, firstRow, trackNo, "TN001");
+        setPrepared(service, secondRow, trackNo, "TN001");
+        ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult = new ImportHistoryRecordDTO.PreQueryResultDTO(
+                Arrays.asList(
+                        billVo("B1", "D1", null, "TN001", null),
+                        billVo("B2", "D2", null, "TN001", null)
+                ),
+                Collections.emptyMap(), Collections.emptyList(), Collections.emptyList());
+        List<String> errorMsgList = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        List<LogisticsBillDTO.LogisticsBillVo> matchedList = (List<LogisticsBillDTO.LogisticsBillVo>) invokePrivate(service,
+                "resolveGroupMatchedLogisticsBillVoList",
+                new Class[]{List.class, List.class, ImportHistoryRecordDTO.PreQueryResultDTO.class, CfgLogisticsCostImportEntity.class, List.class},
+                Collections.singletonList(trackNo), Arrays.asList(firstRow, secondRow), preQueryResult, new CfgLogisticsCostImportEntity(), errorMsgList);
+
+        assertTrue(errorMsgList.isEmpty());
+        assertEquals(2, matchedList.size());
+    }
+
+    @Test
+    public void mergeTmsCostDetailShouldSumSameCurrencyOnly() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+
+        @SuppressWarnings("unchecked")
+        List<TmsCostDetailDTO.UpdateDTO> mergeList = (List<TmsCostDetailDTO.UpdateDTO>) invokePrivate(service, "mergeTmsCostDetail",
+                new Class[]{List.class},
+                Arrays.asList(costDetail("C1", "actual", "USD", "1.25"),
+                        costDetail("C1", "actual", "USD", "2.75"),
+                        costDetail("C1", "actual", "CNY", "5")));
+
+        assertEquals(2, mergeList.size());
+        assertBigDecimalEquals(new BigDecimal("4.00"), findCostValue(mergeList, "USD"));
+        assertBigDecimalEquals(new BigDecimal("5"), findCostValue(mergeList, "CNY"));
+    }
+
+    @Test
+    public void allocateCostDetailMapShouldSplitByOrderWeight() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        Map<String, BigDecimal> weightMap = new HashMap<>();
+        weightMap.put("D1", new BigDecimal("1"));
+        weightMap.put("D2", new BigDecimal("3"));
+        List<String> errorMsgList = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocateMap = (Map<String, List<TmsCostDetailDTO.UpdateDTO>>) invokePrivate(service,
+                "allocateCostDetailMap",
+                new Class[]{List.class, List.class, Map.class, List.class},
+                Collections.singletonList(costDetail("C1", "actual", "CNY", "100")),
+                Arrays.asList(billVo("B1", "D1", null, null, null), billVo("B2", "D2", null, null, null)),
+                weightMap, errorMsgList);
+
+        assertTrue(errorMsgList.isEmpty());
+        assertBigDecimalEquals(new BigDecimal("25"), allocateMap.get("D1").get(0).getCostValue());
+        assertBigDecimalEquals(new BigDecimal("75"), allocateMap.get("D2").get(0).getCostValue());
+    }
+
     /**
      * 调用默认值校验私有方法。
      *
@@ -552,6 +645,37 @@ public class LogisticsCostImportFieldRuleTest {
         CfgLogisticsCostImportDetailEntity detail = importDetail("clean", "amount", "金额");
         detail.setEtlRuleList(Arrays.asList(rules));
         return detail;
+    }
+
+    private LogisticsBillDTO.LogisticsBillVo billVo(String id, String detailId, String platformCode, String trackNo, String sourceCode) {
+        LogisticsBillDTO.LogisticsBillVo billVo = new LogisticsBillDTO.LogisticsBillVo();
+        billVo.setId(id);
+        billVo.setDetailId(detailId);
+        billVo.setPlatformCode(platformCode);
+        billVo.setTrackNo(trackNo);
+        billVo.setSourceCode(sourceCode);
+        return billVo;
+    }
+
+    private TmsCostDetailDTO.UpdateDTO costDetail(String cfgCostId, String type, String currency, String costValue) {
+        TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+        updateDTO.setCfgCostId(cfgCostId);
+        updateDTO.setType(type);
+        updateDTO.setCurrency(currency);
+        updateDTO.setCostValue(new BigDecimal(costValue));
+        return updateDTO;
+    }
+
+    private BigDecimal findCostValue(List<TmsCostDetailDTO.UpdateDTO> mergeList, String currency) {
+        return mergeList.stream()
+                .filter(updateDTO -> currency.equals(updateDTO.getCurrency()))
+                .map(TmsCostDetailDTO.UpdateDTO::getCostValue)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
+    }
+
+    private void assertBigDecimalEquals(BigDecimal expected, BigDecimal actual) {
+        assertEquals(0, expected.compareTo(actual));
     }
 
     /**

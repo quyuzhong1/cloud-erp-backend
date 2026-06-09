@@ -514,6 +514,111 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .collect(Collectors.joining("_"));
     }
 
+    /**
+     * 构建模板导入分组键。
+     * <p>普通识别字段按 Excel 识别单号分组；platformCode 允许一个物流单保存多个平台单号，
+     * 因此按匹配到的物流单集合分组，避免多个平台单号分多组后覆盖同一物流费用单。</p>
+     */
+    private String buildImportRowGroupKey(JSONObject row,
+                                          List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                          ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
+                                          CfgLogisticsCostImportEntity costImportEntity) {
+        String uniqueGroupKey = buildImportUniqueGroupKey(row, uniqueKeyList);
+        if (!containsPlatformCodeUniqueKey(uniqueKeyList)) {
+            return uniqueGroupKey;
+        }
+        List<LogisticsBillDTO.LogisticsBillVo> matchedBillList = resolveMatchedLogisticsBillVoList(uniqueKeyList, row,
+                preQueryResult.getLogisticsBillVoList(), costImportEntity);
+        if (CollUtil.isEmpty(matchedBillList)) {
+            return uniqueGroupKey;
+        }
+        return "billSet:" + buildMatchedBillSetKey(matchedBillList);
+    }
+
+    /**
+     * 判断识别单号是否包含 platformCode。
+     * <p>platformCode 与其他字段不同，数据库侧可能以逗号存储多个平台订单号，需要单独处理多对一分组。</p>
+     */
+    private boolean containsPlatformCodeUniqueKey(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList) {
+        return uniqueKeyList.stream().anyMatch(uniqueKey -> CharSequenceUtil.equals(PLATFORM_CODE_FIELD, uniqueKey.getTargetField()));
+    }
+
+    /**
+     * 按识别单号和模板适用范围解析当前行可写入的物流单。
+     * <p>该方法集中复用唯一键匹配和模板范围过滤，保证分组阶段与落库阶段使用同一套匹配规则。</p>
+     */
+    private List<LogisticsBillDTO.LogisticsBillVo> resolveMatchedLogisticsBillVoList(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                                                     JSONObject successJson,
+                                                                                     List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos,
+                                                                                     CfgLogisticsCostImportEntity costImportEntity) {
+        if (CollUtil.isEmpty(logisticsBillVos)) {
+            return Collections.emptyList();
+        }
+        return distinctLogisticsBillVoList(logisticsBillVos.stream()
+                .filter(obj -> matchesUniqueKey(uniqueKeyList, successJson, obj))
+                .filter(obj -> matchesCostImportConfig(costImportEntity, obj))
+                .collect(Collectors.toList()));
+    }
+
+    /**
+     * 解析同一导入分组命中的物流单集合。
+     * <p>同一组内费用会被合计后统一处理，因此每行命中的物流单集合必须一致；不一致时直接报错，避免错误合并费用。</p>
+     */
+    private List<LogisticsBillDTO.LogisticsBillVo> resolveGroupMatchedLogisticsBillVoList(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
+                                                                                          List<JSONObject> rowList,
+                                                                                          ImportHistoryRecordDTO.PreQueryResultDTO preQueryResult,
+                                                                                          CfgLogisticsCostImportEntity costImportEntity,
+                                                                                          List<String> errorMsgList) {
+        if (CollUtil.isEmpty(rowList)) {
+            return Collections.emptyList();
+        }
+        List<LogisticsBillDTO.LogisticsBillVo> firstMatchedList = resolveMatchedLogisticsBillVoList(uniqueKeyList, rowList.get(0),
+                preQueryResult.getLogisticsBillVoList(), costImportEntity);
+        String firstBillSetKey = buildMatchedBillSetKey(firstMatchedList);
+        for (int i = 1; i < rowList.size(); i++) {
+            List<LogisticsBillDTO.LogisticsBillVo> currentMatchedList = resolveMatchedLogisticsBillVoList(uniqueKeyList, rowList.get(i),
+                    preQueryResult.getLogisticsBillVoList(), costImportEntity);
+            if (!CharSequenceUtil.equals(firstBillSetKey, buildMatchedBillSetKey(currentMatchedList))) {
+                errorMsgList.add("同一识别单号分组命中的物流单不一致，无法合并分摊费用");
+                return Collections.emptyList();
+            }
+        }
+        return firstMatchedList;
+    }
+
+    /**
+     * 构建物流单集合比较键。
+     * <p>同一个识别分组命中的物流单顺序不影响业务含义，排序后比较可避免预查询返回顺序导致误判。</p>
+     */
+    private String buildMatchedBillSetKey(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList) {
+        if (CollUtil.isEmpty(logisticsBillVoList)) {
+            return "";
+        }
+        return logisticsBillVoList.stream()
+                .map(logisticsBillVo -> CharSequenceUtil.blankToDefault(logisticsBillVo.getDetailId(), logisticsBillVo.getId()))
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .sorted()
+                .collect(Collectors.joining(","));
+    }
+
+    /**
+     * 按物流单明细去重，避免预查询 join 出重复明细时重复分摊费用。
+     */
+    private List<LogisticsBillDTO.LogisticsBillVo> distinctLogisticsBillVoList(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList) {
+        if (CollUtil.isEmpty(logisticsBillVoList)) {
+            return Collections.emptyList();
+        }
+        LinkedHashMap<String, LogisticsBillDTO.LogisticsBillVo> billMap = new LinkedHashMap<>();
+        for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
+            String key = CharSequenceUtil.blankToDefault(logisticsBillVo.getDetailId(), logisticsBillVo.getId());
+            if (CharSequenceUtil.isNotBlank(key)) {
+                billMap.putIfAbsent(key, logisticsBillVo);
+            }
+        }
+        return new ArrayList<>(billMap.values());
+    }
+
     // 纵向费用项处理（多线程）
     private List<LogisticsBillCostDTO.ImportDataDTO> processVerticalCostItems(
             List<CfgLogisticsCostImportDetailEntity> uniqueKeyList,
@@ -527,8 +632,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             Map<Integer, String> headMap,
             Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
         List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
+        // 分组阶段先确定哪些 Excel 行应合并：普通识别号按识别值，platformCode 按命中的物流单集合，避免多平台单号覆盖同一费用单。
         Map<String, List<JSONObject>> map = successList.stream()
-                .collect(Collectors.groupingBy(obj -> buildImportUniqueGroupKey(obj, uniqueKeyList)));
+                .collect(Collectors.groupingBy(obj -> buildImportRowGroupKey(obj, uniqueKeyList, preQueryResult, costImportEntity), LinkedHashMap::new, Collectors.toList()));
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
         List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
@@ -563,8 +669,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     }
                     List<String> mainErrorMsgList = new ArrayList<>();
                     try {
+                        // 同一识别分组会先汇总费用，再把固定的物流单集合传入 handleImportData，由既有重量分摊逻辑处理一对多/多对多。
+                        List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVoList = resolveGroupMatchedLogisticsBillVoList(uniqueKeyList,
+                                costSuccessList, preQueryResult, costImportEntity, mainErrorMsgList);
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
-                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getMainIdListMap());
+                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList,
+                                preQueryResult.getMainIdListMap(), matchedLogisticsBillVoList);
                         if (importDataDTO != null) {
                             importDataList.add(importDataDTO);
                         }
@@ -600,8 +710,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             Map<Integer, String> headMap,
             Map<String, String> currencyLookupMap,Map<String, BigDecimal> currencyRateMap) {
         List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
+        // 分组阶段先确定哪些 Excel 行应合并：普通识别号按识别值，platformCode 按命中的物流单集合，避免多平台单号覆盖同一费用单。
         Map<String, List<JSONObject>> map = successList.stream()
-                .collect(Collectors.groupingBy(obj -> buildImportUniqueGroupKey(obj, uniqueKeyList)));
+                .collect(Collectors.groupingBy(obj -> buildImportRowGroupKey(obj, uniqueKeyList, preQueryResult, costImportEntity), LinkedHashMap::new, Collectors.toList()));
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
         List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
@@ -634,8 +745,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     }
                     List<String> mainErrorMsgList = new ArrayList<>();
                     try {
+                        // 同一识别分组会先汇总费用，再把固定的物流单集合传入 handleImportData，由既有重量分摊逻辑处理一对多/多对多。
+                        List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVoList = resolveGroupMatchedLogisticsBillVoList(uniqueKeyList,
+                                costSuccessList, preQueryResult, costImportEntity, mainErrorMsgList);
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
-                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList, preQueryResult.getMainIdListMap());
+                                preQueryResult.getLogisticsBillVoList(), preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList,
+                                preQueryResult.getMainIdListMap(), matchedLogisticsBillVoList);
                         if (importDataDTO != null) {
                             importDataList.add(importDataDTO);
                         }
@@ -799,7 +914,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 合并相同费用项的费用
+     * 合并相同费用项、费用类型和币种的费用。
+     * <p>同一识别分组可能来自多行 Excel，先在这里汇总费用，再由后续逻辑按物流单重量分摊。</p>
      * @author will
      * @date 2026/2/11 17:00
      * @param updateList
@@ -810,7 +926,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             return Collections.emptyList();
         }
         List<TmsCostDetailDTO.UpdateDTO>  mergeList = new ArrayList<>();
-        Map<String, List<TmsCostDetailDTO.UpdateDTO>> map = updateList.stream().collect(Collectors.groupingBy(obj -> obj.getCfgCostId() + "_" + obj.getType()));
+        Map<String, List<TmsCostDetailDTO.UpdateDTO>> map = updateList.stream()
+                .collect(Collectors.groupingBy(obj -> obj.getCfgCostId() + "_" + obj.getType() + "_" + CharSequenceUtil.blankToDefault(obj.getCurrency(), "")));
         for (Map.Entry<String, List<TmsCostDetailDTO.UpdateDTO>> entry :  map.entrySet()) {
             TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
             List<TmsCostDetailDTO.UpdateDTO> value = entry.getValue();
@@ -1133,9 +1250,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * @param errorMsgList
      * @return void
      */
+    /**
+     * 按已解析的物流单集合生成导入数据。
+     * <p>matchedLogisticsBillVos 由分组阶段传入，用于固定一对多/多对多分摊范围；为空时沿用原来的行内匹配逻辑。</p>
+     */
     private LogisticsBillCostDTO.ImportDataDTO handleImportData(List<CfgLogisticsCostImportDetailEntity> uniqueKeyList , JSONObject successJson, List<TmsCostDetailDTO.UpdateDTO> updateList, List<LogisticsBillCostEntity> logisticsBillCostList,
                                                                 List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos, List<TmsCfgCostEntity> cfgCostList, ImportHistoryRecordDTO.ImportSyncDTO importDTO,
-                                                                CfgLogisticsCostImportEntity costImportEntity, List<String> errorMsgList, Map<String, List<TmsCostDetailEntity>> mainIdListMap) {
+                                                                CfgLogisticsCostImportEntity costImportEntity, List<String> errorMsgList, Map<String, List<TmsCostDetailEntity>> mainIdListMap,
+                                                                List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVos) {
 
         ImportHistoryRecordExcelDTO excelDTO = BeanUtil.toBean(successJson, ImportHistoryRecordExcelDTO.class);
 
@@ -1165,13 +1287,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             errorMsgList.add("识别号对应字段不能为空：" + String.join("、", emptyUniqueKeyFieldList));
             return importDataDTO;
         }
-        // 仅按唯一键匹配会在多配置模板/多平台共用单号时命中过宽，落库前按配置范围再次收窄。
-        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = logisticsBillVos.stream()
-                .filter(obj -> matchesUniqueKey(uniqueKeyList, successJson, obj))
-                .filter(obj -> matchesCostImportConfig(costImportEntity, obj))
-                .collect(Collectors.toList());
+        // 分组阶段已解析过物流单集合时优先使用该结果，避免 platformCode 多行合并后被最后一行平台单号重新缩窄匹配范围。
+        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = ObjectUtil.isNotNull(matchedLogisticsBillVos)
+                ? matchedLogisticsBillVos
+                : resolveMatchedLogisticsBillVoList(uniqueKeyList, successJson, logisticsBillVos, costImportEntity);
 
-        // import_add_new 暂不在此处理：按新单无法区分自发货/尾程归属，且费用配置入口已禁用该类型；未匹配到物流单直接报错。
+        // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，且配置入口已禁用；未匹配到物流单直接报错（原 getAddImportLogisticBill 分支已注释）。
         if (CollUtil.isEmpty(logisticsBillVoList)) {
             errorMsgList.add("未找到对应物流单");
         }
@@ -1187,7 +1308,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isNotEmpty(logisticsBillVoList)) {
             Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = Collections.emptyMap();
             if (logisticsBillVoList.size() > 1) {
-                // 同一导入行对应多张物流单时，按上游出库重量拆分费用，避免要求用户人工拆成多行。
+                // 同一识别分组对应多张物流单时，按上游出库重量拆分已汇总费用，避免要求用户人工拆成多行。
                 Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList);
                 if (CollectionUtils.isEmpty(errorMsgList)) {
                     allocatedCostMap = allocateCostDetailMap(updateList, logisticsBillVoList, weightMap, errorMsgList);
@@ -1204,7 +1325,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             String lastBillCostType = "";
             for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
                 logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
-                // 单物流单沿用原导入费用，多物流单使用已按重量分摊后的费用项。
+                // 单物流单沿用已汇总费用，多物流单使用按重量分摊后的费用项。
                 List<TmsCostDetailDTO.UpdateDTO> currentUpdateList = logisticsBillVoList.size() > 1
                         ? allocatedCostMap.getOrDefault(logisticsBillVo.getDetailId(), Collections.emptyList())
                         : updateList;
@@ -1214,7 +1335,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     return importDataDTO;
                 }
                 if (CharSequenceUtil.isNotBlank(lastImportType) && !CharSequenceUtil.equals(lastImportType, thisImportType)) {
-                    errorMsgList.add("同一导入行匹配到的多张物流单导入类型不一致，无法合并处理");
+                    errorMsgList.add("同一识别单号分组匹配到的多张物流单导入类型不一致，无法合并处理");
                     return importDataDTO;
                 }
                 lastImportType = thisImportType;
@@ -1224,7 +1345,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     return importDataDTO;
                 }
                 if (CharSequenceUtil.isNotBlank(lastBillCostType) && !CharSequenceUtil.equals(lastBillCostType, logisticsBillCostEntity.getType())) {
-                    errorMsgList.add("同一导入行匹配到的多张物流单费用类型不一致，无法合并处理");
+                    errorMsgList.add("同一识别单号分组匹配到的多张物流单费用类型不一致，无法合并处理");
                     return importDataDTO;
                 }
                 lastBillCostType = logisticsBillCostEntity.getType();
@@ -1616,11 +1737,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 按新单（import_add_new）格式化待新增的物流单与明细。
-     * 方法保留供后续若恢复按新单导入时复用；handleImportData 已移除对应分支，因混合 selfDeliver/尾程 同文件导入时无法判定新单归属。
-     * @author will
-     * @date 2026/1/22 20:04
+     * IMPORT_ADD_NEW 已下线，原按新单（import_add_new）格式化待新增物流单逻辑保留注释供恢复参考。
+     * 原因：模板导入同一文件可能混合自发货/尾程，按新单无法可靠判定费用归属；handleImportData 已移除对应分支。
      */
+    /*
     private void getAddImportLogisticBill (LogisticsBillCostDTO.ImportDataDTO importDataDTO,ImportHistoryRecordExcelDTO excelDTO,String costAttribution) {
         //新增物流单，格式化物流费用
         LogisticsBillEntity addBillEntity = new LogisticsBillEntity();
@@ -1692,6 +1812,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         importDataDTO.setLogisticsBillEntity(addBillEntity);
         importDataDTO.setLogisticsBillDetailList(Collections.singletonList(addBillDetailEntity));
     }
+    */
 
     /**
      * 数据处理
@@ -1854,7 +1975,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 importType = CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode();
             }
         }else {
-            //
+            //付款类型不一致的情况下走IMPORT_ADD_OLD的逻辑
             logisticsBillCostEntityList = logisticsBillCostList.stream()
                     .filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                             && CharSequenceUtil.equals(logisticsBillVo.getTrackNo(),obj.getTrackNo())
@@ -1885,6 +2006,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add("出库单和运输单号对应对账类型的物流费用单无可更新的数据，请核查");
                 }
             } else {
+                //只需要对Excel相同payType进行校验
+                logisticsBillCostEntityList = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType())).collect(Collectors.toList());
+
                 //新增时判断是否已存在相同对账月份
                 long hasCount = logisticsBillCostEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReconciliationMonth(), logisticsBillVo.getReconciliationMonth())).count();
                 if (hasCount > 0) {
@@ -1907,11 +2031,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add("暂估确认物流费用单已下推费用分摊，不支持更新");
                 }
             } else{
-                if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
-                    errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
-                }
-                if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
-                    errorMsgList.add("已存在未确认的物流费用单，不支持新增");
+                //只需要对Excel相同payType进行校验
+                if(CharSequenceUtil.equals(excelDTO.getPayType(),logisticsBillCostEntity.getPayType())){
+                    if (CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(),logisticsBillCostEntity.getReconciliationMonth())) {
+                        errorMsgList.add("已存在相同对账月份的物流费用单，不支持新增");
+                    }
+                    if (!CharSequenceUtil.equals(logisticsBillVo.getReconciliationMonth(), logisticsBillCostEntity.getReconciliationMonth()) && CharSequenceUtil.equals(logisticsBillCostEntity.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())) {
+                        errorMsgList.add("已存在未确认的物流费用单，不支持新增");
+                    }
                 }
             }
         }

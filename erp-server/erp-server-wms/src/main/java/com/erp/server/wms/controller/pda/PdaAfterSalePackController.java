@@ -144,7 +144,7 @@ public class PdaAfterSalePackController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:afterSalePack:paging",
-            tableAlias = ""
+            tableAlias = "t"
     )
     @WebAdvanceQuery(handler = AfterSalePackQueryHandler.class)
     public ApiResult<PagingVO<AfterSalePackDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<AfterSalePackDTO.PagingParamDTO> dto) {

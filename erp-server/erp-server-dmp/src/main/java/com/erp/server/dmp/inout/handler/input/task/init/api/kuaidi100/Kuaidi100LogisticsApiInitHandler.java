@@ -21,6 +21,7 @@ import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefDetailEntity;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
@@ -58,13 +59,10 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
 
     @Resource
     private Kuaidi100Service kuaidi100Service;
-
-    @Resource
-    private ForeignService foreignService;
-    @Resource
-    private LogisticsFeign logisticsFeign;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private LogisticsBillFeign logisticsBillFeign;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -93,7 +91,7 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                 .build();
 
         // 3. 执行单号查询（原始结果，未做渠道过滤）
-        List<LogisticsTrackDTO.UpdateTrackDTO> rawList = foreignService.listWaitingRegisterByConfig(query, query.getTrackQueryMode());
+        List<LogisticsTrackDTO.UpdateTrackDTO> rawList = logisticsBillFeign.listRegisterByConfig(query, query.getTrackQueryMode());
         if (CollUtil.isEmpty(rawList)) {
             return Collections.emptyList();
         }
