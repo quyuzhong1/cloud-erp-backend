@@ -4,7 +4,6 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
@@ -983,18 +982,5 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
             this.skuNo = skuNo;
             this.qty = qty;
         }
-    }
-
-    /**
-     * 分货单提交前准备数据
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SubmitPrepareDTO {
-        private List<VirtualWarehouseAllocationDetailEntity> detailEntityList;
-        private List<TransferWarehouseDTO> transferWarehouseList;
-        private Map<String, String> warehouseMap;
-        private String statusCode;
     }
 }
