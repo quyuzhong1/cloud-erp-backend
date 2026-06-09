@@ -1370,7 +1370,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     /**
-     * 主账号授权新建子店铺后置：建客户、复制主店用户权限；失败不回滚店铺授权
+     * 主账号授权新建子店铺后置：建客户、复制主店用户权限。
+     * 在 shop_info / shop_auth 已落库后执行，失败不回滚授权；客户与 sys 权限为尽力而为，允许局部不一致。
      */
     private void afterShopeeChildShopCreated(String childShopId, String mainShopId) {
         try {
@@ -1378,30 +1379,51 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (Objects.isNull(childShop) || StringUtils.isNotBlank(childShop.getCustomerId())) {
                 return;
             }
-            this.saveCustom(childShop);
+            CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(childShopId);
+            if (Objects.nonNull(customerInfoEntity)) {
+                ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+                if (Objects.isNull(approveStatus)
+                        || Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus())
+                        || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
+                    customerInfoService.submit(Collections.singletonList(customerInfoEntity.getId()), false);
+                }
+            }
         } catch (Exception e) {
-            log.warn("虾皮子店铺创建客户失败, childShopId={}, mainShopId={}", childShopId, mainShopId, e);
+            log.error("虾皮子店铺创建客户失败, childShopId={}, mainShopId={}", childShopId, mainShopId, e);
         }
-        try {
-            copyMainShopUserAuth(mainShopId, childShopId);
-        } catch (Exception e) {
-            log.warn("虾皮子店铺复制用户权限失败, childShopId={}, mainShopId={}", childShopId, mainShopId, e);
-        }
+        copyMainShopUserAuth(mainShopId, childShopId);
     }
 
     private void copyMainShopUserAuth(String mainShopId, String childShopId) {
         if (StringUtils.isAnyBlank(mainShopId, childShopId)) {
             return;
         }
-        List<String> userIds = authDataFeign.listUserIdByShopIdList(Collections.singletonList(mainShopId));
+        List<String> userIds;
+        try {
+            userIds = authDataFeign.listUserIdByShopIdList(Collections.singletonList(mainShopId));
+        } catch (Exception e) {
+            log.error("虾皮子店铺查询主店用户权限失败, childShopId={}, mainShopId={}", childShopId, mainShopId, e);
+            return;
+        }
         if (CollectionUtils.isEmpty(userIds)) {
             return;
         }
+        List<String> failedUserIds = new ArrayList<>();
         for (String userId : userIds) {
-            AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
-            addUserShopAuthDTO.setUserId(userId);
-            addUserShopAuthDTO.setShopIdList(Collections.singletonList(childShopId));
-            authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+            try {
+                AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+                addUserShopAuthDTO.setUserId(userId);
+                addUserShopAuthDTO.setShopIdList(Collections.singletonList(childShopId));
+                authDataFeign.addUserShopAuth(addUserShopAuthDTO);
+            } catch (Exception e) {
+                failedUserIds.add(userId);
+                log.error("虾皮子店铺复制单个用户权限失败, childShopId={}, mainShopId={}, userId={}",
+                        childShopId, mainShopId, userId, e);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(failedUserIds)) {
+            log.error("虾皮子店铺复制用户权限部分失败, childShopId={}, mainShopId={}, failedUserIds={}",
+                    childShopId, mainShopId, failedUserIds);
         }
     }
 
@@ -1533,6 +1555,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         LocalDateTime tokenExpireTime = localDateTime.minusMinutes(30);
         shopAuth.setTokenExpireTime(tokenExpireTime);
         shopAuthService.saveOrUpdate(shopAuth);
+        // 子店客户/权限后置处理：授权数据已提交，跨服务写失败不回滚（见 afterShopeeChildShopCreated）
         if (isNewShop && Objects.nonNull(mainShop)) {
             afterShopeeChildShopCreated(shopId, mainShop.getId());
         }
