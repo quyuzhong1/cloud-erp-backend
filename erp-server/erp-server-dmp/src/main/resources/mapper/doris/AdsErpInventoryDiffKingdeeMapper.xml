@@ -66,7 +66,7 @@
         update_user_id,
         version,
         is_deleted,
-        unique_code, data_encrypt, source_system, account_code, next_level_id, bill_topic, flow_id, etl_status, node_id, instance_id, task_id, source_id, last_update_flag, check_month, warehouse_id, warehouse_code, warehouse_name, sku_id, sku_no, product_name, closing_qty, intransit_qty, kingdee_warehouse_id, kingdee_warehouse_code, kingdee_warehouse_name, kingdee_warehouse_location, kingdee_warehouse_location_name, kingdee_sku_id, kingdee_sku_no, kingdee_product_name, kingdee_owner, kingdee_closing_qty, kingdee_outstock_qty, kingdee_instock_qty, kingdee_closing_intransit_qty, kingdee_outstock_intransit_qty, kingdee_instock_intransit_qty, diff_closing_intransit_qty, diff_closing_qty, remark
+        unique_code, data_encrypt, source_system,check_platform,check_platform_name, account_code, next_level_id, bill_topic, flow_id, etl_status, node_id, instance_id, task_id, source_id, last_update_flag, check_month, warehouse_id, warehouse_code, warehouse_name, sku_id, sku_no, product_name, closing_qty, intransit_qty, kingdee_warehouse_id, kingdee_warehouse_code, kingdee_warehouse_name, kingdee_warehouse_location, kingdee_warehouse_location_name, kingdee_sku_id, kingdee_sku_no, kingdee_product_name, kingdee_owner, kingdee_closing_qty, kingdee_outstock_qty, kingdee_instock_qty, kingdee_closing_intransit_qty, kingdee_outstock_intransit_qty, kingdee_instock_intransit_qty, diff_closing_intransit_qty, diff_closing_qty, remark
     </sql>
 
     <select id="paging" resultType="com.erp.model.dmp.dto.AdsErpInventoryDiffKingdeeDTO$ListDTO">
@@ -82,6 +82,8 @@
         aeidk.is_deleted AS isDeleted,
         aeidk.unique_code AS uniqueCode,
         aeidk.data_encrypt AS dataEncrypt,
+        aeidk.check_platform AS checkPlatform,
+        aeidk.check_platform_name AS checkPlatformName,
         aeidk.source_system AS sourceSystem,
         aeidk.account_code AS accountCode,
         aeidk.next_level_id AS nextLevelId,
