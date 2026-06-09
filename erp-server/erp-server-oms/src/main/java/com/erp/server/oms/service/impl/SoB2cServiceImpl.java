@@ -5216,10 +5216,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> channelIds = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOList = CollUtil.isNotEmpty(channelIds) ? logisticsAuthFeign.listAuthChannelView(channelIds) : Collections.emptyList();
         Map<String, String> logisticsPlatformMap = authChannelViewDTOList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getChannelId()))
                 .collect(Collectors.toMap(
-                        LogisticsSupplierDTO.AuthChannelViewDTO::getId,
+                        LogisticsSupplierDTO.AuthChannelViewDTO::getChannelId,
                         LogisticsSupplierDTO.AuthChannelViewDTO::getLogisticsPlatform,
-                        (existing, replacement) -> existing // 保留现有值，忽略重复键的值
+                        (existing, replacement) -> existing // channelId 理论唯一；重复多为授权数据异常，保留首条避免账单查询中断
                 ));
         List<LogisticsBillDTO.LogisticsBillVo> billVos = list.stream()
                 .filter(bill -> StringUtils.isNotBlank(bill.getTrackCode()))
