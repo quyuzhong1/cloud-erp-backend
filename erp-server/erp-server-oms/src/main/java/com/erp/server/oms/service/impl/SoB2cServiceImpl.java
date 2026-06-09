@@ -10098,6 +10098,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.listMergePackageBySoIds(ids);
     }
 
+    /**
+     * 平台取消后对单笔订单自动取消预报（非批量循环）；本地 SO 状态与入库预报同步分步提交，Feign 失败不回滚本地。
+     */
     @Override
     public Boolean autoCancelOrderForecast(SoB2cEntity mainEntity) {
         if (ObjectUtil.isEmpty(mainEntity) || StringUtils.isBlank(mainEntity.getId())) {
@@ -10183,9 +10186,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cService.persistAutoCancelOrderForecastLocalState(updateEntity, deleteErrorIds, addOrUpdateErrors);
         operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), latestEntity.getId(), "取消预报");
 
-        // 本地事务已提交后再同步入库预报；跨服务失败暂无补偿任务，与历史行为一致
+        // 本地已提交后同步入库预报；Feign 失败不回滚本地（保宏取消已成功），仅告警，后续可人工或任务补偿
         if (CollUtil.isNotEmpty(updateInstockForcastList)) {
-            transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
+            try {
+                transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
+            } catch (Exception e) {
+                log.error("autoCancelOrderForecast sync transfer declare status failed, soId={}, code={}",
+                        updateEntity.getId(), updateEntity.getCode(), e);
+            }
         }
         return cancelSuccess;
     }
