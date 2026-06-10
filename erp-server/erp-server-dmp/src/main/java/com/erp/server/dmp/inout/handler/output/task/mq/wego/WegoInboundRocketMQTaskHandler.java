@@ -203,8 +203,11 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
      *   <li>每条流水的 {@code defectiveProductFlag} 来自所属批次；</li>
      *   <li>{@code receiveUser} 优先取 {@code upUserName}，缺省回退 {@code createUserName}；</li>
      *   <li>{@code receiveTime} 优先取 {@code createTime} 字符串解析，缺省回退 {@code batch} 当日 00:00:00；</li>
-     *   <li>{@code thirdId}（流水ID）取 {@code inOrderDetailId + '_' + batch + '_' + sku}，
-     *       与下游基于 {@code detailId + receiveQty + receiveTime} 的去重共同保证幂等。</li>
+     *   <li>{@code thirdId}（流水ID）取
+     *       {@code inOrderDetailId + '_' + batch + '_' + createTimeRaw + '_' + sku}。
+     *       {@code createTimeRaw} 使用 wego 服务端返回的原始字符串（秒级精度），保证同一箱、同一天、
+     *       同一 SKU 但不同时间点的两次上架不会生成相同的 thirdId，与下游 wego 分支
+     *       基于 {@code flowId + authId} 的强幂等共同保证多次部分签收不丢、不重。</li>
      * </ul>
      */
     private List<Receiving> buildReceivingList(List<WegoInboundResp.InstockDTO> instockList) {
@@ -224,8 +227,10 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
             String receiveUser = resolveReceiveUser(instock);
             Boolean defectiveProductFlag = instock.getDefectiveProductFlag();
             String batch = StringUtils.defaultString(instock.getBatch());
+            String createTimeRaw = StringUtils.defaultString(instock.getCreateTime());
             String inOrderDetailIdStr = instock.getInOrderDetailId() == null
                     ? "" : instock.getInOrderDetailId().toString();
+            String thirdIdPrefix = inOrderDetailIdStr + "_" + batch + "_" + createTimeRaw + "_";
             for (WegoInboundResp.ProductDTO product : products) {
                 if (product == null || StringUtils.isBlank(product.getSku())) {
                     continue;
@@ -236,7 +241,7 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 receiving.setReceiveTime(receiveTime);
                 receiving.setReceiveUser(receiveUser);
                 receiving.setDefectiveProductFlag(defectiveProductFlag);
-                receiving.setThirdId(inOrderDetailIdStr + "_" + batch + "_" + product.getSku());
+                receiving.setThirdId(thirdIdPrefix + product.getSku());
                 receivingList.add(receiving);
             }
         }

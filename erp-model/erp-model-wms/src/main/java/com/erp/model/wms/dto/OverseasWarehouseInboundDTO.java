@@ -987,6 +987,16 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 数据来源名称
          */
         private String sourceTypeName;
+
+        /**
+         * 是否不良品
+         */
+        private Boolean defectiveProductFlag;
+
+        /**
+         * 是否不良品名称
+         */
+        private String defectiveProductFlagName;
     }
 
 

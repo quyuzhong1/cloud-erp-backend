@@ -2,6 +2,7 @@ package com.erp.server.wms.service.adapter;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.PdfUtil;
@@ -14,7 +15,6 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
@@ -77,12 +77,14 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -155,7 +157,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     public PackageForecastDTO.ShopeeCourierDeliveryOptionsDTO courierDeliveryOptions(PackageForecastDTO.ShopeeOptionParamDTO dto) {
-        ShopeeForecastContext context = buildContext(dto.getIds());
+        ShopeeForecastContext context = buildBaseContext(dto.getIds());
         BaseRequest baseRequest = buildBaseRequest(context.getShopId());
         String region = defaultRegion(dto.getRegion());
         TransitWarehouseListResponse warehouseResp = shopeeLogisticsService.getTransitWarehouseList(baseRequest, region,
@@ -172,7 +174,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     public List<PackageForecastDTO.ShopeeFirstMileChannelDTO> firstMileChannelList(PackageForecastDTO.ShopeeOptionParamDTO dto) {
-        ShopeeForecastContext context = buildContext(dto.getIds());
+        ShopeeForecastContext context = buildBaseContext(dto.getIds());
         FirstMileChannelListResponse response = shopeeLogisticsService.getFirstMileChannelList(buildBaseRequest(context.getShopId()), defaultRegion(dto.getRegion()));
         if (Objects.isNull(response) || CollectionUtils.isEmpty(response.getLogisticsChannelList())) {
             return Collections.emptyList();
@@ -184,7 +186,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     public List<PackageForecastDTO.ShopeeTrackingNumberDTO> trackingNumberList(PackageForecastDTO.ShopeeOptionParamDTO dto) {
-        ShopeeForecastContext context = buildContext(dto.getIds());
+        ShopeeForecastContext context = buildBaseContext(dto.getIds());
         LocalDate declareDate = Objects.nonNull(dto.getDeclareDate()) ? dto.getDeclareDate() : LocalDate.now();
         FirstMileTrackingNumberListRequest request = FirstMileTrackingNumberListRequest.builder()
                 .fromDate(declareDate.toString())
@@ -260,7 +262,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         }
         String shopId = entity.getShopId();
         if (StringUtils.isBlank(shopId)) {
-            ShopeeForecastContext context = buildContext(Collections.singletonList(entity.getId()));
+            ShopeeForecastContext context = buildBaseContext(Collections.singletonList(entity.getId()));
             shopId = context.getShopId();
         }
         LocalDate fromDate = Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : LocalDate.now().minusMonths(3);
@@ -480,7 +482,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         }
     }
 
-    private ShopeeForecastContext buildContext(List<String> ids) {
+    private ShopeeForecastContext buildBaseContext(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException("组包预报单不能为空");
         }
@@ -507,10 +509,19 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (shopIds.size() > 1) {
             throw new ServiceException("Shopee组包预报要求勾选订单店铺一致");
         }
-        List<SoB2cDetailEntity> soDetailList = soB2cFeign.listDetailByMainIds(soIds);
+        ShopeeForecastContext context = new ShopeeForecastContext();
+        context.setEntityList(entityList);
+        context.setDetailList(detailList);
+        context.setSoList(soList);
+        context.setShopId(shopIds.get(0));
+        return context;
+    }
+
+    private ShopeeForecastContext buildContext(List<String> ids) {
+        ShopeeForecastContext context = buildBaseContext(ids);
+        List<PackageForecastDetailEntity> detailList = context.getDetailList();
+        List<SoB2cEntity> soList = context.getSoList();
         Map<String, SoB2cEntity> soMap = soList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity(), (left, right) -> left));
-        Map<String, List<SoB2cDetailEntity>> soDetailMap = CollectionUtils.emptyIfNull(soDetailList).stream()
-                .collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
         LinkedHashMap<String, FirstMileOrder> orderMap = new LinkedHashMap<>();
         Map<String, List<String>> forecastOrderKeyMap = new HashMap<>();
         for (PackageForecastDetailEntity detail : detailList) {
@@ -518,11 +529,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
             if (Objects.isNull(so) || StringUtils.isBlank(so.getPlatformCode())) {
                 throw new ServiceException("销售订单:{}未获取Shopee平台单号", detail.getSoCode());
             }
-            String packageNumber = CollectionUtils.emptyIfNull(soDetailMap.get(so.getId())).stream()
-                    .map(SoB2cDetailEntity::getPlatformPackageId)
-                    .filter(StringUtils::isNotBlank)
-                    .findFirst()
-                    .orElseThrow(() -> new ServiceException("销售订单:{}未获取Shopee平台包裹号", detail.getSoCode()));
+            String packageNumber = getShopeePackageNumber(so).orElse(null);
             String key = orderKey(so.getPlatformCode(), packageNumber);
             orderMap.putIfAbsent(key, FirstMileOrder.builder().orderSn(so.getPlatformCode()).packageNumber(packageNumber).build());
             forecastOrderKeyMap.computeIfAbsent(detail.getMainId(), item -> new ArrayList<>()).add(key);
@@ -530,14 +537,23 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (orderMap.size() > 50) {
             throw new ServiceException("Shopee组包下单单次最多支持50个订单");
         }
-        ShopeeForecastContext context = new ShopeeForecastContext();
-        context.setEntityList(entityList);
-        context.setDetailList(detailList);
-        context.setSoList(soList);
-        context.setShopId(shopIds.get(0));
         context.setOrderList(new ArrayList<>(orderMap.values()));
         context.setForecastOrderKeyMap(forecastOrderKeyMap);
         return context;
+    }
+
+    private Optional<String> getShopeePackageNumber(SoB2cEntity so) {
+        if (Objects.isNull(so) || StringUtils.isBlank(so.getLabelJson())) {
+            return Optional.empty();
+        }
+        String packageNumber = JSONUtil.parseObj(so.getLabelJson()).getStr("package_number");
+        if (StringUtils.isBlank(packageNumber)) {
+            return Optional.empty();
+        }
+        return Arrays.stream(packageNumber.split(","))
+                .map(StringUtils::trimToEmpty)
+                .filter(StringUtils::isNotBlank)
+                .findFirst();
     }
 
     private void validateUploadEntities(ShopeeForecastContext context) {
