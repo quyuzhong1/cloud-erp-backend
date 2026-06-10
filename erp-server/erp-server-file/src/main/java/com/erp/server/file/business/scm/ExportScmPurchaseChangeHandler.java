@@ -8,7 +8,6 @@ import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_CH
 public class ExportScmPurchaseChangeHandler extends AbstractPageFileEventHandler<PurchaseChangeExportExcelDTO, PurchaseChangeDTO.SearchParamDTO> {
     @Resource
     private ExportScmFeign exportScmFeign;
-    @Override
-    protected List<PurchaseChangeExportExcelDTO> getData(FileTask fileTask) {
-        PurchaseChangeDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PurchaseChangeDTO.SearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<PurchaseChangeExportExcelDTO> getPageData(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {

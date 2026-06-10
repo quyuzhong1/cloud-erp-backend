@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -20,12 +19,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_L
 public class ExportWmsWarehouseLocationReplenishHandler extends AbstractPageFileEventHandler<WarehouseLocationReplenishDTO.ViewDTO, WarehouseLocationReplenishDTO.ExportParamDTO> {
     @Resource
     private ExportWmsFeign exportWmsFeign;
-    @Override
-    protected List<WarehouseLocationReplenishDTO.ViewDTO> getData(FileTask fileTask) {
-        WarehouseLocationReplenishDTO.ExportParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<WarehouseLocationReplenishDTO.ExportParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<WarehouseLocationReplenishDTO.ViewDTO> getPageData(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto) {

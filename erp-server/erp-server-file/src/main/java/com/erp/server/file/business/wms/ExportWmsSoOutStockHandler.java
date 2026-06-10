@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsSoOutStockHandler extends AbstractPageFileEventHandler<SoO
         return EXPORT_WMS_SO_OUT_STOCK;
     }
 
-    @Override
-    protected List<SoOutstockDTO.PagingViewDTO> getData(FileTask fileTask) {
-        SoOutstockDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoOutstockDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

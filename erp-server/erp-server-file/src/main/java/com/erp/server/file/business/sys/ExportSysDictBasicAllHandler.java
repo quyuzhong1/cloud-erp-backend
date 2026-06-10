@@ -13,7 +13,6 @@ import com.erp.model.sys.dto.DictBasicAllDTO;
 import com.erp.rpc.sys.feign.ExportSysFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,12 +32,6 @@ public class ExportSysDictBasicAllHandler extends AbstractPageFileEventHandler<D
         return FileTaskEventEnum.EXPORT_DICT_BASIC_ALL;
     }
 
-    @Override
-    protected List<DictBasicAllDTO.ViewDTO> getData(FileTask fileTask) {
-        DictBasicAllDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DictBasicAllDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<DictBasicAllDTO.ViewDTO> getPageData(PagingDTO<DictBasicAllDTO.PagingParamDTO> dto) {

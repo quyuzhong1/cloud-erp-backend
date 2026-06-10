@@ -7,7 +7,6 @@ import com.erp.model.dmp.dto.DmpCfgOutputDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
@@ -26,11 +25,6 @@ public class ExportDmpCfgOutputHandler extends AbstractPageFileEventHandler<DmpC
         return exportDmpFeign.exportDmpCfgOutput(dto);
     }
 
-    @Override
-    protected List<DmpCfgOutputDTO.ListDTO> getData(FileTask fileTask) {
-        DmpCfgOutputDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpCfgOutputDTO.ExportDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

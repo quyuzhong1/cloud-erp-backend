@@ -7,7 +7,6 @@ import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWorkfloApproveTaskHandler extends AbstractPageFileEventHandle
         return EXPORT_APPROVE_TASK;
     }
 
-    @Override
-    protected List<ApproveTaskInfoDTO.ListDTO> getData(FileTask fileTask) {
-        ApproveTaskInfoDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ApproveTaskInfoDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ApproveTaskInfoDTO.ListDTO> getPageData(PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto) {

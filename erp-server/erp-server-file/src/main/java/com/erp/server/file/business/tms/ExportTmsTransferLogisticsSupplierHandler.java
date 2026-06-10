@@ -8,7 +8,6 @@ import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,12 +32,6 @@ public class ExportTmsTransferLogisticsSupplierHandler extends AbstractPageFileE
         return EXPORT_TMS_TRANSFER_LOGISTICS_SUPPLIER;
     }
 
-    @Override
-    protected List<LogisticsSupplierDTO.PagingViewDTO> getData(FileTask fileTask) {
-        TransferLogisticsSupplierDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TransferLogisticsSupplierDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<LogisticsSupplierDTO.PagingViewDTO> getPageData(PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto) {

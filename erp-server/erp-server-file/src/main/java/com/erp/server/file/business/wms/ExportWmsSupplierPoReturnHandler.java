@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -21,12 +20,6 @@ public class ExportWmsSupplierPoReturnHandler extends AbstractPageFileEventHandl
     @Resource
     private ExportWmsFeign exportWmsFeign;
     
-    @Override
-    protected List<PurchaseReturnOrderDTO.SupplierPagingViewDTO> getData(FileTask fileTask) {
-        PurchaseReturnOrderDTO.SupplierPagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PurchaseReturnOrderDTO.SupplierPagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<PurchaseReturnOrderDTO.SupplierPagingViewDTO> getPageData(PagingDTO<PurchaseReturnOrderDTO.SupplierPagingParamDTO> dto) {

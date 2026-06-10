@@ -7,7 +7,6 @@ import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -21,12 +20,6 @@ public class ExportMrpSalesCalcListHandler extends AbstractPageFileEventHandler<
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
-    @Override
-    protected List<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> getData(FileTask fileTask) {
-        CalcSalesInfoDimDTO.ParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CalcSalesInfoDimDTO.ParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

@@ -7,7 +7,6 @@ import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.rpc.sys.feign.ExportSysFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportSysCfgThirdNoticeHandler extends AbstractPageFileEventHandler
         return EXPORT_SYS_THIRD_NOTICE;
     }
 
-    @Override
-    protected List<CfgThirdNoticeDTO.ListDTO> getData(FileTask fileTask) {
-        CfgThirdNoticeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgThirdNoticeDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<CfgThirdNoticeDTO.ListDTO> getPageData(PagingDTO<CfgThirdNoticeDTO.PagingParamDTO> dto) {

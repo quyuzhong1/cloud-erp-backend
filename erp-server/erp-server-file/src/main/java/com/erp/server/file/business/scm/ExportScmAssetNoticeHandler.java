@@ -7,7 +7,6 @@ import com.erp.model.scm.dto.AssetNoticeDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
@@ -34,12 +33,6 @@ public class ExportScmAssetNoticeHandler extends AbstractPageFileEventHandler<As
         return exportScmFeign.exportAssetNotice(dto);
     }
 
-    @Override
-    protected List<AssetNoticeDTO.ListDTO> getData(FileTask fileTask) {
-        AssetNoticeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AssetNoticeDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

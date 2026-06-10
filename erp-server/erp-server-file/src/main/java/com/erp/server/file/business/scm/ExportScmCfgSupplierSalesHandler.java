@@ -7,7 +7,6 @@ import com.erp.model.scm.dto.CfgSupplierSalesDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
@@ -30,12 +29,6 @@ public class ExportScmCfgSupplierSalesHandler extends AbstractPageFileEventHandl
         return EXPORT_SCM_CFG_SUPPLIER_SALES_REPORT;
     }
 
-    @Override
-    protected List<CfgSupplierSalesDTO.ListDTO> getData(FileTask fileTask) {
-        CfgSupplierSalesDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgSupplierSalesDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<CfgSupplierSalesDTO.ListDTO> getPageData(PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> dto) {

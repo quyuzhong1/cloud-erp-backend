@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsFbaTransitReportHandler extends AbstractPageFileEventHandl
         return EXPORT_WMS_FBA_TRANSIT_REPORT;
     }
 
-    @Override
-    protected List<FbaTransitCalculateReportDTO.ListDTO> getData(FileTask fileTask) {
-        FbaTransitCalculateReportDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FbaTransitCalculateReportDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<FbaTransitCalculateReportDTO.ListDTO> getPageData(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto) {

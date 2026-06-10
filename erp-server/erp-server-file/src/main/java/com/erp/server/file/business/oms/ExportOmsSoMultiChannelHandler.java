@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.SoMultiChannelDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +20,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SO_MULTI_CHANNE
 public class ExportOmsSoMultiChannelHandler extends AbstractPageFileEventHandler<SoMultiChannelDTO.ListDTO, SoMultiChannelDTO.PagingParamDTO> {
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<SoMultiChannelDTO.ListDTO> getData(FileTask fileTask) {
-        SoMultiChannelDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoMultiChannelDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SoMultiChannelDTO.ListDTO> getPageData(PagingDTO<SoMultiChannelDTO.PagingParamDTO> dto) {

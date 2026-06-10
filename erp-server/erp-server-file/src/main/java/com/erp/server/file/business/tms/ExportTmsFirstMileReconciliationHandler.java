@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportTmsFirstMileReconciliationHandler extends AbstractPageFileEve
         return EXPORT_TMS_TMS_FIRST_MILE_RECONCILIATION;
     }
 
-    @Override
-    protected List<TmsFirstMileReconciliationDTO.ListDTO> getData(FileTask fileTask) {
-        TmsFirstMileReconciliationDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TmsFirstMileReconciliationDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<TmsFirstMileReconciliationDTO.ListDTO> getPageData(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto) {

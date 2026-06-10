@@ -7,7 +7,6 @@ import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWorkflowProcessDelegateHandler extends AbstractPageFileEventH
         return EXPORT_PROCESS_DELEGATE;
     }
 
-    @Override
-    protected List<ProcessDelegateDTO.ListDTO> getData(FileTask fileTask) {
-        ProcessDelegateDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProcessDelegateDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ProcessDelegateDTO.ListDTO> getPageData(PagingDTO<ProcessDelegateDTO.PagingParamDTO> dto) {

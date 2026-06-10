@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsVirtualWarehouseReportHandler extends AbstractPageFileEven
         return EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT;
     }
 
-    @Override
-    protected List<VirtualWarehouseDTO.ExportDTO> getData(FileTask fileTask) {
-        VirtualWarehouseDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualWarehouseDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<VirtualWarehouseDTO.ExportDTO> getPageData(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto) {

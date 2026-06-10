@@ -8,7 +8,6 @@ import com.erp.model.wms.dto.ThirdWarehouseDeliveryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -35,11 +34,6 @@ public class ExportWmsThirdWarehouseDeliveryHandler extends AbstractPageFileEven
         return exportWmsFeign.exportThirdWarehouseDelivery(dto);
     }
 
-    @Override
-    protected List<ThirdWarehouseDeliveryDTO.PagingViewDTO> getData(FileTask fileTask) {
-        ThirdWarehouseDeliveryDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ThirdWarehouseDeliveryDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

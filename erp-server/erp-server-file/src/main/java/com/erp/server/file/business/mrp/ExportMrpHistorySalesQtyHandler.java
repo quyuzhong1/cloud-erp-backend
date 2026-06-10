@@ -8,7 +8,6 @@ import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +20,6 @@ public class ExportMrpHistorySalesQtyHandler extends AbstractDynamicHeadersFileE
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
-    @Override
-    protected DynamicExcelDTO getData(FileTask fileTask) {
-        ReplenishmentSuggestionDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ReplenishmentSuggestionDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {

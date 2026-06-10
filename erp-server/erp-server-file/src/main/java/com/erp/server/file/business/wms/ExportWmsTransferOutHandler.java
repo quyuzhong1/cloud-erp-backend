@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsTransferOutHandler extends AbstractPageFileEventHandler<Tr
         return EXPORT_WMS_TRANSFER_OUT;
     }
 
-    @Override
-    protected List<TransferOutDTO.PagingViewDTO> getData(FileTask fileTask) {
-        TransferOutDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TransferOutDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

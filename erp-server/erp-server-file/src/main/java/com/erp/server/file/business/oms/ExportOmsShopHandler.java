@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.ShopDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ public class ExportOmsShopHandler extends AbstractPageFileEventHandler<ShopDTO.P
 
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<ShopDTO.PagingViewDTO> getData(FileTask fileTask) {
-        ShopDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ShopDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ShopDTO.PagingViewDTO> getPageData(PagingDTO<ShopDTO.ExportDTO> dto) {

@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ public class ExportOmsPlatformSkuHandler extends AbstractPageFileEventHandler<Sk
 
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<SkuMappingDTO.PagingViewDTO> getData(FileTask fileTask) {
-        SkuMappingDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SkuMappingDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SkuMappingDTO.PagingViewDTO> getPageData(PagingDTO<SkuMappingDTO.ExportDTO> dto) {

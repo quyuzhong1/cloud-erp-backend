@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsSoDeliveryNoticeHandler extends AbstractPageFileEventHandl
         return EXPORT_WMS_SO_DELIVERY_NOTICE;
     }
 
-    @Override
-    protected List<SoDeliveryNoticeDTO.PagingView> getData(FileTask fileTask) {
-        SoDeliveryNoticeDTO.PagingParam dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoDeliveryNoticeDTO.PagingParam>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

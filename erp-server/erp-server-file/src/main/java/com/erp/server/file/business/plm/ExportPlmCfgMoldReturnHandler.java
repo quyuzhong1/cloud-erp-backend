@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,12 +33,6 @@ public class ExportPlmCfgMoldReturnHandler extends AbstractPageFileEventHandler<
         return exportPlmFeign.exportCfgMoldReturn(dto);
     }
 
-    @Override
-    protected List<CfgMoldReturnAlertRuleDTO.ListDTO> getData(FileTask fileTask) {
-        CfgMoldReturnAlertRuleDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgMoldReturnAlertRuleDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

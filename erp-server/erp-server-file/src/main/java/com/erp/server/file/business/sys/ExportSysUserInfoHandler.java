@@ -9,7 +9,6 @@ import com.erp.model.sys.dto.UserManageDTO;
 import com.erp.rpc.sys.feign.ExportSysFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -21,12 +20,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_USER_INFO;
 public class ExportSysUserInfoHandler extends AbstractPageFileEventHandler<UserManageDTO, SysUserInfoDTO.PagingParamDTO> {
     @Resource
     private ExportSysFeign exportSysFeign;
-    @Override
-    protected List<UserManageDTO> getData(FileTask fileTask) {
-        SysUserInfoDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SysUserInfoDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

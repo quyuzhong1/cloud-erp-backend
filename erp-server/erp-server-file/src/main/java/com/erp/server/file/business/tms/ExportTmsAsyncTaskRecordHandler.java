@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,12 +32,6 @@ public class ExportTmsAsyncTaskRecordHandler extends AbstractPageFileEventHandle
         return EXPORT_TMS_ASYNC_TASK_RECORD;
     }
 
-    @Override
-    protected List<TmsAsyncTaskRecordDTO.ListDTO> getData(FileTask fileTask) {
-        TmsAsyncTaskRecordDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TmsAsyncTaskRecordDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<TmsAsyncTaskRecordDTO.ListDTO> getPageData(PagingDTO<TmsAsyncTaskRecordDTO.PagingParamDTO> dto) {

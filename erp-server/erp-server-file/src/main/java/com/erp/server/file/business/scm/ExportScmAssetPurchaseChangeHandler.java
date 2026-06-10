@@ -7,7 +7,6 @@ import com.erp.model.scm.dto.AssetPurchaseChangeDTO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
@@ -33,12 +32,6 @@ public class ExportScmAssetPurchaseChangeHandler extends AbstractPageFileEventHa
         return exportScmFeign.exportAssetPurchaseChange(dto);
     }
 
-    @Override
-    protected List<AssetPurchaseChangeDTO.ListDTO> getData(FileTask fileTask) {
-        AssetPurchaseChangeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AssetPurchaseChangeDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

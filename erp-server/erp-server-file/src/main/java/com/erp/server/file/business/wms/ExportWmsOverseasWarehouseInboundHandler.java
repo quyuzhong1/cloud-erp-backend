@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsOverseasWarehouseInboundHandler extends AbstractPageFileEv
         return EXPORT_WMS_OVERSEAS_WAREHOUSE_INBOUND;
     }
 
-    @Override
-    protected List<OverseasWarehouseInboundDTO.ListDTO> getData(FileTask fileTask) {
-        OverseasWarehouseInboundDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<OverseasWarehouseInboundDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

@@ -9,7 +9,6 @@ import com.erp.model.workflow.dto.CfgThirdProcessDTO;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -36,12 +35,6 @@ public class ExportWorkflowCfgThirdProcessHandler extends AbstractPageFileEventH
         return exportWorkflowFeign.exportCfgThirdProcess(dto);
     }
 
-    @Override
-    protected List<CfgThirdProcessDTO.ListDTO> getData(FileTask fileTask) {
-        CfgThirdProcessDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgThirdProcessDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

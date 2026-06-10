@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportTmsB2cDeclareReconciliationDetailHandler extends AbstractPage
         return EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION_DETAIL;
     }
 
-    @Override
-    protected List<TmsB2cDeclareReconciliationDetailDTO.ListDTO> getData(FileTask fileTask) {
-        TmsB2cDeclareReconciliationDetailDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TmsB2cDeclareReconciliationDetailDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> getPageData(PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {

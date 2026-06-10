@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsSoReturnInStockHandler extends AbstractPageFileEventHandle
         return EXPORT_WMS_SO_RETURN_IN_STOCK;
     }
 
-    @Override
-    protected List<SoReturnInstockDTO.PagingView> getData(FileTask fileTask) {
-        SoReturnInstockDTO.PagingParam dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoReturnInstockDTO.PagingParam>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

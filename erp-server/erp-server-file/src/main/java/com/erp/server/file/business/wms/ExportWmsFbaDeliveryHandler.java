@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsFbaDeliveryHandler extends AbstractPageFileEventHandler<Fi
         return EXPORT_WMS_FBA_DELIVERY;
     }
 
-    @Override
-    protected List<FirstMileDeliveryDTO.ListDTO> getData(FileTask fileTask) {
-        FirstMileDeliveryDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FirstMileDeliveryDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

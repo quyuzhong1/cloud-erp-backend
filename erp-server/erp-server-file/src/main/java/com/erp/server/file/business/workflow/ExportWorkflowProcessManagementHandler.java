@@ -7,7 +7,6 @@ import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.common.business.enums.FileTaskEventEnum;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -31,12 +30,6 @@ public class ExportWorkflowProcessManagementHandler extends AbstractPageFileEven
         return EXPORT_PROCESS_MANAGEMENT;
     }
 
-    @Override
-    protected List<ProcessManagementDTO.PagingResultDTO> getData(FileTask fileTask) {
-        ProcessManagementDTO.SearchDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProcessManagementDTO.SearchDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ProcessManagementDTO.PagingResultDTO> getPageData(PagingDTO<ProcessManagementDTO.SearchDTO> dto) {

@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.ListingPushRecordDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ public class ExportOmsListingPushHandler extends AbstractPageFileEventHandler<Li
 
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<ListingPushRecordDTO.PagingViewDTO> getData(FileTask fileTask) {
-        ListingPushRecordDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ListingPushRecordDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ListingPushRecordDTO.PagingViewDTO> getPageData(PagingDTO<ListingPushRecordDTO.PagingParamDTO> dto) {
