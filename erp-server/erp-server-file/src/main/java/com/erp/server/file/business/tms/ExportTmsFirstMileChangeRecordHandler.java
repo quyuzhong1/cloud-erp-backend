@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportTmsFirstMileChangeRecordHandler extends AbstractPageFileEvent
         return EXPORT_TMS_FIRST_MILE_CHANGE_RECORD;
     }
 
-    @Override
-    protected List<FirstMileChangeRecordDTO.PagingVO> getData(FileTask fileTask) {
-        FirstMileChangeRecordDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FirstMileChangeRecordDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<FirstMileChangeRecordDTO.PagingVO> getPageData(PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto) {

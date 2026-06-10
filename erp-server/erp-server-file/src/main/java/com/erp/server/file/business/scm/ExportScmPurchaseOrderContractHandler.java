@@ -20,10 +20,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_OR
 public class ExportScmPurchaseOrderContractHandler extends AbstractPageFileEventHandler<BomExportExcelVO, String> {
     @Resource
     private ExportScmFeign exportScmFeign;
-    @Override
-    protected List<BomExportExcelVO> getData(FileTask fileTask) {
-        return listSeqData(fileTask.getMetaInfo());
-    }
 
     @Override
     protected PagingVO<BomExportExcelVO> getPageData(PagingDTO<String> dto) {

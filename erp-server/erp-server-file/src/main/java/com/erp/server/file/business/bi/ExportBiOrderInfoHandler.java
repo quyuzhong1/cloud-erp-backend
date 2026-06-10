@@ -8,7 +8,6 @@ import com.erp.model.dmp.dto.DmpOrderInfoSearchDTO;
 import com.erp.rpc.bi.feign.ExportBiFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ public class ExportBiOrderInfoHandler extends AbstractPageFileEventHandler<DmpOr
 
     @Resource
     private ExportBiFeign exportBiFeign;
-    @Override
-    protected List<DmpOrderInfoExcelDTO> getData(FileTask fileTask) {
-        DmpOrderInfoSearchDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DmpOrderInfoSearchDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<DmpOrderInfoExcelDTO> getPageData(PagingDTO<DmpOrderInfoSearchDTO> dto) {

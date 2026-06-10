@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.ProductCertificateDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -20,12 +19,6 @@ public class ExportPlmProductCertificateHandler extends AbstractPageFileEventHan
     @Resource
     private ExportPlmFeign exportPlmFeign;
 
-    @Override
-    protected List<ProductCertificateDTO.ListDTO> getData(FileTask fileTask) {
-        ProductCertificateDTO.ExportParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProductCertificateDTO.ExportParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ProductCertificateDTO.ListDTO> getPageData(PagingDTO<ProductCertificateDTO.ExportParamDTO> dto) {

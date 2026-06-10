@@ -8,7 +8,6 @@ import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,12 +32,6 @@ public class ExportWorkflowThirdProcessDefinitionHandler extends AbstractPageFil
         return exportWorkflowFeign.exportThirdProcessDefinition(dto);
     }
 
-    @Override
-    protected List<ThirdProcessDefinitionDTO.ListDTO> getData(FileTask fileTask) {
-        ThirdProcessDefinitionDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ThirdProcessDefinitionDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.SubcontractReturnDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportWmsSubcontractReturnHandler extends AbstractPageFileEventHand
         return EXPORT_WMS_SUBCONTRACT_RETURN;
     }
 
-    @Override
-    protected List<SubcontractReturnDTO.ListDTO> getData(FileTask fileTask) {
-        SubcontractReturnDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SubcontractReturnDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

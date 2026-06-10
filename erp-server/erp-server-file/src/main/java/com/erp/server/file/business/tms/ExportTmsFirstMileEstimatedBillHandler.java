@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,11 +32,6 @@ public class ExportTmsFirstMileEstimatedBillHandler extends AbstractPageFileEven
         return exportTmsFeign.exportFirstMileEstimatedBill(dto);
     }
 
-    @Override
-    protected List<FirstMileEstimatedBillDTO.View> getData(FileTask fileTask) {
-        FirstMileEstimatedBillDTO.PagingParam dto = readValue(fileTask.getMetaInfo(), new TypeReference<FirstMileEstimatedBillDTO.PagingParam>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

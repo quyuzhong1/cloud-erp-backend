@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
@@ -32,12 +31,6 @@ public class ExportPlmMoldInfoHandler extends AbstractPageFileEventHandler<MoldI
         return exportPlmFeign.exportMoldInfo(dto);
     }
 
-    @Override
-    protected List<MoldInfoDTO.ListDTO> getData(FileTask fileTask) {
-        MoldInfoDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<MoldInfoDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

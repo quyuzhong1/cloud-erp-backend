@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -23,12 +22,6 @@ public class ExportWmsOtherInStockHandler extends AbstractPageFileEventHandler<O
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<OtherInstockDTO.ListDTO> getData(FileTask fileTask) {
-        OtherInstockDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<OtherInstockDTO.SearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<OtherInstockDTO.ListDTO> getPageData(PagingDTO<OtherInstockDTO.SearchParamDTO> dto) {

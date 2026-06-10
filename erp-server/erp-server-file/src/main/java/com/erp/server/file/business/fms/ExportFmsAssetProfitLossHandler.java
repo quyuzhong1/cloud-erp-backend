@@ -7,7 +7,6 @@ import com.erp.rpc.fms.feign.ExportFmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.common.business.enums.FileTaskEventEnum;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +27,6 @@ public class ExportFmsAssetProfitLossHandler extends AbstractPageFileEventHandle
     @Resource
     private ExportFmsFeign exportFmsFeign;
 
-    @Override
-    protected List<AssetProfitLossDTO.ListDTO> getData(FileTask fileTask) {
-        AssetProfitLossDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AssetProfitLossDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<AssetProfitLossDTO.ListDTO> getPageData(PagingDTO<AssetProfitLossDTO.ExportDTO> dto) {

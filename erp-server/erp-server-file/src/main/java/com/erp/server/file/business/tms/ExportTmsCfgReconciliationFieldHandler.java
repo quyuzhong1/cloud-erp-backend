@@ -8,7 +8,6 @@ import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,12 +32,6 @@ public class ExportTmsCfgReconciliationFieldHandler extends AbstractPageFileEven
         return EXPORT_TMS_CFG_RECONCILIATION_FIELD;
     }
 
-    @Override
-    protected List<CfgReconciliationFieldExportExcelDTO> getData(FileTask fileTask) {
-        CfgReconciliationFieldDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgReconciliationFieldDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<CfgReconciliationFieldExportExcelDTO> getPageData(PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto) {

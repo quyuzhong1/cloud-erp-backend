@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -33,11 +32,6 @@ public class ExportTmsFirstMileWeightAllocationHandler extends AbstractPageFileE
         return exportTmsFeign.exportFirstMileWeightAllocation(dto);
     }
 
-    @Override
-    protected List<FirstMileWeightAllocationDTO.ViewDTO> getData(FileTask fileTask) {
-        FirstMileWeightAllocationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FirstMileWeightAllocationDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

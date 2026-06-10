@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.QcStandardDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -29,12 +28,6 @@ public class ExportWmsQcStandardHandler extends AbstractPageFileEventHandler<QcS
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<QcStandardDTO.ExportDTO> getData(FileTask fileTask) {
-        QcStandardDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<QcStandardDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<QcStandardDTO.ExportDTO> getPageData(PagingDTO<QcStandardDTO.PagingParamDTO> dto) {

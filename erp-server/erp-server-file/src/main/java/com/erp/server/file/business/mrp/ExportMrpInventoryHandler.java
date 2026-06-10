@@ -7,7 +7,6 @@ import com.erp.model.mrp.dto.LocalHistoryInventoryDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -20,12 +19,6 @@ public class ExportMrpInventoryHandler extends AbstractPageFileEventHandler<Loca
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
-    @Override
-    protected List<LocalHistoryInventoryDTO.PagingViewDTO> getData(FileTask fileTask) {
-        LocalHistoryInventoryDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<LocalHistoryInventoryDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> getPageData(PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto) {

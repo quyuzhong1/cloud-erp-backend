@@ -7,7 +7,6 @@ import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +20,6 @@ public class ExportMrpPurchaseSuggestionEntityHandler extends AbstractPageFileEv
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
-    @Override
-    protected List<PurchaseSuggestIndependentDTO.ListDTO> getData(FileTask fileTask) {
-        PurchaseSuggestIndependentDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PurchaseSuggestIndependentDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<PurchaseSuggestIndependentDTO.ListDTO> getPageData(PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {

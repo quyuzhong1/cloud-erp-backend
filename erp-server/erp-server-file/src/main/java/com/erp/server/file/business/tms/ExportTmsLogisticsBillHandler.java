@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportTmsLogisticsBillHandler extends AbstractPageFileEventHandler<
         return EXPORT_TMS_LOGISTICS_BILL;
     }
 
-    @Override
-    protected List<LogisticsBillDTO.PagingVO> getData(FileTask fileTask) {
-        LogisticsBillDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<LogisticsBillDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<LogisticsBillDTO.PagingVO> getPageData(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {

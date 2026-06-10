@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.ExhibitionOrderDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
@@ -31,11 +30,6 @@ public class ExportOmsExhibitionOrderHandler extends AbstractPageFileEventHandle
         return exportOmsFeign.exportExhibitionOrder(dto);
     }
 
-    @Override
-    protected List<ExhibitionOrderDTO.ListDTO> getData(FileTask fileTask) {
-        ExhibitionOrderDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ExhibitionOrderDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

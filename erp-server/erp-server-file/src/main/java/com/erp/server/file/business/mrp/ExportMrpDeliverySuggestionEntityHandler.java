@@ -7,7 +7,6 @@ import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +20,6 @@ public class ExportMrpDeliverySuggestionEntityHandler extends AbstractPageFileEv
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
-    @Override
-    protected List<DeliverySuggestDTO.ListDTO> getData(FileTask fileTask) {
-        DeliverySuggestDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<DeliverySuggestDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<DeliverySuggestDTO.ListDTO> getPageData(PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {

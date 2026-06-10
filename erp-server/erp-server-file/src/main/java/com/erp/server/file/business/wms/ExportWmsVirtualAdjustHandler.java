@@ -8,7 +8,6 @@ import com.erp.model.wms.dto.VirtualAdjustDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,11 +33,6 @@ public class ExportWmsVirtualAdjustHandler extends AbstractPageFileEventHandler<
         return exportWmsFeign.exportVirtualAdjust(dto);
     }
 
-    @Override
-    protected List<VirtualAdjustDTO.ListDTO> getData(FileTask fileTask) {
-        VirtualAdjustDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualAdjustDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

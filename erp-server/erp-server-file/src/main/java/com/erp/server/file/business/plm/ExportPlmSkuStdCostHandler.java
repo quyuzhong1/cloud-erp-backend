@@ -8,7 +8,6 @@ import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -35,12 +34,6 @@ public class ExportPlmSkuStdCostHandler extends AbstractPageFileEventHandler<Sku
         return exportPlmFeign.exportSkuStdCostDetail(dto);
     }
 
-    @Override
-    protected List<SkuStdCostDetailDTO.ListDTO> getData(FileTask fileTask) {
-        SkuStdCostDetailDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SkuStdCostDetailDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

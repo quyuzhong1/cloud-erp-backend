@@ -5,7 +5,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
-import com.erp.server.file.core.AbstractMasterDerivedSheetHandler;
+import com.erp.server.file.core.multisheet.AbstractMasterDerivedSheetHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 

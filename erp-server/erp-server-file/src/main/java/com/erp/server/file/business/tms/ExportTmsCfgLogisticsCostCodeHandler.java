@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.CfgLogisticsCostImportDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,11 +33,6 @@ public class ExportTmsCfgLogisticsCostCodeHandler extends AbstractPageFileEventH
         return exportTmsFeign.exportTmsCfgLogisticsCost(dto);
     }
 
-    @Override
-    protected List<CfgLogisticsCostImportDTO.ListDTO> getData(FileTask fileTask) {
-        CfgLogisticsCostImportDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgLogisticsCostImportDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

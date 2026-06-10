@@ -9,7 +9,6 @@ import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +23,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SO_PRICE_CHANGE
 public class ExportOmsSoReceiptHandler extends AbstractPageFileEventHandler<SoReceiptDTO.ListDTO, SoReceiptDTO.PagingParamDTO> {
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<SoReceiptDTO.ListDTO> getData(FileTask fileTask) {
-        SoReceiptDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoReceiptDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SoReceiptDTO.ListDTO> getPageData(PagingDTO<SoReceiptDTO.PagingParamDTO> dto) {

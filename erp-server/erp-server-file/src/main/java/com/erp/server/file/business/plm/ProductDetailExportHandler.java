@@ -18,10 +18,6 @@ public class ProductDetailExportHandler extends AbstractDynamicHeadersFileEventH
 
 
 
-    @Override
-    protected DynamicExcelDTO getData(FileTask fileTask) {
-        return null;
-    }
 
     @Override
     protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<ProductDetailExcelExportDTO> dto) {

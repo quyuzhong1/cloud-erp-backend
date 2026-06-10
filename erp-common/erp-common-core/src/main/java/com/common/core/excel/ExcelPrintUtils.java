@@ -1423,6 +1423,22 @@ public class ExcelPrintUtils {
         }
     }
 
+    /**
+     * 打开动态表头 Writer（分批 write 后须 {@link ExcelWriter#finish()}）。
+     */
+    public ExcelWriter openDynamicHeadersWriter(OutputStream outputStream, List<List<String>> head) {
+        HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
+        return EasyExcelFactory.write(outputStream)
+                .registerConverter(new SqlDateNumberConverter())
+                .registerConverter(new SqlDateStringConverter())
+                .registerConverter(new SqlTimestampStringConverter())
+                .head(head)
+                .registerWriteHandler(horizontalCellStyleStrategy)
+                .registerWriteHandler(new ExcelCellWidthStyleStrategy())
+                .autoCloseStream(false)
+                .build();
+    }
+
 	public static void main(String[] args) throws Exception{
 		String filePath = "C:\\Users\\Administrator\\Desktop\\新建 XLS 工作表.xls";
 		InputStream inputStream = new FileInputStream(filePath);

@@ -7,7 +7,6 @@ import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ public class ExportOmsSoB2CAbnormalHandler extends AbstractPageFileEventHandler<
 
     @Resource
     private ExportOmsFeign exportOmsFeign;
-    @Override
-    protected List<SoB2cAbnormalDTO.ListDTO> getData(FileTask fileTask) {
-        SoB2cAbnormalDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SoB2cAbnormalDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SoB2cAbnormalDTO.ListDTO> getPageData(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {

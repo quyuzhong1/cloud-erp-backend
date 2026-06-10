@@ -8,7 +8,6 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,12 +23,6 @@ public class ExportWmsInventoryAgeHandler extends AbstractDynamicHeadersFileEven
     private ExportWmsFeign exportWmsFeign;
 
 
-    @Override
-    protected DynamicExcelDTO getData(FileTask fileTask) {
-        InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<InventoryReportDTO.ExportInventoryAgeSearchParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto) {

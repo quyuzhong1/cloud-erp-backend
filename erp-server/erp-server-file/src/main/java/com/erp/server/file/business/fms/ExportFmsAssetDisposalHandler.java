@@ -7,7 +7,6 @@ import com.erp.model.fms.dto.AssetDisposalDTO;
 import com.erp.rpc.fms.feign.ExportFmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +27,6 @@ public class ExportFmsAssetDisposalHandler extends AbstractPageFileEventHandler<
     @Resource
     private ExportFmsFeign exportFmsFeign;
 
-    @Override
-    protected List<AssetDisposalDTO.ListDTO> getData(FileTask fileTask) {
-        AssetDisposalDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AssetDisposalDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<AssetDisposalDTO.ListDTO> getPageData(PagingDTO<AssetDisposalDTO.PagingParamDTO> dto) {

@@ -8,7 +8,6 @@ import com.erp.model.plm.dto.ProductChangeDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,11 +33,6 @@ public class ExportPlmProductChangeHandler extends AbstractPageFileEventHandler<
         return exportPlmFeign.productChange(dto);
     }
 
-    @Override
-    protected List<ProductChangeDTO.ListDTO> getData(FileTask fileTask) {
-        ProductChangeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ProductChangeDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

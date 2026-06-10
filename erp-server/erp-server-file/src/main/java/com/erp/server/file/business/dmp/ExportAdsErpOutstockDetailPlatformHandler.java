@@ -7,7 +7,6 @@ import com.erp.model.dmp.dto.AdsErpOutstockDiffFlowDetailDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -31,11 +30,6 @@ public class ExportAdsErpOutstockDetailPlatformHandler extends AbstractPageFileE
         return exportDmpFeign.exportAdsErpOutstockDetailPlatform(dto);
     }
 
-    @Override
-    protected List<AdsErpOutstockDiffFlowDetailDTO.SourcePlatformDTO> getData(FileTask fileTask) {
-        AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AdsErpOutstockDiffFlowDetailDTO.PagingParamDTO>() {});
-        return listSeqData(dto);
-    }
 
     @Override
     protected String getExcelPath() {

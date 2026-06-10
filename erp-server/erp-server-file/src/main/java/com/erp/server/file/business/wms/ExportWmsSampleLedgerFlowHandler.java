@@ -7,7 +7,6 @@ import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.common.business.enums.FileTaskEventEnum;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,12 +27,6 @@ public class ExportWmsSampleLedgerFlowHandler extends AbstractPageFileEventHandl
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<SampleLedgerFlowDTO.ListDTO> getData(FileTask fileTask) {
-        SampleLedgerFlowDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SampleLedgerFlowDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SampleLedgerFlowDTO.ListDTO> getPageData(PagingDTO<SampleLedgerFlowDTO.ExportDTO> dto) {

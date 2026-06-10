@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -32,12 +31,6 @@ public class ExportTmsInventorySkuCostHandler extends AbstractPageFileEventHandl
         return EXPORT_TMS_INVENTORY_SKU_COST;
     }
 
-    @Override
-    protected List<InventorySkuCostDTO.PagingVO> getData(FileTask fileTask) {
-        InventorySkuCostDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<InventorySkuCostDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<InventorySkuCostDTO.PagingVO> getPageData(PagingDTO<InventorySkuCostDTO.PagingParamDTO> dto) {

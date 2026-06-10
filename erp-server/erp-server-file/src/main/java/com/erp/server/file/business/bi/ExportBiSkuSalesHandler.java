@@ -7,7 +7,6 @@ import com.erp.model.bi.dto.SkuSalesDTO;
 import com.erp.rpc.bi.feign.ExportBiFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +21,6 @@ public class ExportBiSkuSalesHandler extends AbstractPageFileEventHandler<SkuSal
     @Resource
     private ExportBiFeign exportBiFeign;
 
-    @Override
-    protected List<SkuSalesDTO.PagingSalesInfoDTO> getData(FileTask fileTask) {
-        SkuSalesDTO.SearchSkuDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SkuSalesDTO.SearchSkuDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<SkuSalesDTO.PagingSalesInfoDTO> getPageData(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {

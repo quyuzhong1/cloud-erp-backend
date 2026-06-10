@@ -7,7 +7,6 @@ import com.erp.model.wms.dto.ReportOrderDemandDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -23,12 +22,6 @@ public class ExportWmsReportOrderDemandHandler extends AbstractPageFileEventHand
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<ReportOrderDemandDTO.ListDTO> getData(FileTask fileTask) {
-        ReportOrderDemandDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ReportOrderDemandDTO.PagingParamDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<ReportOrderDemandDTO.ListDTO> getPageData(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto) {
