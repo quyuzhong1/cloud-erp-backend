@@ -3,19 +3,25 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import lombok.Data;
+
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -327,4 +333,31 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param code 对账状态
      */
     void batchConfirmImport(List<ImportHistoryRecordDTO.ImportConfirmDTO> confirmList, String code);
+
+    /**
+     * 多物流单费用分摊前批量预加载出库明细与 SKU 包装信息，避免分组循环内 N+1 Feign 调用。
+     */
+    OutstockWeightPreloadDTO preloadOutstockWeightDataForAllocation(
+            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupLogisticsBillVoMap);
+
+    /**
+     * 订单重量 = SKU 毛重(g) × 上游出库单实发数量，多物流单匹配时作为费用分摊依据。
+     */
+    Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                                List<String> errorMsgList,
+                                                OutstockWeightPreloadDTO preloadData);
+
+    /**
+     * 多物流单匹配时按订单重量占比分摊费用，最后一条补差，避免四舍五入误差。
+     */
+    Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocateCostDetailByWeight(
+            List<TmsCostDetailDTO.UpdateDTO> updateList,
+            List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+            Map<String, BigDecimal> weightMap);
+
+    @Data
+    class OutstockWeightPreloadDTO {
+        private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
+        private Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
+    }
 }

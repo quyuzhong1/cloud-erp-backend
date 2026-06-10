@@ -1400,36 +1400,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         map.forEach((key, rows) ->
                 groupLogisticsBillVoMap.put(key, matchImportLogisticsBillVos(rows.get(0), logisticsBillVos, billVoIndex)));
 
-        // 多物流单费用分摊前批量预加载出库明细与SKU包装信息，避免分组循环内 N+1 Feign 调用
-        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
-        Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
-        List<String> allocationOutstockIdList = groupLogisticsBillVoMap.values().stream()
-                .filter(list -> list.size() > 1)
-                .flatMap(list -> list.stream())
-                .map(LogisticsBillDTO.LogisticsBillVo::getOutstockId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(allocationOutstockIdList)) {
-            List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
-                    .in(SoOutstockDetailEntity::getMainId, allocationOutstockIdList).list();
-            if (CollUtil.isNotEmpty(outstockDetailList)) {
-                outstockDetailMap = outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
-                List<String> skuIdList = outstockDetailList.stream()
-                        .map(SoOutstockDetailEntity::getSkuId)
-                        .filter(CharSequenceUtil::isNotBlank)
-                        .distinct()
-                        .collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(skuIdList)) {
-                    List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class)
-                            .in(ProductPackEntity::getSkuId, skuIdList).list();
-                    if (CollUtil.isNotEmpty(productPackList)) {
-                        productPackMap = productPackList.stream()
-                                .collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
-                    }
-                }
-            }
-        }
+        OutstockWeightPreloadDTO outstockWeightPreload = preloadOutstockWeightDataForAllocation(groupLogisticsBillVoMap);
 
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
         if(CollUtil.isNotEmpty(logisticsBillVos)) {
@@ -1540,13 +1511,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                 Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = new HashMap<>();
                 if (logisticsBillVoList.size() > 1) {
-                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList, outstockDetailMap, productPackMap);
+                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList, outstockWeightPreload);
                     if (CollectionUtils.isNotEmpty(errorMsgList)) {
                         importSuccessList.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                         errorList.addAll(importSuccessList);
                         continue;
                     }
-                    allocatedCostMap = allocateCostDetailMap(updateDetailList, logisticsBillVoList, weightMap);
+                    allocatedCostMap = allocateCostDetailByWeight(updateDetailList, logisticsBillVoList, weightMap);
                 }
                 List<Pair<LogisticsBillDTO.LogisticsBillVo, LogisticsBillCostEntity>> targetPairList = new ArrayList<>();
                 Map<String, List<TmsCostDetailDTO.UpdateDTO>> targetUpdateMap = new HashMap<>();
@@ -1605,13 +1576,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, billCostExcelDTO, reconciliationMonth);
                     if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(importType)){
                         List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO,currentUpdateList);
-                        List<AddDTO> addDTOS = this.addPayAndRefund(dtoList, cfgCostMap);
+                        List<AddDTO> addDTOS = service.addPayAndRefund(dtoList, cfgCostMap);
                         pairList.addAll(addDTOS.stream()
                                 .map(obj -> new Pair<String, LocalDateTime>(obj.getId(), confirmTime))
                                 .collect(Collectors.toList()));
                     }else {
                         updateDataDTO.setCostDetailList(currentUpdateList);
-                        BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
+                        BaseResultDTO.UpdateDTO update = service.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
                         pairList.add(new Pair<>(update.getId(),confirmTime));
                     }
                 }
@@ -1636,7 +1607,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(logisticsBillCostEntity, billCostExcelDTO, reconciliationMonth);
                 updateDataDTO.setCostDetailList(updateDetailList);
-                BaseResultDTO.UpdateDTO update = this.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
+                BaseResultDTO.UpdateDTO update = service.update(updateDataDTO, Boolean.TRUE, cfgCostMap);
                 pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             //确认
@@ -1763,13 +1734,52 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
     }
 
-    /**
-     * 订单重量 = SKU毛重(g) * 上游出库单实发数量，多物流单匹配时作为费用分摊依据。
-     */
-    private Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
-                                                        List<String> errorMsgList,
-                                                        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap,
-                                                        Map<String, ProductPackEntity> productPackMap) {
+    @Override
+    public OutstockWeightPreloadDTO preloadOutstockWeightDataForAllocation(
+            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupLogisticsBillVoMap) {
+        OutstockWeightPreloadDTO preloadData = new OutstockWeightPreloadDTO();
+        List<String> allocationOutstockIdList = groupLogisticsBillVoMap.values().stream()
+                .filter(list -> list.size() > 1)
+                .flatMap(Collection::stream)
+                .map(LogisticsBillDTO.LogisticsBillVo::getOutstockId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(allocationOutstockIdList)) {
+            return preloadData;
+        }
+        List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
+                .in(SoOutstockDetailEntity::getMainId, allocationOutstockIdList).list();
+        if (CollUtil.isEmpty(outstockDetailList)) {
+            return preloadData;
+        }
+        preloadData.setOutstockDetailMap(outstockDetailList.stream()
+                .collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId)));
+        List<String> skuIdList = outstockDetailList.stream()
+                .map(SoOutstockDetailEntity::getSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIdList)) {
+            return preloadData;
+        }
+        List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class)
+                .in(ProductPackEntity::getSkuId, skuIdList).list();
+        if (CollUtil.isNotEmpty(productPackList)) {
+            preloadData.setProductPackMap(productPackList.stream()
+                    .collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first)));
+        }
+        return preloadData;
+    }
+
+    @Override
+    public Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                                       List<String> errorMsgList,
+                                                       OutstockWeightPreloadDTO preloadData) {
+        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = preloadData == null
+                ? Collections.emptyMap() : ObjectUtil.defaultIfNull(preloadData.getOutstockDetailMap(), Collections.emptyMap());
+        Map<String, ProductPackEntity> productPackMap = preloadData == null
+                ? Collections.emptyMap() : ObjectUtil.defaultIfNull(preloadData.getProductPackMap(), Collections.emptyMap());
         Map<String, BigDecimal> weightMap = new HashMap<>();
         if (logisticsBillVoList.stream().anyMatch(vo -> CharSequenceUtil.isBlank(vo.getOutstockId()))) {
             errorMsgList.add("无法获取上游出库单用于重量分摊");
@@ -1811,18 +1821,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         return weightMap;
     }
 
-    private Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocateCostDetailMap(List<TmsCostDetailDTO.UpdateDTO> updateList,
-                                                                                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
-                                                                                Map<String, BigDecimal> weightMap) {
+    @Override
+    public Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocateCostDetailByWeight(List<TmsCostDetailDTO.UpdateDTO> updateList,
+                                                                                    List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
+                                                                                    Map<String, BigDecimal> weightMap) {
         Map<String, List<TmsCostDetailDTO.UpdateDTO>> resultMap = new LinkedHashMap<>();
         BigDecimal totalWeight = logisticsBillVoList.stream().map(vo -> weightMap.getOrDefault(vo.getDetailId(), BigDecimal.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
         for (TmsCostDetailDTO.UpdateDTO updateDTO : updateList) {
             BigDecimal allocatedSum = BigDecimal.ZERO;
+            BigDecimal cost = ObjectUtil.defaultIfNull(updateDTO.getCostValue(), BigDecimal.ZERO);
             for (int i = 0; i < logisticsBillVoList.size(); i++) {
                 LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(i);
                 BigDecimal allocatedCost = i == logisticsBillVoList.size() - 1
-                        ? updateDTO.getCostValue().subtract(allocatedSum)
-                        : updateDTO.getCostValue().multiply(weightMap.getOrDefault(logisticsBillVo.getDetailId(), BigDecimal.ZERO)).divide(totalWeight, 4, RoundingMode.HALF_UP);
+                        ? cost.subtract(allocatedSum)
+                        : cost.multiply(weightMap.getOrDefault(logisticsBillVo.getDetailId(), BigDecimal.ZERO)).divide(totalWeight, 4, RoundingMode.HALF_UP);
                 allocatedSum = allocatedSum.add(allocatedCost);
                 TmsCostDetailDTO.UpdateDTO copyDTO = copyUpdateCostDetail(updateDTO);
                 copyDTO.setCostValue(allocatedCost);
@@ -2602,7 +2614,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		}
     		addDTO.setCostDetailList(costDetailList);
     		try {
-				addList.add(this.add(addDTO, cfgCostCache));
+				addList.add(service.add(addDTO, cfgCostCache));
 			} catch (ServiceException e) {
 				throw new ServiceException("物流运单号：" + logisticsBillCostEntity.getTransportNo() + e.getMessage());
 			}
@@ -2619,8 +2631,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		dto.setConfirmTime(LocalDateTime.now());
     	}
     	LocalDateTime confirmTime = dto.getConfirmTime();
-		List<AddDTO> dtoList = this.addPayAndRefund(dto.getAddDataDTOList(), null);
-		dtoList.forEach(addDTO -> this.updateReconciliationStatus(addDTO.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), confirmTime));
+		List<AddDTO> dtoList = service.addPayAndRefund(dto.getAddDataDTOList(), null);
+		dtoList.forEach(addDTO -> service.updateReconciliationStatus(addDTO.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), confirmTime));
 	}
 
 	@Override
