@@ -497,7 +497,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     // 执行所有数据库预查询
     private ImportHistoryRecordDTO.PreQueryResultDTO preQueryDbData(Map<String, List<Object>> paramMap) {
-        // 审查说明：费用项统一查尾程发货；主单 type 在 handleImportData 按匹配到的费用单 entity 解析。
+        // 费用项统一查尾程发货；主单 type 在 handleImportData 按匹配到的费用单 entity 解析。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillByUniqueKey(paramMap);
         Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();

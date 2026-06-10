@@ -124,7 +124,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public Boolean downloadTemplate(HttpServletResponse response) {
-        // 审查说明：模板费用项统一来自“尾程发货”配置，主单类型仍为 lastMile。
+        // 模板费用项统一来自“尾程发货”配置，主单类型仍为 lastMile。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(LAST_MILE_FEE_ATTRIBUTION);
         if (CollectionUtils.isEmpty(cfgCostList)) {
             throw new ServiceException(ApiError.LOGISTICS_COST_CONFIG_NOT_FOUND,"尾程发货");
@@ -215,7 +215,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         // 是否确认决定导入成功后是否直接把费用单流转为已确认。
         Boolean confirmStatus = (Boolean)extMap.get("confirmStatus");
 
-        // 审查说明：导入费用项统一从“尾程发货”归属预加载，不改变费用单 type=lastMile 校验。
+        // 导入费用项统一从“尾程发货”归属预加载，不改变费用单 type=lastMile 校验。
         List<TmsCfgCostEntity> cfgCostList = tmsCfgCostService.listByCostAttribution(LAST_MILE_FEE_ATTRIBUTION);
         Map<String, TmsCfgCostEntity> cfgCostMap = CollUtil.isEmpty(cfgCostList) ? Collections.emptyMap()
                 : cfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, obj -> obj, (a, b) -> a));

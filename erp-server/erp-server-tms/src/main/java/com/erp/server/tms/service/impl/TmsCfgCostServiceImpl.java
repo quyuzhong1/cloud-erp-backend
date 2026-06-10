@@ -235,7 +235,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     private String mapLastMileFeeAttribution(String dictCostAttribution) {
         if (CharSequenceUtil.equals(dictCostAttribution, DictCostAttributionEnum.SELF_DELIVER.getCode())
                 || CharSequenceUtil.equals(dictCostAttribution, DictCostAttributionEnum.LAST_MILE.getCode())) {
-            // 审查说明：尾程自发货/三方发货编辑费用项共用“尾程发货”配置，不改变物流费用主单 type。
+            // 尾程自发货/三方发货编辑费用项共用“尾程发货”配置，不改变物流费用主单 type。
             return DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
         }
         return dictCostAttribution;

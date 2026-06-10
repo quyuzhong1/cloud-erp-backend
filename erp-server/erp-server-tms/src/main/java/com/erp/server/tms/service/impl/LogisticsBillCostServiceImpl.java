@@ -1458,7 +1458,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                                 && CharSequenceUtil.equals(obj.getDictCostAttribution(), LAST_MILE_FEE_ATTRIBUTION))
                         .findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity)) {
-                    // 审查说明：自发货尾程导入费用项统一从“尾程发货”归属查找，主单 type 仍由 dictCostAttribution 校验。
+                    // 自发货尾程导入费用项统一从“尾程发货”归属查找，主单 type 仍由 dictCostAttribution 校验。
                     costErrorMsgList.add("费用管理尾程发货未找到该费用名称");
                 }
                 String estimatedCostValue = excelDTO.getEstimatedCostValue();

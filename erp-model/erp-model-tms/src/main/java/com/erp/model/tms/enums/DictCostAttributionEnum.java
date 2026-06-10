@@ -14,7 +14,7 @@ public enum DictCostAttributionEnum implements EnumMessage {
     SELF_DELIVER("selfDeliver", "自发货"),
     DECLARE("declare", "报关"),
     LAST_MILE("lastMile", "尾程"),
-    // 审查说明：尾程发货仅用于费用管理/导入编辑费用项归属，不作为 logistics_bill_cost.type 使用。
+    // 尾程发货仅用于费用管理/导入编辑费用项归属，不作为 logistics_bill_cost.type 使用。
     LAST_MILE_DELIVERY("lastMileDelivery", "尾程发货")
     ;
 

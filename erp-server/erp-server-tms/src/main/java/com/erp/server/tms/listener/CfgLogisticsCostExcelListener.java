@@ -158,7 +158,7 @@ public class CfgLogisticsCostExcelListener extends AnalysisEventListener<CfgLogi
                             errorMsgList.add("格式错误，正确格式如：运费/物流费用");
                         }else {
                             targetDetailFieldName = targetDetailFieldName.trim();
-                            // 审查说明：费用配置导入的尾程费用项统一从“尾程发货”归属查询，不改业务单据类型。
+                            // 费用配置导入的尾程费用项统一从“尾程发货”归属查询，不改业务单据类型。
                             String type = DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode();
                             List<TmsCfgCostEntity> tmsCfgCostEntities = tmsCfgCostGroup.get(type);
 

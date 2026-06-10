@@ -735,7 +735,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         List<CfgLogisticsCostImportFieldEntity> list = cfgLogisticsCostImportFieldService.list();
         Map<String, List<CfgLogisticsCostImportFieldEntity>> fieldMap = list.stream().collect(Collectors.groupingBy(CfgLogisticsCostImportFieldEntity::getBusinessType));
         //费用项
-        // 审查说明：费用配置导入时，尾程自发货/三方发货费用项统一从“尾程发货”归属预加载。
+        // 费用配置导入时，尾程自发货/三方发货费用项统一从“尾程发货”归属预加载。
         Map<String, List<TmsCfgCostEntity>> tmsCfgCostGroup = tmsCfgCostService.lambdaQuery()
                 .eq(TmsCfgCostEntity::getDictCostAttribution, DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode()).list()
                 .stream().collect(Collectors.groupingBy(TmsCfgCostEntity::getDictCostAttribution));
