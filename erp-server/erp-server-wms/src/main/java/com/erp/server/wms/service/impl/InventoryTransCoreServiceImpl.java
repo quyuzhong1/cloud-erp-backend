@@ -347,9 +347,13 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
-                // 调用方显式指定库存状态时覆盖规则配置（如 wego 海外仓不良品签收 → DEFECTIVE_PRODUCT）；
-                // 默认为空走原配置规则，保证历史链路行为不变。
-                InventoryStatusEnum effectiveStatus = flow.getDictInventoryStatus() != null
+                // 调用方显式指定库存状态时仅覆盖「调入端（TARGET）」，对应业务语义：
+                // 物理位置仍按调拨方向（如在途仓→目的仓），但调入仓库的库存分类切换为
+                // 指定状态（如 wego 海外仓签收为不良品 → 目的仓落 DEFECTIVE_PRODUCT）。
+                // 调出端（CURRENT）必须保持原规则状态（如 USABLE），否则会从调出仓的
+                // 不良品库存中扣减，但调出仓只有 USABLE 库存，导致「库存不足」报错。
+                boolean isTargetSide = rule.getWarehouseOption() == InventoryWarehouseOptionEnum.WAREHOUSE_TARGET;
+                InventoryStatusEnum effectiveStatus = (isTargetSide && flow.getDictInventoryStatus() != null)
                         ? flow.getDictInventoryStatus()
                         : rule.getInventoryStatus();
                 stockBaseDTO.setInventoryStatus(effectiveStatus);
