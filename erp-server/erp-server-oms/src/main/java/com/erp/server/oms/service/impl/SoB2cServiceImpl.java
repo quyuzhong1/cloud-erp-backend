@@ -10231,75 +10231,118 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.listMergePackageBySoIds(ids);
     }
 
+    /**
+     * 平台取消后对单笔订单自动取消预报（非批量循环）。
+     * 本地 SO 先提交；后置入库预报 Feign 失败不回滚本地（保宏取消可能已成功）。
+     * 当前无自动补偿/告警，同步失败仅 error 日志，需人工排查或修数。
+     */
     @Override
     public Boolean autoCancelOrderForecast(SoB2cEntity mainEntity) {
-        if (!TransferStatusEnum.SUCCESS.getCode().equals(mainEntity.getTransferStatus())) {
+        if (ObjectUtil.isEmpty(mainEntity) || StringUtils.isBlank(mainEntity.getId())) {
             return false;
         }
-        if (PackageStatusEnum.ALREADY.getCode().equals(mainEntity.getPackageStatus())) {
+        SoB2cEntity latestEntity = this.getById(mainEntity.getId());
+        if (ObjectUtil.isEmpty(latestEntity)) {
             return false;
         }
-        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(mainEntity.getBillStatus())) {
+        if (!TransferStatusEnum.SUCCESS.getCode().equals(latestEntity.getTransferStatus())) {
             return false;
         }
-        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(Arrays.asList(mainEntity.getCode()));
-        TransferDeclareDetailEntity transferDeclareDetailEntity = transferDeclareDetailEntityList.stream().filter(v -> v.getSoCode().equals(mainEntity.getCode())).findFirst().orElse(null);
+        if (PackageStatusEnum.ALREADY.getCode().equals(latestEntity.getPackageStatus())) {
+            return false;
+        }
+        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(latestEntity.getBillStatus())) {
+            return false;
+        }
+        List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(Arrays.asList(latestEntity.getCode()));
+        TransferDeclareDetailEntity transferDeclareDetailEntity = null;
+        if (CollUtil.isNotEmpty(transferDeclareDetailEntityList)) {
+            transferDeclareDetailEntity = transferDeclareDetailEntityList.stream()
+                    .filter(v -> v.getSoCode().equals(latestEntity.getCode()))
+                    .findFirst()
+                    .orElse(null);
+        }
         if (Objects.nonNull(transferDeclareDetailEntity)) {
             return false;
         }
-        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(mainEntity.getId());
-        if (Objects.isNull(soB2cLogisticsEntity) || StringUtils.isBlank(soB2cLogisticsEntity.getTransferLogisticsSupplierId()) || StringUtils.isBlank(mainEntity.getShippingOrderNo())) {
+        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(latestEntity.getId());
+        if (Objects.isNull(soB2cLogisticsEntity) || StringUtils.isBlank(soB2cLogisticsEntity.getTransferLogisticsSupplierId()) || StringUtils.isBlank(latestEntity.getShippingOrderNo())) {
             return false;
         }
 
-        List<SoB2cEntity> updateList = new ArrayList<>();
         List<String> deleteErrorIds = new ArrayList<>();
         List<SoB2cErrorEntity> addOrUpdateErrors = new ArrayList<>();
-        SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
+        SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(latestEntity.getId(), SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
         if (Objects.isNull(error)) {
             error = new SoB2cErrorEntity();
         }
         TransferDeclareDTO.UpdateForcastStatusDTO updateForcastStatusDTO = new TransferDeclareDTO.UpdateForcastStatusDTO();
-        updateForcastStatusDTO.setSoId(mainEntity.getId());
+        updateForcastStatusDTO.setSoId(latestEntity.getId());
 
         List<TransferDeclareDTO.UpdateForcastStatusDTO> updateInstockForcastList = new ArrayList<>();
         TransferDeclareDTO.CancelOrderForecastDTO cancelOrderForecastDTO = TransferDeclareDTO.CancelOrderForecastDTO.builder()
                 .transferLogisticsSupplierId(soB2cLogisticsEntity.getTransferLogisticsSupplierId())
                 .transferCancelOrderReq(TransferCancelOrderReq.builder()
-                        .thirdPlatformCode(mainEntity.getShippingOrderNo())
+                        .thirdPlatformCode(latestEntity.getShippingOrderNo())
                         .reason("平台发货异常")
                         .build())
                 .build();
         ApiResult<String> cancelResult = transferDeclareFeign.cancelOrderForecast(cancelOrderForecastDTO);
 
-        if (cancelResult.isSuccess()) {
-            mainEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
-            if (SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(mainEntity.getSignOrderError())) {
-                mainEntity.setSignOrderError("");
+        // Feign 取消期间 version 可能变化，写库前再加载最新实体
+        SoB2cEntity updateEntity = this.getById(latestEntity.getId());
+        if (ObjectUtil.isEmpty(updateEntity)) {
+            log.error("autoCancelOrderForecast reload order failed, id={}", latestEntity.getId());
+            return false;
+        }
+
+        boolean cancelSuccess = Objects.nonNull(cancelResult) && cancelResult.isSuccess();
+        if (cancelSuccess) {
+            updateEntity.setTransferStatus(TransferStatusEnum.WAIT.getCode());
+            if (SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode().equals(updateEntity.getSignOrderError())) {
+                updateEntity.setSignOrderError("");
             }
             updateForcastStatusDTO.setStatus(TransferStatusEnum.WAIT.getCode());
-            updateList.add(mainEntity);
             if (StringUtils.isNotBlank(error.getId())) {
                 deleteErrorIds.add(error.getId());
             }
             updateInstockForcastList.add(updateForcastStatusDTO);
         } else {
-            error.setMainId(mainEntity.getId())
+            String cancelMsg = Objects.nonNull(cancelResult) ? cancelResult.getMsg() : "取消预报远程调用无响应";
+            error.setMainId(latestEntity.getId())
                     .setType(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode())
-                    .setMessage(cancelResult.getMsg())
-                    .setParamJson(mainEntity.getId());
+                    .setMessage(cancelMsg)
+                    .setParamJson(latestEntity.getId());
             addOrUpdateErrors.add(error);
-            mainEntity.setSignOrderError(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
-            updateList.add(mainEntity);
+            updateEntity.setSignOrderError(SoB2cErrorTypeEnum.CANCEL_ORDER_FORECAST.getCode());
         }
 
-        operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), mainEntity.getId(), "取消预报");
-        //更新操作同个事务
-        soB2cService.orderForecastUpdateSoAndError(updateList, deleteErrorIds, addOrUpdateErrors, new ArrayList<>());
+        // 远程取消不可回滚，本地 DB 写入单独事务，避免 Feign 调用拉长事务
+        soB2cService.persistAutoCancelOrderForecastLocalState(updateEntity, deleteErrorIds, addOrUpdateErrors);
+        operateLogService.addModuleOperateLog("平台订单取消后自动取消订单预报", ModuleTypeEnum.SO_B2C.getCode(), latestEntity.getId(), "取消预报");
 
-        //更新入库预报单详情的上传状态
-        transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
-        return cancelResult.isSuccess();
+        // 本地已提交后同步入库预报；失败不回滚本地。无 MQ/定时补偿，与 orderForecast 批量路径一致不校验 Boolean 返回值
+        if (CollUtil.isNotEmpty(updateInstockForcastList)) {
+            try {
+                transferDeclareFeign.updateTransferStatusByBatch(updateInstockForcastList);
+            } catch (Exception e) {
+                log.error("autoCancelOrderForecast sync transfer declare status failed, soId={}, code={}",
+                        updateEntity.getId(), updateEntity.getCode(), e);
+            }
+        }
+        return cancelSuccess;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void persistAutoCancelOrderForecastLocalState(SoB2cEntity updateEntity, List<String> deleteErrorIds, List<SoB2cErrorEntity> addOrUpdateErrors) {
+        // SoB2cEntity 继承 BaseEntity，updateById 走 MyBatis-Plus @Version 乐观锁，false 表示 version 冲突
+        if (!this.updateById(updateEntity)) {
+            log.error("persistAutoCancelOrderForecastLocalState update so_b2c failed, id={}, code={}, version={}",
+                    updateEntity.getId(), updateEntity.getCode(), updateEntity.getVersion());
+            throw new ServiceException(CharSequenceUtil.format("订单{}取消预报本地状态更新失败，请稍后重试", updateEntity.getCode()));
+        }
+        soB2cService.orderForecastUpdateSoAndError(Collections.emptyList(), deleteErrorIds, addOrUpdateErrors, new ArrayList<>());
     }
 
     @Override

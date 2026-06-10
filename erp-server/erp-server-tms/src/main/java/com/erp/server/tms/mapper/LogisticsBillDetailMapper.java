@@ -62,4 +62,13 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
      * @param status
      */
     void updateRegisticsStatus(@Param("transportNo") String transportNo, @Param("platformOrderNo") String platformOrderNo, @Param("status") int status);
+
+    /**
+     * 根据明细已落库的 third_ref_id 关联第三方渠道配置，查询已注册物流单（用于轨迹拉取）
+     *
+     * @param query 查询条件
+     * @param platformType 第三方平台类型 (如 TRACK123)
+     * @return 已注册单据列表
+     */
+    List<LogisticsTrackDTO.UpdateTrackDTO> listRegisterByConfig(@Param("query") LogisticsBillDetailQueryDTO query, @Param("platformType") String platformType);
 }

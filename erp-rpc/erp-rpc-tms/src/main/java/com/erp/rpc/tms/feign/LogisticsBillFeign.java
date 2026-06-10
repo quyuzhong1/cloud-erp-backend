@@ -73,6 +73,17 @@ public interface LogisticsBillFeign {
     List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(@RequestBody LogisticsBillDetailQueryDTO query);
 
     /**
+     * 查询已注册的物流单详情
+     *
+     * @param query 查询条件
+     * @param platformType 第三方平台类型
+     * @return 待注册单据列表
+     */
+    @PostMapping("/feign/logisticsBill/listRegisterByConfig")
+    List<LogisticsTrackDTO.UpdateTrackDTO> listRegisterByConfig(@RequestBody LogisticsBillDetailQueryDTO query,
+                                                                       @RequestParam("platformType") String platformType);
+
+    /**
      * 删除物流单
      * @return
      */

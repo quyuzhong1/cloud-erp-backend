@@ -141,6 +141,15 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      */
     List<LogisticsTrackDTO.UpdateTrackDTO> listWaitingRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType);
 
+    /**
+     * 根据明细 third_ref_id 关联第三方渠道配置，查询已注册物流单详情（用于轨迹拉取）
+     *
+     * @param query 查询条件
+     * @param platformType 第三方平台类型 (如 TRACK123)
+     * @return 已注册单据列表
+     */
+    List<LogisticsTrackDTO.UpdateTrackDTO> listRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType);
+
     void updateRegisterParams(List<LogisticsTrackDTO.UpdateTrackDTO> refList);
 
     /**
