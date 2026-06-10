@@ -51,6 +51,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
@@ -154,6 +155,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK_DYNAMIC;
@@ -531,6 +533,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
+        // 价税合计金额一致性校验：出库明细=0 但上游销售订单明细非0 时拦截，赠品整单放行；上游查不到不拦截
+        if (isAmountMismatchWithUpstreamSo(entity)) {
+            String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+            // 独立事务写入审核状态说明，不影响后续返回值；不抛异常，避免回滚 remark
+            soOutstockService.appendApproveStatusRemark(entity.getId(), message);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+        }
+
         //提交流程
         if(isNeedProcess){
             startProcess(entity);
@@ -585,6 +595,181 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         return variablesMap;
+    }
+
+    /**
+     * 校验销售出库单与上游销售订单的金额一致性（自动从库中加载明细）。
+     * 适用于 submit/approve 等"明细已落库"场景。
+     */
+    private boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+        List<SoOutstockDetailEntity> outDetails = soOutstockDetailService.lambdaQuery()
+                .eq(SoOutstockDetailEntity::getMainId, entity.getId())
+                .list();
+        return isAmountMismatchWithUpstreamSo(entity, outDetails);
+    }
+
+    /**
+     * 校验销售出库单与上游销售订单的金额一致性（明细由调用方传入）。
+     * <p>
+     * 业务规则：
+     * <ol>
+     *     <li>仅 B2C 订单参与校验，B2B 链路保持原状</li>
+     *     <li>若 soId 为空或上游销售订单明细查询为空（如远程异常），不拦截</li>
+     *     <li>对当前出库单中 tax_amount=0 的每条明细，按 so_detail_id 维度
+     *         汇总<b>所有兄弟出库单（同 soId 且非作废，含当前内存明细）</b>的
+     *         tax_amount 总和，与上游销售订单明细对比：
+     *         <ul>
+     *             <li>所有兄弟出库总和 != 0：金额已分摊到其他兄弟单，放行</li>
+     *             <li>上游销售订单明细 isGift = true：赠品，放行</li>
+     *             <li>上游销售订单明细 amount = 0：上游也是 0，放行</li>
+     *             <li>否则命中拦截</li>
+     *         </ul>
+     *     </li>
+     * </ol>
+     * 适用于"主单和明细尚未落库"的同步落地场景，避免重复查询。
+     *
+     * @param entity     销售出库单主单
+     * @param outDetails 销售出库单明细（可来自内存）
+     * @return true 表示金额异常，应拦截；false 表示通过
+     */
+    @Override
+    public boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails) {
+        if (entity == null || !OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+            return false;
+        }
+        String soId = entity.getSoId();
+        if (CharSequenceUtil.isBlank(soId)) {
+            return false;
+        }
+        if (CollUtil.isEmpty(outDetails)) {
+            return false;
+        }
+
+        // 1. 收集当前出库单中 tax_amount=0 的明细的 so_detail_id 作为校验候选
+        Set<String> zeroTaxSoDetailIds = outDetails.stream()
+                .filter(d -> {
+                    BigDecimal tax = d.getTaxAmount() == null ? BigDecimal.ZERO : d.getTaxAmount();
+                    return tax.compareTo(BigDecimal.ZERO) == 0;
+                })
+                .map(SoOutstockDetailEntity::getSoDetailId)
+                .filter(CharSequenceUtil::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(zeroTaxSoDetailIds)) {
+            return false;
+        }
+
+        // 2. 查询上游销售订单明细
+        List<SoB2cDetailEntity> b2cDetails;
+        try {
+            b2cDetails = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
+        } catch (Exception e) {
+            // 上游查询异常视为查不到，按需求不拦截
+            log.warn("销售出库单金额校验：查询上游销售订单明细失败，跳过校验，soId={}, outstockId={}", soId, entity.getId(), e);
+            return false;
+        }
+        if (CollUtil.isEmpty(b2cDetails)) {
+            return false;
+        }
+        Map<String, SoB2cDetailEntity> b2cDetailMap = b2cDetails.stream()
+                .collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity(), (a, b) -> a));
+
+        // 3. 查询同 soId 的非作废兄弟主单（排除当前 entity.id；同步落库场景下当前主单尚未持久化，ne 不影响结果）
+        // 历史数据 invalid_status 可能为 NULL，PostgreSQL 中 NULL != true 返回 NULL 会过滤掉，需显式兼容
+        List<SoOutstockEntity> siblingOutstocks = lambdaQuery()
+                .eq(SoOutstockEntity::getSoId, soId)
+                .and(w -> w.isNull(SoOutstockEntity::getInvalidStatus).or().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE))
+                .ne(CharSequenceUtil.isNotBlank(entity.getId()), SoOutstockEntity::getId, entity.getId())
+                .list();
+
+        // 4. 查询兄弟主单的明细中命中候选 so_detail_id 的部分
+        List<SoOutstockDetailEntity> siblingDetails = Collections.emptyList();
+        if (CollUtil.isNotEmpty(siblingOutstocks)) {
+            List<String> siblingMainIds = siblingOutstocks.stream()
+                    .map(SoOutstockEntity::getId)
+                    .collect(Collectors.toList());
+            siblingDetails = soOutstockDetailService.lambdaQuery()
+                    .in(SoOutstockDetailEntity::getMainId, siblingMainIds)
+                    .in(SoOutstockDetailEntity::getSoDetailId, zeroTaxSoDetailIds)
+                    .list();
+        }
+
+        // 5. 按 so_detail_id 维度合并求 tax_amount 总和（当前内存 + 兄弟主单）
+        Map<String, BigDecimal> taxSumBySoDetailId = new HashMap<>();
+        Stream.concat(outDetails.stream(), siblingDetails.stream())
+                .filter(d -> CharSequenceUtil.isNotBlank(d.getSoDetailId()))
+                .forEach(d -> {
+                    BigDecimal tax = d.getTaxAmount() == null ? BigDecimal.ZERO : d.getTaxAmount();
+                    taxSumBySoDetailId.merge(d.getSoDetailId(), tax, BigDecimal::add);
+                });
+
+        // 6. 逐 so_detail_id 判定：兄弟总和已分摊 / 上游赠品 / 上游为0 → 放行；否则命中
+        for (String soDetailId : zeroTaxSoDetailIds) {
+            BigDecimal sumTax = taxSumBySoDetailId.getOrDefault(soDetailId, BigDecimal.ZERO);
+            if (sumTax.compareTo(BigDecimal.ZERO) != 0) {
+                continue;
+            }
+            SoB2cDetailEntity b2c = b2cDetailMap.get(soDetailId);
+            if (b2c == null) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(b2c.getIsGift())) {
+                continue;
+            }
+            BigDecimal soAmount = b2c.getAmount() == null ? BigDecimal.ZERO : b2c.getAmount();
+            if (soAmount.compareTo(BigDecimal.ZERO) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 审核状态说明字段最大长度，超过则从头部截断
+     * 与 DDL VARCHAR(255) 对齐
+     */
+    private static final int APPROVE_STATUS_REMARK_MAX_LENGTH = 255;
+
+    /**
+     * 追加写入"审核状态说明"
+     * <p>
+     * 使用默认事务传播（REQUIRED），跟随调用方事务提交/回滚。
+     * 校验失败路径下，调用方在写 remark 后直接返回 fail（不抛异常），
+     * 因此父事务会正常 commit，remark 与主流程一起持久化；
+     * 这样也能在父事务尚未提交的同步落库链路里通过 getById 读到刚保存的实体。
+     * </p>
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void appendApproveStatusRemark(String id, String message) {
+        if (CharSequenceUtil.isBlank(id) || CharSequenceUtil.isBlank(message)) {
+            return;
+        }
+        SoOutstockEntity entity = this.getById(id);
+        if (entity == null) {
+            return;
+        }
+        String prev = entity.getApproveStatusRemark();
+        String prefix = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] ";
+        StringBuilder sb = new StringBuilder();
+        if (CharSequenceUtil.isNotBlank(prev)) {
+            sb.append(prev);
+            if (!prev.endsWith("\n")) {
+                sb.append("\n");
+            }
+        }
+        sb.append(prefix).append(message);
+        String merged = sb.toString();
+        // 超长则从头部截断，保留最近内容
+        if (merged.length() > APPROVE_STATUS_REMARK_MAX_LENGTH) {
+            merged = merged.substring(merged.length() - APPROVE_STATUS_REMARK_MAX_LENGTH);
+        }
+        lambdaUpdate()
+                .set(SoOutstockEntity::getApproveStatusRemark, merged)
+                .eq(SoOutstockEntity::getId, id)
+                .update();
     }
 
     /**
@@ -774,6 +959,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         ApproveStatusEnum ingStatus = ApproveStatusEnum.APPROVE_ING;
         if (!ingStatus.equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.WF_APPROVE_ALLOWED_STATUS_ONLY);
+        }
+
+        // 价税合计金额一致性校验：仅审核通过时拦截，状态保持审核中，写入审核状态说明
+        if (ApproveTypeEnum.PASS.equals(approveType) && isAmountMismatchWithUpstreamSo(entity)) {
+            String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE);
+            soOutstockService.appendApproveStatusRemark(entity.getId(), message);
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
         }
 
         if(OrderTypeEnum.B2B.getCode().equalsIgnoreCase(entity.getOrderType())){

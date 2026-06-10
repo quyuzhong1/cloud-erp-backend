@@ -456,6 +456,35 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void submitAndApprove(String id);
 
     /**
+     * 追加写入"审核状态说明"
+     * <p>
+     * 用途：提交/审核校验失败时，把失败原因落地到 so_outstock.approve_status_remark
+     * 字段，前端列表可见。
+     * 写入策略：按 [yyyy-MM-dd HH:mm:ss] 前缀追加，超过最大长度从头部截断。
+     * 事务策略：默认事务传播（REQUIRED），跟随调用方事务提交，
+     * 校验失败路径调用方直接 return 不抛异常，父事务正常 commit。
+     * </p>
+     *
+     * @param id      销售出库单主键
+     * @param message 本次失败说明
+     */
+    void appendApproveStatusRemark(String id, String message);
+
+    /**
+     * 校验销售出库单与上游销售订单金额是否一致（不一致需拦截）。
+     * <p>
+     * 适用于"主单和明细尚未落库"的同步落地场景（如旺店通/奇门同步），
+     * 让调用方在内存里完成判定，避免重复查询。
+     * 已落库场景请通过 submit/approve 公共流程触发，不需直接调用此方法。
+     * </p>
+     *
+     * @param entity     销售出库单主单
+     * @param outDetails 销售出库单明细（可来自内存）
+     * @return true 表示金额异常应拦截，false 表示通过
+     */
+    boolean isAmountMismatchWithUpstreamSo(SoOutstockEntity entity, List<SoOutstockDetailEntity> outDetails);
+
+    /**
      * 保存与（提交, 审核）事务分开
      */
     Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto);

@@ -21,6 +21,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -80,6 +81,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -341,6 +343,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setSalesOrgName(shopInfo.getSalesOrgName());
         soOutstock.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
         soOutstock.setInvalidStatus(false);
+        // 默认按已审核落库；后续金额校验不通过时会改为待提交
         soOutstock.setApproveStatus(ApproveStatusEnum.APPROVE);
         soOutstock.setApproveTime(soOutstock.getActualDeliveryDate());
         List<WdtSoOutStockDetailDTO> wdtSoOutStockDetailDTOS = buildOutStockDetail(soOutstock,entity.getDetailList());
@@ -426,6 +429,23 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         // 记录最新出库日期
         List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
 //        plmTaskFeign.updateSkuStdCost(new SkuStdCostDTO.UpdateDTO(skuIds, entity.getBillDate()));
+
+        // 价税合计金额一致性校验：拉回时若出库明细=0 但上游销售订单非0，落"待提交"状态等待人工处理，
+        // 不扣库存、不创建物流单、不推送外部系统；上游查不到不拦截。
+        boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailList);
+        if (amountMismatch) {
+            String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+            String stamped = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] " + mismatchMsg;
+            soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            soOutstock.setApproveTime(null);
+            soOutstock.setApproveStatusRemark(stamped);
+            soOutstockService.save(soOutstock);
+            String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
+            operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");
+            soOutstockDetailService.saveBatch(detailList);
+            log.warn("旺店通同步销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
+            return;
+        }
 
         //保存销售出库单
         soOutstockService.save(soOutstock);
