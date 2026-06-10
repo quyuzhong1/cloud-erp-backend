@@ -23,7 +23,7 @@ public class ExportTmsB2BDeclareBillHandler extends AbstractPageFileEventHandler
 
     @Override
     public String getExcelPath() {
-        return "excel/tms/b2bDeclareBill.xlsx";
+        return "excel/tms/declareBill.xlsx";
     }
 
     @Override
