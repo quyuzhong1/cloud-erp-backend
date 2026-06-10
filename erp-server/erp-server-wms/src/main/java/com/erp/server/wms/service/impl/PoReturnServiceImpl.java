@@ -301,6 +301,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         checkSkuReturnQtyForAdd(dto);
         // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
         checkPackReturnWarehouseLocationForAdd(dto);
+        // 整箱退货统一不挂采购订单：无论前端是否回传 purchaseOrderId，都强制清空，保持与 PDA 端语义一致。
+        if (CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
+            dto.setPurchaseOrderId(null);
+        }
         FindUserDTO userDTO = new FindUserDTO();
 
         //获取用户信息
@@ -466,6 +471,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         checkSkuReturnQtyForUpdate(dto);
         // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
         checkPackReturnWarehouseLocationForUpdate(dto);
+        // 整箱退货统一不挂采购订单：无论前端是否回传 purchaseOrderId，都强制清空，保持与 PDA 端语义一致。
+        if (packReturnDetail
+                && CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())) {
+            dto.setPurchaseOrderId(null);
+        }
 
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getReturnUserId());
@@ -3229,12 +3239,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public String pdaAdd(PurchaseReturnOrderDTO.AddDTO dto) {
         // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
         checkPackReturnWarehouseLocationForAdd(dto);
-        // 如果是整箱退货，需要将采购订单id设置为null
-        if (CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
-                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
-            dto.setPurchaseOrderId(null);
-        }
-        if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+        // 整箱退货由 add(...) 内部统一清空 purchaseOrderId，这里仅用作下方 PDA 拆单逻辑的门禁。
+        boolean packReturnDetail = CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForAdd(dto)), ReturnDetailTypeEnum.PACK.getCode());
+        if (!packReturnDetail && CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -3310,12 +3318,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean pdaUpdate(PurchaseReturnOrderDTO.UpdateDTO dto) {
         // 整箱退货：所有 SKU 明细行必须填写仓位，任意一行为空则拦截。
         checkPackReturnWarehouseLocationForUpdate(dto);
-        // 如果是整箱退货，需要将采购订单id设置为null
-        if (CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
-                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode())) {
-            dto.setPurchaseOrderId(null);
-        }
-        if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
+        // 整箱退货由 update(...) 内部统一清空 purchaseOrderId，这里仅用作下方 PDA 拆单逻辑的门禁。
+        boolean packReturnDetail = CollectionUtils.isNotEmpty(dto.getPurchasePriceDetailList())
+                && CharSequenceUtil.equals(resolveReturnDetailType(dto.getReturnDetailType(), hasAfterSalePackDetailsForUpdate(dto)), ReturnDetailTypeEnum.PACK.getCode());
+        if (!packReturnDetail && CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> detailList = dto.getPurchasePriceDetailList();
             List<String> orderDetailIds = detailList.stream().map(req -> req.getPurchaseOrderDetailId()).collect(Collectors.toList());
             //根据ids查询采购单详情
