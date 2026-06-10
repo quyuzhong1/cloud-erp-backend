@@ -23,6 +23,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeApplyScopeEnum;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
+import com.erp.model.sys.enums.CfgThirdNoticeUrlTypeEnum;
 import com.erp.model.sys.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
@@ -529,6 +530,9 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
         String method = data.getMethod();
         data.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
+        // noticeType 存的即为显示文本（枚举 name 或历史自定义值），直接透传
+        data.setNoticeTypeName(entity.getNoticeType());
+        data.setUrlTypeName(CfgThirdNoticeUrlTypeEnum.getName(entity.getUrlType()));
         if(StringUtils.isNotBlank(data.getPost())){
             //岗位id
             List<String> postIdList = Arrays.asList(data.getPost().split(","));

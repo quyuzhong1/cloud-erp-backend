@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.sys.dto.SysCommonDTO;
+import com.erp.model.sys.enums.CfgThirdNoticeTypeEnum;
 import com.erp.rpc.file.feign.FileFeign;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
@@ -116,6 +117,22 @@ public class CommonController extends BaseController {
             list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath, BigDecimal.valueOf(file.getSize() / 1024 / 1024).setScale(2)));
         }
         return this.success(list);
+    }
+
+    /**
+     * 三方通知-通知类型下拉列表
+     * 前端选中后将 name 值作为 noticeType 字段提交存库，兼容历史自定义文本数据。
+     * 枚举：CfgThirdNoticeTypeEnum
+     *
+     * @return name 列表
+     */
+    @GetMapping("/noticeTypeDropDown")
+    public ApiResult<List<String>> noticeTypeDropDown() {
+        List<String> result = new ArrayList<>();
+        for (CfgThirdNoticeTypeEnum e : CfgThirdNoticeTypeEnum.values()) {
+            result.add(e.getName());
+        }
+        return success(result);
     }
 
 }

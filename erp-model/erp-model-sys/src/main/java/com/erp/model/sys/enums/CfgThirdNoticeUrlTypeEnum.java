@@ -11,26 +11,32 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author jack
- * @since 2026-06-08
+ * @since 2026-06-09
  */
 public enum CfgThirdNoticeUrlTypeEnum implements EnumMessage {
     CUSTOM("custom", "自定义路径"),
     MENU("menu", "选择菜单"),
     ;
-    /**
-     * 类型
-     */
+
     @EnumValue
     @JsonValue
-    private String code;
-    /**
-     * 名称
-     */
-    private String name;
+    private final String code;
+
+    private final String name;
 
     CfgThirdNoticeUrlTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     public static String getName(String code) {
@@ -43,15 +49,5 @@ public enum CfgThirdNoticeUrlTypeEnum implements EnumMessage {
             }
         }
         return "";
-    }
-
-    @Override
-    public String getCode() {
-        return code;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }
