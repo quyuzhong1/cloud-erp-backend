@@ -144,9 +144,9 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public List<LogisticsSupplierDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<LogisticsSupplierDTO.TabListDTO> list = baseMapper.tabList(dto.getPermissionSql());
-        List<DictBasicDTO.ViewDTO> typeList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_SUPPLIER.getType());
+        List<com.erp.model.tms.entity.DictBasicEntity> typeList = dictBasicService.getByKey(DictBasicEnum.LOGISTICS_SUPPLIER.getType());
         List<LogisticsSupplierDTO.TabListDTO> resultList = new ArrayList<>(typeList.size());
-        for (DictBasicDTO.ViewDTO item : typeList) {
+        for (com.erp.model.tms.entity.DictBasicEntity item : typeList) {
             LogisticsSupplierDTO.TabListDTO tab = new LogisticsSupplierDTO.TabListDTO();
             String type = item.getCode();
             tab.setTabFlag(type);

@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -20,14 +21,18 @@ import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
-import com.erp.server.sys.service.SysUserInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -40,9 +45,8 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Autowired
     private SysDepartmentService sysDepartmentService;
-
-    @Autowired
-    private SysUserInfoService sysUserInfoService;
+    @Resource
+    private RedisService redisService;
 
     @Override
     public PagingVO findDepartmentUser(PagingDTO<DepartmentSearchDTO> dto) {
@@ -51,26 +55,6 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         List<String> departmentIds = sysDepartmentService.getDepartmentIds(params.getDepartmentId());
         IPage pageData = baseMapper.findDepartmentUser(query, params, departmentIds);
         return new PagingVO(pageData);
-    }
-
-
-    /**
-     * 根据部门Ids 删除对应关系
-     *
-     * @param ids
-     * @return void
-     * @author yl
-     * @date 2022-07-14 10:03
-     */
-
-    @Override
-    public void removeByDepartmentIds(List<String> ids) {
-        LambdaQueryWrapper<SysDepartmentUserEntity> wrapper = new LambdaQueryWrapper();
-        if (CollectionUtils.isNotEmpty(ids)) {
-            wrapper.in(SysDepartmentUserEntity::getDepartmentId, ids);
-            baseMapper.delete(wrapper);
-        }
-
     }
 
     /**
@@ -85,6 +69,8 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     @Override
     public void setLead(UpdateUserStateDTO dto) {
         LoginUser loginUser = UserContext.getNonLoginUser();
+        //删除缓存@Cacheable(value = "cache:sys:dept:getDeptByUserId", key = "#userId")
+        redisService.deleteObject(String.format("cache:sys:dept:getDeptByUserId::%s", loginUser.getUid()));
         LambdaUpdateWrapper<SysDepartmentUserEntity> updateWrapper = new LambdaUpdateWrapper();
         updateWrapper.set(SysDepartmentUserEntity::getLeadState, dto.getState());
         updateWrapper.set(SysDepartmentUserEntity::getUpdateTime, LocalDateTime.now());
@@ -124,13 +110,13 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         String departmentId = dto.getDepartmentId();
 
         List<SysDepartmentUserEntity> dbList = this.listByDepartmentIds(Arrays.asList(departmentId));
-        List<String> existUserIdList=dbList.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
+        List<String> existUserIdList = dbList.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
         List<String> removeIdList = dbList.stream().filter(d -> !userIds.contains(d.getUserId())).
                 map(SysDepartmentUserEntity::getId).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(removeIdList)){
-             this.removeByIds(removeIdList);
+        if (CollectionUtils.isNotEmpty(removeIdList)) {
+            this.removeByIds(removeIdList);
         }
-        List<String> addUserList=userIds.stream().filter(a->!existUserIdList.contains(a)).collect(Collectors.toList());
+        List<String> addUserList = userIds.stream().filter(a -> !existUserIdList.contains(a)).collect(Collectors.toList());
         //在添加
         List<SysDepartmentUserEntity> addList = new LinkedList<>();
         LocalDateTime now = LocalDateTime.now();
@@ -147,6 +133,8 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             entity.setCreateTime(now);
             entity.setCreateUserId(currentUserId);
             entity.setCreateUserName(userName);
+            //删除缓存@Cacheable(value = "cache:sys:dept:getDeptByUserId", key = "#userId")
+            redisService.deleteObject(String.format("cache:sys:dept:getDeptByUserId::%s", userId));
             addList.add(entity);
         }
         if (CollectionUtils.isNotEmpty(addList)) {
@@ -188,6 +176,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     }
 
     @Override
+    @Cacheable(value = "cache:sys:dept:getDeptByUserId", key = "#userId")
     public SysDepartmentUserNumberDTO getDeptByUserId(String userId) {
         SysDepartmentUserNumberDTO deptByUserId = baseMapper.getDeptByUserId(userId);
         if (ObjectUtils.isEmpty(deptByUserId)) {
@@ -251,7 +240,35 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         if (CollectionUtils.isEmpty(userIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.listDeptUserByUserIdList(userIdList);
+        List<String> userIds = userIdList.stream()
+                .filter(com.alibaba.nacos.common.utils.StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysDepartmentUserNumberDTO> result = new ArrayList<>();
+        List<String> missUserIds = new ArrayList<>();
+        for (String userId : userIds) {
+            String redisKey = String.format("cache:sys:dept:getDeptByUserId::%s", userId);
+            SysDepartmentUserNumberDTO cacheObject = redisService.getCacheObject(redisKey);
+            if (cacheObject != null) {
+                if (Objects.nonNull(cacheObject.getDepartmentId())) {
+                    result.add(cacheObject);
+                }
+            } else {
+                missUserIds.add(userId);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missUserIds)) {
+            List<SysDepartmentUserNumberDTO> dbList = baseMapper.listDeptUserByUserIdList(missUserIds);
+            Map<String, SysDepartmentUserNumberDTO> dbMap = dbList.stream()
+                    .collect(Collectors.toMap(SysDepartmentUserNumberDTO::getUserId, Function.identity(), (existing, replacement) -> existing));
+            for (String userId : missUserIds) {
+                SysDepartmentUserNumberDTO dto = dbMap.getOrDefault(userId, new SysDepartmentUserNumberDTO());
+                String redisKey = String.format("cache:sys:dept:getDeptByUserId::%s", userId);
+                redisService.setCacheObject(redisKey, dto, 8L, TimeUnit.HOURS);
+                result.add(dto);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -264,24 +281,25 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "cache:sys:dept:getDeptByUserId", key = "#uid")
     public void batchSaveOrUpdate(String uid, List<String> departmentIdList, boolean ifAdd) {
-        if (StringUtils.isBlank(uid)){
+        if (StringUtils.isBlank(uid)) {
             return;
         }
         //如果是修改 则要先删除数据
         if (!ifAdd) {
             deleteUidDepartmentRef(uid);
         }
-        if(CollectionUtils.isNotEmpty(departmentIdList)){
+        if (CollectionUtils.isNotEmpty(departmentIdList)) {
             //排除已存在的关联数据
-            List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).eq(SysDepartmentUserEntity::getUserId,uid).list();
-            if(CollUtil.isNotEmpty(oldDepartmentIds)){
+            List<SysDepartmentUserEntity> oldDepartmentIds = lambdaQuery().in(SysDepartmentUserEntity::getDepartmentId, departmentIdList).eq(SysDepartmentUserEntity::getUserId, uid).list();
+            if (CollUtil.isNotEmpty(oldDepartmentIds)) {
                 Set<String> existingIds = oldDepartmentIds.stream()
                         .map(SysDepartmentUserEntity::getDepartmentId)
                         .collect(Collectors.toSet());
                 departmentIdList.removeIf(existingIds::contains);
             }
-            if(CollectionUtils.isNotEmpty(departmentIdList)){
+            if (CollectionUtils.isNotEmpty(departmentIdList)) {
                 List<SysDepartmentUserEntity> addList = new LinkedList<>();
                 for (String departmentId : departmentIdList) {
                     SysDepartmentUserEntity entity = new SysDepartmentUserEntity();
@@ -304,7 +322,28 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
         if (CollectionUtils.isEmpty(uids)) {
             return;
         }
+        uids.forEach(userId -> {
+            //删除缓存@Cacheable(value = "cache:sys:dept:getDeptByUserId", key = "#userId")
+            redisService.deleteObject(String.format("cache:sys:dept:getDeptByUserId::%s", userId));
+        });
         lambdaUpdate().in(SysDepartmentUserEntity::getUserId, uids).remove();
+    }
+
+    @Override
+    public boolean deleteByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return true;
+        }
+        List<SysDepartmentUserEntity> entityList = listByIds(ids);
+        if (CollUtil.isEmpty(entityList)) {
+            return true;
+        }
+        entityList.stream().map(SysDepartmentUserEntity::getUserId).distinct().forEach(userId -> {
+            //删除缓存@Cacheable(value = "cache:sys:dept:getDeptByUserId", key = "#userId")
+            redisService.deleteObject(String.format("cache:sys:dept:getDeptByUserId::%s", userId));
+        });
+        this.removeByIds(ids);
+        return true;
     }
 
     private void deleteUidDepartmentRef(String uid) {

@@ -53,7 +53,8 @@ public class KolB2bApplicationQueryHandler extends AbstractQueryHandler {
                     ")" ;
         }
         if ("feedbackUrl".equals(field)) {
-            return " exists (SELECT source_detail_id FROM kol_feedback  WHERE is_deleted= false source_detail_id = kbad.id and url "+ compareCodeSplicingValueSql +
+            // compareCodeSplicingValueSql 由 WebAdvanceQueryAspect/QueryUtils 统一校验和生成，这里只替换业务表关联。
+            return " exists (SELECT 1 FROM kol_sample_cost_ref_feedback_url WHERE is_deleted = false AND source_type = '" + SourceTypeEnum.KOL_B2B_APPLICATION.getCode() + "' AND source_detail_id = kbad.id AND url "+ compareCodeSplicingValueSql +
                     ")" ;
         }
         return null;

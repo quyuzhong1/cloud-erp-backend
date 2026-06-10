@@ -134,6 +134,16 @@ public interface B2cOrderConverter {
             @Mapping(target = "sourceType", ignore = true),
             @Mapping(target = "soCode", source = "code"),
             @Mapping(target = "detailList", ignore = true),
+            @Mapping(target = "billType", ignore = true),
+            @Mapping(target = "cancelStatus", ignore = true),
+            @Mapping(target = "handleResult", ignore = true),
+            @Mapping(target = "handleStatus", ignore = true),
+            @Mapping(target = "handleTime", ignore = true),
+            @Mapping(target = "handleUserName", ignore = true),
+            @Mapping(target = "interceptStatus", ignore = true),
+            @Mapping(target = "logisticsChannelId", ignore = true),
+            @Mapping(target = "logisticsChannelName", ignore = true),
+            @Mapping(target = "transportNo", ignore = true)
     })
     SoB2cDeliveryInterceptDTO.AddDTO convertIntercept(SoB2cEntity entity);
 
@@ -445,7 +455,6 @@ public interface B2cOrderConverter {
     })
     SoMultiChannelDTO.ReceiverInfo convertSoMultiChannelReceiver(SoMultiChannelEntity entity);
 
-    List<SoB2cDetailDTO.ListDTO> toDetailDTOList(List<SoB2cDetailEntity> detailList);
     @Mapping(target = "virtualWarehouseName", ignore = true)
     @Mapping(target = "virtualUsableQty", ignore = true)
     @Mapping(target = "useableQty", ignore = true)
@@ -467,4 +476,5 @@ public interface B2cOrderConverter {
     @Mapping(target = "declareLabel", ignore = true)
     @Mapping(target = "childScarceList", ignore = true)
     SoB2cDetailDTO.ListDTO toDetailDTO(SoB2cDetailEntity detail);
+    List<SoB2cDetailDTO.ListDTO> toDetailDTOList(List<SoB2cDetailEntity> detailList);
 }

@@ -175,8 +175,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
 
     @Override
     public List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> listDictSelect(CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto) {
-        List<DictBasicDTO.ViewDTO> platformList = dictBasicService.getByKey(dto.getKey());
-        List<DictBasicDTO.ViewDTO> filtrationDictList = platformList.stream()
+        List<DictBasicEntity> platformList = dictBasicService.getByKey(dto.getKey());
+        List<DictBasicEntity> filtrationDictList = platformList.stream()
                 .filter(p -> dto.getNames().contains(p.getValue()))
                 .collect(Collectors.toList());
         List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> viewDictPlatformDTOList = BeanUtil.copyToList(filtrationDictList, CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO.class);
