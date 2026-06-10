@@ -1269,7 +1269,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
         Map<String, OverseasWarehouseInboundReceivedEntity> receivedEntityMap = receivedEntityList.stream().collect(Collectors.toMap(v -> v.getDetailId() + v.getReceiveQty() + LocalDateTimeUtil.formatNormal(v.getReceiveTime()), Function.identity(), (v1, v2) -> v1));
         Set<String> receivedKeySet = new HashSet<>(receivedEntityMap.keySet());
-        Set<String> daMaiFlowKeySet = receivedEntityList.stream()
+        // flowKeySet：按 flow_id + create_user_id 维度去重，覆盖 DA_MAI / WEGO 等会回传唯一流水 ID 的平台；
+        // jifeng 等不回传 thirdId 的平台 flow_id 为空，被过滤掉不会进集合，互不影响。
+        Set<String> flowKeySet = receivedEntityList.stream()
                 .filter(v -> StringUtil.isNotBlank(v.getFlowId()))
                 .map(v -> v.getFlowId() + v.getCreateUserId())
                 .collect(Collectors.toSet());
@@ -1290,13 +1292,30 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 }else if(PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(dto.getPlatform())){
                     // 先执行流水ID判断
                     String flowKey = receiving.getThirdId() + dto.getAuthId();
-                    if (StringUtil.isNotBlank(receiving.getThirdId()) && !daMaiFlowKeySet.add(flowKey)) {
+                    if (StringUtil.isNotBlank(receiving.getThirdId()) && !flowKeySet.add(flowKey)) {
                         continue;
                     }
                     // 再执行key判断
                     String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
                     if (!receivedKeySet.add(key)) {
                         continue;
+                    }
+                } else if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dto.getPlatform())) {
+                    // wego 在 WegoInboundRocketMQTaskHandler 为每条流水生成的 thirdId 为
+                    // inOrderDetailId_batch_createTime_sku，在仓库侧已经唯一定位一次上架操作。
+                    // 多次部分签收场景下 wego 每次会推全量 instocks 列表，必须按 flowId+authId 去重，
+                    // 否则同一条批次会被反复落 overseas_warehouse_inbound_received，导致调拨/状态计算重复触发。
+                    // 兜底：极端情况下 thirdId 缺失时降级到 (detailId,qty,time) 弱去重，避免完全丢数据。
+                    if (StringUtil.isNotBlank(receiving.getThirdId())) {
+                        String flowKey = receiving.getThirdId() + dto.getAuthId();
+                        if (!flowKeySet.add(flowKey)) {
+                            continue;
+                        }
+                    } else {
+                        String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
+                        if (!receivedKeySet.add(key)) {
+                            continue;
+                        }
                     }
                 } else {
                     String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
