@@ -1021,6 +1021,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      * @param virtualInventoryQtyList
      */
     private static void checkTotalQty(List<VirtualWarehouseAllocationDTO.DetailDto> detailList, String type, List<VirtualInventoryDTO.ViewQtyDTO> virtualInventoryQtyList) {
+        List<String> errorMsgList = new ArrayList<>();
         switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
             case ALLOCATION:
                 //获取根据sku和实体仓获取需要一共要分配的数量
@@ -1033,10 +1034,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         Integer warehouseAllocationQty = viewQtyDTO.getWarehouseAllocationQty();
                         Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
                         if (warehouseAllocationQty < reduce) {
-                            throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), warehouseAllocationQty);
+                            errorMsgList.add(formatApiError(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), warehouseAllocationQty));
                         }
                     } else {
-                        throw new ServiceException(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), 0);
+                        errorMsgList.add(formatApiError(ApiError.WH_ENTITY_ALLOCATION_STOCK_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getWarehouseName(), 0));
                     }
                 });
                 break;
@@ -1052,14 +1053,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         Integer vwUsableQty = fromVmQty.getFromVirtualWarehouseUsableQty();
                         Integer reduce = list.stream().map(VirtualWarehouseAllocationDTO.DetailDto::getQty).reduce(0, Integer::sum);
                         if (vwUsableQty < reduce) {
-                            throw new ServiceException(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
+                            errorMsgList.add(formatApiError(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty()));
                         }
                     } else {
-                        throw new ServiceException(ApiError.VM_INVENTORY_INSUFFICIENT_FOR_TRANSFER, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), 0);
+                        errorMsgList.add(formatApiError(ApiError.VM_SOURCE_INVENTORY_INSUFFICIENT, list.get(0).getSkuNo(), list.get(0).getFromVirtualWarehouseName(), 0));
                     }
                 });
                 break;
         }
+        throwBatchServiceException(resolveInventoryCheckApiError(type), errorMsgList);
     }
 
     /**
