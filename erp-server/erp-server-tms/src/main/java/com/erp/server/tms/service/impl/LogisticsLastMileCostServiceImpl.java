@@ -489,7 +489,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             // 已确认状态是后续对账流程入口，只有用户选择导入并确认时才在本次导入末尾流转。
-            if (confirmStatus) {
+            if ( Boolean.TRUE.equals(confirmStatus)) {
                 pairList.forEach(obj -> this.updateReconciliationStatus(obj.getKey(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getValue()));
             }
         }

@@ -2032,11 +2032,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 dto.setCostValue(BigDecimal.ZERO);
                 return dto;
             });
+
+            BigDecimal costValue = ObjectUtil.defaultIfNull(updateDTO.getCostValue(), BigDecimal.ZERO);
             if (LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(updateDTO.getType())) {
-                addDataDTO.setEstimatedValue(ObjectUtil.defaultIfNull(addDataDTO.getEstimatedValue(), BigDecimal.ZERO).add(updateDTO.getCostValue()));
+                addDataDTO.setEstimatedValue(ObjectUtil.defaultIfNull(addDataDTO.getEstimatedValue(), BigDecimal.ZERO).add(costValue));
                 addDataDTO.setEstimatedCurrency(updateDTO.getCurrency());
             } else {
-                addDataDTO.setCostValue(addDataDTO.getCostValue().add(updateDTO.getCostValue()));
+                addDataDTO.setCostValue(addDataDTO.getCostValue().add(costValue));
                 addDataDTO.setCurrency(updateDTO.getCurrency());
             }
         }

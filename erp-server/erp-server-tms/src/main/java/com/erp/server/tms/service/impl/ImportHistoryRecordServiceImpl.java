@@ -537,21 +537,20 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                                                                  CfgLogisticsCostImportEntity costImportEntity) {
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> billVoIndex = buildLogisticsBillVoIndex(
                 preQueryResult.getLogisticsBillVoList(), uniqueKeyList, costImportEntity);
-        Map<String, List<JSONObject>> groupRowMap = new LinkedHashMap<>();
-        Map<JSONObject, List<LogisticsBillDTO.LogisticsBillVo>> rowMatchedBillMap = new IdentityHashMap<>();
+        Map<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> groupRowMap = new LinkedHashMap<>();
         for (JSONObject row : successList) {
             List<LogisticsBillDTO.LogisticsBillVo> matchedBillList = resolveMatchedLogisticsBillVoList(uniqueKeyList,
                     row, billVoIndex, costImportEntity);
-            rowMatchedBillMap.put(row, matchedBillList);
             String groupKey = buildImportRowGroupKey(row, uniqueKeyList, matchedBillList);
-            groupRowMap.computeIfAbsent(groupKey, key -> new ArrayList<>()).add(row);
+            groupRowMap.computeIfAbsent(groupKey, key -> new ArrayList<>())
+                    .add(new ImportHistoryRecordDTO.ImportRowContextDTO(row, matchedBillList));
         }
         Map<String, List<LogisticsBillDTO.LogisticsBillVo>> groupMatchedBillMap = new LinkedHashMap<>();
-        groupRowMap.forEach((groupKey, rowList) -> {
+        groupRowMap.forEach((groupKey, rowContextList) -> {
             List<String> ignoreErrorList = new ArrayList<>();
-            groupMatchedBillMap.put(groupKey, resolveGroupMatchedLogisticsBillVoList(rowList, rowMatchedBillMap, ignoreErrorList));
+            groupMatchedBillMap.put(groupKey, resolveGroupMatchedLogisticsBillVoList(rowContextList, ignoreErrorList));
         });
-        return new ImportHistoryRecordDTO.ImportGroupContextDTO(groupRowMap, rowMatchedBillMap, groupMatchedBillMap);
+        return new ImportHistoryRecordDTO.ImportGroupContextDTO(groupRowMap, groupMatchedBillMap);
     }
 
     /**
@@ -665,19 +664,18 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      * 解析同一导入分组命中的物流单集合。
      * <p>同一组内费用会被合计后统一处理，因此每行命中的物流单集合必须一致；不一致时直接报错，避免错误合并费用。</p>
      */
-    private List<LogisticsBillDTO.LogisticsBillVo> resolveGroupMatchedLogisticsBillVoList(List<JSONObject> rowList,
-                                                                                          Map<JSONObject, List<LogisticsBillDTO.LogisticsBillVo>> rowMatchedBillMap,
+    private List<LogisticsBillDTO.LogisticsBillVo> resolveGroupMatchedLogisticsBillVoList(List<ImportHistoryRecordDTO.ImportRowContextDTO> rowContextList,
                                                                                           List<String> errorMsgList) {
-        if (CollUtil.isEmpty(rowList)) {
+        if (CollUtil.isEmpty(rowContextList)) {
             return Collections.emptyList();
         }
-        List<LogisticsBillDTO.LogisticsBillVo> firstMatchedList = rowMatchedBillMap.get(rowList.get(0));
+        List<LogisticsBillDTO.LogisticsBillVo> firstMatchedList = rowContextList.get(0).getMatchedBillList();
         if (firstMatchedList == null) {
             firstMatchedList = Collections.emptyList();
         }
         String firstBillSetKey = buildMatchedBillSetKey(firstMatchedList);
-        for (int i = 1; i < rowList.size(); i++) {
-            List<LogisticsBillDTO.LogisticsBillVo> currentMatchedList = rowMatchedBillMap.get(rowList.get(i));
+        for (int i = 1; i < rowContextList.size(); i++) {
+            List<LogisticsBillDTO.LogisticsBillVo> currentMatchedList = rowContextList.get(i).getMatchedBillList();
             if (!CharSequenceUtil.equals(firstBillSetKey, buildMatchedBillSetKey(currentMatchedList))) {
                 errorMsgList.add("同一识别单号分组命中的物流单不一致，无法合并分摊费用");
                 return Collections.emptyList();
@@ -734,25 +732,26 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
         // 分组阶段先确定哪些 Excel 行应合并：普通识别号按识别值，platformCode 按命中的物流单集合，避免多平台单号覆盖同一费用单。
         ImportHistoryRecordDTO.ImportGroupContextDTO importGroupContext = buildImportGroupContext(successList, uniqueKeyList, preQueryResult, costImportEntity);
-        Map<String, List<JSONObject>> map = importGroupContext.getGroupRowMap();
+        Map<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> map = importGroupContext.getGroupRowMap();
         // 多物流单分摊依赖出库明细/SKU毛重，须在提交线程池前批量预加载；子线程内 Feign 既会按分组放大远程调用，也无法透传 RequestContext。
         preloadOrderWeightData(importGroupContext.getGroupMatchedBillMap(), preQueryResult);
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
         List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
         int batchSize = 100;
-        List<Map.Entry<String, List<JSONObject>>> entryList = new ArrayList<>(map.entrySet());
+        List<Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>>> entryList = new ArrayList<>(map.entrySet());
         for (int i = 0; i < entryList.size(); i += batchSize) {
             int end = Math.min(entryList.size(), i + batchSize);
-            List<Map.Entry<String, List<JSONObject>>> batch = entryList.subList(i, end);
+            List<Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>>> batch = entryList.subList(i, end);
             futures.add(importHistoryRecordPool.submit(() -> {
-                for (Map.Entry<String, List<JSONObject>> entry : batch) {
-                    List<JSONObject> value = entry.getValue();
+                for (Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> entry : batch) {
+                    List<ImportHistoryRecordDTO.ImportRowContextDTO> value = entry.getValue();
                     JSONObject successJson = new JSONObject();
                     List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
                     HashMap<String, String> currencyMap = new HashMap<>();
                     // 逐条处理每个jsonObject，分别校验和赋值
-                    for (JSONObject jsonObject : value) {
+                    for (ImportHistoryRecordDTO.ImportRowContextDTO rowContext : value) {
+                        JSONObject jsonObject = rowContext.getRow();
                         jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                         List<String> costErrorMsgList = new ArrayList<>();
                         List<TmsCostDetailDTO.UpdateDTO> updateList = rowFormatCost(successJson, jsonObject, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode(), costErrorMsgList, currencyMap, currencyLookupMap, currencyRateMap);
@@ -765,7 +764,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         updateAllList.addAll(updateList);
                     }
                     List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateAllList);
-                    List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
+                    List<ImportHistoryRecordDTO.ImportRowContextDTO> costSuccessContextList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.getRow().get(matchIndex.toString()))).collect(Collectors.toList());
+                    List<JSONObject> costSuccessList = costSuccessContextList.stream().map(ImportHistoryRecordDTO.ImportRowContextDTO::getRow).collect(Collectors.toList());
                     if (CollUtil.isEmpty(costSuccessList)) {
                         continue;
                     }
@@ -773,7 +773,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     try {
                         // 同一识别分组会先汇总费用，再把固定的物流单集合传入 handleImportData，由既有重量分摊逻辑处理一对多/多对多。
                         List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVoList = resolveGroupMatchedLogisticsBillVoList(
-                                costSuccessList, importGroupContext.getRowMatchedBillMap(), mainErrorMsgList);
+                                costSuccessContextList, mainErrorMsgList);
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
                                 preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList,
                                 preQueryResult.getMainIdListMap(), preQueryResult.getOrderWeightMap(), preQueryResult.getOrderWeightErrorMap(), matchedLogisticsBillVoList);
@@ -814,23 +814,24 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         List<LogisticsBillCostDTO.ImportDataDTO> importDataList = Collections.synchronizedList(new ArrayList<>());
         // 分组阶段先确定哪些 Excel 行应合并：普通识别号按识别值，platformCode 按命中的物流单集合，避免多平台单号覆盖同一费用单。
         ImportHistoryRecordDTO.ImportGroupContextDTO importGroupContext = buildImportGroupContext(successList, uniqueKeyList, preQueryResult, costImportEntity);
-        Map<String, List<JSONObject>> map = importGroupContext.getGroupRowMap();
+        Map<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> map = importGroupContext.getGroupRowMap();
         // 多物流单分摊依赖出库明细/SKU毛重，须在提交线程池前批量预加载；子线程内 Feign 既会按分组放大远程调用，也无法透传 RequestContext。
         preloadOrderWeightData(importGroupContext.getGroupMatchedBillMap(), preQueryResult);
         Integer matchIndex = getMapKey(headMap, MATCH_FIELD);
         Integer errorIndex = getMapKey(headMap, ERROR_MSG);
         List<java.util.concurrent.Future<Void>> futures = new ArrayList<>();
         int batchSize = 100;
-        List<Map.Entry<String, List<JSONObject>>> entryList = new ArrayList<>(map.entrySet());
+        List<Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>>> entryList = new ArrayList<>(map.entrySet());
         for (int i = 0; i < entryList.size(); i += batchSize) {
             int end = Math.min(entryList.size(), i + batchSize);
-            List<Map.Entry<String, List<JSONObject>>> batch = entryList.subList(i, end);
+            List<Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>>> batch = entryList.subList(i, end);
             futures.add(importHistoryRecordPool.submit(() -> {
-                for (Map.Entry<String, List<JSONObject>> entry : batch) {
-                    List<JSONObject> value = entry.getValue();
+                for (Map.Entry<String, List<ImportHistoryRecordDTO.ImportRowContextDTO>> entry : batch) {
+                    List<ImportHistoryRecordDTO.ImportRowContextDTO> value = entry.getValue();
                     JSONObject successJson = new JSONObject();
                     List<TmsCostDetailDTO.UpdateDTO> updateAllList = new ArrayList<>();
-                    for (JSONObject jsonObject : value) {
+                    for (ImportHistoryRecordDTO.ImportRowContextDTO rowContext : value) {
+                        JSONObject jsonObject = rowContext.getRow();
                         jsonObject.set(matchIndex.toString(), MATCH_SUCCESS);
                         List<String> costErrorMsgList = new ArrayList<>();
                         List<TmsCostDetailDTO.UpdateDTO> updateList = lineFormatCost(successJson, jsonObject, costErrorMsgList, preQueryResult.getCfgCostList(), cfgImportDetailList, headList, DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode(), currencyLookupMap, currencyRateMap);
@@ -843,7 +844,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         updateAllList.addAll(updateList);
                     }
                     List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail = mergeTmsCostDetail(updateAllList);
-                    List<JSONObject> costSuccessList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.get(matchIndex.toString()))).collect(Collectors.toList());
+                    List<ImportHistoryRecordDTO.ImportRowContextDTO> costSuccessContextList = value.stream().filter(obj -> !CharSequenceUtil.equals(MATCH_FAIL, (CharSequence) obj.getRow().get(matchIndex.toString()))).collect(Collectors.toList());
+                    List<JSONObject> costSuccessList = costSuccessContextList.stream().map(ImportHistoryRecordDTO.ImportRowContextDTO::getRow).collect(Collectors.toList());
                     if (CollUtil.isEmpty(costSuccessList)) {
                         continue;
                     }
@@ -851,7 +853,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     try {
                         // 同一识别分组会先汇总费用，再把固定的物流单集合传入 handleImportData，由既有重量分摊逻辑处理一对多/多对多。
                         List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVoList = resolveGroupMatchedLogisticsBillVoList(
-                                costSuccessList, importGroupContext.getRowMatchedBillMap(), mainErrorMsgList);
+                                costSuccessContextList, mainErrorMsgList);
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
                                 preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList,
                                 preQueryResult.getMainIdListMap(), preQueryResult.getOrderWeightMap(), preQueryResult.getOrderWeightErrorMap(), matchedLogisticsBillVoList);
