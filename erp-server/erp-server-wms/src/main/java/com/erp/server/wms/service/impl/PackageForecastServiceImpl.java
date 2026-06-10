@@ -225,6 +225,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
         Map<String, List<PackageForecastDetailEntity>> forecastDetailMap = CollUtil.isNotEmpty(allDetailEntityList) ? allDetailEntityList.stream().collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId)) : Collections.emptyMap();
+        List<String> soIds = CollectionUtils.emptyIfNull(allDetailEntityList).stream().map(PackageForecastDetailEntity::getSoId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = CollectionUtils.isNotEmpty(soIds) ? soB2cFeign.listByIds(soIds) : Collections.emptyList();
+        Map<String, String> platformOrderCodeMap = CollUtil.isNotEmpty(soB2cEntityList) ? soB2cEntityList.stream()
+                .filter(item -> StringUtils.isNotBlank(item.getId()))
+                .collect(Collectors.toMap(SoB2cEntity::getId, item -> StringUtils.defaultString(item.getPlatformCode()), (left, right) -> left)) : Collections.emptyMap();
         List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
         Map<String, String> detailSoCodeMap = CollUtil.isNotEmpty(transferDeclareDetailEntityList) ? transferDeclareDetailEntityList.stream().collect(Collectors.toMap(
@@ -238,7 +243,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             List<PackageForecastDetailEntity> detailEntityList = forecastDetailMap.get(item.getId());
             if (CollUtil.isNotEmpty(detailEntityList)){
                 String soCode = detailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).filter(StringUtils::isNotBlank).findFirst().orElse("");
-                item.setDetailViewDTOList(PackageForecastConverter.INSTANCE.convertPagingDetailViewList(detailEntityList));
+                List<PackageForecastDTO.PagingDetailViewDTO> detailViewDTOList = PackageForecastConverter.INSTANCE.convertPagingDetailViewList(detailEntityList);
+                detailViewDTOList.forEach(detail -> detail.setPlatformOrderCode(platformOrderCodeMap.getOrDefault(detail.getSoId(), "")));
+                item.setDetailViewDTOList(detailViewDTOList);
                 item.setTransferDeclareCode(declareEntityMap.getOrDefault(detailSoCodeMap.getOrDefault(soCode, ""), ""));
             }
             item.setUploadStatusName(PackageUploadStatusEnum.getName(item.getUploadStatus()));
