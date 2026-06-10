@@ -51,7 +51,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             fileTask.setFileUrl(url);
         } catch (Exception e) {
             log.error("导出上传失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
+            throw new BusinessException(CharSequenceUtil.blankToDefault(e.getMessage(), "导出上传失败"));
         } finally {
             ExportTempFilesHandler.deleteQuietly(tempPath);
         }
