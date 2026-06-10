@@ -43,6 +43,7 @@ import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -595,9 +596,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     continue;
                 }
                 if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, field)) {
-                    Arrays.stream(String.valueOf(billValue).split(","))
-                            .map(CharSequenceUtil::trim)
-                            .filter(CharSequenceUtil::isNotBlank)
+                    LogisticsBillPlatformCodeUtil.splitPlatformCodes(String.valueOf(billValue))
                             .forEach(platformCode -> putLogisticsBillVoIndex(billVoIndex, field, platformCode, logisticsBillVo));
                     continue;
                 }
@@ -1641,20 +1640,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             String importValue = getPreparedValue(successJson, uniqueKey);
             Object billValue = BeanUtil.getFieldValue(logisticsBillVo, uniqueKey.getTargetField());
             if (CharSequenceUtil.equals(PLATFORM_CODE_FIELD, uniqueKey.getTargetField())) {
-                return matchesPlatformCodeUniqueKey(importValue, billValue);
+                return LogisticsBillPlatformCodeUtil.matches(importValue, ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
             }
             return CharSequenceUtil.equals(importValue, ObjectUtil.isNull(billValue) ? null : String.valueOf(billValue));
         });
-    }
-
-    private boolean matchesPlatformCodeUniqueKey(String importValue, Object billValue) {
-        String platformCode = CharSequenceUtil.trim(importValue);
-        if (CharSequenceUtil.isBlank(platformCode) || ObjectUtil.isNull(billValue)) {
-            return false;
-        }
-        return Arrays.stream(String.valueOf(billValue).split(","))
-                .map(CharSequenceUtil::trim)
-                .anyMatch(item -> CharSequenceUtil.equals(platformCode, item));
     }
 
     /**

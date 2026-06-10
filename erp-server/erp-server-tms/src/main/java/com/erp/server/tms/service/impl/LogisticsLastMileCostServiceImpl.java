@@ -40,6 +40,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -507,7 +508,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             candidates = billVoIndex.getOrDefault("platform:" + excelDTO.getPlatformCode(), Collections.emptyList());
         }
         return candidates.stream()
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) || CharSequenceUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode())
+                        || LogisticsBillPlatformCodeUtil.matches(excelDTO.getPlatformCode(), obj.getPlatformCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) || CharSequenceUtil.equals(obj.getSoDeliveryCode(), excelDTO.getSoDeliveryCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoCode()) || CharSequenceUtil.equals(obj.getSourceCode(), excelDTO.getSoCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || CharSequenceUtil.equals(obj.getTrackNo(), excelDTO.getTrackNo()))
@@ -529,9 +531,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if (CharSequenceUtil.isNotBlank(vo.getSourceCode())) {
                 index.computeIfAbsent("soCode:" + vo.getSourceCode(), k -> new ArrayList<>()).add(vo);
             }
-            if (CharSequenceUtil.isNotBlank(vo.getPlatformCode())) {
-                index.computeIfAbsent("platform:" + vo.getPlatformCode(), k -> new ArrayList<>()).add(vo);
-            }
+            LogisticsBillPlatformCodeUtil.splitPlatformCodes(vo.getPlatformCode())
+                    .forEach(platformCode -> index.computeIfAbsent("platform:" + platformCode, k -> new ArrayList<>()).add(vo));
         }
         return index;
     }
