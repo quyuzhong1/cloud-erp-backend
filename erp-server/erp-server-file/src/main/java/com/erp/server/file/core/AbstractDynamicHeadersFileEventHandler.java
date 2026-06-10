@@ -50,8 +50,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), buildDownloadFileName(fileTask), null);
             fileTask.setFileUrl(url);
         } catch (Exception e) {
-            log.error("上传文件失败:{}", ExceptionUtil.stacktraceToString(e));
-            throw new BusinessException(ExceptionUtil.stacktraceToString(e));
+            log.error("导出上传失败{}", e.getMessage(), e);
+            throw new BusinessException(e.getMessage());
         } finally {
             ExportTempFilesHandler.deleteQuietly(tempPath);
         }
@@ -128,7 +128,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         }
         List<DynamicExcelDTO> pageList = pageData.getList();
         int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
-        // 表头以首页为准：单遍历流式写入，写入器打开后表头不可变更，故后续页若出现首页没有的新列将无法补列
+        // 表头以首页为准：单遍历流式写入，分页查询的响应对象是固定的，表头不会有变更.
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         mergeHeaders(headers, pageList);
         if (CollUtil.isEmpty(headers)) {
