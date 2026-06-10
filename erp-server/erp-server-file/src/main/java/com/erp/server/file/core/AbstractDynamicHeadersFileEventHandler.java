@@ -115,7 +115,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
     private int writePagedDynamicHeadersExcel(File outFile, P params, String defaultSheetName) throws IOException {
         PagingDTO<P> dto = new PagingDTO<>();
-        dto.setPageSize(getPageSize());
+        int pageSize = getPageSize();
+        dto.setPageSize(pageSize);
         dto.setCurrPage(1);
         dto.setParams(params);
 
@@ -124,7 +125,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             throw new ServiceException("导出数据不能为空");
         }
         List<DynamicExcelDTO> pageList = pageData.getList();
-        LinkedHashMap<String, String> headers = resolveHeaders(pageList);
+        int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
+        LinkedHashMap<String, String> headers = collectHeaders(dto, pageList, totalPage);
         if (CollUtil.isEmpty(headers)) {
             throw new ServiceException("导出数据不能为空");
         }
@@ -141,13 +143,20 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             ExcelWriter excelWriter = excelPrintUtils.openDynamicHeadersWriter(outputStream, header);
             try {
                 WriteSheet writeSheet = buildWriteSheet(sheetNo, sheetName, header);
-                while (true) {
-                    List<List<Object>> rows = convertPageDataList(pageList);
-                    int idx = 0;
+                for (int pageNo = 1; pageNo <= totalPage; pageNo++) {
+                    if (pageNo > 1) {
+                        dto.setCurrPage(pageNo);
+                        pageData = getPageData(dto);
+                        if (pageData == null) {
+                            throw new ServiceException("导出分页查询失败，页码=" + dto.getCurrPage());
+                        }
+                        pageList = pageData.getList();
+                    }
+                    List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());
                     if (rows.isEmpty() && totalRows == 0) {
                         excelWriter.write(rows, writeSheet);
                     }
-                    while (idx < rows.size()) {
+                    for (int idx = 0; idx < rows.size();) {
                         if (rowsInSheet >= maxRowsPerSheet) {
                             sheetNo++;
                             if (sheetNo >= maxSheetNum) {
@@ -164,22 +173,46 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         rowsInSheet += take;
                         idx += take;
                     }
-
-                    if (pageData.getTotalCount() <= dto.getCurrPage() * getPageSize()) {
-                        break;
-                    }
-                    dto.setCurrPage(dto.getCurrPage() + 1);
-                    pageData = getPageData(dto);
-                    if (pageData == null) {
-                        throw new ServiceException("导出数据不能为空");
-                    }
-                    pageList = pageData.getList();
                 }
             } finally {
                 excelWriter.finish();
             }
         }
         return totalRows;
+    }
+
+    private LinkedHashMap<String, String> collectHeaders(PagingDTO<P> dto, List<DynamicExcelDTO> firstPageList, int totalPage) {
+        LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+        mergeHeaders(headers, firstPageList);
+        for (int pageNo = 2; pageNo <= totalPage; pageNo++) {
+            dto.setCurrPage(pageNo);
+            PagingVO<DynamicExcelDTO> pageData = getPageData(dto);
+            if (pageData == null) {
+                throw new ServiceException("导出数据不能为空");
+            }
+            mergeHeaders(headers, pageData.getList());
+        }
+        dto.setCurrPage(1);
+        return headers;
+    }
+
+    private void mergeHeaders(LinkedHashMap<String, String> target, List<DynamicExcelDTO> pageList) {
+        if (CollectionUtils.isEmpty(pageList)) {
+            return;
+        }
+        for (DynamicExcelDTO dynamicExcelDTO : pageList) {
+            if (dynamicExcelDTO == null || CollUtil.isEmpty(dynamicExcelDTO.getHeaders())) {
+                continue;
+            }
+            dynamicExcelDTO.getHeaders().forEach(target::putIfAbsent);
+        }
+    }
+
+    private int computeTotalPage(int totalCount, int pageSize) {
+        if (totalCount <= 0) {
+            return 1;
+        }
+        return (int) ((totalCount + (long) pageSize - 1) / pageSize);
     }
 
     private String resolveDataSheetName(List<DynamicExcelDTO> pageList) {
@@ -205,18 +238,6 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
     private int maxRowsPerSheet() {
         return Math.max(1, FileRegistry.getSheetMaxRows());
-    }
-
-    private LinkedHashMap<String, String> resolveHeaders(List<DynamicExcelDTO> pageList) {
-        if (CollectionUtils.isEmpty(pageList)) {
-            return null;
-        }
-        for (DynamicExcelDTO dynamicExcelDTO : pageList) {
-            if (dynamicExcelDTO != null && !CollUtil.isEmpty(dynamicExcelDTO.getHeaders())) {
-                return dynamicExcelDTO.getHeaders();
-            }
-        }
-        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -254,7 +275,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return 1000;
     }
 
-    private List<List<Object>> convertPageDataList(List<DynamicExcelDTO> pageList) {
+    private List<List<Object>> convertPageDataList(List<DynamicExcelDTO> pageList, Collection<String> headerKeys) {
         List<List<Object>> result = new ArrayList<>();
         if (CollectionUtils.isEmpty(pageList)) {
             return result;
@@ -263,18 +284,22 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             if (dynamicExcelDTO == null || CollectionUtils.isEmpty(dynamicExcelDTO.getData())) {
                 continue;
             }
-            result.addAll(convertDataList(dynamicExcelDTO.getData()));
+            result.addAll(convertDataList(dynamicExcelDTO.getData(), headerKeys));
         }
         return result;
     }
 
-    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data) {
+    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data, Collection<String> headerKeys) {
         List<List<Object>> result = new ArrayList<>();
         if (CollectionUtils.isEmpty(data)) {
             return result;
         }
         for (LinkedHashMap<String, Object> map : data) {
-            result.add((new ArrayList<>(map.values())));
+            List<Object> row = new ArrayList<>(headerKeys.size());
+            for (String key : headerKeys) {
+                row.add(map.get(key));
+            }
+            result.add(row);
         }
         return result;
     }
