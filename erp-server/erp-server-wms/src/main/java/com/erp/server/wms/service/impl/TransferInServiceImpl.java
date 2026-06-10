@@ -470,8 +470,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             throw new ServiceException(ApiError.WF_APPROVE_FAILED);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
-            // 调入审核前校验可分配库存（盘盈盘亏来源暂不校验）
-            validateAllocationInventoryOnApprove(entity);
             handleData(entity);
             //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
             this.updateQcNoticePutaway(entity,Boolean.TRUE);
