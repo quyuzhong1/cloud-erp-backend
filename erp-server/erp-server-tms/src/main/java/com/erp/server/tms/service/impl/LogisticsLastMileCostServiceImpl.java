@@ -316,7 +316,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             groupLogisticsBillVoMap.computeIfAbsent(groupKey, k -> matchImportLogisticsBillVos(excelDTO, logisticsBillVos, billVoIndex));
         }
 
-        LogisticsBillCostService.OutstockWeightPreloadDTO outstockWeightPreload =
+        LogisticsBillCostDTO.OutstockWeightPreloadDTO outstockWeightPreload =
                 logisticsBillCostService.preloadOutstockWeightDataForAllocation(groupLogisticsBillVoMap);
 
         for (Map.Entry<String, List<JSONObject>> entry : importGroupMap.entrySet()) {
