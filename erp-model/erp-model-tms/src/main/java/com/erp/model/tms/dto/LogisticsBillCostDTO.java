@@ -5,8 +5,10 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,6 +22,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -1322,5 +1325,12 @@ public class LogisticsBillCostDTO implements Serializable {
         private String weightPackageAllocation;
         private String packageOrgId;
         private String packageWarehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class OutstockWeightPreloadDTO {
+        private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
+        private Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
     }
 }

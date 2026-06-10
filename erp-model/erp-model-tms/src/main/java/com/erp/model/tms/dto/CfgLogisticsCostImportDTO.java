@@ -364,7 +364,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         /**
         * 配置单据 api/tms/drop/down/dict/list?key=cfgCostType
         */
-        // 审查说明：页面隐藏“配置单据”后，businessType 仍由入口内部传递，用于字段映射和导入行为区分。
+        // 页面隐藏“配置单据”后，businessType 仍由入口内部传递，用于字段映射和导入行为区分。
 //        @NotBlank(message = "配置单据不能为空")
 //        @Size(max = 50,message = "配置单据最大长度不能超过50位")
         private String businessType;
