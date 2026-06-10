@@ -56,6 +56,7 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
         return date + name + excelPath.substring(excelPath.lastIndexOf("."));
     }
 
+    @Deprecated
     protected abstract List<T> getData(FileTask fileTask);
 
     protected abstract String getExcelPath();
