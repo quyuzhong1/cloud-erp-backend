@@ -101,11 +101,10 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         CfgQcUserEntity cfgQcUserEntity = new CfgQcUserEntity();
         BeanMapper.copy(addDTO, cfgQcUserEntity);
         cfgQcUserEntity.setStockinQcUserId(addDTO.getStockInQcUserId());
-        cfgQcUserEntity.setStockinQcUserName(addDTO.getStockInQcUserName());
         cfgQcUserEntity.setStockoutQcUserId(addDTO.getStockOutQcUserId());
-        cfgQcUserEntity.setStockoutQcUserName(addDTO.getStockOutQcUserName());
         cfgQcUserEntity.setNewProductStockinQcUserId(addDTO.getNewProductStockInQcUserId());
-        cfgQcUserEntity.setNewProductStockinQcUserName(addDTO.getNewProductStockInQcUserName());
+        // 前端只传 id，name 由后端根据 id 在金蝶业务员（ZJY）列表中反查后写入，防止与前端传值不一致或为空
+        fillQcUserNames(cfgQcUserEntity, ctx.getQcUserNameMap());
 
         boolean save = super.save(cfgQcUserEntity);
         if (!save) {
@@ -143,11 +142,10 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         cfgQcUserEntity.setSupplierId(supplierId);
         cfgQcUserEntity.setWarehouseId(warehouseId);
         cfgQcUserEntity.setStockinQcUserId(updateDTO.getStockInQcUserId());
-        cfgQcUserEntity.setStockinQcUserName(updateDTO.getStockInQcUserName());
         cfgQcUserEntity.setStockoutQcUserId(updateDTO.getStockOutQcUserId());
-        cfgQcUserEntity.setStockoutQcUserName(updateDTO.getStockOutQcUserName());
         cfgQcUserEntity.setNewProductStockinQcUserId(updateDTO.getNewProductStockInQcUserId());
-        cfgQcUserEntity.setNewProductStockinQcUserName(updateDTO.getNewProductStockInQcUserName());
+        // 前端只传 id，name 由后端根据 id 在金蝶业务员（ZJY）列表中反查后写入，防止与前端传值不一致或为空
+        fillQcUserNames(cfgQcUserEntity, ctx.getQcUserNameMap());
 
         boolean update = super.updateById(cfgQcUserEntity);
         if (!update) {
@@ -222,10 +220,10 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
         // 入库/出库/外验/在库/新品入库/B2B外检/退货质检员至少配置一名
         validateAtLeastOneQcUser(dto);
-        // 校验已选质检员均在仓库对应组织的业务员管理（ZJY）中
-        validateQcUsersInOrg(warehouse, dto);
+        // 校验已选质检员均在仓库对应组织的业务员管理（ZJY）中，并返回 id -> name 映射供后续回填使用
+        Map<String, String> qcUserNameMap = validateQcUsersInOrg(warehouse, dto);
 
-        return new HandleDataResult(supplier, warehouse, supplierId, warehouseId);
+        return new HandleDataResult(supplier, warehouse, supplierId, warehouseId, qcUserNameMap);
     }
 
     @Getter
@@ -235,6 +233,8 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         private final WarehouseEntity warehouse;
         private final String supplierId;
         private final String warehouseId;
+        /** 仓库所属组织下 ZJY 业务员的 id -> name 映射，用于回填质检员姓名 */
+        private final Map<String, String> qcUserNameMap;
     }
 
     /**
@@ -285,9 +285,12 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
 
     /**
      * 校验已选质检员均在业务员管理（type=ZJY）中，且属于质检仓库对应组织
+     *
+     * @return 仓库所属组织下 ZJY 业务员的 id -> name 映射，供调用方回填质检员姓名复用
      */
-    private void validateQcUsersInOrg(WarehouseEntity warehouse, CfgQcUserDTO.CommonDTO dto) {
-        Set<String> validUserIds = loadQcUserIdsByOrgId(warehouse.getOrgId());
+    private Map<String, String> validateQcUsersInOrg(WarehouseEntity warehouse, CfgQcUserDTO.CommonDTO dto) {
+        Map<String, String> userNameMap = loadQcUserMapByOrgId(warehouse.getOrgId());
+        Set<String> validUserIds = userNameMap.keySet();
         Set<String> invalidUsers = new LinkedHashSet<>();
         collectInvalidQcUser(validUserIds, dto.getStockInQcUserId(), dto.getStockInQcUserName(), invalidUsers);
         collectInvalidQcUser(validUserIds, dto.getStockOutQcUserId(), dto.getStockOutQcUserName(), invalidUsers);
@@ -299,6 +302,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         if (CollUtil.isNotEmpty(invalidUsers)) {
             throw new ServiceException(ApiError.CFG_QC_USER_IMPORT_USER_NOT_IN_ORG, String.join(",", invalidUsers));
         }
+        return userNameMap;
     }
 
     private void collectInvalidQcUser(Set<String> validUserIds, String userId, String userName, Set<String> invalidUsers) {
@@ -311,18 +315,50 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
         invalidUsers.add(StrUtil.isNotBlank(userName) ? userName : userId);
     }
 
-    private Set<String> loadQcUserIdsByOrgId(String orgId) {
+    /**
+     * 查询仓库所属组织下 ZJY 业务员列表，返回 id -> name 映射
+     * <p>
+     * 优先取 realName，没有则回退到 userName，与下拉接口 {@link #qcUserList(String)} 保持一致
+     */
+    private Map<String, String> loadQcUserMapByOrgId(String orgId) {
         KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO listDTO = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
         listDTO.setOrgId(orgId);
         listDTO.setType("ZJY");
         ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult = kingdeeFeign.listKingdeeUser(listDTO);
         if (apiResult == null || !apiResult.isSuccess() || CollUtil.isEmpty(apiResult.getData())) {
-            return Collections.emptySet();
+            return Collections.emptyMap();
         }
-        return apiResult.getData().stream()
-                .map(UserInfoDTO.BusinessOperationUserDTO::getUserId)
-                .filter(StrUtil::isNotBlank)
-                .collect(Collectors.toSet());
+        Map<String, String> result = new HashMap<>();
+        for (UserInfoDTO.BusinessOperationUserDTO user : apiResult.getData()) {
+            if (StrUtil.isBlank(user.getUserId())) {
+                continue;
+            }
+            String name = StrUtil.isNotBlank(user.getRealName()) ? user.getRealName() : user.getUserName();
+            result.put(user.getUserId(), StrUtil.nullToEmpty(name));
+        }
+        return result;
+    }
+
+    /**
+     * 根据 entity 上已设置的质检员 id，从金蝶业务员列表反查姓名并回填到 entity 对应的 name 字段
+     * <p>
+     * id 为空则 name 也置空；id 不为空时姓名通过 {@link #validateQcUsersInOrg} 已校验存在
+     */
+    private void fillQcUserNames(CfgQcUserEntity entity, Map<String, String> userNameMap) {
+        entity.setStockinQcUserName(resolveQcUserName(entity.getStockinQcUserId(), userNameMap));
+        entity.setStockoutQcUserName(resolveQcUserName(entity.getStockoutQcUserId(), userNameMap));
+        entity.setOutsideQcUserName(resolveQcUserName(entity.getOutsideQcUserId(), userNameMap));
+        entity.setInsideQcUserName(resolveQcUserName(entity.getInsideQcUserId(), userNameMap));
+        entity.setNewProductStockinQcUserName(resolveQcUserName(entity.getNewProductStockinQcUserId(), userNameMap));
+        entity.setB2bOutsideQcUserName(resolveQcUserName(entity.getB2bOutsideQcUserId(), userNameMap));
+        entity.setReturnQcUserName(resolveQcUserName(entity.getReturnQcUserId(), userNameMap));
+    }
+
+    private String resolveQcUserName(String userId, Map<String, String> userNameMap) {
+        if (StrUtil.isBlank(userId)) {
+            return "";
+        }
+        return StrUtil.nullToEmpty(userNameMap.get(userId));
     }
 
     @Override
