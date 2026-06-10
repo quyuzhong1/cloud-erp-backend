@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -1739,6 +1740,56 @@ public class RequisitionApplicationDTO implements Serializable {
         private String id;
         @NotBlank(message = "FBA货件号不能为空")
         private String fbaShipmentCode;;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadProductLabelViewDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 文件
+         */
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadProductLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 文件
+         */
+        @NotNull(message = "文件不能为空")
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintProductLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
     }
 
     @Data

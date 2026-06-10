@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import com.erp.server.wms.service.OverseasTransferWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundDetailService;
@@ -267,6 +268,46 @@ public class OverseasWarehouseInboundController extends BaseController {
     public ApiResult changeReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allChangeReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 上传箱唛回显
+     */
+    @PostMapping("/uploadCartonLabelView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:uploadCartonLabelView",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "ids")
+    public ApiResult<List<OverseasWarehouseInboundDTO.UploadCartonLabelViewDTO>> uploadCartonLabelView(@RequestBody @Validated OverseasWarehouseInboundDTO.UploadCartonLabelViewReqDTO dto) {
+        return success(overseasWarehouseInboundService.uploadCartonLabelView(dto));
+    }
+
+    /**
+     * 上传箱唛
+     */
+    @PostMapping("/uploadCartonLabel")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "海外仓入库单上传箱唛")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:uploadCartonLabel",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "id")
+    public ApiResult<Boolean> uploadCartonLabel(@RequestBody @Validated List<OverseasWarehouseInboundDTO.UploadCartonLabelDTO> dtoList) {
+        return success(overseasWarehouseInboundService.uploadCartonLabel(dtoList));
+    }
+
+    /**
+     * 打印箱唛
+     */
+    @PostMapping("/printCartonLabel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:printCartonLabel",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "id")
+    public ApiResult<WmsAttachmentDTO.UpdateDTO> printCartonLabel(@RequestBody @Validated OverseasWarehouseInboundDTO.PrintCartonLabelDTO dto) {
+        return success(overseasWarehouseInboundService.printCartonLabel(dto));
     }
 
     /**

@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -107,6 +108,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REQUISITION_APPLICATION;
@@ -122,6 +124,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REQUISITION
 @Slf4j
 @Service
 public class RequisitionApplicationServiceImpl extends SuperServiceImpl<RequisitionApplicationMapper, RequisitionApplicationEntity> implements RequisitionApplicationService {
+    private static final String REQUISITION_PRODUCT_LABEL_TYPE = "requisitionProductLabel";
+
     @Resource
     private OperateLogService operateLogService;
     @Resource
@@ -148,6 +152,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private SyncWdtVirtualWarehousePushOrderService syncWdtVirtualWarehousePushOrderService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
 
     @Resource
     private SkuMappingFeign skuMappingFeign;
@@ -3222,6 +3229,101 @@ revokeDTO.setSourcePlatform(dto.getSourcePlatform());
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServiceException(ApiError.LOGISTICS_FNSKU_LABEL_PRINT_FAILED);
+        }
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.UploadProductLabelViewDTO> uploadProductLabelView(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(distinctIds)) {
+            return Collections.emptyList();
+        }
+        List<RequisitionApplicationEntity> entityList = this.listByIds(distinctIds);
+        validateRequisitionApplicationList(distinctIds, entityList);
+        List<RequisitionApplicationDTO.UploadProductLabelViewDTO> resultList = BeanUtil.copyToList(entityList, RequisitionApplicationDTO.UploadProductLabelViewDTO.class);
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(distinctIds, REQUISITION_PRODUCT_LABEL_TYPE);
+        resultList.forEach(item -> {
+            WmsAttachmentDTO.UpdateDTO updateDTO = attachmentList.stream()
+                    .filter(attach -> Objects.equals(attach.getBusinessId(), item.getId()))
+                    .findFirst()
+                    .orElse(new WmsAttachmentDTO.UpdateDTO());
+            AttachDTO attachDTO = new AttachDTO();
+            attachDTO.setAttachName(updateDTO.getAttachName());
+            attachDTO.setAttachUrl(updateDTO.getAttachUrl());
+            attachDTO.setBusinessId(updateDTO.getBusinessId());
+            item.setAttachDTO(attachDTO);
+        });
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadProductLabel(List<RequisitionApplicationDTO.UploadProductLabelDTO> dtoList) {
+        if (CollectionUtils.isEmpty(dtoList)) {
+            return true;
+        }
+        List<String> ids = dtoList.stream()
+                .map(RequisitionApplicationDTO.UploadProductLabelDTO::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<RequisitionApplicationEntity> entityList = this.listByIds(ids);
+        validateRequisitionApplicationList(ids, entityList);
+        Map<String, RequisitionApplicationEntity> entityMap = entityList.stream()
+                .collect(Collectors.toMap(RequisitionApplicationEntity::getId, Function.identity()));
+        for (RequisitionApplicationDTO.UploadProductLabelDTO dto : dtoList) {
+            RequisitionApplicationEntity entity = entityMap.get(dto.getId());
+            AttachDTO attachDTO = dto.getAttachDTO();
+            validatePdfAttach(entity.getCode(), "货品标签", attachDTO);
+            wmsAttachmentService.batchSave(
+                    Collections.singletonList(attachDTO.getAttachUrl()),
+                    Collections.singletonList(attachDTO.getAttachName()),
+                    REQUISITION_PRODUCT_LABEL_TYPE,
+                    entity.getId()
+            );
+        }
+        return true;
+    }
+
+    @Override
+    public WmsAttachmentDTO.UpdateDTO printProductLabel(RequisitionApplicationDTO.PrintProductLabelDTO dto) {
+        RequisitionApplicationEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)) {
+            throw new ServiceException("要货申请不存在");
+        }
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()), REQUISITION_PRODUCT_LABEL_TYPE);
+        if (CollUtil.isEmpty(attachmentList)) {
+            throw new ServiceException("要货申请【{}】未上传货品标签", entity.getCode());
+        }
+        return attachmentList.get(0);
+    }
+
+    private void validateRequisitionApplicationList(List<String> ids, List<RequisitionApplicationEntity> entityList) {
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException("要货申请不存在");
+        }
+        Set<String> existIds = entityList.stream()
+                .map(RequisitionApplicationEntity::getId)
+                .collect(Collectors.toSet());
+        Optional<String> missingId = ids.stream()
+                .filter(id -> !existIds.contains(id))
+                .findFirst();
+        if (missingId.isPresent()) {
+            throw new ServiceException("要货申请【{}】不存在", missingId.get());
+        }
+    }
+
+    private void validatePdfAttach(String code, String labelName, AttachDTO attachDTO) {
+        if (Objects.isNull(attachDTO) || CharSequenceUtil.isBlank(attachDTO.getAttachUrl()) || CharSequenceUtil.isBlank(attachDTO.getAttachName())) {
+            throw new ServiceException("要货申请【{}】上传{}失败：文件不能为空", code, labelName);
+        }
+        if (!attachDTO.getAttachName().toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+            throw new ServiceException("要货申请【{}】上传{}失败：仅支持PDF格式", code, labelName);
         }
     }
 

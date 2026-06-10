@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.RequestIdTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -1038,5 +1039,89 @@ public class OverseasWarehouseInboundDTO implements Serializable {
 
         private List<String> ids;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadCartonLabelViewReqDTO implements Serializable {
+        /**
+         * 入库单id列表
+         */
+        @NotNull(message = "ids不能为空")
+        @Size(min = 1, message = "ids至少有一个")
+        private List<@NotBlank(message = "id不能为空") String> ids;
+
+        /**
+         * 箱唛类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛
+         */
+        @NotBlank(message = "箱唛类型不能为空")
+        private String labelType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadCartonLabelViewDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 箱唛类型
+         */
+        private String labelType;
+
+        /**
+         * 文件
+         */
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadCartonLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 箱唛类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛
+         */
+        @NotBlank(message = "箱唛类型不能为空")
+        private String labelType;
+
+        /**
+         * 文件
+         */
+        @NotNull(message = "文件不能为空")
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PrintCartonLabelDTO implements Serializable {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
+         * 箱唛类型：thirdWarehouseCartonLabel=三方仓箱唛，transferCartonLabel=中转箱唛
+         */
+        @NotBlank(message = "箱唛类型不能为空")
+        private String labelType;
     }
 }
