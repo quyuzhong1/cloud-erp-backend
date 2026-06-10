@@ -83,6 +83,7 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 枚举：CfgThirdNoticeUrlTypeEnum
          */
         private String urlType;
+        private String urlTypeName;
 
         /**
         * cron

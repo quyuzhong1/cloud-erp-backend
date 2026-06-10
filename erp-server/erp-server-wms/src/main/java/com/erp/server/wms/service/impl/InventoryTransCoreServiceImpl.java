@@ -347,7 +347,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
-                stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
+                // 调用方显式指定库存状态时覆盖规则配置（如 wego 海外仓不良品签收 → DEFECTIVE_PRODUCT）；
+                // 默认为空走原配置规则，保证历史链路行为不变。
+                InventoryStatusEnum effectiveStatus = flow.getDictInventoryStatus() != null
+                        ? flow.getDictInventoryStatus()
+                        : rule.getInventoryStatus();
+                stockBaseDTO.setInventoryStatus(effectiveStatus);
                 if(rule.getWarehouseOption()==InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT){
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getCurWarehouseId()));
                     stockBaseDTO.setWarehouseId(flow.getCurWarehouseId());

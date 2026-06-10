@@ -2,6 +2,7 @@ package com.erp.model.wms.dto.inventory;
 
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
@@ -81,6 +82,12 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     // @Min(value = 1,message = "库存变更数量不能小于1")
     private Integer qty;
 
-
+    /**
+     * 库存状态运行期覆盖：非空时优先于交易规则中的 {@code inventoryStatus}，
+     * 用于海外仓 wego 不良品签收等少数需要在 {@code transaction_flow.dict_inventory_status}
+     * 上落 {@link InventoryStatusEnum#DEFECTIVE_PRODUCT} 的场景。为空时按原有规则走，
+     * 保证全部历史调用链路行为不变。
+     */
+    private InventoryStatusEnum dictInventoryStatus;
 
 }
