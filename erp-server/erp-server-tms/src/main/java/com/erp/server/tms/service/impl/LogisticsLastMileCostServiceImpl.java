@@ -27,7 +27,6 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
@@ -38,7 +37,6 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
@@ -55,7 +53,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -319,36 +316,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             groupLogisticsBillVoMap.computeIfAbsent(groupKey, k -> matchImportLogisticsBillVos(excelDTO, logisticsBillVos, billVoIndex));
         }
 
-        // 多物流单费用分摊前批量预加载出库明细与SKU包装信息，避免分组循环内 N+1 Feign 调用
-        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
-        Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
-        List<String> allocationOutstockIdList = groupLogisticsBillVoMap.values().stream()
-                .filter(list -> list.size() > 1)
-                .flatMap(list -> list.stream())
-                .map(LogisticsBillDTO.LogisticsBillVo::getOutstockId)
-                .filter(CharSequenceUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(allocationOutstockIdList)) {
-            List<SoOutstockDetailEntity> outstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class)
-                    .in(SoOutstockDetailEntity::getMainId, allocationOutstockIdList).list();
-            if (CollUtil.isNotEmpty(outstockDetailList)) {
-                outstockDetailMap = outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
-                List<String> skuIdList = outstockDetailList.stream()
-                        .map(SoOutstockDetailEntity::getSkuId)
-                        .filter(CharSequenceUtil::isNotBlank)
-                        .distinct()
-                        .collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(skuIdList)) {
-                    List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class)
-                            .in(ProductPackEntity::getSkuId, skuIdList).list();
-                    if (CollUtil.isNotEmpty(productPackList)) {
-                        productPackMap = productPackList.stream()
-                                .collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
-                    }
-                }
-            }
-        }
+        LogisticsBillCostService.OutstockWeightPreloadDTO outstockWeightPreload =
+                logisticsBillCostService.preloadOutstockWeightDataForAllocation(groupLogisticsBillVoMap);
 
         for (Map.Entry<String, List<JSONObject>> entry : importGroupMap.entrySet()) {
             List<JSONObject> value = entry.getValue();
@@ -403,9 +372,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if (CollUtil.isNotEmpty(logisticsBillVoList)) {
                 Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = new HashMap<>();
                 if (logisticsBillVoList.size() > 1) {
-                    Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList, outstockDetailMap, productPackMap);
+                    Map<String, BigDecimal> weightMap = logisticsBillCostService.buildOrderWeightMap(
+                            logisticsBillVoList, errorMsgList, outstockWeightPreload);
                     if (CollectionUtils.isEmpty(errorMsgList)) {
-                        allocatedCostMap = allocateCostDetailMap(updateList, logisticsBillVoList, weightMap);
+                        allocatedCostMap = logisticsBillCostService.allocateCostDetailByWeight(
+                                updateList, logisticsBillVoList, weightMap);
                     }
                 }
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -486,7 +457,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                         pairList.add(new Pair<>(update.getId(),confirmTime));
                     }
                 }
-            } else {
+            }
+            else {
                 LogisticsBillEntity logisticsBillEntity = addImportLogisticBill(excelDTO);
                 List<LogisticsBillCostEntity> logisticsBillCost = logisticsBillCostService.getByLogisticsBillIds(Collections.singletonList(logisticsBillEntity.getId()));
                 if (CollUtil.isEmpty(logisticsBillCost)) {
@@ -620,91 +592,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     .orElse(updateDTO.getCfgCostId());
             errorMsgList.add("【" + costName + "】相同费用类型存在不同币别");
         }
-    }
-
-    /**
-     * 订单重量 = SKU毛重(g) * 上游出库单实发数量，多物流单匹配时作为费用分摊依据。
-     */
-    private Map<String, BigDecimal> buildOrderWeightMap(List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
-                                                        List<String> errorMsgList,
-                                                        Map<String, List<SoOutstockDetailEntity>> outstockDetailMap,
-                                                        Map<String, ProductPackEntity> productPackMap) {
-        Map<String, BigDecimal> weightMap = new HashMap<>();
-        if (logisticsBillVoList.stream().anyMatch(vo -> CharSequenceUtil.isBlank(vo.getOutstockId()))) {
-            errorMsgList.add("无法获取上游出库单用于重量分摊");
-            return weightMap;
-        }
-        if (CollUtil.isEmpty(outstockDetailMap)) {
-            errorMsgList.add("无法获取上游出库明细用于重量分摊");
-            return weightMap;
-        }
-        if (CollUtil.isEmpty(productPackMap)) {
-            errorMsgList.add("出库明细缺少SKU信息，无法按重量分摊");
-            return weightMap;
-        }
-        for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
-            List<SoOutstockDetailEntity> detailList = outstockDetailMap.get(logisticsBillVo.getOutstockId());
-            if (CollUtil.isEmpty(detailList)) {
-                errorMsgList.add("无法获取上游出库明细用于重量分摊：" + logisticsBillVo.getOutstockCode());
-                continue;
-            }
-            BigDecimal orderWeight = BigDecimal.ZERO;
-            for (SoOutstockDetailEntity detailEntity : detailList) {
-                ProductPackEntity productPackEntity = productPackMap.get(detailEntity.getSkuId());
-                if (ObjectUtil.isNull(productPackEntity) || ObjectUtil.isNull(productPackEntity.getGrossWeight()) || productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) <= 0) {
-                    errorMsgList.add("缺少SKU毛重，无法按重量分摊：" + detailEntity.getSkuNo());
-                    continue;
-                }
-                if (ObjectUtil.isNull(detailEntity.getActualQty())) {
-                    errorMsgList.add("出库实发数量为空，无法按重量分摊：" + detailEntity.getSkuNo());
-                    continue;
-                }
-                orderWeight = orderWeight.add(productPackEntity.getGrossWeight().multiply(BigDecimal.valueOf(detailEntity.getActualQty())));
-            }
-            weightMap.put(logisticsBillVo.getDetailId(), orderWeight);
-        }
-        BigDecimal totalWeight = weightMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (totalWeight.compareTo(BigDecimal.ZERO) <= 0) {
-            errorMsgList.add("总订单重量为0，无法执行费用分摊");
-        }
-        return weightMap;
-    }
-
-    /**
-     * 多物流单匹配时按订单重量占比分摊费用，最后一条补差，避免四舍五入误差。
-     */
-    private Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocateCostDetailMap(List<TmsCostDetailDTO.UpdateDTO> updateList,
-                                                                                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList,
-                                                                                Map<String, BigDecimal> weightMap) {
-        Map<String, List<TmsCostDetailDTO.UpdateDTO>> resultMap = new LinkedHashMap<>();
-        BigDecimal totalWeight = logisticsBillVoList.stream().map(vo -> weightMap.getOrDefault(vo.getDetailId(), BigDecimal.ZERO)).reduce(BigDecimal.ZERO, BigDecimal::add);
-        for (TmsCostDetailDTO.UpdateDTO updateDTO : updateList) {
-            BigDecimal allocatedSum = BigDecimal.ZERO;
-            for (int i = 0; i < logisticsBillVoList.size(); i++) {
-                LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVoList.get(i);
-                BigDecimal allocatedCost = i == logisticsBillVoList.size() - 1
-                        ? updateDTO.getCostValue().subtract(allocatedSum)
-                        : updateDTO.getCostValue().multiply(weightMap.getOrDefault(logisticsBillVo.getDetailId(), BigDecimal.ZERO)).divide(totalWeight, 4, RoundingMode.HALF_UP);
-                allocatedSum = allocatedSum.add(allocatedCost);
-                TmsCostDetailDTO.UpdateDTO copyDTO = copyUpdateCostDetail(updateDTO);
-                copyDTO.setCostValue(allocatedCost);
-                resultMap.computeIfAbsent(logisticsBillVo.getDetailId(), key -> new ArrayList<>()).add(copyDTO);
-            }
-        }
-        return resultMap;
-    }
-
-    private TmsCostDetailDTO.UpdateDTO copyUpdateCostDetail(TmsCostDetailDTO.UpdateDTO source) {
-        TmsCostDetailDTO.UpdateDTO copyDTO = new TmsCostDetailDTO.UpdateDTO();
-        copyDTO.setId(source.getId());
-        copyDTO.setDictCostCategory(source.getDictCostCategory());
-        copyDTO.setSourceType(source.getSourceType());
-        copyDTO.setMainId(source.getMainId());
-        copyDTO.setCostValue(source.getCostValue());
-        copyDTO.setCfgCostId(source.getCfgCostId());
-        copyDTO.setType(source.getType());
-        copyDTO.setCurrency(source.getCurrency());
-        return copyDTO;
     }
 
     private Map<String, List<TmsCostDetailEntity>> buildCostDetailPreloadMap(List<LogisticsBillCostEntity> logisticsBillCostList) {
@@ -841,10 +728,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
      * @param logisticsBillCostEntity
      * @param excelDTO
      * @param updateList
-     * @param errorList
-     * @param jsonObject
-     * @param errorIndex
-     * @param cfgCostList
      * @return UpdateDTO
      */
     private LogisticsBillCostDTO.UpdateDTO handleLogisticsBillCostImportData(LogisticsBillCostEntity logisticsBillCostEntity,
