@@ -9,6 +9,7 @@ import com.sdk.tms.shopee.constant.PathConstants;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.firstmile.request.BindFirstMileTrackingNumberRequest;
+import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryTrackingNumberListRequest;
 import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryWaybillRequest;
 import com.sdk.tms.shopee.model.firstmile.request.FirstMileTrackingNumberListRequest;
 import com.sdk.tms.shopee.model.firstmile.request.FirstMileWaybillRequest;
@@ -18,6 +19,7 @@ import com.sdk.tms.shopee.model.firstmile.request.UnbindFirstMileTrackingNumberA
 import com.sdk.tms.shopee.model.firstmile.request.UnbindFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.response.BindFirstMileTrackingNumberResponse;
 import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryChannelResponse;
+import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryTrackingNumberListResponse;
 import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryWaybillResponse;
 import com.sdk.tms.shopee.model.firstmile.response.FirstMileChannelListResponse;
 import com.sdk.tms.shopee.model.firstmile.response.FirstMileTrackingNumberListResponse;
@@ -256,7 +258,7 @@ public class ShopeeLogisticsService {
      * @return 绑定结果
      */
     public GenerateAndBindFirstMileTrackingNumberResponse generateAndBindFirstMileTrackingNumber(BaseRequest baseRequest,
-                                                                                                GenerateAndBindFirstMileTrackingNumberRequest request) {
+                                                                                                 GenerateAndBindFirstMileTrackingNumberRequest request) {
         long timestamp = System.currentTimeMillis() / 1000L;
         baseRequest.setPath(PathConstants.POST_GENERATE_AND_BIND_FIRST_MILE_TRACKING_NUMBER_URL);
         baseRequest.setTimestamp(timestamp);
@@ -273,6 +275,33 @@ public class ShopeeLogisticsService {
             throw new ServiceException(CharSequenceUtil.format("虾皮生成并绑定头程追踪号响应为空:{}", baseResponse));
         }
         return JSON.parseObject(baseResponse.getResponse().toJSONString(), GenerateAndBindFirstMileTrackingNumberResponse.class);
+    }
+
+    /**
+     * 快递寄送模式获取绑定结果列表。
+     *
+     * @param baseRequest 授权信息
+     * @param request     查询日期和分页参数
+     * @return 绑定结果列表
+     */
+    public CourierDeliveryTrackingNumberListResponse getCourierDeliveryTrackingNumberList(BaseRequest baseRequest,
+                                                                                          CourierDeliveryTrackingNumberListRequest request) {
+        long timestamp = System.currentTimeMillis() / 1000L;
+        baseRequest.setPath(PathConstants.POST_GET_COURIER_DELIVERY_TRACKING_NUMBER_LIST_URL);
+        baseRequest.setTimestamp(timestamp);
+        HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
+        BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + baseRequest.getPath(), paramMap, JSON.toJSONString(request));
+        if (Objects.isNull(baseResponse)) {
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取快递寄送模式绑定结果列表请求异常:{}", baseResponse));
+        }
+        if (StringUtils.isNotEmpty(baseResponse.getError())) {
+            log.error("获取快递寄送模式绑定结果列表异常：{}", baseResponse.getError());
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取快递寄送模式绑定结果列表接口异常:{}", baseResponse.getError()));
+        }
+        if (Objects.isNull(baseResponse.getResponse())) {
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取快递寄送模式绑定结果列表响应为空:{}", baseResponse));
+        }
+        return JSON.parseObject(baseResponse.getResponse().toJSONString(), CourierDeliveryTrackingNumberListResponse.class);
     }
 
     /**
