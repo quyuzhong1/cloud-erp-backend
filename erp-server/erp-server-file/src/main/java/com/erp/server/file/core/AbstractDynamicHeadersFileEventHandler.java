@@ -1,6 +1,8 @@
 package com.erp.server.file.core;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
@@ -48,8 +50,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), buildDownloadFileName(fileTask), null);
             fileTask.setFileUrl(url);
         } catch (Exception e) {
-            log.error("上传文件失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
+            log.error("上传文件失败:{}", ExceptionUtil.stacktraceToString(e));
+            throw new BusinessException(ExceptionUtil.stacktraceToString(e));
         } finally {
             ExportTempFilesHandler.deleteQuietly(tempPath);
         }
@@ -106,11 +108,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
     private String resolveSheetName(String defaultSheetName, List<DynamicExcelDTO> pageList) {
         List<String> sheetName = getSheetName();
-        if (!CollectionUtils.isEmpty(sheetName) && !isBlank(sheetName.get(0))) {
+        if (!CollectionUtils.isEmpty(sheetName) && CharSequenceUtil.isNotBlank(sheetName.get(0))) {
             return sheetName.get(0);
         }
         String dataSheetName = resolveDataSheetName(pageList);
-        return isBlank(dataSheetName) ? defaultSheetName : dataSheetName;
+        return CharSequenceUtil.isBlank(dataSheetName) ? defaultSheetName : dataSheetName;
     }
 
     private int writePagedDynamicHeadersExcel(File outFile, P params, String defaultSheetName) throws IOException {
@@ -122,11 +124,13 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
         PagingVO<DynamicExcelDTO> pageData = getPageData(dto);
         if (pageData == null) {
-            throw new ServiceException("导出数据不能为空");
+            throw new ServiceException("导出分页查询失败，页码=1");
         }
         List<DynamicExcelDTO> pageList = pageData.getList();
         int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
-        LinkedHashMap<String, String> headers = collectHeaders(dto, pageList, totalPage);
+        // 表头以首页为准：单遍历流式写入，写入器打开后表头不可变更，故后续页若出现首页没有的新列将无法补列
+        LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+        mergeHeaders(headers, pageList);
         if (CollUtil.isEmpty(headers)) {
             throw new ServiceException("导出数据不能为空");
         }
@@ -148,7 +152,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         dto.setCurrPage(pageNo);
                         pageData = getPageData(dto);
                         if (pageData == null) {
-                            throw new ServiceException("导出分页查询失败，页码=" + dto.getCurrPage());
+                            throw new ServiceException("导出分页查询失败，页码=" + pageNo);
                         }
                         pageList = pageData.getList();
                     }
@@ -181,21 +185,6 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return totalRows;
     }
 
-    private LinkedHashMap<String, String> collectHeaders(PagingDTO<P> dto, List<DynamicExcelDTO> firstPageList, int totalPage) {
-        LinkedHashMap<String, String> headers = new LinkedHashMap<>();
-        mergeHeaders(headers, firstPageList);
-        for (int pageNo = 2; pageNo <= totalPage; pageNo++) {
-            dto.setCurrPage(pageNo);
-            PagingVO<DynamicExcelDTO> pageData = getPageData(dto);
-            if (pageData == null) {
-                throw new ServiceException("导出数据不能为空");
-            }
-            mergeHeaders(headers, pageData.getList());
-        }
-        dto.setCurrPage(1);
-        return headers;
-    }
-
     private void mergeHeaders(LinkedHashMap<String, String> target, List<DynamicExcelDTO> pageList) {
         if (CollectionUtils.isEmpty(pageList)) {
             return;
@@ -220,7 +209,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
             return null;
         }
         for (DynamicExcelDTO dynamicExcelDTO : pageList) {
-            if (dynamicExcelDTO != null && !isBlank(dynamicExcelDTO.getSheetName())) {
+            if (dynamicExcelDTO != null && CharSequenceUtil.isNotBlank(dynamicExcelDTO.getSheetName())) {
                 return dynamicExcelDTO.getSheetName();
             }
         }
@@ -230,10 +219,6 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     private WriteSheet buildWriteSheet(int sheetNo, String sheetName, List<List<String>> header) {
         String currentSheetName = sheetNo == 0 ? sheetName : sheetName + (sheetNo + 1);
         return EasyExcel.writerSheet(sheetNo, currentSheetName).head(header).build();
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
     }
 
     private int maxRowsPerSheet() {
@@ -252,6 +237,9 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         while (hasNext) {
             dto.setParams(p);
             PagingVO<DynamicExcelDTO> data = getPageData(dto);
+            if (data == null) {
+                throw new ServiceException("导出分页查询失败，页码=" + dto.getCurrPage());
+            }
             if (!CollectionUtils.isEmpty(data.getList())) {
                 List<DynamicExcelDTO> list = (List<DynamicExcelDTO>) data.getList();
                 for (DynamicExcelDTO dynamicExcelDTO : list) {
@@ -312,7 +300,9 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         try {
             return objectMapper.readValue(params, type);
         } catch (JsonProcessingException e) {
-            throw new ServiceException(e.getMessage());
+            ServiceException ex = new ServiceException("导出参数解析失败：" + e.getOriginalMessage());
+            ex.initCause(e);
+            throw ex;
         }
     }
 
@@ -320,7 +310,9 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         try {
             return objectMapper.readValue(params, javaType);
         } catch (JsonProcessingException e) {
-            throw new ServiceException(e.getMessage());
+            ServiceException ex = new ServiceException("导出参数解析失败：" + e.getOriginalMessage());
+            ex.initCause(e);
+            throw ex;
         }
     }
 }
