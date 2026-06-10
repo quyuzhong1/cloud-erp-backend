@@ -63,6 +63,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
@@ -1425,25 +1426,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
             List<String> errorMsgList = new ArrayList<>();
             List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
-            /*
-             * IMPORT_ADD_NEW 已下线，原按新单校验如下。
-             * 原因：按新单会新建物流单/费用单，自发货标准导入无法可靠区分自发货与尾程归属。
-             */
-            // if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
-            //     if (CollUtil.isNotEmpty(logisticsBillVoList)) {
-            //         errorMsgList.add("单号已存在无法新增，请核查单号");
-            //     }
-            //     if (CharSequenceUtil.isBlank(billCostExcelDTO.getTrackNo())) {
-            //         errorMsgList.add("物流单号不能为空");
-            //     }
-            //     if (CharSequenceUtil.isBlank(billCostExcelDTO.getLogisticsSupplierName())) {
-            //         errorMsgList.add("物流商不能为空");
-            //     }
-            // } else {
             if (CollUtil.isEmpty(logisticsBillVoList)) {
                 errorMsgList.add("未找到对应物流单");
             }
-            // }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 value.forEach(excelDTO -> excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList)));
                 errorList.addAll(value);
@@ -1683,7 +1668,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             candidates = billVoIndex.getOrDefault("platform:" + excelDTO.getPlatformCode(), Collections.emptyList());
         }
         return candidates.stream()
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) || CharSequenceUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode())
+                        || LogisticsBillPlatformCodeUtil.matches(excelDTO.getPlatformCode(), obj.getPlatformCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) || CharSequenceUtil.equals(obj.getSoDeliveryCode(), excelDTO.getSoDeliveryCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoCode()) || CharSequenceUtil.equals(obj.getSourceCode(), excelDTO.getSoCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || CharSequenceUtil.equals(obj.getTrackNo(), excelDTO.getTrackNo()))
@@ -1705,9 +1691,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (CharSequenceUtil.isNotBlank(vo.getSourceCode())) {
                 index.computeIfAbsent("soCode:" + vo.getSourceCode(), k -> new ArrayList<>()).add(vo);
             }
-            if (CharSequenceUtil.isNotBlank(vo.getPlatformCode())) {
-                index.computeIfAbsent("platform:" + vo.getPlatformCode(), k -> new ArrayList<>()).add(vo);
-            }
+            LogisticsBillPlatformCodeUtil.splitPlatformCodes(vo.getPlatformCode())
+                    .forEach(platformCode -> index.computeIfAbsent("platform:" + platformCode, k -> new ArrayList<>()).add(vo));
         }
         return index;
     }
@@ -2032,11 +2017,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 dto.setCostValue(BigDecimal.ZERO);
                 return dto;
             });
+
+            BigDecimal costValue = ObjectUtil.defaultIfNull(updateDTO.getCostValue(), BigDecimal.ZERO);
             if (LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(updateDTO.getType())) {
-                addDataDTO.setEstimatedValue(ObjectUtil.defaultIfNull(addDataDTO.getEstimatedValue(), BigDecimal.ZERO).add(updateDTO.getCostValue()));
+                addDataDTO.setEstimatedValue(ObjectUtil.defaultIfNull(addDataDTO.getEstimatedValue(), BigDecimal.ZERO).add(costValue));
                 addDataDTO.setEstimatedCurrency(updateDTO.getCurrency());
             } else {
-                addDataDTO.setCostValue(addDataDTO.getCostValue().add(updateDTO.getCostValue()));
+                addDataDTO.setCostValue(addDataDTO.getCostValue().add(costValue));
                 addDataDTO.setCurrency(updateDTO.getCurrency());
             }
         }
@@ -2779,7 +2766,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         updateDataDTO.setCostDetailList(updateDetailList);
-		this.update(updateDataDTO , false, null);
+		service.update(updateDataDTO, false, null);
 	}
 
 	@Transactional(rollbackFor = Exception.class)

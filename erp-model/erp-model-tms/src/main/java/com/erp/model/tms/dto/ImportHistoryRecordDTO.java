@@ -413,15 +413,25 @@ public class ImportHistoryRecordDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class ImportRowContextDTO {
+        /**
+         * 导入行数据。
+         */
+        private JSONObject row;
+        /**
+         * 当前行预匹配到的物流单集合。
+         */
+        private List<LogisticsBillDTO.LogisticsBillVo> matchedBillList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ImportGroupContextDTO {
         /**
          * 导入分组行数据，key 为识别分组键。
          */
-        private Map<String, List<JSONObject>> groupRowMap;
-        /**
-         * 每行预匹配到的物流单集合。
-         */
-        private Map<JSONObject, List<LogisticsBillDTO.LogisticsBillVo>> rowMatchedBillMap;
+        private Map<String, List<ImportRowContextDTO>> groupRowMap;
         /**
          * 每个分组预匹配到的物流单集合。
          */

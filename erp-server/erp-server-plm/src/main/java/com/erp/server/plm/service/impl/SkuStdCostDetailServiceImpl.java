@@ -348,6 +348,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public Boolean autoFetchWithContext(SkuStdCostEntity mainEntity,
                                         SkuStdCostDetailEntity detailEntity,
@@ -382,8 +383,8 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
             throw new ServiceException("SKU标准成本自动获取日志记录失败");
         }
 
-        // 日志写入后再提交审核，避免 submitEntity 修改 detailEntity 状态字段导致日志语义失真
-        submitEntity(detailEntity, mainEntity);
+        // 日志写入后再提交审核，避免 doSubmitEntity 修改 detailEntity 状态字段导致日志语义失真
+        doSubmitEntity(detailEntity, mainEntity);
 
         return Boolean.TRUE;
     }
@@ -516,8 +517,13 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO submitEntity(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
+        return doSubmitEntity(entity, mainEntity);
+    }
+
+    private BatchResultDTO doSubmitEntity(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到sku标准成本单数据");
         }

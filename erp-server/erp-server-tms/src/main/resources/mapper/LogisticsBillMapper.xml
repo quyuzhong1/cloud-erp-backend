@@ -730,10 +730,14 @@
         WHERE lb.is_deleted = FALSE
         <trim prefix="AND (" suffix=")" prefixOverrides="OR">
             <if test="platformCodeList != null and platformCodeList.size > 0">
-                or lb.platform_code IN
-                <foreach collection="platformCodeList" item="platformCode" open="(" close=")" separator=",">
-                    #{platformCode}
-                </foreach>
+                or EXISTS (
+                    SELECT 1
+                    FROM unnest(regexp_split_to_array(COALESCE(lb.platform_code, ''), '[[:space:]]*,[[:space:]]*')) AS platform_code_item(code)
+                    WHERE trim(platform_code_item.code) IN
+                    <foreach collection="platformCodeList" item="platformCode" open="(" close=")" separator=",">
+                        #{platformCode}
+                    </foreach>
+                )
             </if>
             <if test="soCodeList != null and soCodeList.size > 0">
                 or lb.source_code IN

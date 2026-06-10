@@ -40,6 +40,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.server.tms.listener.LogisticsLastMileCostExcelListener;
+import com.erp.server.tms.util.LogisticsBillPlatformCodeUtil;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -284,8 +285,14 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 }
                 if (ObjectUtil.isNotEmpty(tmsCfgCostEntity) && ObjectUtil.isNotEmpty(entry.getValue())) {
                     // 费用项列按实际费用导入，币种稍后统一取整行币种，保证同一行尾程费用币种一致。
+                    String entryAmount = String.valueOf(entry.getValue()).trim();
+                    List<String> costValueErrors = FieldValidUtil.fieldValid(new TmsCostDetailDTO.CheckValueDTO(entryAmount));
+                    if (CollectionUtils.isNotEmpty(costValueErrors)) {
+                        errorMsgList.add(tmsCfgCostEntity.getCostName() + costValueErrors.get(0));
+                        continue;
+                    }
                     TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
-                    updateDTO.setCostValue(new BigDecimal(entry.getValue().toString()));
+                    updateDTO.setCostValue(new BigDecimal(entryAmount));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                     updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
@@ -324,21 +331,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             LogisticsLastMileCostExcelDTO excelDTO = rowExcelMap.get(value.get(0));
             List<String> errorMsgList = new ArrayList<>();
             List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = groupLogisticsBillVoMap.getOrDefault(entry.getKey(), Collections.emptyList());
-            /*
-             * IMPORT_ADD_NEW 已下线，原按新单校验如下。
-             * 原因：按新单会新建物流单/费用单，尾程标准导入无法可靠区分自发货与尾程归属。
-             */
-            // if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_NEW.getCode().equals(importType)) {
-            //     if (CollUtil.isNotEmpty(logisticsBillVoList)) {
-            //         errorMsgList.add("单号已存在无法新增，请核查单号");
-            //     }
-            //     if (CharSequenceUtil.isBlank(excelDTO.getTrackNo())) {
-            //         errorMsgList.add("物流单号不能为空");
-            //     }
-            //     if (CharSequenceUtil.isBlank(excelDTO.getLogisticsSupplierName())) {
-            //         errorMsgList.add("物流商不能为空");
-            //     }
-            // } else
             if (CollUtil.isEmpty(logisticsBillVoList)) {
                 errorMsgList.add("未找到对应物流单");
             }
@@ -489,7 +481,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                 pairList.add(new Pair<>(update.getId(),confirmTime));
             }
             // 已确认状态是后续对账流程入口，只有用户选择导入并确认时才在本次导入末尾流转。
-            if (confirmStatus) {
+            if ( Boolean.TRUE.equals(confirmStatus)) {
                 pairList.forEach(obj -> this.updateReconciliationStatus(obj.getKey(), ReconciliationStatusEnum.CONFIRMED.getCode(), obj.getValue()));
             }
         }
@@ -516,7 +508,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             candidates = billVoIndex.getOrDefault("platform:" + excelDTO.getPlatformCode(), Collections.emptyList());
         }
         return candidates.stream()
-                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode()) || CharSequenceUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode()))
+                .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getPlatformCode())
+                        || LogisticsBillPlatformCodeUtil.matches(excelDTO.getPlatformCode(), obj.getPlatformCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoDeliveryCode()) || CharSequenceUtil.equals(obj.getSoDeliveryCode(), excelDTO.getSoDeliveryCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getSoCode()) || CharSequenceUtil.equals(obj.getSourceCode(), excelDTO.getSoCode()))
                 .filter(obj -> CharSequenceUtil.isBlank(excelDTO.getTrackNo()) || CharSequenceUtil.equals(obj.getTrackNo(), excelDTO.getTrackNo()))
@@ -538,9 +531,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if (CharSequenceUtil.isNotBlank(vo.getSourceCode())) {
                 index.computeIfAbsent("soCode:" + vo.getSourceCode(), k -> new ArrayList<>()).add(vo);
             }
-            if (CharSequenceUtil.isNotBlank(vo.getPlatformCode())) {
-                index.computeIfAbsent("platform:" + vo.getPlatformCode(), k -> new ArrayList<>()).add(vo);
-            }
+            LogisticsBillPlatformCodeUtil.splitPlatformCodes(vo.getPlatformCode())
+                    .forEach(platformCode -> index.computeIfAbsent("platform:" + platformCode, k -> new ArrayList<>()).add(vo));
         }
         return index;
     }

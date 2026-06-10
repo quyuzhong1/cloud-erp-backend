@@ -1,25 +1,11 @@
 package com.erp.model.tms.dto;
 
-import com.common.business.dto.base.SortDTO;
 import java.util.List;
-
-import com.erp.model.sys.dto.CfgQueryConditionDTO;
 import com.erp.model.sys.dto.CfgQueryOptionDTO;
-import com.erp.model.sys.dto.DepartmentDTO;
-import com.erp.model.sys.entity.CfgQueryOptionEntity;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import com.common.business.dto.base.SuperDTO;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
-import java.util.Map;
 
 /**
  * <p>
