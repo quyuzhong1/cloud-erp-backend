@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Service
 @Scope("prototype")
-public class DmpInputAliExpressOverseasManagedProductApiInitHandler implements DmpInputApiInitHandler {
+public class DmpInputAliExpressOmProductApiInitHandler implements DmpInputApiInitHandler {
 
 	private static final int PAGE_SIZE = 20;
 

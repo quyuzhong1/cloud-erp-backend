@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -124,8 +126,7 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
         }
         product.setShopId(dmpProductInfoEntity.getNextLevelId());
         // 包装信息
-        String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", dmpSkuInfoEntity.getPackageLength(), dmpSkuInfoEntity.getPackageWidth(), dmpSkuInfoEntity.getPackageHeight(), dmpSkuInfoEntity.getGrossWeight());
-        product.setProductPacking(packing);
+        product.setProductPacking(buildPacking(dmpSkuInfoEntity));
         product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
         product.setPlatformSkuId(dmpSkuInfoEntity.getSkuId());
         product.setPlatformParentSpuNo(dmpSkuInfoEntity.getPlatformParentSpuNo());
@@ -137,6 +138,20 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
     	
         return product;
     }
+
+	private String buildPacking(DmpSkuInfoEntity dmpSkuInfoEntity) {
+		return Stream.of(
+				buildPackingItem("长度", dmpSkuInfoEntity.getPackageLength(), "cm"),
+				buildPackingItem("宽度", dmpSkuInfoEntity.getPackageWidth(), "cm"),
+				buildPackingItem("高度", dmpSkuInfoEntity.getPackageHeight(), "cm"),
+				buildPackingItem("重量", dmpSkuInfoEntity.getGrossWeight(), "kg"))
+				.filter(StringUtils::isNotBlank)
+				.collect(Collectors.joining(";"));
+	}
+
+	private String buildPackingItem(String name, Object value, String unit) {
+		return value == null ? "" : StrUtil.format("{}:{}{}", name, value, unit);
+	}
 
     @Override
     protected List<String> getSourceCodeKeys() {

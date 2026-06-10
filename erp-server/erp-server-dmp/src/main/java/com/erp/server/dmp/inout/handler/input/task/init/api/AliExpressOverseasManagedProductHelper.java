@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
@@ -58,7 +59,7 @@ public final class AliExpressOverseasManagedProductHelper {
 		if (StringUtils.isBlank(body)) {
 			return new JSONObject();
 		}
-		JSONObject root = JSONObject.parseObject(body);
+		JSONObject root = JSON.parseObject(body);
 		JSONObject payload = root.getJSONObject(responseKey);
 		if (payload == null) {
 			payload = root;
@@ -178,12 +179,21 @@ public final class AliExpressOverseasManagedProductHelper {
 		JSONArray mainImages = new JSONArray();
 		JSONObject skuMultimedia = sku.getJSONObject("multimedia");
 		if (skuMultimedia != null) {
-			mainImages = skuMultimedia.getJSONArray("main_image_list");
+			JSONArray skuImages = skuMultimedia.getJSONArray("main_image_list");
+			if (skuImages != null) {
+				mainImages = skuImages;
+			}
+		}
+		if (mainImages.isEmpty()) {
+			mainImages = findArray(sku, "main_image_list", "mainImageList");
 		}
 		if (mainImages.isEmpty()) {
 			JSONObject productMultimedia = findObject(detail, "multimedia");
 			if (productMultimedia != null) {
-				mainImages = productMultimedia.getJSONArray("main_image_list");
+				JSONArray productImages = productMultimedia.getJSONArray("main_image_list");
+				if (productImages != null) {
+					mainImages = productImages;
+				}
 			}
 		}
 		if (mainImages.isEmpty()) {

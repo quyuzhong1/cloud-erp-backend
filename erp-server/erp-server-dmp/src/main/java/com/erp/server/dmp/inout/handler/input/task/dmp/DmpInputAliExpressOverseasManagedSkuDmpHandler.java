@@ -60,7 +60,7 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 
 	private List<Map<String, Object>> expandSku(Map<String, Object> childMongo) {
 		List<Map<String, Object>> result = new ArrayList<>();
-		JSONObject detail = JSONObject.parseObject(JSON.toJSONString(childMongo));
+		JSONObject detail = JSON.parseObject(JSON.toJSONString(childMongo));
 		JSONObject productInfo = AliExpressOverseasManagedProductHelper.findObject(detail, "product_info_dto", "productInfoDto");
 		if (productInfo == null) {
 			productInfo = detail;
@@ -68,7 +68,8 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 		String spuId = firstNotBlank(
 				AliExpressOverseasManagedProductHelper.findString(productInfo, "product_id", "productId"),
 				AliExpressOverseasManagedProductHelper.findString(detail, "parentProductId"));
-		JSONArray skuList = AliExpressOverseasManagedProductHelper.findArray(detail, "product_sku_list", "productSkuList");
+		JSONArray skuList = AliExpressOverseasManagedProductHelper.findArray(detail,
+				"product_sku_list", "productSkuList", "search_sku_info_list", "searchSkuInfoList");
 		if (skuList.isEmpty()) {
 			return result;
 		}
@@ -78,10 +79,10 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 			}
 			JSONObject sku = (JSONObject) item;
 			Map<String, Object> flatSku = new HashMap<>();
-			flatSku.put("platformCreateTime", firstNotBlank(
+			putIfNotBlank(flatSku, "platformCreateTime", firstNotBlank(
 					AliExpressOverseasManagedProductHelper.findString(productInfo, "gmt_create", "gmtCreate"),
 					AliExpressOverseasManagedProductHelper.findString(detail, "gmt_create", "gmtCreate")));
-			flatSku.put("platformUpdateTime", firstNotBlank(
+			putIfNotBlank(flatSku, "platformUpdateTime", firstNotBlank(
 					AliExpressOverseasManagedProductHelper.findString(productInfo, "gmt_modified", "gmtModified"),
 					AliExpressOverseasManagedProductHelper.findString(detail, "gmt_modified", "gmtModified")));
 			flatSku.put("spuId", spuId);
