@@ -14,8 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author zdy
@@ -27,6 +33,13 @@ import java.util.Map;
 @Slf4j
 public class ShopeeApiUtils {
 
+    private static final String CONTENT_TYPE = "Content-Type";
+    private static final String APPLICATION = "application/json";
+    private static final String MASK = "***";
+    private static final Set<String> SENSITIVE_KEYS = new HashSet<>(Arrays.asList(
+            "access_token", "refresh_token", "sign", "partner_key", "tmp_partner_key",
+            "secret", "secret_key", "token", "authorization"
+    ));
 
     public static String getPublicSign(String path, long partner_id, String tmp_partner_key) {
         long timest = System.currentTimeMillis() / 1000L;
@@ -41,9 +54,8 @@ public class ShopeeApiUtils {
             SecretKeySpec secret_key = new SecretKeySpec(partner_key, "HmacSHA256");
             mac.init(secret_key);
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
-            log.info("sign：{}, timest:{}", sign, timest);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
         }
         return sign;
     }
@@ -66,9 +78,8 @@ public class ShopeeApiUtils {
             mac.init(secret_key);
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
         }
-        log.info("sign：{}, timest:{}", sign, timest);
         return sign;
     }
 
@@ -86,9 +97,8 @@ public class ShopeeApiUtils {
             mac.init(secret_key);
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(base_string)));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
         }
-        log.info("sign：{}, timest:{}", sign, timest);
         return sign;
     }
 
@@ -102,15 +112,16 @@ public class ShopeeApiUtils {
     public static ShopResponse sendShopGet(String baseUrl, HashMap<String, Object> paramMap) {
         ShopResponse resultMap = null;
         Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
         headers.put("Connection", "keep-alive");
-        log.info("baseUrl：{}", baseUrl);
+        String safeUrl = buildSafeUrl(baseUrl, paramMap);
+        log.info("虾皮接口请求, method: GET, url: {}", safeUrl);
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: GET, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, ShopResponse.class);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
 
         return resultMap;
@@ -125,15 +136,16 @@ public class ShopeeApiUtils {
     public static MerchantResponse sendMerchantGet(String baseUrl, HashMap<String, Object> paramMap) {
         MerchantResponse resultMap = null;
         Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
         headers.put("Connection", "keep-alive");
-        log.info("baseUrl：{}", baseUrl);
+        String safeUrl = buildSafeUrl(baseUrl, paramMap);
+        log.info("虾皮接口请求, method: GET, url: {}", safeUrl);
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: GET, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, MerchantResponse.class);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
 
         return resultMap;
@@ -148,15 +160,16 @@ public class ShopeeApiUtils {
     public static ShopeeResponse sendGet(String baseUrl, HashMap<String, Object> paramMap) {
         ShopeeResponse resultMap = null;
         Map<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
         headers.put("Connection", "keep-alive");
-        log.info("baseUrl：{}", baseUrl);
+        String safeUrl = buildSafeUrl(baseUrl, paramMap);
+        log.info("虾皮接口请求, method: GET, url: {}", safeUrl);
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: GET, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
 
         return resultMap;
@@ -170,14 +183,20 @@ public class ShopeeApiUtils {
      */
     public static ShopeeAuth sendAuthPost(String baseUrl, Map<String, Object> urlParams, Map<String, Object> params) {
         Map<String, String> headers = new HashMap();
-        headers.put("Content-Type", "application/json");
-        headers.put("Accept", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
+        headers.put("Accept", APPLICATION);
         String url = buildUrl(baseUrl, urlParams);
-        log.info("baseUrl：{}", baseUrl);
-        String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
-        log.info("bodyStr：{}", bodyStr);
-        ShopeeAuth resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
-        return resultMap;
+        String safeUrl = buildSafeUrl(baseUrl, urlParams);
+        log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(params));
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
+            log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
+            ShopeeAuth resultMap = JSONUtil.toBean(bodyStr, ShopeeAuth.class);
+            return resultMap;
+        } catch (RuntimeException e) {
+            log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -190,16 +209,17 @@ public class ShopeeApiUtils {
     public static ShopeeResponse sendPost(String baseUrl, Map<String, Object> urlParams, Map<String, Object> params) {
         ShopeeResponse resultMap = null;
         Map<String, String> headers = new HashMap();
-        headers.put("Content-Type", "application/json");
-        headers.put("Accept", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
+        headers.put("Accept", APPLICATION);
         String url = buildUrl(baseUrl, urlParams);
-        log.info("url：{}", url);
+        String safeUrl = buildSafeUrl(baseUrl, urlParams);
+        log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(params));
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
-            log.error("请求异常：{}", e.getMessage());
+            log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
         return resultMap;
     }
@@ -214,16 +234,17 @@ public class ShopeeApiUtils {
     public static ShopeeTokenAuth sendRefreshPost(String baseUrl, Map<String, Object> urlParams, Map<String, Object> params) {
         ShopeeTokenAuth resultMap = null;
         Map<String, String> headers = new HashMap();
-        headers.put("Content-Type", "application/json");
-        headers.put("Accept", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
+        headers.put("Accept", APPLICATION);
         String url = buildUrl(baseUrl, urlParams);
-        log.info("url：{}", url);
+        String safeUrl = buildSafeUrl(baseUrl, urlParams);
+        log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(params));
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, params, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, ShopeeTokenAuth.class);
         } catch (Exception e) {
-            log.error("请求异常：{}", e.getMessage());
+            log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
 
         return resultMap;
@@ -238,18 +259,90 @@ public class ShopeeApiUtils {
     public static ShopeeResponse sendPost(String baseUrl, Map<String, Object> urlParams, String paramsJson) {
         ShopeeResponse resultMap = null;
         Map<String, String> headers = new HashMap();
-        headers.put("Content-Type", "application/json");
-        headers.put("Accept", "application/json");
+        headers.put(CONTENT_TYPE, APPLICATION);
+        headers.put("Accept", APPLICATION);
         String url = buildUrl(baseUrl, urlParams);
-        log.info("url：{}", url);
+        String safeUrl = buildSafeUrl(baseUrl, urlParams);
+        log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(paramsJson));
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, paramsJson, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
         } catch (Exception e) {
-            log.error("请求异常：{}", e.getMessage());
+            log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
         return resultMap;
+    }
+
+    private static String buildSafeUrl(String url, Map<String, Object> urlParams) {
+        return maskSensitiveContent(buildUrl(url, maskParams(urlParams)));
+    }
+
+    private static Object maskLogBody(Object body) {
+        if (body == null) {
+            return null;
+        }
+        if (body instanceof Map) {
+            return maskParams((Map<?, ?>) body);
+        }
+        if (body instanceof Iterable) {
+            return maskIterable((Iterable<?>) body);
+        }
+        return maskSensitiveContent(String.valueOf(body));
+    }
+
+    private static Map<String, Object> maskParams(Map<?, ?> params) {
+        if (params == null || params.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : params.entrySet()) {
+            String key = String.valueOf(entry.getKey());
+            result.put(key, maskValue(key, entry.getValue()));
+        }
+        return result;
+    }
+
+    private static List<Object> maskIterable(Iterable<?> iterable) {
+        List<Object> result = new ArrayList<>();
+        for (Object item : iterable) {
+            result.add(maskValue(null, item));
+        }
+        return result;
+    }
+
+    private static Object maskValue(String key, Object value) {
+        if (isSensitiveKey(key)) {
+            return MASK;
+        }
+        if (value instanceof Map) {
+            return maskParams((Map<?, ?>) value);
+        }
+        if (value instanceof Iterable) {
+            return maskIterable((Iterable<?>) value);
+        }
+        if (value instanceof String) {
+            return maskSensitiveContent((String) value);
+        }
+        return value;
+    }
+
+    private static boolean isSensitiveKey(String key) {
+        return key != null && SENSITIVE_KEYS.contains(key.toLowerCase());
+    }
+
+    private static String maskSensitiveContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        String result = content;
+        for (String key : SENSITIVE_KEYS) {
+            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*\")([^\"]*)(\")", "$1" + MASK + "$3");
+            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*)([^,}\\]]+)", "$1\"" + MASK + "\"");
+            result = result.replaceAll("(?i)([?&]" + key + "=)([^&\\s]+)", "$1" + MASK);
+            result = result.replaceAll("(?i)(^" + key + "=)([^&\\s]+)", "$1" + MASK);
+        }
+        return result;
     }
 
     public static String buildUrl(String url, Map<String, Object> urlParams) {

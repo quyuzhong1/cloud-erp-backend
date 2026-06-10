@@ -10,8 +10,14 @@ import lombok.extern.slf4j.Slf4j;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author zdy
@@ -27,6 +33,11 @@ public class ShopeeApiUtils {
     
     private static String CONTENT_TYPE = "Content-Type";
     private static String APPLICATION = "application/json";
+    private static final String MASK = "***";
+    private static final Set<String> SENSITIVE_KEYS = new HashSet<>(Arrays.asList(
+            "access_token", "refresh_token", "sign", "partner_key", "tmp_partner_key",
+            "secret", "secret_key", "token", "authorization"
+    ));
             
 
     public static String getOrderSign(String path, String accessToken, long partnerId, String tmpPartnerKey, long shopId) {
@@ -43,7 +54,7 @@ public class ShopeeApiUtils {
             mac.init(secretKey);
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(baseString)));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
         }
         return sign;
     }
@@ -65,7 +76,7 @@ public class ShopeeApiUtils {
             mac.init(secretKey);
             sign = String.format("%064x", new BigInteger(1, mac.doFinal(baseString)));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("虾皮签名生成异常, path: {}, 错误: {}", path, e.getMessage(), e);
         }
         return sign;
     }
@@ -82,11 +93,14 @@ public class ShopeeApiUtils {
         Map<String, String> headers = new HashMap<String, String>();
         headers.put(CONTENT_TYPE, APPLICATION);
         headers.put("Connection", "keep-alive");
+        String safeUrl = buildSafeUrl(baseUrl, paramMap);
+        log.info("虾皮接口请求, method: GET, url: {}", safeUrl);
         try {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
+            log.info("虾皮接口响应, method: GET, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSON.parseObject(bodyStr, BaseResponse.class);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("虾皮接口请求异常, method: GET, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
 
         return resultMap;
@@ -104,13 +118,14 @@ public class ShopeeApiUtils {
         headers.put(CONTENT_TYPE, APPLICATION);
         headers.put("Accept", APPLICATION);
         String url = buildUrl(baseUrl, urlParams);
-        log.info("url：{}", url);
+        String safeUrl = buildSafeUrl(baseUrl, urlParams);
+        log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(paramsJson));
         try {
             String bodyStr = OkHttpUtils.doPostJsonBase64(url, paramsJson, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: POST, url: {}, responseLength: {}", safeUrl, bodyStr == null ? 0 : bodyStr.length());
             return bodyStr;
         } catch (Exception e) {
-            log.error("请求异常：{}", e.getMessage());
+            log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
             throw new ServiceException("虾皮面单获取异常"+e.getMessage());
         }
     }
@@ -128,16 +143,88 @@ public class ShopeeApiUtils {
         headers.put(CONTENT_TYPE, APPLICATION);
         headers.put("Accept", APPLICATION);
         String url = buildUrl(baseUrl, urlParams);
-        log.info("url：{}", url);
+        String safeUrl = buildSafeUrl(baseUrl, urlParams);
+        log.info("虾皮接口请求, method: POST, url: {}, body: {}", safeUrl, maskLogBody(paramsJson));
         try {
             String bodyStr = OkHttpUtils.doPostJson(url, paramsJson, headers);
-            log.info("bodyStr：{}", bodyStr);
+            log.info("虾皮接口响应, method: POST, url: {}, response: {}", safeUrl, maskSensitiveContent(bodyStr));
             resultMap = JSONUtil.toBean(bodyStr, BaseResponse.class);
 
         } catch (Exception e) {
-            log.error("请求异常：{}", e.getMessage());
+            log.error("虾皮接口请求异常, method: POST, url: {}, 错误: {}", safeUrl, e.getMessage(), e);
         }
         return resultMap;
+    }
+
+    private static String buildSafeUrl(String url, Map<String, Object> urlParams) {
+        return maskSensitiveContent(buildUrl(url, maskParams(urlParams)));
+    }
+
+    private static Object maskLogBody(Object body) {
+        if (body == null) {
+            return null;
+        }
+        if (body instanceof Map) {
+            return maskParams((Map<?, ?>) body);
+        }
+        if (body instanceof Iterable) {
+            return maskIterable((Iterable<?>) body);
+        }
+        return maskSensitiveContent(String.valueOf(body));
+    }
+
+    private static Map<String, Object> maskParams(Map<?, ?> params) {
+        if (params == null || params.isEmpty()) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : params.entrySet()) {
+            String key = String.valueOf(entry.getKey());
+            result.put(key, maskValue(key, entry.getValue()));
+        }
+        return result;
+    }
+
+    private static List<Object> maskIterable(Iterable<?> iterable) {
+        List<Object> result = new ArrayList<>();
+        for (Object item : iterable) {
+            result.add(maskValue(null, item));
+        }
+        return result;
+    }
+
+    private static Object maskValue(String key, Object value) {
+        if (isSensitiveKey(key)) {
+            return MASK;
+        }
+        if (value instanceof Map) {
+            return maskParams((Map<?, ?>) value);
+        }
+        if (value instanceof Iterable) {
+            return maskIterable((Iterable<?>) value);
+        }
+        if (value instanceof String) {
+            return maskSensitiveContent((String) value);
+        }
+        return value;
+    }
+
+    private static boolean isSensitiveKey(String key) {
+        return key != null && SENSITIVE_KEYS.contains(key.toLowerCase());
+    }
+
+    private static String maskSensitiveContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        String result = content;
+        for (String key : SENSITIVE_KEYS) {
+            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*\")([^\"]*)(\")", "$1" + MASK + "$3");
+            result = result.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*)([^,}\\]]+)", "$1\"" + MASK + "\"");
+            result = result.replaceAll("(?i)([?&]" + key + "=)([^&\\s]+)", "$1" + MASK);
+            result = result.replaceAll("(?i)(^" + key + "=)([^&\\s]+)", "$1" + MASK);
+        }
+        return result;
     }
 
     public static String buildUrl(String url, Map<String, Object> urlParams) {
