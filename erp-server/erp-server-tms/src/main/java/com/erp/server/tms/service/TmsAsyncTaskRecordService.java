@@ -53,6 +53,11 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     int resolveBatchSize(String batchConfig, int defaultSize);
 
     /**
+     * 解析批次并发等待超时秒数，非法或 <=0 时使用默认值
+     */
+    int resolveTimeoutSeconds(String timeoutConfig, int defaultSeconds);
+
+    /**
      * 格式化任务错误信息，避免 getMessage() 为 null
      */
     String formatTaskErrorMessage(Exception e);

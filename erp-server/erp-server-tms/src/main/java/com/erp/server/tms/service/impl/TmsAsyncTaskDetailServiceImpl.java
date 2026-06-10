@@ -5,12 +5,15 @@ import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.server.tms.mapper.AsyncTaskDetailRecordMapper;
 import com.erp.server.tms.service.TmsAsyncTaskDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import groovy.util.logging.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -54,6 +57,31 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
                 .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
                 .list();
 
+    }
+
+    /**
+     * 错误重试只分页读取来源任务失败明细，避免大批量失败 ID 撑大 dataJson 和 MQ 消息体。
+     */
+    @Override
+    public List<String> listFailedBusinessIdsByCursor(String mainId, String lastBusinessId, int batchSize) {
+        if (StringUtils.isBlank(mainId)) {
+            throw new ServiceException("错误重试来源任务不能为空");
+        }
+        int safeBatchSize = batchSize <= 0 ? 500 : batchSize;
+        return lambdaQuery()
+                .select(TmsAsyncTaskDetailEntity::getBusinessId)
+                .eq(TmsAsyncTaskDetailEntity::getMainId, mainId)
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .isNotNull(TmsAsyncTaskDetailEntity::getBusinessId)
+                .gt(StringUtils.isNotBlank(lastBusinessId), TmsAsyncTaskDetailEntity::getBusinessId, lastBusinessId)
+                .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
+                .last("LIMIT " + safeBatchSize)
+                .list()
+                .stream()
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
 }

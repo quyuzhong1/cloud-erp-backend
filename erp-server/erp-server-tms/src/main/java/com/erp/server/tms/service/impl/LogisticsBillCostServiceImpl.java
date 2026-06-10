@@ -99,6 +99,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -2629,8 +2630,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
 
             // 2. 初始化批次配置
-            int batchSize = StringUtils.isBlank(billBatchParamsDTO.getSmallBagBatch()) ? 500 : Integer.valueOf(billBatchParamsDTO.getSmallBagBatch());
-            int timeoutSeconds = StringUtils.isBlank(billBatchParamsDTO.getSmallBagTimeoutSeconds()) ? 5000 : Integer.valueOf(billBatchParamsDTO.getSmallBagTimeoutSeconds());
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getSmallBagBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getSmallBagTimeoutSeconds(), 5000);
             String lastId = ""; // 游标起点为空
 
             int totalProcessed = 0;
@@ -2671,7 +2672,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
                 List<String> batchIds;
                 try {
-                    batchIds = pageByCanPushAllocation(dto);
+                    if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode())) {
+                        // 错误重试按来源任务失败明细分页，避免 dataJson 携带大批量费用ID。
+                        batchIds = asyncTaskDetailRecordService.listFailedBusinessIdsByCursor(dto.getRetrySourceTaskId(), lastId, batchSize);
+                    } else {
+                        batchIds = pageByCanPushAllocation(dto);
+                    }
                 } catch (Exception e) {
                     log.error("第{}批查询失败，taskId: {}", batchNumber, taskId, e);
                     asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
@@ -2915,42 +2921,50 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
 
-            costAllocationPool.execute(() -> {
-                try {
-                    if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
-                        log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
-                        return;
-                    }
+            try {
+                costAllocationPool.execute(() -> {
+                    try {
+                        if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+                            log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+                            return;
+                        }
 
-                    BatchResultDTO result = service.pushAllocation(businessId, reportDate, pushContext);
+                        BatchResultDTO result = service.pushAllocation(businessId, reportDate, pushContext);
 
-                    if (result.getSuccess()) {
-                        asyncTaskDetailRecordService.updateDetail(
-                            taskDetailId,
-                            TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            ""
-                        );
-                        successCount.incrementAndGet();
-                    } else {
-                        String errorMsg = StringUtils.isNotBlank(result.getMsg())
-                            ? org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)
-                            : "未知错误";
-                        asyncTaskDetailRecordService.updateDetail(
-                            taskDetailId,
-                            TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
-                            errorMsg
-                        );
+                        if (result.getSuccess()) {
+                            asyncTaskDetailRecordService.updateDetail(
+                                taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                                ""
+                            );
+                            successCount.incrementAndGet();
+                        } else {
+                            String errorMsg = StringUtils.isNotBlank(result.getMsg())
+                                ? org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000)
+                                : "未知错误";
+                            asyncTaskDetailRecordService.updateDetail(
+                                taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                                errorMsg
+                            );
+                            failedCount.incrementAndGet();
+                        }
+
+                    } catch (Exception e) {
+                        log.error("处理任务失败 taskDetailId: {}, businessId: {}", taskDetailId, businessId, e);
+                        asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
                         failedCount.incrementAndGet();
+                    } finally {
+                        latch.countDown();
                     }
-
-                } catch (Exception e) {
-                    log.error("处理任务失败 taskDetailId: {}, businessId: {}", taskDetailId, businessId, e);
-                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
-                    failedCount.incrementAndGet();
-                } finally {
-                    latch.countDown();
-                }
-            });
+                });
+            } catch (RejectedExecutionException ex) {
+                log.error("小包分摊任务提交失败 taskDetailId: {}, businessId: {}", taskDetailId, businessId, ex);
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "线程池拒绝执行");
+                failedCount.incrementAndGet();
+                latch.countDown();
+            }
         }
 
         try {

@@ -79,6 +79,10 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     private static final JSONConfig TASK_DATA_JSON_CONFIG = JSONConfig.create().setIgnoreNullValue(true);
 
+    private static final String TASK_DISPATCHED_MSG = "任务已派发";
+
+    private static final String TASK_BATCH_PROCESSING_MSG = "分批处理中";
+
     @Resource
     private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
 
@@ -332,6 +336,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     @Override
+    public int resolveTimeoutSeconds(String timeoutConfig, int defaultSeconds) {
+        int timeoutSeconds = NumberUtils.toInt(timeoutConfig, defaultSeconds);
+        return timeoutSeconds <= 0 ? defaultSeconds : timeoutSeconds;
+    }
+
+    @Override
     public String formatTaskErrorMessage(Exception e) {
         String message = e == null ? null : e.getMessage();
         return StringUtils.substring(Objects.toString(message, e == null ? "未知错误" : e.getClass().getSimpleName()), 0, 1000);
@@ -539,6 +549,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         newTask.setStartTime(LocalDateTime.now());
         newTask.setDataJson(entity.getDataJson());
         newTask.setBusinessType(entity.getBusinessType());
+        newTask.setMethodType(entity.getMethodType());
         newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         if(Objects.nonNull(execTimeout)){
             newTask.setExecTimeout(execTimeout);
@@ -595,11 +606,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     public BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity) {
         //数据校验
         checkData(entity);
-        //失败明细业务id集合
-        List<String> businessIds = tmsAsyncTaskDetailService.listErrorDetail(entity.getId()).stream().map(TmsAsyncTaskDetailEntity::getBusinessId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        if(CollUtil.isEmpty(businessIds)){
-            throw new ServiceException("未找到错误明细");
-        }
         //默认8小时
         Integer execTimeout = null;
         //获取分摊配置--任务超时时间
@@ -631,7 +637,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
         //entity.getDataJson()转TmsAsyncTaskRecordDTO.PushDTO实体类
         TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
-        pushDTO.setIds(businessIds);
+        // 错误重试只记录来源任务，消费时按失败明细分页读取，避免 dataJson 持有大批量 ids。
+        pushDTO.setIds(null);
+        pushDTO.setRetrySourceTaskId(entity.getId());
+        pushDTO.setRetryMode(TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY);
+        pushDTO.setBusinessType(entity.getBusinessType());
+        pushDTO.setMethodType(StringUtils.defaultIfBlank(entity.getMethodType(), pushDTO.getMethodType()));
 
         TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
         //重置任务ID
@@ -642,6 +653,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         newTask.setStartTime(LocalDateTime.now());
         newTask.setDataJson(JSONUtil.toJsonStr(pushDTO));
         newTask.setBusinessType(entity.getBusinessType());
+        newTask.setMethodType(entity.getMethodType());
         newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         if(Objects.nonNull(execTimeout)){
             newTask.setExecTimeout(execTimeout);
@@ -670,21 +682,34 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
 
     /**
-     * 任务结束，记录错误数量
+     * 正常完整收尾：主表保持三态，任务级异常通过 errorData 表达，不能被这里覆盖。
      */
     @Override
     public void updateTaskFinally(String taskId) {
         Integer errorCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode()).count();
         Integer detailCount = tmsAsyncTaskDetailService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).count();
+        TmsAsyncTaskRecordEntity currentTask = getById(taskId);
+        boolean clearProgressMsg = shouldClearTaskProgressMsg(currentTask);
 
         lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, "")
+                .set(clearProgressMsg, TmsAsyncTaskRecordEntity::getErrorData, "")
                 .set(TmsAsyncTaskRecordEntity::getErrorCount,errorCount)
                 .set(TmsAsyncTaskRecordEntity::getDetailCount,detailCount)
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
+    }
+
+    /**
+     * 正常收尾只清理派发/处理中进度文案，保留超时、查询失败等任务级异常原因。
+     */
+    private boolean shouldClearTaskProgressMsg(TmsAsyncTaskRecordEntity currentTask) {
+        if (currentTask == null || StringUtils.isBlank(currentTask.getErrorData())) {
+            return true;
+        }
+        String errorData = currentTask.getErrorData();
+        return TASK_DISPATCHED_MSG.equals(errorData) || TASK_BATCH_PROCESSING_MSG.equals(errorData);
     }
 
     /**

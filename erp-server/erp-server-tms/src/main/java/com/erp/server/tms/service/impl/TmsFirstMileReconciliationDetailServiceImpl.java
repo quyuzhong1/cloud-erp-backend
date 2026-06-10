@@ -80,6 +80,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -2934,27 +2935,33 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
-            costAllocationPool.execute(() -> {
-                try {
-                    //判断是否超时中止
-                    Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
-                    if(count >0){
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
+            try {
+                costAllocationPool.execute(() -> {
+                    try {
+                        //判断是否超时中止
+                        Integer count = asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getId, taskDetailId).eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode()).count();
+                        if(count >0){
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                    TmsAsyncTaskRecordStatusEnum.ING.getCode(), "");
 
-                        processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
+                            processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
 
-                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                    TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        }
+                    } catch (Exception e) {
+                        log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
+                        // 统一处理任务失败状态更新
+                        asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                    } finally {
+                        latch.countDown();
                     }
-                } catch (Exception e) {
-                    log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
-                    // 统一处理任务失败状态更新
-                    asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
-                } finally {
-                    latch.countDown();
-                }
-            });
+                });
+            } catch (RejectedExecutionException ex) {
+                log.error("任务提交失败 taskDetailId: {}", taskDetailId, ex);
+                asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, ex);
+                latch.countDown();
+            }
         }
         try {
             boolean await = latch.await(tmsAsyncTaskRecordEntity.getExecTimeout(), TimeUnit.SECONDS);// 等待所有任务完成

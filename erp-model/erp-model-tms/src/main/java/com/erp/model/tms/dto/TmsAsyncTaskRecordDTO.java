@@ -30,6 +30,8 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class TmsAsyncTaskRecordDTO implements Serializable {
 
+    public static final String RETRY_MODE_FAILED_ONLY = "FAILED_ONLY";
+
     /**
      * 状态统计
      */
@@ -317,6 +319,16 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
          */
         private String methodType;
+
+        /**
+         * 错误重试来源任务：避免把大批量失败明细ID写入 dataJson
+         */
+        private String retrySourceTaskId;
+
+        /**
+         * 重试模式：FAILED_ONLY 表示按来源任务失败明细分页执行
+         */
+        private String retryMode;
 
         /**
          * 核算期间 yyyy-MM（按月处理时的过滤条件）
