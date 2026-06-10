@@ -426,12 +426,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
         // FBA/Amazon货件：走DMP拉取
         DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
-        dmpAmazonFeign.pullShipment(pullShipmentDTO);
+        if (!Boolean.TRUE.equals(dmpAmazonFeign.pullShipment(pullShipmentDTO))) {
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "拉取FBA货件失败");
+        }
         return true;
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean pullInboundPlanShipment(FbaShipmentDTO.PullShipmentDTO dto) {
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(dto.getShopId());
         if (null == shopInfoEntity) {
@@ -440,8 +441,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if (!AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(shopInfoEntity.getAuthStatus())) {
             throw new ServiceException(ApiError.SHOP_AUTH_SHIPMENT_ERROR);
         }
+        // 入库计划仅支持 Amazon 平台，禁止 TikTok / FBT 等其他平台误入新流程
+        if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())) {
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "FBA入库计划货件拉取仅支持Amazon平台");
+        }
         DmpPullShipmentDTO pullShipmentDTO = new DmpPullShipmentDTO(dto.getShopId(), dto.getShipmentCodeList());
-        dmpAmazonFeign.pullInboundPlanShipment(pullShipmentDTO);
+        if (!Boolean.TRUE.equals(dmpAmazonFeign.pullInboundPlanShipment(pullShipmentDTO))) {
+            throw new ServiceException(ApiError.HTTP_BAD_REQUEST.getCode(), "拉取FBA入库计划货件失败");
+        }
         return true;
     }
 
