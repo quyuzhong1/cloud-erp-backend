@@ -129,6 +129,6 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
     @GetMapping("/getDefaultAddWarehouse")
     public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
         List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
-        return CollUtil.isNotEmpty(dtos)?ApiResult.success(dtos.get(0)):new ApiResult<>();
+        return CollUtil.isNotEmpty(dtos) ? ApiResult.success(dtos.get(0)) : ApiResult.success();
     }
 }
