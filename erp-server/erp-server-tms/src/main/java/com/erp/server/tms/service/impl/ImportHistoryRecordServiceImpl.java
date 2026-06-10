@@ -20,7 +20,6 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskStatusEnum;
-import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -34,8 +33,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
@@ -46,8 +43,6 @@ import com.erp.model.tms.dto.excel.ImportHistoryRecordExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.server.tms.util.CfgLogisticsCostImportEtlRuleHelper;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -774,6 +769,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         // 同一识别分组会先汇总费用，再把固定的物流单集合传入 handleImportData，由既有重量分摊逻辑处理一对多/多对多。
                         List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVoList = resolveGroupMatchedLogisticsBillVoList(
                                 costSuccessContextList, mainErrorMsgList);
+                        // 分组物流单不一致时已写入错误，直接回填结果并跳过 handleImportData，避免再叠加“未找到对应物流单”的重复错误。
+                        if (CollUtil.isNotEmpty(mainErrorMsgList)) {
+                            synchronized (matchImportList) { updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList); }
+                            continue;
+                        }
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
                                 preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList,
                                 preQueryResult.getMainIdListMap(), preQueryResult.getOrderWeightMap(), preQueryResult.getOrderWeightErrorMap(), matchedLogisticsBillVoList);
@@ -854,6 +854,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         // 同一识别分组会先汇总费用，再把固定的物流单集合传入 handleImportData，由既有重量分摊逻辑处理一对多/多对多。
                         List<LogisticsBillDTO.LogisticsBillVo> matchedLogisticsBillVoList = resolveGroupMatchedLogisticsBillVoList(
                                 costSuccessContextList, mainErrorMsgList);
+                        // 分组物流单不一致时已写入错误，直接回填结果并跳过 handleImportData，避免再叠加“未找到对应物流单”的重复错误。
+                        if (CollUtil.isNotEmpty(mainErrorMsgList)) {
+                            synchronized (matchImportList) { updateMatchResult(costSuccessList, matchIndex.toString(), errorIndex.toString(), mainErrorMsgList, matchImportList); }
+                            continue;
+                        }
                         LogisticsBillCostDTO.ImportDataDTO importDataDTO = handleImportData(uniqueKeyList, successJson, mergeCostDetail, preQueryResult.getLogisticsBillCostList(),
                                 preQueryResult.getCfgCostList(), importDTO, costImportEntity, mainErrorMsgList,
                                 preQueryResult.getMainIdListMap(), preQueryResult.getOrderWeightMap(), preQueryResult.getOrderWeightErrorMap(), matchedLogisticsBillVoList);
@@ -1244,7 +1249,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .filter(CharSequenceUtil::isNotBlank)
                 .findFirst().orElse("");
         //币别赋值
-        if (ObjectUtil.isNotNull(currency)) {
+        if (CharSequenceUtil.isNotBlank(currency)) {
             String normalizeCurrency = normalizeCurrencyByDict(currency, currencyLookupMap);
             if (CharSequenceUtil.isBlank(normalizeCurrency)) {
                 errorMsgList.add("币别不存在");
@@ -1506,7 +1511,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         // 分组阶段已解析物流单集合，避免 platformCode 多行合并后被最后一行平台单号重新缩窄匹配范围。
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = ObjectUtil.defaultIfNull(matchedLogisticsBillVos, Collections.emptyList());
 
-        // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，且配置入口已禁用；未匹配到物流单直接报错（原 getAddImportLogisticBill 分支已注释）。
+        // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，配置入口已禁用；未匹配到物流单直接报错。
         if (CollUtil.isEmpty(logisticsBillVoList)) {
             errorMsgList.add("未找到对应物流单");
         }
@@ -1910,84 +1915,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         String taskId = downloadTaskFeign.reImportTask(fileTaskDTOS.get(0).getTaskId(),"物流商费用导入", IMPORT_TMS_IMPORT_HISTORY_RECORD.getCode(), importSyncDTO);
         return  BatchResultDTO.success(taskId,importSyncDTO.getFileName(),"重新导入成功");
     }
-
-    /**
-     * IMPORT_ADD_NEW 已下线，原按新单（import_add_new）格式化待新增物流单逻辑保留注释供恢复参考。
-     * 原因：模板导入同一文件可能混合自发货/尾程，按新单无法可靠判定费用归属；handleImportData 已移除对应分支。
-     */
-    /*
-    private void getAddImportLogisticBill (LogisticsBillCostDTO.ImportDataDTO importDataDTO,ImportHistoryRecordExcelDTO excelDTO,String costAttribution) {
-        //新增物流单，格式化物流费用
-        LogisticsBillEntity addBillEntity = new LogisticsBillEntity();
-        addBillEntity.setLogisticsSupplierId(excelDTO.getLogisticsSupplierId());
-
-        //发货单信息
-        if (CharSequenceUtil.isNotBlank(excelDTO.getSoDeliveryCode())) {
-            if (excelDTO.getSoDeliveryCode().startsWith("FHTZ")) {
-                List<SoDeliveryNoticeEntity> list = FeignQuery.create(SoDeliveryNoticeEntity.class).eq(SoDeliveryNoticeEntity::getCode, excelDTO.getSoDeliveryCode()).list();
-                if (CollUtil.isNotEmpty(list)) {
-                    addBillEntity.setSoDeliveryCode(list.get(0).getId());
-                    addBillEntity.setSourceCode(list.get(0).getSourceCode());
-                    addBillEntity.setOrderType(OrderTypeEnum.B2B.getCode());
-                    addBillEntity.setSourceType(SourceTypeEnum.SO_INFO.getCode());
-                }
-            } else if (excelDTO.getSoDeliveryCode().startsWith("FHDC")) {
-                List<SoB2cDeliveryEntity> list = FeignQuery.create(SoB2cDeliveryEntity.class).eq(SoB2cDeliveryEntity::getCode, excelDTO.getSoDeliveryCode()).list();
-                if (CollUtil.isNotEmpty(list)) {
-                    addBillEntity.setSoDeliveryCode(list.get(0).getId());
-                    addBillEntity.setSourceCode(list.get(0).getSourceCode());
-                    addBillEntity.setOrderType(OrderTypeEnum.B2C.getCode());
-                    addBillEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-                }
-            } else {
-                addBillEntity.setOrderType(OrderTypeEnum.OTHER.getCode());
-            }
-        }
-        //销售订单信息
-        if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())) {
-            if (CharSequenceUtil.isNotBlank(addBillEntity.getSourceCode()) && !CharSequenceUtil.equals(addBillEntity.getSourceCode(),excelDTO.getSourceCode())) {
-                throw new ServiceException("发货单对应的销售订单与导入的销售订单不匹配，请核查");
-            }
-            if (excelDTO.getSourceCode().startsWith("XSD")) {
-                List<SoInfoEntity> list = FeignQuery.create(SoInfoEntity.class).eq(SoInfoEntity::getCode, excelDTO.getSourceCode()).list();
-                if (CollUtil.isNotEmpty(list)) {
-                    addBillEntity.setSourceId(list.get(0).getId());
-                    addBillEntity.setOrderType(OrderTypeEnum.B2B.getCode());
-                    addBillEntity.setSourceType(SourceTypeEnum.SO_INFO.getCode());
-                }
-            } else if (excelDTO.getSourceCode().startsWith("XSDS")) {
-                List<SoB2cEntity> list = FeignQuery.create(SoB2cEntity.class).eq(SoB2cEntity::getCode, excelDTO.getSourceCode()).list();
-                if (CollUtil.isNotEmpty(list)) {
-                    addBillEntity.setSourceId(list.get(0).getId());
-                    addBillEntity.setOrderType(OrderTypeEnum.B2C.getCode());
-                    addBillEntity.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-                }
-            } else {
-                addBillEntity.setOrderType(OrderTypeEnum.OTHER.getCode());
-            }
-        }
-
-        //订单类型默认其他
-        if (CharSequenceUtil.isBlank(addBillEntity.getOrderType())) {
-            addBillEntity.setOrderType(OrderTypeEnum.OTHER.getCode());
-        }
-
-        addBillEntity.setSourceCode(excelDTO.getSourceCode());
-        addBillEntity.setPlatformCode(excelDTO.getPlatformCode());
-        addBillEntity.setSoDeliveryCode(excelDTO.getSoDeliveryCode());
-        String shipmentType = CharSequenceUtil.equals(costAttribution, DictCostAttributionEnum.SELF_DELIVER.getCode()) ?ShipmentTypeEnum.SELF_DELIVER.getCode() : ShipmentTypeEnum.PLATFORM_DELIVER.getCode();
-        addBillEntity.setShipmentType(shipmentType);
-        addBillEntity.setId(IdWorker.getIdStr());
-
-        LogisticsBillDetailEntity addBillDetailEntity = new LogisticsBillDetailEntity();
-        addBillDetailEntity.setTrackNo(excelDTO.getTrackNo());
-        addBillDetailEntity.setTrackEnable(Boolean.FALSE);
-        addBillDetailEntity.setMainId(addBillEntity.getId());
-
-        importDataDTO.setLogisticsBillEntity(addBillEntity);
-        importDataDTO.setLogisticsBillDetailList(Collections.singletonList(addBillDetailEntity));
-    }
-    */
 
     /**
      * 数据处理

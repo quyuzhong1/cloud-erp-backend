@@ -348,6 +348,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
 
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public Boolean autoFetchWithContext(SkuStdCostEntity mainEntity,
                                         SkuStdCostDetailEntity detailEntity,
@@ -383,7 +384,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
         }
 
         // 日志写入后再提交审核，避免 submitEntity 修改 detailEntity 状态字段导致日志语义失真
-        submitEntity(detailEntity, mainEntity);
+        self.submitEntity(detailEntity, mainEntity);
 
         return Boolean.TRUE;
     }
@@ -516,6 +517,7 @@ public class SkuStdCostDetailServiceImpl extends SuperServiceImpl<SkuStdCostDeta
     }
 
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Override
     public BatchResultDTO submitEntity(SkuStdCostDetailEntity entity, SkuStdCostEntity mainEntity) {
         if (ObjectUtil.isEmpty(entity)) {
