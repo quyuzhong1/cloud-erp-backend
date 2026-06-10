@@ -47,9 +47,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         if ("deliveryCode".equals(field)) {
             if (DynamicDataSourceTypeEnum.isDoris(DynamicDataSourceThreadLocal.get())) { // 切换到doris
-                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code " + compareCodeSplicingValueSql + " ) OR sbd.code " + compareCodeSplicingValueSql + " )";
+                return "(sb2c.id in ( SELECT so_id FROM erp_wms.third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code " + compareCodeSplicingValueSql + " ) OR (sb2c.ID IN ( SELECT source_id FROM erp_wms.so_b2c_delivery sbd WHERE sbd.is_deleted = FALSE AND sbd.code " + compareCodeSplicingValueSql + " ))";
             } else {
-                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code " + compareCodeSplicingValueSql + " ) OR sbd.code " + compareCodeSplicingValueSql + " )";
+                return "(sb2c.id in ( SELECT so_id FROM foreign_third_warehouse_delivery twd where is_deleted = false  AND status != 'cancelDelivery' and twd.code " + compareCodeSplicingValueSql + " ) OR (sb2c.ID IN ( SELECT source_id FROM so_b2c_delivery sbd WHERE sbd.is_deleted = FALSE AND sbd.code " + compareCodeSplicingValueSql + " ))";
             }
 
 
