@@ -103,6 +103,16 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
             throw new ServiceException("箱唛已被使用，不可操作");
         }
+        // 只剩一条明细时禁止单条移除：移除后箱唛下没有任何 sku 会导致箱唛为空，与 PC 端整单提交的兜底提示保持一致。
+        if (OPERATION_REMOVE.equals(addOrUpdateDTO.getOperation())) {
+            long retainDetailCount = lambdaQuery()
+                    .eq(AfterSalePackDetailEntity::getMainId, old.getMainId())
+                    .ne(AfterSalePackDetailEntity::getId, old.getId())
+                    .count();
+            if (retainDetailCount <= 0) {
+                throw new ServiceException("不可再移除，否则箱唛无sku");
+            }
+        }
         // 查询仓位是否可用
         Map<String, WarehouseLocationEntity> warehouseLocationMap = getWarehouseLocationMap(addOrUpdateDTO);
         Integer moveQty = updatePackQty(addOrUpdateDTO, old);
