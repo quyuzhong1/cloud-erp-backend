@@ -14,6 +14,7 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
+import com.sdk.wms.wego.enums.WegoSkuStatusEnum;
 import com.sdk.wms.wego.service.WegoOpenApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -105,9 +106,13 @@ public class WegoSkuInitHandler extends DmpInputInitHandler {
             if (list != null && !list.isEmpty()) {
                 for (int i = 0; i < list.size(); i++) {
                     JSONObject item = list.getJSONObject(i);
-                    if (item != null) {
-                        allSkuList.add(item);
+                    if (item == null) {
+                        continue;
                     }
+                    if (!WegoSkuStatusEnum.needSync(item.getInteger("status"))) {
+                        continue;
+                    }
+                    allSkuList.add(item);
                 }
             }
 
