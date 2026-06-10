@@ -83,10 +83,17 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     private Integer qty;
 
     /**
-     * 库存状态运行期覆盖：非空时优先于交易规则中的 {@code inventoryStatus}，
-     * 用于海外仓 wego 不良品签收等少数需要在 {@code transaction_flow.dict_inventory_status}
-     * 上落 {@link InventoryStatusEnum#DEFECTIVE_PRODUCT} 的场景。为空时按原有规则走，
-     * 保证全部历史调用链路行为不变。
+     * 库存状态运行期覆盖（仅对「调入端 TARGET」生效）：非空时调入仓库的 inventoryStatus
+     * 取此值，调出仓库 inventoryStatus 仍按交易规则配置（一般为 {@link InventoryStatusEnum#USABLE}）。
+     * <p>
+     * 设计为「单边覆盖」是因为调拨业务的物理语义是：调出仓的物理库存搬到调入仓，
+     * 调出端的库存分类必须与调出仓的实际库存匹配，否则会出现「调出仓 0 不良品库存」
+     * 的库存不足报错；调入端则可以根据业务需要切换分类。
+     * <p>
+     * 当前已知用例：wego 海外仓签收 {@code defective_product_flag=true} 时，
+     * 在途仓 USABLE 调出 → 目的仓 DEFECTIVE_PRODUCT 调入。
+     * <p>
+     * 为空时按原有规则走，保证全部历史调用链路行为不变。
      */
     private InventoryStatusEnum dictInventoryStatus;
 

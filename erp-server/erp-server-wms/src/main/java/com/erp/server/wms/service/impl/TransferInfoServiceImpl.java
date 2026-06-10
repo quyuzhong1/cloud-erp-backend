@@ -1607,11 +1607,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      *   <li>调拨单 {@code source_type} 为 {@link SourceTypeEnum#OVERSEAS_INBOUND}；</li>
      *   <li>对应海外仓入库主表 {@code dict_platform} 为 {@link OmsPlatformEnum#WE_GO} —
      *       其他平台目前未约定这个语义，按可用品处理；</li>
-     *   <li>对应签收记录 {@code defective_product_flag = true}。</li>
+     *   <li>对应签收记录 {@code defective_product_flag = true}；</li>
+     *   <li>调拨方向为「正向（在途仓 → 目的仓）」，即 {@code detail.inWarehouseId == mainEntity.toWarehouseId}。
+     *       负数签收回滚（目的仓 → 在途仓）场景下不覆盖，避免在反向时把目的仓
+     *       本不存在的 USABLE 库存被错误扣减；该边缘场景如需对账由业务侧人工处理。</li>
      * </ol>
      *
-     * @return detailId → 覆盖后的库存状态。命中条件之外的 detail 不会出现在返回 map 中，
-     *         调用方据此判定「是否覆盖」，避免误伤其他场景。
+     * @return detailId → 覆盖后的库存状态（仅作用于调入端 TARGET）。
+     *         命中条件之外的 detail 不会出现在返回 map 中，调用方据此判定「是否覆盖」，
+     *         避免误伤其他场景。
      */
     private Map<String, InventoryStatusEnum> resolveOverseasInboundInventoryStatus(List<TransferInfoEntity> list, List<TransferInfoDetailEntity> detailList) {
         if (CollectionUtils.isEmpty(list) || CollectionUtils.isEmpty(detailList)) {
@@ -1638,22 +1642,29 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .map(TransferInfoEntity::getSourceId)
                 .collect(Collectors.toSet());
         List<OverseasWarehouseInboundEntity> mainEntities = overseasWarehouseInboundService.listByIds(overseasInboundIds);
-        Set<String> wegoInboundIds = mainEntities.stream()
+        // 主表 id → toWarehouseId（目的仓 id），用于判定调拨方向
+        Map<String, String> wegoInboundToWarehouseIdMap = mainEntities.stream()
                 .filter(e -> OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(e.getDictPlatform()))
-                .map(BaseEntity::getId)
-                .collect(Collectors.toSet());
-        if (wegoInboundIds.isEmpty()) {
+                .collect(Collectors.toMap(BaseEntity::getId,
+                        OverseasWarehouseInboundEntity::getToWarehouseId,
+                        (a, b) -> a));
+        if (wegoInboundToWarehouseIdMap.isEmpty()) {
             return Collections.emptyMap();
         }
-        // 4. 仅保留 wego 入库单对应的调拨明细
-        List<TransferInfoDetailEntity> wegoDetails = overseasDetails.stream()
-                .filter(d -> wegoInboundIds.contains(overseasInboundTransferMap.get(d.getMainId()).getSourceId()))
+        // 4. 仅保留 wego 入库单对应的、且为「正向调拨（调入仓=目的仓）」的调拨明细
+        List<TransferInfoDetailEntity> wegoForwardDetails = overseasDetails.stream()
+                .filter(d -> {
+                    TransferInfoEntity transfer = overseasInboundTransferMap.get(d.getMainId());
+                    String toWarehouseId = wegoInboundToWarehouseIdMap.get(transfer.getSourceId());
+                    return CharSequenceUtil.isNotBlank(toWarehouseId)
+                            && CharSequenceUtil.equals(toWarehouseId, d.getInWarehouseId());
+                })
                 .collect(Collectors.toList());
-        if (wegoDetails.isEmpty()) {
+        if (wegoForwardDetails.isEmpty()) {
             return Collections.emptyMap();
         }
         // 5. 按 sourceDetailId 反查签收记录，构造 detailId → DEFECTIVE_PRODUCT 映射
-        Set<String> receivedIds = wegoDetails.stream()
+        Set<String> receivedIds = wegoForwardDetails.stream()
                 .map(TransferInfoDetailEntity::getSourceDetailId)
                 .collect(Collectors.toSet());
         List<OverseasWarehouseInboundReceivedEntity> receivedList = overseasWarehouseInboundReceivedService.listByIds(receivedIds);
@@ -1662,7 +1673,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                         r -> Boolean.TRUE.equals(r.getDefectiveProductFlag()),
                         (a, b) -> a));
         Map<String, InventoryStatusEnum> result = new HashMap<>();
-        for (TransferInfoDetailEntity detail : wegoDetails) {
+        for (TransferInfoDetailEntity detail : wegoForwardDetails) {
             if (Boolean.TRUE.equals(defectiveFlagMap.get(detail.getSourceDetailId()))) {
                 result.put(detail.getId(), InventoryStatusEnum.DEFECTIVE_PRODUCT);
             }
