@@ -20,6 +20,8 @@ public class PathConstants {
     public static final String GET_TRANSIT_WAREHOUSE_LIST_URL = "/api/v2/first_mile/get_transit_warehouse_list";
     //给快递公司下单并绑定组包揽收批次号
     public static final String POST_GENERATE_AND_BIND_FIRST_MILE_TRACKING_NUMBER_URL = "/api/v2/first_mile/generate_and_bind_first_mile_tracking_number";
+    //获取快递寄送模式绑定结果列表
+    public static final String POST_GET_COURIER_DELIVERY_TRACKING_NUMBER_LIST_URL = "/api/v2/first_mile/get_courier_delivery_tracking_number_list";
     //获取快递寄送模式面单
     public static final String POST_GET_COURIER_DELIVERY_WAYBILL_URL = "/api/v2/first_mile/get_courier_delivery_waybill";
     //解绑订单头程追踪号或绑定ID

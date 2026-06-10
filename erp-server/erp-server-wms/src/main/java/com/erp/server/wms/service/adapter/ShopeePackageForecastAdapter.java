@@ -33,6 +33,7 @@ import com.erp.server.wms.service.PackageForecastDetailService;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.firstmile.request.BindFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryInfo;
+import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryTrackingNumberListRequest;
 import com.sdk.tms.shopee.model.firstmile.request.CourierDeliveryWaybillRequest;
 import com.sdk.tms.shopee.model.firstmile.request.FirstMileOrder;
 import com.sdk.tms.shopee.model.firstmile.request.FirstMileTrackingNumberListRequest;
@@ -44,6 +45,8 @@ import com.sdk.tms.shopee.model.firstmile.request.UnbindFirstMileTrackingNumberR
 import com.sdk.tms.shopee.model.firstmile.response.BindFirstMileTrackingNumberOrder;
 import com.sdk.tms.shopee.model.firstmile.response.BindFirstMileTrackingNumberResponse;
 import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryChannelResponse;
+import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryBindingInfo;
+import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryTrackingNumberListResponse;
 import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryWaybill;
 import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryWaybillResponse;
 import com.sdk.tms.shopee.model.firstmile.response.CourierLogisticsChannel;
@@ -258,7 +261,14 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     @Override
     public void syncTrackingStatus(PackageForecastEntity entity) {
-        if (Objects.isNull(entity) || StringUtils.isBlank(entity.getTransportNo())) {
+        if (Objects.isNull(entity)) {
+            return;
+        }
+        if (PackageForecastCollectModeEnum.SHOPEE_COURIER_DELIVERY.getCode().equals(entity.getCollectMode())) {
+            syncCourierDeliveryTrackingStatus(entity);
+            return;
+        }
+        if (StringUtils.isBlank(entity.getTransportNo())) {
             return;
         }
         String shopId = entity.getShopId();
@@ -366,11 +376,11 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 shopeeLogisticsService.bindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
 
         Map<String, String> failReasonMap = CollectionUtils.emptyIfNull(response.getOrderList()).stream()
-                .filter(item -> StringUtils.isNotBlank(item.getFailError()) || StringUtils.isNotBlank(item.getFailMessage()))
+                .filter(this::isBindFailed)
                 .collect(Collectors.toMap(item -> orderKey(item.getOrderSn(), item.getPackageNumber()),
                         this::buildFailReason, (left, right) -> left));
         Set<String> successKeys = CollectionUtils.emptyIfNull(response.getOrderList()).stream()
-                .filter(item -> StringUtils.isBlank(item.getFailError()) && StringUtils.isBlank(item.getFailMessage()))
+                .filter(this::isBindSuccess)
                 .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
                 .collect(Collectors.toSet());
         String finalTrackingNumber = StringUtils.defaultIfBlank(response.getFirstMileTrackingNumber(), trackingNumber);
@@ -413,16 +423,27 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (StringUtils.isBlank(entity.getPlatformPackageNo())) {
             throw new ServiceException("虾皮快递寄送绑定ID为空");
         }
+        CourierDeliveryBindingInfo bindingInfo = findCourierDeliveryBindingInfo(entity, shopId)
+                .orElseThrow(() -> new ServiceException("虾皮快递寄送绑定结果暂未返回，请稍后重试,bindingId:" + entity.getPlatformPackageNo()));
+        validateCourierDeliveryBindingStatus(entity, bindingInfo);
+        String status = mapShopeeHandoverStatus(bindingInfo.getStatus());
+        if (StringUtils.isNotBlank(status) && !status.equals(entity.getHandoverStatus())) {
+            entity.setHandoverStatus(status);
+            packageForecastMapper.updateById(entity);
+        }
         CourierDeliveryWaybillRequest request = CourierDeliveryWaybillRequest.builder()
                 .bindingIdList(Collections.singletonList(entity.getPlatformPackageNo()))
                 .build();
         CourierDeliveryWaybillResponse response = shopeeLogisticsService.getCourierDeliveryWaybill(buildBaseRequest(shopId), request);
-        String url = CollectionUtils.emptyIfNull(response.getWaybillList()).stream()
+        CourierDeliveryWaybill waybill = CollectionUtils.emptyIfNull(response.getWaybillList()).stream()
                 .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
-                .map(CourierDeliveryWaybill::getShippingLabelUrl)
-                .filter(StringUtils::isNotBlank)
                 .findFirst()
-                .orElseThrow(() -> new ServiceException("虾皮快递寄送交接面单为空"));
+                .orElseThrow(() -> new ServiceException("虾皮快递寄送交接面单不存在,bindingId:" + entity.getPlatformPackageNo()));
+        String url = waybill.getShippingLabelUrl();
+        if (StringUtils.isBlank(url)) {
+            throw new ServiceException("虾皮快递寄送交接面单暂未生成，请稍后重试,bindingId:"
+                    + entity.getPlatformPackageNo() + ",status:" + StringUtils.defaultString(bindingInfo.getStatus()));
+        }
         try {
             return PdfUtil.convertPdfUrlToBase64(url, true);
         } catch (IOException e) {
@@ -438,6 +459,69 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 .firstMileTrackingNumberList(Collections.singletonList(entity.getTransportNo()))
                 .build();
         return shopeeLogisticsService.getWaybill(buildBaseRequest(shopId), request);
+    }
+
+    private void syncCourierDeliveryTrackingStatus(PackageForecastEntity entity) {
+        if (StringUtils.isBlank(entity.getPlatformPackageNo())) {
+            return;
+        }
+        String shopId = entity.getShopId();
+        if (StringUtils.isBlank(shopId)) {
+            ShopeeForecastContext context = buildBaseContext(Collections.singletonList(entity.getId()));
+            shopId = context.getShopId();
+        }
+        Optional<CourierDeliveryBindingInfo> bindingInfoOptional = findCourierDeliveryBindingInfo(entity, shopId);
+        if (!bindingInfoOptional.isPresent()) {
+            return;
+        }
+        String status = mapShopeeHandoverStatus(bindingInfoOptional.get().getStatus());
+        if (StringUtils.isNotBlank(status)) {
+            entity.setHandoverStatus(status);
+            packageForecastMapper.updateById(entity);
+        }
+    }
+
+    private Optional<CourierDeliveryBindingInfo> findCourierDeliveryBindingInfo(PackageForecastEntity entity, String shopId) {
+        LocalDate toDate = LocalDate.now();
+        LocalDate fromDate = Objects.nonNull(entity.getBillDate()) ? entity.getBillDate() : toDate.minusMonths(3);
+        if (fromDate.isAfter(toDate)) {
+            fromDate = toDate;
+        }
+        String cursor = null;
+        do {
+            CourierDeliveryTrackingNumberListRequest request = CourierDeliveryTrackingNumberListRequest.builder()
+                    .fromDate(fromDate.toString())
+                    .toDate(toDate.toString())
+                    .pageSize(50)
+                    .cursor(cursor)
+                    .build();
+            ValidatorUtil.validateEntity(request);
+            CourierDeliveryTrackingNumberListResponse response =
+                    shopeeLogisticsService.getCourierDeliveryTrackingNumberList(buildBaseRequest(shopId), request);
+            Optional<CourierDeliveryBindingInfo> bindingInfo = CollectionUtils.emptyIfNull(response.getTrackingNumberList()).stream()
+                    .filter(item -> entity.getPlatformPackageNo().equals(item.getBindingId()))
+                    .findFirst();
+            if (bindingInfo.isPresent()) {
+                return bindingInfo;
+            }
+            cursor = response.getNextCursor();
+            if (!Boolean.TRUE.equals(response.getMore())) {
+                cursor = null;
+            }
+        } while (StringUtils.isNotBlank(cursor));
+        return Optional.empty();
+    }
+
+    private void validateCourierDeliveryBindingStatus(PackageForecastEntity entity, CourierDeliveryBindingInfo bindingInfo) {
+        String status = bindingInfo.getStatus();
+        String bindingId = entity.getPlatformPackageNo();
+        if ("NOT_AVAILABLE".equals(status)) {
+            throw new ServiceException("虾皮快递寄送绑定ID暂未绑定订单，请稍后重试,bindingId:" + bindingId);
+        }
+        if ("CANCELING".equals(status) || "CANCELED".equals(status)) {
+            throw new ServiceException("虾皮快递寄送单已取消或取消中,bindingId:" + bindingId
+                    + ",status:" + status + ",reason:" + StringUtils.defaultString(bindingInfo.getReason()));
+        }
     }
 
     private void cancelCourierDelivery(ShopeeForecastContext context) {
@@ -683,11 +767,34 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     private String buildFailReason(FirstMileBindingFail fail) {
-        return StringUtils.defaultIfBlank(StringUtils.defaultIfBlank(fail.getFailMessage(), fail.getFailError()), "Shopee返回失败");
+        return defaultShopeeFailReason(fail.getFailMessage(), fail.getFailError());
     }
 
     private String buildFailReason(BindFirstMileTrackingNumberOrder fail) {
-        return StringUtils.defaultIfBlank(StringUtils.defaultIfBlank(fail.getFailMessage(), fail.getFailError()), "Shopee返回失败");
+        return defaultShopeeFailReason(fail.getFailMessage(), fail.getFailError());
+    }
+
+    private boolean isBindFailed(BindFirstMileTrackingNumberOrder item) {
+        return Objects.nonNull(item) && (hasShopeeFailText(item.getFailError()) || hasShopeeFailText(item.getFailMessage()));
+    }
+
+    private boolean isBindSuccess(BindFirstMileTrackingNumberOrder item) {
+        return Objects.nonNull(item) && !isBindFailed(item);
+    }
+
+    private String defaultShopeeFailReason(String failMessage, String failError) {
+        if (hasShopeeFailText(failMessage)) {
+            return failMessage;
+        }
+        if (hasShopeeFailText(failError)) {
+            return failError;
+        }
+        return "Shopee返回失败";
+    }
+
+    private boolean hasShopeeFailText(String value) {
+        String text = StringUtils.trimToEmpty(value);
+        return StringUtils.isNotBlank(text) && !"{}".equals(text) && !"null".equalsIgnoreCase(text);
     }
 
     private String buildFailReasonWithOrder(FirstMileBindingFail fail) {
@@ -696,7 +803,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
 
     private String buildFailReasonWithOrder(UnbindFirstMileTrackingNumberOrder fail) {
         return buildOrderPrefix(fail.getOrderSn(), fail.getPackageNumber())
-                + StringUtils.defaultIfBlank(StringUtils.defaultIfBlank(fail.getFailMessage(), fail.getFailError()), "Shopee返回失败");
+                + defaultShopeeFailReason(fail.getFailMessage(), fail.getFailError());
     }
 
     private boolean isPackageHasNotBind(FirstMileBindingFail fail) {
