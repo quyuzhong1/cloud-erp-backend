@@ -100,6 +100,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private static final String PAYMENT_PREPAID = "prepaid";
     private static final String PAYMENT_MONTHLY = "monthly";
     private static final String PAYMENT_MONTHLY_CN = "快递账号月结";
+    private static final String FIRST_MILE_PACKAGE_HAS_NOT_BIND = "firstmile.package_has_not_bind";
 
     @Resource
     private PackageForecastMapper packageForecastMapper;
@@ -446,6 +447,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         UnbindFirstMileTrackingNumberAllResponse response =
                 shopeeLogisticsService.unbindFirstMileTrackingNumberAll(buildBaseRequest(context.getShopId()), request);
         List<String> failureReasons = CollectionUtils.emptyIfNull(response.getFailList()).stream()
+                .filter(item -> !isPackageHasNotBind(item))
                 .map(this::buildFailReasonWithOrder)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(failureReasons)) {
@@ -474,6 +476,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                     shopeeLogisticsService.unbindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
             List<String> failureReasons = CollectionUtils.emptyIfNull(response.getOrderList()).stream()
                     .filter(item -> StringUtils.isNotBlank(item.getFailError()) || StringUtils.isNotBlank(item.getFailMessage()))
+                    .filter(item -> !isPackageHasNotBind(item))
                     .map(this::buildFailReasonWithOrder)
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(failureReasons)) {
@@ -681,6 +684,14 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private String buildFailReasonWithOrder(UnbindFirstMileTrackingNumberOrder fail) {
         return buildOrderPrefix(fail.getOrderSn(), fail.getPackageNumber())
                 + StringUtils.defaultIfBlank(StringUtils.defaultIfBlank(fail.getFailMessage(), fail.getFailError()), "Shopee返回失败");
+    }
+
+    private boolean isPackageHasNotBind(FirstMileBindingFail fail) {
+        return Objects.nonNull(fail) && FIRST_MILE_PACKAGE_HAS_NOT_BIND.equals(fail.getFailError());
+    }
+
+    private boolean isPackageHasNotBind(UnbindFirstMileTrackingNumberOrder fail) {
+        return Objects.nonNull(fail) && FIRST_MILE_PACKAGE_HAS_NOT_BIND.equals(fail.getFailError());
     }
 
     private String buildOrderPrefix(String orderSn, String packageNumber) {
