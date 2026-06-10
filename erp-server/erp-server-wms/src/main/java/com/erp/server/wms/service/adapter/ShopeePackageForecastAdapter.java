@@ -41,7 +41,6 @@ import com.sdk.tms.shopee.model.firstmile.request.FirstMileWaybillRequest;
 import com.sdk.tms.shopee.model.firstmile.request.GenerateAndBindFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.request.GenerateFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.request.UnbindFirstMileTrackingNumberAllRequest;
-import com.sdk.tms.shopee.model.firstmile.request.UnbindFirstMileTrackingNumberRequest;
 import com.sdk.tms.shopee.model.firstmile.response.BindFirstMileTrackingNumberOrder;
 import com.sdk.tms.shopee.model.firstmile.response.BindFirstMileTrackingNumberResponse;
 import com.sdk.tms.shopee.model.firstmile.response.CourierDeliveryChannelResponse;
@@ -63,7 +62,6 @@ import com.sdk.tms.shopee.model.firstmile.response.TransitWarehouse;
 import com.sdk.tms.shopee.model.firstmile.response.TransitWarehouseListResponse;
 import com.sdk.tms.shopee.model.firstmile.response.UnbindFirstMileTrackingNumberAllResponse;
 import com.sdk.tms.shopee.model.firstmile.response.UnbindFirstMileTrackingNumberOrder;
-import com.sdk.tms.shopee.model.firstmile.response.UnbindFirstMileTrackingNumberResponse;
 import com.sdk.tms.shopee.model.logistics.response.ShopeeAddress;
 import com.sdk.tms.shopee.model.logistics.response.ShopeeAddressListResponse;
 import com.sdk.tms.shopee.model.merchant.request.MerchantPrepaidAccountRequest;
@@ -525,6 +523,14 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     }
 
     private void cancelCourierDelivery(ShopeeForecastContext context) {
+        cancelByOrder(context);
+    }
+
+    private void cancelFirstMile(ShopeeForecastContext context) {
+        cancelByOrder(context);
+    }
+
+    private void cancelByOrder(ShopeeForecastContext context) {
         UnbindFirstMileTrackingNumberAllRequest request = UnbindFirstMileTrackingNumberAllRequest.builder()
                 .orderList(context.getOrderList())
                 .build();
@@ -549,36 +555,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(failureReasons)) {
             throw new ServiceException(String.join(";", failureReasons));
-        }
-    }
-
-    private void cancelFirstMile(ShopeeForecastContext context) {
-        Map<String, List<FirstMileOrder>> trackingOrderMap = new HashMap<>();
-        for (PackageForecastEntity entity : context.getEntityList()) {
-            if (StringUtils.isBlank(entity.getTransportNo())) {
-                throw new ServiceException("虾皮头程追踪号为空");
-            }
-            List<String> orderKeys = context.getForecastOrderKeyMap().get(entity.getId());
-            List<FirstMileOrder> orderList = context.getOrderList().stream()
-                    .filter(order -> orderKeys.contains(orderKey(order.getOrderSn(), order.getPackageNumber())))
-                    .collect(Collectors.toList());
-            trackingOrderMap.computeIfAbsent(entity.getTransportNo(), key -> new ArrayList<>()).addAll(orderList);
-        }
-        for (Map.Entry<String, List<FirstMileOrder>> entry : trackingOrderMap.entrySet()) {
-            UnbindFirstMileTrackingNumberRequest request = UnbindFirstMileTrackingNumberRequest.builder()
-                    .firstMileTrackingNumber(entry.getKey())
-                    .orderList(entry.getValue())
-                    .build();
-            UnbindFirstMileTrackingNumberResponse response =
-                    shopeeLogisticsService.unbindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
-            List<String> failureReasons = CollectionUtils.emptyIfNull(response.getOrderList()).stream()
-                    .filter(item -> StringUtils.isNotBlank(item.getFailError()) || StringUtils.isNotBlank(item.getFailMessage()))
-                    .filter(item -> !isPackageHasNotBind(item))
-                    .map(this::buildFailReasonWithOrder)
-                    .collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(failureReasons)) {
-                throw new ServiceException(String.join(";", failureReasons));
-            }
         }
     }
 
