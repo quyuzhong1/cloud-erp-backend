@@ -31,7 +31,7 @@
     </select>
 
     <select id="paging" resultType="com.erp.model.wms.dto.WaveListDTO$ViewDTO">
-        select  wl.id,
+        select  distinct wl.id,
                 wl.create_time,
                 wl.update_time,
                 wl.create_user_name,
