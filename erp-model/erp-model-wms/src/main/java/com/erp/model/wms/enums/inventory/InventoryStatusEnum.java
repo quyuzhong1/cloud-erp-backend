@@ -18,6 +18,7 @@ public enum InventoryStatusEnum  implements EnumMessage {
     FROZEN("frozen", "冻结", Boolean.TRUE),
     IN_TRANSIT("inTransit", "在途", Boolean.FALSE),
     WAIT_QC("waitQc", "待检", Boolean.FALSE),
+    DEFECTIVE_PRODUCT("defectiveProduct", "不良品", Boolean.FALSE),
     ;
 
     // 实际库存=可用库存+冻结库存，待检库存和在途库存不计入。
