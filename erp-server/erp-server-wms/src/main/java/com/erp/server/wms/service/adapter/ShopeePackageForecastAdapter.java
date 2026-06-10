@@ -446,9 +446,22 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 .build();
         UnbindFirstMileTrackingNumberAllResponse response =
                 shopeeLogisticsService.unbindFirstMileTrackingNumberAll(buildBaseRequest(context.getShopId()), request);
-        List<String> failureReasons = CollectionUtils.emptyIfNull(response.getFailList()).stream()
+        Set<String> successKeys = CollectionUtils.emptyIfNull(response.getSuccessList()).stream()
+                .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
+                .collect(Collectors.toSet());
+        Set<String> notBindKeys = CollectionUtils.emptyIfNull(response.getFailList()).stream()
+                .filter(this::isPackageHasNotBind)
+                .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
+                .collect(Collectors.toSet());
+        Map<String, String> failReasonMap = CollectionUtils.emptyIfNull(response.getFailList()).stream()
                 .filter(item -> !isPackageHasNotBind(item))
-                .map(this::buildFailReasonWithOrder)
+                .collect(Collectors.toMap(item -> orderKey(item.getOrderSn(), item.getPackageNumber()),
+                        this::buildFailReasonWithOrder, (left, right) -> left));
+        List<String> failureReasons = context.getOrderList().stream()
+                .filter(item -> !successKeys.contains(orderKey(item.getOrderSn(), item.getPackageNumber())))
+                .filter(item -> !notBindKeys.contains(orderKey(item.getOrderSn(), item.getPackageNumber())))
+                .map(item -> failReasonMap.getOrDefault(orderKey(item.getOrderSn(), item.getPackageNumber()),
+                        buildOrderPrefix(item.getOrderSn(), item.getPackageNumber()) + "Shopee返回失败"))
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(failureReasons)) {
             throw new ServiceException(String.join(";", failureReasons));
