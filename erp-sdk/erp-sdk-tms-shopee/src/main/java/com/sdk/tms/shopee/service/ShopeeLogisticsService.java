@@ -376,6 +376,7 @@ public class ShopeeLogisticsService {
         }
         if (StringUtils.isNotEmpty(baseResponse.getError())) {
             log.error("解绑指定头程追踪号异常：{}", baseResponse.getError());
+            throw new ServiceException(CharSequenceUtil.format("虾皮解绑指定头程追踪号接口异常:{}", baseResponse.getError()));
         }
         if (Objects.isNull(baseResponse.getResponse())) {
             throw new ServiceException(CharSequenceUtil.format("虾皮解绑指定头程追踪号响应为空:{}", baseResponse));
