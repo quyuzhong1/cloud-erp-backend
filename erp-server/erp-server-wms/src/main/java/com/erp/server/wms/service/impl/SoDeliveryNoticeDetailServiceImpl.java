@@ -353,6 +353,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             SoOutDTO.setSourceCode(packingDTO.getSourceCode());
             SoOutDTO.setSoOutstockId(packingDTO.getSoOutstockId());
             SoOutDTO.setSoOutstockCode(packingDTO.getSoOutstockCode());
+            SoOutDTO.setBusinessType(packingDTO.getBusinessType());
             SoOutDTO.setPackingDTOList(value);
             soOutDTOList.add(SoOutDTO);
         }

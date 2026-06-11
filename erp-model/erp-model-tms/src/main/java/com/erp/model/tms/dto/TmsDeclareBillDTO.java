@@ -386,6 +386,12 @@ public class TmsDeclareBillDTO implements Serializable {
          *  销售出库单编码
          */
         private String soOutstockCode;
+
+        /**
+         * 订单类型（so_outstock.order_type）
+         */
+        private String businessType;
+
         /**
          * sku
          */
