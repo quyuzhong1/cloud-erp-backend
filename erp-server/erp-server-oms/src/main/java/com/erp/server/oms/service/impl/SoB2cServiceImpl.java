@@ -2404,30 +2404,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
-            if (Boolean.TRUE.equals(isDelivery)) {
-                try {
-                    UserContext.setIsUserSystem(true);
-                    // 查询配置的海外仓物流
-                    String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
-                    List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
-                    LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v -> v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
-                    String warehouseLogisticsChannelId = Objects.nonNull(viewDTO) ? viewDTO.getPlatformLogisticsChannelId() : "";
-                    //提交发货
-                    submitDelivery(id, warehouseLogisticsChannelId);
-                } catch (Exception e) {
-                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                    addError.setParamJson("");
-                    addError.setReturnJson("");
-                    addError.setMainId(id);
-                    addError.setMessage(e.getMessage());
-                    soB2cErrorService.add(addError);
-                } finally {
-                    UserContext.clearIsUserSystem();
-                }
-            }
-
-            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             if (resultDTO.getIsPlatformShip()) {
                 //更新平台已标发
                 soB2cDetailList.forEach(v -> v.setIsSignShipped(true));
@@ -2745,8 +2721,58 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(batchResultDTO.getId());
                 batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}", CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : batchResultDTO.getMsg(), rulePromptWordEntity.getSolution()));
             }
+            return batchResultDTO;
+        }else{
+            if (Boolean.TRUE.equals(isDelivery)) {
+                handleAutoSubmitDeliveryAfterGetLogisticsCode(id);
+            }
         }
         return batchResultDTO;
+    }
+
+    /**
+     * 获取物流单号全局事务提交后再提交发货，避免与 autoOrderForecast(REQUIRES_NEW) 争抢 so_b2c 行锁。
+     */
+    private void handleAutoSubmitDeliveryAfterGetLogisticsCode(String soId) {
+        try {
+            String warehouseLogisticsChannelId = resolveWarehouseLogisticsChannelId(soId);
+            BatchResultDTO submitResult = soB2cService.submitDelivery(soId, warehouseLogisticsChannelId);
+            if (!Boolean.TRUE.equals(submitResult.getSuccess())) {
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                addError.setParamJson("");
+                addError.setReturnJson("");
+                addError.setMainId(soId);
+                addError.setMessage(CharSequenceUtil.blankToDefault(submitResult.getMsg(), "提交发货失败"));
+                soB2cErrorService.add(addError);
+            }
+        } catch (Exception e) {
+            log.error("销售订单自动提交发货失败,soId:{}", soId, e);
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+            addError.setParamJson("");
+            addError.setReturnJson("");
+            addError.setMainId(soId);
+            addError.setMessage(CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()));
+            soB2cErrorService.add(addError);
+        }
+    }
+
+    private String resolveWarehouseLogisticsChannelId(String soId) {
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soId);
+        if (Objects.isNull(logisticsEntity) || StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
+            return "";
+        }
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soId);
+        if (CollUtil.isEmpty(detailList) || StringUtils.isBlank(detailList.get(0).getWarehouseId())) {
+            return "";
+        }
+        List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(
+                logisticsEntity.getLogisticsChannelId(), LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+        LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream()
+                .filter(v -> v.getWarehouseId().equals(detailList.get(0).getWarehouseId()))
+                .findFirst().orElse(null);
+        return Objects.nonNull(viewDTO) ? CharSequenceUtil.blankToDefault(viewDTO.getPlatformLogisticsChannelId(), "") : "";
     }
 
     @Override
