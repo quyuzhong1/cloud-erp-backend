@@ -145,9 +145,6 @@ public class DmpThirdInventoryEntity extends BaseEntity<DmpThirdInventoryEntity>
     @TableField("sale_return_in_transit_qty")
     private Integer saleReturnInTransitQty;
 
-    public static final String PLATFORM_SKU_NAME = "platform_sku_name";
-
-
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 
@@ -194,12 +191,6 @@ public class DmpThirdInventoryEntity extends BaseEntity<DmpThirdInventoryEntity>
     public static final String UNIQUE_ENCRYPT = "unique_encrypt";
 
     public static final String DATA_ENCRYPT = "data_encrypt";
-    /**
-     * 平台SKU名称
-     */
-    @TableField("platform_sku_name")
-    private String platformSkuName;
-
     @Override
     public Serializable pkVal() {
         return null;
