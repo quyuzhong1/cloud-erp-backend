@@ -1,10 +1,8 @@
 package com.erp.server.file.core.multisheet;
 
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.core.AbstractFileEventHandler;
 import com.erp.server.file.core.ExportTempFilesHandler;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +11,6 @@ import org.springframework.core.ResolvableType;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -25,21 +22,12 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
 
     @Override
     public final void handle(FileTask fileTask) {
-        Path tempPath = null;
-        try {
-            P params = resolveExportParams(fileTask);
-            String excelPath = getExcelPath(params);
-            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx", fileTask.getUniqueWithFileName());
-            int total = writeAllSheets(tempPath.toFile(), params, excelPath);
-            fileTask.setCount(total);
-            String displayName = buildDownloadFileName(fileTask, excelPath);
-            fileTask.setFileUrl(FastDFSClientUtil.uploadFile(tempPath.toFile(), displayName, null));
-        } catch (IOException e) {
-            log.error("多sheet导出失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
-        } finally {
-            ExportTempFilesHandler.deleteQuietly(tempPath);
-        }
+        P params = resolveExportParams(fileTask);
+        String excelPath = getExcelPath(params);
+        String displayName = buildDownloadFileName(fileTask, excelPath);
+        // 复用统一导出模板：流式上传（streamUploadFile），避免整文件入内存导致大文件 OOM 与上传失败被静默写入空 url
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
+                outFile -> writeAllSheets(outFile, params, excelPath));
     }
 
     /**
@@ -93,7 +81,7 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
     }
 
     protected int getPageSize() {
-        return 5000;
+        return FileRegistry.exportPageSize();
     }
 
     protected int getFirstPage() {

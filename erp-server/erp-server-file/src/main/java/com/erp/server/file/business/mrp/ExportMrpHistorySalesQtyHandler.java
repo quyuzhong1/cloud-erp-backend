@@ -7,12 +7,20 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
+/**
+ * MRP 历史销量导出。
+ * <p>
+ * 不重写 {@code getSheetName()} 系有意为之：sheet 名由数据侧在
+ * {@code ReplenishmentSuggestionServiceImpl#listHistorySalesQty} 通过
+ * {@code DynamicExcelDTO#setSheetName("销售订单")} 提供，基类
+ * {@code AbstractDynamicHeadersFileEventHandler#resolveSheetName} 会优先读取
+ * {@code DynamicExcelDTO.getSheetName()}，无需 Handler 再传。请勿误判为丢失 sheet 名。
+ */
 @Component
 @Slf4j
 public class ExportMrpHistorySalesQtyHandler extends AbstractDynamicHeadersFileEventHandler<ReplenishmentSuggestionDTO.PagingParamDTO> {

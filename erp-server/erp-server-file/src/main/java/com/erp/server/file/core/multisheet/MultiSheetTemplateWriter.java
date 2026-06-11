@@ -9,8 +9,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.erp.server.file.exception.BusinessException;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ClassPathResource;
@@ -31,6 +31,7 @@ import java.util.function.Function;
 /**
  * EasyExcel 2.2.7 多 sheet 分页模板写引擎。
  */
+@Slf4j
 public class MultiSheetTemplateWriter {
 
     private final String excelPath;
@@ -103,7 +104,14 @@ public class MultiSheetTemplateWriter {
                         PagingDTO<P> pageDto = pagingDtos[i];
                         pageDto.setCurrPage(currPage + 1);
                         PagingVO<?> nextVo = sheets.get(i).getPageFetcher().apply(pageDto);
-                        if (nextVo == null || CollectionUtils.isEmpty(nextVo.getList())) {
+                        // 后续页返回 null 视为分页查询失败，显式抛错，避免以不完整数据"成功"结束导致静默丢数
+                        if (nextVo == null) {
+                            throw new ServiceException("独立分页导出后续页返回为空，sheetIndex=" + i + "，页码=" + (currPage + 1));
+                        }
+                        if (CollectionUtils.isEmpty(nextVo.getList())) {
+                            // 数据较 totalCount 提前耗尽：容忍总数估算的轻微偏差并结束，但打 warn 留痕便于排查
+                            log.warn("独立分页导出后续页数据为空，提前结束。sheetIndex={}, 页码={}, totalCount={}",
+                                    i, currPage + 1, totalRows[i]);
                             break;
                         }
                         currentVo = nextVo;
@@ -113,11 +121,10 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        int totalRowsAllSheets = 0;
-        for (int rows : totalRows) {
-            totalRowsAllSheets += rows;
-        }
-        return totalRowsAllSheets;
+        // count 取首个（主）sheet 行数，与 streamMasterDerived 及 writeAllSheets 文档语义一致；
+        // 不返回各 sheet 行数之和，避免 fileTask.count 被放大影响任务展示/下游统计。
+        // 独立多 sheet 约定 sheets 列表首项为主表（typeCount>=1，空集合在方法开头已抛异常）。
+        return totalRows[0];
     }
 
     public <P, M> int streamMasterDerived(File outFile,
@@ -173,7 +180,13 @@ public class MultiSheetTemplateWriter {
                     }
                     pagingDto.setCurrPage(currPage + 1);
                     PagingVO<M> nextVo = spec.getMasterPageFetcher().apply(pagingDto);
-                    if (nextVo == null || CollectionUtils.isEmpty(nextVo.getList())) {
+                    // 后续页返回 null 视为分页查询失败，显式抛错，避免以不完整数据"成功"结束导致静默丢数
+                    if (nextVo == null) {
+                        throw new ServiceException("主从派生导出后续页返回为空，页码=" + (currPage + 1));
+                    }
+                    if (CollectionUtils.isEmpty(nextVo.getList())) {
+                        // 数据较 totalCount 提前耗尽：容忍总数估算的轻微偏差并结束，但打 warn 留痕便于排查
+                        log.warn("主从派生导出后续页数据为空，提前结束。页码={}, totalCount={}", currPage + 1, total);
                         break;
                     }
                     currentVo = nextVo;
@@ -270,13 +283,17 @@ public class MultiSheetTemplateWriter {
         try {
             excelWriter.fill(rows, fillConfig, cursor.writeSheet);
         } catch (Throwable ex) {
-            throw new BusinessException("多sheet模板填充失败，phase=" + phase + ",typeIndex=" + typeIndex + ",sheetNo=" + cursor.sheetNo + ",msg=" + ex.getMessage());
+            // initCause 保留原始 cause，避免线上仅见包装信息无法定位根因（ServiceException 无 cause 构造器，
+            // 且新增 (String,Throwable) 重载会改变既有 (String,Object...) 调用方的占位符格式化行为，故此处用 initCause）
+            ServiceException se = new ServiceException("多sheet模板填充失败，phase=" + phase + ",typeIndex=" + typeIndex + ",sheetNo=" + cursor.sheetNo);
+            se.initCause(ex);
+            throw se;
         }
     }
 
     private void ensureCursorSheet(SheetCursor cursor) {
         if (cursor.sheetNo < 0 || cursor.sheetNo >= cursor.dataSheetIndexes.size()) {
-            throw new BusinessException("导出数据超过当前模板可承载的sheet数量，请缩小筛选范围导出。");
+            throw new ServiceException("导出数据超过当前模板可承载的sheet数量，请缩小筛选范围导出。");
         }
         cursor.writeSheet = EasyExcel.writerSheet(cursor.dataSheetIndexes.get(cursor.sheetNo)).build();
     }
@@ -301,7 +318,7 @@ public class MultiSheetTemplateWriter {
         }
         long count = (totalRows + (long) maxDataRowsPerSheet - 1) / (long) maxDataRowsPerSheet;
         if (count > maxTemplateDataSheets) {
-            throw new BusinessException("导出约需 " + count + " 张数据表，超过系统上限 " + maxTemplateDataSheets + "，请缩小筛选范围导出。");
+            throw new ServiceException("导出约需 " + count + " 张数据表，超过系统上限 " + maxTemplateDataSheets + "，请缩小筛选范围导出。");
         }
         return (int) count;
     }

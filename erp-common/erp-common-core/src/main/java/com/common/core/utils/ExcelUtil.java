@@ -837,32 +837,58 @@ public class ExcelUtil {
      *
      * @param inputFile 原始 Excel 临时文件
      * @param fileName  文件名（仅用于日志，可为空）
-     * @return 可供 EasyExcel 读取的文件；无错误单元格或处理失败时返回原文件，否则返回新生成的清洗临时文件
+     * @return 清洗结果：包含可供 EasyExcel 读取的文件，以及「清洗是否失败」标记，便于调用方观测与提示
      */
-    public static File clearFormulaErrorCellsToTempFile(File inputFile, String fileName) {
+    public static CleanResult clearFormulaErrorCellsToTempFile(File inputFile, String fileName) {
         if (inputFile == null || !inputFile.exists() || inputFile.length() == 0) {
             throw new ServiceException(ApiError.COMMON_FILE_EMPTY, StringUtils.isNotBlank(fileName) ? fileName : "");
         }
         try {
+            File cleaned;
             if (isXlsFormat(inputFile)) {
-                return clearXlsFormulaErrorCellsToTempFile(inputFile, fileName);
+                cleaned = clearXlsFormulaErrorCellsToTempFile(inputFile, fileName);
+            } else if (isXlsxFormat(inputFile)) {
+                cleaned = clearXlsxFormulaErrorCellsToTempFile(inputFile, fileName);
+            } else {
+                cleaned = inputFile;
             }
-            if (isXlsxFormat(inputFile)) {
-                return clearXlsxFormulaErrorCellsToTempFile(inputFile, fileName);
-            }
-            return inputFile;
+            return new CleanResult(cleaned, false);
         } catch (ServiceException e) {
             throw e;
         } catch (Exception e) {
+            // 清洗失败不阻断导入，回退用原始文件解析；但通过 cleanFailed=true 向调用方暴露「公式错误未清洗」，便于提示与排查
             log.error("清除 Excel 公式错误单元格失败，文件名={}，将使用原始文件解析", fileName, e);
-            return inputFile;
+            return new CleanResult(inputFile, true);
+        }
+    }
+
+    /**
+     * 清洗结果：file 为可供后续解析的文件（清洗成功为新临时文件，无错误或失败回退为原文件）；
+     * cleanFailed=true 表示清洗过程异常、错误单元格可能未被清除（原文件可能仍含幽灵行）。
+     */
+    public static final class CleanResult {
+        private final File file;
+        private final boolean cleanFailed;
+
+        public CleanResult(File file, boolean cleanFailed) {
+            this.file = file;
+            this.cleanFailed = cleanFailed;
+        }
+
+        public File getFile() {
+            return file;
+        }
+
+        public boolean isCleanFailed() {
+            return cleanFailed;
         }
     }
 
     /**
      * 文件版 .xls 清理：清理后写入新的临时文件，避免返回清洗后的 byte[]。
+     * 失败向上抛出，由 {@link #clearFormulaErrorCellsToTempFile} 统一标记 cleanFailed 并回退原文件。
      */
-    private static File clearXlsFormulaErrorCellsToTempFile(File inputFile, String fileName) {
+    private static File clearXlsFormulaErrorCellsToTempFile(File inputFile, String fileName) throws IOException {
         try (InputStream inputStream = new FileInputStream(inputFile);
              Workbook workbook = WorkbookFactory.create(inputStream)) {
             int clearedCount = clearWorkbookErrorCells(workbook);
@@ -872,26 +898,26 @@ public class ExcelUtil {
             File outputFile = File.createTempFile("formula-error-clean-", ".xls", FileUtils.getTempDirectory());
             try (OutputStream outputStream = new FileOutputStream(outputFile)) {
                 workbook.write(outputStream);
+            } catch (Exception e) {
+                FileUtils.deleteQuietly(outputFile);
+                throw e;
             }
             log.info("已清除 xls 公式错误单元格，文件名={}，清除数量={}", fileName, clearedCount);
             return outputFile;
-        } catch (Exception e) {
-            log.error("清除 xls 公式错误单元格失败，文件名={}，将使用原始文件解析", fileName, e);
-            return inputFile;
         }
     }
 
     /**
      * 文件版 .xlsx 清理：先轻量扫描是否存在错误单元格；存在才以「ZIP + StAX 流式」重写到临时文件，
      * 不存在则直接返回原文件，避免无错误时仍重写整包造成的磁盘浪费。全程流式、不构建内存工作簿对象模型。
+     * 失败向上抛出，由 {@link #clearFormulaErrorCellsToTempFile} 统一标记 cleanFailed 并回退原文件。
      */
-    private static File clearXlsxFormulaErrorCellsToTempFile(File inputFile, String fileName) {
-        File outputFile = null;
+    private static File clearXlsxFormulaErrorCellsToTempFile(File inputFile, String fileName) throws IOException, XMLStreamException {
+        if (!xlsxHasErrorCells(inputFile)) {
+            return inputFile;
+        }
+        File outputFile = File.createTempFile("formula-error-clean-", ".xlsx", FileUtils.getTempDirectory());
         try {
-            if (!xlsxHasErrorCells(inputFile)) {
-                return inputFile;
-            }
-            outputFile = File.createTempFile("formula-error-clean-", ".xlsx", FileUtils.getTempDirectory());
             int clearedCount;
             try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(inputFile), StandardCharsets.UTF_8);
                  ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(outputFile))) {
@@ -901,8 +927,7 @@ public class ExcelUtil {
             return outputFile;
         } catch (Exception e) {
             FileUtils.deleteQuietly(outputFile);
-            log.error("清除 xlsx 公式错误单元格失败，文件名={}，将使用原始文件解析", fileName, e);
-            return inputFile;
+            throw e;
         }
     }
 
@@ -1032,7 +1057,18 @@ public class ExcelUtil {
                     case XMLStreamConstants.END_DOCUMENT:
                         writer.writeEndDocument();
                         break;
+                    case XMLStreamConstants.PROCESSING_INSTRUCTION:
+                        if (reader.getPIData() != null) {
+                            writer.writeProcessingInstruction(reader.getPITarget(), reader.getPIData());
+                        } else {
+                            writer.writeProcessingInstruction(reader.getPITarget());
+                        }
+                        break;
                     default:
+                        // 其余事件类型（DTD/实体引用等）在标准 worksheet XML 中基本不出现，遇到则忽略并记录便于排查
+                        if (log.isDebugEnabled()) {
+                            log.debug("worksheet XML 未显式处理的事件类型={}，已忽略", event);
+                        }
                         break;
                 }
             }
@@ -1132,6 +1168,17 @@ public class ExcelUtil {
                 && entryName.startsWith("xl/worksheets/")
                 && entryName.endsWith(".xml")
                 && !entryName.contains("/_rels/");
+    }
+
+    /**
+     * 判断字节内容是否为真正的旧版 .xls（OLE2 复合文档）格式，仅比对文件头魔数。
+     * 供外部（如 Service 决定临时文件后缀）复用，避免在调用方重复硬编码 OLE2 魔数。
+     *
+     * @param fileBytes 文件字节
+     * @return true 表示 .xls(OLE2) 格式
+     */
+    public static boolean isXls(byte[] fileBytes) {
+        return fileBytes != null && startsWithMagic(fileBytes, XLS_MAGIC);
     }
 
     /**

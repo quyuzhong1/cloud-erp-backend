@@ -1,7 +1,7 @@
 package com.erp.server.file.handler;
 
 import com.common.business.annotation.FileServiceType;
-import com.erp.server.file.exception.BusinessException;
+import com.common.core.exception.ServiceException;
 import com.erp.server.file.service.FileService;
 import lombok.Getter;
 import org.springframework.aop.framework.AopProxyUtils;
@@ -44,11 +44,17 @@ public class FileRegistry {
     private static Integer sheetMaxRows;
 
     /**
-     * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link BusinessException}，避免无限克隆。
+     * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link ServiceException}，避免无限克隆。
      * 默认全局指定：50
      */
     @Getter
     private static Integer maxSheetNum;
+
+    /**
+     * 文件每次分页处理每页最大数量
+     */
+    @Getter
+    private static Integer maxPageSize;
 
     /**
      * 冒号后无内容表示「缺省属性时用空字符串」；业务侧应对空白串再回退到 {@code java.io.tmpdir}（见 ExportTempFilesHandler 等）。
@@ -67,6 +73,20 @@ public class FileRegistry {
     @Value("${file.storage.maxSheetNum:50}")
     public void setMaxSheetNum(Integer maxSheetNum){
         FileRegistry.maxSheetNum = maxSheetNum;
+    }
+
+    @Value("${file.storage.maxPageSize:5000}")
+    public void setMaxPageSize(Integer maxPageSize){
+        FileRegistry.maxPageSize = maxPageSize;
+    }
+
+    /**
+     * 导出分页每页条数：读取 {@code file.storage.maxPageSize}，未注入或非法（&lt;1）时回退 5000，
+     * 与 {@link #setMaxPageSize} 的缺省配置一致。
+     */
+    public static int exportPageSize() {
+        Integer configured = maxPageSize;
+        return configured == null || configured < 1 ? 5000 : configured;
     }
 
     @PostConstruct

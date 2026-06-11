@@ -1,7 +1,6 @@
 package com.erp.server.file.core;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -11,10 +10,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,7 +26,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,21 +36,10 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
     @Override
     public void handle(FileTask fileTask) {
-        Path tempPath = null;
-        try {
-            P params = resolveExportParams(fileTask);
-            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx",
-                    fileTask.getUniqueWithFileName());
-            int total = writePagedDynamicHeadersExcel(tempPath.toFile(), params, fileTask.getFileName());
-            fileTask.setCount(total);
-            String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), buildDownloadFileName(fileTask), null);
-            fileTask.setFileUrl(url);
-        } catch (Exception e) {
-            log.error("导出上传失败{}", e.getMessage(), e);
-            throw new BusinessException(CharSequenceUtil.blankToDefault(e.getMessage(), "导出上传失败"));
-        } finally {
-            ExportTempFilesHandler.deleteQuietly(tempPath);
-        }
+        P params = resolveExportParams(fileTask);
+        String displayName = buildDownloadFileName(fileTask);
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
+                outFile -> writePagedDynamicHeadersExcel(outFile, params, fileTask.getFileName()));
     }
 
     /**
@@ -106,6 +91,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return date + name + ".xlsx";
     }
 
+    /**
+     * sheet 名解析顺序：Handler 重写的 {@link #getSheetName()} → 数据侧 {@link DynamicExcelDTO#getSheetName()}
+     * → {@code defaultSheetName}（文件名）。因此 Handler 未重写 {@code getSheetName()} 时不会丢失 sheet 名，
+     * 仍会读取每批 {@link DynamicExcelDTO} 上业务设置的 sheet 名。
+     */
     private String resolveSheetName(String defaultSheetName, List<DynamicExcelDTO> pageList) {
         List<String> sheetName = getSheetName();
         if (!CollectionUtils.isEmpty(sheetName) && CharSequenceUtil.isNotBlank(sheetName.get(0))) {
@@ -126,9 +116,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         if (pageData == null) {
             throw new ServiceException("导出分页查询失败，页码=1");
         }
-        List<DynamicExcelDTO> pageList = pageData.getList();
         int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
-        // 表头以首页为准：单遍历流式写入，分页查询的响应对象是固定的，表头不会有变更.
+        // 表头以首页为准、不在后续分页重复 mergeHeaders：本链路为标准 OFFSET 分页（totalCount>0 时首页必有数据），
+        // 且各页 DynamicExcelDTO 由同一查询/同一响应类产出，动态列集合在分页间保持一致（仅数据行不同），故首页表头即为全量表头。
+        // 后续页若出现首页未包含的新列，由 ensureNoNewHeaderKeys 在写出循环中显式抛错兜底，而非静默丢列。
+        List<DynamicExcelDTO> pageList = pageData.getList();
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         mergeHeaders(headers, pageList);
         if (CollUtil.isEmpty(headers)) {
@@ -156,6 +148,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         }
                         pageList = pageData.getList();
                     }
+                    ensureNoNewHeaderKeys(headers, pageList, pageNo);
                     List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());
                     if (rows.isEmpty() && totalRows == 0) {
                         excelWriter.write(rows, writeSheet);
@@ -164,7 +157,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         if (rowsInSheet >= maxRowsPerSheet) {
                             sheetNo++;
                             if (sheetNo >= maxSheetNum) {
-                                throw new BusinessException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
+                                throw new ServiceException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
                             }
                             writeSheet = buildWriteSheet(sheetNo, sheetName, header);
                             rowsInSheet = 0;
@@ -194,6 +187,29 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                 continue;
             }
             dynamicExcelDTO.getHeaders().forEach(target::putIfAbsent);
+        }
+    }
+
+    /**
+     * 校验后续分页是否引入了首页表头未包含的动态列。
+     * <p>
+     * 表头按首页一次性确定，本链路约定各页动态列一致；若后续页出现新列，
+     * 继续按既有表头写出会静默丢列，故此处显式抛 {@link ServiceException} 提示，避免导出结果缺列且难排查。
+     */
+    private void ensureNoNewHeaderKeys(LinkedHashMap<String, String> headers, List<DynamicExcelDTO> pageList, int pageNo) {
+        if (CollectionUtils.isEmpty(pageList)) {
+            return;
+        }
+        for (DynamicExcelDTO dynamicExcelDTO : pageList) {
+            if (dynamicExcelDTO == null || CollUtil.isEmpty(dynamicExcelDTO.getHeaders())) {
+                continue;
+            }
+            for (String key : dynamicExcelDTO.getHeaders().keySet()) {
+                if (!headers.containsKey(key)) {
+                    throw new ServiceException("导出失败：第 " + pageNo + " 页出现首页表头未包含的动态列[" + key
+                            + "]，各页动态列不一致，请缩小筛选范围后重试或联系开发处理。");
+                }
+            }
         }
     }
 
@@ -260,7 +276,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     protected abstract PagingVO<DynamicExcelDTO> getPageData(PagingDTO<P> dto);
 
     protected int getPageSize() {
-        return 1000;
+        return FileRegistry.exportPageSize();
     }
 
     private List<List<Object>> convertPageDataList(List<DynamicExcelDTO> pageList, Collection<String> headerKeys) {

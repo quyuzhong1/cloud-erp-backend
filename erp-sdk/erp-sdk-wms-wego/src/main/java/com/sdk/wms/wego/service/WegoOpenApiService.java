@@ -1,6 +1,7 @@
 package com.sdk.wms.wego.service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
@@ -10,23 +11,23 @@ import com.erp.model.wms.dto.WegoInOrderCancelDTO;
 import com.erp.model.wms.dto.WegoInOrderQueryPageDTO;
 import com.erp.model.wms.dto.WegoInOrderSaveDTO;
 import com.erp.model.wms.dto.WegoInventoryQueryDTO;
+import com.erp.model.wms.dto.WegoOutboundInterceptDTO;
+import com.erp.model.wms.dto.WegoOutboundQueryPageDTO;
+import com.erp.model.wms.dto.WegoOutboundSaveDTO;
+import com.erp.model.wms.dto.WegoOutboundSearchDTO;
 import com.erp.model.wms.dto.WegoTransportQueryDTO;
 import com.erp.model.wms.dto.WegoSkuQueryDTO;
 import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.sdk.wms.wego.constants.WeGoConstants;
 import com.sdk.wms.wego.dto.response.WegoInboundResp;
+import com.sdk.wms.wego.dto.response.WegoOutboundResp;
 import com.sdk.wms.wego.utils.WeGoSignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * WEGO 海外仓开放接口 SDK
@@ -211,6 +212,152 @@ public class WegoOpenApiService {
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.INORDER_CANCEL, bizParams, "取消入库单");
     }
 
+    // ===================== 2C 出库单相关接口 =====================
+
+    /**
+     * 调用 WEGO 2c.order.save 创建或修改 2C 出库单。
+     * <p>
+     * {@link WegoOutboundSaveDTO.SaveReqDTO#getNo()} 为空时创建新出库单；非空时修改。
+     * 创建成功后响应 {@code result} 字符串即为 WEGO 出库单号（即 {@code no}），
+     * 调用方应将其存入 {@code third_warehouse_delivery.shipping_order_no}。
+     *
+     * @param dto 2C 出库单创建/修改请求
+     * @return WEGO 接口原始响应（含 success / errorCode / errorMsg / result=WEGO单号或错误详情）
+     */
+    public JSONObject save2cOrder(@Valid WegoOutboundSaveDTO.SaveReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        putIfNotNull(bizParams, "warehouseBusiness", dto.getWarehouseBusiness());
+        putIfNotNull(bizParams, "warehouseCode", dto.getWarehouseCode());
+        putIfNotNull(bizParams, "no", dto.getNo());
+        putIfNotNull(bizParams, "shopName", dto.getShopName());
+        putIfNotNull(bizParams, "receiver", dto.getReceiver());
+        putIfNotNull(bizParams, "receiverPhone", dto.getReceiverPhone());
+        putIfNotNull(bizParams, "receiverPostCode", dto.getReceiverPostCode());
+        putIfNotNull(bizParams, "receiverEmail", dto.getReceiverEmail());
+        putIfNotNull(bizParams, "receiverProvince", dto.getReceiverProvince());
+        putIfNotNull(bizParams, "receiverCity", dto.getReceiverCity());
+        putIfNotNull(bizParams, "receiverArea", dto.getReceiverArea());
+        putIfNotNull(bizParams, "receiverAddress", dto.getReceiverAddress());
+        putIfNotNull(bizParams, "referenceCode", dto.getReferenceCode());
+        putIfNotNull(bizParams, "referenceCode2", dto.getReferenceCode2());
+        putIfNotNull(bizParams, "remark", dto.getRemark());
+        putIfNotNull(bizParams, "sender", dto.getSender());
+        putIfNotNull(bizParams, "senderPhone", dto.getSenderPhone());
+        putIfNotNull(bizParams, "senderEmail", dto.getSenderEmail());
+        putIfNotNull(bizParams, "receiveDate", dto.getReceiveDate());
+        putIfNotNull(bizParams, "receiveTime", dto.getReceiveTime());
+        putIfNotNull(bizParams, "needSendFlag", dto.getNeedSendFlag());
+        putIfNotNull(bizParams, "needPackFlag", dto.getNeedPackFlag());
+        putIfNotNull(bizParams, "wayBillType", dto.getWayBillType());
+        putIfNotNull(bizParams, "logisticsName", dto.getLogisticsName());
+        putIfNotNull(bizParams, "trackRemark", dto.getTrackRemark());
+        putIfNotNull(bizParams, "wayBillBase64", dto.getWayBillBase64());
+        if (dto.getWayBillUrl() != null) {
+            bizParams.put("wayBillUrl", JSON.toJSON(dto.getWayBillUrl()));
+        }
+        if (dto.getProducts() != null) {
+            bizParams.put("products", JSON.toJSON(dto.getProducts()));
+        }
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TWO_C_ORDER_SAVE, bizParams, "创建2C出库单");
+    }
+
+    /**
+     * 调用 WEGO 2c.order.search 按单号列表精确查询 2C 出库单。
+     * <p>
+     * 主要用于 Handler 的 {@code queryOutboundBill}：传入 WEGO 出库单号（存于
+     * {@code third_warehouse_delivery.shipping_order_no}），返回当前状态、物流跟踪号等信息。
+     * 物流跟踪号在响应的 {@code logisticsList[].trackingNum} 字段中，取第一条非空值即可。
+     * <p>
+     * WEGO 限制：单次最多查询 100 条。
+     * <p>
+     * 注意：该接口响应的 {@code result} 字段是数组，与 queryPage 的分页对象结构不同，
+     * 此处直接解包为 {@link WegoOutboundResp.OutboundOrderDTO} 列表返回，避免 FastJSON 同名字段冲突。
+     *
+     * @param dto 查询请求，包含 accessToken / secret / noList（WEGO 出库单号列表）
+     * @return 出库单详情列表；失败或无数据时返回空列表
+     */
+    public List<WegoOutboundResp.OutboundOrderDTO> search2cOrder(@Valid WegoOutboundSearchDTO.SearchReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("noList", JSON.toJSON(dto.getNoList()));
+        JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
+                WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
+        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.warn("[WEGO查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
+            return Collections.emptyList();
+        }
+        JSONArray resultArray = response.getJSONArray("result");
+        if (resultArray == null || resultArray.isEmpty()) {
+            return Collections.emptyList();
+        }
+        try {
+            return resultArray.toJavaList(WegoOutboundResp.OutboundOrderDTO.class);
+        } catch (Exception ex) {
+            log.error("[WEGO查询2C出库单] result数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
+            throw new ServiceException("WEGO 查询2C出库单接口响应转换失败: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * 调用 WEGO 2c.order.queryPage 分页查询 2C 出库单。
+     * <p>
+     * 主要用于 DMP 定时轮询：传入待轮询的 WEGO 出库单号列表（{@code noList}），
+     * 或按 {@code finishDateBegin/End}、{@code orderDateBegin/End} 时间范围拉取有变化的订单。
+     * <p>
+     * 调用方根据 {@link WegoOutboundResp.PageResultDTO#getPages()} 判断总页数，
+     * 当 {@code pageNum >= pages} 或 {@code emptyFlag == true} 时结束分页。
+     * <p>
+     * WEGO 限制：单次最多返回 100 条（pageSize ≤ 100）。
+     *
+     * @param dto 分页查询请求（pageNum / pageSize 必填，其余过滤条件可选）
+     * @return 分页结果（{@code result} 为分页对象）；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     */
+    public WegoOutboundResp query2cOrderPage(@Valid WegoOutboundQueryPageDTO.QueryReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("pageNum", dto.getPageNum());
+        bizParams.put("pageSize", dto.getPageSize());
+        if (dto.getNoList() != null && !dto.getNoList().isEmpty()) {
+            bizParams.put("noList", JSON.toJSON(dto.getNoList()));
+        }
+        putIfNotNull(bizParams, "finishDateBegin", dto.getFinishDateBegin());
+        putIfNotNull(bizParams, "finishDateEnd", dto.getFinishDateEnd());
+        putIfNotNull(bizParams, "orderDateBegin", dto.getOrderDateBegin());
+        putIfNotNull(bizParams, "orderDateEnd", dto.getOrderDateEnd());
+        JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
+                WeGoConstants.TWO_C_ORDER_QUERY_PAGE, bizParams, "分页查询2C出库单");
+        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.warn("[WEGO分页查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
+            return null;
+        }
+        try {
+            return response.toJavaObject(WegoOutboundResp.class);
+        } catch (Exception ex) {
+            log.error("[WEGO分页查询2C出库单] 响应JSON转换WegoOutboundResp失败, {}", safeResponseLog(response), ex);
+            throw new ServiceException("WEGO 分页查询2C出库单接口响应转换失败: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * 调用 WEGO 2c.order.intercept 截单（取消）2C 出库单。
+     * <p>
+     * 截单规则（来自 WEGO 官方文档）：
+     * <ul>
+     *     <li>「已提交」前的订单可直接取消；</li>
+     *     <li>「拣货中/已拣货」视为仓内拦截，产生操作费，无物流费用；</li>
+     *     <li>「已出库」无法线上拦截。</li>
+     * </ul>
+     * 截单成功返回 {@code success=true}；失败返回 {@code success=false}
+     * （如 errorCode=2004 errorMsg="截单失败"）。
+     * 调用方根据 {@code success} 字段返回 {@code ThirdWarehouseCancelResultEnum}。
+     *
+     * @param dto 截单请求，仅需 WEGO 出库单号 {@code no}
+     * @return WEGO 接口原始响应（含 success / errorCode / errorMsg / result=截单后订单数组）
+     */
+    public JSONObject intercept2cOrder(@Valid WegoOutboundInterceptDTO.InterceptReqDTO dto) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("no", dto.getNo());
+        return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TWO_C_ORDER_INTERCEPT, bizParams, "截单2C出库单");
+    }
+
     /**
      * 仅在 value 非 null 时写入 map。
      * <p>
@@ -262,7 +409,7 @@ public class WegoOpenApiService {
             throw new ServiceException("WEGO " + actionName + "接口调用异常: " + e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
-        log.info("[WEGO{}] 请求结束, cost={}ms, response={}", actionName, cost, response);
+        log.info("[WEGO{}] 请求结束, cost={}ms", actionName, cost);
         if (response == null || response.isEmpty()) {
             log.error("[WEGO{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
             throw new ServiceException("WEGO " + actionName + "接口返回为空");
@@ -320,6 +467,20 @@ public class WegoOpenApiService {
             logParams.put(WeGoSignUtils.SIGN_FIELD, "***");
         }
         return logParams;
+    }
+
+    /**
+     * 从 WEGO 响应中提取可安全打印的字段（success / errorCode / errorMsg），
+     * 避免将含收货人姓名、电话、地址等 PII 的完整 JSON 写入日志。
+     */
+    private String safeResponseLog(JSONObject response) {
+        if (response == null) {
+            return "response=null";
+        }
+        return String.format("success=%s, errorCode=%s, errorMsg=%s",
+                response.get("success"),
+                response.get("errorCode"),
+                response.get("errorMsg"));
     }
 
     /**

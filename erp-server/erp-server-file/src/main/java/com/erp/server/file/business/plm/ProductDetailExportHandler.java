@@ -6,7 +6,6 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductDetailExcelExportDTO;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

@@ -11,11 +11,9 @@ import com.common.business.vo.KeysetPagingVO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -30,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.*;
 
 @Slf4j
@@ -93,22 +90,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 标准分页导出：{@link #resolveExportParams} → {@link #writePagedExcel} → 临时文件 → FastDFS → 清理。
      */
     protected void defaultPagingExportHandle(FileTask fileTask) {
-        Path tempPath = null;
-        try {
-            P params = resolveExportParams(fileTask);
-            String excelPath = getExcelPath(params);
-            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx", fileTask.getUniqueWithFileName());
-            int total = writePagedExcel(tempPath.toFile(), params, excelPath);
-            fileTask.setCount(total);
-            String displayName = buildDownloadFileName(fileTask, excelPath);
-            String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), displayName, null);
-            fileTask.setFileUrl(url);
-        } catch (IOException e) {
-            log.error("导出上传失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
-        } finally {
-            ExportTempFilesHandler.deleteQuietly(tempPath);
-        }
+        P params = resolveExportParams(fileTask);
+        String excelPath = getExcelPath(params);
+        String displayName = buildDownloadFileName(fileTask, excelPath);
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
+                outFile -> writePagedExcel(outFile, params, excelPath));
     }
 
 
@@ -119,7 +105,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             case OFFSET:
                 return writeOffsetBatches(outFile, params, excelPath);
             default:
-                throw new BusinessException(exportPaginationMode().name());
+                throw new ServiceException(exportPaginationMode().name());
         }
     }
 
@@ -158,7 +144,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     /**
-     * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link BusinessException}，避免无限克隆。
+     * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link ServiceException}，避免无限克隆。
      */
     protected int maxTemplateDataSheets() {
         return FileRegistry.getMaxSheetNum();
@@ -183,7 +169,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int sheets = (int) Math.max(1L, k);
         int max = maxTemplateDataSheets();
         if (sheets > max) {
-            throw new BusinessException("导出约需 " + sheets + " 张数据表，超过系统上限 " + max
+            throw new ServiceException("导出约需 " + sheets + " 张数据表，超过系统上限 " + max
                     + "，请缩小筛选范围或联系管理员调大 maxTemplateDataSheets。");
         }
         return sheets;
@@ -222,7 +208,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 将模板中 {@link #templateSourceSheetIndex()} 指向的数据源 sheet 复制为共 {@code dataSheetCount} 张同结构数据 sheet，
      * 供 EasyExcel 按 sheet 分批 fill。
      * <p>
-     * 模板除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link BusinessException}；展开时会先移除这些空占位 sheet，
+     * 模板除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link ServiceException}；展开时会先移除这些空占位 sheet，
      * 再由数据源 sheet 克隆补齐，保证数据 sheet 物理下标连续（0、1、2…）且不残留中间空 sheet。返回真实物理 sheet 下标映射。
      */
     private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
@@ -337,7 +323,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
 
     private WriteSheet buildCurrentDataSheet(OffsetSheetCursor c) {
         if (c.sheetNo >= c.dataSheetIndexes.size()) {
-            throw new BusinessException("导出数据超过当前模板可承载的 sheet 数，请缩小筛选范围导出。");
+            throw new ServiceException("导出数据超过当前模板可承载的 sheet 数，请缩小筛选范围导出。");
         }
         return EasyExcel.writerSheet(c.dataSheetIndexes.get(c.sheetNo)).build();
     }
@@ -367,7 +353,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             }
             int hardRoom = maxRowsPerXlsxSheetHardLimit() - (int) c.rowsInSheet;
             if (hardRoom <= 0) {
-                throw new BusinessException(
+                throw new ServiceException(
                         "导出数据超过 Excel 单 sheet 最大行数（约 104 万行），请缩小筛选范围或拆分导出。");
             }
             int take = Math.min(Math.min(roomConfigured, hardRoom), batch.size() - idx);
@@ -416,11 +402,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     List<T> batch = withoutNullListElements(rawList);
                     if (batch.isEmpty()) {
-                        throw new BusinessException("导出数据存在空行，请检查查询结果");
+                        throw new ServiceException("导出数据存在空行，请检查查询结果");
                     }
                     long cap = (long) preparedSheets * maxDataRowsPerSheet();
                     if (total + batch.size() > cap) {
-                        throw new BusinessException("键集导出数据量超过当前模板可承载的上限（约 " + cap
+                        throw new ServiceException("键集导出数据量超过当前模板可承载的上限（约 " + cap
                                 + " 行），请缩小筛选范围或改用 OFFSET 导出。");
                     }
                     fillBatchAcrossDataSheets("KEYSET", excelPath, excelWriter, fillConfig, batch, rawList, cursor,
@@ -431,7 +417,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         next = maxSortId(batch);
                     }
                     if (next == null) {
-                        throw new BusinessException("键集导出无法推导下一游标，请在 KeysetPagingVO 中设置 nextCursorId 或重写 extractSortId");
+                        throw new ServiceException("键集导出无法推导下一游标，请在 KeysetPagingVO 中设置 nextCursorId 或重写 extractSortId");
                     }
                     lastId = next;
                     clearBatchIfDetachedCopy(batch, rawList);
@@ -507,7 +493,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     int pageListSize = CollectionUtils.isEmpty(pageData.getList()) ? 0 : pageData.getList().size();
                     long cap = (long) dataSheets * maxDataRowsPerSheet();
                     if (totalRows + pageListSize > cap) {
-                        throw new BusinessException("导出数据量超过当前模板可承载的上限（约 " + cap
+                        throw new ServiceException("导出数据量超过当前模板可承载的上限（约 " + cap
                                 + " 行），请缩小筛选范围导出。");
                     }
                     if (!CollectionUtils.isEmpty(pageData.getList())) {
@@ -581,7 +567,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     protected int getPageSize() {
-        return 5000;
+        return FileRegistry.exportPageSize();
     }
 
     protected int getFirstPage() {

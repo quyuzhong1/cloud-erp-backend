@@ -6,12 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.rpc.sys.feign.ExportSysFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE;
 

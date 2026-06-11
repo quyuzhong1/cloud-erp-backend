@@ -42,6 +42,13 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
+
+	private static final Set<String> ALLOWED_PACKAGE_LOGISTICS_STATUS = new HashSet<>(Arrays.asList(
+			"LOGISTICS_READY",
+			"LOGISTICS_PICKUP_RETRY",
+			"LOGISTICS_REQUEST_CREATED"
+	));
+
 	@Resource
 	private CfgAppClientService cfgAppClientService;
 	@Resource
@@ -74,10 +81,14 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 			log.warn("没有订单详情数据，订单SN列表：{}", orderSnList);
 			return new ArrayList<>();
 		}
-		//过滤出订单状态是READY_TO_SHIP的订单
-		List<String> readyToShipOrderSnList = detailMongoData.stream().filter(f -> "READY_TO_SHIP".equals(f.get("order_status"))).map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
+		// 过滤 READY_TO_SHIP 且 package_list.logistics_status 满足条件的订单后再请求配送参数
+		List<String> readyToShipOrderSnList = detailMongoData.stream()
+				.filter(f -> "READY_TO_SHIP".equals(f.get("order_status")))
+				.filter(this::hasAllowedPackageLogisticsStatus)
+				.map(f -> f.get("order_sn").toString())
+				.collect(Collectors.toList());
 		if(CollUtil.isEmpty(readyToShipOrderSnList)) {
-			log.warn("没有READY_TO_SHIP状态的订单，订单SN列表：{}", orderSnList);
+			log.warn("没有满足 READY_TO_SHIP 且 package_list.logistics_status 条件的订单，订单SN列表：{}", orderSnList);
 			return new ArrayList<>();
 		}
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
@@ -131,6 +142,23 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 			resultList.add(result);
 		}
 		return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
+	}
+
+	@SuppressWarnings("unchecked")
+	private boolean hasAllowedPackageLogisticsStatus(Map<String, Object> orderDetail) {
+		Object packageListObj = orderDetail.get("package_list");
+		if (!(packageListObj instanceof List)) {
+			return false;
+		}
+		List<Map<String, Object>> packageList = (List<Map<String, Object>>) packageListObj;
+		if (CollUtil.isEmpty(packageList)) {
+			return false;
+		}
+		return packageList.stream()
+				.map(pkg -> pkg.get("logistics_status"))
+				.filter(Objects::nonNull)
+				.map(Object::toString)
+				.anyMatch(ALLOWED_PACKAGE_LOGISTICS_STATUS::contains);
 	}
 
 	/**
