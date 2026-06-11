@@ -99,15 +99,18 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         //小包分摊
         else if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
             String methodType = dto.getMethodType();
-            // 同一单据类型下按 methodType 二级分发；methodType 为空兜底为下推分摊（兼容历史/在途消息）
+            // 同一单据类型下按 methodType 二级分发；空值和旧枚举兼容历史/在途下推消息
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 //批量更新核算状态
                 smallBagCostAllocationService.pushUpdateReportStatus(dto);
+            } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_RECONCILIATION_STATUS.getCode())) {
+                //批量更新对账状态
+                logisticsBillCostService.pushUpdateReconciliationStatus(dto);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.RE_ALLOCATION.getCode())) {
                 smallBagCostAllocationService.pushReAllocation(dto);
             } else if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.DELETE.getCode())) {
                 smallBagCostAllocationService.pushDelete(dto);
-            } else if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+            } else if (isSmallBagPushAllocationMethodType(methodType)) {
                 //下推小包费用分摊
                 logisticsBillCostService.pushSmallBagCostAllocation(dto);
             } else {
@@ -141,5 +144,10 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         log.info("TMS异步任务消费完成，taskId: {}, businessType: {}", taskId, businessType);
     }
 
-
+    private boolean isSmallBagPushAllocationMethodType(String methodType) {
+        return StringUtils.isBlank(methodType)
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode())
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode());
+    }
 }

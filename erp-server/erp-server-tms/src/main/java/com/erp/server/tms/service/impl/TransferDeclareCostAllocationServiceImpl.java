@@ -384,7 +384,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			params.getBusinessType(), params.getMethodType(), total, jsonStr);
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -581,7 +581,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			params.getBusinessType(), params.getMethodType(), total, jsonStr);
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -777,7 +777,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			params.getBusinessType(), params.getMethodType(), total, jsonStr);
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}

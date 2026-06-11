@@ -56,8 +56,8 @@ public class PushAllocationCostConsumerService implements RocketMQListener<TmsAs
         if (Objects.equals(businessType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())) {
             firstMileCostAllocationService.pushFirstMileCostAllocation(dto);
         } else if (Objects.equals(businessType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())) {
-            // 同一单据类型下按 methodType 二级分发；methodType 为空兜底为下推分摊（兼容历史/在途消息）
-            if (StringUtils.isBlank(methodType) || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())) {
+            // 空值和旧枚举兼容历史/在途下推消息，新枚举区分自发货/尾程费用。
+            if (isSmallBagPushAllocationMethodType(methodType)) {
                 logisticsBillCostService.pushSmallBagCostAllocation(dto);
             } else {
                 log.warn("下推分摊MQ方法类型不支持，跳过消费，taskId: {}, methodType: {}", taskId, methodType);
@@ -72,6 +72,10 @@ public class PushAllocationCostConsumerService implements RocketMQListener<TmsAs
         log.info("下推分摊任务消费完成，taskId: {}, businessType: {}, methodType: {}", taskId, businessType, methodType);
     }
 
-
-
+    private boolean isSmallBagPushAllocationMethodType(String methodType) {
+        return StringUtils.isBlank(methodType)
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode())
+            || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode());
+    }
 }

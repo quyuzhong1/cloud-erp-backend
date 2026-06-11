@@ -1026,12 +1026,27 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateStatusDTO {
+    public static class UpdateStatusDTO extends PermissionsDTO {
 
         /**
          * ids
          */
         private List<String> ids;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 费用归属类型
+         */
+        private String type;
 
         /**
          * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus

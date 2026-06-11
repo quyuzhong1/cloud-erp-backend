@@ -129,6 +129,30 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @date 2026-04-22
      */
     Integer countByCanPushAllocation(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 游标分页查询可批量更新对账状态的费用ID
+     *
+     * @param params 查询条件（含高级查询、权限、状态和游标）
+     * @return 当前批次费用ID列表
+     */
+    List<String> pageByUpdateReconciliationStatus(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 统计可批量更新对账状态的费用总条数
+     *
+     * @param params 查询条件（含高级查询、权限和状态）
+     * @return 总条数
+     */
+    Integer countByUpdateReconciliationStatus(@Param("params") TmsAsyncTaskRecordDTO.PushParamsDTO params);
+
+    /**
+     * 校验批量更新对账状态入参ID是否都在当前数据权限范围内
+     *
+     * @param params 入参（含 ids 和 permissionSql）
+     * @return 有权限的ID数量
+     */
+    Integer countPermittedUpdateReconciliationStatusIds(@Param("params") LogisticsBillCostDTO.UpdateStatusDTO params);
     /**
      * 查询计费重合计
      * @author will

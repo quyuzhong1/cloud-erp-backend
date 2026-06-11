@@ -2859,6 +2859,23 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         LocalDate endDate = dto.getEndDate();
         String transportNo ="";
         List<String> logisticsSupplierIds = dto.getIds();
+        if (CollUtil.isNotEmpty(asyncTaskDetailRecordService.lambdaQuery().eq(TmsAsyncTaskDetailEntity::getMainId, taskId).list())) {
+            return false;
+        }
+        if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode())) {
+            List<TmsAsyncTaskDetailEntity> retryDetails = asyncTaskDetailRecordService.listErrorDetail(dto.getRetrySourceTaskId());
+            if (CollUtil.isEmpty(retryDetails)) {
+                asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"无失败明细可重试");
+                return true;
+            }
+            List<TmsAsyncTaskDetailEntity> taskDetailList = retryDetails.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getBusinessId()))
+                    .map(e -> buildTaskDetail(taskId, dto.getBusinessType(), e.getBusinessId(), e.getBusinessCode()))
+                    .collect(Collectors.toList());
+            asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount, taskDetailList.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
+            asyncTaskDetailRecordService.saveBatch(taskDetailList);
+            return false;
+        }
         if (null == startDate || null == endDate) {
             asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),"开始时间或结束时间为空");
             return true;
@@ -2883,20 +2900,23 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         asyncTaskRecordService.lambdaUpdate().set(TmsAsyncTaskRecordEntity::getDetailCount,map.size()).eq(TmsAsyncTaskRecordEntity::getId, taskId).update();
 
         List<TmsAsyncTaskDetailEntity> taskDetailList = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
         for (Map.Entry<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> entry : map.entrySet()) {
             String logisticsSupplierId = entry.getKey();
-            TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
-            detail.setMainId(taskId);
-            detail.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
-            detail.setBusinessId(logisticsSupplierId);
-//            detail.setBusinessCode(firstMileDeliveryEntity.getCode());
-            detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-            detail.setCreateTime(now);
-            taskDetailList.add(detail);
+            taskDetailList.add(buildTaskDetail(taskId, dto.getBusinessType(), logisticsSupplierId, null));
         }
         asyncTaskDetailRecordService.saveBatch(taskDetailList);
         return false;
+    }
+
+    private TmsAsyncTaskDetailEntity buildTaskDetail(String taskId, String businessType, String businessId, String businessCode) {
+        TmsAsyncTaskDetailEntity detail = new TmsAsyncTaskDetailEntity();
+        detail.setMainId(taskId);
+        detail.setBusinessType(businessType);
+        detail.setBusinessId(businessId);
+        detail.setBusinessCode(businessCode);
+        detail.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
+        detail.setCreateTime(LocalDateTime.now());
+        return detail;
     }
 
     @Override
@@ -2931,7 +2951,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, String> supplierMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds, DetailReconciliationTypeEnum.ACTUAL.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), null);
 
-        CountDownLatch latch = new CountDownLatch(detailList.size());
+        CountDownLatch latch = new CountDownLatch(taskDetailList.size());
         for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();

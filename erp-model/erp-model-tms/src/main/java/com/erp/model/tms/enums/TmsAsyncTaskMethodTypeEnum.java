@@ -13,8 +13,11 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2026-05-30
  */
 public enum TmsAsyncTaskMethodTypeEnum implements EnumMessage {
+    SELFDELIVER_PUSH_ALLOCATION("selfDeliverPushAllocation", "自发货下推分摊"),
+    LASTMILE_PUSH_ALLOCATION("lastMilePushAllocation", "尾程下推分摊"),
 	PUSH_ALLOCATION("pushAllocation", "下推分摊"),
 	UPDATE_REPORT_STATUS("updateReportStatus", "批量更新核算状态"),
+	UPDATE_RECONCILIATION_STATUS("updateReconciliationStatus", "批量更新对账状态"),
 	RE_ALLOCATION("reAllocation", "重新分摊"),
 	DELETE("delete", "批量删除"),
     ;

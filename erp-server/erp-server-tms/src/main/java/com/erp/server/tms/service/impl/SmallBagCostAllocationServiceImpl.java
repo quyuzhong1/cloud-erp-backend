@@ -363,7 +363,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		// 创建任务时直接写入预期明细数量，返回任务实体
-		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(params.getBusinessType(), params.getMethodType(), total, jsonStr);
+		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -560,7 +561,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		params.setReportStatus(reportStatus);
 		String jsonStr = JSONUtil.toJsonStr(params);
 
-		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(params.getBusinessType(), params.getMethodType(), total, jsonStr);
+		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -749,7 +751,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		params.setReportStatus(reportStatus);
 		String jsonStr = JSONUtil.toJsonStr(params);
 
-		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(params.getBusinessType(), params.getMethodType(), total, jsonStr);
+		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}

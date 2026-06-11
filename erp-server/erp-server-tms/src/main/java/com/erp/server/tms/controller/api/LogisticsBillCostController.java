@@ -157,12 +157,21 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
     @PostMapping("/updateReconciliationStatus")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:updateReconciliationStatus",
-            serviceClass = LogisticsBillCostService.class,
-            keyIdName = "id")
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public ApiResult<List<BatchResultDTO>> updateReconciliationStatus(@RequestBody @Validated LogisticsBillCostDTO.UpdateStatusDTO dto) {
+        dto.setType(DictCostAttributionEnum.SELF_DELIVER.getCode());
+        if (CollUtil.isEmpty(dto.getIds())) {
+            // 全量高级查询场景不回传海量ID，改由后端按查询条件创建异步任务。
+            List<BatchResultDTO> resultDTOS = new ArrayList<>(1);
+            resultDTOS.add(logisticsBillCostService.batchAsyncUpdateReconciliationStatus(dto));
+            return success(resultDTOS);
+        }
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO submit;

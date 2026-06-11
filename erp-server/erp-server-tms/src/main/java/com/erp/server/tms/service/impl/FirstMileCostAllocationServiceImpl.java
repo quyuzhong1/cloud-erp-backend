@@ -2116,7 +2116,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         String jsonStr = JSONUtil.toJsonStr(params);
 
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-            params.getBusinessType(), params.getMethodType(), total, jsonStr);
+            new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
         if (Objects.isNull(taskRecord)) {
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
         }
@@ -2374,7 +2374,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         String jsonStr = JSONUtil.toJsonStr(params);
 
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-            params.getBusinessType(), params.getMethodType(), total, jsonStr);
+            new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
         if (Objects.isNull(taskRecord)) {
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
         }
@@ -2572,7 +2572,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         String jsonStr = JSONUtil.toJsonStr(params);
 
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-            params.getBusinessType(), params.getMethodType(), total, jsonStr);
+            new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
         if (Objects.isNull(taskRecord)) {
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
         }
@@ -2805,7 +2805,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         
         // 2. 创建主任务（创建时直接写入预期明细数量，返回任务实体）
-        TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(), TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode(), totalCount, jsonStr);
+        TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
+            new TmsAsyncTaskRecordDTO.ManualCreateDTO(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode(),
+                TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode(), totalCount, jsonStr));
         if(Objects.isNull(taskRecord)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
