@@ -101,7 +101,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             int total = writePagedExcel(tempPath.toFile(), params, excelPath);
             fileTask.setCount(total);
             String displayName = buildDownloadFileName(fileTask, excelPath);
-            String url = FastDFSClientUtil.uploadFile(tempPath.toFile(), displayName, null);
+            String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), displayName, null);
             fileTask.setFileUrl(url);
         } catch (IOException e) {
             log.error("导出上传失败{}", e.getMessage(), e);
@@ -482,6 +482,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         dto.setParams(params);
 
         PagingVO<T> firstData = getPageData(dto);
+        if (firstData == null) {
+            throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
+        }
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
@@ -528,6 +531,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
                     pageData = getPageData(dto);
+                    if (pageData == null) {
+                        throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
+                    }
                 }
             } finally {
                 excelWriter.finish();
@@ -551,6 +557,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         while (hasNext) {
             dto.setParams(p);
             PagingVO<T> data = getPageData(dto);
+            if (null == data){
+                throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
+            }
             if (!CollectionUtils.isEmpty(data.getList())) {
                 dataList.addAll((Collection<? extends T>) data.getList());
             }

@@ -27,12 +27,12 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * @param detailCount 预期明细数量（创建时直接写入，省去二次更新）
      * @return 创建成功的任务记录；命中防重或保存失败时返回 null
      */
-    TmsAsyncTaskRecordEntity addManualTask(String businessType, String methodType, Integer detailCount, String json);
+    TmsAsyncTaskRecordEntity addManualTask(TmsAsyncTaskRecordDTO.ManualCreateDTO dto);
 
     /**
      * 新增自动任务（带方法类型）
      */
-    String addAutoTask(String businessType, String methodType, String json, String startTimeStr);
+    String addAutoTask(TmsAsyncTaskRecordDTO.AutoCreateDTO dto);
 
     void updateTask(String taskId, String status, String errorMsg);
 
@@ -50,6 +50,11 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * 解析批次大小，非法或缺失时使用默认值
      */
     int resolveBatchSize(String batchConfig, int defaultSize);
+
+    /**
+     * 解析批次并发等待超时秒数，非法或 <=0 时使用默认值
+     */
+    int resolveTimeoutSeconds(String timeoutConfig, int defaultSeconds);
 
     /**
      * 格式化任务错误信息，避免 getMessage() 为 null
@@ -88,7 +93,7 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity);
 
-    Boolean isExist(String businessType,  String startTimeStr);
+    Boolean isExist(String businessType, String methodType, String startTimeStr);
 
     void updateTaskDetailFailure(String taskDetailId, Exception e);
 

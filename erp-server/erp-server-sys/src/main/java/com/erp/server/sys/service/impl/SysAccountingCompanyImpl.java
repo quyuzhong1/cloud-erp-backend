@@ -223,7 +223,6 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 
-
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> listAll(String name) {
         LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -235,6 +234,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         list = list.stream().sorted(Comparator.comparing(SysAccountingCompanyEntity::getDisabled)).collect(Collectors.toList());
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
+
 
     /**
      * 根据ids 获取组织列表

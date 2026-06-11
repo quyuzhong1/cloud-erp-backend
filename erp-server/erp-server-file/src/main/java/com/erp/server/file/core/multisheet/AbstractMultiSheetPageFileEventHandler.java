@@ -12,6 +12,7 @@ import org.springframework.core.ResolvableType;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
 
     @SuppressWarnings("unchecked")
     protected P resolveExportParams(FileTask fileTask) {
-        Class<?> paramType = resolveExportParamType(getClass());
+        Type paramType = resolveExportParamType(getClass());
         if (paramType == null) {
             throw new IllegalStateException(getClass().getName()
                     + " 无法推断导出参数类型 P，请确保直接继承 AbstractMultiSheetPageFileEventHandler<P> 并指定具体 P，或重写 resolveExportParams");
@@ -72,11 +73,23 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
         return (P) value;
     }
 
-    static Class<?> resolveExportParamType(Class<?> handlerClass) {
-        ResolvableType param = ResolvableType
-                .forClass(AbstractMultiSheetPageFileEventHandler.class, handlerClass)
-                .getGeneric(0);
-        return param.resolve();
+    /**
+     * 从当前 Handler 类沿继承链解析 {@link AbstractMultiSheetPageFileEventHandler} 的类型参数 P，
+     * 返回 {@link Type} 以保留泛型嵌套信息（与 {@code AbstractPageFileEventHandler} 的解析方式一致）。
+     */
+    static Type resolveExportParamType(Class<?> handlerClass) {
+        ResolvableType rt = ResolvableType.forClass(handlerClass);
+        while (rt != ResolvableType.NONE) {
+            if (rt.getRawClass() != null && rt.getRawClass() == AbstractMultiSheetPageFileEventHandler.class) {
+                ResolvableType param = rt.getGeneric(0);
+                if (param != ResolvableType.NONE && null != param.getType()) {
+                    return param.getType();
+                }
+                return null;
+            }
+            rt = rt.getSuperType();
+        }
+        return null;
     }
 
     protected int getPageSize() {

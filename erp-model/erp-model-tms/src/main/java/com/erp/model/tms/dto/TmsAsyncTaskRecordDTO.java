@@ -30,6 +30,8 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class TmsAsyncTaskRecordDTO implements Serializable {
 
+    public static final String RETRY_MODE_FAILED_ONLY = "FAILED_ONLY";
+
     /**
      * 状态统计
      */
@@ -286,6 +288,64 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     }
 
     /**
+     * 手动创建异步任务入参
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ManualCreateDTO implements Serializable {
+
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
+        /**
+         * 方法类型
+         */
+        private String methodType;
+
+        /**
+         * 预期明细数量（创建时直接写入）
+         */
+        private Integer detailCount;
+
+        /**
+         * 任务参数 JSON（PushParamsDTO 序列化）
+         */
+        private String dataJson;
+    }
+
+    /**
+     * 自动创建异步任务入参
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AutoCreateDTO implements Serializable {
+
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
+        /**
+         * 方法类型
+         */
+        private String methodType;
+
+        /**
+         * 任务参数 JSON（PushParamsDTO 序列化）
+         */
+        private String dataJson;
+
+        /**
+         * 任务开始时间 yyyy-MM-dd
+         */
+        private String startTimeStr;
+    }
+
+    /**
      * 手动创建任务
      */
     @Data
@@ -314,9 +374,29 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String type;
 
         /**
+         * 自发货费用类型（兼容历史小包下推任务）
+         */
+        private String selfDeliverType;
+
+        /**
+         * 尾程费用类型（兼容历史小包下推任务）
+         */
+        private String lastMileType;
+
+        /**
          * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
          */
         private String methodType;
+
+        /**
+         * 错误重试来源任务：避免把大批量失败明细ID写入 dataJson
+         */
+        private String retrySourceTaskId;
+
+        /**
+         * 重试模式：FAILED_ONLY 表示按来源任务失败明细分页执行
+         */
+        private String retryMode;
 
         /**
          * 核算期间 yyyy-MM（按月处理时的过滤条件）
@@ -327,6 +407,76 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          * 目标核算状态（批量更新核算状态时使用）
          */
         private String reportStatus;
+
+        /**
+         * 目标对账状态（批量更新对账状态时使用）
+         */
+        private String reconciliationStatus;
+
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
+
+        /**
+         * 页面高级查询生成的 SQL 条件
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 数据权限 SQL
+         */
+        private String permissionSql;
+
+        /**
+         * 任务提交人ID
+         */
+        private String operatorUserId;
+
+        /**
+         * 任务提交人名称
+         */
+        private String operatorUserName;
+
+        /**
+         * 对账状态：暂估确认
+         */
+        private String estimateConfirmStatus;
+
+        /**
+         * 对账状态：账单确认
+         */
+        private String confirmedStatus;
+
+        /**
+         * 对账状态：已作废
+         */
+        private String invalidStatus;
+
+        /**
+         * 对账状态：待确认
+         */
+        private String toBeConfirmStatus;
+
+        /**
+         * 核算状态：已生成
+         */
+        private String checkedCheckStatus;
+
+        /**
+         * 核算状态：待生成
+         */
+        private String checkingCheckStatus;
+
+        /**
+         * 支付类型：退款
+         */
+        private String refundPayType;
+
+        /**
+         * 支付状态：待付款/待退款
+         */
+        private String paymentPayStatus;
 
         /**
          *开始日期
@@ -357,6 +507,40 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
          */
         private Integer batchSize;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CursorPageDTO {
+
+        /**
+         * 业务筛选 ID 集合，如物流商 ID 或待处理业务 ID
+         */
+        private List<String> ids;
+
+        private LocalDate startDate;
+
+        private LocalDate endDate;
+
+        private LocalDateTime startTime;
+
+        private LocalDateTime endTime;
+
+        /**
+         * 游标分页：上一批最后一条业务 ID
+         */
+        private String lastId;
+
+        /**
+         * 每批查询条数
+         */
+        private Integer batchSize;
+
+        private String orderType;
+
+        private String reconciliationStatus;
+
+        private String trackStatus;
     }
 
     /**
