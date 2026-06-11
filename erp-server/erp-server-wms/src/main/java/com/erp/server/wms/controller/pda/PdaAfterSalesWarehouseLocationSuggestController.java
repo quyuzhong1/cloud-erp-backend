@@ -15,10 +15,7 @@ import com.erp.server.wms.service.AfterSalesWarehouseLocationSuggestService;
 import com.erp.server.wms.service.WarehouseLocationMoveService;
 import com.erp.server.wms.service.WarehouseService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -120,5 +117,18 @@ public class PdaAfterSalesWarehouseLocationSuggestController {
         //
         List<AfterSalesWarehouseLocationSuggestDto.PdaListDto> list  = afterSalesWarehouseLocationSuggestService.getSuggestWarehouseLocationList(dto);
         return ApiResult.success(list);
+    }
+
+    /**
+     * 获取默认的新增数据的仓库信息
+     *
+     * @return com.common.core.controller.vo.ApiResult
+     * @date 2026-04-30
+     * @author liuchao
+     */
+    @GetMapping("/getDefaultAddWarehouse")
+    public ApiResult<WarehouseDTO.ListDTO> getDefaultAddData() {
+        List<WarehouseDTO.ListDTO> dtos = warehouseService.listByNames(Collections.singletonList("东莞售后仓库"));
+        return CollUtil.isNotEmpty(dtos) ? ApiResult.success(dtos.get(0)) : ApiResult.success();
     }
 }

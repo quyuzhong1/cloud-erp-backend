@@ -334,7 +334,7 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
      * 避免污染原实体的真实ID字段，同时让日志展示业务编码而非内部ID。
      */
     private AfterSalePackDetailEntity convertWarehouseLocationIdToDisplay(AfterSalePackDetailEntity source,
-                                                                         Map<String, String> warehouseLocationDisplayMap) {
+                                                                          Map<String, String> warehouseLocationDisplayMap) {
         AfterSalePackDetailEntity copy = BeanMapperUtils.map(AfterSalePackDetailEntity.class, source);
         if (copy == null) {
             return null;
@@ -907,6 +907,49 @@ public class AfterSalePackServiceImpl extends SuperServiceImpl<AfterSalePackMapp
                 .in(AfterSalePackDetailEntity::getMainId, ids)
                 .set(AfterSalePackDetailEntity::getInWarehouseLocationId, targetWarehouseLocationId)
                 .update();
+    }
+
+    @Override
+    @DistributeLocker(businessType = AFTER_SALE_PACK_LOCK_KEY, keyName = "dto.ids")
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchSubmit(BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<AfterSalePackEntity> afterSalePackEntityList = super.listByIds(dto.getIds());
+        Map<String, AfterSalePackEntity> map = afterSalePackEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, item -> item));
+        Set<String> mainIdsWithDetail = afterSalePackDetailService.lambdaQuery()
+                .in(AfterSalePackDetailEntity::getMainId, dto.getIds())
+                .list()
+                .stream()
+                .map(AfterSalePackDetailEntity::getMainId)
+                .collect(Collectors.toSet());
+        for (String id : dto.getIds()) {
+            AfterSalePackEntity afterSalePackEntity = map.get(id);
+            BatchResultDTO submitResult;
+            if (ObjectUtil.isEmpty(afterSalePackEntity)) {
+                submitResult = BatchResultDTO.fail(id, id, "该箱唛不存在或已被删除, 提交失败");
+            } else if (Boolean.TRUE.equals(afterSalePackEntity.getIsUse())) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "该箱唛已被单据使用, 不可提交审核");
+            } else if (AfterSalePackStatusEnum.UNDER_REVIEW.getCode().equals(afterSalePackEntity.getPackStatus())
+                    || AfterSalePackStatusEnum.SEALED_BOX.getCode().equals(afterSalePackEntity.getPackStatus())) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "箱唛状态等于复审中或者已封箱状态，不可提交审核");
+            } else if (!mainIdsWithDetail.contains(id)) {
+                submitResult = BatchResultDTO.fail(id, afterSalePackEntity.getCode(), "没有箱唛明细，不可提交审核");
+            } else {
+                log.info("确定提审 开始修改箱唛数据，单号：【{}】", afterSalePackEntity.getCode());
+                afterSalePackEntity.setPackStatus(AfterSalePackStatusEnum.UNDER_REVIEW.getCode());
+                boolean save = super.updateById(afterSalePackEntity);
+                if (!save) {
+                    throw new ServiceException("箱唛确定提审失败");
+                }
+                // 记录主单操作日志
+                log.info("确定提审 开始记录箱唛日志数据，单号：【{}】", afterSalePackEntity.getCode());
+                String msg = StrUtil.format("用户【{}】确定提审单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), afterSalePackEntity.getCode(), "箱唛");
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE_PACK.getCode(), afterSalePackEntity.getId(), "确定提审");
+                submitResult = BatchResultDTO.success(id, afterSalePackEntity.getCode(), "提交审核成功");
+            }
+            resultDTOS.add(submitResult);
+        }
+        return resultDTOS;
     }
 
 }
