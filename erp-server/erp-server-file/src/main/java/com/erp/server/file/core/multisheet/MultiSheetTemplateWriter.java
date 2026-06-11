@@ -86,6 +86,7 @@ public class MultiSheetTemplateWriter {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
 
+        int actualMainRows = 0;
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expanded.templateBytes, handlers);
             try {
@@ -97,6 +98,9 @@ public class MultiSheetTemplateWriter {
                         List<?> batch = withoutNullListElements(currentVo.getList());
                         if (!CollectionUtils.isEmpty(batch)) {
                             fillAcrossSheets(excelWriter, fillConfig, batch, cursors[i], i, "INDEPENDENT");
+                            if (i == 0) {
+                                actualMainRows += batch.size();
+                            }
                         }
                         if (pageOffset == totalPages - 1) {
                             break;
@@ -121,10 +125,10 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        // count 取首个（主）sheet 行数，与 streamMasterDerived 及 writeAllSheets 文档语义一致；
+        // count 取首个（主）sheet 实际写入行数（非 totalCount），与 streamMasterDerived 及 writeAllSheets 文档语义一致；
         // 不返回各 sheet 行数之和，避免 fileTask.count 被放大影响任务展示/下游统计。
         // 独立多 sheet 约定 sheets 列表首项为主表（typeCount>=1，空集合在方法开头已抛异常）。
-        return totalRows[0];
+        return actualMainRows;
     }
 
     public <P, M> int streamMasterDerived(File outFile,
@@ -164,6 +168,7 @@ public class MultiSheetTemplateWriter {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
 
+        int actualMainRows = 0;
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expanded.templateBytes, handlers);
             try {
@@ -174,6 +179,7 @@ public class MultiSheetTemplateWriter {
                     List<M> mainBatch = withoutNullListElements(currentVo.getList());
                     if (!CollectionUtils.isEmpty(mainBatch)) {
                         fillMasterDerivedBatch(excelWriter, fillConfig, mainBatch, cursors, spec.getSheetExtractors());
+                        actualMainRows += mainBatch.size();
                     }
                     if (pageOffset == totalPages - 1) {
                         break;
@@ -195,7 +201,7 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        return total;
+        return actualMainRows;
     }
 
     private <M> void fillMasterDerivedBatch(ExcelWriter excelWriter,

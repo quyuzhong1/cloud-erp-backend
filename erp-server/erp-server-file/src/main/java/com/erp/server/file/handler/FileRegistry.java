@@ -89,6 +89,22 @@ public class FileRegistry {
         return configured == null || configured < 1 ? 5000 : configured;
     }
 
+    /**
+     * 单 sheet 最大数据行数（含表头预留），未注入或非法（&lt;1）时回退 100000。
+     */
+    public static int sheetMaxRowsOrDefault() {
+        Integer configured = sheetMaxRows;
+        return configured == null || configured < 1 ? 100000 : configured;
+    }
+
+    /**
+     * 列表数据区最多占用的物理 sheet 数，未注入或非法（&lt;1）时回退 50。
+     */
+    public static int maxSheetNumOrDefault() {
+        Integer configured = maxSheetNum;
+        return configured == null || configured < 1 ? 50 : configured;
+    }
+
     @PostConstruct
     public void init() {
         Map<String, FileService> beans = context.getBeansOfType(FileService.class);

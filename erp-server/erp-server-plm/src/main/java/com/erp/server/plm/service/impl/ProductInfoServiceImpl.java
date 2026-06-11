@@ -32,6 +32,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.util.ProductDevelopExportTypeValidator;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -2644,10 +2645,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 根据产品开发导出数据类型解析 file 侧 event code。
-     * 校验规则与 {@code ExportPlmProductInfoHandler#validateExportDataList} 对齐，在创建下载任务前完成唯一一次严格校验。
+     * 校验规则由 {@link ProductDevelopExportTypeValidator} 统一维护，在创建下载任务前完成唯一一次严格校验。
      */
     private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
-        List<Integer> validated = validateProductDevelopExportDataList(exportDataList);
+        List<Integer> validated = ProductDevelopExportTypeValidator.validate(exportDataList);
         if (validated.size() == 1) {
             Integer flag = validated.get(0);
             if (EXPORT_PRODUCT.equals(flag)) {
@@ -2659,31 +2660,5 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             throw new ServiceException("导出数据类型不合法：" + flag);
         }
         return EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
-    }
-
-    /**
-     * 产品开发导出类型校验：枚举合法性、去重，仅允许单一类型或 PRODUCT+TASK 组合。
-     */
-    private List<Integer> validateProductDevelopExportDataList(List<Integer> exportDataList) {
-        if (CollectionUtils.isEmpty(exportDataList)) {
-            throw new ServiceException("导出数据类型不能为空");
-        }
-        Set<Integer> distinctTypes = new LinkedHashSet<>();
-        for (Integer flag : exportDataList) {
-            if (!ProductDevelopExportTypeEnum.isValid(flag)) {
-                throw new ServiceException("导出数据类型不合法：" + flag);
-            }
-            if (!distinctTypes.add(flag)) {
-                throw new ServiceException("导出数据类型存在重复：" + flag);
-            }
-        }
-        boolean validCombination = distinctTypes.size() == 1
-                || (distinctTypes.size() == 2
-                    && distinctTypes.contains(EXPORT_PRODUCT)
-                    && distinctTypes.contains(EXPORT_TASK));
-        if (!validCombination) {
-            throw new ServiceException("导出数据类型不合法：" + exportDataList);
-        }
-        return exportDataList;
     }
 }

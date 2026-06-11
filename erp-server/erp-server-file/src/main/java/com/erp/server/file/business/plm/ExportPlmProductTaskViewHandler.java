@@ -7,6 +7,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductTaskViewDTO;
 import com.erp.model.plm.dto.ProductTaskViewSearchDTO;
+import com.erp.model.plm.enums.ProductTaskViewExportTypeEnum;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -43,17 +44,20 @@ public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandle
         if (dto == null || Objects.isNull(dto.getType())) {
             throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
-        switch (dto.getType()) {
-            case 1:
+        ProductTaskViewExportTypeEnum viewType = ProductTaskViewExportTypeEnum.getEnum(dto.getType());
+        if (viewType == null) {
+            throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
+        }
+        switch (viewType) {
+            case PERSONNEL:
                 return "excel/plm/taskViewPersonnel.xlsx";
-            case 2:
+            case PRODUCT:
                 return "excel/plm/taskViewProduct.xlsx";
-            case 3:
+            case PHASE:
                 return "excel/plm/taskViewPhase.xlsx";
-            case 4:
+            case IN_WAREHOUSE_TIME:
                 return "excel/plm/taskViewTime.xlsx";
             default:
-                // 非法 type（非 1-4）尽早抛业务异常，避免空模板路径导致后续模板加载阶段才失败、错误信息不直观
                 throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
     }

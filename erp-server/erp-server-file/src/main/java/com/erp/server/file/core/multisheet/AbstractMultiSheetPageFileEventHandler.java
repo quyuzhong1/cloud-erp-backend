@@ -1,5 +1,6 @@
 package com.erp.server.file.core.multisheet;
 
+import com.common.core.exception.ServiceException;
 import com.erp.server.file.core.AbstractFileEventHandler;
 import com.erp.server.file.core.ExportTempFilesHandler;
 import com.erp.server.file.entity.FileTask;
@@ -53,7 +54,7 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
     protected P resolveExportParams(FileTask fileTask) {
         Type paramType = resolveExportParamType(getClass());
         if (paramType == null) {
-            throw new IllegalStateException(getClass().getName()
+            throw new ServiceException(getClass().getName()
                     + " 无法推断导出参数类型 P，请确保直接继承 AbstractMultiSheetPageFileEventHandler<P> 并指定具体 P，或重写 resolveExportParams");
         }
         JavaType javaType = getObjectMapper().getTypeFactory().constructType(paramType);
@@ -93,11 +94,11 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
     }
 
     protected int maxDataRowsPerSheet() {
-        return Math.max(1, FileRegistry.getSheetMaxRows() - reservedTemplateHeaderRows());
+        return Math.max(1, FileRegistry.sheetMaxRowsOrDefault() - reservedTemplateHeaderRows());
     }
 
     protected int maxTemplateDataSheets() {
-        return FileRegistry.getMaxSheetNum();
+        return FileRegistry.maxSheetNumOrDefault();
     }
 
     protected int maxRowsPerXlsxSheetHardLimit() {

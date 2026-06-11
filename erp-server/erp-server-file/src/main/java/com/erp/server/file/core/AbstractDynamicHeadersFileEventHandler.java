@@ -50,7 +50,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     protected P resolveExportParams(FileTask fileTask) {
         Type paramType = resolvePagingParamType(getClass());
         if (paramType == null) {
-            throw new IllegalStateException(getClass().getName()
+            throw new ServiceException(getClass().getName()
                     + " 无法推断分页参数类型 P，请确保直接继承 AbstractDynamicHeadersFileEventHandler<P> 并指定具体 P，或重写 resolveExportParams");
         }
         JavaType javaType = objectMapper.getTypeFactory().constructType(paramType);
@@ -133,7 +133,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         int sheetNo = 0;
         long rowsInSheet = 0;
         int maxRowsPerSheet = maxRowsPerSheet();
-        int maxSheetNum = FileRegistry.getMaxSheetNum();
+        int maxSheetNum = FileRegistry.maxSheetNumOrDefault();
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = excelPrintUtils.openDynamicHeadersWriter(outputStream, header);
@@ -238,7 +238,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     }
 
     private int maxRowsPerSheet() {
-        return Math.max(1, FileRegistry.getSheetMaxRows());
+        return Math.max(1, FileRegistry.sheetMaxRowsOrDefault());
     }
 
     @SuppressWarnings("unchecked")

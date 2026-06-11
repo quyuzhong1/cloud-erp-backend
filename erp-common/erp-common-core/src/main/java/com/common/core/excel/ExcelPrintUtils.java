@@ -1368,7 +1368,10 @@ public class ExcelPrintUtils {
         ClassPathResource classPathResource = new ClassPathResource(excelPath);
         try (FileOutputStream outputStream = new FileOutputStream(outputFile);
              InputStream inputStream = classPathResource.getInputStream()) {
-            ExcelWriter excelWriter = EasyExcel.write(outputStream).withTemplate(inputStream).registerWriteHandler(new ExcelFillCellMergeStrategy()).build();
+            ExcelWriter excelWriter = EasyExcel.write(outputStream).withTemplate(inputStream)
+                    .autoCloseStream(false)
+                    .registerWriteHandler(new ExcelFillCellMergeStrategy())
+                    .build();
             // 复用统一 Converter 注册，避免与列表导出行为不一致（含 List/图片字段转换器），并消除重复代码
             registerPatchExportListConverters(excelWriter);
 
@@ -1393,7 +1396,7 @@ public class ExcelPrintUtils {
         ClassPathResource classPathResource = new ClassPathResource(excelPath);
         try (FileOutputStream out = new FileOutputStream(outputFile);
              InputStream inputStream = classPathResource.getInputStream()) {
-            ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(inputStream).build();
+            ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(inputStream).autoCloseStream(false).build();
             // 复用统一 Converter 注册，避免与列表导出行为不一致（含 List/图片字段转换器），并消除重复代码
             registerPatchExportListConverters(excelWriter);
             try {

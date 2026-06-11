@@ -51,7 +51,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     protected P resolveExportParams(FileTask fileTask) {
         Type paramType = resolvePagingParamType(getClass());
         if (paramType == null) {
-            throw new IllegalStateException(getClass().getName()
+            throw new ServiceException(getClass().getName()
                     + " 无法推断分页参数类型 P，请确保直接继承 AbstractPageFileEventHandler<T,P> 并指定具体 P，或重写 resolveExportParams");
         }
         JavaType javaType = getObjectMapper().getTypeFactory().constructType(paramType);
@@ -140,14 +140,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     protected int maxDataRowsPerSheet() {
-        return Math.max(1, FileRegistry.getSheetMaxRows() - reservedTemplateHeaderRows());
+        return Math.max(1, FileRegistry.sheetMaxRowsOrDefault() - reservedTemplateHeaderRows());
     }
 
     /**
      * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link ServiceException}，避免无限克隆。
      */
     protected int maxTemplateDataSheets() {
-        return FileRegistry.getMaxSheetNum();
+        return FileRegistry.maxSheetNumOrDefault();
     }
 
     /**
