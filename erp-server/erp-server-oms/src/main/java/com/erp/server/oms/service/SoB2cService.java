@@ -199,11 +199,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @date: 2023/8/18 16:49
      */
     BatchResultDTO submitDelivery(String id, String channelId);
-
-    /**
-     * 提交发货；pendingLogistics 用于获取运单号后同事务内尚未提交的物流单号透传给预报
-     */
-    BatchResultDTO submitDelivery(String id, String channelId, SoB2cLogisticsEntity pendingLogistics);
     /**
      * 记录用户点击提交发货日志
      * @param id B2C订单ID
@@ -848,11 +843,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto);
 
     List<BatchResultDTO> autoOrderForecast(List<String> soIdList);
-
-    /**
-     * 自动订单预报；logisticsOverride 按订单 id 透传内存中的物流单号（key=soId）
-     */
-    List<BatchResultDTO> autoOrderForecast(List<String> soIdList, Map<String, SoB2cLogisticsEntity> logisticsOverride);
 
     List<BatchResultDTO> cancelOrderForecast(List<String> ids, Boolean checkPackageStatus);
 
