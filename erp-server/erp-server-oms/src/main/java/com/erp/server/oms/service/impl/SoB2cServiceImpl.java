@@ -2369,11 +2369,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String transportNo = resultDTO.getTransportNo();
             String iossTaxNo = resultDTO.getIossTaxNo();
             String declareOrgId = resultDTO.getDeclareOrgId();
-            if (Boolean.TRUE.equals(isDelivery)) {
-                soB2cLogisticsService.updateLogisticsCodeRequiresNew(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
-            } else {
-                soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
-            }
+            soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
 
             //KOL-B2C订单需要回写跟踪单号
             if (Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getSourceType())) {
