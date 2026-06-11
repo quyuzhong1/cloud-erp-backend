@@ -69,6 +69,7 @@ import com.sdk.tms.shopee.model.merchant.response.MerchantPrepaidAccount;
 import com.sdk.tms.shopee.model.merchant.response.MerchantPrepaidAccountListResponse;
 import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -93,6 +94,7 @@ import java.util.stream.Collectors;
 /**
  * Shopee first-mile 组包预报适配器。
  */
+@Slf4j
 @Component
 public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdapter {
 
@@ -247,6 +249,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                     .map(entity -> BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传"))
                     .collect(Collectors.toList());
         } catch (Exception e) {
+            log.error("虾皮组包预报取消上传失败, ids: {}", ids, e);
             context.getEntityList().forEach(entity -> {
                 entity.setRemark("取消失败原因:" + e.getMessage());
                 packageForecastMapper.updateById(entity);
