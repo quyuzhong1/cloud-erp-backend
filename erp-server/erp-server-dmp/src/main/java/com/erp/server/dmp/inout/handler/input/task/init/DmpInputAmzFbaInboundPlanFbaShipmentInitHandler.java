@@ -110,19 +110,8 @@ public class DmpInputAmzFbaInboundPlanFbaShipmentInitHandler extends DmpInputAmz
      * 子任务 nextLevelId 会变成上游 mongoId，这里沿父任务链回溯拿根任务店铺ID。
      */
     private String resolveAuthShopIdByTaskChain() {
-        DmpInputTaskEntity currentTask = dmpInputTaskEntity;
-        int guard = 0;
-        while (currentTask != null && StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < 20) {
-            DmpInputTaskEntity parentTask = dmpInputTaskService.getById(currentTask.getParentTaskId());
-            if (parentTask == null) {
-                break;
-            }
-            currentTask = parentTask;
-        }
-        if (currentTask == null) {
-            return "";
-        }
-        return StringUtils.defaultString(currentTask.getNextLevelId());
+        DmpInputTaskEntity rootTask = dmpInputTaskService.findRootTaskInChain(dmpInputTaskEntity);
+        return rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId());
     }
 
     private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {

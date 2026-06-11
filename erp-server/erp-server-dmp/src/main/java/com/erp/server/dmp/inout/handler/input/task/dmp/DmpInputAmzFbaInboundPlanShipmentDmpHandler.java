@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
@@ -203,7 +204,8 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
         }
         Object areCasesRequired = mongoData.get("areCasesRequired");
         if (areCasesRequired instanceof Boolean) {
-            return (Boolean) areCasesRequired ? "原厂包装" : "混装";
+            AmazonFbaPackTypeEnum packTypeEnum = AmazonFbaPackTypeEnum.fromAreCasesRequired((Boolean) areCasesRequired);
+            return packTypeEnum == null ? "" : packTypeEnum.getName();
         }
         return "";
     }

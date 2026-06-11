@@ -105,4 +105,14 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
      * @return
      */
     BatchResultDTO retry(DmpInputTaskEntity entity);
+
+    /**
+     * 沿父任务链回溯，返回链路最顶端的根任务。
+     * <p>用于子任务回溯获取根任务上下文（如店铺ID、扩展字段等），统一的入口便于后续优化为
+     * 递归 CTE 或批次缓存，避免在多个 Handler 中重复维护循环 getById 的回溯逻辑。</p>
+     *
+     * @param startTask 起始任务（不为 null 时直接复用，避免额外查库）
+     * @return 链路根任务；若 startTask 为 null 返回 null；若 parentTaskId 中途断链，返回最后一个有效任务
+     */
+    DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask);
 }

@@ -150,19 +150,8 @@ public class DmpInputAmzFbaInboundPlanGetFbaShipmentDetailInitHandler extends Dm
     }
 
     private String resolveAuthShopIdByTaskChain() {
-        DmpInputTaskEntity currentTask = dmpInputTaskEntity;
-        int guard = 0;
-        while (currentTask != null && StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < 20) {
-            DmpInputTaskEntity parentTask = dmpInputTaskService.getById(currentTask.getParentTaskId());
-            if (parentTask == null) {
-                break;
-            }
-            currentTask = parentTask;
-        }
-        if (currentTask == null) {
-            return "";
-        }
-        return StringUtils.defaultString(currentTask.getNextLevelId());
+        DmpInputTaskEntity rootTask = dmpInputTaskService.findRootTaskInChain(dmpInputTaskEntity);
+        return rootTask == null ? "" : StringUtils.defaultString(rootTask.getNextLevelId());
     }
 
     private String buildRateLimitKey(AmazonShopInfoDTO shopInfoDTO, AmazonRequestTypeRateLimiterEnum requestType) {
