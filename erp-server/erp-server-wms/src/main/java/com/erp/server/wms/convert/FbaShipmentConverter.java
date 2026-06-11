@@ -22,6 +22,7 @@ public interface FbaShipmentConverter {
     FbaShipmentConverter INSTANCE = Mappers.getMapper(FbaShipmentConverter.class);
 
     @Mapping(target = "detailList", ignore = true)
+    @Mapping(target = "packType", expression = "java(com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum.toDisplayName(shipmentEntity.getPackType()))")
     FbaShipmentDTO.ViewDTO fbaShipmentToViewDTO(FbaShipmentEntity shipmentEntity);
 
     @Mapping(target = "productName", ignore = true)
@@ -225,5 +226,6 @@ public interface FbaShipmentConverter {
 
     @Mapping(target = "detailList", ignore = true)
     @Mapping(target = "id", source = "entity.id")
+    @Mapping(target = "packType", expression = "java(com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum.toDisplayName(entity.getPackType()))")
     FbaShipmentDTO.ViewAwdDTO awdShipmentToViewDTO(FbaShipmentEntity entity, FbaShipmentExtendEntity fbaShipmentExtendEntity);
 }
