@@ -42,6 +42,7 @@ public class ExportWmsInventoryHandler extends AbstractPageFileEventHandler<Inve
 
     @Override
     public String getExcelPath() {
+        // AbstractPageFileEventHandler上游做了优先处理
         throw new UnsupportedOperationException("分页导出请使用 getExcelPath(P)");
     }
 

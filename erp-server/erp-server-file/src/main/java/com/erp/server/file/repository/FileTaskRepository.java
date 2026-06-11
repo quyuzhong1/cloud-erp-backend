@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -79,13 +80,29 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
     }
 
     @Override
-    public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, List<String> excludeIds) {
+    public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, int offset) {
         return lambdaQuery()
                 .lt(FileTask::getCreateTime, expireTime)
                 .isNotNull(FileTask::getFileUrl)
                 .ne(FileTask::getFileUrl, "")
-                .notIn(CollUtil.isNotEmpty(excludeIds), FileTask::getId, excludeIds)
-                .last("limit " + limit)
+                .notIn(FileTask::getStatus, Arrays.asList(FileTaskStatusEnum.PROCESS.name(), FileTaskStatusEnum.PENDING.name()))
+                .orderByAsc(FileTask::getCreateTime)
+                .orderByAsc(FileTask::getId)
+                .last("limit " + limit + " offset " + Math.max(0, offset))
                 .list();
+    }
+
+    @Override
+    public Set<String> listProcessingTaskIds() {
+        List<FileTask> list = lambdaQuery()
+                .select(FileTask::getId)
+                .eq(FileTask::getStatus, FileTaskStatusEnum.PROCESS.name())
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptySet();
+        }
+        return list.stream()
+                .map(FileTask::getId)
+                .collect(Collectors.toSet());
     }
 }
