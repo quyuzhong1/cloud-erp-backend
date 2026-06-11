@@ -204,4 +204,24 @@ public class PdaAfterSalePackController extends BaseController {
         return success(afterSalePackService.viewByCode(code));
     }
 
+    /**
+     * 批量提交审核
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    @PostMapping("/batchSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:afterSalePack:batchSubmit",
+            serviceClass = AfterSalePackService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "售后装箱批量提交审核")
+    public ApiResult<List<BatchResultDTO>> batchSubmit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = afterSalePackService.batchSubmit(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 }

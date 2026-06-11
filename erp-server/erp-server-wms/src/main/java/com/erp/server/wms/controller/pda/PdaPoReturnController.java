@@ -11,6 +11,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
@@ -314,5 +315,15 @@ public class PdaPoReturnController extends BaseController {
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = poReturnService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetPurchasePrice")
+    public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
+        return success(poReturnService.batchGetPurchasePrice(list));
     }
 }

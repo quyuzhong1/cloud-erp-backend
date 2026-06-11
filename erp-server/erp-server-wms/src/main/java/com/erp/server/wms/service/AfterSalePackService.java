@@ -141,4 +141,13 @@ public interface AfterSalePackService extends SuperService<AfterSalePackEntity> 
      */
     void markBoxesAsMoved(List<String> ids, String targetWarehouseLocationId);
 
+    /**
+     * 批量确定提审
+     *
+     * @param dto BaseIdsDTO.IdsDTO
+     * @return List<BatchResultDTO>
+     * @author lei.nie
+     * @date: 2026-05-12
+     */
+    List<BatchResultDTO> batchSubmit(BaseIdsDTO.IdsDTO dto);
 }
