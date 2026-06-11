@@ -2369,7 +2369,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String transportNo = resultDTO.getTransportNo();
             String iossTaxNo = resultDTO.getIossTaxNo();
             String declareOrgId = resultDTO.getDeclareOrgId();
-            soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
+            if (Boolean.TRUE.equals(isDelivery)) {
+                // 仅 Spring REQUIRES_NEW 提前落库运单号；勿加 @GlobalTransactional(REQUIRES_NEW)，否则会与外层全局事务死锁
+                soB2cLogisticsService.commitLogisticsCodeRequiresNew(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
+            } else {
+                soB2cLogisticsService.updateLogisticsCode(id, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
+            }
 
             //KOL-B2C订单需要回写跟踪单号
             if (Objects.equals(SourceTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getSourceType())) {
@@ -2409,38 +2414,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
                 LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v -> v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
                 String warehouseLogisticsChannelId = Objects.nonNull(viewDTO) ? viewDTO.getPlatformLogisticsChannelId() : "";
-                final String submitDeliveryId = id;
-                final String submitChannelId = warehouseLogisticsChannelId;
-                // 运单号随 getLogisticsCode 事务提交后再提交发货，避免 Seata 全局事务内嵌套 REQUIRES_NEW 死锁；
-                // autoOrderForecast(REQUIRES_NEW) 可读到已提交的运单号，且预报结果不受后续提交发货失败回滚
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        try {
-                            UserContext.setIsUserSystem(true);
-                            BatchResultDTO submitResult = soB2cService.submitDelivery(submitDeliveryId, submitChannelId);
-                            if (!submitResult.getSuccess() && CharSequenceUtil.isNotBlank(submitResult.getMsg())) {
-                                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                                addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                                addError.setParamJson("");
-                                addError.setReturnJson("");
-                                addError.setMainId(submitDeliveryId);
-                                addError.setMessage(submitResult.getMsg());
-                                soB2cErrorService.add(addError);
-                            }
-                        } catch (Exception e) {
-                            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                            addError.setParamJson("");
-                            addError.setReturnJson("");
-                            addError.setMainId(submitDeliveryId);
-                            addError.setMessage(e.getMessage());
-                            soB2cErrorService.add(addError);
-                        } finally {
-                            UserContext.clearIsUserSystem();
-                        }
+                try {
+                    BatchResultDTO submitResult = soB2cService.submitDelivery(id, warehouseLogisticsChannelId);
+                    if (!Boolean.TRUE.equals(submitResult.getSuccess())) {
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                        addError.setParamJson("");
+                        addError.setReturnJson("");
+                        addError.setMainId(id);
+                        addError.setMessage(CharSequenceUtil.blankToDefault(submitResult.getMsg(), "提交发货失败"));
+                        soB2cErrorService.add(addError);
                     }
-                });
+                } catch (Exception e) {
+                    log.error("销售订单【{}】自动提交发货失败", entity.getCode(), e);
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(id);
+                    addError.setMessage(CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()));
+                    soB2cErrorService.add(addError);
+                }
             }
 
             if (resultDTO.getIsPlatformShip()) {
