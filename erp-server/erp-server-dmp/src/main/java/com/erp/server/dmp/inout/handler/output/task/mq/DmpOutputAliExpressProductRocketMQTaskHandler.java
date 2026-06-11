@@ -112,7 +112,10 @@ public class DmpOutputAliExpressProductRocketMQTaskHandler extends DmpOutputRock
 		product.setPlatformProductName(spuName);
 		String skuNo = dmpSkuInfoEntity.getSkuNo();
 		product.setPlatformSkuNo(StringUtils.isBlank(skuNo)? "" : skuNo);
-		product.setProductSpec(dmpSkuInfoEntity.getName());
+		String productSpec = StringUtils.isBlank(dmpSkuInfoEntity.getProdcutProperty())
+				? dmpSkuInfoEntity.getName()
+				: dmpSkuInfoEntity.getProdcutProperty();
+		product.setProductSpec(productSpec);
 
         product.setPlatformSkuName(spuName);
         // 类型 platform 平台  warehouse 仓库

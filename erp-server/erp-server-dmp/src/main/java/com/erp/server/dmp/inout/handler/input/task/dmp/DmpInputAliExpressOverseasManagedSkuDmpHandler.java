@@ -68,6 +68,9 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 		String spuId = firstNotBlank(
 				AliExpressOverseasManagedProductHelper.findString(productInfo, "product_id", "productId"),
 				AliExpressOverseasManagedProductHelper.findString(detail, "parentProductId"));
+		String productTitle = firstNotBlank(
+				AliExpressOverseasManagedProductHelper.findString(detail, "productTitle", "product_title", "title"),
+				AliExpressOverseasManagedProductHelper.findString(productInfo, "productTitle", "product_title", "title"));
 		JSONArray skuList = AliExpressOverseasManagedProductHelper.findArray(detail,
 				"product_sku_list", "productSkuList", "search_sku_info_list", "searchSkuInfoList");
 		if (skuList.isEmpty()) {
@@ -90,7 +93,8 @@ public class DmpInputAliExpressOverseasManagedSkuDmpHandler extends DmpInputDoCh
 			flatSku.put("skuNo", AliExpressOverseasManagedProductHelper.findString(sku, "sku_code", "skuCode"));
 			flatSku.put("status", AliExpressOverseasManagedProductHelper.mapStatus(
 					AliExpressOverseasManagedProductHelper.findString(sku, "status")));
-			flatSku.put("name", AliExpressOverseasManagedProductHelper.joinSkuProperties(sku));
+			flatSku.put("name", productTitle);
+			putIfNotBlank(flatSku, "prodcutProperty", AliExpressOverseasManagedProductHelper.joinSkuProperties(sku));
 			flatSku.put("imageUrls", AliExpressOverseasManagedProductHelper.joinImages(detail, sku));
 			putIfNotBlank(flatSku, "packageLength", firstNotBlank(
 					AliExpressOverseasManagedProductHelper.findString(sku, "package_length", "packageLength", "length"),
