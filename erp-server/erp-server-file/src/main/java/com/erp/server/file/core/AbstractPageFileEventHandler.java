@@ -531,6 +531,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
                     pageData = getPageData(dto);
+                    if (pageData == null) {
+                        throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
+                    }
                 }
             } finally {
                 excelWriter.finish();
