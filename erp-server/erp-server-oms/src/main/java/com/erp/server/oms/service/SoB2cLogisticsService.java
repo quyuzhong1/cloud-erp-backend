@@ -82,12 +82,6 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode);
 
     /**
-     * 独立事务更新物流单号，供获取物流单号后立即自动提交发货时先落库，
-     * 以便后续 REQUIRES_NEW 的 autoOrderForecast 能从库中读到运单号。
-     */
-    Boolean updateLogisticsCodeRequiresNew(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode);
-
-    /**
      * 更新中转信息
      * @param mainId
      * @param transportNo

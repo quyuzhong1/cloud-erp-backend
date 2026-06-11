@@ -44,7 +44,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -203,17 +202,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
-        return doUpdateLogisticsCode(mainId, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
-    public Boolean updateLogisticsCodeRequiresNew(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
-        return doUpdateLogisticsCode(mainId, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
-    }
-
-    private Boolean doUpdateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId)
                 .set(SoB2cLogisticsEntity::getCode, transportNo)
                 .set(SoB2cLogisticsEntity::getTrackNo, trackNo)
