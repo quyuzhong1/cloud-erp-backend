@@ -1323,10 +1323,13 @@ public class ExcelPrintUtils {
 
     /**
      * 使用已预处理（例如 POI 克隆多 sheet）的模板字节打开列表模板 Writer。
+     * <p>
+     * {@code autoCloseStream(false)}：与 {@link #patchExportListToFile}、{@link #openDynamicHeadersWriter} 一致，
+     * {@code finish()} 后不自动关闭 {@code outputStream}，由调用方显式管理其生命周期（通常以 try-with-resources 包裹）。
      */
     public static ExcelWriter openTemplateListWriter(OutputStream outputStream, byte[] templateBytes, WriteHandler... writeHandlers) throws IOException {
         try (InputStream templateIn = new ByteArrayInputStream(templateBytes)) {
-            ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(templateIn).autoCloseStream(true);
+            ExcelWriterBuilder excelWriterBuilder = EasyExcelFactory.write(outputStream).withTemplate(templateIn).autoCloseStream(false);
             for (WriteHandler handler : writeHandlers) {
                 excelWriterBuilder.registerWriteHandler(handler);
             }
@@ -1366,17 +1369,8 @@ public class ExcelPrintUtils {
         try (FileOutputStream outputStream = new FileOutputStream(outputFile);
              InputStream inputStream = classPathResource.getInputStream()) {
             ExcelWriter excelWriter = EasyExcel.write(outputStream).withTemplate(inputStream).registerWriteHandler(new ExcelFillCellMergeStrategy()).build();
-            LocalDateTimeConverter converter = new LocalDateTimeConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
-
-            EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
-
-            EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+            // 复用统一 Converter 注册，避免与列表导出行为不一致（含 List/图片字段转换器），并消除重复代码
+            registerPatchExportListConverters(excelWriter);
 
             WriteSheet writeSheet = EasyExcel.writerSheet().build();
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
@@ -1400,17 +1394,8 @@ public class ExcelPrintUtils {
         try (FileOutputStream out = new FileOutputStream(outputFile);
              InputStream inputStream = classPathResource.getInputStream()) {
             ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(inputStream).build();
-            LocalDateTimeConverter converter = new LocalDateTimeConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
-
-            EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
-
-            EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
-            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+            // 复用统一 Converter 注册，避免与列表导出行为不一致（含 List/图片字段转换器），并消除重复代码
+            registerPatchExportListConverters(excelWriter);
             try {
                 for (Pair<Integer, List<?>> pair : pairList) {
                     WriteSheet writeSheet = EasyExcel.writerSheet(pair.getKey()).build();
