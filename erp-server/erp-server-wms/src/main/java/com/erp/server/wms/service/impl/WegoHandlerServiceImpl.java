@@ -12,13 +12,18 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WegoInOrderCancelDTO;
 import com.erp.model.wms.dto.WegoInOrderSaveDTO;
+import com.erp.model.wms.dto.WegoOutboundInterceptDTO;
+import com.erp.model.wms.dto.WegoOutboundSaveDTO;
+import com.erp.model.wms.dto.WegoOutboundSearchDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
+import com.sdk.wms.wego.dto.response.WegoOutboundResp;
 import com.sdk.wms.wego.service.WegoOpenApiService;
 import com.sdk.wms.wego.utils.WeGoSignUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -481,7 +486,18 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return failure("WEGO暂不支持创建2C出库单");
+        WegoOutboundSaveDTO.SaveReqDTO request = buildOutboundSaveDto(createOutboundReq, null);
+        log.warn("{}创建出库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
+        JSONObject resp = wegoOpenApiService.save2cOrder(request);
+        log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        if (!isSuccess(resp)) {
+            return failure(buildErrorMessage(resp));
+        }
+        String wegoOrderNo = extractStringResult(resp);
+        if (CharSequenceUtil.isBlank(wegoOrderNo)) {
+            log.warn("{}创建出库单成功但未提取到出库单号, resp={}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        }
+        return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(wegoOrderNo).build());
     }
 
     @Override
@@ -491,7 +507,17 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return failure("WEGO暂不支持取消2C出库单");
+        if (CharSequenceUtil.isBlank(cancelOutboundReq.getOrderCode())) {
+            throw new ServiceException("WEGO出库单号不能为空");
+        }
+        WegoOutboundInterceptDTO.InterceptReqDTO request = buildInterceptDto(cancelOutboundReq);
+        log.warn("{}截单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
+        JSONObject resp = wegoOpenApiService.intercept2cOrder(request);
+        log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        if (isSuccess(resp)) {
+            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
     }
 
     @Override
@@ -501,12 +527,188 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
-        return failure("WEGO暂不支持查询2C出库单");
+        String wegoOrderCode = queryOutboundReq.getErpOrderCode();
+        if (CharSequenceUtil.isBlank(wegoOrderCode)) {
+            return failure("WEGO出库单号不能为空");
+        }
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
+        if (authMap == null || authMap.isEmpty()) {
+            throw new ServiceException("WEGO授权信息为空");
+        }
+        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
+        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
+        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
+            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+        }
+        WegoOutboundSearchDTO.SearchReqDTO request = WegoOutboundSearchDTO.SearchReqDTO.builder()
+                .accessToken(accessToken)
+                .secret(secret)
+                .noList(Collections.singletonList(wegoOrderCode))
+                .build();
+        List<WegoOutboundResp.OutboundOrderDTO> orders = wegoOpenApiService.search2cOrder(request);
+        if (CollUtil.isEmpty(orders)) {
+            return failure("WEGO未查询到对应出库单: " + wegoOrderCode);
+        }
+        WegoOutboundResp.OutboundOrderDTO order = orders.get(0);
+        String trackNo = extractTrackNo(order.getLogisticsList());
+        return success(ThirdWarehouseQueryOutboundResponse.builder()
+                .shippingOrderNo(order.getNo())
+                .trackNo(trackNo)
+                .build());
     }
 
     @Override
     protected ApiResult<List<ThirdWarehouseQueryFbaOutboundResponse>> queryFbaOutboundBill(ThirdWarehouseQueryFbaOutboundReq req) {
         return failure("WEGO暂不支持查询B2B出库单");
+    }
+
+    /**
+     * 将 {@link ThirdWarehouseCreateOutboundReq} 转换为 WEGO {@code 2c.order.save} 请求 DTO。
+     *
+     * <p>字段映射说明：</p>
+     * <ul>
+     *     <li>{@code referenceNo}（WFHD 三方仓发货单号）→ {@code referenceCode}，供 WEGO 回传时关联 ERP 单据；</li>
+     *     <li>{@code receiverInfo} → 收件人相关字段，address1/2/3 拼接为单一 {@code receiverAddress}；</li>
+     *     <li>有 {@code labelUrl} 时 {@code wayBillType=1}（平台指定面单），否则 {@code wayBillType=0}（WEGO 自动生成）；</li>
+     *     <li>{@code needSendFlag=0}（需要派送）、{@code needPackFlag=1}（不需要包装）为默认值；</li>
+     *     <li>{@code products} 取 {@code items[].productSku}（平台 SKU，已由上层 sku_mapping 转换完成）。</li>
+     * </ul>
+     *
+     * @param req         ERP 统一出库单请求
+     * @param wegoOrderNo WEGO 出库单号：新增传 null，修改传已有单号
+     */
+    private WegoOutboundSaveDTO.SaveReqDTO buildOutboundSaveDto(ThirdWarehouseCreateOutboundReq req, String wegoOrderNo) {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
+        if (authMap == null || authMap.isEmpty()) {
+            throw new ServiceException("WEGO授权信息为空");
+        }
+        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
+        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
+        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
+            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+        }
+
+        ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
+
+        // 有 labelUrl 时用平台指定面单（wayBillType=1），否则由 WEGO 生成（wayBillType=0）
+        boolean hasPlatformLabel = CharSequenceUtil.isNotBlank(req.getLabelUrl());
+        int wayBillType = hasPlatformLabel ? 1 : 0;
+        WegoOutboundSaveDTO.WayBillUrl wayBillUrl = null;
+        if (hasPlatformLabel) {
+            List<WegoOutboundSaveDTO.WayBillFile> files = Collections.singletonList(
+                    WegoOutboundSaveDTO.WayBillFile.builder().fileUrl(req.getLabelUrl()).build());
+            wayBillUrl = WegoOutboundSaveDTO.WayBillUrl.builder()
+                    .logisticsName(req.getShippingMethodName())
+                    .trackingNum(req.getTrackingNo())
+                    .files(files)
+                    .build();
+        }
+
+        List<WegoOutboundSaveDTO.Product> products = new ArrayList<>();
+        if (CollUtil.isNotEmpty(req.getItems())) {
+            req.getItems().forEach(item -> products.add(
+                    WegoOutboundSaveDTO.Product.builder()
+                            .sku(item.getProductSku())
+                            .qty(item.getQuantity())
+                            .build()));
+        }
+
+        return WegoOutboundSaveDTO.SaveReqDTO.builder()
+                .accessToken(accessToken)
+                .secret(secret)
+                .no(wegoOrderNo)
+                .warehouseBusiness(getPlatForm().getName())
+                .warehouseCode(req.getWarehouseCode())
+                .receiver(receiver != null ? receiver.getName() : null)
+                .receiverPhone(receiver != null ? receiver.getPhone() : null)
+                .receiverPostCode(receiver != null ? receiver.getZipCode() : null)
+                .receiverEmail(receiver != null ? receiver.getEmail() : null)
+                .receiverProvince(receiver != null ? receiver.getProvince() : null)
+                .receiverCity(receiver != null ? receiver.getCity() : null)
+                .receiverArea(receiver != null ? receiver.getDistrict() : null)
+                .receiverAddress(buildReceiverAddress(receiver))
+                .referenceCode(req.getReferenceNo())
+                .shopName(req.getShopName())
+                .remark(req.getBuyerRemark())
+                .needSendFlag(0)
+                .needPackFlag(1)
+                .wayBillType(wayBillType)
+                .wayBillUrl(wayBillUrl)
+                .logisticsName(req.getShippingMethodName())
+                .products(products)
+                .build();
+    }
+
+    /**
+     * 拼接收件人地址：address1 + address2 + address3，以空格分隔，去除首尾空白。
+     */
+    private String buildReceiverAddress(ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver) {
+        if (receiver == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        appendIfNotBlank(sb, receiver.getAddress1());
+        appendIfNotBlank(sb, receiver.getAddress2());
+        appendIfNotBlank(sb, receiver.getAddress3());
+        String result = sb.toString().trim();
+        return result.isEmpty() ? null : result;
+    }
+
+    private void appendIfNotBlank(StringBuilder sb, String value) {
+        if (CharSequenceUtil.isNotBlank(value)) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(value.trim());
+        }
+    }
+
+    /**
+     * 构造 WEGO {@code 2c.order.intercept} 截单请求 DTO。
+     */
+    private WegoOutboundInterceptDTO.InterceptReqDTO buildInterceptDto(ThirdWarehouseCancelOutboundReq cancelReq) {
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
+        if (authMap == null || authMap.isEmpty()) {
+            throw new ServiceException("WEGO授权信息为空");
+        }
+        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
+        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
+        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
+            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+        }
+        return WegoOutboundInterceptDTO.InterceptReqDTO.builder()
+                .accessToken(accessToken)
+                .secret(secret)
+                .no(cancelReq.getOrderCode())
+                .build();
+    }
+
+    /**
+     * 从 {@code logisticsList} 中取第一条非空物流跟踪号（即 ERP trackNo）。
+     */
+    private String extractTrackNo(List<WegoOutboundResp.LogisticsDTO> logisticsList) {
+        if (CollUtil.isEmpty(logisticsList)) {
+            return null;
+        }
+        return logisticsList.stream()
+                .filter(l -> CharSequenceUtil.isNotBlank(l.getTrackingNum()))
+                .map(WegoOutboundResp.LogisticsDTO::getTrackingNum)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * 从 WEGO 响应中提取 {@code result} 字符串字段（2c.order.save 成功时为出库单号）。
+     */
+    private String extractStringResult(JSONObject resp) {
+        if (resp == null) {
+            return "";
+        }
+        Object result = resp.get("result");
+        if (result instanceof String && CharSequenceUtil.isNotBlank((String) result)) {
+            return (String) result;
+        }
+        return "";
     }
 
     @Override
