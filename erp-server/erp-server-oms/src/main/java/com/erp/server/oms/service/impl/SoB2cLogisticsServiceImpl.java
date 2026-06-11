@@ -203,16 +203,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
-        return doUpdateLogisticsCode(mainId, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    public Boolean updateLogisticsCodeRequiresNew(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
-        return doUpdateLogisticsCode(mainId, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
-    }
-
-    private Boolean doUpdateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId)
                 .set(SoB2cLogisticsEntity::getCode, transportNo)
                 .set(SoB2cLogisticsEntity::getTrackNo, trackNo)
@@ -220,6 +210,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .set(SoB2cLogisticsEntity::getDeclareOrgId, declareOrgId)
                 .set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.THIRD.getCode())
                 .set(SoB2cLogisticsEntity::getPushPlatformCode, pushPlatformCode).update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public Boolean commitLogisticsCodeRequiresNew(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode) {
+        return updateLogisticsCode(mainId, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
     }
 
     @Override

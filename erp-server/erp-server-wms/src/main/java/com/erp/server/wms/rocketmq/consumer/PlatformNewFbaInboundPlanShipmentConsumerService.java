@@ -1,5 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import com.common.message.constant.RocketMqNewConsumerGroup;
+import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -15,20 +17,10 @@ import javax.annotation.Resource;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqNewTopic.DMP_FBA_SHIPMENT_TO_WMS_TOPIC,
-        selectorExpression = PlatformNewFbaInboundPlanShipmentConsumerService.DMP_FBA_INBOUND_PLAN_TO_WMS_TAG,
-        consumerGroup = PlatformNewFbaInboundPlanShipmentConsumerService.DMP_FBA_INBOUND_PLAN_TO_WMS_GROUP,
+        selectorExpression = RocketMqNewTag.DMP_FBA_INBOUND_PLAN_TO_WMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.DMP_FBA_INBOUND_PLAN_TO_WMS_GROUP,
         consumeMode = ConsumeMode.ORDERLY)
 public class PlatformNewFbaInboundPlanShipmentConsumerService extends AbstractNewPlatformConsumerHandler {
-
-    /**
-     * 使用新tag隔离老FBA货件消费者，避免重复消费
-     */
-    public static final String DMP_FBA_INBOUND_PLAN_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inbound_plan_to_wms_tag";
-
-    /**
-     * 使用独立group消费 InboundPlan 货件消息
-     */
-    public static final String DMP_FBA_INBOUND_PLAN_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inbound_plan_to_wms_group";
 
     @Resource
     private PlatformFbaShipmentConsumerService platformFbaShipmentConsumerService;

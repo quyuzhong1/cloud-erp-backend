@@ -82,10 +82,10 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode);
 
     /**
-     * 独立事务更新物流单号，供获取物流单号后立即自动提交发货时先落库，
-     * 以便后续 REQUIRES_NEW 的 autoOrderForecast 能从库中读到运单号。
+     * 独立本地事务提交运单号（仅 Spring REQUIRES_NEW，不加 Seata 全局事务），
+     * 供自动提交发货前让 autoOrderForecast 从库中读到运单号，且避免 Seata 嵌套 REQUIRES_NEW 死锁。
      */
-    Boolean updateLogisticsCodeRequiresNew(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode);
+    Boolean commitLogisticsCodeRequiresNew(String mainId, String transportNo, String trackNo, String iossTaxNo, String declareOrgId, String pushPlatformCode);
 
     /**
      * 更新中转信息
