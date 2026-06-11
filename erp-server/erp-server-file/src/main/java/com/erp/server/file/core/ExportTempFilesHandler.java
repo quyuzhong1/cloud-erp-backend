@@ -2,7 +2,7 @@ package com.erp.server.file.core;
 
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
+import com.common.core.exception.ServiceException;
 import com.erp.server.file.handler.FileRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -54,7 +54,7 @@ public final class ExportTempFilesHandler {
             fileTask.setFileUrl(url);
         } catch (IOException e) {
             log.error("导出上传失败{}", e.getMessage(), e);
-            throw new BusinessException(StringUtils.defaultIfBlank(e.getMessage(), "导出上传失败"));
+            throw new ServiceException(StringUtils.defaultIfBlank(e.getMessage(), "导出上传失败"));
         } finally {
             deleteQuietly(tempPath);
         }

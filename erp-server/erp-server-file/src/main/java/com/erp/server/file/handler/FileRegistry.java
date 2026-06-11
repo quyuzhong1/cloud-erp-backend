@@ -1,7 +1,7 @@
 package com.erp.server.file.handler;
 
 import com.common.business.annotation.FileServiceType;
-import com.erp.server.file.exception.BusinessException;
+import com.common.core.exception.ServiceException;
 import com.erp.server.file.service.FileService;
 import lombok.Getter;
 import org.springframework.aop.framework.AopProxyUtils;
@@ -44,7 +44,7 @@ public class FileRegistry {
     private static Integer sheetMaxRows;
 
     /**
-     * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link BusinessException}，避免无限克隆。
+     * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link ServiceException}，避免无限克隆。
      * 默认全局指定：50
      */
     @Getter

@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

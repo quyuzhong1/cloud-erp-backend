@@ -394,7 +394,12 @@ public class FastDFSClientUtil {
 		return result;
 	}
 
-    public static String uploadFile2Client(long fileSize, UploadCallback callback, String fileName, Map<String, String> metaList) throws IOException, MyException {
+    /**
+     * 流式上传底层方法：仅供已持有共享连接锁的 {@link #streamUploadFile} 调用，禁止对外直接使用。
+     * {@link StorageClient1} 非线程安全且全 JVM 共享单连接，绕过 {@code streamUploadFile} 的 {@code synchronized}
+     * 直接并发调用本方法会导致数据串包/文件损坏，故声明为 {@code private}。
+     */
+    private static String uploadFile2Client(long fileSize, UploadCallback callback, String fileName, Map<String, String> metaList) throws IOException, MyException {
         NameValuePair[] nameValuePairs = null;
         if (metaList != null) {
             nameValuePairs = new NameValuePair[metaList.size()];

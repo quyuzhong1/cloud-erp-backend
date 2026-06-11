@@ -40,26 +40,21 @@ public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandle
 
     @Override
     protected String getExcelPath(ProductTaskViewSearchDTO dto) {
-        String excelPath = "";
         if (dto == null || Objects.isNull(dto.getType())) {
             throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
         switch (dto.getType()) {
             case 1:
-                excelPath = "excel/plm/taskViewPersonnel.xlsx";
-                break;
+                return "excel/plm/taskViewPersonnel.xlsx";
             case 2:
-                excelPath = "excel/plm/taskViewProduct.xlsx";
-                break;
+                return "excel/plm/taskViewProduct.xlsx";
             case 3:
-                excelPath = "excel/plm/taskViewPhase.xlsx";
-                break;
+                return "excel/plm/taskViewPhase.xlsx";
             case 4:
-                excelPath = "excel/plm/taskViewTime.xlsx";
-                break;
+                return "excel/plm/taskViewTime.xlsx";
             default:
-                excelPath = "";
+                // 非法 type（非 1-4）尽早抛业务异常，避免空模板路径导致后续模板加载阶段才失败、错误信息不直观
+                throw new ServiceException(ApiError.PROJECT_TASK_VIEW_EXPORT_TYPE_REQUIRED);
         }
-        return excelPath;
     }
 }
