@@ -113,7 +113,11 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        return totalRows[0];
+        int totalRowsAllSheets = 0;
+        for (int rows : totalRows) {
+            totalRowsAllSheets += rows;
+        }
+        return totalRowsAllSheets;
     }
 
     public <P, M> int streamMasterDerived(File outFile,
@@ -210,7 +214,12 @@ public class MultiSheetTemplateWriter {
 
             for (int typeIndex = 1; typeIndex < cursors.length; typeIndex++) {
                 SheetCursor detailCursor = cursors[typeIndex];
-                detailCursor.sheetNo = mainCursor.sheetNo;
+                // 主 sheet 切换物理页后，明细 cursor 需跟随并将本 sheet 行计数归零，
+                // 否则跨 sheet 累加会导致单段超限误判（与主 sheet fillAcrossSheets 的归零行为保持一致）。
+                if (detailCursor.sheetNo != mainCursor.sheetNo) {
+                    detailCursor.sheetNo = mainCursor.sheetNo;
+                    detailCursor.rowsInSheet = 0;
+                }
                 ensureCursorSheet(detailCursor);
                 List<?> detailRows = extractors.get(typeIndex).apply(mainSlice);
                 List<?> sanitizedDetailRows = withoutNullListElements(detailRows);
@@ -219,7 +228,7 @@ public class MultiSheetTemplateWriter {
                 }
                 long nextRows = detailCursor.rowsInSheet + sanitizedDetailRows.size();
                 if (nextRows > detailCursor.rowLimit) {
-                    throw new BusinessException("明细sheet单段数据超过Excel单sheet最大行数（约104万），请缩小筛选范围导出。");
+                    throw new ServiceException("明细sheet单段数据超过Excel单sheet最大行数（约104万），请缩小筛选范围导出。");
                 }
                 fillCurrentSheet(excelWriter, fillConfig, sanitizedDetailRows, detailCursor, typeIndex, "DETAIL_SEGMENT");
                 detailCursor.rowsInSheet = nextRows;

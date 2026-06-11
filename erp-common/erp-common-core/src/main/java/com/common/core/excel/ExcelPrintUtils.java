@@ -1280,7 +1280,8 @@ public class ExcelPrintUtils {
                     .registerConverter(new SqlTimestampStringConverter())
                     .head(head).registerWriteHandler(horizontalCellStyleStrategy).registerWriteHandler(new ExcelCellWidthStyleStrategy()).sheet(sheetName).doWrite(data);
         } catch (Exception e) {
-            throw new ServiceException(e.getMessage());
+            log.error("exportDynamicHeadersExcelToFile:", e);
+            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 

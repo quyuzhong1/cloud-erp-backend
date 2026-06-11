@@ -421,7 +421,7 @@ public class FastDFSClientUtil {
             return uploadFile2Client(size, sender, fileName, metaList);
         } catch (Exception e) {
             log.error("uploadFile  ",e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 }
