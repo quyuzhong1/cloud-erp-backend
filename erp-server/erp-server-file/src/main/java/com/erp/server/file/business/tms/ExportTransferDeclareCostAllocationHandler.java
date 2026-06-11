@@ -1,6 +1,5 @@
 package com.erp.server.file.business.tms;
 
-import java.util.List;
 
 import javax.annotation.Resource;
 
@@ -12,7 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -6,11 +6,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
-import java.util.List;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_MOLD_INFO;
 
 /**

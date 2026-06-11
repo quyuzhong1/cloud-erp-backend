@@ -6,12 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.SalesSharingDTO;
 import com.erp.rpc.srm.feign.ExportSrmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_SALES_SHARING_REPORT;
 
