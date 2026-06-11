@@ -627,6 +627,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         soInfoEntity.setAllAmountLc(allAmountLc);
+        // 订单实付总额 = sum(明细.价税合计本位币) - 主表折扣总额
+        soInfoEntity.setPaidTotalAmount(allAmountLc.subtract(MathUtil.getValue(soInfoEntity.getDiscountAmount())));
         soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1387,6 +1389,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         soInfoEntity.setAllAmountLc(allAmountLc);
+        // 订单实付总额 = sum(明细.价税合计本位币) - 主表折扣总额
+        soInfoEntity.setPaidTotalAmount(allAmountLc.subtract(MathUtil.getValue(soInfoEntity.getDiscountAmount())));
         soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }

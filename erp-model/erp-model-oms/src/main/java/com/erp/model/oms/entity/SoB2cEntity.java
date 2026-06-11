@@ -109,10 +109,15 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("pay_status")
     private String payStatus;
     /**
-     * 订单金额
+     * 订单销售总额（原"订单金额"标签）
      */
     @TableField("amount")
     private BigDecimal amount;
+    /**
+     * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+     */
+    @TableField("paid_total_amount")
+    private BigDecimal paidTotalAmount;
     /**
      * 币别（原币）
      */

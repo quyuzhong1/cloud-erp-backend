@@ -90,6 +90,21 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("amount")
     private BigDecimal amount;
     /**
+     * 销售金额（折前）= 真实售价 × 数量
+     */
+    @TableField("sale_amount")
+    private BigDecimal saleAmount;
+    /**
+     * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+     */
+    @TableField("paid_amount")
+    private BigDecimal paidAmount;
+    /**
+     * 折扣额 = 销售金额 - 实付金额
+     */
+    @TableField("discount_amount")
+    private BigDecimal discountAmount;
+    /**
     * 币别（原币）
     */
     @TableField("currency")

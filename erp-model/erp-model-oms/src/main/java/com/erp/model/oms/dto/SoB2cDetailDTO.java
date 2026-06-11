@@ -92,6 +92,18 @@ public class SoB2cDetailDTO implements Serializable {
          */
        private BigDecimal amount;
         /**
+         * 销售金额（折前）= 真实售价 × 数量
+         */
+       private BigDecimal saleAmount;
+        /**
+         * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+         */
+       private BigDecimal paidAmount;
+        /**
+         * 折扣额 = 销售金额 - 实付金额
+         */
+       private BigDecimal discountAmount;
+        /**
          * 本位币别（默认人民币）
          */
        private String currency;
@@ -387,6 +399,18 @@ public class SoB2cDetailDTO implements Serializable {
         * 金额
         */
         private BigDecimal amount;
+        /**
+         * 销售金额（折前）= 真实售价 × 数量
+         */
+        private BigDecimal saleAmount;
+        /**
+         * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+         */
+        private BigDecimal paidAmount;
+        /**
+         * 折扣额 = 销售金额 - 实付金额
+         */
+        private BigDecimal discountAmount;
 
         /**
         * 汇率
@@ -481,6 +505,18 @@ public class SoB2cDetailDTO implements Serializable {
          * 金额
          */
         private BigDecimal amount;
+        /**
+         * 销售金额（折前）= 真实售价 × 数量
+         */
+        private BigDecimal saleAmount;
+        /**
+         * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+         */
+        private BigDecimal paidAmount;
+        /**
+         * 折扣额 = 销售金额 - 实付金额
+         */
+        private BigDecimal discountAmount;
 
         /**
          * 建议售价（本位币）

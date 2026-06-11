@@ -48,6 +48,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cDetailMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoB2cAmountUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -148,6 +149,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.TRUE);
+        SoB2cAmountUtil.applyDetailAmounts(soB2cEntity, list);
         //批量新增
         boolean flag = this.saveBatch(list);
         //新增拆分订单关联关系
@@ -179,6 +181,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.FALSE);
+        SoB2cAmountUtil.applyDetailAmounts(soB2cEntity, list);
         return service.saveOrUpdateBatch(list);
     }
 
@@ -616,6 +619,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 this.saveOrUpdateBatch(notExist);
             }
         }
+        SoB2cAmountUtil.applyDetailAmounts(mainEntity, saveOrUpdateList);
         // 批量保存和更新
         if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");

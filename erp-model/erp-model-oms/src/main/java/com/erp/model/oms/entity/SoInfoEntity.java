@@ -355,10 +355,16 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
 
 
     /**
-     * 订单金额
+     * 订单销售总额（原"订单金额"标签）
      */
     @TableField("order_amount")
     private BigDecimal orderAmount;
+
+    /**
+     * 订单实付总额：应收金额 / 平台推送实付，对应 sum(明细.实付金额)
+     */
+    @TableField("paid_total_amount")
+    private BigDecimal paidTotalAmount;
 
     /**
      * 平台订单Id

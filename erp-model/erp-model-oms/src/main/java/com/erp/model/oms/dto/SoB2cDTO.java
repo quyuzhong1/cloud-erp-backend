@@ -624,9 +624,14 @@ public class SoB2cDTO implements Serializable {
         private String trackCode;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签，sum(明细.销售金额)）
          */
         private BigDecimal amount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
 
         /**
          * 币别（原币）
@@ -1242,9 +1247,14 @@ public class SoB2cDTO implements Serializable {
         private String currency;
 
         /**
-         * 订单总金额
+         * 订单销售总额（原"订单总金额"标签）
          */
         private BigDecimal amount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
 
         /**
          * 运费收入
@@ -1615,11 +1625,21 @@ public class SoB2cDTO implements Serializable {
         private String shopId;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签，sum(明细.销售金额)）
          */
-        @NotNull(message = "订单金额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
+        @NotNull(message = "订单销售总额不能为空")
+        @Digits(integer = 12, fraction = 4, message = "订单销售总额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        @Digits(integer = 12, fraction = 4, message = "订单实付总额整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal paidTotalAmount;
+        /**
+         * 总优惠金额（来源：平台推送或拆单分摊）
+         */
+        @Digits(integer = 12, fraction = 4, message = "总优惠金额整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal totalDiscount;
         /**
          * 运费
          */
@@ -4457,9 +4477,14 @@ public class SoB2cDTO implements Serializable {
         private String trackNo;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签，sum(明细.销售金额)）
          */
         private BigDecimal amount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
 
         /**
          * 币别（原币）

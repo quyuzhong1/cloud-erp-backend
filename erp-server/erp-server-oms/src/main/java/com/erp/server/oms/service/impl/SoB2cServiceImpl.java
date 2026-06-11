@@ -134,6 +134,7 @@ import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoB2cAmountUtil;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
@@ -879,6 +880,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
         String dictPlatform = addDTO.getDictPlatform();
+        SoB2cAmountUtil.applyMainPaidTotalAmount(soB2cEntity);
         // 数据处理
         handleData(soB2cEntity, true, true);
         //创建时间
@@ -1475,6 +1477,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cCoreService.checkPayMent(old);
 
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
+        if (soB2cEntity.getTotalDiscount() == null) {
+            soB2cEntity.setTotalDiscount(old.getTotalDiscount());
+        }
+        SoB2cAmountUtil.applyMainPaidTotalAmount(soB2cEntity);
 
         // 数据处理
         handleData(soB2cEntity, true, true);
@@ -4429,6 +4435,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(list.get(0), addDTO);
         BigDecimal totalAmount = list.stream().map(SoB2cEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         addDTO.setAmount(totalAmount);
+        // 累加各子单的优惠金额，由 add() 内部 applyMainPaidTotalAmount 统一算 paidTotalAmount
+        BigDecimal mergedTotalDiscount = list.stream()
+                .map(SoB2cEntity::getTotalDiscount)
+                .map(MathUtil::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        addDTO.setTotalDiscount(mergedTotalDiscount);
         // 税后金额合并
         BigDecimal afterTaxAmount = list.stream().map(SoB2cEntity::getAfterTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         addDTO.setAfterTaxAmount(afterTaxAmount);
@@ -7602,6 +7614,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //校验汇率
             checkExchangeRate(entity);
+            SoB2cAmountUtil.applyMainPaidTotalAmount(entity);
 
             // 生成单号
             String businessNo = "";
@@ -7803,6 +7816,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
             checkExchangeRate(entity);
+            SoB2cAmountUtil.applyMainPaidTotalAmount(entity);
 
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {
@@ -12548,6 +12562,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //表示可以添加
                 if (!errorNoList.contains(no)) {
 
+                    SoB2cAmountUtil.applyAll(soB2cEntity, detailList);
                     soB2cService.save(soB2cEntity);
                     // 操作日志
                     String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());

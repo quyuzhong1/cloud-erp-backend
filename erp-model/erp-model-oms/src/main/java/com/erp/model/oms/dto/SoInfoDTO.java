@@ -134,9 +134,14 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal creditDeductAmount;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签）
          */
         private BigDecimal orderAmount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
 
         /**
          * 军区id
@@ -910,9 +915,14 @@ public class SoInfoDTO implements Serializable {
         private String thirdSystem;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签）
          */
         private BigDecimal orderAmount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
 
         /**
          * 类型 来源
@@ -1217,9 +1227,14 @@ public class SoInfoDTO implements Serializable {
         private String virtualWarehouseName;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签）
          */
         private BigDecimal orderAmount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
 
         /**
          * 审核状态code
@@ -1773,9 +1788,14 @@ public class SoInfoDTO implements Serializable {
         private String orderType;
 
         /**
-         * 订单金额
+         * 订单销售总额（原"订单金额"标签）
          */
         private BigDecimal orderAmount;
+
+        /**
+         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         */
+        private BigDecimal paidTotalAmount;
         /**
          * 要货日期
          */
