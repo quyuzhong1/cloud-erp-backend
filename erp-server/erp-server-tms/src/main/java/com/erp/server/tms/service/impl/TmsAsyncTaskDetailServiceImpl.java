@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,6 +84,51 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void saveBatchInChunks(List<TmsAsyncTaskDetailEntity> details, int batchSize) {
+        if (details == null || details.isEmpty()) {
+            return;
+        }
+        int safeBatchSize = batchSize <= 0 ? 500 : batchSize;
+        for (int i = 0; i < details.size(); i += safeBatchSize) {
+            saveBatch(details.subList(i, Math.min(i + safeBatchSize, details.size())), safeBatchSize);
+        }
+    }
+
+    @Override
+    public List<String> listExistingBusinessIds(String mainId, Collection<String> businessIds) {
+        if (StringUtils.isBlank(mainId) || businessIds == null || businessIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .select(TmsAsyncTaskDetailEntity::getBusinessId)
+                .eq(TmsAsyncTaskDetailEntity::getMainId, mainId)
+                .in(TmsAsyncTaskDetailEntity::getBusinessId, businessIds)
+                .list()
+                .stream()
+                .map(TmsAsyncTaskDetailEntity::getBusinessId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TmsAsyncTaskDetailEntity> listFailedDetailsByCursor(String mainId, String lastBusinessId, int batchSize) {
+        if (StringUtils.isBlank(mainId)) {
+            throw new ServiceException("错误重试来源任务不能为空");
+        }
+        int safeBatchSize = batchSize <= 0 ? 500 : batchSize;
+        return lambdaQuery()
+                .select(TmsAsyncTaskDetailEntity::getBusinessId, TmsAsyncTaskDetailEntity::getBusinessCode)
+                .eq(TmsAsyncTaskDetailEntity::getMainId, mainId)
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .isNotNull(TmsAsyncTaskDetailEntity::getBusinessId)
+                .gt(StringUtils.isNotBlank(lastBusinessId), TmsAsyncTaskDetailEntity::getBusinessId, lastBusinessId)
+                .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
+                .last("LIMIT " + safeBatchSize)
+                .list();
     }
 
 }

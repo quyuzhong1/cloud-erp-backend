@@ -509,6 +509,40 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class CursorPageDTO {
+
+        /**
+         * 业务筛选 ID 集合，如物流商 ID 或待处理业务 ID
+         */
+        private List<String> ids;
+
+        private LocalDate startDate;
+
+        private LocalDate endDate;
+
+        private LocalDateTime startTime;
+
+        private LocalDateTime endTime;
+
+        /**
+         * 游标分页：上一批最后一条业务 ID
+         */
+        private String lastId;
+
+        /**
+         * 每批查询条数
+         */
+        private Integer batchSize;
+
+        private String orderType;
+
+        private String reconciliationStatus;
+
+        private String trackStatus;
+    }
+
     /**
      * 内部类：批次处理结果
      */

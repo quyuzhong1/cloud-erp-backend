@@ -2107,6 +2107,34 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
+    public List<String> pageAutoGenerateFirstMileReconciliationSupplierIds(LocalDate startDate, LocalDate endDate, List<String> logisticsSupplierIds, String lastSupplierId, int batchSize) {
+        TmsAsyncTaskRecordDTO.CursorPageDTO pageDTO = new TmsAsyncTaskRecordDTO.CursorPageDTO();
+        pageDTO.setOrderType(OrderTypeEnum.FIRST_MILE.getCode());
+        pageDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
+        pageDTO.setTrackStatus(FmLogisticTrackStatusEnum.SIGN.getCode());
+        pageDTO.setIds(logisticsSupplierIds);
+        pageDTO.setStartDate(startDate);
+        pageDTO.setEndDate(endDate);
+        pageDTO.setLastId(lastSupplierId);
+        pageDTO.setBatchSize(batchSize);
+        return this.baseMapper.pageWaitReconciliationSupplierIds(pageDTO);
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliationBySuppliers(LocalDate startDate, LocalDate endDate, List<String> logisticsSupplierIds) {
+        return this.baseMapper.waitReconciliationList(
+                OrderTypeEnum.FIRST_MILE.getCode(),
+                ReconciliationStatusEnum.TO_BE_GENERATED.getCode(),
+                FmLogisticTrackStatusEnum.SIGN.getCode(),
+                null,
+                null,
+                logisticsSupplierIds,
+                startDate,
+                endDate,
+                null,null);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO) {
         if(StringUtils.isBlank(autoGenerateBillDTO.getId()) || Objects.isNull(autoGenerateBillDTO.getSourceTypeEnum()) || Objects.isNull(autoGenerateBillDTO.getBillGenerateTimingEnum())){
