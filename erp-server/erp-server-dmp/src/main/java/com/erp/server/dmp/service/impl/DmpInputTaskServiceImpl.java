@@ -66,6 +66,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper, DmpInputTaskEntity> implements DmpInputTaskService {
+
+    /**
+     * 链路最大回溯深度，避免脏数据导致的循环。当前业务任务链层级远小于该值，未来若发现日常深度逼近此值需重新评估。
+     */
+    private static final int MAX_TASK_CHAIN_DEPTH = 20;
+
 	@Resource
     private MQProducerService mqProducerService;
 	@Resource
@@ -353,6 +359,23 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
         } else {
             throw new ServiceException("拉取任务重试失败");
         }
+    }
+
+    @Override
+    public DmpInputTaskEntity findRootTaskInChain(DmpInputTaskEntity startTask) {
+        if (startTask == null) {
+            return null;
+        }
+        DmpInputTaskEntity currentTask = startTask;
+        int guard = 0;
+        while (StringUtils.isNotBlank(currentTask.getParentTaskId()) && guard++ < MAX_TASK_CHAIN_DEPTH) {
+            DmpInputTaskEntity parentTask = super.getById(currentTask.getParentTaskId());
+            if (parentTask == null) {
+                break;
+            }
+            currentTask = parentTask;
+        }
+        return currentTask;
     }
 
 }

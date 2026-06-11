@@ -38,20 +38,11 @@ public class DmpOutputAmzFbaPlanShipmentRocketMQTaskHandler extends DmpOutputAmz
         if (dmpMainEntity == null || StringUtils.isBlank(dmpMainEntity.getInputTaskId())) {
             return StringUtils.defaultString(dmpMainEntity == null ? "" : dmpMainEntity.getNextLevelId());
         }
-        DmpInputTaskEntity currentTask = dmpInputTaskService.getById(dmpMainEntity.getInputTaskId());
-        int guard = 0;
-        while (currentTask != null
-                && StringUtils.isNotBlank(currentTask.getParentTaskId())
-                && guard++ < 20) {
-            DmpInputTaskEntity parentTask = dmpInputTaskService.getById(currentTask.getParentTaskId());
-            if (parentTask == null) {
-                break;
-            }
-            currentTask = parentTask;
-        }
-        if (currentTask == null) {
+        DmpInputTaskEntity startTask = dmpInputTaskService.getById(dmpMainEntity.getInputTaskId());
+        DmpInputTaskEntity rootTask = dmpInputTaskService.findRootTaskInChain(startTask);
+        if (rootTask == null) {
             return StringUtils.defaultString(dmpMainEntity.getNextLevelId());
         }
-        return StringUtils.defaultString(currentTask.getNextLevelId());
+        return StringUtils.defaultString(rootTask.getNextLevelId());
     }
 }
