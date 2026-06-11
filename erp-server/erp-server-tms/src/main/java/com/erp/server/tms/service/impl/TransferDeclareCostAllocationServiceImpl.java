@@ -19,10 +19,8 @@ import javax.annotation.Resource;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -62,7 +60,6 @@ import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.TabListDTO;
-import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
 import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
@@ -71,7 +68,6 @@ import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
-import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
@@ -1259,7 +1255,6 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
     @Override
     public void pushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        if (transferDeclareService.addTaskDetailByTransferDeclare(dto)) return;
         transferDeclareService.pushTransferDeclare(dto);
     }
 

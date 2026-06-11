@@ -170,9 +170,6 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     void autoGenFirstMileReconciliation(LocalDate startDate, LocalDate endDate, String transportNo);
 
     @Transactional(rollbackFor = Exception.class)
-    boolean addTaskDetailByFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
-
-    @Transactional(rollbackFor = Exception.class)
     void pushFirstMileReconciliation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     /** MQ 消费：下推头程对账单（含任务明细初始化） */
