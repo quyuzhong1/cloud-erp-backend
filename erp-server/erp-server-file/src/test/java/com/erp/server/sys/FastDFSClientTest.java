@@ -6,8 +6,9 @@
  * Please visit the FastDFS Home Page http://www.csource.org/ for more detail.
  **/
 
-package com.common.core.utils.fastdfs;
+package com.erp.server.sys;
 
+import com.common.core.utils.fastdfs.UploadLocalFileSender;
 import org.csource.common.NameValuePair;
 import org.csource.fastdfs.*;
 
@@ -23,6 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * client test
+ *
+ * 测试demo:单元测试：打包已跳过
  *
  * @author Happy Fish / YuQing
  * @version Version 1.18

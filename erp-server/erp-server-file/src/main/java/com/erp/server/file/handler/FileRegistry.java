@@ -64,9 +64,9 @@ public class FileRegistry {
         FileRegistry.sheetMaxRows = sheetMaxRows;
     }
 
-    @Value("${file.storage.maxSheetNow:50}")
-    public void setMaxSheetNum(Integer maxSheetNow){
-        FileRegistry.maxSheetNum = maxSheetNow;
+    @Value("${file.storage.maxSheetNum:50}")
+    public void setMaxSheetNum(Integer maxSheetNum){
+        FileRegistry.maxSheetNum = maxSheetNum;
     }
 
     @PostConstruct

@@ -5,7 +5,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.core.ExportTempFilesHandler;
 import com.erp.server.file.entity.FileTask;
@@ -26,8 +25,8 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -65,10 +64,12 @@ public class CleanFileTaskJob {
         int successCount = 0;
         int fastDfsFailCount = 0;
         int logicDeleteFailCount = 0;
-        List<String> skipTaskIds = new ArrayList<>();
+        // 本轮已失败、仍匹配查询条件且未删除的任务数：作为下一次查询的 offset，
+        // 跳过这些“卡住”的记录，避免使用持续膨胀的 NOT IN 列表。
+        int failedOffset = 0;
 
         while (true) {
-            List<FileTask> fileTaskList = fileTaskRepository.listCleanFileTask(expireTime, BATCH_SIZE, skipTaskIds);
+            List<FileTask> fileTaskList = fileTaskRepository.listCleanFileTask(expireTime, BATCH_SIZE, failedOffset);
             if (CollUtil.isEmpty(fileTaskList)) {
                 break;
             }
@@ -79,7 +80,7 @@ public class CleanFileTaskJob {
                 String id = fileTask.getId();
                 String fileUrl = fileTask.getFileUrl();
                 if (CharSequenceUtil.isBlank(fileUrl)) {
-                    skipTaskIds.add(id);
+                    failedOffset++;
                     continue;
                 }
 
@@ -87,14 +88,14 @@ public class CleanFileTaskJob {
                     int result = FastDFSClientUtil.deleteFile(fileUrl);
                     if (result != 0) {
                         fastDfsFailCount++;
-                        skipTaskIds.add(id);
+                        failedOffset++;
                         XxlJobHelper.log("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
                         log.warn("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
                         continue;
                     }
                 } catch (Exception e) {
                     fastDfsFailCount++;
-                    skipTaskIds.add(id);
+                    failedOffset++;
                     XxlJobHelper.log("FastDFS文件删除异常, id={}, fileUrl={}, error={}", id, fileUrl, e.getMessage());
                     log.error("FastDFS文件删除异常, id={}, fileUrl={}", id, fileUrl, e);
                     continue;
@@ -106,13 +107,13 @@ public class CleanFileTaskJob {
                         successCount++;
                     } else {
                         logicDeleteFailCount++;
-                        skipTaskIds.add(id);
+                        failedOffset++;
                         XxlJobHelper.log("文件任务逻辑删除失败, id={}, fileUrl={}", id, fileUrl);
                         log.warn("文件任务逻辑删除失败, id={}, fileUrl={}", id, fileUrl);
                     }
                 } catch (Exception e) {
                     logicDeleteFailCount++;
-                    skipTaskIds.add(id);
+                    failedOffset++;
                     XxlJobHelper.log("文件任务逻辑删除异常, id={}, fileUrl={}, error={}", id, fileUrl, e.getMessage());
                     log.error("文件任务逻辑删除异常, id={}, fileUrl={}", id, fileUrl, e);
                 }
@@ -132,7 +133,7 @@ public class CleanFileTaskJob {
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("任务参数={}", JSONUtil.toJsonStr(jobParam));
         Integer days = 3;
-        if (StringUtils.isBlank(jobParam)) {
+        if (StringUtils.isNotBlank(jobParam)) {
             days = parseDays(jobParam);
             if (days == null || days <= 0) {
                 XxlJobHelper.log("任务参数不合法, days必须为正整数, 任务参数={}", JSONUtil.toJsonStr(jobParam));
@@ -160,6 +161,9 @@ public class CleanFileTaskJob {
         int skipProcessingCount = 0;
         int deleteFailCount = 0;
 
+        // 扫描前一次性加载处理中任务ID，循环内 O(1) 判断，避免逐文件查库（N+1）。
+        Set<String> processingTaskIds = fileTaskRepository.listProcessingTaskIds();
+
         try (Stream<Path> pathStream = Files.walk(workDir)) {
             for (Path path : (Iterable<Path>) pathStream::iterator) {
                 if (!Files.isRegularFile(path)) {
@@ -171,7 +175,7 @@ public class CleanFileTaskJob {
                 if (!createTime.isBefore(expireTime)) {
                     continue;
                 }
-                if (isProcessingTempFile(path)) {
+                if (isProcessingTempFile(path, processingTaskIds)) {
                     skipProcessingCount++;
                     XxlJobHelper.log("跳过处理中的临时文件, path={}", path);
                     continue;
@@ -198,7 +202,10 @@ public class CleanFileTaskJob {
         return ReturnT.SUCCESS;
     }
 
-    private boolean isProcessingTempFile(Path path) {
+    private boolean isProcessingTempFile(Path path, Set<String> processingTaskIds) {
+        if (CollUtil.isEmpty(processingTaskIds)) {
+            return false;
+        }
         String fileName = path.getFileName().toString();
         if (!fileName.startsWith(ExportTempFilesHandler.EXPORT_TMP_PREFIX)) {
             return false;
@@ -207,10 +214,7 @@ public class CleanFileTaskJob {
         if (CharSequenceUtil.isBlank(taskId)) {
             return false;
         }
-        return fileTaskRepository.lambdaQuery()
-                .eq(FileTask::getId, taskId)
-                .eq(FileTask::getStatus, FileTaskStatusEnum.PROCESS.name())
-                .count() > 0;
+        return processingTaskIds.contains(taskId);
     }
 
     private String parseTaskId(String fileName) {
