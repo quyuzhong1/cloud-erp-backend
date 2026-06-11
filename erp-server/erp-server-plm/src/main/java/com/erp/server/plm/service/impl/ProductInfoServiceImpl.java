@@ -2639,32 +2639,51 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
     }
 
+    private static final Integer EXPORT_PRODUCT = ProductDevelopExportTypeEnum.PRODUCT.getCode();
+    private static final Integer EXPORT_TASK = ProductDevelopExportTypeEnum.TASK.getCode();
+
     /**
-     * 导出数据类型：
-     * 0 产品列表
-     * 1 任务列表
+     * 根据产品开发导出数据类型解析 file 侧 event code。
+     * 校验规则与 {@code ExportPlmProductInfoHandler#validateExportDataList} 对齐，在创建下载任务前完成唯一一次严格校验。
      */
     private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
-        if (CollectionUtils.isEmpty(exportDataList)) {
-            throw new ServiceException("导出数据类型不能为空");
-        }
-        if (exportDataList.size() == 1) {
-            Integer flag = exportDataList.get(0);
-            if (Integer.valueOf(0).equals(flag)) {
+        List<Integer> validated = validateProductDevelopExportDataList(exportDataList);
+        if (validated.size() == 1) {
+            Integer flag = validated.get(0);
+            if (EXPORT_PRODUCT.equals(flag)) {
                 return EXPORT_PLM_PRODUCT_DEV_PRODUCT.getCode();
             }
-            if (Integer.valueOf(1).equals(flag)) {
+            if (EXPORT_TASK.equals(flag)) {
                 return EXPORT_PLM_PRODUCT_DEV_TASK.getCode();
             }
             throw new ServiceException("导出数据类型不合法：" + flag);
         }
-        if (exportDataList.size() == 2) {
-            boolean hasProduct = exportDataList.contains(0);
-            boolean hasTask = exportDataList.contains(1);
-            if (hasProduct && hasTask) {
-                return EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
+        return EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
+    }
+
+    /**
+     * 产品开发导出类型校验：枚举合法性、去重，仅允许单一类型或 PRODUCT+TASK 组合。
+     */
+    private List<Integer> validateProductDevelopExportDataList(List<Integer> exportDataList) {
+        if (CollectionUtils.isEmpty(exportDataList)) {
+            throw new ServiceException("导出数据类型不能为空");
+        }
+        Set<Integer> distinctTypes = new LinkedHashSet<>();
+        for (Integer flag : exportDataList) {
+            if (!ProductDevelopExportTypeEnum.isValid(flag)) {
+                throw new ServiceException("导出数据类型不合法：" + flag);
+            }
+            if (!distinctTypes.add(flag)) {
+                throw new ServiceException("导出数据类型存在重复：" + flag);
             }
         }
-        throw new ServiceException("导出数据类型不合法：" + exportDataList);
+        boolean validCombination = distinctTypes.size() == 1
+                || (distinctTypes.size() == 2
+                    && distinctTypes.contains(EXPORT_PRODUCT)
+                    && distinctTypes.contains(EXPORT_TASK));
+        if (!validCombination) {
+            throw new ServiceException("导出数据类型不合法：" + exportDataList);
+        }
+        return exportDataList;
     }
 }

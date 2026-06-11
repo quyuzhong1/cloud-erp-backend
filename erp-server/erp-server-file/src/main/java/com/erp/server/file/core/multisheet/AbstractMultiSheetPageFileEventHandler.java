@@ -81,7 +81,7 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
     }
 
     protected int getPageSize() {
-        return 5000;
+        return FileRegistry.exportPageSize();
     }
 
     protected int getFirstPage() {
