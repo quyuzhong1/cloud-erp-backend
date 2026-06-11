@@ -806,6 +806,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
         dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
+        dmpInputHotfixCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
         dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
     }
