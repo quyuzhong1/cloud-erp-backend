@@ -97,9 +97,6 @@ public class PlatformInventoryDTO extends UniqueDto {
 
     //冻结数量
     private Integer piFreeze;
-
-    //平台SKU名称
-    private String platformSkuName;
     /**
      * 数据下载时间
      */
