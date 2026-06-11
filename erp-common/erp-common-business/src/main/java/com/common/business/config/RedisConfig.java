@@ -151,9 +151,16 @@ public class RedisConfig {
 
         // 特定缓存的配置
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put("cache:plm:", redisCacheConfiguration.entryTtl(Duration.ofHours(8)));
+        cacheConfigurations.put("cache:fms:", redisCacheConfiguration.entryTtl(Duration.ofHours(8)));
+        cacheConfigurations.put("cache:dmp:", redisCacheConfiguration.entryTtl(Duration.ofHours(8)));
+        cacheConfigurations.put("cache:mrp:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("cache:scm:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("cache:tms:", redisCacheConfiguration.entryTtl(Duration.ofHours(8)));
         cacheConfigurations.put("cache:wms:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
-        cacheConfigurations.put("cache:sys", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
-        cacheConfigurations.put("cache:oms", redisCacheConfiguration.entryTtl(Duration.ofMillis(30)));
+        cacheConfigurations.put("cache:sys:", redisCacheConfiguration.entryTtl(Duration.ofHours(8)));
+        cacheConfigurations.put("cache:oms:", redisCacheConfiguration.entryTtl(Duration.ofMillis(30)));
+        cacheConfigurations.put("cache:workflow:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
 
 
         return RedisCacheManager

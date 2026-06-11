@@ -15,7 +15,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOC
 
 @Component
 @Slf4j
-public class ExportWmsSoOutStockHandler extends AbstractPageFileEventHandler<SoOutstockDTO.PagingViewDTO, SoOutstockDTO.ExportDTO> {
+public class ExportWmsSoOutStockHandler extends AbstractPageFileEventHandler<SoOutstockDTO.PagingViewDTO, SoOutstockDTO.PagingParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
@@ -32,7 +32,12 @@ public class ExportWmsSoOutStockHandler extends AbstractPageFileEventHandler<SoO
 
 
     @Override
-    protected PagingVO<SoOutstockDTO.PagingViewDTO> getPageData(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    protected PagingVO<SoOutstockDTO.PagingViewDTO> getPageData(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         return exportWmsFeign.exportSoOutStock(dto);
+    }
+
+    @Override
+    protected int getPageSize() {
+        return 10000;
     }
 }

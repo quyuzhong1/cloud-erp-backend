@@ -41,8 +41,8 @@ public class ScmDictController  extends BaseController {
      * @return List<DictBasicDTO>
      */
     @PostMapping("/listDictByKey")
-    public List<DictBasicDTO> listDictByKey(@RequestBody String key) {
-        List<DictBasicDTO> list =  dictBasicService.getByKey(key);
+    public List<DictBasicEntity> listDictByKey(@RequestBody String key) {
+        List<DictBasicEntity> list =  dictBasicService.getByKey(key);
         return list;
     }
 

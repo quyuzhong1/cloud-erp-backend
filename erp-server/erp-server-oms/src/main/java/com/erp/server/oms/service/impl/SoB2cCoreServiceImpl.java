@@ -108,8 +108,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         Map<String, SoB2cReceiverEntity> soB2cReceiverMap = soB2cReceiverList.stream().collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity()));
 
         //平台
-        List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        Map<String, String> platformMap = dictBasicList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        Map<String, String> platformMap = dictBasicList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
 
         //仓库
         List<String> warehouseIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());

@@ -388,8 +388,16 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
         //查询采购订单下的质检批次合格数量汇总  外验数量汇总
         List<QcResultDTO.TotalLotQualifiedQtyDTO> totalAllowInstockQtyList = qcResultService.getTotalLotQualifiedQtyByPodId(podIdList);
-        //入库质检总数量
-        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream().filter(e -> QcTypeEnum.STOCK_IN.getCode().equals(e.getQcType())).collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty));
+        //入库质检总数量（包含入库质检与新品入库质检）
+        //filter 已保证非 null
+        Map<String, Integer> totalQtyMap = totalAllowInstockQtyList.stream()
+                .filter(e -> QcTypeEnum.STOCK_IN.getCode().equals(e.getQcType()) || QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode().equals(e.getQcType()))
+                .filter(e -> e.getTotalQty() != null)
+                .collect(Collectors.toMap(
+                        QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId,
+                        QcResultDTO.TotalLotQualifiedQtyDTO::getTotalQty,
+                        Integer::sum
+                ));
         //外验允许入库量
         Map<String, Integer> allowInstockQtyMap = totalAllowInstockQtyList.stream().filter(e -> QcTypeEnum.OUTSIDE_QC.getCode().equals(e.getQcType())).collect(Collectors.toMap(QcResultDTO.TotalLotQualifiedQtyDTO::getPurchaseOrderDetailId, QcResultDTO.TotalLotQualifiedQtyDTO::getTotalAllowInstockQty));
         //查询采购订单下的 收货数量汇总

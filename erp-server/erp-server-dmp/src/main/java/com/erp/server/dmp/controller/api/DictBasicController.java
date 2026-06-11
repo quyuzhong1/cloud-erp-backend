@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.server.dmp.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +50,7 @@ public class DictBasicController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult list(@RequestParam(value = "type") String type) {
-        List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(type);
+        List<DictBasicEntity> list = dictBasicService.getByKey(type);
         return  success(list);
     }
 
