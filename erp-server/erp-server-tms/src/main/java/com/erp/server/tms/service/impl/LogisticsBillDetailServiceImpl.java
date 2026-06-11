@@ -397,6 +397,13 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         return baseMapper.listWaitingRegisterByConfig(query, platformType);
     }
 
+
+    @Override
+    public List<LogisticsTrackDTO.UpdateTrackDTO> listRegisterByConfig(LogisticsBillDetailQueryDTO query, String platformType) {
+        return baseMapper.listRegisterByConfig(query, platformType);
+    }
+
+
     @Override
     public void updateRegisterParams(List<LogisticsTrackDTO.UpdateTrackDTO> refList) {
         if (CollUtil.isEmpty(refList)){

@@ -88,7 +88,7 @@ public class SoOutstockController extends BaseController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto,Boolean.FALSE);
         return success(pagingVO);
     }
 
@@ -407,7 +407,7 @@ public class SoOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售出库单")
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto) {
+    public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.PagingParamDTO dto) {
         Boolean result = soOutstockService.exportExcel(dto);
         return result ? success() : failure();
     }
