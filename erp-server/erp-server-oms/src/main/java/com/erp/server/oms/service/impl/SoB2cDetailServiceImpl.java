@@ -10,7 +10,6 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -492,8 +491,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         //查询速卖通仓库名称是否映射ERP仓库
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = new ArrayList<>();
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
-            mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
+        boolean isAliExpressApiPlatform = isAliExpressApiPlatform(mainEntity.getDictPlatform());
+        if (isAliExpressApiPlatform) {
+            mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(PlatformDictEnum.getApiPlatformCode(mainEntity.getDictPlatform()));
         }
         //已发货
         String shipped = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
@@ -532,7 +532,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             // 历史记录
             SoB2cDetailEntity oldEntity = oldDetailMap.get(detailDTO.getSourceDetailId());
             List<ListingInfoWithSkuMappingDTO> mappingDTOList;
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform()) && StringUtils.isBlank(detailDTO.getPlatformSkuNo())) {
+            if (isAliExpressApiPlatform(dto.getDictPlatform()) && StringUtils.isBlank(detailDTO.getPlatformSkuNo())) {
                 // 速卖通明细SKU为空按platformSpuNo匹配
                 mappingDTOList = listingInfoWithSkuMappingDTOMap.values()
                         .stream()
@@ -573,7 +573,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 saveOrUpdateEntity = B2cOrderConsumerConverter.INSTANCE.convertNewDetail(detailDTO, mainEntity.getId(), skuId, skuNO, imageUrl, platformSpuNo);
             }
 
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && mainEntity.hasPlatformWarehouseOrder() && isShipped) {
+            if (isAliExpressApiPlatform && mainEntity.hasPlatformWarehouseOrder() && isShipped) {
                 //查询映射的仓库信息
                 WarehouseMappingDTO.MappingViewDTO mappingViewDTO = finalMappingViewDTOS.stream()
                         .filter(req -> StringUtils.isNotBlank(detailDTO.getWarehouseName()) && detailDTO.getWarehouseName().equals(req.getThirdWarehouseName()))
@@ -1526,6 +1526,10 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             log.error("解析订单明细标签失败，labelJson = {}", labelJson, e);
             return new SoB2cDetailDTO.DetailLabelDTO();
         }
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 
     private void setDeclareInfo(SoB2cDetailDTO.ListDTO detailDTO, List<SoB2cDeclareProductDTO.ViewDTO> declareProductList) {

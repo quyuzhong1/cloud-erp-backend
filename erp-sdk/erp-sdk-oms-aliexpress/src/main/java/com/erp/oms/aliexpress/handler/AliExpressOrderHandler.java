@@ -190,6 +190,7 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
                 token(shopInfoDTO.getToken()).build();
         List<ErpFulfillmentForwardDtoBean> deliveryList = new ArrayList<>();
         List<String> orderIdList = orderList.stream().map(req -> req.getAliExpressOrder().getOrderId()).distinct().collect(Collectors.toList());
+        fillOrderPlatform(orderList, shopInfoDTO);
         //20个分片拆分，平台只支持一次查询20个;
         List<List<String>> partition = Lists.partition(orderIdList, 20);
         for (List<String> list : partition) {
@@ -239,6 +240,18 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
         return orderList;
     }
 
+    private void fillOrderPlatform(List<PlatformAliExpressOrderDTO> orderList, AliExpressShopInfoDTO shopInfoDTO) {
+        if (CollectionUtils.isEmpty(orderList) || Objects.isNull(shopInfoDTO)) {
+            return;
+        }
+        for (PlatformAliExpressOrderDTO orderDTO : orderList) {
+            orderDTO.setAliExpressShopInfoDTO(shopInfoDTO);
+            if (StringUtils.isNotBlank(shopInfoDTO.getDictPlatform())) {
+                orderDTO.setPlatform(shopInfoDTO.getDictPlatform());
+            }
+        }
+    }
+
     @Override
     public List<PlatformOrderDTO> convert(List<PlatformAliExpressOrderDTO> sourceDataList) {
 //        if(!CollectionUtils.isEmpty(sourceDataList)){
@@ -272,6 +285,10 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             log.error("[速卖通订单地址明细下载]  获取 token 失败: shopId={}", shopId);
             String msg = StrUtil.format("[速卖通订单地址明细下载]  获取 token 失败: shopId={}", shopId);
             throw new ServiceException(msg);
+        }
+        dto.setAliExpressShopInfoDTO(shopInfoDTO);
+        if (StringUtils.isNotBlank(shopInfoDTO.getDictPlatform())) {
+            dto.setPlatform(shopInfoDTO.getDictPlatform());
         }
         String oaid = orderDetail.getOaid();
         //加密id
@@ -320,6 +337,10 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", shopId);
             throw new ServiceException(msg);
         }
+        dto.setAliExpressShopInfoDTO(shopInfoDTO);
+        if (StringUtils.isNotBlank(shopInfoDTO.getDictPlatform())) {
+            dto.setPlatform(shopInfoDTO.getDictPlatform());
+        }
         OrderRequest orderRequest = OrderRequest.builderByShopInfo(apiName, shopInfoDTO);
         try {
             AliExpressOrderDetail orderDetail = aliExpressOrderService.getOrderDetail(dto.getAliExpressOrder().getOrderId(), orderRequest);
@@ -346,6 +367,10 @@ public class AliExpressOrderHandler extends AbstractOrderHandler<PlatformAliExpr
             log.error("[速卖通发货单明细下载]  获取 token 失败: shopId={}", shopId);
             String msg = StrUtil.format("[速卖通订单下载]  获取 token 失败: shopId={}", shopId);
             throw new ServiceException(msg);
+        }
+        dto.setAliExpressShopInfoDTO(shopInfoDTO);
+        if (StringUtils.isNotBlank(shopInfoDTO.getDictPlatform())) {
+            dto.setPlatform(shopInfoDTO.getDictPlatform());
         }
         String deliveryQueryAPiName = AliexpressConstants.ALIEXPRESS_ASCP_FFO_ITEM_QUERY;;
         OrderRequest deliveryRequest = OrderRequest.builder().

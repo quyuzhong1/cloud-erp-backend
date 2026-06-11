@@ -329,6 +329,83 @@ public class AliExpressShipperService {
         return client.execute(request, token, Protocol.TOP);
     }
 
+    public IopResponse createOverseasManagedLogisticsOrder(Map<String, String> authMap,
+                                                           String sellerId,
+                                                           String tradeOrderId,
+                                                           String tradeOrderItemSupportItemDTOS,
+                                                           String addressId,
+                                                           String refundAddressId,
+                                                           String sendOption) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.asf.local.supply.split.quantity.rts.pack");
+        request.addApiParameter("sellerId", sellerId);
+        request.addApiParameter("tradeOrderId", tradeOrderId);
+        request.addApiParameter("tradeOrderItemSupportItemDTOS", tradeOrderItemSupportItemDTOS);
+        request.addApiParameter("addressId", addressId);
+        request.addApiParameter("refundAddressId", refundAddressId);
+        request.addApiParameter("sendOption", sendOption);
+        request.addApiParameter("simplify", "true");
+        return client.execute(request, token, Protocol.TOP);
+    }
+
+    public IopResponse queryOverseasManagedLogisticsDocument(Map<String, String> authMap,
+                                                            String queryDocumentRequestList,
+                                                            String locale) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.asf.local.supply.platform.logistics.document.query");
+        request.addApiParameter("documentType", "WAY_BILL");
+        request.addApiParameter("queryDocumentRequestList", queryDocumentRequestList);
+        if (StringUtils.isNotBlank(locale)) {
+            request.addApiParameter("locale", locale);
+        }
+        request.addApiParameter("simplify", "true");
+        return client.execute(request, token, Protocol.TOP);
+    }
+
+    public IopResponse cancelOverseasManagedLogisticsOrder(Map<String, String> authMap,
+                                                          String packageId,
+                                                          String tradeOrderId,
+                                                          String trackingNumber,
+                                                          String locale) throws ApiException {
+        String appKey = authMap.get("clientId");
+        String appSecret = authMap.get("clientSecret");
+        String token = authMap.get("token");
+        String url = authMap.get("url");
+        if (StringUtils.isBlank(url)){
+            url = PathConstants.BASE_URL;
+        }
+        validate(appKey,appSecret,token,url);
+        IopClient client = new IopClientImpl(url, appKey, appSecret);
+        IopRequest request = new IopRequest();
+        request.setApiName("aliexpress.asf.local.supply.platform.logistics.repack");
+        request.addApiParameter("packageId", packageId);
+        request.addApiParameter("tradeOrderId", tradeOrderId);
+        request.addApiParameter("trackingNumber", trackingNumber);
+        if (StringUtils.isNotBlank(locale)) {
+            request.addApiParameter("locale", locale);
+        }
+        request.addApiParameter("simplify", "true");
+        return client.execute(request, token, Protocol.TOP);
+    }
+
     public IopResponse getSellerInfo(Map<String, String> authMap) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");

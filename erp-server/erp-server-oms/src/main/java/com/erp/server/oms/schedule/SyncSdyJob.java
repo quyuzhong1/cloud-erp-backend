@@ -180,7 +180,7 @@ public class SyncSdyJob {
             Map<String, List<AliexpressDeliveryEntity>> aliexpressDeliveryMap = new HashMap<>();
             List<AliexpressDeliveryDetailEntity> detailAliexpressDeliveryList = new LinkedList<>();
             List<String> aliExpressSoIds = list.stream()
-                    .filter(e -> PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(e.getDictPlatform()) && e.hasPlatformWarehouseOrder())
+                    .filter(e -> isAliExpressApiPlatform(e.getDictPlatform()) && e.hasPlatformWarehouseOrder())
                     .map(BaseEntity::getId).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(aliExpressSoIds)){
                 List<AliexpressDeliveryEntity> aliexpressDeliveryList = FeignQuery.create(AliexpressDeliveryEntity.class)
@@ -313,7 +313,7 @@ public class SyncSdyJob {
                 if (soB2cEntity.hasPlatformWarehouseOrder()) {
                     // 并且已出库
                     if (outstockEntityList.stream().anyMatch(e->e.getSoId().equalsIgnoreCase(soB2cEntity.getId()))){
-                        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
+                        if (isAliExpressApiPlatform(soB2cEntity.getDictPlatform())){
                             // 速卖通推送
                             syncAliExpressDelivery(soB2cEntity,
                                     aliexpressDeliveryMap,
@@ -643,5 +643,9 @@ public class SyncSdyJob {
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
         }
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 }

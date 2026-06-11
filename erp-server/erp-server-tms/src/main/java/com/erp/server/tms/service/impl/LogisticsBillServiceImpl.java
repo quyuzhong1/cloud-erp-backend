@@ -824,6 +824,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         LogisticsCancelOrderVO cancelOrderVO = new LogisticsCancelOrderVO();
         cancelOrderVO.setDeliveryNo(dto.getReferenceNumber());
         cancelOrderVO.setTransportNo(dto.getTransportNo());
+        cancelOrderVO.setTrackNo(dto.getTrackNo());
         cancelOrderVO.setPlatformCode(dto.getPlatformCode());
         cancelOrderVO.setReason(dto.getReason());
         cancelOrderVO.setOrderId(dto.getOrderId());
@@ -833,6 +834,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流单");
             }
             cancelOrderVO.setTransportNo(billBase.getTransportNo());
+            cancelOrderVO.setTrackNo(billBase.getTrackNo());
+        } else if (StringUtils.isBlank(dto.getTrackNo())) {
+            List<LogisticsBillDTO.BaseDTO> billBaseList = this.listLogisticsBillByTransportNos(Collections.singletonList(dto.getTransportNo()));
+            if (CollectionUtils.isNotEmpty(billBaseList)) {
+                cancelOrderVO.setTrackNo(billBaseList.get(0).getTrackNo());
+            }
         }
         Map<String, String> authMap = logisticsAuthService.getLogisticsAuthConfig(auth.getAuthId(), dto.getShopId(), auth.getLogisticsPlatform());
         cancelOrderVO.setAuthMap(authMap);
@@ -844,7 +851,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //是否成功
         if (thirdPartyResult.isSuccess()) {
             //将自发货费用状态改成作废
-            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo, dto.getTransportNo()).last(SqlConstants.LIMIT_1).one();
+            LogisticsBillEntity logisticsBillEntity = this.lambdaQuery().eq(LogisticsBillEntity::getTransportNo, cancelOrderVO.getTransportNo()).last(SqlConstants.LIMIT_1).one();
             if (Objects.nonNull(logisticsBillEntity)) {
                 logisticsBillCostService.invalidByLogisticsBillId(logisticsBillEntity.getId());
             }

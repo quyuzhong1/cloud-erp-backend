@@ -181,11 +181,18 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			        Map<String, Object> labelMap = new HashMap<>();
 			        //订单明细
 			        List<OrderItemDetail> orderItemDetailList = JSON.parseObject(JSON.toJSONString(detailData.get("child_order_list")),new TypeReference<List<OrderItemDetail>>() {}.getType());
+			        if (CollectionUtils.isEmpty(orderItemDetailList)) {
+			            orderItemDetailList = new ArrayList<>();
+			        }
 			        Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
 			        if (CollectionUtils.isNotEmpty(orderItemDetailList)) {
 			            long count = orderItemDetailList.stream().
 			                    filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType())).count();
-			            isAliexpressPlatformWarehouseOrder = count > 0;
+			            if (dmpBasicSystemEntity != null && DmpBasicSystemCodeEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equals(dmpBasicSystemEntity.getCode())) {
+			                isAliexpressPlatformWarehouseOrder = count == orderItemDetailList.size();
+			            } else {
+			                isAliexpressPlatformWarehouseOrder = count > 0;
+			            }
 			            
 			            dmpDataMap.put("allAmount", orderItemDetailList.stream().map(o -> {
 				        	Integer productCount = o.getProductCount();

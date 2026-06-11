@@ -214,15 +214,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             soB2cService.autoCancelOrderForecast(mainEntity);
         }
 
-        // 非平台
-        if (!mainEntity.hasPlatformWarehouseOrder()
-                && resultDTO.isUpdateCancel()
-        ){
-            if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
-                    && !mainEntity.getIsIntercept()){
-                soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
-            }
-            handleSplitTargetPlatformCancel(mainEntity);
+        if (resultDTO.isUpdateCancel()) {
+            handlePlatformCancelDeliveryIntercept(mainEntity);
         }
 
 
@@ -265,6 +258,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        if (Objects.nonNull(entity) && ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())){
 //            cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
 //        }
+    }
+
+    /**
+     * 平台取消后同步发货拦截；速卖通平台仓现有规则不支持本地拦截，海外托管保持一致。
+     */
+    private void handlePlatformCancelDeliveryIntercept(SoB2cEntity mainEntity) {
+        if (mainEntity.hasPlatformWarehouseOrder()) {
+            return;
+        }
+        if (SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+                && !Boolean.TRUE.equals(mainEntity.getIsIntercept())) {
+            soB2cService.deliveryIntercept(mainEntity.getId(), "平台取消");
+        }
+        handleSplitTargetPlatformCancel(mainEntity);
     }
 
     /**

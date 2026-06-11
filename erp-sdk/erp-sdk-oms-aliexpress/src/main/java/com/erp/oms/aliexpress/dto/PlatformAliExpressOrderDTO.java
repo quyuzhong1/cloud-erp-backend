@@ -97,7 +97,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         this.aliExpressShopInfoDTO = aliExpressShopInfoDTO;
         this.setIsClean(0);
         this.shopId=aliExpressShopInfoDTO.getId();
-        this.setPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        this.setPlatform(resolvePlatform(dto, aliExpressShopInfoDTO));
         this.setUniqueId(combineUnique(aliExpressOrder.getOrderId(), this.shopId));
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setDownloadAddressStatus(0);
@@ -118,6 +118,27 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         return StrUtil.format("{}_{}", orderId, shopId);
     }
 
+    private static String resolvePlatform(JobTaskDTO dto, AliExpressShopInfoDTO shopInfoDTO) {
+        if (Objects.nonNull(shopInfoDTO) && StringUtils.isNotBlank(shopInfoDTO.getDictPlatform())) {
+            return shopInfoDTO.getDictPlatform();
+        }
+        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getDictPlatform())) {
+            return dto.getDictPlatform();
+        }
+        return PlatformDictEnum.ALI_EXPRESS.getCode();
+    }
+
+    private static String resolvePlatform(PlatformAliExpressOrderDTO dto) {
+        if (Objects.nonNull(dto) && Objects.nonNull(dto.getAliExpressShopInfoDTO())
+                && StringUtils.isNotBlank(dto.getAliExpressShopInfoDTO().getDictPlatform())) {
+            return dto.getAliExpressShopInfoDTO().getDictPlatform();
+        }
+        if (Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getPlatform())) {
+            return dto.getPlatform();
+        }
+        return PlatformDictEnum.ALI_EXPRESS.getCode();
+    }
+
     /**
      * 将订单的数据转化成想要的数据
      *
@@ -132,7 +153,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
         // 平台类型
-        orderDTO.setPlatform(dto.getPlatform());
+        orderDTO.setPlatform(resolvePlatform(dto));
         // 唯一ID
         orderDTO.setUniqueId(dto.getUniqueId());
         // 同步任务ID
@@ -145,7 +166,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 平台订单号
         orderDTO.setPlatformCode(sourceOrder.getOrderId());
         // 销售平台
-        orderDTO.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        orderDTO.setDictPlatform(resolvePlatform(dto));
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
         // 平台取消
@@ -239,12 +260,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         Map<String, Object> labelMap = new HashMap<>();
         //订单明细
         List<OrderItemDetail> orderItemDetailList = detailNotNull ? sourceOrder.getDetail().getChildOrderList() : Collections.emptyList();
-        Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
-        if (CollectionUtils.isNotEmpty(orderItemDetailList)) {
-            long count = orderItemDetailList.stream().
-                    filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType())).count();
-            isAliexpressPlatformWarehouseOrder = count > 0;
-        }
+        Boolean isAliexpressPlatformWarehouseOrder = isPlatformWarehouseOrder(orderDTO.getDictPlatform(), orderItemDetailList);
         labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
         labelMap.put("isPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
         String orderStatus = sourceOrder.getOrderStatus();
@@ -484,12 +500,20 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         if (null == detail){
             return false;
         }
-        if (CollectionUtils.isEmpty(detail.getChildOrderList())){
+        return isPlatformWarehouseOrder(resolvePlatform(this), detail.getChildOrderList());
+    }
+
+    private static boolean isPlatformWarehouseOrder(String platform, List<OrderItemDetail> orderItemDetailList) {
+        if (CollectionUtils.isEmpty(orderItemDetailList)) {
             return false;
         }
-        return detail.getChildOrderList()
-                .stream()
-                .anyMatch(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType()));
+        long cainiaoCount = orderItemDetailList.stream()
+                .filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType()))
+                .count();
+        if (PlatformDictEnum.ALI_EXPRESS_OVERSEAS_MANAGED.getCode().equalsIgnoreCase(platform)) {
+            return cainiaoCount == orderItemDetailList.size();
+        }
+        return cainiaoCount > 0;
     }
 
     /**

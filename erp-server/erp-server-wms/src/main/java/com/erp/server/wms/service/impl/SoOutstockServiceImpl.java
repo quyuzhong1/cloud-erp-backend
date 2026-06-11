@@ -3473,7 +3473,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     if(Objects.isNull(deliveryTime)){
                        throw new ServiceException("发货日期不能为空");
                     }
-                    if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(dto.getDictPlatform())){
+                    if(isAliExpressApiPlatform(dto.getDictPlatform())){
                         // 速卖通GMT时区转北京时区
                         LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
                                 ZoneId.of("America/Los_Angeles"),
@@ -3795,7 +3795,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
          * [排除速卖通订单]
          */
         if (Objects.nonNull(soB2c)
-                && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2c.getDictPlatform())
+                && !isAliExpressApiPlatform(soB2c.getDictPlatform())
                 && !PlatformDictEnum.TIK_TOK.getCode().equals(soB2c.getDictPlatform())) {
             soB2cFeign.updateWarehouseByShopId(soB2c.getId(), soB2c.getShopId());
         }
@@ -3804,7 +3804,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean flag = Boolean.TRUE;
 
         //速卖通异常订单重新生成需要查询速卖通平台发货单获取仓库
-        if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
+        if (currentEntity.hasPlatformWarehouseOrder() && isAliExpressApiPlatform(currentEntity.getDictPlatform())) {
             flag = soB2cFeign.updateAliExpressOrderWarehouse(currentEntity.getId(), currentEntity.getShopId());
         }
         if (currentEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
@@ -3823,7 +3823,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         } else {
             //速卖通平台仓订单的销售出库在处理类生成
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(currentEntity.getDictPlatform())) {
+            if (isAliExpressApiPlatform(currentEntity.getDictPlatform())) {
                 result = flag;
             } else if (PlatformDictEnum.TIK_TOK.getCode().equals(currentEntity.getDictPlatform())) {
                 result = flag && this.generateB2cSoOutstock(id);
@@ -3845,6 +3845,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private SoOutstockEntity getBySoCode(String soB2cCode) {
         return this.lambdaQuery().eq(SoOutstockEntity::getSoCode, soB2cCode).
                 last("LIMIT 1").one();
+    }
+
+    private boolean isAliExpressApiPlatform(String platform) {
+        return PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(PlatformDictEnum.getApiPlatformCode(platform));
     }
 
     private void handleSaveOrUpdateDb(SoOutstockEntity soOutstock) {
