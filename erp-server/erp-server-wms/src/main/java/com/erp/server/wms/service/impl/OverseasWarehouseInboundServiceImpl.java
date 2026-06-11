@@ -1280,6 +1280,15 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             //判断是否存在，通过明细id+数量+时间
             for (PlatformInboundDTO.Receiving receiving : dto.getReceivingDataList()) {
                 OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receiving.getProductSku());
+                // 平台回写的签收 sku 在本地入库明细中找不到时（如 wego 海外仓收到计划外不良品），
+                // 单独跳过本条流水并落 warn 日志，避免一条异常 NPE 把整批签收记录连同事务回滚掉。
+                if (detailEntity == null) {
+                    log.warn("[海外仓签收] 单号={} 平台={} 流水sku={} 在本地入库明细中找不到，已跳过该流水",
+                            StringUtil.isBlank(dto.getReceivingCode()) ? dto.getSourceCode() : dto.getReceivingCode(),
+                            dto.getPlatform(),
+                            receiving.getProductSku());
+                    continue;
+                }
                 String detailId = detailEntity.getId();
                 if (StringUtil.isBlank(detailId)) {
                     continue;
