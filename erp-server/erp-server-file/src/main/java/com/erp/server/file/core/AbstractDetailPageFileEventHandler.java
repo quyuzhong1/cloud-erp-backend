@@ -6,7 +6,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -40,7 +39,7 @@ public abstract class AbstractDetailPageFileEventHandler<R, T> implements FileEv
             fileTask.setFileUrl(url);
         } catch (IOException e) {
             log.error("上传文件失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
+            throw new ServiceException(e.getMessage());
         } finally {
             ExportTempFilesHandler.deleteQuietly(tempPath);
         }

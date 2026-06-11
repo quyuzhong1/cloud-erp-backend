@@ -12,7 +12,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -117,12 +116,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         if (pageData == null) {
             throw new ServiceException("导出分页查询失败，页码=1");
         }
-        List<DynamicExcelDTO> pageList = pageData.getList();
         int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
-        // 表头以首页为准、不在后续分页重复 mergeHeaders：本链路约定同一次导出的各页 DynamicExcelDTO 由同一
-        // 查询/同一响应类产出，动态列集合在分页间保持一致（仅数据行不同），故首页表头即为全量表头。
-        // 该约定成立时单遍历流式写入既正确又高效；若未来出现"各页动态列不一致"的数据源，需改为分页循环内继续
-        // mergeHeaders，或在检测到列变化时抛 ServiceException，否则后续页新增列会被静默丢弃。
+        // 表头以首页为准、不在后续分页重复 mergeHeaders：本链路为标准 OFFSET 分页（totalCount>0 时首页必有数据），
+        // 且各页 DynamicExcelDTO 由同一查询/同一响应类产出，动态列集合在分页间保持一致（仅数据行不同），故首页表头即为全量表头。
+        // 后续页若出现首页未包含的新列，由 ensureNoNewHeaderKeys 在写出循环中显式抛错兜底，而非静默丢列。
+        List<DynamicExcelDTO> pageList = pageData.getList();
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         mergeHeaders(headers, pageList);
         if (CollUtil.isEmpty(headers)) {
@@ -150,6 +148,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         }
                         pageList = pageData.getList();
                     }
+                    ensureNoNewHeaderKeys(headers, pageList, pageNo);
                     List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());
                     if (rows.isEmpty() && totalRows == 0) {
                         excelWriter.write(rows, writeSheet);
@@ -158,7 +157,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         if (rowsInSheet >= maxRowsPerSheet) {
                             sheetNo++;
                             if (sheetNo >= maxSheetNum) {
-                                throw new BusinessException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
+                                throw new ServiceException("导出数据超过当前系统可承载的 sheet 数，请缩小筛选范围导出。");
                             }
                             writeSheet = buildWriteSheet(sheetNo, sheetName, header);
                             rowsInSheet = 0;
@@ -188,6 +187,29 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                 continue;
             }
             dynamicExcelDTO.getHeaders().forEach(target::putIfAbsent);
+        }
+    }
+
+    /**
+     * 校验后续分页是否引入了首页表头未包含的动态列。
+     * <p>
+     * 表头按首页一次性确定，本链路约定各页动态列一致；若后续页出现新列，
+     * 继续按既有表头写出会静默丢列，故此处显式抛 {@link ServiceException} 提示，避免导出结果缺列且难排查。
+     */
+    private void ensureNoNewHeaderKeys(LinkedHashMap<String, String> headers, List<DynamicExcelDTO> pageList, int pageNo) {
+        if (CollectionUtils.isEmpty(pageList)) {
+            return;
+        }
+        for (DynamicExcelDTO dynamicExcelDTO : pageList) {
+            if (dynamicExcelDTO == null || CollUtil.isEmpty(dynamicExcelDTO.getHeaders())) {
+                continue;
+            }
+            for (String key : dynamicExcelDTO.getHeaders().keySet()) {
+                if (!headers.containsKey(key)) {
+                    throw new ServiceException("导出失败：第 " + pageNo + " 页出现首页表头未包含的动态列[" + key
+                            + "]，各页动态列不一致，请缩小筛选范围后重试或联系开发处理。");
+                }
+            }
         }
     }
 
