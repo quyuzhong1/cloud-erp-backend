@@ -14,6 +14,8 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="source_field" property="sourceField" />
        <result column="source_detail_field" property="sourceDetailField" />
+       <result column="default_value" property="defaultValue" />
+       <result column="etl_rule_list" property="etlRuleListStorage" />
        <result column="is_unique_key" property="isUniqueKey" />
        <result column="is_absolute_value" property="isAbsoluteValue" />
        <result column="target_field_id" property="targetFieldId" />
@@ -39,6 +41,8 @@ clcid.version AS version,
 clcid.is_deleted AS isDeleted,
 clcid.source_field AS sourceField,
 clcid.source_detail_field AS sourceDetailField,
+clcid.default_value AS defaultValue,
+clcid.etl_rule_list AS etlRuleListStorage,
 clcid.is_unique_key AS isUniqueKey,
 clcid.is_absolute_value AS isAbsoluteValue,
 clcid.target_field_id AS targetFieldId,

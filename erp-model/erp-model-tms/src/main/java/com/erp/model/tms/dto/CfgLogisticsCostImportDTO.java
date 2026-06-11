@@ -3,6 +3,7 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -188,6 +189,22 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         private String sourceDetailField;
 
         /**
+         * 默认值
+         */
+        private String defaultValue;
+
+        /**
+         * 字段清洗规则
+         */
+        private List<CfgLogisticsCostImportDetailDTO.EtlRuleDTO> etlRuleList;
+
+        /**
+         * 字段清洗规则存储值
+         */
+        @JsonIgnore
+        private String etlRuleListStorage;
+
+        /**
          * 是否唯一
          */
         private Boolean isUniqueKey;
@@ -347,8 +364,9 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         /**
         * 配置单据 api/tms/drop/down/dict/list?key=cfgCostType
         */
-        @NotBlank(message = "配置单据不能为空")
-        @Size(max = 50,message = "配置单据最大长度不能超过50位")
+        // 页面隐藏“配置单据”后，businessType 仍由入口内部传递，用于字段映射和导入行为区分。
+//        @NotBlank(message = "配置单据不能为空")
+//        @Size(max = 50,message = "配置单据最大长度不能超过50位")
         private String businessType;
 
         /**
