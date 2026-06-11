@@ -677,7 +677,11 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             return (Boolean) isMinIssueQty;
         }
         if (isMinIssueQty != null && StringUtils.isNotBlank(String.valueOf(isMinIssueQty))) {
-            return Boolean.parseBoolean(String.valueOf(isMinIssueQty));
+            Boolean parsed = parseKingdeeBoolean(String.valueOf(isMinIssueQty));
+            if (parsed != null) {
+                return parsed;
+            }
+            // 无法识别的字符串落入下方 BaseMinIssueQty 兜底，避免被 Boolean.parseBoolean 静默判为 false
         }
         Object baseMinIssueQty = srcEntry.get("BaseMinIssueQty");
         if (baseMinIssueQty == null || StringUtils.isBlank(String.valueOf(baseMinIssueQty))) {
@@ -685,6 +689,38 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         }
         BigDecimal minIssueQty = ConvertUtil.toBigDecimal(baseMinIssueQty, BigDecimal.ZERO);
         return minIssueQty.compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    /**
+     * 解析金蝶下发的非标准布尔字符串：
+     * - "true" / "1" / "y" / "yes" / "t" → {@code Boolean.TRUE}
+     * - "false" / "0" / "n" / "no" / "f" → {@code Boolean.FALSE}
+     * - 其它无法识别的值 → {@code null}（让调用方走兜底）
+     */
+    private Boolean parseKingdeeBoolean(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim().toLowerCase();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        switch (trimmed) {
+            case "true":
+            case "1":
+            case "y":
+            case "yes":
+            case "t":
+                return Boolean.TRUE;
+            case "false":
+            case "0":
+            case "n":
+            case "no":
+            case "f":
+                return Boolean.FALSE;
+            default:
+                return null;
+        }
     }
 
     private int resolveOperId(JSONObject srcEntry) {
