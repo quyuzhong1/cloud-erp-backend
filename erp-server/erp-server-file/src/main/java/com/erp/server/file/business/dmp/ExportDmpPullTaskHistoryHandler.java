@@ -6,11 +6,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PULL_TASK_HISTORY;
 

@@ -7,12 +7,10 @@ import com.erp.model.tms.dto.LogisticsOrderDTO;
 import com.erp.model.tms.dto.excel.TmsLogisticsOrderExcelDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_ORDER;
 

@@ -85,13 +85,19 @@ public class CleanFileTaskJob {
                 }
 
                 try {
-                    int result = FastDFSClientUtil.deleteFile(fileUrl);
-                    if (result != 0) {
-                        fastDfsFailCount++;
-                        failedOffset++;
-                        XxlJobHelper.log("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
-                        log.warn("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
-                        continue;
+                    // 参考 FileTaskContext.delete 的「先查 exist 再删」模式：文件不存在（已删除）则跳过删除，
+                    // 直接执行后续 DB 软删，避免记录因 FastDFS 反复返回非 0 而永久卡住、fileUrl 长期残留。
+                    if (FastDFSClientUtil.exist(fileUrl)) {
+                        int result = FastDFSClientUtil.deleteFile(fileUrl);
+                        // 删除返回非 0 时再确认一次远端是否其实已不存在（兼容客户端对不存在文件返回非 0 错误码）；
+                        // 仅当文件确实仍存在才算真实失败并跳过。
+                        if (result != 0 && FastDFSClientUtil.exist(fileUrl)) {
+                            fastDfsFailCount++;
+                            failedOffset++;
+                            XxlJobHelper.log("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
+                            log.warn("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
+                            continue;
+                        }
                     }
                 } catch (Exception e) {
                     fastDfsFailCount++;
@@ -121,8 +127,13 @@ public class CleanFileTaskJob {
         }
 
         long end = System.currentTimeMillis();
-        XxlJobHelper.log("====结束清理过期文件任务, 成功删除={}, FastDFS删除失败={}, 逻辑删除失败={}, 耗时={}ms====",
+        String summary = CharSequenceUtil.format("成功删除={}, FastDFS删除失败={}, 逻辑删除失败={}, 耗时={}ms",
                 successCount, fastDfsFailCount, logicDeleteFailCount, end - start);
+        XxlJobHelper.log("====结束清理过期文件任务, {}====", summary);
+        // 存在删除失败时返回 FAIL，避免调度平台误判成功、失败记录长期积压不可见
+        if (fastDfsFailCount + logicDeleteFailCount > 0) {
+            return new ReturnT<>(ReturnT.FAIL_CODE, "清理过期文件任务存在失败记录: " + summary);
+        }
         return ReturnT.SUCCESS;
     }
 
@@ -197,8 +208,13 @@ public class CleanFileTaskJob {
         }
 
         long end = System.currentTimeMillis();
-        XxlJobHelper.log("====结束清理文件临时目录, 扫描文件={}, 成功删除={}, 跳过处理中={}, 删除失败={}, 耗时={}ms====",
+        String summary = CharSequenceUtil.format("扫描文件={}, 成功删除={}, 跳过处理中={}, 删除失败={}, 耗时={}ms",
                 scanCount, successCount, skipProcessingCount, deleteFailCount, end - start);
+        XxlJobHelper.log("====结束清理文件临时目录, {}====", summary);
+        // 存在删除失败时返回 FAIL，便于调度平台告警与运维感知
+        if (deleteFailCount > 0) {
+            return new ReturnT<>(ReturnT.FAIL_CODE, "清理文件临时目录存在删除失败: " + summary);
+        }
         return ReturnT.SUCCESS;
     }
 

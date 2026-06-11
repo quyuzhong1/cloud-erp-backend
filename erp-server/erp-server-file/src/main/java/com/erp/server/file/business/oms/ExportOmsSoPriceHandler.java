@@ -7,12 +7,10 @@ import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SO_PRICE;
 

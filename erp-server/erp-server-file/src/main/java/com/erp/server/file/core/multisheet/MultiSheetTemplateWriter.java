@@ -113,11 +113,10 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        int totalRowsAllSheets = 0;
-        for (int rows : totalRows) {
-            totalRowsAllSheets += rows;
-        }
-        return totalRowsAllSheets;
+        // count 取首个（主）sheet 行数，与 streamMasterDerived 及 writeAllSheets 文档语义一致；
+        // 不返回各 sheet 行数之和，避免 fileTask.count 被放大影响任务展示/下游统计。
+        // 独立多 sheet 约定 sheets 列表首项为主表（typeCount>=1，空集合在方法开头已抛异常）。
+        return totalRows[0];
     }
 
     public <P, M> int streamMasterDerived(File outFile,
