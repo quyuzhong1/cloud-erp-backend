@@ -2417,7 +2417,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v -> v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
                     String warehouseLogisticsChannelId = Objects.nonNull(viewDTO) ? viewDTO.getPlatformLogisticsChannelId() : "";
                     //提交发货
-                    soB2cService.submitDelivery(id, warehouseLogisticsChannelId);
+                    submitDelivery(id, warehouseLogisticsChannelId);
                 } catch (Exception e) {
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                     addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
@@ -10087,7 +10087,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
                 SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
         if (CollUtil.isEmpty(soB2cEntityList)) {
-            log.warn("autoOrderForecast跳过,订单不满足预报条件,soIds:{}", soIdList);
             return new ArrayList<>();
         }
         soIdList = soB2cEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
@@ -10095,7 +10094,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cLogisticsEntityList = soB2cLogisticsEntityList.stream().filter(v -> StringUtils.isNotBlank(v.getCode()) && StringUtils.isNotBlank(v.getLogisticsChannelId())).collect(Collectors.toList());
         List<String> channelIds = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(channelIds) || CollUtil.isEmpty(soB2cLogisticsEntityList)) {
-            log.warn("autoOrderForecast跳过,物流单号或渠道为空,soIds:{}", soIdList);
             return new ArrayList<>();
         }
         List<LogisticsChannelDTO.BaseDTO> channelList = logisticsFeign.listChannelInfoById(channelIds);
@@ -10104,7 +10102,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SettingForecastEntity> settingForecastEntityList = forecastFeign.getSettingForecastByLogisticsSupplierIdList(logisticSupplierIds);
         settingForecastEntityList = settingForecastEntityList.stream().filter(v -> v.getIsAutoForecast() && StringUtils.isNotBlank(v.getTransferLogisticsChannelId()) && StringUtils.isNotBlank(v.getTransferLogisticsSupplierId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(settingForecastEntityList)) {
-            log.warn("autoOrderForecast跳过,未配置自动预报,soIds:{},logisticsSupplierIds:{}", soIdList, logisticSupplierIds);
             return new ArrayList<>();
         }
         //根据物流商分类
@@ -10128,10 +10125,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             } else {
                 existDTO.getIds().add(soB2cEntity.getId());
             }
-        }
-        if (CollUtil.isEmpty(transferDeclareDTOList)) {
-            log.warn("autoOrderForecast跳过,物流商未匹配到预报设置,soIds:{},channelIds:{}", soIdList, channelIds);
-            return new ArrayList<>();
         }
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         transferDeclareDTOList.forEach(e -> {
