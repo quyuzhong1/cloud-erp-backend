@@ -187,6 +187,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return Math.min(maxTemplateDataSheets(), Math.max(1, byHard));
     }
 
+    /**
+     * 读取 classpath 模板为字节数组。
+     * <p>
+     * 注意：模板整本读入内存、展开多 sheet 后再整本 {@code wb.write} 为 byte[]，峰值内存与
+     * 「模板复杂度 × 数据 sheet 数」正相关。数据行已流式写盘，但模板展开阶段仍非流式，
+     * 故须在配置层约束 {@code maxTemplateDataSheets}（{@link #maxTemplateDataSheets()}）与单 sheet 行数
+     * （{@link #maxDataRowsPerSheet()}），避免复杂模板 + 高 sheet 数导致 OOM；超大导出场景的 POI 流式模板展开作为后续优化。
+     */
     private byte[] readClasspathTemplateBytes(String excelPath) throws IOException {
         ClassPathResource resource = new ClassPathResource(excelPath);
         try (InputStream in = resource.getInputStream()) {

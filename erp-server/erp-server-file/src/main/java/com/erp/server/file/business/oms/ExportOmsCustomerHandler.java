@@ -36,7 +36,8 @@ public class ExportOmsCustomerHandler extends AbstractMasterDerivedSheetHandler<
     @Override
     protected List<Function<List<CustomerDTO.PagingExportDTO>, List<?>>> buildSheetExtractors() {
         List<Function<List<CustomerDTO.PagingExportDTO>, List<?>>> extractors = new ArrayList<>(3);
-        extractors.add(ArrayList::new);
+        // 主表透传：返回行数须与主分页切片一致（见 MultiSheetTemplateWriter#fillMasterDerivedBatch 的行数一致性校验），不可改为返回空列表
+        extractors.add(mainSlice -> new ArrayList<>(mainSlice));
         extractors.add(mainRows -> {
             List<CustomerDTO.PagingAddressContactExportDTO> addressRows = new ArrayList<>();
             for (CustomerDTO.PagingExportDTO row : mainRows) {

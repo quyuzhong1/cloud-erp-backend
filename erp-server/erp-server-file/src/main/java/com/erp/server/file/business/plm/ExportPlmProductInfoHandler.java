@@ -4,7 +4,6 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.enums.ProductDevelopExportTypeEnum;
-import com.erp.model.plm.util.ProductDevelopExportTypeValidator;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.multisheet.AbstractStreamingMultiSheetHandler;
 import com.erp.server.file.core.multisheet.MultiSheetTemplateWriter;
@@ -51,7 +50,9 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
         if (CollectionUtils.isEmpty(params.getExportDataList())) {
             params.setExportDataList(deriveExportDataListByEvent(fileTask.getEvent()));
         }
-        params.setExportDataList(ProductDevelopExportTypeValidator.validate(params.getExportDataList()));
+        if (!ProductDevelopExportTypeEnum.isValidCombination(params.getExportDataList())) {
+            throw new ServiceException("导出数据类型不合法：" + params.getExportDataList());
+        }
         return params;
     }
 
@@ -96,6 +97,11 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
         }
         if (EXPORT_PLM_PRODUCT_DEV_BOTH.name().equals(event)) {
             return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK));
+        }
+        // 兼容历史遗留事件 EXPORT_PLM_PRODUCT（仅切换 event、metaInfo 未携带 exportDataList 的存量异步任务）：
+        // 与旧实现一致默认导出产品列表（PRODUCT），避免重试时抛「导出数据类型不能为空」。
+        if (EXPORT_PLM_PRODUCT.name().equals(event)) {
+            return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT));
         }
         throw new ServiceException("导出数据类型不能为空");
     }

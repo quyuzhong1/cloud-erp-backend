@@ -32,7 +32,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.util.ProductDevelopExportTypeValidator;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -2645,12 +2644,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 根据产品开发导出数据类型解析 file 侧 event code。
-     * 校验规则由 {@link ProductDevelopExportTypeValidator} 统一维护，在创建下载任务前完成唯一一次严格校验。
+     * 组合合法性由 {@link ProductDevelopExportTypeEnum#isValidCombination} 统一维护，
+     * 在创建下载任务前完成唯一一次严格校验，不合法时由本服务层抛出业务异常。
      */
     private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
-        List<Integer> validated = ProductDevelopExportTypeValidator.validate(exportDataList);
-        if (validated.size() == 1) {
-            Integer flag = validated.get(0);
+        if (!ProductDevelopExportTypeEnum.isValidCombination(exportDataList)) {
+            throw new ServiceException("导出数据类型不合法：" + exportDataList);
+        }
+        if (exportDataList.size() == 1) {
+            Integer flag = exportDataList.get(0);
             if (EXPORT_PRODUCT.equals(flag)) {
                 return EXPORT_PLM_PRODUCT_DEV_PRODUCT.getCode();
             }

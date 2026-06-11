@@ -1271,7 +1271,16 @@ public class ExcelPrintUtils {
 		return dataList;
 	}
 
-    public <T> void exportDynamicHeadersExcelToFile(File outputFile, String sheetName, List<List<String>> head, List<List<T>> data) {
+    /**
+     * 动态表头导出到本地文件。
+     * <p>
+     * 注意：{@code doWrite(data)} 需一次性提供完整 data，仅适用于小批量动态表头导出；
+     * 大数据量请改用 {@link #openDynamicHeadersWriter} 分批 write，避免全量 data 驻留内存导致 OOM。
+     * <p>
+     * 异常风格：与 {@link #patchExportListToFile}、{@link #patchExportDetailToFile}、{@link #sheetPatchExportToFile}
+     * 统一为向上抛 {@link IOException}，由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}。
+     */
+    public <T> void exportDynamicHeadersExcelToFile(File outputFile, String sheetName, List<List<String>> head, List<List<T>> data) throws IOException {
         try (FileOutputStream out = new FileOutputStream(outputFile)) {
             HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
             EasyExcelFactory.write(out)
@@ -1279,9 +1288,6 @@ public class ExcelPrintUtils {
                     .registerConverter(new SqlDateStringConverter())
                     .registerConverter(new SqlTimestampStringConverter())
                     .head(head).registerWriteHandler(horizontalCellStyleStrategy).registerWriteHandler(new ExcelCellWidthStyleStrategy()).sheet(sheetName).doWrite(data);
-        } catch (Exception e) {
-            log.error("exportDynamicHeadersExcelToFile:", e);
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 
@@ -1407,9 +1413,6 @@ public class ExcelPrintUtils {
             } finally {
                 excelWriter.finish();
             }
-        } catch (Exception e) {
-            log.error("sheetPatchExportToFile:", e);
-            throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
 

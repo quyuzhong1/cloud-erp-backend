@@ -28,6 +28,15 @@ import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_MRP_SALES_CALC;
 
+/**
+ * MRP 销量测算导出。
+ * <p>
+ * 保留原因：本导出为多 sheet 复合结构（销量/降噪/公式等多张关联子表），各子表需按统一行口径对齐，
+ * 暂未纳入基类分页流式写出能力，仍沿用自定义 {@code handle()} + {@code getData()} + {@code listSeqData()} 全量聚合后一次性 sheetPatchExport。
+ * <p>
+ * 数据量限制：全量聚合在内存中，仅适用于受控数据量的销量测算导出；若结果集显著增大需评估 OOM，
+ * 后续应对齐 {@code AbstractMasterDerivedSheetHandler} 或基类多 sheet 流式能力按批写出。
+ */
 @Component
 @Slf4j
 public class ExportMrpSalesCalcHandler extends AbstractPageFileEventHandler<Pair<Integer, List<?>>, CalcSalesInfoDimDTO.ExportSalesInfoDTO> {
