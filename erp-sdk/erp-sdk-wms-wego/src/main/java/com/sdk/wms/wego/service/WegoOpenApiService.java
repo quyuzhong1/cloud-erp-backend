@@ -282,6 +282,7 @@ public class WegoOpenApiService {
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_SEARCH, bizParams, "查询2C出库单");
         if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.warn("[WEGO查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
             return Collections.emptyList();
         }
         JSONArray resultArray = response.getJSONArray("result");
@@ -291,7 +292,7 @@ public class WegoOpenApiService {
         try {
             return resultArray.toJavaList(WegoOutboundResp.OutboundOrderDTO.class);
         } catch (Exception ex) {
-            log.error("[WEGO查询2C出库单] result数组转换OutboundOrderDTO失败, response={}", response, ex);
+            log.error("[WEGO查询2C出库单] result数组转换OutboundOrderDTO失败, {}", safeResponseLog(response), ex);
             throw new ServiceException("WEGO 查询2C出库单接口响应转换失败: " + ex.getMessage());
         }
     }
@@ -324,13 +325,13 @@ public class WegoOpenApiService {
         JSONObject response = doQuery(dto.getAccessToken(), dto.getSecret(),
                 WeGoConstants.TWO_C_ORDER_QUERY_PAGE, bizParams, "分页查询2C出库单");
         if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
-            log.warn("[WEGO分页查询2C出库单] 接口返回失败或无响应, response={}", response);
+            log.warn("[WEGO分页查询2C出库单] 接口返回失败或无响应, {}", safeResponseLog(response));
             return null;
         }
         try {
             return response.toJavaObject(WegoOutboundResp.class);
         } catch (Exception ex) {
-            log.error("[WEGO分页查询2C出库单] 响应JSON转换WegoOutboundResp失败, response={}", response, ex);
+            log.error("[WEGO分页查询2C出库单] 响应JSON转换WegoOutboundResp失败, {}", safeResponseLog(response), ex);
             throw new ServiceException("WEGO 分页查询2C出库单接口响应转换失败: " + ex.getMessage());
         }
     }
@@ -408,7 +409,7 @@ public class WegoOpenApiService {
             throw new ServiceException("WEGO " + actionName + "接口调用异常: " + e.getMessage());
         }
         long cost = System.currentTimeMillis() - start;
-        log.info("[WEGO{}] 请求结束, cost={}ms, response={}", actionName, cost, response);
+        log.info("[WEGO{}] 请求结束, cost={}ms", actionName, cost);
         if (response == null || response.isEmpty()) {
             log.error("[WEGO{}] 接口返回为空, url={}, params={}", actionName, url, logRequestJson);
             throw new ServiceException("WEGO " + actionName + "接口返回为空");
@@ -466,6 +467,20 @@ public class WegoOpenApiService {
             logParams.put(WeGoSignUtils.SIGN_FIELD, "***");
         }
         return logParams;
+    }
+
+    /**
+     * 从 WEGO 响应中提取可安全打印的字段（success / errorCode / errorMsg），
+     * 避免将含收货人姓名、电话、地址等 PII 的完整 JSON 写入日志。
+     */
+    private String safeResponseLog(JSONObject response) {
+        if (response == null) {
+            return "response=null";
+        }
+        return String.format("success=%s, errorCode=%s, errorMsg=%s",
+                response.get("success"),
+                response.get("errorCode"),
+                response.get("errorMsg"));
     }
 
     /**
