@@ -225,8 +225,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     void pushSmallBagCostAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
-    BatchResultDTO pushAllocation(String id , String reportDate);
-
     BatchResultDTO pushAllocation(String id , String reportDate, LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext);
 
     /**

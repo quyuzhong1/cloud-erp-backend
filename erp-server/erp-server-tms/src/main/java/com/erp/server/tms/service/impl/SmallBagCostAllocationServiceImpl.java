@@ -1174,7 +1174,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			.in(SmallBagCostAllocationDetailEntity::getMainId, ids)
 			.set(SmallBagCostAllocationDetailEntity::getIsDeleted, true)
 			.update();
-		logisticsBillCostService.pushAllocation(costId, smallBagCostAllocationMainEntity.getReportDate());
+		logisticsBillCostService.pushAllocation(costId, smallBagCostAllocationMainEntity.getReportDate(), null);
 		
 		smallBagCostAllocationMainService.lambdaUpdate().eq(SmallBagCostAllocationMainEntity::getCostId, costId)
 			.set(SmallBagCostAllocationMainEntity::getCreateTime, smallBagCostAllocationMainEntity.getCreateTime())
