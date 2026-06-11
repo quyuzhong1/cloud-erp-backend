@@ -388,8 +388,6 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         return updateUploadResult(context, successKeys, failReasonMap, entity -> {
             entity.setCollectMode(dto.getCollectMode());
             entity.setTransportNo(finalTrackingNumber);
-            entity.setLogisticsSupplierName(PackageForecastCollectModeEnum.SHOPEE_SELF_DELIVER.getCode().equals(dto.getCollectMode())
-                    ? "自行配送" : StringUtils.defaultIfBlank(dto.getLogisticsChannelName(), entity.getLogisticsSupplierName()));
             entity.setHandoverStatus(HandoverStatusEnum.SHOPEE_ORDER_CREATED.getCode());
         });
     }
