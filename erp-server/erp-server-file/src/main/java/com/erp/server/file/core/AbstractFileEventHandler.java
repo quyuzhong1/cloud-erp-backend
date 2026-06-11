@@ -3,11 +3,8 @@ package com.erp.server.file.core;
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.server.file.entity.FileTask;
-import com.erp.server.file.exception.BusinessException;
-import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
@@ -15,8 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
@@ -29,21 +24,12 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
     @Override
     public void handle(FileTask fileTask) {
         List<T> list = getData(fileTask);
-        fileTask.setCount(list.size());
         String displayName = buildDownloadFileName(fileTask);
-        Path tempPath = null;
-        try {
-            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx", fileTask.getUniqueWithFileName());
-            new ExcelPrintUtils().patchExportListToFile(tempPath.toFile(), list, getExcelPath(),
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName, outFile -> {
+            new ExcelPrintUtils().patchExportListToFile(outFile, list, getExcelPath(),
                     getWriteHandler().toArray(new WriteHandler[0]));
-            String url = FastDFSClientUtil.uploadFile(tempPath.toFile(), displayName, null);
-            fileTask.setFileUrl(url);
-        } catch (IOException e) {
-            log.error("上传文件失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
-        } finally {
-            ExportTempFilesHandler.deleteQuietly(tempPath);
-        }
+            return list.size();
+        });
     }
 
     protected String buildDownloadFileName(FileTask fileTask) {

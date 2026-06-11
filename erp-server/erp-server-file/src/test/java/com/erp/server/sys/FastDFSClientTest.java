@@ -221,10 +221,18 @@ public class FastDFSClientTest {
             System.out.println(client.get_file_info(group_name, remote_filename));
             String file_id = group_name + StorageClient1.SPLIT_GROUP_NAME_AND_FILENAME_SEPERATOR + remote_filename;
             InetSocketAddress inetSockAddr = trackerServer.getInetSocketAddress();
-//            String file_url = "http://" + inetSockAddr.getAddress().getHostAddress();
-            String file_url = "https://erptest.ulanzi.cn:9002/";
-            if (ClientGlobal.g_tracker_http_port != 80) {
-                file_url += ":" + ClientGlobal.g_tracker_http_port;
+            // HTTP 基址从 test-client.properties 的 http.baseUrl 读取，禁止在代码中写死环境地址（换环境无需改代码，也防误提交到 CI）。
+            // 该 properties 不入库；未配置时回退为 tracker 主机地址，仅用于本地手工调试。
+            String httpBaseUrl = testClientProps.getProperty("http.baseUrl");
+            String file_url;
+            if (httpBaseUrl != null && !httpBaseUrl.trim().isEmpty()) {
+                // 完整基址由配置提供（含 scheme/host/port），不再追加 tracker http port
+                file_url = httpBaseUrl.trim().replaceAll("/+$", "");
+            } else {
+                file_url = "http://" + inetSockAddr.getAddress().getHostAddress();
+                if (ClientGlobal.g_tracker_http_port != 80) {
+                    file_url += ":" + ClientGlobal.g_tracker_http_port;
+                }
             }
             file_url += "/" + file_id;
             if (ClientGlobal.g_anti_steal_token) {

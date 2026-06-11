@@ -51,6 +51,12 @@ public class FileRegistry {
     private static Integer maxSheetNum;
 
     /**
+     * 文件每次分页处理每页最大数量
+     */
+    @Getter
+    private static Integer maxPageSize;
+
+    /**
      * 冒号后无内容表示「缺省属性时用空字符串」；业务侧应对空白串再回退到 {@code java.io.tmpdir}（见 ExportTempFilesHandler 等）。
      * 若需缺省为 null，可改为 {@code ${file.storage.tmpdir:#{null}}}（SpEL）。
      */
@@ -67,6 +73,11 @@ public class FileRegistry {
     @Value("${file.storage.maxSheetNum:50}")
     public void setMaxSheetNum(Integer maxSheetNum){
         FileRegistry.maxSheetNum = maxSheetNum;
+    }
+
+    @Value("${file.storage.maxPageSize:10000}")
+    public void setMaxPageSize(Integer maxPageSize){
+        FileRegistry.maxPageSize = maxPageSize;
     }
 
     @PostConstruct

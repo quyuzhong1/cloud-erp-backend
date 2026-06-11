@@ -8,18 +8,16 @@ import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.common.core.excel.ExcelPrintUtils;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.server.file.ErpServerFileApplication;
-import com.erp.server.file.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -31,13 +29,11 @@ import java.util.List;
 @Slf4j
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerFileApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Profile("dev")
+@ActiveProfiles("dev")
 public class ErpServerEasyExcelTests {
 
     private static final String TEMPLATE_CLASSPATH = "excel/sys/city.xlsx";
 
-    @Resource
-    private FileService fileFeign;
 
     /**
      * 数据量大的复杂填充

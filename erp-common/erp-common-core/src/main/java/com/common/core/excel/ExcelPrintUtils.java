@@ -1420,6 +1420,7 @@ public class ExcelPrintUtils {
                 excelWriter.finish();
             }
         } catch (Exception e) {
+            log.error("sheetPatchExportToFile:", e);
             throw new ServiceException(ApiError.FILE_EXPORT_FAILED);
         }
     }
