@@ -4,11 +4,12 @@ import com.common.business.dto.ApproveDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.SkuStdCostDTO;
 import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostDetailEntity;
 import com.erp.model.plm.entity.SkuStdCostEntity;
-
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
@@ -88,6 +89,19 @@ public interface SkuStdCostDetailService extends SuperService<SkuStdCostDetailEn
      */
     Boolean update(SkuStdCostDetailDTO.UpdateDTO dto);
 
+
+    /**
+     * 批量自动获取标准成本
+     *
+     * @param dto
+     * @return
+     */
+    List<BatchResultDTO> autoFetchBatch(SkuStdCostDTO.AutoFetchBatchDTO dto);
+
+
+    Boolean autoFetchWithContext(SkuStdCostEntity mainEntity,
+                                 SkuStdCostDetailEntity detailEntity,
+                                 List<InventorySkuCostDTO.SkuCostCNYDTO> skuCostList);
 
     /**
      * 修改

@@ -1224,7 +1224,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
-    		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
+    		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getIsDeleted,Boolean.FALSE).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
     			throw new ServiceException("小包物流单已生成");
     		}
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
@@ -1269,10 +1269,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //表示是b2c
                 if (ObjectUtil.isNotEmpty(soId)) {
 
-                    SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
-                    if(Objects.nonNull(soB2cEntity)){
-                        addDTO.setPlatformCode(soB2cEntity.getPlatformCode());
-                    }
                     SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
                     if (Objects.nonNull(customer)) {
                         addDTO.setShopId(customer.getShopId());
@@ -1349,12 +1345,26 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (CharSequenceUtil.isBlank(addDTO.getShipmentType())){
                 addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
             }
+            if (!OrderTypeEnum.B2B.getCode().equals(orderType)) {
+                addDTO.setPlatformCode(buildLogisticsBillPlatformCodeFromOutstockDetail(entity.getId()));
+            }
             addDTO.setDetailList(detailList);
             logisticsBillFeign.addLogisticsBill(addDTO);
 
 
     }
 
+    private String buildLogisticsBillPlatformCodeFromOutstockDetail(String outstockId) {
+        List<SoOutstockDetailEntity> detailList = soOutstockDetailService.listByMainIds(Collections.singletonList(outstockId));
+        if (CollUtil.isEmpty(detailList)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return detailList.stream()
+                .map(SoOutstockDetailEntity::getPlatformCode)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.joining(","));
+    }
 
     /**
      * 处理反审核的数据
