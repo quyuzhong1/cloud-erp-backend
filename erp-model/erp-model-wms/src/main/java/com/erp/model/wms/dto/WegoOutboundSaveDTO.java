@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -228,6 +229,7 @@ public class WegoOutboundSaveDTO implements Serializable {
          * 发货数量
          */
         @NotNull(message = "qty不能为空")
+        @Min(value = 1, message = "qty最小为1")
         private Integer qty;
     }
 
