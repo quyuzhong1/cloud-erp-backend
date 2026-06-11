@@ -7,6 +7,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -383,7 +384,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			params.getBusinessType(), params.getMethodType(), total, jsonStr);
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -467,7 +468,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		}
 
 		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
+			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -505,7 +506,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				List<String> batchIds;
 				try {
 					String cursor = lastId;
-					batchIds = pageTransferCostAllocationIds(dto.getIds(), cursor, batchSize,
+					// 分页入口统一承接错误重试，避免错误重试任务把大量失败ID塞进 dataJson。
+					batchIds = pageTransferCostAllocationIds(dto, cursor, batchSize,
 						() -> transferDeclareCostAllocationMainService.pageMainIdsByReportPeriodStr(
 							dto.getReportPeriodStr(), dto.getReportStatus(), excludeBigTableDone, bigTableDoneCode, cursor, batchSize));
 				} catch (Exception e) {
@@ -579,7 +581,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			params.getBusinessType(), params.getMethodType(), total, jsonStr);
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -663,7 +665,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		}
 
 		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
+			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -700,7 +702,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				List<String> batchIds;
 				try {
 					String cursor = lastId;
-					batchIds = pageTransferCostAllocationIds(dto.getIds(), cursor, batchSize,
+					// 分页入口统一承接错误重试，避免错误重试任务把大量失败ID塞进 dataJson。
+					batchIds = pageTransferCostAllocationIds(dto, cursor, batchSize,
 						() -> transferDeclareCostAllocationMainService.pageMainIdsForReAllocation(
 							dto.getReportPeriodStr(), reportStatus, cursor, batchSize));
 				} catch (Exception e) {
@@ -774,7 +777,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		String jsonStr = JSONUtil.toJsonStr(params);
 
 		TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
-			params.getBusinessType(), params.getMethodType(), total, jsonStr);
+			new TmsAsyncTaskRecordDTO.ManualCreateDTO(params.getBusinessType(), params.getMethodType(), total, jsonStr));
 		if (Objects.isNull(taskRecord)) {
 			throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, jsonStr);
 		}
@@ -858,7 +861,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		}
 
 		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
+			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -895,7 +898,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				List<String> batchIds;
 				try {
 					String cursor = lastId;
-					batchIds = pageTransferCostAllocationIds(dto.getIds(), cursor, batchSize,
+					// 分页入口统一承接错误重试，避免错误重试任务把大量失败ID塞进 dataJson。
+					batchIds = pageTransferCostAllocationIds(dto, cursor, batchSize,
 						() -> transferDeclareCostAllocationMainService.pageMainIdsForReAllocation(
 							dto.getReportPeriodStr(), reportStatus, cursor, batchSize));
 				} catch (Exception e) {
@@ -953,7 +957,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	/**
 	 * 普通任务按查询条件分页；失败重试任务只遍历失败明细中的 businessId。
 	 */
-	private List<String> pageTransferCostAllocationIds(List<String> retryIds, String lastId, int batchSize, Supplier<List<String>> querySupplier) {
+	private List<String> pageTransferCostAllocationIds(TmsAsyncTaskRecordDTO.PushParamsDTO dto, String lastId, int batchSize, Supplier<List<String>> querySupplier) {
+		if (TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY.equals(dto.getRetryMode())) {
+			return asyncTaskDetailRecordService.listFailedBusinessIdsByCursor(dto.getRetrySourceTaskId(), lastId, batchSize);
+		}
+		List<String> retryIds = dto.getIds();
 		if (CollUtil.isEmpty(retryIds)) {
 			return querySupplier.get();
 		}
@@ -1112,41 +1120,49 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		for (TmsAsyncTaskDetailEntity detail : executableDetailMap.values()) {
 			String taskDetailId = detail.getId();
 			String businessId = detail.getBusinessId();
-			costAllocationPool.execute(() -> {
-				try {
-					if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
-						log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
-						return;
-					}
-					TransferDeclareCostAllocationMainEntity entity = entityMap.get(businessId);
-					if (Objects.isNull(entity)) {
-						asyncTaskDetailRecordService.updateDetail(taskDetailId,
-							TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "主表记录不存在");
-						failedCount.incrementAndGet();
-						return;
-					}
+			try {
+				costAllocationPool.execute(() -> {
+					try {
+						if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+							log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+							return;
+						}
+						TransferDeclareCostAllocationMainEntity entity = entityMap.get(businessId);
+						if (Objects.isNull(entity)) {
+							asyncTaskDetailRecordService.updateDetail(taskDetailId,
+								TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "主表记录不存在");
+							failedCount.incrementAndGet();
+							return;
+						}
 
-					BatchResultDTO result = executor.execute(taskDetailId, businessId, entity);
-					if (Boolean.TRUE.equals(result.getSuccess())) {
-						asyncTaskDetailRecordService.updateDetail(taskDetailId,
-							TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
-						successCount.incrementAndGet();
-					} else {
-						String errorMsg = StringUtils.isNotBlank(result.getMsg())
-							? StringUtils.substring(result.getMsg(), 0, 1000)
-							: "未知错误";
-						asyncTaskDetailRecordService.updateDetail(taskDetailId,
-							TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), errorMsg);
+						BatchResultDTO result = executor.execute(taskDetailId, businessId, entity);
+						if (Boolean.TRUE.equals(result.getSuccess())) {
+							asyncTaskDetailRecordService.updateDetail(taskDetailId,
+								TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+							successCount.incrementAndGet();
+						} else {
+							String errorMsg = StringUtils.isNotBlank(result.getMsg())
+								? StringUtils.substring(result.getMsg(), 0, 1000)
+								: "未知错误";
+							asyncTaskDetailRecordService.updateDetail(taskDetailId,
+								TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), errorMsg);
+							failedCount.incrementAndGet();
+						}
+					} catch (Exception e) {
+						log.error("处理中转费用分摊任务失败 taskDetailId: {}, businessId: {}", taskDetailId, businessId, e);
+						asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
 						failedCount.incrementAndGet();
+					} finally {
+						latch.countDown();
 					}
-				} catch (Exception e) {
-					log.error("处理中转费用分摊任务失败 taskDetailId: {}, businessId: {}", taskDetailId, businessId, e);
-					asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
-					failedCount.incrementAndGet();
-				} finally {
-					latch.countDown();
-				}
-			});
+				});
+			} catch (RejectedExecutionException ex) {
+				log.error("中转费用分摊任务提交失败 taskDetailId: {}, businessId: {}", taskDetailId, businessId, ex);
+				asyncTaskDetailRecordService.updateDetail(taskDetailId,
+					TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "线程池拒绝执行");
+				failedCount.incrementAndGet();
+				latch.countDown();
+			}
 		}
 
 		try {

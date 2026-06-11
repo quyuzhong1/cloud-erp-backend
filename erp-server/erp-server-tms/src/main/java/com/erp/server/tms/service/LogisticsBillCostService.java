@@ -284,6 +284,28 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
 
     void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
+    /**
+     * 创建尾程费用对账状态变更异步任务，用任务code承接全量高级查询场景。
+     *
+     * @param dto 高级查询条件与目标对账状态
+     * @return 异步任务ID和code
+     */
+    BatchResultDTO batchAsyncUpdateReconciliationStatus(LogisticsBillCostDTO.UpdateStatusDTO dto);
+
+    /**
+     * 同步按ID更新时校验入参ID是否都在当前数据权限范围内。
+     *
+     * @param dto 更新入参
+     */
+    void checkUpdateReconciliationStatusPermission(LogisticsBillCostDTO.UpdateStatusDTO dto);
+
+    /**
+     * 消费尾程费用对账状态变更异步任务，按游标分页执行。
+     *
+     * @param dto 任务参数
+     */
+    void pushUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
     LogisticsBillCostDTO.PushAllocatedCostCountDTO pushAllocationCount(LogisticsBillCostDTO.PushDTO dto);
 
     /**
@@ -305,6 +327,22 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @date 2026-04-22
      */
     int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 游标分页查询可更新对账状态的费用ID。
+     *
+     * @param dto 查询条件（含 lastId 游标、batchSize 批大小）
+     * @return 当前批次费用ID列表
+     */
+    List<String> pageByUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
+
+    /**
+     * 统计可更新对账状态的费用数量，避免创建无效异步任务。
+     *
+     * @param dto 查询条件
+     * @return 可处理数量
+     */
+    int countByUpdateReconciliationStatus(TmsAsyncTaskRecordDTO.PushParamsDTO dto);
 
     /**
      * @description: 批量导入新增

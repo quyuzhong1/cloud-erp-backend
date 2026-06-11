@@ -22,4 +22,9 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
     boolean tryClaimDetailForExecution(String taskDetailId);
 
     List<TmsAsyncTaskDetailEntity> listErrorDetail(String mainId);
+
+    /**
+     * 错误重试按失败明细游标分页，避免一次性把大量 businessId 写入任务参数。
+     */
+    List<String> listFailedBusinessIdsByCursor(String mainId, String lastBusinessId, int batchSize);
 }
