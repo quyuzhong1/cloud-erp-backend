@@ -205,7 +205,7 @@ public class DmpInputAmzFbaInboundPlanShipmentDmpHandler extends DmpInputDbConve
         Object areCasesRequired = mongoData.get("areCasesRequired");
         if (areCasesRequired instanceof Boolean) {
             AmazonFbaPackTypeEnum packTypeEnum = AmazonFbaPackTypeEnum.fromAreCasesRequired((Boolean) areCasesRequired);
-            return packTypeEnum == null ? "" : packTypeEnum.getName();
+            return packTypeEnum == null ? "" : packTypeEnum.getCode();
         }
         return "";
     }

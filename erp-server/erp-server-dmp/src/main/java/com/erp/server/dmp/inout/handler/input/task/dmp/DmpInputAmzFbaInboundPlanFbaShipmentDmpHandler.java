@@ -1,8 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
-import com.alibaba.fastjson.JSON;
-import org.apache.commons.lang3.StringUtils;
+import com.erp.server.dmp.utils.DmpFieldMapUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -37,42 +36,15 @@ public class DmpInputAmzFbaInboundPlanFbaShipmentDmpHandler extends DmpInputDbCo
     }
 
     private void fillInboundPlanFields(TreeMap<String, Object> dmpDataMap, Map<String, Object> mongoData) {
-        putStringIfNotBlank(dmpDataMap, "inboundPlanId", mongoData.get("inboundPlanId"));
-        putStringIfNotBlank(dmpDataMap, "name", mongoData.get("name"));
-        putStringIfNotBlank(dmpDataMap, "status", mongoData.get("status"));
-        putStringIfNotBlank(dmpDataMap, "createdAtPlatform", mongoData.get("createdAt"));
-        putStringIfNotBlank(dmpDataMap, "lastUpdatedAtPlatform", mongoData.get("lastUpdatedAt"));
-        putJsonIfPresent(dmpDataMap, "marketplaceIdsJson", mongoData, "marketplaceIds");
-        putJsonIfPresent(dmpDataMap, "packingOptionsJson", mongoData, "packingOptions");
-        putJsonIfPresent(dmpDataMap, "placementOptionsJson", mongoData, "placementOptions");
-        putJsonIfPresent(dmpDataMap, "shipmentsJson", mongoData, "shipments");
-        putJsonIfPresent(dmpDataMap, "sourceAddressJson", mongoData, "sourceAddress");
-    }
-
-    private void putStringIfNotBlank(TreeMap<String, Object> dmpDataMap, String key, Object value) {
-        if (value == null) {
-            return;
-        }
-        String str = value.toString();
-        if (StringUtils.isNotBlank(str)) {
-            dmpDataMap.put(key, str);
-        }
-    }
-
-    private void putJsonIfPresent(TreeMap<String, Object> dmpDataMap, String targetKey, Map<String, Object> source, String sourceKey) {
-        if (source == null || !source.containsKey(sourceKey)) {
-            return;
-        }
-        Object value = source.get(sourceKey);
-        if (value == null) {
-            return;
-        }
-        if (value instanceof String) {
-            if (StringUtils.isNotBlank((String) value)) {
-                dmpDataMap.put(targetKey, value);
-            }
-            return;
-        }
-        dmpDataMap.put(targetKey, JSON.toJSONString(value));
+        DmpFieldMapUtils.putStringIfNotBlank(dmpDataMap, "inboundPlanId", mongoData.get("inboundPlanId"));
+        DmpFieldMapUtils.putStringIfNotBlank(dmpDataMap, "name", mongoData.get("name"));
+        DmpFieldMapUtils.putStringIfNotBlank(dmpDataMap, "status", mongoData.get("status"));
+        DmpFieldMapUtils.putStringIfNotBlank(dmpDataMap, "createdAtPlatform", mongoData.get("createdAt"));
+        DmpFieldMapUtils.putStringIfNotBlank(dmpDataMap, "lastUpdatedAtPlatform", mongoData.get("lastUpdatedAt"));
+        DmpFieldMapUtils.putJsonIfPresent(dmpDataMap, "marketplaceIdsJson", mongoData, "marketplaceIds");
+        DmpFieldMapUtils.putJsonIfPresent(dmpDataMap, "packingOptionsJson", mongoData, "packingOptions");
+        DmpFieldMapUtils.putJsonIfPresent(dmpDataMap, "placementOptionsJson", mongoData, "placementOptions");
+        DmpFieldMapUtils.putJsonIfPresent(dmpDataMap, "shipmentsJson", mongoData, "shipments");
+        DmpFieldMapUtils.putJsonIfPresent(dmpDataMap, "sourceAddressJson", mongoData, "sourceAddress");
     }
 }

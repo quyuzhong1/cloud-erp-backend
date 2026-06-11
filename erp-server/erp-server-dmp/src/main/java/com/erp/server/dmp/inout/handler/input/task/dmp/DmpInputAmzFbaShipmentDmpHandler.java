@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.ShopInfoMappingEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaPackTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
 import com.erp.server.dmp.service.ShopInfoMappingService;
@@ -85,7 +86,8 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
                 }
                 Object areCasesRequired = mongoData.get("areCasesRequired");
                 if (areCasesRequired instanceof Boolean) {
-                    dmpDataMap.put("packType", (Boolean) areCasesRequired ? "原厂包装" : "混装");
+                    AmazonFbaPackTypeEnum packTypeEnum = AmazonFbaPackTypeEnum.fromAreCasesRequired((Boolean) areCasesRequired);
+                    dmpDataMap.put("packType", packTypeEnum == null ? "" : packTypeEnum.getCode());
                 } else {
                     dmpDataMap.put("packType", "");
                 }
