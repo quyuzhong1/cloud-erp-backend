@@ -148,6 +148,9 @@ public class WegoInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         }
         PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
         String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
+        // 与谷仓/大卖等 handler 对齐：authId 取 nextLevelId（overseas_provider.id），
+        // 供下游 handlePlatformMessage 按 flowId+authId 幂等落签收记录。
+        platformInboundDTO.setAuthId(dmpThirdInboundEntity.getNextLevelId());
         platformInboundDTO.setPlatform(sourcePlatform);
         platformInboundDTO.setProvider(sourcePlatform);
 
