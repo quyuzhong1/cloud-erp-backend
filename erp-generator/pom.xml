@@ -67,7 +67,7 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus</artifactId>
-            <version>3.1.1</version>
+            <version>3.5.3.1</version>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
@@ -82,12 +82,12 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>5.0.5.RELEASE</version>
+            <version>5.2.22.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.5.4</version>
+            <version>42.7.11</version>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
