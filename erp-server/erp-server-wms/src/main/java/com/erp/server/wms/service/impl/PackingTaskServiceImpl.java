@@ -2523,6 +2523,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             sourceType =  PickingSourceTypeEnum.THIRD.getCode();
         }else if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)){
             sourceType = PickingSourceTypeEnum.FBA.getCode();
+        }else if (RequisitionApplicationTypeEnum.FBS.getCode().equals(type)){
+            sourceType = PickingSourceTypeEnum.FBS.getCode();
         }else if (RequisitionApplicationTypeEnum.FBT.getCode().equals(type)){
             sourceType = PickingSourceTypeEnum.FBT.getCode();
         }else if (RequisitionApplicationTypeEnum.AWD.getCode().equals(type)){
