@@ -75,9 +75,18 @@ public class FileRegistry {
         FileRegistry.maxSheetNum = maxSheetNum;
     }
 
-    @Value("${file.storage.maxPageSize:10000}")
+    @Value("${file.storage.maxPageSize:5000}")
     public void setMaxPageSize(Integer maxPageSize){
         FileRegistry.maxPageSize = maxPageSize;
+    }
+
+    /**
+     * 导出分页每页条数：读取 {@code file.storage.maxPageSize}，未注入或非法（&lt;1）时回退 5000，
+     * 与 {@link #setMaxPageSize} 的缺省配置一致。
+     */
+    public static int exportPageSize() {
+        Integer configured = maxPageSize;
+        return configured == null || configured < 1 ? 5000 : configured;
     }
 
     @PostConstruct

@@ -567,7 +567,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     protected int getPageSize() {
-        return 5000;
+        return FileRegistry.exportPageSize();
     }
 
     protected int getFirstPage() {
