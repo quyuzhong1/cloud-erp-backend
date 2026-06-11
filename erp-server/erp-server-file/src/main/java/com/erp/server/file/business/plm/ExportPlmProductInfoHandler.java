@@ -14,7 +14,9 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH;
@@ -103,19 +105,25 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
         if (CollectionUtils.isEmpty(exportDataList)) {
             throw new ServiceException("导出数据类型不能为空");
         }
-        if (exportDataList.size() == 1) {
-            Integer flag = exportDataList.get(0);
-            if (ProductDevelopExportTypeEnum.isValid(flag)) {
-                return exportDataList;
+        // 逐元素校验枚举合法性并去重，拒绝 [0, 99] 等非法值与 [0, 0] 等重复值
+        Set<Integer> distinctTypes = new LinkedHashSet<>();
+        for (Integer flag : exportDataList) {
+            if (!ProductDevelopExportTypeEnum.isValid(flag)) {
+                throw new ServiceException("导出数据类型不合法：" + flag);
             }
-            throw new ServiceException("导出数据类型不合法：" + flag);
+            if (!distinctTypes.add(flag)) {
+                throw new ServiceException("导出数据类型存在重复：" + flag);
+            }
         }
-        if (exportDataList.size() == 2
-                && exportDataList.contains(EXPORT_PRODUCT)
-                && exportDataList.contains(EXPORT_TASK)) {
-            return exportDataList;
+        // 仅允许：单一合法类型，或 PRODUCT + TASK 的组合
+        boolean validCombination = distinctTypes.size() == 1
+                || (distinctTypes.size() == 2
+                    && distinctTypes.contains(EXPORT_PRODUCT)
+                    && distinctTypes.contains(EXPORT_TASK));
+        if (!validCombination) {
+            throw new ServiceException("导出数据类型不合法：" + exportDataList);
         }
-        throw new ServiceException("导出数据类型不合法：" + exportDataList);
+        return exportDataList;
     }
 
     @Override

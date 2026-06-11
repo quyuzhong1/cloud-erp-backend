@@ -2,6 +2,8 @@ package com.common.core.utils;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -420,8 +422,8 @@ public class FastDFSClientUtil {
             };
             return uploadFile2Client(size, sender, fileName, metaList);
         } catch (Exception e) {
-            log.error("uploadFile  ",e);
-            throw new RuntimeException(e);
+            log.error("streamUploadFile failed, fileName={}", fileName, e);
+            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
         }
     }
 }
