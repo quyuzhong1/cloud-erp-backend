@@ -38,6 +38,11 @@ public class FastDFSClientUtil {
 
 	private static String configFile;
 
+	/**
+	 * 全类共享的单个 FastDFS 客户端（底层单 socket 连接）。{@link StorageClient1} 非线程安全，
+	 * 故各上传/下载方法以 {@code synchronized} 串行化对该共享连接的访问；这也是并发上传瓶颈的根因。
+	 * 若需提升并发，应改为连接池或按调用新建短连接，而非简单去掉方法上的 {@code synchronized}。
+	 */
 	private static StorageClient1 storageClient1 = null;
 
 	public static String publicUrl;
@@ -402,15 +407,21 @@ public class FastDFSClientUtil {
         return checkFileId(filePath);
     }
 
-    /**
-     * 上传文件
-     *
-     * @param file     文件对象
-     * @param fileName 文件名
-     * @param metaList 文件元数据
-     * @return
-     */
-    public synchronized static String streamUploadFile(File file, String fileName, Map<String, String> metaList) {
+	/**
+	 * 上传文件（流式，避免整文件读入内存）。
+	 * <p>
+	 * <strong>{@code synchronized} 系有意为之，请勿删除：</strong>全类共用一个静态 {@link #storageClient1}
+	 * （底层单 socket 连接），而 {@code org.csource} 的 {@link StorageClient1} 非线程安全，多线程在同一连接上
+	 * 并发读写会串包、数据损坏。此处的锁是保护这唯一共享连接的正确性手段，去锁前必须先改掉"全 JVM 共用单连接"
+	 * 的模型（如引入连接池或按调用新建短连接），否则会从"上传串行变慢"升级为"上传数据损坏"。
+	 * 已知的并发瓶颈根因即此共享单连接，后续优化方向为连接池。
+	 *
+	 * @param file     文件对象
+	 * @param fileName 文件名
+	 * @param metaList 文件元数据
+	 * @return
+	 */
+	public synchronized static String streamUploadFile(File file, String fileName, Map<String, String> metaList) {
         try {
             long size = file.length();
             // 使用 File 打开流，避免 getAbsolutePath/getCanonicalPath 与路径字符串在相对路径、符号链接等场景下与 JVM 解析不一致

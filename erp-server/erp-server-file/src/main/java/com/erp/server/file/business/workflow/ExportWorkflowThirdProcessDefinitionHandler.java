@@ -7,12 +7,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_THIRD_PROCESS_DEFINITION;
 

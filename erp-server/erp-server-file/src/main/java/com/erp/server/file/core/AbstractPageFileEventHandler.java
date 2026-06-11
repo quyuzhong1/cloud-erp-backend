@@ -11,7 +11,6 @@ import com.common.business.vo.KeysetPagingVO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.erp.server.file.entity.FileTask;
@@ -30,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.*;
 
 @Slf4j
@@ -93,22 +91,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 标准分页导出：{@link #resolveExportParams} → {@link #writePagedExcel} → 临时文件 → FastDFS → 清理。
      */
     protected void defaultPagingExportHandle(FileTask fileTask) {
-        Path tempPath = null;
-        try {
-            P params = resolveExportParams(fileTask);
-            String excelPath = getExcelPath(params);
-            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx", fileTask.getUniqueWithFileName());
-            int total = writePagedExcel(tempPath.toFile(), params, excelPath);
-            fileTask.setCount(total);
-            String displayName = buildDownloadFileName(fileTask, excelPath);
-            String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), displayName, null);
-            fileTask.setFileUrl(url);
-        } catch (IOException e) {
-            log.error("导出上传失败{}", e.getMessage(), e);
-            throw new BusinessException(e.getMessage());
-        } finally {
-            ExportTempFilesHandler.deleteQuietly(tempPath);
-        }
+        P params = resolveExportParams(fileTask);
+        String excelPath = getExcelPath(params);
+        String displayName = buildDownloadFileName(fileTask, excelPath);
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
+                outFile -> writePagedExcel(outFile, params, excelPath));
     }
 
 

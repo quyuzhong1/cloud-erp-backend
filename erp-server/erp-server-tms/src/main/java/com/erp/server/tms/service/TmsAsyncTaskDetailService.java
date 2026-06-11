@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
 import com.common.business.service.SuperService;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,4 +28,19 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
      * 错误重试按失败明细游标分页，避免一次性把大量 businessId 写入任务参数。
      */
     List<String> listFailedBusinessIdsByCursor(String mainId, String lastBusinessId, int batchSize);
+
+    /**
+     * 分批保存任务明细，避免单次 saveBatch 数据量过大。
+     */
+    void saveBatchInChunks(List<TmsAsyncTaskDetailEntity> details, int batchSize);
+
+    /**
+     * 查询当前任务下已存在的业务 ID，用于批内幂等落明细。
+     */
+    List<String> listExistingBusinessIds(String mainId, Collection<String> businessIds);
+
+    /**
+     * 错误重试按失败明细游标分页，保留 businessCode 供目标任务明细展示。
+     */
+    List<TmsAsyncTaskDetailEntity> listFailedDetailsByCursor(String mainId, String lastBusinessId, int batchSize);
 }

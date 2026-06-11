@@ -1,7 +1,6 @@
 package com.erp.server.file.core;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -11,7 +10,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.server.file.entity.FileTask;
 import com.erp.server.file.exception.BusinessException;
@@ -29,7 +27,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,21 +37,10 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
 
     @Override
     public void handle(FileTask fileTask) {
-        Path tempPath = null;
-        try {
-            P params = resolveExportParams(fileTask);
-            tempPath = ExportTempFilesHandler.createTempPath(FileRegistry.getStorageTmpdir(), ".xlsx",
-                    fileTask.getUniqueWithFileName());
-            int total = writePagedDynamicHeadersExcel(tempPath.toFile(), params, fileTask.getFileName());
-            fileTask.setCount(total);
-            String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), buildDownloadFileName(fileTask), null);
-            fileTask.setFileUrl(url);
-        } catch (Exception e) {
-            log.error("导出上传失败{}", e.getMessage(), e);
-            throw new BusinessException(CharSequenceUtil.blankToDefault(e.getMessage(), "导出上传失败"));
-        } finally {
-            ExportTempFilesHandler.deleteQuietly(tempPath);
-        }
+        P params = resolveExportParams(fileTask);
+        String displayName = buildDownloadFileName(fileTask);
+        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName,
+                outFile -> writePagedDynamicHeadersExcel(outFile, params, fileTask.getFileName()));
     }
 
     /**
@@ -106,6 +92,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return date + name + ".xlsx";
     }
 
+    /**
+     * sheet 名解析顺序：Handler 重写的 {@link #getSheetName()} → 数据侧 {@link DynamicExcelDTO#getSheetName()}
+     * → {@code defaultSheetName}（文件名）。因此 Handler 未重写 {@code getSheetName()} 时不会丢失 sheet 名，
+     * 仍会读取每批 {@link DynamicExcelDTO} 上业务设置的 sheet 名。
+     */
     private String resolveSheetName(String defaultSheetName, List<DynamicExcelDTO> pageList) {
         List<String> sheetName = getSheetName();
         if (!CollectionUtils.isEmpty(sheetName) && CharSequenceUtil.isNotBlank(sheetName.get(0))) {
@@ -128,7 +119,10 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         }
         List<DynamicExcelDTO> pageList = pageData.getList();
         int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
-        // 表头以首页为准：单遍历流式写入，分页查询的响应对象是固定的，表头不会有变更.
+        // 表头以首页为准、不在后续分页重复 mergeHeaders：本链路约定同一次导出的各页 DynamicExcelDTO 由同一
+        // 查询/同一响应类产出，动态列集合在分页间保持一致（仅数据行不同），故首页表头即为全量表头。
+        // 该约定成立时单遍历流式写入既正确又高效；若未来出现"各页动态列不一致"的数据源，需改为分页循环内继续
+        // mergeHeaders，或在检测到列变化时抛 ServiceException，否则后续页新增列会被静默丢弃。
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         mergeHeaders(headers, pageList);
         if (CollUtil.isEmpty(headers)) {

@@ -352,8 +352,8 @@ public class AfterSalePackDetailServiceImpl extends SuperServiceImpl<AfterSalePa
         if (OPERATION_ADD.equals(addOrUpdateDTO.getOperation())) {
             old.setPackQty(oldPackQty + updateQty);
         } else {
-            if (oldPackQty < updateQty) {
-                throw new ServiceException("减少数量不能大于已出库数量");
+            if (updateQty >= oldPackQty) {
+                throw new ServiceException("减少数量不可大于或等于原数量");
             }
             old.setPackQty(oldPackQty - updateQty);
         }

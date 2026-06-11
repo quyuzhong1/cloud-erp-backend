@@ -6,13 +6,11 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
 import feign.Request;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_FULLY_MANAGED;

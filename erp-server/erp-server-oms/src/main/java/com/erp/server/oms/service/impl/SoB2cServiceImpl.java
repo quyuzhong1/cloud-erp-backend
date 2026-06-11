@@ -2405,42 +2405,32 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             if (Boolean.TRUE.equals(isDelivery)) {
-                String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
-                List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
-                LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v -> v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
-                String warehouseLogisticsChannelId = Objects.nonNull(viewDTO) ? viewDTO.getPlatformLogisticsChannelId() : "";
-                final String submitDeliveryId = id;
-                final String submitChannelId = warehouseLogisticsChannelId;
-                // 运单号随 getLogisticsCode 事务提交后再提交发货，避免 Seata 全局事务内嵌套 REQUIRES_NEW 死锁；
-                // autoOrderForecast(REQUIRES_NEW) 可读到已提交的运单号，且预报结果不受后续提交发货失败回滚
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        try {
-                            UserContext.setIsUserSystem(true);
-                            BatchResultDTO submitResult = soB2cService.submitDelivery(submitDeliveryId, submitChannelId);
-                            if (!submitResult.getSuccess() && CharSequenceUtil.isNotBlank(submitResult.getMsg())) {
-                                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                                addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                                addError.setParamJson("");
-                                addError.setReturnJson("");
-                                addError.setMainId(submitDeliveryId);
-                                addError.setMessage(submitResult.getMsg());
-                                soB2cErrorService.add(addError);
-                            }
-                        } catch (Exception e) {
-                            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                            addError.setParamJson("");
-                            addError.setReturnJson("");
-                            addError.setMainId(submitDeliveryId);
-                            addError.setMessage(e.getMessage());
-                            soB2cErrorService.add(addError);
-                        } finally {
-                            UserContext.clearIsUserSystem();
-                        }
+                try {
+                    String channelId = soB2cLogisticsEntity.getLogisticsChannelId();
+                    List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+                    LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream().filter(v -> v.getWarehouseId().equals(soB2cDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
+                    String warehouseLogisticsChannelId = Objects.nonNull(viewDTO) ? viewDTO.getPlatformLogisticsChannelId() : "";
+                    SoB2cLogisticsEntity pendingLogistics = buildPendingLogistics(soB2cLogisticsEntity, transportNo, trackNo, iossTaxNo, declareOrgId, pushPlatformCode);
+                    BatchResultDTO submitResult = soB2cService.submitDelivery(id, warehouseLogisticsChannelId, pendingLogistics);
+                    if (!Boolean.TRUE.equals(submitResult.getSuccess())) {
+                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                        addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                        addError.setParamJson("");
+                        addError.setReturnJson("");
+                        addError.setMainId(id);
+                        addError.setMessage(CharSequenceUtil.blankToDefault(submitResult.getMsg(), "提交发货失败"));
+                        soB2cErrorService.add(addError);
                     }
-                });
+                } catch (Exception e) {
+                    log.error("销售订单【{}】自动提交发货失败", entity.getCode(), e);
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(id);
+                    addError.setMessage(CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()));
+                    soB2cErrorService.add(addError);
+                }
             }
 
             if (resultDTO.getIsPlatformShip()) {
@@ -2779,8 +2769,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public BatchResultDTO submitDelivery(String id, String channelId) {
+        return submitDelivery(id, channelId, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
+    public BatchResultDTO submitDelivery(String id, String channelId, SoB2cLogisticsEntity pendingLogistics) {
+        Map<String, SoB2cLogisticsEntity> logisticsOverride = null;
+        if (Objects.nonNull(pendingLogistics) && StringUtils.isNotBlank(pendingLogistics.getMainId())) {
+            logisticsOverride = Collections.singletonMap(pendingLogistics.getMainId(), pendingLogistics);
+        }
         try {
-            List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id));
+            List<BatchResultDTO> batchResultDTOS = soB2cService.autoOrderForecast(Collections.singletonList(id), logisticsOverride);
             //在提交发货中，清除异常订单报错
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
             if (CollUtil.isNotEmpty(batchResultDTOS) && !batchResultDTOS.get(0).getSuccess()) {
@@ -2829,7 +2829,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.SO_B2C_SUBMIT_DELIVERY_NOT_ALLOWED, entity.getCode());
         }
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(id);
+        SoB2cLogisticsEntity logisticsEntity = mergePendingLogistics(soB2cLogisticsService.getByMainId(id), pendingLogistics);
         if (Objects.isNull(logisticsEntity)) {
             throw new ServiceException(ApiError.SO_B2C_LOGISTICS_NOT_FOUND);
         }
@@ -9980,10 +9980,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @DistributeLocker(businessType = DistributeKeyConstant.SO_B2C_ORDER_KEY, keyName = "dto.ids", waiteTime = 60)
     public List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto) {
+        return orderForecast(dto, null);
+    }
+
+    private List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto, Map<String, SoB2cLogisticsEntity> logisticsOverride) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = listByIds(dto.getIds());
         List<String> ids = soB2cEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        applyLogisticsOverride(soB2cLogisticsEntityList, logisticsOverride);
         List<SoB2cReceiverEntity> soReceiiveEntityList = soB2cReceiverService.listByMainIds(ids);
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIds);
@@ -10094,6 +10099,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
+        return autoOrderForecast(soIdList, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    public List<BatchResultDTO> autoOrderForecast(List<String> soIdList, Map<String, SoB2cLogisticsEntity> logisticsOverride) {
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> (TransferStatusEnum.FAILURE.getCode().equals(v.getTransferStatus()) || TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus())) &&
                 SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
@@ -10103,6 +10115,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         soIdList = soB2cEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(soIdList);
+        applyLogisticsOverride(soB2cLogisticsEntityList, logisticsOverride);
         soB2cLogisticsEntityList = soB2cLogisticsEntityList.stream().filter(v -> StringUtils.isNotBlank(v.getCode()) && StringUtils.isNotBlank(v.getLogisticsChannelId())).collect(Collectors.toList());
         List<String> channelIds = soB2cLogisticsEntityList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(channelIds) || CollUtil.isEmpty(soB2cLogisticsEntityList)) {
@@ -10146,12 +10159,69 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         transferDeclareDTOList.forEach(e -> {
-            List<BatchResultDTO> batchResultDTOS = soB2cService.orderForecast(e);
+            List<BatchResultDTO> batchResultDTOS = orderForecast(e, logisticsOverride);
             if (CollUtil.isNotEmpty(batchResultDTOS)) {
                 batchResultDTOList.addAll(batchResultDTOS);
             }
         });
         return batchResultDTOList;
+    }
+
+    private SoB2cLogisticsEntity buildPendingLogistics(SoB2cLogisticsEntity source, String transportNo, String trackNo,
+                                                       String iossTaxNo, String declareOrgId, String pushPlatformCode) {
+        SoB2cLogisticsEntity pendingLogistics = new SoB2cLogisticsEntity();
+        pendingLogistics.setId(source.getId());
+        pendingLogistics.setMainId(source.getMainId());
+        pendingLogistics.setLogisticsChannelId(source.getLogisticsChannelId());
+        pendingLogistics.setCode(transportNo);
+        pendingLogistics.setTrackNo(trackNo);
+        pendingLogistics.setIossTaxNo(iossTaxNo);
+        pendingLogistics.setDeclareOrgId(declareOrgId);
+        pendingLogistics.setPushPlatformCode(pushPlatformCode);
+        return pendingLogistics;
+    }
+
+    private SoB2cLogisticsEntity mergePendingLogistics(SoB2cLogisticsEntity dbEntity, SoB2cLogisticsEntity pendingLogistics) {
+        if (Objects.isNull(pendingLogistics)) {
+            return dbEntity;
+        }
+        if (Objects.isNull(dbEntity)) {
+            return pendingLogistics;
+        }
+        if (StringUtils.isNotBlank(pendingLogistics.getCode())) {
+            dbEntity.setCode(pendingLogistics.getCode());
+        }
+        if (pendingLogistics.getTrackNo() != null) {
+            dbEntity.setTrackNo(pendingLogistics.getTrackNo());
+        }
+        if (StringUtils.isNotBlank(pendingLogistics.getIossTaxNo())) {
+            dbEntity.setIossTaxNo(pendingLogistics.getIossTaxNo());
+        }
+        if (StringUtils.isNotBlank(pendingLogistics.getDeclareOrgId())) {
+            dbEntity.setDeclareOrgId(pendingLogistics.getDeclareOrgId());
+        }
+        if (StringUtils.isNotBlank(pendingLogistics.getPushPlatformCode())) {
+            dbEntity.setPushPlatformCode(pendingLogistics.getPushPlatformCode());
+        }
+        return dbEntity;
+    }
+
+    private void applyLogisticsOverride(List<SoB2cLogisticsEntity> logisticsList, Map<String, SoB2cLogisticsEntity> logisticsOverride) {
+        if (CollUtil.isEmpty(logisticsOverride)) {
+            return;
+        }
+        Map<String, SoB2cLogisticsEntity> byMainId = logisticsList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getMainId()))
+                .collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, v -> v, (a, b) -> a));
+        logisticsOverride.forEach((mainId, pendingLogistics) -> {
+            SoB2cLogisticsEntity existing = byMainId.get(mainId);
+            if (Objects.isNull(existing)) {
+                logisticsList.add(pendingLogistics);
+                byMainId.put(mainId, pendingLogistics);
+                return;
+            }
+            mergePendingLogistics(existing, pendingLogistics);
+        });
     }
 
     @Override
