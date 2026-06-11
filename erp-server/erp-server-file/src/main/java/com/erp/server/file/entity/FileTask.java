@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -94,7 +95,8 @@ public class FileTask extends BaseEntity<FileTask> {
     }
 
     public String getUniqueWithFileName() {
-        return super.getId() + "_" + this.getFileName() + "_" + System.currentTimeMillis();
+        String safeName = StringUtils.defaultIfBlank(this.getFileName(), "export");
+        return super.getId() + "_" + safeName + "_" + System.currentTimeMillis();
     }
 
 

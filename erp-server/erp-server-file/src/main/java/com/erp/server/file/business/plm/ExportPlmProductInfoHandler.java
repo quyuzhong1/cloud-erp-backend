@@ -14,9 +14,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH;
@@ -52,7 +50,9 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
         if (CollectionUtils.isEmpty(params.getExportDataList())) {
             params.setExportDataList(deriveExportDataListByEvent(fileTask.getEvent()));
         }
-        params.setExportDataList(validateExportDataList(params.getExportDataList()));
+        if (!ProductDevelopExportTypeEnum.isValidCombination(params.getExportDataList())) {
+            throw new ServiceException("导出数据类型不合法：" + params.getExportDataList());
+        }
         return params;
     }
 
@@ -98,32 +98,12 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
         if (EXPORT_PLM_PRODUCT_DEV_BOTH.name().equals(event)) {
             return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK));
         }
+        // 兼容历史遗留事件 EXPORT_PLM_PRODUCT（仅切换 event、metaInfo 未携带 exportDataList 的存量异步任务）：
+        // 与旧实现一致默认导出产品列表（PRODUCT），避免重试时抛「导出数据类型不能为空」。
+        if (EXPORT_PLM_PRODUCT.name().equals(event)) {
+            return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT));
+        }
         throw new ServiceException("导出数据类型不能为空");
-    }
-
-    private List<Integer> validateExportDataList(List<Integer> exportDataList) {
-        if (CollectionUtils.isEmpty(exportDataList)) {
-            throw new ServiceException("导出数据类型不能为空");
-        }
-        // 逐元素校验枚举合法性并去重，拒绝 [0, 99] 等非法值与 [0, 0] 等重复值
-        Set<Integer> distinctTypes = new LinkedHashSet<>();
-        for (Integer flag : exportDataList) {
-            if (!ProductDevelopExportTypeEnum.isValid(flag)) {
-                throw new ServiceException("导出数据类型不合法：" + flag);
-            }
-            if (!distinctTypes.add(flag)) {
-                throw new ServiceException("导出数据类型存在重复：" + flag);
-            }
-        }
-        // 仅允许：单一合法类型，或 PRODUCT + TASK 的组合
-        boolean validCombination = distinctTypes.size() == 1
-                || (distinctTypes.size() == 2
-                    && distinctTypes.contains(EXPORT_PRODUCT)
-                    && distinctTypes.contains(EXPORT_TASK));
-        if (!validCombination) {
-            throw new ServiceException("导出数据类型不合法：" + exportDataList);
-        }
-        return exportDataList;
     }
 
     @Override

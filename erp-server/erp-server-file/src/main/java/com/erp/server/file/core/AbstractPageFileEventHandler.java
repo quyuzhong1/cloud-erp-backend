@@ -51,7 +51,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     protected P resolveExportParams(FileTask fileTask) {
         Type paramType = resolvePagingParamType(getClass());
         if (paramType == null) {
-            throw new IllegalStateException(getClass().getName()
+            throw new ServiceException(getClass().getName()
                     + " 无法推断分页参数类型 P，请确保直接继承 AbstractPageFileEventHandler<T,P> 并指定具体 P，或重写 resolveExportParams");
         }
         JavaType javaType = getObjectMapper().getTypeFactory().constructType(paramType);
@@ -140,14 +140,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     protected int maxDataRowsPerSheet() {
-        return Math.max(1, FileRegistry.getSheetMaxRows() - reservedTemplateHeaderRows());
+        return Math.max(1, FileRegistry.sheetMaxRowsOrDefault() - reservedTemplateHeaderRows());
     }
 
     /**
      * 列表数据区最多占用的物理 sheet 数（含 sheet0）。超出则抛 {@link ServiceException}，避免无限克隆。
      */
     protected int maxTemplateDataSheets() {
-        return FileRegistry.getMaxSheetNum();
+        return FileRegistry.maxSheetNumOrDefault();
     }
 
     /**
@@ -187,6 +187,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return Math.min(maxTemplateDataSheets(), Math.max(1, byHard));
     }
 
+    /**
+     * 读取 classpath 模板为字节数组。
+     * <p>
+     * 注意：模板整本读入内存、展开多 sheet 后再整本 {@code wb.write} 为 byte[]，峰值内存与
+     * 「模板复杂度 × 数据 sheet 数」正相关。数据行已流式写盘，但模板展开阶段仍非流式，
+     * 故须在配置层约束 {@code maxTemplateDataSheets}（{@link #maxTemplateDataSheets()}）与单 sheet 行数
+     * （{@link #maxDataRowsPerSheet()}），避免复杂模板 + 高 sheet 数导致 OOM；超大导出场景的 POI 流式模板展开作为后续优化。
+     */
     private byte[] readClasspathTemplateBytes(String excelPath) throws IOException {
         ClassPathResource resource = new ClassPathResource(excelPath);
         try (InputStream in = resource.getInputStream()) {

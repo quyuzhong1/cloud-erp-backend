@@ -51,7 +51,10 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
         try {
             return objectMapper.readValue(params, type);
         } catch (JsonProcessingException e) {
-            throw new ServiceException(e.getMessage());
+            // 与 AbstractDynamicHeadersFileEventHandler.readValue 对齐：保留异常链便于排障
+            ServiceException ex = new ServiceException("导出参数解析失败：" + e.getOriginalMessage());
+            ex.initCause(e);
+            throw ex;
         }
     }
 
@@ -62,7 +65,9 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
         try {
             return objectMapper.readValue(params, javaType);
         } catch (JsonProcessingException e) {
-            throw new ServiceException(e.getMessage());
+            ServiceException ex = new ServiceException("导出参数解析失败：" + e.getOriginalMessage());
+            ex.initCause(e);
+            throw ex;
         }
     }
 

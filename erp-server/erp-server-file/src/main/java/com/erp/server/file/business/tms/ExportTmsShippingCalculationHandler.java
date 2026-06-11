@@ -16,6 +16,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_SHIPPING_CA
 @Component
 @Slf4j
 public class ExportTmsShippingCalculationHandler extends AbstractPageFileEventHandler<ShippingCalculationDTO.ListDTO, ShippingCalculationDTO.PagingParamDTO> {
+
+    /** 运输方式：头程。tms 域暂无统一枚举，先在此定义常量替代魔法字符串，避免拼写错误。 */
+    private static final String SHIPMENT_METHOD_FIRST = "first";
+
     @Resource
     private ExportTmsFeign exportTmsFeign;
 
@@ -27,7 +31,7 @@ public class ExportTmsShippingCalculationHandler extends AbstractPageFileEventHa
 
     @Override
     protected String getExcelPath(ShippingCalculationDTO.PagingParamDTO params) {
-        if (params != null && "first".equals(params.getShipmentMethod())) {
+        if (params != null && SHIPMENT_METHOD_FIRST.equals(params.getShipmentMethod())) {
             return "excel/tms/shippingCalculation_first.xlsx";
         }
         return "excel/tms/shippingCalculation_self.xlsx";

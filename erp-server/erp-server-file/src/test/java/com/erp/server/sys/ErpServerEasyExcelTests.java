@@ -7,16 +7,11 @@ import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.common.core.excel.ExcelPrintUtils;
 import com.erp.model.sys.dto.DictCityDTO;
-import com.erp.server.file.ErpServerFileApplication;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assume;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -26,10 +21,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// 纯单元测试：仅验证 EasyExcel 模板填充与内存表现，不依赖 Spring 容器/dev profile/Nacos，
+// 改为不启容器后可在 CI 稳定执行（模板取自本模块 classpath，缺失时 Assume 跳过）。
 @Slf4j
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = {ErpServerFileApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ActiveProfiles("dev")
 public class ErpServerEasyExcelTests {
 
     private static final String TEMPLATE_CLASSPATH = "excel/sys/city.xlsx";

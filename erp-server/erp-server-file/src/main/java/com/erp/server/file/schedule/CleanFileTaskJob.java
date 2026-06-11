@@ -64,12 +64,14 @@ public class CleanFileTaskJob {
         int successCount = 0;
         int fastDfsFailCount = 0;
         int logicDeleteFailCount = 0;
-        // 本轮已失败、仍匹配查询条件且未删除的任务数：作为下一次查询的 offset，
-        // 跳过这些“卡住”的记录，避免使用持续膨胀的 NOT IN 列表。
-        int failedOffset = 0;
+        // 游标分页位置：上一批已处理到的最后一条 (create_time, id)，首批为 null。
+        // 无论成功（软删后从结果集移除）还是失败，游标都单调推进，本轮不回扫已处理记录；
+        // 失败记录顺延到下次调度（游标重新从头开始）重试，避免纯 offset 在同轮内反复跳过失败记录。
+        LocalDateTime cursorCreateTime = null;
+        String cursorId = null;
 
         while (true) {
-            List<FileTask> fileTaskList = fileTaskRepository.listCleanFileTask(expireTime, BATCH_SIZE, failedOffset);
+            List<FileTask> fileTaskList = fileTaskRepository.listCleanFileTask(expireTime, BATCH_SIZE, cursorCreateTime, cursorId);
             if (CollUtil.isEmpty(fileTaskList)) {
                 break;
             }
@@ -79,8 +81,10 @@ public class CleanFileTaskJob {
             for (FileTask fileTask : fileTaskList) {
                 String id = fileTask.getId();
                 String fileUrl = fileTask.getFileUrl();
+                // 推进游标到当前记录：即便本条删除失败也不在本轮重复处理，留待下次调度重试。
+                cursorCreateTime = fileTask.getCreateTime();
+                cursorId = id;
                 if (CharSequenceUtil.isBlank(fileUrl)) {
-                    failedOffset++;
                     continue;
                 }
 
@@ -93,7 +97,6 @@ public class CleanFileTaskJob {
                         // 仅当文件确实仍存在才算真实失败并跳过。
                         if (result != 0 && FastDFSClientUtil.exist(fileUrl)) {
                             fastDfsFailCount++;
-                            failedOffset++;
                             XxlJobHelper.log("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
                             log.warn("FastDFS文件删除失败, id={}, fileUrl={}, result={}", id, fileUrl, result);
                             continue;
@@ -101,7 +104,6 @@ public class CleanFileTaskJob {
                     }
                 } catch (Exception e) {
                     fastDfsFailCount++;
-                    failedOffset++;
                     XxlJobHelper.log("FastDFS文件删除异常, id={}, fileUrl={}, error={}", id, fileUrl, e.getMessage());
                     log.error("FastDFS文件删除异常, id={}, fileUrl={}", id, fileUrl, e);
                     continue;
@@ -113,16 +115,19 @@ public class CleanFileTaskJob {
                         successCount++;
                     } else {
                         logicDeleteFailCount++;
-                        failedOffset++;
                         XxlJobHelper.log("文件任务逻辑删除失败, id={}, fileUrl={}", id, fileUrl);
                         log.warn("文件任务逻辑删除失败, id={}, fileUrl={}", id, fileUrl);
                     }
                 } catch (Exception e) {
                     logicDeleteFailCount++;
-                    failedOffset++;
                     XxlJobHelper.log("文件任务逻辑删除异常, id={}, fileUrl={}, error={}", id, fileUrl, e.getMessage());
                     log.error("文件任务逻辑删除异常, id={}, fileUrl={}", id, fileUrl, e);
                 }
+            }
+
+            // 不足一批说明已扫描到末尾，结束循环，避免末批 size==limit 时再多查一次空结果。
+            if (fileTaskList.size() < BATCH_SIZE) {
+                break;
             }
         }
 
@@ -165,10 +170,12 @@ public class CleanFileTaskJob {
         }
 
         LocalDateTime expireTime = LocalDateTime.now().minusDays(days);
-        XxlJobHelper.log("清理目录{}下创建时间早于{}且非处理中的文件", workDir, expireTime);
+        XxlJobHelper.log("清理目录{}下创建时间早于{}、以{}为前缀且非处理中的导出临时文件", workDir, expireTime,
+                ExportTempFilesHandler.EXPORT_TMP_PREFIX);
 
         int scanCount = 0;
         int successCount = 0;
+        int skipNonExportCount = 0;
         int skipProcessingCount = 0;
         int deleteFailCount = 0;
 
@@ -181,6 +188,12 @@ public class CleanFileTaskJob {
                     continue;
                 }
                 scanCount++;
+                // 仅清理本服务导出产生的临时文件（exportTmp_ 前缀）：目录可能被复用或配置指向共享目录，
+                // 非本前缀的业务/中间文件不归本 Job 管理，跳过以杜绝误删无关文件。
+                if (!path.getFileName().toString().startsWith(ExportTempFilesHandler.EXPORT_TMP_PREFIX)) {
+                    skipNonExportCount++;
+                    continue;
+                }
                 BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
                 LocalDateTime createTime = LocalDateTime.ofInstant(attributes.creationTime().toInstant(), ZoneId.systemDefault());
                 if (!createTime.isBefore(expireTime)) {
@@ -208,8 +221,8 @@ public class CleanFileTaskJob {
         }
 
         long end = System.currentTimeMillis();
-        String summary = CharSequenceUtil.format("扫描文件={}, 成功删除={}, 跳过处理中={}, 删除失败={}, 耗时={}ms",
-                scanCount, successCount, skipProcessingCount, deleteFailCount, end - start);
+        String summary = CharSequenceUtil.format("扫描文件={}, 成功删除={}, 跳过非导出临时文件={}, 跳过处理中={}, 删除失败={}, 耗时={}ms",
+                scanCount, successCount, skipNonExportCount, skipProcessingCount, deleteFailCount, end - start);
         XxlJobHelper.log("====结束清理文件临时目录, {}====", summary);
         // 存在删除失败时返回 FAIL，便于调度平台告警与运维感知
         if (deleteFailCount > 0) {
@@ -226,20 +239,18 @@ public class CleanFileTaskJob {
         if (!fileName.startsWith(ExportTempFilesHandler.EXPORT_TMP_PREFIX)) {
             return false;
         }
-        String taskId = parseTaskId(fileName);
-        if (CharSequenceUtil.isBlank(taskId)) {
-            return false;
+        // 不从文件名反推 taskId（避免依赖「id 不含下划线」的隐含约定：净化后的文件名可能含多个下划线段）。
+        // 改为用处理中任务ID集合正向构造前缀 exportTmp_{id}_ 匹配，无论 id 内部含何字符都判定准确。
+        for (String taskId : processingTaskIds) {
+            if (CharSequenceUtil.isBlank(taskId)) {
+                continue;
+            }
+            String expectedPrefix = ExportTempFilesHandler.EXPORT_TMP_PREFIX + taskId + "_";
+            if (fileName.startsWith(expectedPrefix)) {
+                return true;
+            }
         }
-        return processingTaskIds.contains(taskId);
-    }
-
-    private String parseTaskId(String fileName) {
-        String suffixName = fileName.substring(ExportTempFilesHandler.EXPORT_TMP_PREFIX.length());
-        int endIndex = suffixName.indexOf("_");
-        if (endIndex <= 0) {
-            return null;
-        }
-        return suffixName.substring(0, endIndex);
+        return false;
     }
 
     private Integer parseDays(String jobParam) {

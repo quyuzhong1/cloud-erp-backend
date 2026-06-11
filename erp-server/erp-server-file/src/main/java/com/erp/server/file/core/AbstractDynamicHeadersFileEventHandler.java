@@ -50,7 +50,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     protected P resolveExportParams(FileTask fileTask) {
         Type paramType = resolvePagingParamType(getClass());
         if (paramType == null) {
-            throw new IllegalStateException(getClass().getName()
+            throw new ServiceException(getClass().getName()
                     + " 无法推断分页参数类型 P，请确保直接继承 AbstractDynamicHeadersFileEventHandler<P> 并指定具体 P，或重写 resolveExportParams");
         }
         JavaType javaType = objectMapper.getTypeFactory().constructType(paramType);
@@ -116,7 +116,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         if (pageData == null) {
             throw new ServiceException("导出分页查询失败，页码=1");
         }
-        int totalPage = computeTotalPage(pageData.getTotalCount(), pageSize);
+        int totalCount = pageData.getTotalCount();
+        int totalPage = computeTotalPage(totalCount, pageSize);
         // 表头以首页为准、不在后续分页重复 mergeHeaders：本链路为标准 OFFSET 分页（totalCount>0 时首页必有数据），
         // 且各页 DynamicExcelDTO 由同一查询/同一响应类产出，动态列集合在分页间保持一致（仅数据行不同），故首页表头即为全量表头。
         // 后续页若出现首页未包含的新列，由 ensureNoNewHeaderKeys 在写出循环中显式抛错兜底，而非静默丢列。
@@ -124,7 +125,14 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         mergeHeaders(headers, pageList);
         if (CollUtil.isEmpty(headers)) {
-            throw new ServiceException("导出数据不能为空");
+            // 区分两类根因，避免「分页异常」被笼统归为「无数据」掩盖真实问题：
+            // 1) totalCount<=0：查询结果确实为空，属正常的「无可导出数据」；
+            // 2) totalCount>0 但首页表头/数据为空：首页与总数不一致（Feign 分页异常、并发删数、游标/OFFSET 不一致等），属数据异常，需排查上游分页查询。
+            if (totalCount <= 0) {
+                throw new ServiceException("导出数据不能为空");
+            }
+            throw new ServiceException("导出失败：总记录数=" + totalCount + " 但首页(页码=1, pageSize=" + pageSize
+                    + ")未返回表头/数据，疑似分页查询异常或数据并发变更，请稍后重试或联系开发排查上游分页接口。");
         }
         List<List<String>> header = convertHeadList(headers.values());
         String sheetName = resolveSheetName(defaultSheetName, pageList);
@@ -133,7 +141,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         int sheetNo = 0;
         long rowsInSheet = 0;
         int maxRowsPerSheet = maxRowsPerSheet();
-        int maxSheetNum = FileRegistry.getMaxSheetNum();
+        int maxSheetNum = FileRegistry.maxSheetNumOrDefault();
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = excelPrintUtils.openDynamicHeadersWriter(outputStream, header);
@@ -238,7 +246,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     }
 
     private int maxRowsPerSheet() {
-        return Math.max(1, FileRegistry.getSheetMaxRows());
+        return Math.max(1, FileRegistry.sheetMaxRowsOrDefault());
     }
 
     @SuppressWarnings("unchecked")

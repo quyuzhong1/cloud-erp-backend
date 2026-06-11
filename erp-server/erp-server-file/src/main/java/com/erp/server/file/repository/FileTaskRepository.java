@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.BaseDTO;
@@ -80,16 +81,25 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
     }
 
     @Override
-    public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, int offset) {
-        return lambdaQuery()
+    public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, LocalDateTime lastCreateTime, String lastId) {
+        LambdaQueryChainWrapper<FileTask> query = lambdaQuery()
                 .lt(FileTask::getCreateTime, expireTime)
                 .isNotNull(FileTask::getFileUrl)
                 .ne(FileTask::getFileUrl, "")
-                .notIn(FileTask::getStatus, Arrays.asList(FileTaskStatusEnum.PROCESS.name(), FileTaskStatusEnum.PENDING.name()))
-                .orderByAsc(FileTask::getCreateTime)
+                .notIn(FileTask::getStatus, Arrays.asList(FileTaskStatusEnum.PROCESS.name(), FileTaskStatusEnum.PENDING.name()));
+        // 游标分页：按 (create_time, id) 严格大于上一批已处理到的位置取下一批，替代纯 offset。
+        // 软删成功记录会从结果集移除，offset 语义随之漂移，导致失败记录在同一轮内被反复跳过；
+        // 游标单调推进，无论成功/失败都不回扫已处理记录，失败记录顺延到下次调度重试，不再积压在本轮反复 offset。
+        if (lastCreateTime != null && CharSequenceUtil.isNotBlank(lastId)) {
+            query.and(w -> w.gt(FileTask::getCreateTime, lastCreateTime)
+                    .or(o -> o.eq(FileTask::getCreateTime, lastCreateTime).gt(FileTask::getId, lastId)));
+        }
+        // 用 Page 由框架参数化 LIMIT，替代 .last("limit "+limit) 拼接；关闭 count 查询（游标分页无需总数）。
+        Page<FileTask> page = new Page<>(1, Math.max(1, limit), false);
+        return query.orderByAsc(FileTask::getCreateTime)
                 .orderByAsc(FileTask::getId)
-                .last("limit " + limit + " offset " + Math.max(0, offset))
-                .list();
+                .page(page)
+                .getRecords();
     }
 
     @Override

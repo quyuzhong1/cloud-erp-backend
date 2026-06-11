@@ -10,7 +10,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ClassPathResource;
@@ -31,7 +30,6 @@ import java.util.function.Function;
 /**
  * EasyExcel 2.2.7 多 sheet 分页模板写引擎。
  */
-@Slf4j
 public class MultiSheetTemplateWriter {
 
     private final String excelPath;
@@ -86,6 +84,7 @@ public class MultiSheetTemplateWriter {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
 
+        int actualMainRows = 0;
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expanded.templateBytes, handlers);
             try {
@@ -97,6 +96,9 @@ public class MultiSheetTemplateWriter {
                         List<?> batch = withoutNullListElements(currentVo.getList());
                         if (!CollectionUtils.isEmpty(batch)) {
                             fillAcrossSheets(excelWriter, fillConfig, batch, cursors[i], i, "INDEPENDENT");
+                            if (i == 0) {
+                                actualMainRows += batch.size();
+                            }
                         }
                         if (pageOffset == totalPages - 1) {
                             break;
@@ -109,10 +111,10 @@ public class MultiSheetTemplateWriter {
                             throw new ServiceException("独立分页导出后续页返回为空，sheetIndex=" + i + "，页码=" + (currPage + 1));
                         }
                         if (CollectionUtils.isEmpty(nextVo.getList())) {
-                            // 数据较 totalCount 提前耗尽：容忍总数估算的轻微偏差并结束，但打 warn 留痕便于排查
-                            log.warn("独立分页导出后续页数据为空，提前结束。sheetIndex={}, 页码={}, totalCount={}",
-                                    i, currPage + 1, totalRows[i]);
-                            break;
+                            // totalCount 估算仍有后续页，但实际返回空列表：属分页查询异常或数据并发变更，
+                            // 若仅 break 会以不完整 Excel"成功"结束、fileTask.count 仅反映已写行数，用户难感知缺数，故显式抛错。
+                            throw new ServiceException("独立分页导出数据缺失：sheetIndex=" + i + "，页码=" + (currPage + 1)
+                                    + " 实际返回空列表但 totalCount=" + totalRows[i] + " 仍有后续页，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
                         }
                         currentVo = nextVo;
                     }
@@ -121,12 +123,20 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        // count 取首个（主）sheet 行数，与 streamMasterDerived 及 writeAllSheets 文档语义一致；
+        // count 取首个（主）sheet 实际写入行数（非 totalCount），与 streamMasterDerived 及 writeAllSheets 文档语义一致；
         // 不返回各 sheet 行数之和，避免 fileTask.count 被放大影响任务展示/下游统计。
         // 独立多 sheet 约定 sheets 列表首项为主表（typeCount>=1，空集合在方法开头已抛异常）。
-        return totalRows[0];
+        return actualMainRows;
     }
 
+    /**
+     * 主从派生导出：仅分页查询主表，明细行由 {@code sheetExtractors} 从主表对象内存派生（非独立分页查询）。
+     * <p>
+     * 主要用于兼容历史单据导出，历史单据类型有限、单条主表行派生明细量可控，
+     * 故明细 sheet 与主表 sheet 保持 1:1 绑定、明细不跨物理 sheet 续写；
+     * 仅当单个主表 sheet 内派生明细累计超过 Excel 单 sheet 上限（约 104 万行）这一极端场景才显式抛错，
+     * 不为该小概率场景引入「明细独立扩容/跨 sheet 续写」的复杂度。
+     */
     public <P, M> int streamMasterDerived(File outFile,
                                           MasterDerivedSpec<P, M> spec,
                                           int pageSize,
@@ -164,6 +174,7 @@ public class MultiSheetTemplateWriter {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
 
+        int actualMainRows = 0;
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
             ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expanded.templateBytes, handlers);
             try {
@@ -174,6 +185,7 @@ public class MultiSheetTemplateWriter {
                     List<M> mainBatch = withoutNullListElements(currentVo.getList());
                     if (!CollectionUtils.isEmpty(mainBatch)) {
                         fillMasterDerivedBatch(excelWriter, fillConfig, mainBatch, cursors, spec.getSheetExtractors());
+                        actualMainRows += mainBatch.size();
                     }
                     if (pageOffset == totalPages - 1) {
                         break;
@@ -185,9 +197,10 @@ public class MultiSheetTemplateWriter {
                         throw new ServiceException("主从派生导出后续页返回为空，页码=" + (currPage + 1));
                     }
                     if (CollectionUtils.isEmpty(nextVo.getList())) {
-                        // 数据较 totalCount 提前耗尽：容忍总数估算的轻微偏差并结束，但打 warn 留痕便于排查
-                        log.warn("主从派生导出后续页数据为空，提前结束。页码={}, totalCount={}", currPage + 1, total);
-                        break;
+                        // totalCount 估算仍有后续页，但实际返回空列表：属分页查询异常或数据并发变更，
+                        // 若仅 break 会以不完整 Excel"成功"结束、fileTask.count 仅反映已写行数，用户难感知缺数，故显式抛错。
+                        throw new ServiceException("主从派生导出数据缺失：页码=" + (currPage + 1)
+                                + " 实际返回空列表但 totalCount=" + total + " 仍有后续页，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
                     }
                     currentVo = nextVo;
                 }
@@ -195,7 +208,7 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
-        return total;
+        return actualMainRows;
     }
 
     private <M> void fillMasterDerivedBatch(ExcelWriter excelWriter,
@@ -241,7 +254,11 @@ public class MultiSheetTemplateWriter {
                 }
                 long nextRows = detailCursor.rowsInSheet + sanitizedDetailRows.size();
                 if (nextRows > detailCursor.rowLimit) {
-                    throw new ServiceException("明细sheet单段数据超过Excel单sheet最大行数（约104万），请缩小筛选范围导出。");
+                    // 主从派生布局下明细 sheet 与主表 sheet 1:1 绑定，明细不跨物理 sheet 续写；
+                    // 单个主表 sheet 内派生明细累计超过 Excel 单 sheet 上限时无法继续，明确失败而非静默截断。
+                    throw new ServiceException("明细sheet[typeIndex=" + typeIndex + "]单段累计 " + nextRows
+                            + " 行，超过Excel单sheet最大行数 " + detailCursor.rowLimit
+                            + "（明细随主表分sheet、不跨sheet续写）。请缩小筛选范围或减少单主表行的明细展开量后重试。");
                 }
                 fillCurrentSheet(excelWriter, fillConfig, sanitizedDetailRows, detailCursor, typeIndex, "DETAIL_SEGMENT");
                 detailCursor.rowsInSheet = nextRows;
