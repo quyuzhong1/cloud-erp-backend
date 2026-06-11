@@ -223,7 +223,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         try {
             // 下载到临时文件并清除公式错误单元格，避免大 xlsx 在内存中同时持有原始/清洗后的 byte[]
             sourceFile = downloadImportFileToTempFile(importSyncDTO);
-            excelFile = ExcelUtil.clearFormulaErrorCellsToTempFile(sourceFile, importSyncDTO.getFileName());
+            ExcelUtil.CleanResult cleanResult = ExcelUtil.clearFormulaErrorCellsToTempFile(sourceFile, importSyncDTO.getFileName());
+            excelFile = cleanResult.getFile();
+            // 清洗失败时回退用原文件解析，可能仍含公式错误幽灵行；记录告警便于在任务备注中提示
+            boolean cleanFailed = cleanResult.isCleanFailed();
+            if (cleanFailed) {
+                log.warn("公式错误单元格未清洗成功，taskId={} fileName={}，将按原文件解析，可能存在异常行",
+                        importSyncDTO.getTaskId(), importSyncDTO.getFileName());
+            }
 
             //获取批次号，同一个文件同一次导入用同一个批次号
             String batchNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
@@ -272,7 +279,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                         ? "" : excelListenerUtil.getMatchResultUrl();
                 importResultDTO.setErrorUrl(url);
                 importResultDTO.setFinishTime(LocalDateTime.now());
-                importResultDTO.setRemark("处理完成，失败" + matchErrorCount + "条");
+                String remark = "处理完成，失败" + matchErrorCount + "条";
+                if (cleanFailed) {
+                    remark += "（注意：公式错误单元格未清洗，可能存在异常行）";
+                }
+                importResultDTO.setRemark(remark);
                 importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
                 downloadTaskFeign.updateTask(importResultDTO);
             }
@@ -1815,14 +1826,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
-     * 按文件头魔数判定临时文件后缀：OLE2(D0 CF 11 E0) 为 .xls，其余按 .xlsx 处理。
+     * 按文件头魔数判定临时文件后缀：复用 {@link ExcelUtil#isXls(byte[])}，避免重复硬编码 OLE2 魔数。
      */
     private String resolveExcelTempSuffix(byte[] bytes) {
-        if (bytes.length >= 4
-                && (bytes[0] & 0xFF) == 0xD0 && (bytes[1] & 0xFF) == 0xCF
-                && (bytes[2] & 0xFF) == 0x11 && (bytes[3] & 0xFF) == 0xE0) {
-            return ".xls";
-        }
-        return ".xlsx";
+        return ExcelUtil.isXls(bytes) ? ".xls" : ".xlsx";
     }
 }
