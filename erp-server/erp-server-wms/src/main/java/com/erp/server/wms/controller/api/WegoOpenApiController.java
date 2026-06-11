@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.WegoInOrderQueryPageDTO;
 import com.erp.model.wms.dto.WegoSkuQueryDTO;
 import com.erp.server.wms.schedule.WegoWarehouseBaseDataJob;
+import com.sdk.wms.wego.dto.response.WegoInboundResp;
 import com.sdk.wms.wego.service.WegoOpenApiService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,5 +49,17 @@ public class WegoOpenApiController extends BaseController {
     @PostMapping("/sku/query")
     public ApiResult<JSONObject> querySku(@RequestBody @Validated WegoSkuQueryDTO.QueryReqDTO dto) {
         return success(wegoOpenApiService.querySku(dto));
+    }
+
+    /**
+     * 分页查询 WEGO 入库单
+     *
+     * @param dto 请求参数（accessToken、secret、日期范围、pageNum、pageSize）
+     * @return WEGO 入库单分页响应
+     */
+    @PostMapping("/inorder/queryPage")
+    public ApiResult<WegoInboundResp> queryInorderPage(
+            @RequestBody @Validated WegoInOrderQueryPageDTO.QueryReqDTO dto) {
+        return success(wegoOpenApiService.queryInorderPage(dto));
     }
 }
