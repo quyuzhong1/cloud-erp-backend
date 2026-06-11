@@ -45,6 +45,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      */
     String add(SoInfoDTO.AddDTO dto);
 
+    /**
+     * 获取新建销售订单的基础信息默认值
+     * <p>来源：cfg_setting 表 key=soInfoDefault 的 JSON 配置；
+     * 业务方按环境维护，未配置时返回各字段为空。前端在"新增"按钮点击时拉取并填入表单（用户可见可改）。
+     *
+     * @return 基础信息默认值集合
+     */
+    SoInfoDTO.NewBillDefaultDTO getNewBillDefault();
+
 
     /**
      * 提交

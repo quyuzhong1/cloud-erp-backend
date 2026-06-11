@@ -3727,6 +3727,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean addResult = super.save(soOutstock);
         if (addResult) {
             List<SoOutstockDetailEntity> detailEntities = soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
+            // 价税合计金额一致性校验：平台仓/海外仓下推生成出库单时，
+            // 若出库明细=0 但上游销售订单非0 → 状态保留待提交，写入审核状态说明等待人工核实；
+            // 上游查不到不拦截。
+            boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailEntities);
+            if (amountMismatch) {
+                String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
+                soOutstockService.appendApproveStatusRemark(soOutstock.getId(), mismatchMsg);
+                log.warn("平台仓/海外仓下推销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
+            }
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");

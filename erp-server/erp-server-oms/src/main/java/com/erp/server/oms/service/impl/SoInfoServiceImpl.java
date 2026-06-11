@@ -49,10 +49,12 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.CfgSettingEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
@@ -164,6 +166,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
@@ -425,6 +430,79 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return id;
         }
         return "";
+    }
+
+    /**
+     * 获取新建销售订单的基础信息默认值（前端"新增"时拉取展示，用户可见可改）。
+     * <p>读取 cfg_setting 表 key=soInfoDefault 的 JSON 配置，并补齐展示用的名称字段（仓库名/销售组织名/单据子类型名）。
+     * 配置缺失或解析失败时返回各字段为空，由前端继续按原表单逻辑展示，不阻塞新增流程。
+     */
+    @Override
+    public SoInfoDTO.NewBillDefaultDTO getNewBillDefault() {
+        SoInfoDTO.NewBillDefaultDTO result = new SoInfoDTO.NewBillDefaultDTO();
+        CfgSettingEntity setting;
+        try {
+            setting = cfgSettingService.getSettingByKey(CfgSettingEnum.SO_INFO_DEFAULT.getCode());
+        } catch (Exception e) {
+            log.warn("读取销售订单默认值配置失败 key={}", CfgSettingEnum.SO_INFO_DEFAULT.getCode(), e);
+            return result;
+        }
+        if (setting == null || StringUtils.isBlank(setting.getValue())) {
+            return result;
+        }
+        JSONObject json;
+        try {
+            json = JSONUtil.parseObj(setting.getValue());
+        } catch (Exception e) {
+            log.warn("销售订单默认值配置 JSON 解析失败 key={}, value={}", setting.getKey(), setting.getValue(), e);
+            return result;
+        }
+        // 单据子类型默认值
+        String transactionSubType = json.getStr("transactionSubType");
+        if (StringUtils.isNotBlank(transactionSubType)) {
+            result.setTransactionSubType(transactionSubType);
+            result.setTransactionSubTypeName(OrderSubTypeEnum.getName(transactionSubType));
+        }
+        // 默认仓库
+        String warehouseId = json.getStr("warehouseId");
+        if (StringUtils.isNotBlank(warehouseId)) {
+            result.setWarehouseId(warehouseId);
+            try {
+                List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));
+                if (CollectionUtils.isNotEmpty(warehouseList) && warehouseList.get(0) != null) {
+                    result.setWarehouseName(warehouseList.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.warn("读取默认仓库名失败 warehouseId={}", warehouseId, e);
+            }
+        }
+        // 默认销售组织
+        String salesOrgId = json.getStr("salesOrgId");
+        if (StringUtils.isNotBlank(salesOrgId)) {
+            result.setSalesOrgId(salesOrgId);
+            try {
+                List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(salesOrgId));
+                if (CollectionUtils.isNotEmpty(orgList) && orgList.get(0) != null) {
+                    result.setSalesOrgName(orgList.get(0).getName());
+                }
+            } catch (Exception e) {
+                log.warn("读取默认销售组织名失败 salesOrgId={}", salesOrgId, e);
+            }
+        }
+        // 销售组织 → 收款账号联动映射
+        JSONObject mapJson = json.getJSONObject("receiveAccountMap");
+        if (mapJson != null && !mapJson.isEmpty()) {
+            Map<String, String> receiveAccountMap = new HashMap<>();
+            for (String orgKey : mapJson.keySet()) {
+                receiveAccountMap.put(orgKey, mapJson.getStr(orgKey));
+            }
+            result.setReceiveAccountMap(receiveAccountMap);
+            // 若有默认销售组织，顺带返回联动收款账号方便前端无需二次匹配
+            if (StringUtils.isNotBlank(salesOrgId)) {
+                result.setReceiveAccount(receiveAccountMap.get(salesOrgId));
+            }
+        }
+        return result;
     }
 
     private void buildPartition(SoInfoEntity addEntity) {
