@@ -2620,8 +2620,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 return;
             }
 
-            CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.BILL_BATCH_PARAMS.getCode());
-            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+            CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = asyncTaskRecordService.loadBillBatchParams(taskId);
+            if (billBatchParamsDTO == null) {
+                return;
+            }
 
             // 1. 校验任务存在性和状态
             TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(taskId);
@@ -2987,15 +2989,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
 
+        List<TmsAsyncTaskDetailEntity> batchDetailSnapshot = new ArrayList<>(executableDetailMap.values());
         try {
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {
                 log.error("批次处理超时，批次大小: {}, 超时时间: {}秒", batchDetails.size(), timeoutSeconds);
-                // 超时不中断，继续下一批
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    batchDetailSnapshot, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("批次等待被中断", e);
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                batchDetailSnapshot, "任务等待中断"));
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
@@ -3623,6 +3629,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
 
             int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getSmallBagBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getSmallBagTimeoutSeconds(), 5000);
             String lastId = "";
             int totalProcessed = 0;
             int totalSuccess = 0;
@@ -3674,7 +3681,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     break;
                 }
 
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processUpdateReconciliationStatusBatch(taskId, batchIds, dto);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processUpdateReconciliationStatusBatch(taskId, batchIds, dto, timeoutSeconds);
                 totalProcessed += batchIds.size();
                 totalSuccess += result.getSuccessCount();
                 totalFailed += result.getFailedCount();
@@ -3704,7 +3711,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processUpdateReconciliationStatusBatch(String taskId,
                                                                                            List<String> batchIds,
-                                                                                           TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+                                                                                           TmsAsyncTaskRecordDTO.PushParamsDTO dto,
+                                                                                           int timeoutSeconds) {
         List<String> distinctBatchIds = batchIds.stream()
                 .filter(StringUtils::isNotBlank)
                 .distinct()
@@ -3721,37 +3729,106 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
         }
 
+        return executeUpdateReconciliationStatusBatchWithConcurrency(details, dto, timeoutSeconds);
+    }
+
+    /**
+     * 并发执行单批对账状态变更，与下推分摊批次处理模式保持一致。
+     */
+    private TmsAsyncTaskRecordDTO.BatchProcessResult executeUpdateReconciliationStatusBatchWithConcurrency(
+            List<TmsAsyncTaskDetailEntity> batchDetails,
+            TmsAsyncTaskRecordDTO.PushParamsDTO dto,
+            int timeoutSeconds) {
+        Map<String, TmsAsyncTaskDetailEntity> executableDetailMap = new LinkedHashMap<>();
+        List<TmsAsyncTaskDetailEntity> duplicateDetails = new ArrayList<>();
+        for (TmsAsyncTaskDetailEntity detail : batchDetails) {
+            String businessId = detail.getBusinessId();
+            if (StringUtils.isBlank(businessId)) {
+                executableDetailMap.put(detail.getId(), detail);
+                continue;
+            }
+            TmsAsyncTaskDetailEntity oldDetail = executableDetailMap.putIfAbsent(businessId, detail);
+            if (Objects.nonNull(oldDetail)) {
+                duplicateDetails.add(detail);
+            }
+        }
+
+        CountDownLatch latch = new CountDownLatch(executableDetailMap.size());
         AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failedCount = new AtomicInteger(0);
-        com.common.business.vo.LoginUser loginUser = new com.common.business.vo.LoginUser();
-        loginUser.setUid(StringUtils.isBlank(dto.getOperatorUserId()) ? UserContext.getDefaultLoginUser().getUid() : dto.getOperatorUserId());
-        loginUser.setUserName(StringUtils.isBlank(dto.getOperatorUserName()) ? UserContext.getDefaultLoginUser().getUserName() : dto.getOperatorUserName());
-        for (TmsAsyncTaskDetailEntity detail : details) {
+        AtomicInteger failedCount = new AtomicInteger(duplicateDetails.size());
+        String costTypeName = resolveCostAttributionName(dto.getType());
+        TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.getById(dto.getTaskId());
+        com.common.business.vo.LoginUser loginUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
+
+        for (TmsAsyncTaskDetailEntity duplicateDetail : duplicateDetails) {
+            asyncTaskDetailRecordService.updateDetail(
+                duplicateDetail.getId(),
+                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                "同一任务下重复明细已跳过"
+            );
+        }
+
+        for (TmsAsyncTaskDetailEntity detail : executableDetailMap.values()) {
+            if (Objects.equals(detail.getStatus(), TmsAsyncTaskRecordStatusEnum.FAILED.getCode())) {
+                failedCount.incrementAndGet();
+                latch.countDown();
+                continue;
+            }
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
             try {
-                if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
-                    continue;
-                }
-                // MQ线程没有请求上下文，需恢复提交人用于确认人字段和操作日志。
-                UserContext.setLoginUser(loginUser);
-                BatchResultDTO result = updateReconciliationStatus(businessId, dto.getReconciliationStatus(), dto.getConfirmTime());
-                if (Boolean.TRUE.equals(result.getSuccess())) {
-                    asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
-                    successCount.incrementAndGet();
-                } else {
-                    asyncTaskDetailRecordService.updateDetail(taskDetailId, TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
-                            org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000));
-                    failedCount.incrementAndGet();
-                }
-            } catch (Exception e) {
-                log.error("{}对账状态变更明细执行失败 taskDetailId: {}, businessId: {}",
-                        resolveCostAttributionName(dto.getType()), taskDetailId, businessId, e);
-                asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                costAllocationPool.execute(() -> {
+                    try {
+                        if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+                            log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+                            return;
+                        }
+                        UserContext.setLoginUser(loginUser);
+                        BatchResultDTO result = service.updateReconciliationStatus(
+                            businessId, dto.getReconciliationStatus(), dto.getConfirmTime());
+                        if (Boolean.TRUE.equals(result.getSuccess())) {
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                            successCount.incrementAndGet();
+                        } else {
+                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
+                                org.apache.commons.lang3.StringUtils.substring(result.getMsg(), 0, 1000));
+                            failedCount.incrementAndGet();
+                        }
+                    } catch (Exception e) {
+                        log.error("{}对账状态变更明细执行失败 taskDetailId: {}, businessId: {}",
+                            costTypeName, taskDetailId, businessId, e);
+                        asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                        failedCount.incrementAndGet();
+                    } finally {
+                        UserContext.clear();
+                        latch.countDown();
+                    }
+                });
+            } catch (RejectedExecutionException ex) {
+                log.error("{}对账状态变更任务提交失败 taskDetailId: {}, businessId: {}", costTypeName, taskDetailId, businessId, ex);
+                asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                    TmsAsyncTaskRecordStatusEnum.FAILED.getCode(), "线程池拒绝执行");
                 failedCount.incrementAndGet();
-            } finally {
-                UserContext.clear();
+                latch.countDown();
             }
+        }
+
+        List<TmsAsyncTaskDetailEntity> batchDetailSnapshot = new ArrayList<>(executableDetailMap.values());
+        try {
+            boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
+            if (!completed) {
+                log.error("{}对账状态变更批次处理超时，批次大小: {}, 超时时间: {}秒",
+                    costTypeName, batchDetails.size(), timeoutSeconds);
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    batchDetailSnapshot, "批次执行超时"));
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("{}对账状态变更批次等待被中断", costTypeName, e);
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                batchDetailSnapshot, "任务等待中断"));
         }
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }

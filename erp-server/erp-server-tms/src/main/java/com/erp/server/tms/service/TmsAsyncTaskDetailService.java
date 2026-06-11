@@ -43,4 +43,11 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
      * 错误重试按失败明细游标分页，保留 businessCode 供目标任务明细展示。
      */
     List<TmsAsyncTaskDetailEntity> listFailedDetailsByCursor(String mainId, String lastBusinessId, int batchSize);
+
+    /**
+     * 批次并发等待超时或中断时，将本批未完成的明细（含 ING/PENDING）标记为失败。
+     *
+     * @return 实际标记为失败的明细数量
+     */
+    int markUnfinishedBatchDetailsFailed(List<TmsAsyncTaskDetailEntity> taskDetailList, String errorMsg);
 }

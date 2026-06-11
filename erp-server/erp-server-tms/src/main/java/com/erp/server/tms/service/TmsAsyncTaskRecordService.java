@@ -2,6 +2,7 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.dto.TmsAsyncTaskRecordDTO;
@@ -68,6 +69,11 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * @return 幂等成功时返回 BatchResultDTO，认领成功时返回 null 由调用方继续
      */
     BatchResultDTO resolveDispatchClaimOrThrow(String taskId, boolean claimed, String taskCode, String errorPayload);
+
+    /**
+     * 解析异步任务执行业务时的操作人：优先 PushParams 显式操作人，错误重试时追溯源任务创建人，否则取当前任务创建人。
+     */
+    LoginUser resolveOperatorLoginUser(TmsAsyncTaskRecordEntity taskRecord, TmsAsyncTaskRecordDTO.PushParamsDTO pushParams);
 
     /**
      * 分批循环内检查任务是否应终止（记录消失或已完成）

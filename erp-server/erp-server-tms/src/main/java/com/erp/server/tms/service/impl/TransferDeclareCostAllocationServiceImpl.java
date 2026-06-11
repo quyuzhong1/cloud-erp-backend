@@ -38,6 +38,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -475,6 +476,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
 			boolean excludeBigTableDone = TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode().equals(dto.getReportStatus());
 			String bigTableDoneCode = TransferDeclareCostAllocationBigTableStatusEnum.DONE.getCode();
+			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
 			log.info("开始分批处理中转核算状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -520,7 +522,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				}
 
 				// 先写入任务明细再变更状态，保证中转分摊任务可按单据追踪失败原因。
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferUpdateStatusBatch(taskId, batchIds, dto, timeoutSeconds);
+				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferUpdateStatusBatch(taskId, batchIds, dto, timeoutSeconds, operatorUser);
 
 				totalProcessed += batchIds.size();
 				totalSuccess += result.getSuccessCount();
@@ -670,6 +672,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			LocalDateTime taskStartTime = taskRecord.getStartTime();
 			Integer taskExecTimeout = taskRecord.getExecTimeout();
 			String reportStatus = TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode();
+			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
 			log.info("开始分批处理中转重新分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -716,7 +719,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				}
 
 				// 重新分摊可能部分单据失败，明细表用于后续只重试失败单据。
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferReAllocationBatch(taskId, batchIds, timeoutSeconds);
+				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferReAllocationBatch(taskId, batchIds, timeoutSeconds, operatorUser);
 
 				totalProcessed += batchIds.size();
 				totalSuccess += result.getSuccessCount();
@@ -866,6 +869,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			LocalDateTime taskStartTime = taskRecord.getStartTime();
 			Integer taskExecTimeout = taskRecord.getExecTimeout();
 			String reportStatus = TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode();
+			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
 			log.info("开始分批处理中转批量删除任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -912,7 +916,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				}
 
 				// 删除任务同样按明细记录执行结果，避免 MQ 重投时重复处理已完成单据。
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferDeleteBatch(taskId, batchIds, timeoutSeconds);
+				TmsAsyncTaskRecordDTO.BatchProcessResult result = processTransferDeleteBatch(taskId, batchIds, timeoutSeconds, operatorUser);
 
 				totalProcessed += batchIds.size();
 				totalSuccess += result.getSuccessCount();
@@ -983,11 +987,12 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	private TmsAsyncTaskRecordDTO.BatchProcessResult processTransferUpdateStatusBatch(String taskId,
 																					 List<String> batchIds,
 																					 TmsAsyncTaskRecordDTO.PushParamsDTO dto,
-																					 int timeoutSeconds) {
+																					 int timeoutSeconds,
+																					 LoginUser operatorUser) {
 		Map<String, TransferDeclareCostAllocationMainEntity> entityMap = transferDeclareCostAllocationMainService.listByIds(batchIds).stream()
 			.collect(Collectors.toMap(TransferDeclareCostAllocationMainEntity::getId, Function.identity(), (a, b) -> a));
 		List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareTransferTaskDetails(taskId, batchIds, entityMap);
-		return executeTransferBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) -> {
+		return executeTransferBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) -> {
 			updateReportStatus(entity, dto.getReportDate(), dto.getReportStatus());
 			return BatchResultDTO.success(businessId, entity.getTransferDeclareId(), "核算状态变更成功");
 		});
@@ -998,11 +1003,12 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	 */
 	private TmsAsyncTaskRecordDTO.BatchProcessResult processTransferReAllocationBatch(String taskId,
 																					 List<String> batchIds,
-																					 int timeoutSeconds) {
+																					 int timeoutSeconds,
+																					 LoginUser operatorUser) {
 		Map<String, TransferDeclareCostAllocationMainEntity> entityMap = transferDeclareCostAllocationMainService.listByIds(batchIds).stream()
 			.collect(Collectors.toMap(TransferDeclareCostAllocationMainEntity::getId, Function.identity(), (a, b) -> a));
 		List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareTransferTaskDetails(taskId, batchIds, entityMap);
-		return executeTransferBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) ->
+		return executeTransferBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
 			self.reAllocation(entity));
 	}
 
@@ -1011,11 +1017,12 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	 */
 	private TmsAsyncTaskRecordDTO.BatchProcessResult processTransferDeleteBatch(String taskId,
 																			   List<String> batchIds,
-																			   int timeoutSeconds) {
+																			   int timeoutSeconds,
+																			   LoginUser operatorUser) {
 		Map<String, TransferDeclareCostAllocationMainEntity> entityMap = transferDeclareCostAllocationMainService.listByIds(batchIds).stream()
 			.collect(Collectors.toMap(TransferDeclareCostAllocationMainEntity::getId, Function.identity(), (a, b) -> a));
 		List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareTransferTaskDetails(taskId, batchIds, entityMap);
-		return executeTransferBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) ->
+		return executeTransferBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
 			self.delete(businessId));
 	}
 
@@ -1083,6 +1090,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	private TmsAsyncTaskRecordDTO.BatchProcessResult executeTransferBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
 																						Map<String, TransferDeclareCostAllocationMainEntity> entityMap,
 																						int timeoutSeconds,
+																						LoginUser operatorUser,
 																						TransferTaskExecutor executor) {
 		if (CollUtil.isEmpty(batchDetails)) {
 			return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
@@ -1119,6 +1127,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			try {
 				costAllocationPool.execute(() -> {
 					try {
+						UserContext.setLoginUser(operatorUser);
 						if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
 							log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
 							return;
@@ -1149,6 +1158,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 						asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
 						failedCount.incrementAndGet();
 					} finally {
+						UserContext.clear();
 						latch.countDown();
 					}
 				});
@@ -1161,14 +1171,19 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			}
 		}
 
+		List<TmsAsyncTaskDetailEntity> batchDetailSnapshot = new ArrayList<>(executableDetailMap.values());
 		try {
 			boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
 			if (!completed) {
 				log.error("中转费用分摊批次处理超时，批次大小: {}, 超时时间: {}秒", batchDetails.size(), timeoutSeconds);
+				failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+					batchDetailSnapshot, "批次执行超时"));
 			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			log.error("中转费用分摊批次等待被中断", e);
+			failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+				batchDetailSnapshot, "任务等待中断"));
 		}
 
 		return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());

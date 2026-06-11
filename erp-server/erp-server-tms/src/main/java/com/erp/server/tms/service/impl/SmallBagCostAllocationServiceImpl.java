@@ -18,6 +18,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -299,6 +300,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 	
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO updateReportStatus(String id, String reportDate, String reportStatus) {
 		return updateReportStatus(smallBagCostAllocationMainService.getById(id), reportDate, reportStatus);
 	}
@@ -462,6 +464,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 			boolean excludeBigTableDone = SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode().equals(dto.getReportStatus());
 			String bigTableDoneCode = SmallBagCostAllocationBigTableStatusEnum.DONE.getCode();
+			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
 			log.info("开始分批处理核算状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -504,7 +507,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				}
 
 				// 先记录每条主表明细，再执行核算状态变更，便于失败重试和明细导出。
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processSmallBagUpdateStatusBatch(taskId, batchIds, dto, timeoutSeconds);
+				TmsAsyncTaskRecordDTO.BatchProcessResult result = processSmallBagUpdateStatusBatch(taskId, batchIds, dto, timeoutSeconds, operatorUser);
 
 				totalProcessed += batchIds.size();
 				totalSuccess += result.getSuccessCount();
@@ -654,6 +657,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			LocalDateTime taskStartTime = taskRecord.getStartTime();
 			Integer taskExecTimeout = taskRecord.getExecTimeout();
 			String reportStatus = SmallBagCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode();
+			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
 			log.info("开始分批处理小包重新分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -696,7 +700,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				}
 
 				// 重新分摊会重建分摊数据，明细表用于保留每条主表的执行结果。
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processSmallBagReAllocationBatch(taskId, batchIds, timeoutSeconds);
+				TmsAsyncTaskRecordDTO.BatchProcessResult result = processSmallBagReAllocationBatch(taskId, batchIds, timeoutSeconds, operatorUser);
 
 				totalProcessed += batchIds.size();
 				totalSuccess += result.getSuccessCount();
@@ -844,6 +848,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			LocalDateTime taskStartTime = taskRecord.getStartTime();
 			Integer taskExecTimeout = taskRecord.getExecTimeout();
 			String reportStatus = SmallBagCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode();
+			LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
 			log.info("开始分批处理小包批量删除任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -886,7 +891,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				}
 
 				// 删除任务也按明细落库，避免批量任务只能看到汇总失败数。
-				TmsAsyncTaskRecordDTO.BatchProcessResult result = processSmallBagDeleteBatch(taskId, batchIds, timeoutSeconds);
+				TmsAsyncTaskRecordDTO.BatchProcessResult result = processSmallBagDeleteBatch(taskId, batchIds, timeoutSeconds, operatorUser);
 
 				totalProcessed += batchIds.size();
 				totalSuccess += result.getSuccessCount();
@@ -956,14 +961,13 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	private TmsAsyncTaskRecordDTO.BatchProcessResult processSmallBagUpdateStatusBatch(String taskId,
 																					 List<String> batchIds,
 																					 TmsAsyncTaskRecordDTO.PushParamsDTO dto,
-																					 int timeoutSeconds) {
+																					 int timeoutSeconds,
+																					 LoginUser operatorUser) {
 		Map<String, SmallBagCostAllocationMainEntity> entityMap = smallBagCostAllocationMainService.listByIds(batchIds).stream()
 			.collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, Function.identity(), (a, b) -> a));
 		List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareSmallBagTaskDetails(taskId, batchIds, entityMap);
-		return executeSmallBagBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) -> {
-			updateReportStatus(entity, dto.getReportDate(), dto.getReportStatus());
-			return BatchResultDTO.success(businessId, entity.getCostId(), "核算状态变更成功");
-		});
+		return executeSmallBagBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
+			self.updateReportStatus(businessId, dto.getReportDate(), dto.getReportStatus()));
 	}
 
 	/**
@@ -971,11 +975,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	 */
 	private TmsAsyncTaskRecordDTO.BatchProcessResult processSmallBagReAllocationBatch(String taskId,
 																					 List<String> batchIds,
-																					 int timeoutSeconds) {
+																					 int timeoutSeconds,
+																					 LoginUser operatorUser) {
 		Map<String, SmallBagCostAllocationMainEntity> entityMap = smallBagCostAllocationMainService.listByIds(batchIds).stream()
 			.collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, Function.identity(), (a, b) -> a));
 		List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareSmallBagTaskDetails(taskId, batchIds, entityMap);
-		return executeSmallBagBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) ->
+		return executeSmallBagBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
 			self.reAllocation(entity));
 	}
 
@@ -984,11 +989,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	 */
 	private TmsAsyncTaskRecordDTO.BatchProcessResult processSmallBagDeleteBatch(String taskId,
 																			   List<String> batchIds,
-																			   int timeoutSeconds) {
+																			   int timeoutSeconds,
+																			   LoginUser operatorUser) {
 		Map<String, SmallBagCostAllocationMainEntity> entityMap = smallBagCostAllocationMainService.listByIds(batchIds).stream()
 			.collect(Collectors.toMap(SmallBagCostAllocationMainEntity::getId, Function.identity(), (a, b) -> a));
 		List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareSmallBagTaskDetails(taskId, batchIds, entityMap);
-		return executeSmallBagBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) ->
+		return executeSmallBagBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
 			self.delete(businessId));
 	}
 
@@ -1056,6 +1062,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	private TmsAsyncTaskRecordDTO.BatchProcessResult executeSmallBagBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
 																						Map<String, SmallBagCostAllocationMainEntity> entityMap,
 																						int timeoutSeconds,
+																						LoginUser operatorUser,
 																						SmallBagTaskExecutor executor) {
 		if (CollUtil.isEmpty(batchDetails)) {
 			return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
@@ -1092,6 +1099,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			try {
 				costAllocationPool.execute(() -> {
 					try {
+						UserContext.setLoginUser(operatorUser);
 						if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
 							log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
 							return;
@@ -1122,6 +1130,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 						asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
 						failedCount.incrementAndGet();
 					} finally {
+						UserContext.clear();
 						latch.countDown();
 					}
 				});
@@ -1134,14 +1143,19 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 		}
 
+		List<TmsAsyncTaskDetailEntity> batchDetailSnapshot = new ArrayList<>(executableDetailMap.values());
 		try {
 			boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
 			if (!completed) {
 				log.error("小包费用分摊批次处理超时，批次大小: {}, 超时时间: {}秒", batchDetails.size(), timeoutSeconds);
+				failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+					batchDetailSnapshot, "批次执行超时"));
 			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			log.error("小包费用分摊批次等待被中断", e);
+			failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+				batchDetailSnapshot, "任务等待中断"));
 		}
 
 		return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());

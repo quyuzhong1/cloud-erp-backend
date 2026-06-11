@@ -22,6 +22,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -2209,6 +2210,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             LocalDateTime taskStartTime = taskRecord.getStartTime();
             Integer taskExecTimeout = taskRecord.getExecTimeout();
             LocalDate reportPeriodMonth = parseReportPeriodMonth(dto.getReportPeriodStr());
+            LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
             log.info("开始分批处理头程核算状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -2255,7 +2257,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 }
 
                 // 先落任务明细再执行，保证失败重试和明细导出都有逐条依据。
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileUpdateStatusBatch(taskId, batchIds, dto, timeoutSeconds);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileUpdateStatusBatch(taskId, batchIds, dto, timeoutSeconds, operatorUser);
 
                 totalProcessed += batchIds.size();
                 totalSuccess += result.getSuccessCount();
@@ -2468,6 +2470,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             Integer taskExecTimeout = taskRecord.getExecTimeout();
             LocalDate reportPeriodMonth = parseReportPeriodMonth(dto.getReportPeriodStr());
             String waitConfirmStatus = ConfirmStatusEnum.WAIT_CONFIRM.getCode();
+            LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
             log.info("开始分批处理头程重新分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -2514,7 +2517,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 }
 
                 // 重新分摊依赖外部发货单明细，批次内集中预加载后再逐条记录执行结果。
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileReAllocationBatch(taskId, batchIds, timeoutSeconds);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileReAllocationBatch(taskId, batchIds, timeoutSeconds, operatorUser);
 
                 totalProcessed += batchIds.size();
                 totalSuccess += result.getSuccessCount();
@@ -2666,6 +2669,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             Integer taskExecTimeout = taskRecord.getExecTimeout();
             LocalDate reportPeriodMonth = parseReportPeriodMonth(dto.getReportPeriodStr());
             String waitConfirmStatus = ConfirmStatusEnum.WAIT_CONFIRM.getCode();
+            LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
             log.info("开始分批处理头程批量删除任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -2712,7 +2716,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 }
 
                 // 批量删除也写入明细，避免单条失败时只能在主任务上看到汇总错误数。
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileDeleteBatch(taskId, batchIds, timeoutSeconds);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileDeleteBatch(taskId, batchIds, timeoutSeconds, operatorUser);
 
                 totalProcessed += batchIds.size();
                 totalSuccess += result.getSuccessCount();
@@ -2908,6 +2912,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             int batchNumber = 0;
             LocalDateTime taskStartTime = taskRecord.getStartTime();
             Integer taskExecTimeout = taskRecord.getExecTimeout();
+            LoginUser operatorUser = asyncTaskRecordService.resolveOperatorLoginUser(taskRecord, dto);
 
             log.info("开始分批处理头程费用分摊任务，taskId: {}, 批次大小: {}, 预计总数: {}",
                 taskId, batchSize, taskRecord.getDetailCount());
@@ -2958,7 +2963,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
                 log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchDeliveryIds.size(), lastId);
 
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate(), timeoutSeconds);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processFirstMileBatch(taskId, batchDeliveryIds, dto.getReportDate(), timeoutSeconds, operatorUser);
 
                 totalProcessed += batchDeliveryIds.size();
                 totalSuccess += result.getSuccessCount();
@@ -3032,12 +3037,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileUpdateStatusBatch(String taskId,
                                                                                        List<String> batchIds,
                                                                                        TmsAsyncTaskRecordDTO.PushParamsDTO dto,
-                                                                                       int timeoutSeconds) {
+                                                                                       int timeoutSeconds,
+                                                                                       LoginUser operatorUser) {
         List<FirstMileCostAllocationEntity> entityList = listByIds(batchIds);
         Map<String, FirstMileCostAllocationEntity> entityMap = entityList.stream()
             .collect(Collectors.toMap(FirstMileCostAllocationEntity::getId, Function.identity(), (a, b) -> a));
         List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareFirstMileCostAllocationTaskDetails(taskId, batchIds, entityMap);
-        return executeFirstMileCostAllocationBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) ->
+        return executeFirstMileCostAllocationBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
             updateStatus(entity, dto.getReportStatus(), dto.getReportDate()));
     }
 
@@ -3046,7 +3052,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileReAllocationBatch(String taskId,
                                                                                        List<String> batchIds,
-                                                                                       int timeoutSeconds) {
+                                                                                       int timeoutSeconds,
+                                                                                       LoginUser operatorUser) {
         List<FirstMileCostAllocationEntity> entityList = listByIds(batchIds);
         Map<String, FirstMileCostAllocationEntity> entityMap = entityList.stream()
             .collect(Collectors.toMap(FirstMileCostAllocationEntity::getId, Function.identity(), (a, b) -> a));
@@ -3071,7 +3078,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         Map<String, FirstMileDeliveryEntity> finalDeliveryMap = deliveryMap;
         Map<String, List<FirstMileDeliveryDetailEntity>> finalDetailMap = detailMap;
-        return executeFirstMileCostAllocationBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) -> {
+        return executeFirstMileCostAllocationBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) -> {
             if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
                 return BatchResultDTO.fail(businessId, entity.getSourceCode(), "核算状态已确认");
             }
@@ -3093,12 +3100,13 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileDeleteBatch(String taskId,
                                                                                  List<String> batchIds,
-                                                                                 int timeoutSeconds) {
+                                                                                 int timeoutSeconds,
+                                                                                 LoginUser operatorUser) {
         List<FirstMileCostAllocationEntity> entityList = listByIds(batchIds);
         Map<String, FirstMileCostAllocationEntity> entityMap = entityList.stream()
             .collect(Collectors.toMap(FirstMileCostAllocationEntity::getId, Function.identity(), (a, b) -> a));
         List<TmsAsyncTaskDetailEntity> detailsToExecute = prepareFirstMileCostAllocationTaskDetails(taskId, batchIds, entityMap);
-        return executeFirstMileCostAllocationBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, (taskDetailId, businessId, entity) ->
+        return executeFirstMileCostAllocationBatchWithConcurrency(detailsToExecute, entityMap, timeoutSeconds, operatorUser, (taskDetailId, businessId, entity) ->
             service.delete(entity));
     }
 
@@ -3166,6 +3174,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileCostAllocationBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
                                                                                                         Map<String, FirstMileCostAllocationEntity> entityMap,
                                                                                                         int timeoutSeconds,
+                                                                                                        LoginUser operatorUser,
                                                                                                         FirstMileCostAllocationTaskExecutor executor) {
         if (CollUtil.isEmpty(batchDetails)) {
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
@@ -3202,6 +3211,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             try {
                 costAllocationPool.execute(() -> {
                     try {
+                        UserContext.setLoginUser(operatorUser);
                         if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
                             log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
                             return;
@@ -3232,6 +3242,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
                         failedCount.incrementAndGet();
                     } finally {
+                        UserContext.clear();
                         latch.countDown();
                     }
                 });
@@ -3244,14 +3255,19 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
         }
 
+        List<TmsAsyncTaskDetailEntity> batchDetailSnapshot = new ArrayList<>(executableDetailMap.values());
         try {
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {
                 log.error("头程费用分摊批次处理超时，批次大小: {}, 超时时间: {}秒", batchDetails.size(), timeoutSeconds);
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    batchDetailSnapshot, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("头程费用分摊批次等待被中断", e);
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                batchDetailSnapshot, "任务等待中断"));
         }
 
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
@@ -3304,7 +3320,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      * @author jack
      * @date 2026-04-22
      */
-    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds, String reportDate, int timeoutSeconds) {
+    private TmsAsyncTaskRecordDTO.BatchProcessResult processFirstMileBatch(String taskId, List<String> batchDeliveryIds, String reportDate, int timeoutSeconds, LoginUser operatorUser) {
         LocalDate reportPeriodMonth = LocalDate.parse(reportDate + "-01");
 
         List<String> distinctDeliveryIds = batchDeliveryIds.stream()
@@ -3408,7 +3424,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, detailsToExecute.size());
         }
 
-        return executeFirstMileBatchWithConcurrency(detailsToExecute, deliveryList, deliveryDetailMap, reportPeriodMonth, timeoutSeconds);
+        return executeFirstMileBatchWithConcurrency(detailsToExecute, deliveryList, deliveryDetailMap, reportPeriodMonth, timeoutSeconds, operatorUser);
     }
 
     /**
@@ -3424,7 +3440,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeFirstMileBatchWithConcurrency(List<TmsAsyncTaskDetailEntity> batchDetails,
                                                                                            List<FirstMileDeliveryEntity> deliveryList,
                                                                                            Map<String, List<FirstMileDeliveryDetailEntity>> deliveryDetailMap,
-                                                                                           LocalDate reportPeriodMonth, int timeoutSeconds) {
+                                                                                           LocalDate reportPeriodMonth, int timeoutSeconds,
+                                                                                           LoginUser operatorUser) {
 
         Map<String, FirstMileDeliveryEntity> deliveryMap = deliveryList.stream()
             .collect(Collectors.toMap(FirstMileDeliveryEntity::getId, Function.identity(), (o1, o2) -> o1));
@@ -3469,6 +3486,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             try {
                 costAllocationPool.execute(() -> {
                     try {
+                        UserContext.setLoginUser(operatorUser);
                         if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
                             log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
                             return;
@@ -3516,6 +3534,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                         asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
                         failedCount.incrementAndGet();
                     } finally {
+                        UserContext.clear();
                         latch.countDown();
                     }
                 });
@@ -3528,16 +3547,21 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
         }
         
+        List<TmsAsyncTaskDetailEntity> batchDetailSnapshot = new ArrayList<>(executableDetailMap.values());
         try {
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {
                 log.error("批次处理超时，批次大小: {}, 超时时间: {}秒", batchDetails.size(), timeoutSeconds);
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    batchDetailSnapshot, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("批次等待被中断", e);
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                batchDetailSnapshot, "任务等待中断"));
         }
-        
+
         return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
 }

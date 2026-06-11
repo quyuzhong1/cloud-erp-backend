@@ -10,14 +10,16 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.UserStateConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SystemCodeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.alibaba.fastjson.JSON;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -340,7 +342,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             finishTaskWithError(taskId, "批次配置缺失");
             return null;
         }
-        return JSON.parseObject(byKey.getDataJson().toJSONString(0), CfgSettingValueDTO.BillBatchParamsDTO.class);
+        return JSONUtil.toBean(byKey.getDataJson(), CfgSettingValueDTO.BillBatchParamsDTO.class);
     }
 
     @Override
@@ -372,6 +374,31 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
         finishTaskWithError(taskId, "任务状态竞争失败");
         throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, errorPayload);
+    }
+
+    @Override
+    public LoginUser resolveOperatorLoginUser(TmsAsyncTaskRecordEntity taskRecord, TmsAsyncTaskRecordDTO.PushParamsDTO pushParams) {
+        if (pushParams != null && StringUtils.isNotBlank(pushParams.getOperatorUserId())) {
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUid(pushParams.getOperatorUserId().trim());
+            loginUser.setUserName(StringUtils.defaultIfBlank(StringUtils.trimToNull(pushParams.getOperatorUserName()),
+                UserStateConstants.USER_SYSTEM));
+            return loginUser;
+        }
+        TmsAsyncTaskRecordEntity operatorTask = taskRecord;
+        if (pushParams != null && StringUtils.isNotBlank(pushParams.getRetrySourceTaskId())) {
+            TmsAsyncTaskRecordEntity sourceTask = getById(pushParams.getRetrySourceTaskId());
+            if (sourceTask != null) {
+                operatorTask = sourceTask;
+            }
+        }
+        if (operatorTask != null && StringUtils.isNotBlank(operatorTask.getCreateUserId())) {
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUid(operatorTask.getCreateUserId());
+            loginUser.setUserName(StringUtils.defaultIfBlank(operatorTask.getCreateUserName(), UserStateConstants.USER_SYSTEM));
+            return loginUser;
+        }
+        return UserContext.getDefaultLoginUser();
     }
 
     @Override
@@ -841,7 +868,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         try {
             SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                log.error("消息发送结果失败：{}", JSON.toJSONString(sendResult));
+                log.error("消息发送结果失败：{}", JSONUtil.toJsonStr(sendResult));
                 lambdaUpdate()
                         .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                         .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")

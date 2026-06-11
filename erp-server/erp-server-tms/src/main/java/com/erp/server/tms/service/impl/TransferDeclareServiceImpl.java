@@ -22,6 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -1497,7 +1498,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     private TmsAsyncTaskRecordDTO.BatchProcessResult executeTransferDeclareBatch(List<TmsAsyncTaskDetailEntity> taskDetailList, int timeoutSeconds) {
+        if (CollectionUtils.isEmpty(taskDetailList)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+        }
         CountDownLatch latch = new CountDownLatch(taskDetailList.size());
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(0);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         List<String> businessIds = taskDetailList.stream().map(TmsAsyncTaskDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
         List<TmsB2cDeclareReconciliationDetailEntity> list = tmsB2cDeclareReconciliationDetailService.listAutoGenerateCostByIds(businessIds);
@@ -1508,20 +1514,22 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             try {
                 costAllocationPool.execute(() -> {
                     try {
-                        if (asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
-                            TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
-                            if (Objects.isNull(entity)) {
-                                throw new ServiceException("b2c报关对账单明细为空");
-                            }
-                            singPushAllocation(entity.getSourceId() , entity.getApproveDate().format(formatter) , Arrays.asList(entity));
-
-                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                    TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+                            log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+                            return;
                         }
+                        TmsB2cDeclareReconciliationDetailEntity entity = map.get(businessId);
+                        if (Objects.isNull(entity)) {
+                            throw new ServiceException("b2c报关对账单明细为空");
+                        }
+                        singPushAllocation(entity.getSourceId(), entity.getApproveDate().format(formatter), Arrays.asList(entity));
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        successCount.incrementAndGet();
                     } catch (Exception e) {
                         log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
-                        // 统一处理任务失败状态更新
                         asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                        failedCount.incrementAndGet();
                     } finally {
                         latch.countDown();
                     }
@@ -1529,6 +1537,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             } catch (RejectedExecutionException ex) {
                 log.error("任务提交失败 taskDetailId: {}", taskDetailId, ex);
                 asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, ex);
+                failedCount.incrementAndGet();
                 latch.countDown();
             }
         }
@@ -1536,38 +1545,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {
                 log.warn("中转报关批次执行超时，taskId: {}, timeoutSeconds: {}", taskDetailList.get(0).getMainId(), timeoutSeconds);
-                markUnfinishedBatchDetailsFailed(taskDetailList, "批次执行超时");
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    taskDetailList, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("任务等待中断", e);
-            markUnfinishedBatchDetailsFailed(taskDetailList, "任务等待中断");
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                taskDetailList, "任务等待中断"));
         }
-        int failedCount = asyncTaskDetailRecordService.lambdaQuery()
-                .eq(TmsAsyncTaskDetailEntity::getMainId, taskDetailList.get(0).getMainId())
-                .in(TmsAsyncTaskDetailEntity::getId, taskDetailList.stream().map(TmsAsyncTaskDetailEntity::getId).collect(Collectors.toList()))
-                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
-                .count();
-        return new TmsAsyncTaskRecordDTO.BatchProcessResult(taskDetailList.size() - failedCount, failedCount);
-    }
-
-    private void markUnfinishedBatchDetailsFailed(List<TmsAsyncTaskDetailEntity> taskDetailList, String errorMsg) {
-        if (CollectionUtils.isEmpty(taskDetailList)) {
-            return;
-        }
-        List<String> detailIds = taskDetailList.stream()
-                .map(TmsAsyncTaskDetailEntity::getId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(detailIds)) {
-            return;
-        }
-        asyncTaskDetailRecordService.lambdaUpdate()
-                .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
-                .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
-                .set(TmsAsyncTaskDetailEntity::getErrorData, errorMsg)
-                .in(TmsAsyncTaskDetailEntity::getId, detailIds)
-                .notIn(TmsAsyncTaskDetailEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), TmsAsyncTaskRecordStatusEnum.FAILED.getCode()))
-                .update();
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
 }

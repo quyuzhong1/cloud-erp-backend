@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
 import com.erp.model.tms.enums.TmsAsyncTaskRecordStatusEnum;
 import com.erp.server.tms.mapper.AsyncTaskDetailRecordMapper;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -129,6 +131,38 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
                 .orderByAsc(TmsAsyncTaskDetailEntity::getBusinessId)
                 .last("LIMIT " + safeBatchSize)
                 .list();
+    }
+
+    @Override
+    public int markUnfinishedBatchDetailsFailed(List<TmsAsyncTaskDetailEntity> taskDetailList, String errorMsg) {
+        if (CollUtil.isEmpty(taskDetailList)) {
+            return 0;
+        }
+        List<String> detailIds = taskDetailList.stream()
+                .map(TmsAsyncTaskDetailEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(detailIds)) {
+            return 0;
+        }
+        List<String> terminalStatuses = Arrays.asList(
+                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
+                TmsAsyncTaskRecordStatusEnum.FAILED.getCode());
+        int unfinishedCount = lambdaQuery()
+                .in(TmsAsyncTaskDetailEntity::getId, detailIds)
+                .notIn(TmsAsyncTaskDetailEntity::getStatus, terminalStatuses)
+                .count();
+        if (unfinishedCount <= 0) {
+            return 0;
+        }
+        lambdaUpdate()
+                .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
+                .set(TmsAsyncTaskDetailEntity::getErrorData, StringUtils.substring(errorMsg, 0, 1000))
+                .in(TmsAsyncTaskDetailEntity::getId, detailIds)
+                .notIn(TmsAsyncTaskDetailEntity::getStatus, terminalStatuses)
+                .update();
+        return unfinishedCount;
     }
 
 }

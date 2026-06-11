@@ -82,6 +82,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -2992,6 +2993,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                                                                                          LocalDate startDate,
                                                                                          LocalDate endDate,
                                                                                          int timeoutSeconds) {
+        if (CollUtil.isEmpty(taskDetailList)) {
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+        }
         List<String> supplierIds = taskDetailList.stream().map(TmsAsyncTaskDetailEntity::getBusinessId).distinct().collect(Collectors.toList());
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> detailList = tmsFirstMileLogisticService.listAutoGenerateFirstMileReconciliationBySuppliers(startDate, endDate, supplierIds);
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = detailList.stream().filter(e -> Objects.isNull(e.getSupplierType())).collect(Collectors.toList());
@@ -3004,21 +3008,26 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, String> supplierMap = logisticsSupplierEntityList.stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getSupplierName));
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = this.listBySourceIds(billIds, DetailReconciliationTypeEnum.ACTUAL.getCode(), SupplierTypeEnum.LOGISTICS.getCode(), null);
         CountDownLatch latch = new CountDownLatch(taskDetailList.size());
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failedCount = new AtomicInteger(0);
         for (TmsAsyncTaskDetailEntity detail : taskDetailList) {
             String taskDetailId = detail.getId();
             String businessId = detail.getBusinessId();
             try {
                 costAllocationPool.execute(() -> {
                     try {
-                        if (asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
-                            processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
-                            asyncTaskDetailRecordService.updateDetail(taskDetailId,
-                                    TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        if (!asyncTaskDetailRecordService.tryClaimDetailForExecution(taskDetailId)) {
+                            log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
+                            return;
                         }
+                        processSingleTask(map, businessId, startDate, endDate, supplierMap, detailEntityList);
+                        asyncTaskDetailRecordService.updateDetail(taskDetailId,
+                                TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "");
+                        successCount.incrementAndGet();
                     } catch (Exception e) {
                         log.error("处理任务失败 taskDetailId: {}", taskDetailId, e);
-                        // 统一处理任务失败状态更新
                         asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, e);
+                        failedCount.incrementAndGet();
                     } finally {
                         latch.countDown();
                     }
@@ -3026,6 +3035,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             } catch (RejectedExecutionException ex) {
                 log.error("任务提交失败 taskDetailId: {}", taskDetailId, ex);
                 asyncTaskRecordService.updateTaskDetailFailure(taskDetailId, ex);
+                failedCount.incrementAndGet();
                 latch.countDown();
             }
         }
@@ -3033,39 +3043,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             boolean completed = latch.await(timeoutSeconds, TimeUnit.SECONDS);
             if (!completed) {
                 log.warn("头程对账批次执行超时，taskId: {}, timeoutSeconds: {}", taskDetailList.get(0).getMainId(), timeoutSeconds);
-                markUnfinishedBatchDetailsFailed(taskDetailList, "批次执行超时");
+                failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                    taskDetailList, "批次执行超时"));
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("任务等待中断", e);
-            markUnfinishedBatchDetailsFailed(taskDetailList, "任务等待中断");
+            failedCount.addAndGet(asyncTaskDetailRecordService.markUnfinishedBatchDetailsFailed(
+                taskDetailList, "任务等待中断"));
         }
-        int failedCount = asyncTaskDetailRecordService.lambdaQuery()
-                .eq(TmsAsyncTaskDetailEntity::getMainId, taskDetailList.get(0).getMainId())
-                .in(TmsAsyncTaskDetailEntity::getId, taskDetailList.stream().map(TmsAsyncTaskDetailEntity::getId).collect(Collectors.toList()))
-                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
-                .count();
-        return new TmsAsyncTaskRecordDTO.BatchProcessResult(taskDetailList.size() - failedCount, failedCount);
-    }
-
-    private void markUnfinishedBatchDetailsFailed(List<TmsAsyncTaskDetailEntity> taskDetailList, String errorMsg) {
-        if (CollUtil.isEmpty(taskDetailList)) {
-            return;
-        }
-        List<String> detailIds = taskDetailList.stream()
-                .map(TmsAsyncTaskDetailEntity::getId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(detailIds)) {
-            return;
-        }
-        asyncTaskDetailRecordService.lambdaUpdate()
-                .set(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
-                .set(TmsAsyncTaskDetailEntity::getEndTime, LocalDateTime.now())
-                .set(TmsAsyncTaskDetailEntity::getErrorData, errorMsg)
-                .in(TmsAsyncTaskDetailEntity::getId, detailIds)
-                .notIn(TmsAsyncTaskDetailEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), TmsAsyncTaskRecordStatusEnum.FAILED.getCode()))
-                .update();
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(successCount.get(), failedCount.get());
     }
 
     private void processSingleTask(Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> map, String businessId, LocalDate startDate, LocalDate endDate, Map<String, String> supplierMap, List<TmsFirstMileReconciliationDetailEntity> detailEntityList) {
