@@ -48,6 +48,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
 
+    /**
+     * 字典批量查询单批最大 ID 数量。该接口对外通过 Feign 暴露（{@link com.erp.server.wms.controller.feign.DictBasicFeignController}），
+     * 限制单次 IN 查询规模，避免恶意或异常调用造成大 IN 查询打到数据库。
+     */
+    private static final int LIST_VALUE_MAP_MAX_BATCH_SIZE = 200;
+
 	@Override
     @CacheEvict(
             cacheNames = RedisCacheConstants.WMS_DICT_BASIC_BY_TYPE,
@@ -239,9 +245,17 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CharSequenceUtil.isBlank(type) || CollectionUtils.isEmpty(ids)) {
             return Collections.emptyMap();
         }
+        if (ids.size() > LIST_VALUE_MAP_MAX_BATCH_SIZE) {
+            log.warn("listValueMapByTypeAndIds 单次查询数量超过上限, type={}, size={}, max={}",
+                    type, ids.size(), LIST_VALUE_MAP_MAX_BATCH_SIZE);
+            throw new com.common.core.exception.ServiceException(
+                    CharSequenceUtil.format("字典批量查询单次最多支持 {} 条, 当前 {} 条",
+                            LIST_VALUE_MAP_MAX_BATCH_SIZE, ids.size()));
+        }
+        List<String> distinctIds = ids.stream().distinct().collect(Collectors.toList());
         List<DictBasicEntity> list = this.lambdaQuery()
                 .eq(DictBasicEntity::getType, type)
-                .in(DictBasicEntity::getId, ids)
+                .in(DictBasicEntity::getId, distinctIds)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyMap();
