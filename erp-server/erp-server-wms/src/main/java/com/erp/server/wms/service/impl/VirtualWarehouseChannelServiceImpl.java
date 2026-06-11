@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -26,6 +27,7 @@ import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
 import com.erp.model.wms.entity.VirtualWarehouseChannelPartitionRefEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseChannelMapper;
@@ -62,6 +64,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private CustomerFeign customerFeign;
+    @Resource
+    private DictBasicService dictBasicService;
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 批量新增
@@ -100,6 +106,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         //新增数据
         if (CollectionUtils.isNotEmpty(allChannelList)) {
             List<VirtualWarehouseChannelEntity> batchSaveDTOList = handleData(batchUpdateDTO, allChannelList);
+            checkSameWarehouseB2bForeignPlatform(virtualWarehouseId, batchSaveDTOList);
             //检查已启用虚拟仓是否存在重合配置 多虚拟仓校验
             if (Objects.nonNull(warehouseEntity.getDisabled()) && Boolean.FALSE.equals(warehouseEntity.getDisabled())){
                 checkBoundChannel(batchSaveDTOList, Boolean.TRUE);
@@ -533,6 +540,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         }
         //比较数据
         List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO = buildBaseChannelDTO(curChannelEntitieList,hasPartitionIds);
+        curChannelDTO = filterAllScopeSkipCheckPlatform(curChannelDTO);
+        if (CollUtil.isEmpty(curChannelDTO)) {
+            return;
+        }
         //获取当前已经绑定的所有渠道
         List<VirtualWarehouseDTO.BindChannelDto> allBindedList = baseMapper.getBindedDictPlatformNoGroup();
         if (CollUtil.isEmpty(allBindedList)) {
@@ -544,6 +555,69 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             throw new ServiceException(msg.toString());
         }
 
+    }
+
+    /**
+     * 同一实体仓下不同虚拟仓不可重复配置B2B海外线下平台。
+     */
+    @Override
+    public void checkSameWarehouseB2bForeignPlatform(String virtualWarehouseId, List<VirtualWarehouseChannelEntity> curChannelEntitieList) {
+        if (CollUtil.isEmpty(curChannelEntitieList)) {
+            return;
+        }
+        String b2bForeignPlatform = PlatformDictEnum.B2B_FOREIGN.getCode();
+        boolean hasB2bForeign = curChannelEntitieList.stream()
+                .anyMatch(e -> CharSequenceUtil.equals(b2bForeignPlatform, e.getDictPlatform()));
+        if (!hasB2bForeign) {
+            return;
+        }
+        List<VirtualWarehouseDTO.B2bForeignConflictDTO> conflictList = baseMapper.findB2bForeignConflicts(virtualWarehouseId, b2bForeignPlatform);
+        if (CollUtil.isEmpty(conflictList)) {
+            return;
+        }
+        Set<String> msgSet = buildSameWarehouseB2bForeignMessages(b2bForeignPlatform, conflictList);
+        throw new ServiceException(String.join("；", msgSet));
+    }
+
+    private Set<String> buildSameWarehouseB2bForeignMessages(String b2bForeignPlatform,
+                                                             List<VirtualWarehouseDTO.B2bForeignConflictDTO> conflictList) {
+        // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，这里不会每次直查字典表。
+        List<com.erp.model.wms.entity.DictBasicEntity> platformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.SALES_PLATFORM.getType()));
+        String platformName = platformList.stream()
+                .filter(obj -> CharSequenceUtil.equals(obj.getValue(), b2bForeignPlatform))
+                .map(com.erp.model.wms.entity.DictBasicEntity::getName)
+                .findFirst()
+                // 字典未配置时回退 code，可读性较差；友好名称依赖字典维护。
+                .orElse(b2bForeignPlatform);
+        Set<String> msgSet = new LinkedHashSet<>();
+        for (VirtualWarehouseDTO.B2bForeignConflictDTO conflict : conflictList) {
+            String format = MessageUtils.getMessage(ApiError.VM_SAME_WAREHOUSE_B2B_FOREIGN_ERROR,
+                    CharSequenceUtil.blankToDefault(conflict.getWarehouseName(), CharSequenceUtil.EMPTY),
+                    CharSequenceUtil.blankToDefault(conflict.getVirtualWarehouseName(), CharSequenceUtil.EMPTY),
+                    platformName);
+            msgSet.add(format);
+        }
+        return msgSet;
+    }
+
+    /**
+     * 字典配置的平台在店铺和军区均为全部时，跳过重复绑定校验。
+     */
+    private List<VirtualWarehouseDTO.BindChannelDto> filterAllScopeSkipCheckPlatform(List<VirtualWarehouseDTO.BindChannelDto> curChannelDTO) {
+        // DictBasicService#getByKeyList 已按 type 使用 Redis 缓存，避免保存/启用渠道时反复查库。
+        List<String> skipPlatformList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicTypeEnum.VM_CHANNEL_SKIP_CHECK_PLATFORM.getType())).stream()
+                .map(com.erp.model.wms.entity.DictBasicEntity::getValue)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skipPlatformList)) {
+            return curChannelDTO;
+        }
+        return curChannelDTO.stream()
+                .filter(e -> !(skipPlatformList.contains(e.getDictPlatform())
+                        && CharSequenceUtil.isBlank(e.getRelationId())
+                        && CharSequenceUtil.isBlank(e.getPartitionId())))
+                .collect(Collectors.toList());
     }
 
     /**
