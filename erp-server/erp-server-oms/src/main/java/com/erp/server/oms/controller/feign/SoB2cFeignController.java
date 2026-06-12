@@ -642,6 +642,11 @@ public class SoB2cFeignController extends BaseController {
          soB2cLogisticsService.updateTrackNoByTransportNo(trackDTOS);
         return Boolean.TRUE;
     }
+
+    @PostMapping("/updateTrackNoByTransportNoWithResult")
+    public List<BatchResultDTO> updateTrackNoByTransportNoWithResult(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS) {
+        return soB2cLogisticsService.updateTrackNoByTransportNoWithResult(trackDTOS);
+    }
     /**
      * 根据销售订单更新跟踪单号
      * @param soId
