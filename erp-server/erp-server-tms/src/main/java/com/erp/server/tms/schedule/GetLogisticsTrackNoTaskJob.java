@@ -111,6 +111,7 @@ public class GetLogisticsTrackNoTaskJob {
                         continue;
                     }
                     List<LogisticsBillDTO.TrackDTO> updateList = new ArrayList<>(resultList.size());
+                    Map<String, LogisticsBillDTO.PrintLogisticsWaybillDTO> labelMessageMap = new HashMap<>();
                     for (LogisticsOrderResponseVO item : resultList) {
                         SoB2cLogisticsDTO.TrackNoDTO trackNoDTO = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).findFirst().orElse(null);
 
@@ -122,7 +123,6 @@ public class GetLogisticsTrackNoTaskJob {
                                     .id(b2cLogisticsId)
                                     .build();
                             updateList.add(dto);
-                            //下单成功发送异步请求保存面单
                             if (Objects.nonNull(isAliExpress) && isAliExpress && Objects.nonNull(trackNoDTO)){
                                 LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
                                 waybillDTO.setChannelId(trackNoDTO.getLogisticsChannelId());
@@ -130,13 +130,27 @@ public class GetLogisticsTrackNoTaskJob {
                                 waybillDTO.setDeliveryNo(trackNoDTO.getSoCode());
                                 waybillDTO.setShopId(trackNoDTO.getShopId());
                                 waybillDTO.setTransportNo(trackNoDTO.getTransportNo());
-                                mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+                                labelMessageMap.put(b2cLogisticsId, waybillDTO);
                             }
                         }
 
                     }
                     if (CollectionUtils.isNotEmpty(updateList)) {
-                        soB2cFeign.updateTrackNoByTransportNo(updateList);
+                        for (LogisticsBillDTO.TrackDTO updateDTO : updateList) {
+                            try {
+                                Boolean updateSuccess = soB2cFeign.updateTrackNoByTransportNo(Collections.singletonList(updateDTO));
+                                if (!Boolean.TRUE.equals(updateSuccess)) {
+                                    log.warn("更新销售订单物流跟踪号失败，跳过异步获取平台面单，updateDTO: {}", updateDTO);
+                                    continue;
+                                }
+                                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = labelMessageMap.get(updateDTO.getId());
+                                if (Objects.nonNull(waybillDTO)) {
+                                    mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+                                }
+                            } catch (Exception updateException) {
+                                log.error("更新销售订单物流跟踪号异常，物流信息ID: {}, 物流单号: {}", updateDTO.getId(), updateDTO.getTransportNo(), updateException);
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     log.error("查询物流跟踪号异常>>>>{}", e);
