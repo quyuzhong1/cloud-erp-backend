@@ -464,6 +464,9 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/updateTrackNoByTransportNo")
     Boolean updateTrackNoByTransportNo(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
+
+    @PostMapping("/feign/soB2c/updateTrackNoByTransportNoWithResult")
+    List<BatchResultDTO> updateTrackNoByTransportNoWithResult(@RequestBody List<LogisticsBillDTO.TrackDTO> trackDTOS);
     /**
      * 根据平台单号和平台查询B2C销售订单
      *
