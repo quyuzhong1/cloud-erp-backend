@@ -193,7 +193,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 注意：模板整本读入内存、展开多 sheet 后再整本 {@code wb.write} 为 byte[]，峰值内存与
      * 「模板复杂度 × 数据 sheet 数」正相关。数据行已流式写盘，但模板展开阶段仍非流式，
      * 故须在配置层约束 {@code maxTemplateDataSheets}（{@link #maxTemplateDataSheets()}）与单 sheet 行数
-     * （{@link #maxDataRowsPerSheet()}），避免复杂模板 + 高 sheet 数导致 OOM；超大导出场景的 POI 流式模板展开作为后续优化。
+     * （{@link #maxDataRowsPerSheet()}）；并在 {@link #expandTemplateWithDataSheetCopies} 入口以
+     * {@code file.storage.maxTemplateExpandBytes}（默认 300MB）对「模板字节 × sheet 数」做固定上界保护、早失败避免 OOM。
+     * 超大导出场景的 POI 流式模板展开作为后续优化。
      */
     private byte[] readClasspathTemplateBytes(String excelPath) throws IOException {
         ClassPathResource resource = new ClassPathResource(excelPath);
@@ -222,6 +224,16 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
         if (dataSheetCount <= 0) {
             throw new ServiceException("dataSheetCount 必须大于 0");
+        }
+        // 模板展开为非流式：POI 整本读入并克隆 dataSheetCount 张 sheet 后再整本写出，
+        // 峰值内存与「模板字节 × sheet 数」正相关（POI 对象模型放大系数另计）。此处以「展开足迹」固定上界早失败，
+        // 把「复杂模板 × 高 sheet 数」从开放风险收成可证明上界，避免 OOM；上界由 file.storage.maxTemplateExpandBytes 配置（默认 300MB）。
+        long expandFootprint = (long) templateBytes.length * dataSheetCount;
+        long maxExpandBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
+        if (expandFootprint > maxExpandBytes) {
+            throw new ServiceException("导出模板展开预估占用过大（模板≈" + (templateBytes.length / 1024)
+                    + "KB × " + dataSheetCount + " 张 ≈ " + (expandFootprint / 1024 / 1024) + "MB，上限 "
+                    + (maxExpandBytes / 1024 / 1024) + "MB），请简化模板、缩小导出范围或调大 file.storage.maxTemplateExpandBytes。");
         }
         int source = templateSourceSheetIndex();
         try (ByteArrayInputStream bin = new ByteArrayInputStream(templateBytes);
@@ -383,13 +395,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     }
 
     private int writeKeysetBatches(File outFile, P params, String excelPath) throws IOException {
-        ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
 
         // 先取首页以判定数据规模：EasyExcel 模板写入需在打开 Writer 前确定 sheet 数、写入中无法再加 sheet。
         // 单页即结束（!hasNext）的小数据量导出按实际行数精确展开（通常 1 张），避免无脑按 keysetPreparedSheetCount()
         // 上限预克隆过多 sheet 造成的模板展开内存开销；多页（hasNext）导出因无法中途加 sheet，仍保守预展开以保证容量不回退。
-        KeysetPagingVO<T> vo = fetchKeyset(params, null, getPageSize());
+        KeysetPagingVO<T> vo = requirePagingResult(fetchKeyset(params, null, getPageSize()), "游标 lastId=null");
         List<T> rawList = vo.getList();
         int firstBatchRows = (rawList == null) ? 0 : rawList.size() - nullElementCount(rawList);
         int preparedSheets = vo.isHasNext()
@@ -409,7 +420,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         cursor.dataSheetIndexes = expandedTemplate.dataSheetIndexes;
         WriteHandler[] handlers = getWriteHandler().toArray(new WriteHandler[0]);
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
-            ExcelWriter excelWriter = excelPrintUtils.openTemplateListWriter(fos, expandedTemplate.templateBytes, handlers);
+            ExcelWriter excelWriter = ExcelPrintUtils.openTemplateListWriter(fos, expandedTemplate.templateBytes, handlers);
             try {
                 cursor.writeSheet = buildCurrentDataSheet(cursor);
                 while (true) {
@@ -440,7 +451,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     if (!vo.isHasNext()) {
                         break;
                     }
-                    vo = fetchKeyset(params, lastId, getPageSize());
+                    vo = requirePagingResult(fetchKeyset(params, lastId, getPageSize()), "游标 lastId=" + lastId);
                     rawList = vo.getList();
                 }
             } finally {
@@ -478,6 +489,39 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         return listSeqData(resolveExportParams(fileTask));
     }
 
+    /**
+     * 分页结果统一判空（出口守卫）。
+     * <p>
+     * 上游分页 Feign / 查询返回 {@code null} 视为查询失败，统一在分页主流程（OFFSET / KEYSET / {@code listSeqData}）
+     * 调用点集中拦截并抛出语义一致的 {@link ServiceException}，避免各调用点重复 {@code if (vo == null)} 与文案分叉。
+     * <p>
+     * <strong>因此各子类的 {@code getPageData} / {@code fetchKeyset} 实现无需各自对返回值判空</strong>
+     * （保持 Handler 轻薄、错误文案统一）；仅当子类走非标准取数路径（如主从派生 {@code fetchMasterPage}）时，
+     * 才在其自有方法内按需判空。
+     *
+     * @param vo          分页结果（{@link PagingVO} 或 {@link KeysetPagingVO}）
+     * @param pageLocator 定位信息（如 {@code "页码=3"} 或 {@code "游标 lastId=100"}），用于错误排查
+     */
+    private <V> V requirePagingResult(V vo, String pageLocator) {
+        if (vo == null) {
+            throw new ServiceException("导出分页查询失败，查询为空：" + pageLocator);
+        }
+        return vo;
+    }
+
+    /**
+     * 是否已到末页（适用于任意 {@link #getFirstPage()} 基准，0 基 / 1 基均正确）。
+     * <p>
+     * 已覆盖行数 = {@code (currPage - getFirstPage() + 1) * pageSize}，{@code >= totalCount} 即末页。
+     * 统一公式取代原「firstPage==1 / else 两套硬编码分支」：原写法仅对 firstPage 为 1 或 0 成立，
+     * 若子类将 {@link #getFirstPage()} 覆写为其它值会漏页或多拉页；此处一次性消除该隐患。
+     * 用 {@code long} 累计避免大 totalCount 下的 int 溢出。
+     */
+    private boolean isLastPage(int currPage, int totalCount) {
+        long covered = (long) (currPage - getFirstPage() + 1) * getPageSize();
+        return totalCount <= covered;
+    }
+
     private int writeOffsetBatches(File outFile, P params, String excelPath) throws IOException {
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         PagingDTO<P> dto = new PagingDTO<>();
@@ -485,10 +529,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         dto.setCurrPage(getFirstPage());
         dto.setParams(params);
 
-        PagingVO<T> firstData = getPageData(dto);
-        if (firstData == null) {
-            throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
-        }
+        PagingVO<T> firstData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
         int totalCount = firstData.getTotalCount();
         int dataSheets = computeDataSheetCountForTotalRows(totalCount);
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
@@ -524,20 +565,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                             clearBatchIfDetachedCopy(batch, rawPage);
                         }
                     }
-                    if (1 == getFirstPage()) {
-                        if (totalCount <= dto.getCurrPage() * getPageSize()) {
-                            break;
-                        }
-                    } else {
-                        if (totalCount <= (dto.getCurrPage() + 1) * getPageSize()) {
-                            break;
-                        }
+                    if (isLastPage(dto.getCurrPage(), totalCount)) {
+                        break;
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
-                    pageData = getPageData(dto);
-                    if (pageData == null) {
-                        throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
-                    }
+                    pageData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
                 }
             } finally {
                 excelWriter.finish();
@@ -560,24 +592,15 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         int totalCount = 0;
         while (hasNext) {
             dto.setParams(p);
-            PagingVO<T> data = getPageData(dto);
-            if (null == data){
-                throw new ServiceException("导出分页查询失败，查询为空：页码=" + dto.getCurrPage());
-            }
+            PagingVO<T> data = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
             if (!CollectionUtils.isEmpty(data.getList())) {
                 dataList.addAll((Collection<? extends T>) data.getList());
             }
             if (totalCount == 0) {
                 totalCount = data.getTotalCount();
             }
-            if (1 == getFirstPage()) {
-                if (totalCount <= dto.getCurrPage() * getPageSize()) {
-                    hasNext = false;
-                }
-            } else {
-                if (totalCount <= (dto.getCurrPage() + 1) * getPageSize()) {
-                    hasNext = false;
-                }
+            if (isLastPage(dto.getCurrPage(), totalCount)) {
+                hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
         }

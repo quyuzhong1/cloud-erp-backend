@@ -60,17 +60,18 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     @Override
     protected String getExcelPath(ProductSearchDTO.ExportDTO params) {
         List<Integer> exportDataList = params.getExportDataList();
-        if (exportDataList.size() == 2) {
+        boolean exportProduct = exportDataList.contains(EXPORT_PRODUCT);
+        boolean exportTask = exportDataList.contains(EXPORT_TASK);
+        if (exportProduct && exportTask) {
             return "excel/plm/productDevelop.xlsx";
         }
-        Integer flag = exportDataList.get(0);
-        if (EXPORT_PRODUCT.equals(flag)) {
+        if (exportProduct) {
             return "excel/plm/product.xlsx";
         }
-        if (EXPORT_TASK.equals(flag)) {
+        if (exportTask) {
             return "excel/plm/productTask.xlsx";
         }
-        throw new ServiceException("导出数据类型不合法：" + flag);
+        throw new ServiceException("导出数据类型不合法：" + exportDataList);
     }
 
     @Override
