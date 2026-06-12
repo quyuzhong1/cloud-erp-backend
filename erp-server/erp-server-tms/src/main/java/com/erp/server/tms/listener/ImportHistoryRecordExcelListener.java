@@ -131,10 +131,6 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         if (Objects.nonNull(importCount) && count < importCount){
             return;
         }
-        //无表头数据报错
-        if (ObjectUtil.isEmpty(headMap)) {
-            throw new ServiceException(ApiError.COMMON_FILE_HEAD_READ_HEAD_FAIL);
-        }
 
         //当导入的最后一列数据都是空时map无值导致表头size和map.size不一致，所以需要添加表头一致的数据
         for (Map.Entry<Integer,String> entry : headMap.entrySet()) {
