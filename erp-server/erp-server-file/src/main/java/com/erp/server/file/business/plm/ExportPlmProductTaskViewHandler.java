@@ -34,8 +34,14 @@ public class ExportPlmProductTaskViewHandler extends AbstractPageFileEventHandle
         return EXPORT_PLM_TASK_VIEW;
     }
 
+    /**
+     * 参数驱动模板处理器：运行期只走 {@link #getExcelPath(ProductTaskViewSearchDTO)}
+     * （父类 {@link AbstractPageFileEventHandler#defaultPagingExportHandle} → {@code getExcelPath(P)}）。
+     * 无参版本不可达，仅为兼容 {@code AbstractFileEventHandler} 的旧抽象签名而保留，禁止调用。
+     */
+    @Deprecated
     @Override
-    public String getExcelPath() {
+    public final String getExcelPath() {
         throw new UnsupportedOperationException("分页导出请使用 getExcelPath(P)");
     }
 

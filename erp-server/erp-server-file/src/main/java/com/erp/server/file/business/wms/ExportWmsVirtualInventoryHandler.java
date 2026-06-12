@@ -45,7 +45,7 @@ public class ExportWmsVirtualInventoryHandler extends AbstractMasterDerivedSheet
     protected List<java.util.function.Function<List<VirtualInventoryDTO.ListDTO>, List<?>>> buildSheetExtractors() {
         List<java.util.function.Function<List<VirtualInventoryDTO.ListDTO>, List<?>>> extractors = new ArrayList<>(2);
         // 主表透传：返回行数须与主分页切片一致（见 MultiSheetTemplateWriter#fillMasterDerivedBatch），不可改为返回空列表
-        extractors.add(mainSlice -> new ArrayList<>(mainSlice));
+        extractors.add(ArrayList::new);
         extractors.add(mainRows -> {
             List<VirtualInventoryDTO.ListDetailDTO> detailRows = new ArrayList<>();
             for (VirtualInventoryDTO.ListDTO row : mainRows) {

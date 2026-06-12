@@ -22,15 +22,7 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
     private ObjectMapper objectMapper;
 
     @Override
-    public void handle(FileTask fileTask) {
-        List<T> list = getData(fileTask);
-        String displayName = buildDownloadFileName(fileTask);
-        ExportTempFilesHandler.exportToTempAndUpload(fileTask, ".xlsx", displayName, outFile -> {
-            new ExcelPrintUtils().patchExportListToFile(outFile, list, getExcelPath(),
-                    getWriteHandler().toArray(new WriteHandler[0]));
-            return list.size();
-        });
-    }
+    public abstract void handle(FileTask fileTask);
 
     protected String buildDownloadFileName(FileTask fileTask) {
         return buildDownloadFileName(fileTask, getExcelPath());

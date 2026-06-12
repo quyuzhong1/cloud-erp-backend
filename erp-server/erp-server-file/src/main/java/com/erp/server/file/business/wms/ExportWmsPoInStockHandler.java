@@ -20,8 +20,14 @@ public class ExportWmsPoInStockHandler extends AbstractPageFileEventHandler<PoIn
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
+    /**
+     * 参数驱动模板处理器：运行期只走 {@link #getExcelPath(PoInstockDTO.ExportParamDTO)}
+     * （父类 {@link AbstractPageFileEventHandler#defaultPagingExportHandle} → {@code getExcelPath(P)}）。
+     * 无参版本不可达，仅为兼容 {@code AbstractFileEventHandler} 的旧抽象签名而保留，禁止调用。
+     */
+    @Deprecated
     @Override
-    public String getExcelPath() {
+    public final String getExcelPath() {
         throw new UnsupportedOperationException("分页导出请使用 getExcelPath(P)");
     }
 

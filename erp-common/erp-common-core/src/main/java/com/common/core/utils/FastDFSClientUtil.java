@@ -443,8 +443,8 @@ public class FastDFSClientUtil {
             };
             return uploadFile2Client(size, sender, fileName, metaList);
         } catch (Exception e) {
-            log.error("streamUploadFile failed, fileName={}", fileName, e);
-            throw new ServiceException(ApiError.FILE_UPLOAD_FAILED);
+            // 保留 cause，便于全局异常处理器/线上日志定位根因；对外仍只暴露 FILE_UPLOAD_FAILED 文案，不泄露内部路径
+            throw new ServiceException(e, ApiError.FILE_UPLOAD_FAILED);
         }
     }
 }

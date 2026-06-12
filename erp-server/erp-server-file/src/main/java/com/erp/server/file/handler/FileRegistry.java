@@ -57,6 +57,14 @@ public class FileRegistry {
     private static Integer maxPageSize;
 
     /**
+     * 模板展开足迹（模板字节 × 数据 sheet 数）硬上界，单位字节。
+     * 用于在 POI 整本克隆多 sheet 前对峰值内存做固定上界保护，超出则早失败抛 {@link ServiceException}，避免 OOM。
+     * 默认全局指定：300MB（314572800）。
+     */
+    @Getter
+    private static Long maxTemplateExpandBytes;
+
+    /**
      * 冒号后无内容表示「缺省属性时用空字符串」；业务侧应对空白串再回退到 {@code java.io.tmpdir}（见 ExportTempFilesHandler 等）。
      * 若需缺省为 null，可改为 {@code ${file.storage.tmpdir:#{null}}}（SpEL）。
      */
@@ -78,6 +86,11 @@ public class FileRegistry {
     @Value("${file.storage.maxPageSize:5000}")
     public void setMaxPageSize(Integer maxPageSize){
         FileRegistry.maxPageSize = maxPageSize;
+    }
+
+    @Value("${file.storage.maxTemplateExpandBytes:314572800}")
+    public void setMaxTemplateExpandBytes(Long maxTemplateExpandBytes){
+        FileRegistry.maxTemplateExpandBytes = maxTemplateExpandBytes;
     }
 
     /**
@@ -103,6 +116,14 @@ public class FileRegistry {
     public static int maxSheetNumOrDefault() {
         Integer configured = maxSheetNum;
         return configured == null || configured < 1 ? 50 : configured;
+    }
+
+    /**
+     * 模板展开足迹硬上界（字节），未注入或非法（&lt;1）时回退 300MB（314572800）。
+     */
+    public static long maxTemplateExpandBytesOrDefault() {
+        Long configured = maxTemplateExpandBytes;
+        return configured == null || configured < 1 ? 314572800L : configured;
     }
 
     @PostConstruct
