@@ -195,8 +195,11 @@ public class CleanFileTaskJob {
                     continue;
                 }
                 BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-                LocalDateTime createTime = LocalDateTime.ofInstant(attributes.creationTime().toInstant(), ZoneId.systemDefault());
-                if (!createTime.isBefore(expireTime)) {
+                // 临时文件为「一次写入、不再更新」，用 lastModifiedTime 判断过期：
+                // CentOS/ext 文件系统的 creationTime(birth time) 经 Java NIO 常不可靠（可能退化为 mtime 或 epoch），
+                // 会导致过期清理不及时或误判删除时机，故改用稳定的 lastModifiedTime。
+                LocalDateTime fileTime = LocalDateTime.ofInstant(attributes.lastModifiedTime().toInstant(), ZoneId.systemDefault());
+                if (!fileTime.isBefore(expireTime)) {
                     continue;
                 }
                 if (isProcessingTempFile(path, processingTaskIds)) {
