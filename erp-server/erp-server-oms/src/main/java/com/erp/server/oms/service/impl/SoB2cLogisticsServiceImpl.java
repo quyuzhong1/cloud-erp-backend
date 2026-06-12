@@ -518,6 +518,28 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
+    public List<BatchResultDTO> updateTrackNoByTransportNoWithResult(List<LogisticsBillDTO.TrackDTO> trackDTOS) {
+        if (CollectionUtils.isEmpty(trackDTOS)) {
+            return new ArrayList<>();
+        }
+        List<BatchResultDTO> resultList = new ArrayList<>(trackDTOS.size());
+        for (LogisticsBillDTO.TrackDTO trackDTO : trackDTOS) {
+            if (Objects.isNull(trackDTO) || StringUtils.isBlank(trackDTO.getTransportNo()) || StringUtils.isBlank(trackDTO.getTrackNo())) {
+                resultList.add(BatchResultDTO.fail(Objects.nonNull(trackDTO) ? trackDTO.getId() : "", "", "物流单号或跟踪号为空"));
+                continue;
+            }
+            try {
+                baseMapper.updateTrackNoByTransportNo(Collections.singletonList(trackDTO));
+                resultList.add(BatchResultDTO.success(trackDTO.getId(), trackDTO.getTransportNo(), "更新跟踪号成功"));
+            } catch (Exception e) {
+                log.error("更新销售订单物流跟踪号异常，物流信息ID: {}, 物流单号: {}", trackDTO.getId(), trackDTO.getTransportNo(), e);
+                resultList.add(BatchResultDTO.fail(trackDTO.getId(), trackDTO.getTransportNo(), e.getMessage()));
+            }
+        }
+        return resultList;
+    }
+
+    @Override
     public void updateLogisticsFee(String b2cSoId, BigDecimal totalShippingCost, String currency) {
         if (CharSequenceUtil.isBlank(b2cSoId) || Objects.isNull(totalShippingCost) || CharSequenceUtil.isBlank(currency)){
             return;

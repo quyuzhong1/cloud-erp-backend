@@ -3,6 +3,7 @@ package com.erp.server.tms.schedule;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -77,6 +78,19 @@ public class GetLogisticsTrackNoTaskJob {
         queryDTO.setDictPlatformList(dictPlatformList);
         //获取到了为空的跟踪单号
         List<SoB2cLogisticsDTO.TrackNoDTO> list = soB2cFeign.listTrackNoEmptyList(queryDTO);
+        if (CollectionUtils.isEmpty(list)) {
+            XxlJobHelper.log("====本次没有需要获取物流跟踪号的数据====");
+            return;
+        }
+        list = list.stream()
+                .filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getId()))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(SoB2cLogisticsDTO.TrackNoDTO::getId, e -> e, (oldValue, newValue) -> oldValue, LinkedHashMap::new),
+                        map -> new ArrayList<>(map.values())));
+        if (CollectionUtils.isEmpty(list)) {
+            XxlJobHelper.log("====本次需要获取物流跟踪号的数据去重后为空====");
+            return;
+        }
         List<String> channelIdList = list.stream().map(SoB2cLogisticsDTO.TrackNoDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.LogisticsPlatformDTO> platformList = logisticsChannelService.listChannelPlatform(channelIdList);
         //平台分组
@@ -136,19 +150,19 @@ public class GetLogisticsTrackNoTaskJob {
 
                     }
                     if (CollectionUtils.isNotEmpty(updateList)) {
-                        for (LogisticsBillDTO.TrackDTO updateDTO : updateList) {
-                            try {
-                                Boolean updateSuccess = soB2cFeign.updateTrackNoByTransportNo(Collections.singletonList(updateDTO));
-                                if (!Boolean.TRUE.equals(updateSuccess)) {
-                                    log.warn("更新销售订单物流跟踪号失败，跳过异步获取平台面单，updateDTO: {}", updateDTO);
-                                    continue;
-                                }
-                                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = labelMessageMap.get(updateDTO.getId());
-                                if (Objects.nonNull(waybillDTO)) {
-                                    mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
-                                }
-                            } catch (Exception updateException) {
-                                log.error("更新销售订单物流跟踪号异常，物流信息ID: {}, 物流单号: {}", updateDTO.getId(), updateDTO.getTransportNo(), updateException);
+                        List<BatchResultDTO> updateResults = soB2cFeign.updateTrackNoByTransportNoWithResult(updateList);
+                        if (CollectionUtils.isEmpty(updateResults)) {
+                            log.warn("更新销售订单物流跟踪号返回结果为空，跳过异步获取平台面单，updateList: {}", updateList);
+                            continue;
+                        }
+                        for (BatchResultDTO updateResult : updateResults) {
+                            if (!Boolean.TRUE.equals(updateResult.getSuccess())) {
+                                log.warn("更新销售订单物流跟踪号失败，跳过异步获取平台面单，updateResult: {}", updateResult);
+                                continue;
+                            }
+                            LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = labelMessageMap.get(updateResult.getId());
+                            if (Objects.nonNull(waybillDTO)) {
+                                mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
                             }
                         }
                     }
