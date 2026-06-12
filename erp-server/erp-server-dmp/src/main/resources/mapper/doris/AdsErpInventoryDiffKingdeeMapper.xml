@@ -121,7 +121,9 @@
         aeidk.kingdee_instock_intransit_qty AS kingdeeInstockIntransitQty,
         aeidk.diff_closing_intransit_qty AS diffClosingIntransitQty,
         aeidk.diff_closing_qty AS diffClosingQty,
-        aeidk.remark AS remark
+        aeidk.remark AS remark,
+        aeidk.finish_time AS finishTime,
+        aeidk.exec_status_name AS execStatusName
         FROM ads_erp_inventory_diff_kingdee aeidk
         WHERE ${params.sqlMap.default}
         and aeidk.is_deleted = FALSE

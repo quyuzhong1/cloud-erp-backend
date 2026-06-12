@@ -131,5 +131,13 @@ public class SoB2cErrorFeignController extends BaseController {
     public List<SoB2cErrorEntity> listSoB2cErrorByMainIds(@RequestBody List<String> errorSoIds) {
         return soB2cErrorService.listSoB2cErrorByMainIds(errorSoIds);
     }
-
+    /**
+     * 获取异常信息
+     * @param
+     * @return
+     */
+    @PostMapping("/getByMainIdsAndType")
+    public List<SoB2cErrorEntity> getByMainIdsAndType(@RequestBody SoB2cErrorDTO.MainIdsDTO mainIdsDTO) {
+        return soB2cErrorService.getByMainIdsAndType(mainIdsDTO.getMainIds(),mainIdsDTO.getType());
+    }
 }

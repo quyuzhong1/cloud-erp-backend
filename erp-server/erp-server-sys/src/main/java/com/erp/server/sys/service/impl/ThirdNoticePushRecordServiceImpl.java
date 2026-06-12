@@ -186,9 +186,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
     private void fillList(List<ThirdNoticePushRecordDTO.ListDTO> records) {
 
-        List<DictBasicDTO.ViewDTO> viewDTOS = dictBasicService.listByType("thirdNoticeBusinessType");
+        List<DictBasicEntity> viewDTOS = dictBasicService.listByType("thirdNoticeBusinessType");
 
-        Map<String, String> map = viewDTOS.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName, (o1, o2) -> o1));
+        Map<String, String> map = viewDTOS.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
 
         for (ThirdNoticePushRecordDTO.ListDTO record : records) {
 

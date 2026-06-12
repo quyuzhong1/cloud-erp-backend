@@ -9,21 +9,22 @@ import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.LogisticsThirdChannelRefDetailEntity;
 import com.erp.model.tms.enums.LogisticsThirdChannelRefPushTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
-import com.erp.server.dmp.service.ForeignService;
 import com.sdk.tms.kuaidi100.model.request.Kuaidi100QueryParam;
 import com.sdk.tms.kuaidi100.model.response.Kuaidi100QueryResponse;
 import com.sdk.tms.kuaidi100.service.Kuaidi100Service;
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler {
 
-    private static final int DEFAULT_PAGE_SIZE = 30;
+    private static final int DEFAULT_PAGE_SIZE = 100;
     private static final String PAGE_SIZE_PARAM = "pageSize";
 
     @Resource
@@ -56,11 +57,10 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
 
     @Resource
     private Kuaidi100Service kuaidi100Service;
-
     @Resource
-    private ForeignService foreignService;
+    private MQProducerService mqProducerService;
     @Resource
-    private LogisticsFeign logisticsFeign;
+    private LogisticsBillFeign logisticsBillFeign;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -75,8 +75,6 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
 
         // 2. 构建查询条件
         int pageSize = getPageSizeValue(dmpInputApiInitRequest);
-        // 频率限制：拉取 30 分钟内未更新的单据
-        LocalDateTime updateTimeLimit = LocalDateTime.now().minusMinutes(60);
         // 轨迹时间范围（最近3个月）
         LocalDateTime trackStartTime = LocalDateTime.now().minusMonths(3);
 
@@ -87,13 +85,24 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                 .registerStatus(1) // 已注册
                 .trackEnable(true)
                 .trackTime(trackStartTime)
-                .trackEndTime(updateTimeLimit) // 过滤频率
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
 
-        // 3. 执行单号循环查询
-        List<LogisticsTrackDTO.UpdateTrackDTO> records = foreignService.listWaitingRegisterByConfig(query, query.getTrackQueryMode())
-                .stream().filter(e -> StringUtils.isNotBlank(e.getThirdChannelName()))
+        // 3. 执行单号查询（原始结果，未做渠道过滤）
+        List<LogisticsTrackDTO.UpdateTrackDTO> rawList = logisticsBillFeign.listRegisterByConfig(query, query.getTrackQueryMode());
+        if (CollUtil.isEmpty(rawList)) {
+            return Collections.emptyList();
+        }
+
+        // 推进游标：拉取瞬间即把本批全部单据 update_time 刷为 now，使其在 ORDER BY update_time 队列中轮到队尾，
+        // 避免查无渠道/查询失败的单据卡在队首导致重复拉取与积压。复用 Track123 的 topic/tag 与消费者，仅用于推进游标，与轨迹数据回写无关。
+        List<String> rawIds = rawList.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(rawIds)) {
+            mqProducerService.asyncClassMsg(RocketMqTopic.TMS_123_LOGISTICS_TRACK, RocketMqTagEnum.ASYNC_GET_TRACK123_LOGISTICS_TRACK.getName(), rawIds, "getTrack");
+        }
+
+        List<LogisticsTrackDTO.UpdateTrackDTO> records = rawList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getThirdChannelName()))
                 .collect(Collectors.toList());
         if (ObjectUtil.isEmpty(records)) {
             return Collections.emptyList();
@@ -114,27 +123,20 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
         //查询过滤单号开头配置
         List<DictBasicEntity> dictList =FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType,"trackNoFilterPrefix").list();
         List<String> prefixList = dictList.stream().map(DictBasicEntity::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        //设置为暂不查询
-        List<String> detailIds = new ArrayList<>();
-        List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList = new ArrayList<>();
-        List<LogisticsBillDetailDTO.BillDetailDTO> sucessList = new ArrayList<>();
 
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             String trackNo = getTrackNo(record);
             if (StrUtil.isBlank(trackNo)) {
-                detailIds.add(record.getId());
                 continue;
             }
             String companyCode = record.getThirdChannelName();
             if(StrUtil.isBlank(companyCode)){
-                detailIds.add(record.getId());
                 continue;
             }
             //根据配置过滤是否符合配置
             if (CollUtil.isNotEmpty(prefixList)){
                 //判断是否符合配置
                 if (prefixList.stream().anyMatch(trackNo::startsWith)){
-                    detailIds.add(record.getId());
                     continue;
                 }
             }
@@ -181,37 +183,10 @@ public class Kuaidi100LogisticsApiInitHandler implements DmpInputApiInitHandler 
                 DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
                 dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(response));
                 dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-//                // 成功
-//                if(Objects.equals(response.getStatus() ,"200")){
-//                    sucessList.add(LogisticsBillDetailDTO.BillDetailDTO.builder().trackNo(trackNo).platformOrderNo(record.getPlatformOrderNo()).build());
-//                }else {
-//                    // 失败
-//                    errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg(response.getMessage()).build());
-//                }
             }
         }
 
-//        // 5. 更新
-//        LogisticsTrackDTO.Kuaidi100Detail dto = new LogisticsTrackDTO.Kuaidi100Detail();
-//        if (CollUtil.isNotEmpty(detailIds)){
-//            dto.setDetailIds(detailIds);
-//        }
-//
-//        // 6. 更新注册手机号和关联关系
-//        List<LogisticsTrackDTO.UpdateTrackDTO> refList = records.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getThirdRefId()) && !detailIds.contains(e.getId())).collect(Collectors.toList());
-//        if (CollUtil.isNotEmpty(refList)){
-//            dto.setRefList(refList);
-//        }
-//        // 7. 更新物流轨迹成功
-//        if (CollUtil.isNotEmpty(sucessList)){
-//            dto.setSucessList(sucessList);
-//        }
-//        // 8. 更是物流单查询失败和原因
-//        if (CollUtil.isNotEmpty(errorList)){
-//            dto.setErrorList(errorList);
-//        }
-//        logisticsFeign.updateTrack(dto);
-
+        // 游标推进已在查询后通过 MQ 完成（刷 update_time）；轨迹数据回写由 DMP 输出链路异步处理，此处无需再回写。
         return dmpInputTaskInitDTOList;
     }
 

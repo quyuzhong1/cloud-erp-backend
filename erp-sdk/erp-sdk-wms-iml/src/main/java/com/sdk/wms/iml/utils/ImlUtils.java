@@ -1,11 +1,13 @@
 package com.sdk.wms.iml.utils;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.common.core.utils.Md5Util;
 import com.sdk.wms.iml.dto.ImlBaseResp;
 import com.sdk.wms.iml.soap.Ec;
@@ -21,6 +23,14 @@ import java.util.Map;
 @Slf4j
 @Component
 public class ImlUtils {
+
+    private static final String EMPTY_RESPONSE_MESSAGE = "IML接口返回为空";
+
+    private static void assertResponseNotBlank(String jsonStr) {
+        if (CharSequenceUtil.isBlank(jsonStr)) {
+            throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+        }
+    }
 
     private String getPreUrl(){
         if (BusinessCommonConstants.hasProfile("prod")) {
@@ -70,7 +80,14 @@ public class ImlUtils {
      */
     public static <T> ImlBaseResp<T> parseToImlResp(String jsonStr, Class<T> clazz) {
         try {
-            return JSON.parseObject(jsonStr, new TypeReference<ImlBaseResp<T>>(clazz) {});
+            assertResponseNotBlank(jsonStr);
+            ImlBaseResp<T> resp = JSON.parseObject(jsonStr, new TypeReference<ImlBaseResp<T>>(clazz) {});
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return ImlBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
@@ -85,7 +102,14 @@ public class ImlUtils {
      */
     public static <T> ImlBaseResp<T> parseToImlResp(String jsonStr, TypeReference<ImlBaseResp<T>> typeRef) {
         try {
-            return JSON.parseObject(jsonStr, typeRef);
+            assertResponseNotBlank(jsonStr);
+            ImlBaseResp<T> resp = JSON.parseObject(jsonStr, typeRef);
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException(EMPTY_RESPONSE_MESSAGE);
+            }
+            return resp;
+        } catch (ThirdWarehouseEmptyResponseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
             return ImlBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);

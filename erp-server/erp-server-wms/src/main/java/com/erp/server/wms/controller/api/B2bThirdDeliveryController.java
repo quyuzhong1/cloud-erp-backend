@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -14,16 +15,26 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.wms.dto.B2bCustomerPackingDTO;
+import com.erp.model.wms.dto.B2bThirdDeliveryDetailDTO;
 import com.erp.model.wms.dto.B2bThirdDeliveryDTO;
 import com.erp.model.wms.entity.B2bThirdDeliveryEntity;
 import com.erp.server.wms.query.B2bThirdWarehouseDeliveryQueryHandler;
 import com.erp.server.wms.service.B2bThirdDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +51,8 @@ import java.util.Objects;
 @LogSystemModule("B2B三方发货单")
 @RequestMapping("/b2bThirdDelivery")
 public class B2bThirdDeliveryController extends BaseController {
+
+    private static final long MAX_PACKING_IMPORT_FILE_SIZE = 5L * 1024 * 1024;
 
     @Resource
     private B2bThirdDeliveryService b2bThirdDeliveryService;
@@ -281,6 +294,41 @@ public class B2bThirdDeliveryController extends BaseController {
     @PostMapping(value = "/listWarehouseOperationDescription")
     public ApiResult<List<B2bThirdDeliveryDTO.OtherWarehouseOperationDescriptionDTO>> listWarehouseOperationDescription(@RequestBody B2bThirdDeliveryDTO.ThirdWarehousePlatformDTO thirdWarehousePlatformDTO) {
         return success(b2bThirdDeliveryService.listWarehouseOperationDescription(thirdWarehousePlatformDTO));
+    }
+
+    /**
+     * 下载装箱明细导入模板
+     */
+    @GetMapping("/downloadPackingTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载装箱明细导入模板")
+    public ApiResult<Object> downloadPackingTemplate(HttpServletResponse response) {
+        b2bThirdDeliveryService.downloadPackingTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入装箱明细（不落库，返回解析结果供页面填充）
+     */
+    @PostMapping("/importPackingDetail")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入装箱明细")
+    // 该接口仅解析上传文件并按 soId 的产品明细回填，不落库、不返回已有装箱数据；保存/编辑仍走 B2B 三方发货单权限链路。
+    public ApiResult<B2bCustomerPackingDTO.ImportDTO> importPackingDetail(
+            @RequestParam("soId") String soId,
+            @RequestParam("excelFile") MultipartFile excelFile) {
+        if (CharSequenceUtil.isBlank(soId)) {
+            throw new ServiceException("销售订单id不能为空");
+        }
+        if (excelFile == null || excelFile.isEmpty()) {
+            throw new ServiceException("导入文件不能为空");
+        }
+        if (excelFile.getSize() > MAX_PACKING_IMPORT_FILE_SIZE) {
+            throw new ServiceException("导入文件不能超过5MB");
+        }
+        String extension = FilenameUtils.getExtension(excelFile.getOriginalFilename());
+        if (!"xlsx".equalsIgnoreCase(extension) && !"xls".equalsIgnoreCase(extension)) {
+            throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
+        }
+        return success(b2bThirdDeliveryService.importPackingDetail(soId, excelFile));
     }
 
 }

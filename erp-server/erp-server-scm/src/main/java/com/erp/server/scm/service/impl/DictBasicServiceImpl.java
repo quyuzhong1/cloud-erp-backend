@@ -4,9 +4,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.constant.RedisCacheConstants;
+import com.common.business.service.impl.RedisService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -27,6 +35,8 @@ import com.erp.server.scm.service.DictBasicService;
 
 import cn.hutool.core.collection.CollUtil;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 字典表 服务实现类
@@ -37,8 +47,13 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
-
+    @Resource
+    private RedisService redisService;
 	@Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.SCM_DICT_BASIC_BY_TYPE,
+            key = "#jsonObject.getString('type')"
+    )
 	public boolean saveJsonObject(JSONObject jsonObject) {
 		DictBasicEntity entity = JSON.parseObject(jsonObject.toJSONString(), DictBasicEntity.class);
 		LocalDateTime now = LocalDateTime.now();
@@ -56,6 +71,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 	}
 	
 	@Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.SCM_DICT_BASIC_BY_TYPE,
+            key = "#jsonObjects[0].getString('type')"
+    )
 	public boolean updateJsonObject(List<JSONObject> jsonObjects) {
 		List<DictBasicEntity> entityList = new ArrayList<>();
 		for(JSONObject jsonObject : jsonObjects) {
@@ -81,6 +100,10 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 12:21
      */
     @Override
+    @CacheEvict(
+            cacheNames = RedisCacheConstants.SCM_DICT_BASIC_BY_TYPE,
+            key = "#list[0].type"
+    )
     public Boolean saveOrUpdateDict(List<DictBasicDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
@@ -99,29 +122,57 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 14:16
      */
     @Override
-    public List<DictBasicDTO> getByKey(String key) {
-        List<DictBasicEntity> list = listByKey(key);
-        List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
-        return resultList;
+    @Cacheable(
+            cacheNames = RedisCacheConstants.SRM_DICT_BASIC_BY_TYPE,
+            key = "#key"
+    )
+    public List<DictBasicEntity> getByKey(String key) {
+        return listByKey(key);
     }
 
 
     /**
      * 根据key list 获取对应数据
      *
-     * @param keyList
+     * @param typeList
      * @return java.util.List<com.erp.model.scm.entity.DictBasicEntity>
      * @author yl
      * @date 2023-03-20 14:24
      */
     @Override
-    public List<DictBasicEntity> getByKeyList(List<String> keyList) {
-        if (CollectionUtils.isEmpty(keyList)) {
+    public List<DictBasicEntity> getByKeyList(List<String> typeList) {
+        if (CollectionUtils.isEmpty(typeList)) {
             return new ArrayList<>();
         }
-        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(DictBasicEntity::getType, keyList);
-        return this.list(queryWrapper);
+        List<String> types = typeList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<DictBasicEntity> result = new ArrayList<>();
+        List<String> missTypes = new ArrayList<>();
+        for (String type : types) {
+            String redisKey = String.format("cache:%s:dict:type::%s", "scm", type);
+            List<DictBasicEntity> cacheList = redisService.getCacheObject(redisKey);
+            if (cacheList != null) {
+                result.addAll(cacheList);
+            } else {
+                missTypes.add(type);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missTypes)) {
+            List<DictBasicEntity> dbList = this.lambdaQuery()
+                    .in(DictBasicEntity::getType, missTypes)
+                    .list();
+            Map<String, List<DictBasicEntity>> dbMap = dbList.stream()
+                    .collect(Collectors.groupingBy(DictBasicEntity::getType));
+            for (String type : missTypes) {
+                List<DictBasicEntity> list = dbMap.getOrDefault(type, new ArrayList<>());
+                String redisKey = String.format("cache:%s:dict:type::%s", "scm", type);
+                redisService.setCacheObject(redisKey, list, 8L, TimeUnit.HOURS);
+                result.addAll(list);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -170,6 +221,9 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
 
     private List<DictBasicEntity> listByKey(String key) {
+        if (CharSequenceUtil.isBlank(key)) {
+            return Collections.emptyList();
+        }
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, key);
         return this.list(queryWrapper);

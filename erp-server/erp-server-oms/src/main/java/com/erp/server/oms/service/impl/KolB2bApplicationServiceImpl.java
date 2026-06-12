@@ -1082,7 +1082,7 @@ public class KolB2bApplicationServiceImpl extends SuperServiceImpl<KolB2bApplica
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySoIds(soIdList);
 
         //回片信息
-       List<KolFeedbackDTO.FeedbackQtyDTO> feedbackQtyList =  kolFeedbackService.listFeedbackQtyBySourceDetailIdList(detailIdList);
+       List<KolFeedbackDTO.FeedbackQtyDTO> feedbackQtyList =  kolFeedbackService.listFeedbackQtyBySourceDetailIdList(detailIdList, SourceTypeEnum.KOL_B2B_APPLICATION.getCode());
         Map<String,KolFeedbackDTO.FeedbackQtyDTO> feedbackQtyMap = CollUtil.isEmpty(feedbackQtyList) ? new HashMap<>() :
                 feedbackQtyList.stream().collect(Collectors.toMap(KolFeedbackDTO.FeedbackQtyDTO::getSourceDetailId, feedbackQtyDTO -> feedbackQtyDTO));
         // 属性赋值

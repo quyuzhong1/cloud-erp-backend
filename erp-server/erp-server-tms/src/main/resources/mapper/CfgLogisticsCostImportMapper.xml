@@ -56,6 +56,8 @@ clci.remark AS remark
         clcid.id AS detailId,
         clcid.source_field AS sourceField,
         clcid.source_detail_field AS sourceDetailField,
+        clcid.default_value AS defaultValue,
+        clcid.etl_rule_list AS etlRuleListStorage,
         clcid.is_unique_key AS isUniqueKey,
         clcid.is_absolute_value AS isAbsoluteValue,
         clcid.target_field_id AS targetFieldId,

@@ -459,9 +459,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         WarehouseDTO.SelectDTO params = searchDTO.getParams();
         //查询配置过滤对应组织仓库
         if(params.isFilterOrgFlag()){
-            List<DictBasicDTO.ListDTO> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
+            List<DictBasicEntity> listDTOList = dictBasicService.getByKey(WmsConstant.WAREHOUSE_BY_FILTER_ORG);
             if(CollectionUtils.isNotEmpty(listDTOList)){
-                DictBasicDTO.ListDTO orgDTOList = listDTOList.get(0);
+                DictBasicEntity orgDTOList = listDTOList.get(0);
                 String orgArr = orgDTOList.getValue();
                 params.setOrgIds(Arrays.asList(orgArr.split(",")));
             }
@@ -601,7 +601,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             // 组织信息
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
@@ -614,7 +614,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
             listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
             //平台类型
-            DictBasicDTO.ListDTO dict = dictList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(listDTO.getTypeId())).findFirst().orElse(null);
+            DictBasicEntity dict = dictList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(listDTO.getTypeId())).findFirst().orElse(null);
             listDTO.setTypeName(Objects.nonNull(dict) ? dict.getName() : CharSequenceUtil.EMPTY);
         }
     }
@@ -1290,8 +1290,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
         List<String> typeIdList = null;
         if (CollUtil.isNotEmpty(dto.getTypeCodeList())){
-            List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
-            typeIdList = dictList.stream().filter(e -> dto.getTypeCodeList().contains(e.getValue())).map(DictBasicDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+            List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            typeIdList = dictList.stream().filter(e -> dto.getTypeCodeList().contains(e.getValue())).map(DictBasicEntity::getId).distinct().collect(Collectors.toList());
         }
         dto.setTypeIdList(typeIdList);
         if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
@@ -1326,7 +1326,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             return new PagingVO(pageData);
         }
         //获取到仓库类型
-        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         //获取用户信息
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingNoPermissionDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
@@ -1451,7 +1451,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     private List<WarehouseDTO.ListTreeDTO> handleWarehouseTree(List<WarehouseDTO.ListDTO> list) {
 
         //获取到仓库类型
-        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<DictBasicEntity> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
 
         List<WarehouseDTO.ListTreeDTO> resultList = new ArrayList<>();
         Map<String, List<WarehouseDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(WarehouseDTO.ListDTO::getTypeId));
