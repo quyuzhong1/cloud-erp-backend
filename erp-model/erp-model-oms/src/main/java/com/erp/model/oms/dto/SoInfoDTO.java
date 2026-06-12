@@ -3375,47 +3375,4 @@ public class SoInfoDTO implements Serializable {
         @NotEmpty(message = "平台订单明细Id不能为空")
         private List<String> platformDetailIdList;
     }
-
-    /**
-     * 新建销售订单时基础信息默认值（前端点"新增"时拉取，用户可见可改）
-     * 配置位于 cfg_setting 表 key=soInfoDefault
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class NewBillDefaultDTO {
-        /**
-         * 单据子类型默认值（OrderSubTypeEnum.code，例如 "offlineOrder"）
-         * /listWithDisabled?key=orderSubType
-         */
-        private String transactionSubType;
-        /**
-         * 单据子类型默认值名称（用于前端展示）
-         */
-        private String transactionSubTypeName;
-        /**
-         * 默认仓库 ID
-         */
-        private String warehouseId;
-        /**
-         * 默认仓库名称
-         */
-        private String warehouseName;
-        /**
-         * 默认销售组织 ID
-         */
-        private String salesOrgId;
-        /**
-         * 默认销售组织名称
-         */
-        private String salesOrgName;
-        /**
-         * 销售组织联动的默认收款账号 ID（基于 salesOrgId 联动取值，前端切换销售组织时可重新拉接口或本地映射）
-         */
-        private String receiveAccount;
-        /**
-         * 销售组织 → 收款账号 ID 全量联动映射，前端可缓存供切换销售组织时本地匹配
-         */
-        private Map<String, String> receiveAccountMap;
-    }
 }

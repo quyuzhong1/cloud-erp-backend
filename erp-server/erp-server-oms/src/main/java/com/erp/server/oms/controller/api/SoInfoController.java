@@ -187,16 +187,6 @@ public class SoInfoController extends BaseController {
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
-    /**
-     * 获取新建销售订单的基础信息默认值
-     * <p>前端点击"新增"时调用，把返回值预填入表单展示，用户可见可改。
-     * 配置位于 cfg_setting 表 key=soInfoDefault，业务方按环境维护。
-     */
-    @GetMapping("/getNewBillDefault")
-    public ApiResult<SoInfoDTO.NewBillDefaultDTO> getNewBillDefault() {
-        return success(soInfoService.getNewBillDefault());
-    }
-
 
     /**
      * 批量提交审核
