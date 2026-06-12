@@ -2734,51 +2734,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 获取物流单号全局事务提交后再提交发货，避免与 autoOrderForecast(REQUIRES_NEW) 争抢 so_b2c 行锁。
-     */
-    private void handleAutoSubmitDeliveryAfterGetLogisticsCode(String soId) {
-        try {
-            String warehouseLogisticsChannelId = resolveWarehouseLogisticsChannelId(soId);
-            BatchResultDTO submitResult = soB2cService.submitDelivery(soId, warehouseLogisticsChannelId);
-            if (!Boolean.TRUE.equals(submitResult.getSuccess())) {
-                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-                addError.setParamJson("");
-                addError.setReturnJson("");
-                addError.setMainId(soId);
-                addError.setMessage(CharSequenceUtil.blankToDefault(submitResult.getMsg(), "提交发货失败"));
-                soB2cErrorService.add(addError);
-            }
-        } catch (Exception e) {
-            log.error("销售订单自动提交发货失败,soId:{}", soId, e);
-            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-            addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
-            addError.setParamJson("");
-            addError.setReturnJson("");
-            addError.setMainId(soId);
-            addError.setMessage(CharSequenceUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()));
-            soB2cErrorService.add(addError);
-        }
-    }
-
-    private String resolveWarehouseLogisticsChannelId(String soId) {
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soId);
-        if (Objects.isNull(logisticsEntity) || StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())) {
-            return "";
-        }
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soId);
-        if (CollUtil.isEmpty(detailList) || StringUtils.isBlank(detailList.get(0).getWarehouseId())) {
-            return "";
-        }
-        List<LogisticsMappingDTO.ViewDTO> viewDTOS = logisticsMappingFeign.listByChannelIdAndType(
-                logisticsEntity.getLogisticsChannelId(), LogisticsMappingTypeEnum.WAREHOUSE.getCode());
-        LogisticsMappingDTO.ViewDTO viewDTO = viewDTOS.stream()
-                .filter(v -> v.getWarehouseId().equals(detailList.get(0).getWarehouseId()))
-                .findFirst().orElse(null);
-        return Objects.nonNull(viewDTO) ? CharSequenceUtil.blankToDefault(viewDTO.getPlatformLogisticsChannelId(), "") : "";
-    }
-
-    /**
      * 获取物流单号成功后自动提交发货。须在 {@link #getLogisticsCode} 中、inner 全局事务提交后调用，勿在 inner 内注册 afterCommit。
      */
     private void handleAutoSubmitDeliveryAfterGetLogisticsCode(String soId) {
