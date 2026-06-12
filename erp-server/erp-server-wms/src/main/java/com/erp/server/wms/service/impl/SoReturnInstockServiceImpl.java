@@ -2532,19 +2532,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         return bytes;
     }
 
-    private Map<String, BaseIdDTO.CodeDTO> buildEnabledAccountingCompanyMap() {
-        return listEnabledAccountingCompanyList().stream()
-                .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getName, Function.identity(), (a, b) -> a));
-    }
-
-    private List<BaseIdDTO.CodeDTO> listEnabledAccountingCompanyList() {
+    /**
+     * 一次性拉取所有核算组织（含已禁用），由调用方按 disabled 字段自行决定是否过滤。
+     */
+    private List<BaseIdDTO.CodeDTO> listAllAccountingCompanyList() {
         List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
-        if (CollectionUtils.isEmpty(companyList)) {
-            return Collections.emptyList();
-        }
-        return companyList.stream()
-                .filter(org -> !Boolean.TRUE.equals(org.getDisabled()))
-                .collect(Collectors.toList());
+        return companyList == null ? Collections.emptyList() : companyList;
     }
 
     private List<DictCurrencyEntity> listCurrencySafe() {
@@ -2639,10 +2632,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream()
                 .collect(Collectors.groupingBy(CustomerInfoEntity::getName));
 
-        List<BaseIdDTO.CodeDTO> enabledCompanyList = listEnabledAccountingCompanyList();
-        Map<String, BaseIdDTO.CodeDTO> inventoryOrgMap = enabledCompanyList.stream()
+        // 一次拉全量核算公司：
+        //  - inventoryOrgMap（name → CodeDTO）：用户在模版手填"库存组织"做匹配，按 !disabled 过滤，禁用组织走校验"未能找到库存组织"
+        //  - salesOrgByIdMap（id → CodeDTO）：按客户档案 useOrgId 反查销售组织名，不过滤 disabled，
+        //    避免历史客户挂在已禁用组织时 salesOrgName 被清空
+        List<BaseIdDTO.CodeDTO> allCompanyList = listAllAccountingCompanyList();
+        Map<String, BaseIdDTO.CodeDTO> inventoryOrgMap = allCompanyList.stream()
+                .filter(org -> !Boolean.TRUE.equals(org.getDisabled()))
                 .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getName, Function.identity(), (a, b) -> a));
-        Map<String, BaseIdDTO.CodeDTO> salesOrgByIdMap = enabledCompanyList.stream()
+        Map<String, BaseIdDTO.CodeDTO> salesOrgByIdMap = allCompanyList.stream()
                 .collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, Function.identity(), (a, b) -> a));
 
         List<DictCurrencyEntity> currencyList = listCurrencySafe();
