@@ -385,14 +385,24 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     private int writeKeysetBatches(File outFile, P params, String excelPath) throws IOException {
         ExcelPrintUtils excelPrintUtils = new ExcelPrintUtils();
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
-        Long lastId = null;
-        int preparedSheets = keysetPreparedSheetCount();
+
+        // 先取首页以判定数据规模：EasyExcel 模板写入需在打开 Writer 前确定 sheet 数、写入中无法再加 sheet。
+        // 单页即结束（!hasNext）的小数据量导出按实际行数精确展开（通常 1 张），避免无脑按 keysetPreparedSheetCount()
+        // 上限预克隆过多 sheet 造成的模板展开内存开销；多页（hasNext）导出因无法中途加 sheet，仍保守预展开以保证容量不回退。
+        KeysetPagingVO<T> vo = fetchKeyset(params, null, getPageSize());
+        List<T> rawList = vo.getList();
+        int firstBatchRows = (rawList == null) ? 0 : rawList.size() - nullElementCount(rawList);
+        int preparedSheets = vo.isHasNext()
+                ? keysetPreparedSheetCount()
+                : computeDataSheetCountForTotalRows(firstBatchRows);
+
         byte[] rawTemplate = readClasspathTemplateBytes(excelPath);
-        // 预先克隆好多张数据 sheet，避免在写入过程中再 clone 导致的性能问题（尤其是当模板复杂时）。若数据量超出预估则直接报错，避免无限克隆。
+        // 预先克隆好数据 sheet，避免在写入过程中再 clone 导致的性能问题（尤其模板复杂时）。若数据量超出预估则直接报错，避免无限克隆。
         ExpandedTemplate expandedTemplate = expandTemplateWithDataSheetCopies(rawTemplate, preparedSheets);
         rawTemplate = null;
 
         int total = 0;
+        Long lastId = null;
         OffsetSheetCursor cursor = new OffsetSheetCursor();
         cursor.sheetNo = 0;
         cursor.rowsInSheet = 0;
@@ -403,8 +413,6 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             try {
                 cursor.writeSheet = buildCurrentDataSheet(cursor);
                 while (true) {
-                    KeysetPagingVO<T> vo = fetchKeyset(params, lastId, getPageSize());
-                    List<T> rawList = vo.getList();
                     if (CollectionUtils.isEmpty(rawList)) {
                         break;
                     }
@@ -432,6 +440,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     if (!vo.isHasNext()) {
                         break;
                     }
+                    vo = fetchKeyset(params, lastId, getPageSize());
+                    rawList = vo.getList();
                 }
             } finally {
                 // 必须在底层 OutputStream 仍打开时 finish，否则依赖 finalize 会出现 Zip 未关闭 entry 等 WARN

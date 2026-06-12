@@ -48,26 +48,32 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
     }
 
     /**
-     * 校验导出类型组合是否合法（纯判断，不抛异常、不依赖异常体系）：
-     * 非空、每个 code 均为合法枚举、无重复，且仅允许单一类型或 PRODUCT+TASK 组合。
-     * 业务异常由调用方（server 层）按需抛出，避免 model 层承载业务异常逻辑。
+     * 校验导出类型组合并返回细分错误信息（纯判断，不抛异常、不依赖异常体系）：
+     * 合法返回 {@code null}；空/null、非法 code、重复元素、非法组合各返回与旧 validate 一致的细分文案。
+     * 由 server 层调用方据此抛出 {@code ServiceException}，既保留错误粒度又不让 model 依赖异常体系。
+     *
+     * @return 错误信息；合法时为 {@code null}
      */
-    public static boolean isValidCombination(List<Integer> exportDataList) {
+    public static String validateCombinationMessage(List<Integer> exportDataList) {
         if (CollectionUtils.isEmpty(exportDataList)) {
-            return false;
+            return "导出数据类型不能为空";
         }
         Set<Integer> distinctTypes = new LinkedHashSet<>();
         for (Integer flag : exportDataList) {
             if (!isValid(flag)) {
-                return false;
+                return "导出数据类型不合法：" + flag;
             }
             if (!distinctTypes.add(flag)) {
-                return false;
+                return "导出数据类型存在重复：" + flag;
             }
         }
-        return distinctTypes.size() == 1
+        boolean validCombination = distinctTypes.size() == 1
                 || (distinctTypes.size() == 2
                     && distinctTypes.contains(EXPORT_PRODUCT)
                     && distinctTypes.contains(EXPORT_TASK));
+        if (!validCombination) {
+            return "导出数据类型不合法：" + exportDataList;
+        }
+        return null;
     }
 }
