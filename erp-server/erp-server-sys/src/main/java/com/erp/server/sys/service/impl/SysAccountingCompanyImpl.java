@@ -255,6 +255,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
                 dto.setName(item.getCompanyName());
                 dto.setCode(item.getCode());
                 dto.setFlagId(item.getKingdeeId());
+                dto.setDisabled(item.getDisabled());
                 resultList.add(dto);
             }
             return resultList;
@@ -266,6 +267,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
             dto.setName(item.getCompanyName());
             dto.setCode(item.getCode());
             dto.setFlagId(item.getKingdeeId());
+            dto.setDisabled(item.getDisabled());
             resultList.add(dto);
         }
         return resultList;
