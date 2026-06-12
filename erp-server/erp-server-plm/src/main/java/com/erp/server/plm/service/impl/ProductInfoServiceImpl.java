@@ -2644,12 +2644,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 根据产品开发导出数据类型解析 file 侧 event code。
-     * 组合合法性由 {@link ProductDevelopExportTypeEnum#isValidCombination} 统一维护，
-     * 在创建下载任务前完成唯一一次严格校验，不合法时由本服务层抛出业务异常。
+     * 组合合法性由 {@link ProductDevelopExportTypeEnum#validateCombinationMessage} 统一维护，
+     * 在创建下载任务前完成唯一一次严格校验；返回细分错误文案后由本服务层抛出业务异常（保留空/重复/非法的差异提示）。
      */
     private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
-        if (!ProductDevelopExportTypeEnum.isValidCombination(exportDataList)) {
-            throw new ServiceException("导出数据类型不合法：" + exportDataList);
+        String validateMessage = ProductDevelopExportTypeEnum.validateCombinationMessage(exportDataList);
+        if (validateMessage != null) {
+            throw new ServiceException(validateMessage);
         }
         if (exportDataList.size() == 1) {
             Integer flag = exportDataList.get(0);

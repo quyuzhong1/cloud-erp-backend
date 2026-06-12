@@ -1279,6 +1279,10 @@ public class ExcelPrintUtils {
      * <p>
      * 异常风格：与 {@link #patchExportListToFile}、{@link #patchExportDetailToFile}、{@link #sheetPatchExportToFile}
      * 统一为向上抛 {@link IOException}，由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}。
+     * <p>
+     * <b>Breaking change</b>：原实现内部 {@code catch Exception} 转 {@code ServiceException}，现改为向上抛 {@code IOException}。
+     * 经全量检索当前仓库内无调用方，故不影响既有编译；新增调用方须保证由统一导出模板捕获 {@code IOException} 并转 {@code ServiceException}，
+     * 不要再各自 {@code catch} 后吞异常或抛非 {@code ServiceException} 类型，以保持任务失败语义一致。
      */
     public <T> void exportDynamicHeadersExcelToFile(File outputFile, String sheetName, List<List<String>> head, List<List<T>> data) throws IOException {
         try (FileOutputStream out = new FileOutputStream(outputFile)) {
@@ -1396,7 +1400,13 @@ public class ExcelPrintUtils {
     }
 
     /**
-     * 多 sheet 模板填充写入本地文件
+     * 多 sheet 模板填充写入本地文件。
+     * <p>
+     * 异常风格：与 {@link #patchExportListToFile}、{@link #patchExportDetailToFile}、{@link #exportDynamicHeadersExcelToFile}
+     * 统一为向上抛 {@link IOException}，由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}。
+     * <p>
+     * <b>Breaking change</b>：原实现内部 {@code catch Exception} 转 {@code ServiceException}，现改为向上抛 {@code IOException}。
+     * 经全量检索当前仓库内无调用方，故不影响既有编译；新增调用方须由统一导出模板捕获 {@code IOException} 并转 {@code ServiceException}。
      */
     public void sheetPatchExportToFile(File outputFile, List<Pair<Integer, List<?>>> pairList, String excelPath) throws IOException {
         ClassPathResource classPathResource = new ClassPathResource(excelPath);

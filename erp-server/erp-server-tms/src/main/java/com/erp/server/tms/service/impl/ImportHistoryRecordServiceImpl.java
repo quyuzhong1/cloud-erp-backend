@@ -30,7 +30,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
@@ -56,7 +55,6 @@ import com.erp.server.tms.service.*;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -64,7 +62,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -230,87 +228,66 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     @Override
     public BatchResultDTO preprocessingImportExcel(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO) {
-        Map<String, List<CfgLogisticsCostImportDetailEntity>> impotyDetailMap = importSyncDTO.getImportDetailList().stream().collect(Collectors.groupingBy(CfgLogisticsCostImportDetailEntity::getMainId));
+        Map<String,List<CfgLogisticsCostImportDetailEntity>> impotyDetailMap = importSyncDTO.getImportDetailList().stream().collect(Collectors.groupingBy(CfgLogisticsCostImportDetailEntity::getMainId));
 
-        File sourceFile = null;
-        File excelFile = null;
-        try {
-            // 下载到临时文件并清除公式错误单元格，避免大 xlsx 在内存中同时持有原始/清洗后的 byte[]
-            sourceFile = downloadImportFileToTempFile(importSyncDTO);
-            ExcelUtil.CleanResult cleanResult = ExcelUtil.clearFormulaErrorCellsToTempFile(sourceFile, importSyncDTO.getFileName());
-            excelFile = cleanResult.getFile();
-            // 清洗失败时回退用原文件解析，可能仍含公式错误幽灵行；记录告警便于在任务备注中提示
-            boolean cleanFailed = cleanResult.isCleanFailed();
-            if (cleanFailed) {
-                log.warn("公式错误单元格未清洗成功，taskId={} fileName={}，将按原文件解析，可能存在异常行",
-                        importSyncDTO.getTaskId(), importSyncDTO.getFileName());
+        //下载文件
+        byte[] bytes = fileFeign.downloadFile(importSyncDTO.getFileUrl());
+
+        //获取批次号，同一个文件同一次导入用同一个批次号
+        String batchNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
+        importSyncDTO.setCode(batchNo);
+
+        //标记是否存在匹配的sheet页
+        Boolean isExistSheet = Boolean.FALSE;
+
+        for (CfgLogisticsCostImportEntity costImportEntity : importSyncDTO.getCfgLogisticsCostImportList()) {
+            List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = impotyDetailMap.get(costImportEntity.getId());
+            if (CollUtil.isEmpty(cfgImportDetailList)) {
+                throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
+            }
+            //查询配置的唯一识别号
+            List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(cfgDetailList)) {
+                throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND,importSyncDTO.getFileName());
             }
 
-            //获取批次号，同一个文件同一次导入用同一个批次号
-            String batchNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
-            importSyncDTO.setCode(batchNo);
-
-            //标记是否存在匹配的sheet页
-            Boolean isExistSheet = Boolean.FALSE;
-
-            for (CfgLogisticsCostImportEntity costImportEntity : importSyncDTO.getCfgLogisticsCostImportList()) {
-                List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList = impotyDetailMap.get(costImportEntity.getId());
-                if (CollUtil.isEmpty(cfgImportDetailList)) {
-                    throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
-                }
-                //查询配置的唯一识别号
-                List<CfgLogisticsCostImportDetailEntity> cfgDetailList = cfgImportDetailList.stream().filter(CfgLogisticsCostImportDetailEntity::getIsUniqueKey).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(cfgDetailList)) {
-                    throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_IS_UNIQUE_KEY_NOT_FOUND, importSyncDTO.getFileName());
-                }
-
-                ImportHistoryRecordExcelListener excelListenerUtil = new ImportHistoryRecordExcelListener(costImportEntity, cfgImportDetailList, importSyncDTO);
-                try {
-                    EasyExcel.read(excelFile, excelListenerUtil)
-                            .headRowNumber(costImportEntity.getHeaderRow())
-                            .sheet(costImportEntity.getSheetName()).doRead();
-                } catch (ExcelCommonException e) {
-                    log.error("导入格式错误！", e);
-                    throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
-                }
-
-
-                //更新导入结果
-                BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
-                importResultDTO.setTaskId(importSyncDTO.getTaskId());
-                importResultDTO.setCount(excelListenerUtil.getCount());
-                //导出错误数据
-                Map<Integer, String> headMap = excelListenerUtil.getHeadMap();
-                //未找到表头直接跳过
-                if (ObjectUtil.isEmpty(headMap)) {
-                    continue;
-                }
-                isExistSheet = Boolean.TRUE;
-
-                //匹配结果序号
-                Integer matchErrorCount = excelListenerUtil.getMatchFailCount();
-                String url = CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(), importSyncDTO.getProcessingType())
-                        ? "" : excelListenerUtil.getMatchResultUrl();
-                importResultDTO.setErrorUrl(url);
-                importResultDTO.setFinishTime(LocalDateTime.now());
-                String remark = "处理完成，失败" + matchErrorCount + "条";
-                if (cleanFailed) {
-                    remark += "（注意：公式错误单元格未清洗，可能存在异常行）";
-                }
-                importResultDTO.setRemark(remark);
-                importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
-                downloadTaskFeign.updateTask(importResultDTO);
+            ImportHistoryRecordExcelListener excelListenerUtil = new ImportHistoryRecordExcelListener(costImportEntity,cfgImportDetailList,importSyncDTO);
+            try {
+                EasyExcel.read(new ByteArrayInputStream(bytes), excelListenerUtil)
+                        .headRowNumber(costImportEntity.getHeaderRow())
+                        .sheet(costImportEntity.getSheetName()).doRead();
+            } catch (ExcelCommonException e) {
+                log.error("导入格式错误！", e);
+                throw new ServiceException(ApiError.FILE_IMPORT_FORMAT_INVALID_XLSX);
             }
-            if (!isExistSheet) {
-                throw new ServiceException(ApiError.FILE_SHEET_NOT_EXIST);
+
+
+            //更新导入结果
+            BaseDTO.ImportResultDTO importResultDTO = new BaseDTO.ImportResultDTO();
+            importResultDTO.setTaskId(importSyncDTO.getTaskId());
+            importResultDTO.setCount(excelListenerUtil.getCount());
+            //导出错误数据
+            Map<Integer, String> headMap = excelListenerUtil.getHeadMap();
+            //未找到表头直接跳过
+            if (ObjectUtil.isEmpty(headMap)) {
+                continue;
             }
-            return BatchResultDTO.success(importSyncDTO.getTaskId(), importSyncDTO.getFileName(), "导入成功");
-        } finally {
-            FileUtils.deleteQuietly(excelFile);
-            if (!Objects.equals(sourceFile, excelFile)) {
-                FileUtils.deleteQuietly(sourceFile);
-            }
+            isExistSheet = Boolean.TRUE;
+
+            //匹配结果序号
+            Integer matchErrorCount = excelListenerUtil.getMatchFailCount();
+            String url = CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(),importSyncDTO.getProcessingType())
+                    ? "" : excelListenerUtil.getMatchResultUrl();
+            importResultDTO.setErrorUrl(url);
+            importResultDTO.setFinishTime(LocalDateTime.now());
+            importResultDTO.setRemark("处理完成，失败" + matchErrorCount + "条");
+            importResultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
+            downloadTaskFeign.updateTask(importResultDTO);
         }
+        if (!isExistSheet) {
+            throw new ServiceException(ApiError.FILE_SHEET_NOT_EXIST);
+        }
+        return  BatchResultDTO.success(importSyncDTO.getTaskId(),importSyncDTO.getFileName(),"导入成功");
     }
 
     @Override
@@ -2620,35 +2597,5 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             throw new ServiceException("文件URL、sheet页名称不能为空");
         }
         return this.lambdaQuery().eq(ImportHistoryRecordEntity::getFileUrl, fileUrl).eq(ImportHistoryRecordEntity::getSheetName,sheetName).last("limit 1").one();
-    }
-
-    /**
-     * 下载导入文件并写入临时文件。
-     * 复用已验证的 {@code downloadFile}（query 参数，兼容含 "/" 的 FastDFS 地址）拿到字节后立即落盘，
-     * 字节随即可被回收；真正的内存优化在于后续清洗(ExcelUtil)不再额外生成清洗后的 byte[] 副本。
-     */
-    private File downloadImportFileToTempFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO) {
-        String fileUrl = importSyncDTO.getFileUrl();
-        byte[] bytes = fileFeign.downloadFile(fileUrl);
-        if (bytes == null || bytes.length == 0) {
-            throw new ServiceException(ApiError.COMMON_FILE_EMPTY, StringUtils.isNotBlank(importSyncDTO.getFileName()) ? importSyncDTO.getFileName() : "");
-        }
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile("import-history-source-", resolveExcelTempSuffix(bytes), FileUtils.getTempDirectory());
-            FileUtils.writeByteArrayToFile(tempFile, bytes);
-            return tempFile;
-        } catch (Exception e) {
-            FileUtils.deleteQuietly(tempFile);
-            log.error("导入文件写入临时文件失败 fileUrl={}", fileUrl, e);
-            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, fileUrl);
-        }
-    }
-
-    /**
-     * 按文件头魔数判定临时文件后缀：复用 {@link ExcelUtil#isXls(byte[])}，避免重复硬编码 OLE2 魔数。
-     */
-    private String resolveExcelTempSuffix(byte[] bytes) {
-        return ExcelUtil.isXls(bytes) ? ".xls" : ".xlsx";
     }
 }

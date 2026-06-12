@@ -424,7 +424,7 @@ public class FastDFSClientUtil {
 	 * @param file     文件对象
 	 * @param fileName 文件名
 	 * @param metaList 文件元数据
-	 * @return
+	 * @return 上传成功后的文件 ID（group/path）
 	 */
 	public synchronized static String streamUploadFile(File file, String fileName, Map<String, String> metaList) {
         try {
@@ -434,6 +434,11 @@ public class FastDFSClientUtil {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     IOUtils.copy(fis, out);
                 }
+                // 返回值是 FastDFS 协议的 errno（状态码），不是写入字节数：
+                // csource StorageClient#do_upload_file 会把 callback.send(out) 的返回值作为本次上传的错误码，
+                // 0=成功，非 0=失败（do_upload_file 直接返回 null，表现为上传"返回空"）。
+                // 上传字节数由协议头里的 file_size（即 upload_file1 传入的 size）单独声明，回调只负责把字节写入 out。
+                // 切勿改成返回 IOUtils.copy 的字节数，否则任意非空文件都会变成非 0 errno 而上传失败。
                 return 0;
             };
             return uploadFile2Client(size, sender, fileName, metaList);

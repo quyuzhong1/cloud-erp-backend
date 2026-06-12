@@ -50,8 +50,9 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
         if (CollectionUtils.isEmpty(params.getExportDataList())) {
             params.setExportDataList(deriveExportDataListByEvent(fileTask.getEvent()));
         }
-        if (!ProductDevelopExportTypeEnum.isValidCombination(params.getExportDataList())) {
-            throw new ServiceException("导出数据类型不合法：" + params.getExportDataList());
+        String validateMessage = ProductDevelopExportTypeEnum.validateCombinationMessage(params.getExportDataList());
+        if (validateMessage != null) {
+            throw new ServiceException(validateMessage);
         }
         return params;
     }
