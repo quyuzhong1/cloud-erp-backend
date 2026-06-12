@@ -583,7 +583,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .map(LogisticsGetLabelVO::getDeliveryNo)
                     .filter(CharSequenceUtil::isNotBlank)
                     .collect(Collectors.joining(","));
-            String errorMessage = "速卖通国际运单号为空，无法获取物流面单，请稍后重试";
+            String errorMessage = "当前批次存在速卖通国际运单号为空的单据，无法获取物流面单，请稍后重试";
             LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
             response.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), orderCodes, errorMessage);
             responses.add(response);
