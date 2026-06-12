@@ -5,9 +5,12 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.CfgAfterPlatformShopEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.dmp.entity.ThirdShopEntity;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -16,6 +19,8 @@ import com.erp.server.dmp.service.CfgAfterPlatformShopService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.service.ThirdMappingService;
+import com.erp.server.dmp.service.ThirdShopService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +50,9 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
 
     @Resource
     private ThirdMappingService thirdMappingService;
+
+    @Resource
+    private ThirdShopService thirdShopService;
 
     /**
     * 保存
@@ -265,11 +273,26 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
         List<CfgAfterPlatformShopDTO.CsAgentDTO> csAgentDTOList = new ArrayList<>();
 
         // 优先只按店铺匹配（不考虑平台）
-        if (Objects.nonNull(shopId)) {
-            ThirdMappingEntity thirdMapping = thirdMappingService.lambdaQuery()
-                    .eq(ThirdMappingEntity::getThirdCode, shopId)
-                    .eq(ThirdMappingEntity::getType, "shop")
+        // 旺店通店铺编号 -> third_shop.code -> third_mapping.third_info_id -> ERP店铺sys_id
+        if (StringUtils.isNotBlank(shopId)) {
+            ThirdMappingEntity thirdMapping = null;
+            ThirdShopEntity thirdShop = thirdShopService.lambdaQuery()
+                    .eq(ThirdShopEntity::getSysType, PlatformDictEnum.WDT.getCode())
+                    .eq(ThirdShopEntity::getCode, shopId)
+                    .eq(ThirdShopEntity::getDisabled, Boolean.FALSE)
+                    .orderByDesc(ThirdShopEntity::getCreateTime)
+                    .last("limit 1")
                     .one();
+            if (Objects.nonNull(thirdShop)) {
+                thirdMapping = thirdMappingService.lambdaQuery()
+                        .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
+                        .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
+                        .eq(ThirdMappingEntity::getThirdId, thirdShop.getShopId())
+                        .eq(ThirdMappingEntity::getDisabled, Boolean.FALSE)
+                        .orderByDesc(ThirdMappingEntity::getCreateTime)
+                        .last("limit 1")
+                        .one();
+            }
             if (Objects.nonNull(thirdMapping)) {
                 List<CfgAfterPlatformShopEntity> allList = this.lambdaQuery().list();
                 for (CfgAfterPlatformShopEntity entity : allList) {
@@ -308,7 +331,7 @@ public class CfgAfterPlatformShopServiceImpl extends SuperServiceImpl<CfgAfterPl
             for (CfgAfterPlatformShopEntity entity : platformList) {
                 // 先匹配平台+空店铺
                 JSONObject shopJson = entity.getShopJson();
-                if (shopJson.isEmpty()) {
+                if (shopJson == null || shopJson.isEmpty()) {
                     CfgAfterPlatformShopDTO.CsAgentJsonDTO csAgentJsonDTO = JSONUtil.toBean(
                             entity.getCsAgentJson(),
                             CfgAfterPlatformShopDTO.CsAgentJsonDTO.class

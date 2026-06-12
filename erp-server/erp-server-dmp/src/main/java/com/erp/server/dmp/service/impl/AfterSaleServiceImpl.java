@@ -236,6 +236,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         String platformCode = addDTO.getPlatformCode();
         DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoService.lambdaQuery()
                 .eq(DmpSoInfoEntity::getPlatformCode, platformCode)
+                .eq(DmpSoInfoEntity::getSourceSystem, PlatformDictEnum.WDT.getCode())
+                .eq(DmpSoInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .orderByDesc(DmpSoInfoEntity::getCreateTime)
+                .last("limit 1")
                 .one();
         // 直接根据店铺匹配，不需要平台正确
         if (Objects.nonNull(dmpSoInfoEntity)) {
@@ -251,9 +255,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 afterSaleEntity.setCsAgentName(names);
             }
         } else {
+            log.warn("未找到旺店通订单，按平台兜底匹配售后人员，platformCode={}", platformCode);
             ThirdMappingEntity thirdMapping = thirdMappingService.lambdaQuery()
                     .eq(ThirdMappingEntity::getThirdSysType, ThirdMappingSystemEnum.ERP.getCode())
                     .eq(ThirdMappingEntity::getThirdCode, addDTO.getDictPlatform())
+                    .eq(ThirdMappingEntity::getDisabled, Boolean.FALSE)
+                    .orderByDesc(ThirdMappingEntity::getCreateTime)
+                    .last("limit 1")
                     .one();
             if (Objects.nonNull(thirdMapping)) {
                 // 如果店铺ID为空，则按平台匹配
