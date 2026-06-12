@@ -30,7 +30,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
@@ -57,7 +56,6 @@ import com.google.common.base.Stopwatch;
 import groovy.lang.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -65,7 +63,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1780,35 +1777,5 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             throw new ServiceException("文件URL、sheet页名称不能为空");
         }
         return this.lambdaQuery().eq(ImportHistoryRecordEntity::getFileUrl, fileUrl).eq(ImportHistoryRecordEntity::getSheetName,sheetName).last("limit 1").one();
-    }
-
-    /**
-     * 下载导入文件并写入临时文件。
-     * 复用已验证的 {@code downloadFile}（query 参数，兼容含 "/" 的 FastDFS 地址）拿到字节后立即落盘，
-     * 字节随即可被回收；真正的内存优化在于后续清洗(ExcelUtil)不再额外生成清洗后的 byte[] 副本。
-     */
-    private File downloadImportFileToTempFile(ImportHistoryRecordDTO.ImportSyncDTO importSyncDTO) {
-        String fileUrl = importSyncDTO.getFileUrl();
-        byte[] bytes = fileFeign.downloadFile(fileUrl);
-        if (bytes == null || bytes.length == 0) {
-            throw new ServiceException(ApiError.COMMON_FILE_EMPTY, StringUtils.isNotBlank(importSyncDTO.getFileName()) ? importSyncDTO.getFileName() : "");
-        }
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile("import-history-source-", resolveExcelTempSuffix(bytes), FileUtils.getTempDirectory());
-            FileUtils.writeByteArrayToFile(tempFile, bytes);
-            return tempFile;
-        } catch (Exception e) {
-            FileUtils.deleteQuietly(tempFile);
-            log.error("导入文件写入临时文件失败 fileUrl={}", fileUrl, e);
-            throw new ServiceException(ApiError.FILE_DOWNLOAD_FAILED, fileUrl);
-        }
-    }
-
-    /**
-     * 按文件头魔数判定临时文件后缀：复用 {@link ExcelUtil#isXls(byte[])}，避免重复硬编码 OLE2 魔数。
-     */
-    private String resolveExcelTempSuffix(byte[] bytes) {
-        return ExcelUtil.isXls(bytes) ? ".xls" : ".xlsx";
     }
 }
