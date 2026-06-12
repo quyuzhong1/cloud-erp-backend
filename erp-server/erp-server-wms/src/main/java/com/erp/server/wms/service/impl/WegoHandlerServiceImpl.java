@@ -13,8 +13,8 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WegoInOrderCancelDTO;
 import com.erp.model.wms.dto.WegoInOrderSaveDTO;
 import com.erp.model.wms.dto.WegoOutboundInterceptDTO;
+import com.erp.model.wms.dto.WegoOutboundQueryPageDTO;
 import com.erp.model.wms.dto.WegoOutboundSaveDTO;
-import com.erp.model.wms.dto.WegoOutboundSearchDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -33,6 +33,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -71,6 +72,24 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * 日志脱敏占位符
      */
     private static final String LOG_MASK = "***";
+
+    /**
+     * queryPage 降级查询的时间窗口（小时）。
+     * 幂等重试通常在建单后数秒到数分钟内触发，24 小时窗口足够覆盖所有重试场景，
+     * 同时相比 3 天窗口大幅减少 queryPage 返回的无关订单数，降低漏匹配概率。
+     */
+    private static final int REFERENCE_CODE_FALLBACK_HOURS = 24;
+
+    /**
+     * queryPage 降级查询的最大翻页数。
+     * 防止 WEGO 在时间窗口内存在大量订单时发起过多 HTTP 请求导致超时或触发限速。
+     */
+    private static final int REFERENCE_CODE_FALLBACK_MAX_PAGES = 50;
+
+    /**
+     * WEGO "订单已存在" 错误关键词（errorCode=2000 时出现在 result/errorMsg 字段中）。
+     */
+    private static final String WEGO_ERROR_ORDER_ALREADY_EXISTS = "订单已存在";
 
     /**
      * 默认库存类型：0=2C库存
@@ -484,20 +503,83 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return null;
     }
 
+    /**
+     * 创建 WEGO 2C 出库单（2c.order.save）。
+     *
+     * <p>WEGO 不支持幂等建单：相同 {@code referenceCode} 重复提交会返回
+     * {@code success=false, errorCode=2000, result="订单已存在:WFHD-xxx"}。
+     * 为避免将"已存在"误判为真实失败（导致 WFHD 被删除、订单回退），
+     * 在收到该错误时立即通过 {@link #queryByReferenceCodeFallback} 反查真实 WEGO 单号
+     * 并返回 success，使幂等重试链路安全落地。</p>
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        WegoOutboundSaveDTO.SaveReqDTO request = buildOutboundSaveDto(createOutboundReq, null);
+        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
+        if (authMap == null || authMap.isEmpty()) {
+            throw new ServiceException("WEGO授权信息为空");
+        }
+        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
+        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
+        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
+            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
+        }
+
+        WegoOutboundSaveDTO.SaveReqDTO request = buildOutboundSaveDto(createOutboundReq, null, accessToken, secret);
         log.warn("{}创建出库单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.save2cOrder(request);
         log.warn("{}创建出库单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+
         if (!isSuccess(resp)) {
+            // WEGO 不幂等：相同 referenceCode 重复提交返回 "订单已存在"。
+            // 此时订单实际已在 WEGO 侧创建成功，通过 queryPage 反查真实单号并返回 success，
+            // 避免上层误删 WFHD 并将订单回退到"配货中"。
+            if (isOrderAlreadyExistsError(resp)) {
+                String referenceNo = createOutboundReq.getReferenceNo();
+                log.warn("{}建单返回[订单已存在]（非重单，属幂等重试），按 referenceCode 反查 WEGO 单号, referenceNo={}",
+                        getPlatForm().getName(), referenceNo);
+                ApiResult<ThirdWarehouseQueryOutboundResponse> fallback =
+                        queryByReferenceCodeFallback(accessToken, secret, referenceNo);
+                if (fallback.isSuccess()) {
+                    log.info("{}反查成功，幂等重试命中已有订单, wegoNo={}",
+                            getPlatForm().getName(), fallback.getData().getShippingOrderNo());
+                    return fallback;
+                }
+                log.warn("{}反查失败（referenceCode={}, msg={}），以原始错误返回",
+                        getPlatForm().getName(), referenceNo, fallback.getMsg());
+            }
             return failure(buildErrorMessage(resp));
         }
+
         String wegoOrderNo = extractStringResult(resp);
         if (CharSequenceUtil.isBlank(wegoOrderNo)) {
             log.warn("{}创建出库单成功但未提取到出库单号, resp={}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
         }
         return success(ThirdWarehouseQueryOutboundResponse.builder().shippingOrderNo(wegoOrderNo).build());
+    }
+
+    /**
+     * 判断 WEGO 是否因"相同 referenceCode 已存在"而拒绝建单。
+     * <p>
+     * WEGO 返回特征：{@code success=false, errorCode=2000, result="订单已存在:WFHD-xxx"}。
+     * 同时兜底检查 {@code errorMsg} 字段，应对 WEGO 未来调整字段位置的情况。
+     * errorCode 与关键词双重匹配，防止其他错误场景误触发。
+     * </p>
+     */
+    private boolean isOrderAlreadyExistsError(JSONObject resp) {
+        if (resp == null) {
+            return false;
+        }
+        Integer errorCode = resp.getInteger("errorCode");
+        boolean codeMatch = Integer.valueOf(2000).equals(errorCode);
+        if (!codeMatch) {
+            return false;
+        }
+        String result = resp.getString("result");
+        if (CharSequenceUtil.isNotBlank(result) && result.contains(WEGO_ERROR_ORDER_ALREADY_EXISTS)) {
+            return true;
+        }
+        String errorMsg = resp.getString("errorMsg");
+        return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains(WEGO_ERROR_ORDER_ALREADY_EXISTS);
     }
 
     @Override
@@ -525,11 +607,21 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return failure("WEGO暂不支持取消B2B出库单");
     }
 
+    /**
+     * 查询 WEGO 2C 出库单（按 referenceCode 反查）。
+     *
+     * <p>{@code erpOrderCode} 在所有调用路径上均为 ERP 侧的 WFHD 参考号（非 WEGO 内部单号），
+     * 直接通过 {@code 2c.order.queryPage} 按近 {@value REFERENCE_CODE_FALLBACK_HOURS} 小时
+     * 时间窗口拉取，再按 {@code referenceCode} 过滤定位目标订单。</p>
+     *
+     * <p>这样即使建单后因网络超时未能拿到 WEGO 单号，幂等重试时也能感知订单已存在，
+     * 从而避免重复建单。</p>
+     */
     @Override
     protected ApiResult<ThirdWarehouseQueryOutboundResponse> queryOutboundBill(@Valid ThirdWarehouseQueryOutboundReq queryOutboundReq) {
-        String wegoOrderCode = queryOutboundReq.getErpOrderCode();
-        if (CharSequenceUtil.isBlank(wegoOrderCode)) {
-            return failure("WEGO出库单号不能为空");
+        String referenceCode = queryOutboundReq.getErpOrderCode();
+        if (CharSequenceUtil.isBlank(referenceCode)) {
+            return failure("WEGO查询出库单参考号不能为空");
         }
         Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
         if (authMap == null || authMap.isEmpty()) {
@@ -540,21 +632,84 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (CharSequenceUtil.hasBlank(accessToken, secret)) {
             throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
         }
-        WegoOutboundSearchDTO.SearchReqDTO request = WegoOutboundSearchDTO.SearchReqDTO.builder()
-                .accessToken(accessToken)
-                .secret(secret)
-                .noList(Collections.singletonList(wegoOrderCode))
-                .build();
-        List<WegoOutboundResp.OutboundOrderDTO> orders = wegoOpenApiService.search2cOrder(request);
-        if (CollUtil.isEmpty(orders)) {
-            return failure("WEGO未查询到对应出库单: " + wegoOrderCode);
+
+        log.info("{}查询出库单（按 referenceCode），referenceCode={}", getPlatForm().getName(), referenceCode);
+        return queryByReferenceCodeFallback(accessToken, secret, referenceCode);
+    }
+
+    /**
+     * 通过 {@code 2c.order.queryPage} 在近 {@value REFERENCE_CODE_FALLBACK_HOURS} 小时订单中
+     * 按 {@code referenceCode} 反查出库单，自动翻页直到找到匹配项或全部扫描完毕。
+     *
+     * <p>每页最多 {@link WegoOutboundQueryPageDTO#MAX_PAGE_SIZE} 条（WEGO 上限 100）；
+     * 第一页响应的 {@code pages} 字段决定总页数，后续逐页拉取直到命中或超出范围。
+     * DMP 轮询等已知 WEGO 单号的场景不走此路径（已在第一段按单号找到）。</p>
+     */
+    private ApiResult<ThirdWarehouseQueryOutboundResponse> queryByReferenceCodeFallback(
+            String accessToken, String secret, String referenceCode) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime begin = now.minusHours(REFERENCE_CODE_FALLBACK_HOURS);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String orderDateBegin = begin.format(fmt);
+        String orderDateEnd = now.format(fmt);
+
+        int pageNum = 1;
+        int totalPages = 1;
+        int totalScanned = 0;
+
+        do {
+            WegoOutboundQueryPageDTO.QueryReqDTO pageReq = WegoOutboundQueryPageDTO.QueryReqDTO.builder()
+                    .accessToken(accessToken)
+                    .secret(secret)
+                    .orderDateBegin(orderDateBegin)
+                    .orderDateEnd(orderDateEnd)
+                    .pageNum(pageNum)
+                    .pageSize(WegoOutboundQueryPageDTO.MAX_PAGE_SIZE)
+                    .build();
+
+            WegoOutboundResp pageResp = wegoOpenApiService.query2cOrderPage(pageReq);
+            if (pageResp == null || pageResp.getResult() == null
+                    || CollUtil.isEmpty(pageResp.getResult().getList())) {
+                log.warn("{}queryPage 降级查询第{}页无数据，停止翻页, referenceCode={}",
+                        getPlatForm().getName(), pageNum, referenceCode);
+                break;
+            }
+
+            WegoOutboundResp.PageResultDTO page = pageResp.getResult();
+            // 首页时读取总页数
+            if (pageNum == 1 && page.getPages() != null && page.getPages() > 0) {
+                totalPages = page.getPages();
+            }
+            totalScanned += page.getList().size();
+
+            WegoOutboundResp.OutboundOrderDTO matched = page.getList().stream()
+                    .filter(o -> referenceCode.equals(o.getReferenceCode()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (matched != null) {
+                String trackNo = extractTrackNo(matched.getLogisticsList());
+                log.info("{}queryPage 降级查询成功（第{}/{}页）, referenceCode={}, wegoNo={}, trackNo={}",
+                        getPlatForm().getName(), pageNum, totalPages, referenceCode, matched.getNo(), trackNo);
+                return success(ThirdWarehouseQueryOutboundResponse.builder()
+                        .shippingOrderNo(matched.getNo())
+                        .trackNo(trackNo)
+                        .build());
+            }
+
+            pageNum++;
+        } while (pageNum <= totalPages && pageNum <= REFERENCE_CODE_FALLBACK_MAX_PAGES);
+
+        if (pageNum > REFERENCE_CODE_FALLBACK_MAX_PAGES) {
+            log.warn("{}queryPage 降级查询达到最大翻页上限({})仍未命中, referenceCode={}, 近{}小时共扫描{}条",
+                    getPlatForm().getName(), REFERENCE_CODE_FALLBACK_MAX_PAGES,
+                    referenceCode, REFERENCE_CODE_FALLBACK_HOURS, totalScanned);
+        } else {
+            log.warn("{}queryPage 降级查询完成但未匹配, referenceCode={}, 近{}小时共扫描{}条（{}页）",
+                    getPlatForm().getName(), referenceCode, REFERENCE_CODE_FALLBACK_HOURS,
+                    totalScanned, pageNum - 1);
         }
-        WegoOutboundResp.OutboundOrderDTO order = orders.get(0);
-        String trackNo = extractTrackNo(order.getLogisticsList());
-        return success(ThirdWarehouseQueryOutboundResponse.builder()
-                .shippingOrderNo(order.getNo())
-                .trackNo(trackNo)
-                .build());
+        return failure("WEGO未查询到对应出库单（referenceCode=" + referenceCode + "）");
     }
 
     @Override
@@ -576,17 +731,12 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      *
      * @param req         ERP 统一出库单请求
      * @param wegoOrderNo WEGO 出库单号：新增传 null，修改传已有单号
+     * @param accessToken WEGO appToken
+     * @param secret      WEGO appSecret
      */
-    private WegoOutboundSaveDTO.SaveReqDTO buildOutboundSaveDto(ThirdWarehouseCreateOutboundReq req, String wegoOrderNo) {
-        Map<String, Object> authMap = ThirdWarehouseContext.getAuthMap();
-        if (authMap == null || authMap.isEmpty()) {
-            throw new ServiceException("WEGO授权信息为空");
-        }
-        String accessToken = toStr(authMap.get(AUTH_KEY_APP_TOKEN));
-        String secret = toStr(authMap.get(AUTH_KEY_APP_SECRET));
-        if (CharSequenceUtil.hasBlank(accessToken, secret)) {
-            throw new ServiceException("WEGO授权信息appToken/appSecret缺失");
-        }
+    private WegoOutboundSaveDTO.SaveReqDTO buildOutboundSaveDto(
+            ThirdWarehouseCreateOutboundReq req, String wegoOrderNo,
+            String accessToken, String secret) {
 
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiver = req.getReceiverInfo();
 
