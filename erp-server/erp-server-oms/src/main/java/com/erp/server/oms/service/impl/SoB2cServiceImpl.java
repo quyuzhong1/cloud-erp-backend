@@ -3650,12 +3650,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<DictCountryEntity> countryEntityList = sysDictFeign.listCountryByIds(Collections.singletonList(receiver.getCountry()));
             receiverInfo.setCountryCode3(CollUtil.isNotEmpty(countryEntityList) ? countryEntityList.get(0).getAlpha3() : "");
         }
-        //速派通地址3赋值
+        //地址2/地址3分行处理：需要将secondAddress/fullAddress分开传递的仓库平台
         if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
          ||PlatformDictEnum.JI_TU_WAREHOUSE.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
-         ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+         ||PlatformDictEnum.DA_MAI.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+         ||OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
 
             receiverInfo.setAddress3(receiver.getFullAddress());
@@ -4012,6 +4013,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cErrorService.generateErrorOrder(entity.getId(), type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult), getApiResultCode(apiResult));
                 //标记三方仓发货单为删除
                 thirdWarehouseDeliveryFeign.deleteByCode(createOutboundReq.getReferenceNo());
+            } else {
+                // 建单成功后立即将 WEGO/三方仓出库单号持久化到 so_b2c，防止外层调用方在后续逻辑中
+                // 因超时、异常等原因未能执行到 thirdWarehouseCreateOutStock 的写库步骤，
+                // 导致 shippingOrderNo 丢失，下次重试时因找不到已有订单而重复建单。
+                String earlyShippingOrderNo = apiResult.getData() != null ? apiResult.getData().getShippingOrderNo() : null;
+                if (CharSequenceUtil.isNotBlank(earlyShippingOrderNo) && CharSequenceUtil.isBlank(entity.getShippingOrderNo())) {
+                    boolean updated = this.lambdaUpdate()
+                            .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
+                            .eq(SoB2cEntity::getId, entity.getId())
+                            .eq(SoB2cEntity::getVersion, entity.getVersion())
+                            .update(entity);
+                    if (updated) {
+                        entity.setShippingOrderNo(earlyShippingOrderNo);
+                        log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}", earlyShippingOrderNo, entity.getCode());
+                    } else {
+                        log.warn("三方仓建单成功，提前落库 shippingOrderNo 因版本冲突跳过（并发写），soCode={}", entity.getCode());
+                    }
+                }
             }
             return apiResult;
         } catch (Exception e) {
