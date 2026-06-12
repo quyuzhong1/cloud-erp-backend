@@ -340,8 +340,8 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      * 审核状态说明
      * 用于存储提交失败、不允许审核通过、审核不通过等说明，按时间戳追加，超过最大长度从头部截断
      */
-    @TableField("approve_status_remark")
-    private String approveStatusRemark;
+    @TableField("approve_remark")
+    private String approveRemark;
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;

@@ -629,9 +629,9 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal amount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
 
         /**
          * 币别（原币）
@@ -1252,9 +1252,9 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal amount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
 
         /**
          * 运费收入
@@ -1631,10 +1631,10 @@ public class SoB2cDTO implements Serializable {
         @Digits(integer = 12, fraction = 4, message = "订单销售总额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        @Digits(integer = 12, fraction = 4, message = "订单实付总额整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal paidTotalAmount;
+        @Digits(integer = 12, fraction = 4, message = "实付总额整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal paidAmount;
         /**
          * 总优惠金额（来源：平台推送或拆单分摊）
          */
@@ -4482,9 +4482,9 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal amount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
 
         /**
          * 币别（原币）

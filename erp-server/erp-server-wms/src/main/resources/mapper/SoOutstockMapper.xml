@@ -21,7 +21,7 @@
         so.source_id AS sourceId,
         so.order_type AS orderType,
         so.approve_status AS approveStatus,
-        so.approve_status_remark AS approveStatusRemark,
+        so.approve_remark AS approveRemark,
         so.warehouse_org_name AS warehouseOrgName,
         so.carrier_id AS carrierId,
         so.invalid_status AS invalidStatus,

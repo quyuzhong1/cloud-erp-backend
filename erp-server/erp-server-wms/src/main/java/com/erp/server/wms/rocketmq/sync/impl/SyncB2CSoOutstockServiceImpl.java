@@ -438,7 +438,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             String stamped = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] " + mismatchMsg;
             soOutstock.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
             soOutstock.setApproveTime(null);
-            soOutstock.setApproveStatusRemark(stamped);
+            soOutstock.setApproveRemark(stamped);
             soOutstockService.save(soOutstock);
             String warnMsg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】(金额异常待人工核实)", UserContext.getDefaultLoginUser().getUserName(), "销售出库单", soOutstock.getCode());
             operateLogService.addModuleOperateLog(warnMsg, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增销售出库单");

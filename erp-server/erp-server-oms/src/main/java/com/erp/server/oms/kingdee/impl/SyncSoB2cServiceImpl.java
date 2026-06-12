@@ -133,8 +133,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
             shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
         } else {
-            // 买家实际付款按订单实付总额推送：优先 paidTotalAmount，回填前的历史单回退到 amount
-            shudiyunB2cOrderDTO.setBuyer_actual_payment(SoB2cAmountUtil.preferPositive(soB2cEntity.getPaidTotalAmount(), soB2cEntity.getAmount()));
+            // 买家实际付款按实付总额推送：优先 paidAmount，回填前的历史单回退到 amount
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(SoB2cAmountUtil.preferPositive(soB2cEntity.getPaidAmount(), soB2cEntity.getAmount()));
         }
 
         // 公共处理
@@ -712,8 +712,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
             shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
         } else {
-            // 买家实际付款按订单实付总额推送：优先 paidTotalAmount，回填前的历史单回退到 amount
-            shudiyunB2cOrderDTO.setBuyer_actual_payment(SoB2cAmountUtil.preferPositive(soB2cEntity.getPaidTotalAmount(), soB2cEntity.getAmount()));
+            // 买家实际付款按实付总额推送：优先 paidAmount，回填前的历史单回退到 amount
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(SoB2cAmountUtil.preferPositive(soB2cEntity.getPaidAmount(), soB2cEntity.getAmount()));
         }
 
         // 公共处理

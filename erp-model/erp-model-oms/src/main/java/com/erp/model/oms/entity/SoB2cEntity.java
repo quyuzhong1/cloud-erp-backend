@@ -114,10 +114,10 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("amount")
     private BigDecimal amount;
     /**
-     * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+     * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
      */
-    @TableField("paid_total_amount")
-    private BigDecimal paidTotalAmount;
+    @TableField("paid_amount")
+    private BigDecimal paidAmount;
     /**
      * 币别（原币）
      */

@@ -96,7 +96,7 @@ public class SoB2cDetailDTO implements Serializable {
          */
        private BigDecimal saleAmount;
         /**
-         * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+         * 实付金额（折后）= 销售金额 / 订单销售总额 × 实付总额
          */
        private BigDecimal paidAmount;
         /**
@@ -404,7 +404,7 @@ public class SoB2cDetailDTO implements Serializable {
          */
         private BigDecimal saleAmount;
         /**
-         * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+         * 实付金额（折后）= 销售金额 / 订单销售总额 × 实付总额
          */
         private BigDecimal paidAmount;
         /**
@@ -510,7 +510,7 @@ public class SoB2cDetailDTO implements Serializable {
          */
         private BigDecimal saleAmount;
         /**
-         * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+         * 实付金额（折后）= 销售金额 / 订单销售总额 × 实付总额
          */
         private BigDecimal paidAmount;
         /**

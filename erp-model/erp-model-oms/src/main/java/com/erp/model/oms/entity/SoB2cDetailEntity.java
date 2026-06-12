@@ -95,7 +95,7 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("sale_amount")
     private BigDecimal saleAmount;
     /**
-     * 实付金额（折后）= 销售金额 / 订单销售总额 × 订单实付总额
+     * 实付金额（折后）= 销售金额 / 订单销售总额 × 实付总额
      */
     @TableField("paid_amount")
     private BigDecimal paidAmount;

@@ -458,7 +458,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     /**
      * 追加写入"审核状态说明"
      * <p>
-     * 用途：提交/审核校验失败时，把失败原因落地到 so_outstock.approve_status_remark
+     * 用途：提交/审核校验失败时，把失败原因落地到 so_outstock.approve_remark
      * 字段，前端列表可见。
      * 写入策略：按 [yyyy-MM-dd HH:mm:ss] 前缀追加，超过最大长度从头部截断。
      * 事务策略：默认事务传播（REQUIRED），跟随调用方事务提交，
@@ -468,7 +468,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param id      销售出库单主键
      * @param message 本次失败说明
      */
-    void appendApproveStatusRemark(String id, String message);
+    void appendApproveRemark(String id, String message);
 
     /**
      * 校验销售出库单与上游销售订单金额是否一致（不一致需拦截）。

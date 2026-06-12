@@ -172,6 +172,12 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOC
 @Slf4j
 public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, SoOutstockEntity> implements SoOutstockService {
 
+    /**
+     * 审核状态说明字段最大长度，超过则从头部截断
+     * 与 DDL VARCHAR(255) 对齐
+     */
+    private static final int APPROVE_REMARK_MAX_LENGTH = 255;
+
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -537,7 +543,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (isAmountMismatchWithUpstreamSo(entity)) {
             String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
             // 独立事务写入审核状态说明，不影响后续返回值；不抛异常，避免回滚 remark
-            soOutstockService.appendApproveStatusRemark(entity.getId(), message);
+            soOutstockService.appendApproveRemark(entity.getId(), message);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
         }
 
@@ -727,12 +733,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     * 审核状态说明字段最大长度，超过则从头部截断
-     * 与 DDL VARCHAR(255) 对齐
-     */
-    private static final int APPROVE_STATUS_REMARK_MAX_LENGTH = 255;
-
-    /**
      * 追加写入"审核状态说明"
      * <p>
      * 使用默认事务传播（REQUIRED），跟随调用方事务提交/回滚。
@@ -743,7 +743,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void appendApproveStatusRemark(String id, String message) {
+    public void appendApproveRemark(String id, String message) {
         if (CharSequenceUtil.isBlank(id) || CharSequenceUtil.isBlank(message)) {
             return;
         }
@@ -751,7 +751,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (entity == null) {
             return;
         }
-        String prev = entity.getApproveStatusRemark();
+        String prev = entity.getApproveRemark();
         String prefix = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "] ";
         StringBuilder sb = new StringBuilder();
         if (CharSequenceUtil.isNotBlank(prev)) {
@@ -763,11 +763,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         sb.append(prefix).append(message);
         String merged = sb.toString();
         // 超长则从头部截断，保留最近内容
-        if (merged.length() > APPROVE_STATUS_REMARK_MAX_LENGTH) {
-            merged = merged.substring(merged.length() - APPROVE_STATUS_REMARK_MAX_LENGTH);
+        if (merged.length() > APPROVE_REMARK_MAX_LENGTH) {
+            merged = merged.substring(merged.length() - APPROVE_REMARK_MAX_LENGTH);
         }
         lambdaUpdate()
-                .set(SoOutstockEntity::getApproveStatusRemark, merged)
+                .set(SoOutstockEntity::getApproveRemark, merged)
                 .eq(SoOutstockEntity::getId, id)
                 .update();
     }
@@ -964,7 +964,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         // 价税合计金额一致性校验：仅审核通过时拦截，状态保持审核中，写入审核状态说明
         if (ApproveTypeEnum.PASS.equals(approveType) && isAmountMismatchWithUpstreamSo(entity)) {
             String message = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_APPROVE);
-            soOutstockService.appendApproveStatusRemark(entity.getId(), message);
+            soOutstockService.appendApproveRemark(entity.getId(), message);
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
         }
 
@@ -3733,7 +3733,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             boolean amountMismatch = soOutstockService.isAmountMismatchWithUpstreamSo(soOutstock, detailEntities);
             if (amountMismatch) {
                 String mismatchMsg = MessageUtils.getMessage(ApiError.SO_OUTSTOCK_AMOUNT_MISMATCH_SUBMIT);
-                soOutstockService.appendApproveStatusRemark(soOutstock.getId(), mismatchMsg);
+                soOutstockService.appendApproveRemark(soOutstock.getId(), mismatchMsg);
                 log.warn("平台仓/海外仓下推销售出库单金额异常，落待提交状态，单号：{}，soId：{}", soOutstock.getCode(), soOutstock.getSoId());
             }
             //添加日志

@@ -627,9 +627,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         soInfoEntity.setAllAmountLc(allAmountLc);
-        // 订单实付总额 = 应收款金额 = 订单销售总额 - 折扣总额（与 UI 收款信息区"应收款金额"口径对齐）
+        // 实付总额 = 应收款金额 = 订单销售总额 - 折扣总额（与 UI 收款信息区"应收款金额"口径对齐）
         BigDecimal orderAmountForPaidTotal = MathUtil.getValue(soInfoEntity.getOrderAmount());
-        soInfoEntity.setPaidTotalAmount(orderAmountForPaidTotal.subtract(MathUtil.getValue(soInfoEntity.getDiscountAmount())));
+        soInfoEntity.setPaidAmount(orderAmountForPaidTotal.subtract(MathUtil.getValue(soInfoEntity.getDiscountAmount())));
         soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1390,9 +1390,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         BigDecimal allAmountLc = saveOrUpdateList.stream().map(SoDetailEntity::getAllAmountLocalCurrency).reduce(BigDecimal.ZERO, BigDecimal::add);
         soInfoEntity.setAllAmountLc(allAmountLc);
-        // 订单实付总额 = 应收款金额 = 订单销售总额 - 折扣总额（与 UI 收款信息区"应收款金额"口径对齐）
+        // 实付总额 = 应收款金额 = 订单销售总额 - 折扣总额（与 UI 收款信息区"应收款金额"口径对齐）
         BigDecimal orderAmountForPaidTotal = MathUtil.getValue(soInfoEntity.getOrderAmount());
-        soInfoEntity.setPaidTotalAmount(orderAmountForPaidTotal.subtract(MathUtil.getValue(soInfoEntity.getDiscountAmount())));
+        soInfoEntity.setPaidAmount(orderAmountForPaidTotal.subtract(MathUtil.getValue(soInfoEntity.getDiscountAmount())));
         soInfoService.updateById(soInfoEntity);
         this.saveOrUpdateBatch(saveOrUpdateList);
     }

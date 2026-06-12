@@ -14,14 +14,14 @@ import java.util.List;
  *
  * <p>统一处理：
  * <ul>
- *   <li>主表 paid_total_amount = amount - total_discount（订单实付总额）</li>
+ *   <li>主表 paid_amount = amount - total_discount（实付总额）</li>
  *   <li>明细 sale_amount = price × qty（销售金额，折前）</li>
- *   <li>明细 paid_amount = sale_amount / main.amount × main.paid_total_amount，最后一行吃精度差</li>
+ *   <li>明细 paid_amount = sale_amount / main.amount × main.paid_amount，最后一行吃精度差</li>
  *   <li>明细 discount_amount = sale_amount - paid_amount</li>
  * </ul>
  *
  * <p>调用前置：主表的 amount、total_discount 已经从入参/平台推送/手工录入设置完毕。
- * 调用后明细的 saleAmount/paidAmount/discountAmount 与主表 paidTotalAmount 都会被覆盖写入。
+ * 调用后明细的 saleAmount/paidAmount/discountAmount 与主表 paidAmount 都会被覆盖写入。
  */
 public final class SoB2cAmountUtil {
 
@@ -31,32 +31,32 @@ public final class SoB2cAmountUtil {
     }
 
     /**
-     * 主表订单实付总额：amount - totalDiscount。
+     * 主表实付总额：amount - totalDiscount。
      */
-    public static void applyMainPaidTotalAmount(SoB2cEntity main) {
+    public static void applyMainPaidAmount(SoB2cEntity main) {
         if (main == null) {
             return;
         }
         BigDecimal amount = MathUtil.getValue(main.getAmount());
         BigDecimal discount = MathUtil.getValue(main.getTotalDiscount());
-        main.setPaidTotalAmount(amount.subtract(discount).setScale(SCALE, RoundingMode.HALF_UP));
+        main.setPaidAmount(amount.subtract(discount).setScale(SCALE, RoundingMode.HALF_UP));
     }
 
     /**
      * 明细销售金额、实付金额、折扣额：
      * <ul>
      *   <li>saleAmount = price × qty</li>
-     *   <li>paidAmount 按 saleAmount 占 main.amount 的比例分摊 main.paidTotalAmount，最后一行 = paidTotalAmount - sum(前面)</li>
+     *   <li>paidAmount 按 saleAmount 占 main.amount 的比例分摊 main.paidAmount，最后一行 = paidAmount - sum(前面)</li>
      *   <li>discountAmount = saleAmount - paidAmount</li>
      * </ul>
-     * 必须先调用 {@link #applyMainPaidTotalAmount(SoB2cEntity)}。
+     * 必须先调用 {@link #applyMainPaidAmount(SoB2cEntity)}。
      */
     public static void applyDetailAmounts(SoB2cEntity main, List<SoB2cDetailEntity> details) {
         if (main == null || CollUtil.isEmpty(details)) {
             return;
         }
         BigDecimal mainAmount = MathUtil.getValue(main.getAmount());
-        BigDecimal paidTotal = MathUtil.getValue(main.getPaidTotalAmount());
+        BigDecimal paidTotal = MathUtil.getValue(main.getPaidAmount());
 
         for (SoB2cDetailEntity d : details) {
             BigDecimal price = MathUtil.getValue(d.getPrice());
@@ -92,10 +92,10 @@ public final class SoB2cAmountUtil {
     }
 
     /**
-     * 一站式计算：主表 paidTotalAmount + 明细 saleAmount/paidAmount/discountAmount。
+     * 一站式计算：主表 paidAmount + 明细 saleAmount/paidAmount/discountAmount。
      */
     public static void applyAll(SoB2cEntity main, List<SoB2cDetailEntity> details) {
-        applyMainPaidTotalAmount(main);
+        applyMainPaidAmount(main);
         applyDetailAmounts(main, details);
     }
 
@@ -114,7 +114,7 @@ public final class SoB2cAmountUtil {
      * 子集重分摊：BOM 套装明细被拆成多条子件时使用。
      *
      * <p>区别于 {@link #applyDetailAmounts}：本方法把"父明细的实付金额"等比例分摊到 children 内部，
-     * 不动订单其他未拆明细，避免 last-eats-diff 误把整单 paidTotalAmount 灌进最后一条子件。
+     * 不动订单其他未拆明细，避免 last-eats-diff 误把整单 paidAmount 灌进最后一条子件。
      *
      * <p>计算口径：
      * <ul>

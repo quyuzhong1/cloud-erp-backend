@@ -139,9 +139,9 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal orderAmount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
 
         /**
          * 军区id
@@ -920,9 +920,9 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal orderAmount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
 
         /**
          * 类型 来源
@@ -1232,9 +1232,9 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal orderAmount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
 
         /**
          * 审核状态code
@@ -1793,9 +1793,9 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal orderAmount;
 
         /**
-         * 订单实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
          */
-        private BigDecimal paidTotalAmount;
+        private BigDecimal paidAmount;
         /**
          * 要货日期
          */

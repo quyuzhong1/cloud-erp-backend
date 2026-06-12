@@ -126,7 +126,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
         //订单金额
         orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
-        //总优惠金额（驱动 paidTotalAmount = amount - totalDiscount 计算）
+        //总优惠金额（驱动 paidAmount = amount - totalDiscount 计算）
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
 
         //币别

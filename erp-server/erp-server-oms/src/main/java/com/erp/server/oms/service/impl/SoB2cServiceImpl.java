@@ -880,7 +880,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
         String dictPlatform = addDTO.getDictPlatform();
-        SoB2cAmountUtil.applyMainPaidTotalAmount(soB2cEntity);
+        SoB2cAmountUtil.applyMainPaidAmount(soB2cEntity);
         // 数据处理
         handleData(soB2cEntity, true, true);
         //创建时间
@@ -1480,7 +1480,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (soB2cEntity.getTotalDiscount() == null) {
             soB2cEntity.setTotalDiscount(old.getTotalDiscount());
         }
-        SoB2cAmountUtil.applyMainPaidTotalAmount(soB2cEntity);
+        SoB2cAmountUtil.applyMainPaidAmount(soB2cEntity);
 
         // 数据处理
         handleData(soB2cEntity, true, true);
@@ -4435,7 +4435,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(list.get(0), addDTO);
         BigDecimal totalAmount = list.stream().map(SoB2cEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         addDTO.setAmount(totalAmount);
-        // 累加各子单的优惠金额，由 add() 内部 applyMainPaidTotalAmount 统一算 paidTotalAmount
+        // 累加各子单的优惠金额，由 add() 内部 applyMainPaidAmount 统一算 paidAmount
         BigDecimal mergedTotalDiscount = list.stream()
                 .map(SoB2cEntity::getTotalDiscount)
                 .map(MathUtil::getValue)
@@ -7614,7 +7614,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //校验汇率
             checkExchangeRate(entity);
-            SoB2cAmountUtil.applyMainPaidTotalAmount(entity);
+            SoB2cAmountUtil.applyMainPaidAmount(entity);
 
             // 生成单号
             String businessNo = "";
@@ -7816,7 +7816,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
             checkExchangeRate(entity);
-            SoB2cAmountUtil.applyMainPaidTotalAmount(entity);
+            SoB2cAmountUtil.applyMainPaidAmount(entity);
 
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {

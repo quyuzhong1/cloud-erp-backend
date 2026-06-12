@@ -498,7 +498,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     soB2cDetailEntity.setPrice(soB2cDetailEntity.getAmount().divide(new BigDecimal(soB2cDetailEntity.getQty()),4, RoundingMode.HALF_UP));
                 }
                 // 仅对原 BOM 父明细的 saleAmount/paidAmount 在 children 内部重分摊，
-                // 不动其他未拆明细，避免 last-eats-diff 灌爆整单 paidTotalAmount
+                // 不动其他未拆明细，避免 last-eats-diff 灌爆整单 paidAmount
                 SoB2cAmountUtil.redistributeChildAmounts(detailEntity, addDetailList);
 
                 //封装平台sku信息
