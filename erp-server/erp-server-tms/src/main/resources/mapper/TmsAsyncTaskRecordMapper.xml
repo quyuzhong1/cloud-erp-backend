@@ -27,6 +27,16 @@
         <result column="exec_type" property="execType"/>
         <result column="is_retry" property="isRetry"/>
         <result column="method_type" property="methodType"/>
+        <result column="unique_key" property="uniqueKey"/>
+        <result column="unique_key_text" property="uniqueKeyText"/>
+        <result column="execute_time" property="executeTime"/>
+        <result column="dispatch_time" property="dispatchTime"/>
+        <result column="result_status" property="resultStatus"/>
+        <result column="success_count" property="successCount"/>
+        <result column="last_heartbeat_time" property="lastHeartbeatTime"/>
+        <result column="root_task_id" property="rootTaskId"/>
+        <result column="retry_source_task_id" property="retrySourceTaskId"/>
+        <result column="retry_mode" property="retryMode"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -54,7 +64,17 @@ tatr.error_data AS errorData,
 tatr.detail_count AS detailCount,
 tatr.error_count AS errorCount,
 tatr.exec_type AS execType,
-tatr.method_type AS methodType
+tatr.method_type AS methodType,
+tatr.unique_key AS uniqueKey,
+tatr.unique_key_text AS uniqueKeyText,
+tatr.execute_time AS executeTime,
+tatr.dispatch_time AS dispatchTime,
+tatr.result_status AS resultStatus,
+tatr.success_count AS successCount,
+tatr.last_heartbeat_time AS lastHeartbeatTime,
+tatr.root_task_id AS rootTaskId,
+tatr.retry_source_task_id AS retrySourceTaskId,
+tatr.retry_mode AS retryMode
     </sql>
 
     <select id="tabList" resultType="com.erp.model.tms.dto.TmsAsyncTaskRecordDTO$TabListDTO">
