@@ -7,6 +7,8 @@ import com.erp.model.tms.dto.CfgLogisticsCostImportFieldDTO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
+import com.erp.model.tms.enums.CfgLogisticsCostImportIdentifyTypeEnum;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportFieldEntity;
@@ -151,6 +153,57 @@ public class LogisticsCostImportFieldRuleTest {
         assertThrowsServiceException(() -> clean(service, "ABC",
                 detailWithRules(rule("UNKNOWN")),
                 new JSONObject(), Collections.emptyMap()));
+    }
+
+    @Test
+    public void matchesCostImportConfigShouldFilterBySupplierWhenIdentifyNoSupplier() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo matched = billVoWithSupplier("bill-1", "detail-1", "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo other = billVoWithSupplier("bill-2", "detail-2", "supplier-b");
+
+        assertTrue((Boolean) invokePrivate(service, "matchesCostImportConfig",
+                new Class[]{CfgLogisticsCostImportEntity.class, LogisticsBillDTO.LogisticsBillVo.class}, config, matched));
+        assertFalse((Boolean) invokePrivate(service, "matchesCostImportConfig",
+                new Class[]{CfgLogisticsCostImportEntity.class, LogisticsBillDTO.LogisticsBillVo.class}, config, other));
+    }
+
+    @Test
+    public void matchesCostImportConfigShouldSkipSupplierFilterWhenIdentifyNo() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportEntity config = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        LogisticsBillDTO.LogisticsBillVo other = billVoWithSupplier("bill-2", "detail-2", "supplier-b");
+
+        assertTrue((Boolean) invokePrivate(service, "matchesCostImportConfig",
+                new Class[]{CfgLogisticsCostImportEntity.class, LogisticsBillDTO.LogisticsBillVo.class}, config, other));
+    }
+
+    @Test
+    public void validateDuplicateImportConfigShouldRejectSameRecognitionName() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        CfgLogisticsCostImportEntity first = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        first.setName("模板A");
+        first.setSheetName("sheet1");
+        first.setCostType("excel");
+        CfgLogisticsCostImportEntity second = costImportConfig(
+                CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode(),
+                CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(),
+                "supplier-a");
+        second.setName("模板A");
+        second.setSheetName("sheet1");
+        second.setCostType("excel");
+
+        assertThrowsServiceException(() -> invokePrivate(service, "validateDuplicateImportConfig",
+                new Class[]{List.class}, Arrays.asList(first, second)));
     }
 
     /**
@@ -645,6 +698,22 @@ public class LogisticsCostImportFieldRuleTest {
         CfgLogisticsCostImportDetailEntity detail = importDetail("clean", "amount", "金额");
         detail.setEtlRuleList(Arrays.asList(rules));
         return detail;
+    }
+
+    private LogisticsBillDTO.LogisticsBillVo billVoWithSupplier(String id, String detailId, String logisticsSupplierId) {
+        LogisticsBillDTO.LogisticsBillVo billVo = new LogisticsBillDTO.LogisticsBillVo();
+        billVo.setId(id);
+        billVo.setDetailId(detailId);
+        billVo.setLogisticsSupplierId(logisticsSupplierId);
+        return billVo;
+    }
+
+    private CfgLogisticsCostImportEntity costImportConfig(String identifyType, String cfgType, String dictPlatform) {
+        CfgLogisticsCostImportEntity entity = new CfgLogisticsCostImportEntity();
+        entity.setIdentifyType(identifyType);
+        entity.setCfgType(cfgType);
+        entity.setDictPlatform(dictPlatform);
+        return entity;
     }
 
     private LogisticsBillDTO.LogisticsBillVo billVo(String id, String detailId, String platformCode, String trackNo, String sourceCode) {

@@ -212,6 +212,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
             return BatchResultDTO.fail(importSyncDTO.getTaskId(),importSyncDTO.getFileName(),"无法识别导入模板，请检查配置是否正确");
         }
+        validateDuplicateImportConfig(cfgLogisticsCostImportList);
         //查询配置明细信息
         List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
         List<CfgLogisticsCostImportDetailEntity> importDetailList =  cfgLogisticsCostImportDetailService.listByMainIdList(mainIdList);
@@ -1489,8 +1490,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //物流商信息
-        excelDTO.setLogisticsSupplierId(costImportEntity.getDictPlatform());
         //付款类型
         String payTypeCode = logisticsPayTypeEnum.getByName(excelDTO.getPayType());
         if (CharSequenceUtil.isBlank(payTypeCode)) {
@@ -1509,6 +1508,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         // 分组阶段已解析物流单集合，避免 platformCode 多行合并后被最后一行平台单号重新缩窄匹配范围。
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = ObjectUtil.defaultIfNull(matchedLogisticsBillVos, Collections.emptyList());
+        applyImportLogisticsSupplierId(excelDTO, costImportEntity, logisticsBillVoList);
 
         // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，配置入口已禁用；未匹配到物流单直接报错。
         if (CollUtil.isEmpty(logisticsBillVoList)) {
@@ -1543,6 +1543,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             String lastBillCostType = "";
             for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
                 logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
+                applyImportLogisticsSupplierId(excelDTO, costImportEntity, Collections.singletonList(logisticsBillVo));
                 // 单物流单沿用已汇总费用，多物流单使用按重量分摊后的费用项。
                 List<TmsCostDetailDTO.UpdateDTO> currentUpdateList = logisticsBillVoList.size() > 1
                         ? allocatedCostMap.getOrDefault(logisticsBillVo.getDetailId(), Collections.emptyList())
@@ -1648,8 +1649,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     /**
      * 物流商/平台模板只允许处理自身配置范围内的物流单，避免跨模板误写费用。
+     * <p>按识别单号（identify_no）时不按配置平台过滤；按识别单号+物流商（identify_no_supplier）或空值时保持原有过滤。</p>
      */
     private boolean matchesCostImportConfig(CfgLogisticsCostImportEntity costImportEntity, LogisticsBillDTO.LogisticsBillVo logisticsBillVo) {
+        if (!shouldFilterByCostImportPlatform(costImportEntity)) {
+            return true;
+        }
         String cfgType = costImportEntity.getCfgType();
         String dictPlatform = costImportEntity.getDictPlatform();
         if (CharSequenceUtil.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(), cfgType)) {
@@ -1659,6 +1664,52 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             return CharSequenceUtil.equals(dictPlatform, logisticsBillVo.getSalesPlatform());
         }
         return true;
+    }
+
+    /**
+     * 是否按配置平台（物流商/销售平台）收窄物流单匹配范围。
+     */
+    private boolean shouldFilterByCostImportPlatform(CfgLogisticsCostImportEntity costImportEntity) {
+        String identifyType = costImportEntity.getIdentifyType();
+        if (CharSequenceUtil.isBlank(identifyType)) {
+            return true;
+        }
+        return CharSequenceUtil.equals(CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode(), identifyType);
+    }
+
+    /**
+     * 导入行物流商：按识别单号+物流商时用配置平台；仅按识别单号时用命中物流单上的物流商。
+     */
+    private void applyImportLogisticsSupplierId(ImportHistoryRecordExcelDTO excelDTO,
+                                                CfgLogisticsCostImportEntity costImportEntity,
+                                                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList) {
+        if (shouldFilterByCostImportPlatform(costImportEntity)) {
+            excelDTO.setLogisticsSupplierId(costImportEntity.getDictPlatform());
+            return;
+        }
+        if (CollUtil.isNotEmpty(logisticsBillVoList)) {
+            excelDTO.setLogisticsSupplierId(logisticsBillVoList.get(0).getLogisticsSupplierId());
+        }
+    }
+
+    /**
+     * 同一文件名命中多条除识别维度外完全相同的配置时，会导致重复解析同一 sheet，提前拦截。
+     */
+    private void validateDuplicateImportConfig(List<CfgLogisticsCostImportEntity> cfgLogisticsCostImportList) {
+        if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
+            return;
+        }
+        Map<String, List<CfgLogisticsCostImportEntity>> grouped = cfgLogisticsCostImportList.stream()
+                .collect(Collectors.groupingBy(entity -> CharSequenceUtil.join("|",
+                        entity.getDictPlatform(),
+                        entity.getName(),
+                        entity.getSheetName(),
+                        entity.getCostType())));
+        for (List<CfgLogisticsCostImportEntity> group : grouped.values()) {
+            if (group.size() > 1) {
+                throw new ServiceException("文件名命中多条识别名称相同的费用项配置，请检查识别维度或识别名称是否重复");
+            }
+        }
     }
 
     private LogisticsBillCostEntity findMatchedLogisticsBillCost(List<LogisticsBillCostEntity> logisticsBillCostList,
@@ -1880,6 +1931,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollUtil.isEmpty(cfgLogisticsCostImportList)) {
             return BatchResultDTO.fail(importDTO.getTaskId(),entity.getFileName(),"无法识别导入模板，请检查配置是否正确");
         }
+        validateDuplicateImportConfig(cfgLogisticsCostImportList);
         //查询配置明细信息
         List<String> mainIdList = cfgLogisticsCostImportList.stream().map(CfgLogisticsCostImportEntity::getId).distinct().collect(Collectors.toList());
         List<CfgLogisticsCostImportDetailEntity> importDetailList =  cfgLogisticsCostImportDetailService.listByMainIdList(mainIdList);
