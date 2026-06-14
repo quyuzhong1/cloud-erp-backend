@@ -140,7 +140,13 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         * 导入处理：import_update=导入更新,import_add_old=导入新增(按原单),import_add_new=导入新增(按新单)
         */
         private String importType;
-        private String importTypeName;
+                private String importTypeName;
+
+        /**
+        * 识别维度：identify_no=按识别单号,identify_no_supplier=按识别单号+物流商
+        */
+        private String identifyType;
+        private String identifyTypeName;
 
         /**
         * 启用状态
@@ -313,6 +319,12 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         private String importType;
 
         /**
+        * 识别维度：identify_no=按识别单号,identify_no_supplier=按识别单号+物流商
+        */
+        private String identifyType;
+        private String identifyTypeName;
+
+        /**
         * 启用状态
         */
         private Boolean disabled;
@@ -420,6 +432,13 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         private List<String> importTypeList;
 
         private String importType;
+
+        /**
+        * 识别维度：api/tms/common/enumDropDown?type=CfgLogisticsCostImportIdentifyType
+        */
+        @NotBlank(message = "识别维度不能为空")
+        @Size(max = 50, message = "识别维度最大长度不能超过50位")
+        private String identifyType;
 
         /**
         * 启用状态

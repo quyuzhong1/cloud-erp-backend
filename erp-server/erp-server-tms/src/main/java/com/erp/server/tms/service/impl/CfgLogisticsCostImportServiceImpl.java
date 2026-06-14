@@ -112,8 +112,9 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO addInTransaction(CfgLogisticsCostImportDTO.AddDTO dto, Set<String> validCurrencyKeys) {
         dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
-        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
-        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),"");
+        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
+        resolveIdentifyType(dto);
+        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(), dto.getCostType(), dto.getIdentifyType(), "");
         // 验证明细列表
         validateDetailList(dto.getBusinessType(), dto.getDetailList(), validCurrencyKeys);
 
@@ -197,8 +198,9 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateInTransaction(CfgLogisticsCostImportDTO.UpdateDTO dto, Set<String> validCurrencyKeys) {
         dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
-        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
-        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(),dto.getCostType(),dto.getId());
+        //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
+        validateIdentifyType(dto.getIdentifyType());
+        isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(), dto.getCostType(), dto.getIdentifyType(), dto.getId());
 
         // 验证明细列表
         validateDetailList(dto.getBusinessType(), dto.getDetailList(), validCurrencyKeys);
@@ -300,19 +302,33 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         return Boolean.TRUE;
     }
 
-    //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet 为唯一）
-    private void isExist(String businessType,String dictPlatform,String name,String sheetName,String costType,String id) {
+    //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
+    private void isExist(String businessType, String dictPlatform, String name, String sheetName, String costType, String identifyType, String id) {
         Integer count = lambdaQuery()
                 .eq(CfgLogisticsCostImportEntity::getBusinessType, businessType)
                 .eq(CfgLogisticsCostImportEntity::getDictPlatform, dictPlatform)
                 .eq(CfgLogisticsCostImportEntity::getName, name)
                 .eq(CfgLogisticsCostImportEntity::getSheetName, sheetName)
                 .eq(CfgLogisticsCostImportEntity::getCostType, costType)
+                .eq(CfgLogisticsCostImportEntity::getIdentifyType, identifyType)
                 //若id不为空则作为参数
                 .ne(StringUtils.isNotBlank(id), CfgLogisticsCostImportEntity::getId, id)
                 .count();
         if(count > 0){
             throw new ServiceException(ApiError.COMMON_HAS_EXIST, "费用配置");
+        }
+    }
+
+    private void resolveIdentifyType(CfgLogisticsCostImportDTO.CommonDTO dto) {
+        if (StringUtils.isBlank(dto.getIdentifyType())) {
+            dto.setIdentifyType(CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode());
+        }
+        validateIdentifyType(dto.getIdentifyType());
+    }
+
+    private void validateIdentifyType(String identifyType) {
+        if (!CfgLogisticsCostImportIdentifyTypeEnum.isValidCode(identifyType)) {
+            throw new ServiceException("识别维度不合法");
         }
     }
 
@@ -604,6 +620,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
 
             data.setCostTypeName(CfgLogisticsCostImportCostTypeEnum.getName(data.getCostType()));
 
+            data.setIdentifyTypeName(CfgLogisticsCostImportIdentifyTypeEnum.getName(data.getIdentifyType()));
+
             String importType = data.getImportType();
             if(StringUtils.isNotBlank(importType)){
                 List<String> importTypeList = Arrays.asList(importType.split(","));
@@ -663,6 +681,8 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
             data.setCfgTypeName(CfgLogisticsCostImportCfgTypeEnum.getName(data.getCfgType()));
 
             data.setCostTypeName(CfgLogisticsCostImportCostTypeEnum.getName(data.getCostType()));
+
+            data.setIdentifyTypeName(CfgLogisticsCostImportIdentifyTypeEnum.getName(data.getIdentifyType()));
 
             String importType = data.getImportType();
             if(StringUtils.isNotBlank(importType)){
