@@ -355,8 +355,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         JSONObject supplyOrgJson = new JSONObject();
         supplyOrgJson.put("FNumber", sysAccountingCompany.getKingdeeCode());
         entry.put("FSupplyOrg", supplyOrgJson);
-        //发料方式：直接倒冲
-        entry.put("FIssueType", KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode());
+        //发料方式：变更前取源单原值
+        entry.put("FIssueType", resolveIssueType(srcEntry));
         //变更前
         entry.put("FChangeType","2");
         //分子
@@ -379,8 +379,8 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         entry.put("FOverControlMode","1");
         //货主类型
         entry.put("FOwnerTypeId","BD_OwnerOrg");
-        //倒冲时机：入库倒冲
-        entry.put("FBackFlushType", KingdeeSubcontractBomBackFlushTypeEnum.INSTOCK_BACKFLUSH.getCode());
+        //倒冲时机：变更前取源单原值
+        entry.put("FBackFlushType", resolveBackFlushType(srcEntry));
         //领料考虑最小发料批量
         entry.put("FISMinIssueQty", resolveConsiderMinIssueQty(srcEntry));
         //需求日期
@@ -669,6 +669,30 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             log.warn("委外用料清单用量类型无效: {}, 使用默认值: {}", code, KingdeeSubcontractBomDosageTypeEnum.VARIABLE.getCode());
         }
         return KingdeeSubcontractBomDosageTypeEnum.VARIABLE.getCode();
+    }
+
+    private String resolveIssueType(JSONObject srcEntry) {
+        Object issueType = srcEntry.get("IssueType");
+        if (issueType != null && StringUtils.isNotBlank(String.valueOf(issueType))) {
+            String code = String.valueOf(issueType).trim();
+            if (KingdeeSubcontractBomIssueTypeEnum.getByCode(code) != null) {
+                return code;
+            }
+            log.warn("委外用料清单发料方式无效: {}, 使用默认值: {}", code, KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode());
+        }
+        return KingdeeSubcontractBomIssueTypeEnum.DIRECT_BACKFLUSH.getCode();
+    }
+
+    private String resolveBackFlushType(JSONObject srcEntry) {
+        Object backFlushType = srcEntry.get("BackFlushType");
+        if (backFlushType != null && StringUtils.isNotBlank(String.valueOf(backFlushType))) {
+            String code = String.valueOf(backFlushType).trim();
+            if (KingdeeSubcontractBomBackFlushTypeEnum.getByCode(code) != null) {
+                return code;
+            }
+            log.warn("委外用料清单倒冲时机无效: {}, 使用默认值: {}", code, KingdeeSubcontractBomBackFlushTypeEnum.INSTOCK_BACKFLUSH.getCode());
+        }
+        return KingdeeSubcontractBomBackFlushTypeEnum.INSTOCK_BACKFLUSH.getCode();
     }
 
     private boolean resolveConsiderMinIssueQty(JSONObject srcEntry) {

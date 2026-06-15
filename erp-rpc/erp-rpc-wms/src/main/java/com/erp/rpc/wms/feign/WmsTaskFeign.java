@@ -44,7 +44,7 @@ public interface WmsTaskFeign {
      * 查询所有审核通过并启用的仓库
      */
     @GetMapping("feign/warehouse/listApproveWarehouse")
-    List<WarehouseDTO.UpdateDTO> listApproveWarehouse();
+    List<WarehouseDTO.ListDTO> listApproveWarehouse();
 
     /**
      * 根据采购订单明细ids查询收货明细
@@ -545,13 +545,4 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseReturnOrder/listPoReturnDetailByIdList")
     List<PoReturnDetailEntity> listPoReturnDetailByIdList(@RequestBody List<String> poReturnDetailIdList);
-
-    /**
-     * 根据字典类型和 id 集合批量获取字典值（id -> value），用于避免跨服务直查 WMS 字典实体
-     * @param type 字典 type，例如 warehouseType
-     * @param ids  字典 id 集合
-     * @return Map<id, value>
-     */
-    @PostMapping("feign/dict/listValueMapByTypeAndIds")
-    Map<String, String> listDictValueMapByTypeAndIds(@RequestParam("type") String type, @RequestBody List<String> ids);
 }

@@ -599,8 +599,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public PurchaseApplicationDetailDTO.ImportDTO importFile(MultipartFile excelFile,List<String> skuIds, HttpServletResponse response) {
         //查询所有审核通过的sku
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        //查询所有审核通过并启用的仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
         PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,wmsTaskFeign,skuIds,companyList);

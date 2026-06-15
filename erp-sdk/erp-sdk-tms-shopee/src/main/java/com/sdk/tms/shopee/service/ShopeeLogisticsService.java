@@ -268,8 +268,9 @@ public class ShopeeLogisticsService {
             throw new ServiceException(CharSequenceUtil.format("虾皮生成并绑定头程追踪号请求异常:{}", baseResponse));
         }
         if (StringUtils.isNotEmpty(baseResponse.getError())) {
-            log.error("生成并绑定头程追踪号异常：{}", baseResponse.getError());
-            throw new ServiceException(CharSequenceUtil.format("虾皮生成并绑定头程追踪号接口异常:{}", baseResponse.getError()));
+            String errorDetail = buildShopeeErrorDetail(baseResponse);
+            log.error("生成并绑定头程追踪号异常：{}", errorDetail);
+            throw new ServiceException(CharSequenceUtil.format("虾皮生成并绑定头程追踪号接口异常:{}", errorDetail));
         }
         if (Objects.isNull(baseResponse.getResponse())) {
             throw new ServiceException(CharSequenceUtil.format("虾皮生成并绑定头程追踪号响应为空:{}", baseResponse));
@@ -693,6 +694,23 @@ public class ShopeeLogisticsService {
             throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET, orderSn,error));
         }
         return response;
+    }
+
+    private String buildShopeeErrorDetail(BaseResponse baseResponse) {
+        if (Objects.isNull(baseResponse)) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder(StringUtils.defaultString(baseResponse.getError()));
+        if (StringUtils.isNotBlank(baseResponse.getMessage())) {
+            if (builder.length() > 0) {
+                builder.append(":");
+            }
+            builder.append(baseResponse.getMessage());
+        }
+        if (StringUtils.isNotBlank(baseResponse.getRequestId())) {
+            builder.append(",request_id:").append(baseResponse.getRequestId());
+        }
+        return builder.toString();
     }
 
     public BaseResponse shippingOrder(BaseRequest baseRequest, ShipOrderRequest shipOrderRequest) {
