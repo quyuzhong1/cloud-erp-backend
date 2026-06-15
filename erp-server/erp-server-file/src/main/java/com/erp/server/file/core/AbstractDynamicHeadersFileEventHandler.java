@@ -290,7 +290,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     protected abstract PagingVO<DynamicExcelDTO> getPageData(PagingDTO<P> dto);
 
     protected int getPageSize() {
-        return FileRegistry.exportPageSize();
+        // 动态表头单行体积通常大于固定模板行，使用专用且更保守的批次（默认 1000），避免大宽表导出内存/超时回归
+        return FileRegistry.dynamicExportPageSize();
     }
 
     private List<List<Object>> convertPageDataList(List<DynamicExcelDTO> pageList, Collection<String> headerKeys) {
