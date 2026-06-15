@@ -1,6 +1,7 @@
 package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -305,7 +306,8 @@ public class LogisticsReconDetailDTO implements Serializable {
     }
 
     /**
-     * 导入匹配（按对账费用项批量触发"合并 & 匹配"）
+     * 导入匹配（标准异步导入：上传 Excel，按手动匹配字段批量匹配）
+     * 前端一次可上传多个文件，控制层循环逐文件提交异步导入任务
      */
     @Data
     @NoArgsConstructor
@@ -317,10 +319,46 @@ public class LogisticsReconDetailDTO implements Serializable {
         private String mainId;
 
         /**
-         * 待匹配的对账费用项 id 集合
+         * 导入文件列表
          */
-        @NotEmpty(message = "对账费用项id集合不能为空")
-        private List<String> detailSubIds;
+        @NotEmpty(message = "导入文件不能为空")
+        private List<BaseDTO.ImportDTO> list;
+    }
+
+    /**
+     * 导入匹配单文件异步参数（异步回调时由文件中心写入 taskId）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportMatchSyncDTO {
+        /**
+         * 对账单 id
+         */
+        private String mainId;
+        /**
+         * 文件中心任务 id
+         */
+        private String taskId;
+        /**
+         * 文件 URL
+         */
+        private String fileUrl;
+        /**
+         * 文件名
+         */
+        private String fileName;
+        /**
+         * 操作人 id
+         */
+        private String userId;
+
+        public ImportMatchSyncDTO(String mainId, BaseDTO.ImportDTO file) {
+            this.mainId = mainId;
+            this.taskId = file.getTaskId();
+            this.fileUrl = file.getFileUrl();
+            this.fileName = file.getFileName();
+            this.userId = file.getUserId();
+        }
     }
 
     /**

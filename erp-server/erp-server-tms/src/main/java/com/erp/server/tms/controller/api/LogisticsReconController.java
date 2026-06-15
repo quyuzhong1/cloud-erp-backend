@@ -284,6 +284,10 @@ public class LogisticsReconController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @LogAction(value = LogActionEnum.EXPORT, desc = "物流商对账单导出")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsRecon:paging",
+            tableAlias = "logistics_recon")
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated LogisticsReconDTO.ExportDTO dto) {
         logisticsReconService.exportList(dto);
         return success(Boolean.TRUE);

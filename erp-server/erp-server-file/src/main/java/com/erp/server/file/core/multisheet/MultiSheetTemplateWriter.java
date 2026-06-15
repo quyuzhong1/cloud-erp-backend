@@ -9,6 +9,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.erp.server.file.handler.FileRegistry;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -368,6 +369,20 @@ public class MultiSheetTemplateWriter {
     private ExpandedTemplate expandTemplate(byte[] templateBytes, int[] sheetCountPerType) throws IOException {
         if (sheetCountPerType == null || sheetCountPerType.length == 0) {
             throw new ServiceException("sheetCountPerType 不能为空");
+        }
+        // 与单 sheet 路径（AbstractPageFileEventHandler.expandTemplateWithDataSheetCopies）一致的内存上界保护：
+        // POI 整本克隆全部类型 sheet 后再整本写出，峰值内存与「模板字节 × 总展开 sheet 数」正相关，
+        // 以 file.storage.maxTemplateExpandBytes（默认 300MB）做固定上界、早失败避免 OOM。
+        long totalExpandSheets = 0L;
+        for (int c : sheetCountPerType) {
+            totalExpandSheets += Math.max(0, c);
+        }
+        long expandFootprint = (long) templateBytes.length * totalExpandSheets;
+        long maxExpandBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
+        if (expandFootprint > maxExpandBytes) {
+            throw new ServiceException("多sheet导出模板展开预估占用过大（模板≈" + (templateBytes.length / 1024)
+                    + "KB × " + totalExpandSheets + " 张 ≈ " + (expandFootprint / 1024 / 1024) + "MB，上限 "
+                    + (maxExpandBytes / 1024 / 1024) + "MB），请简化模板、缩小导出范围或调大 file.storage.maxTemplateExpandBytes。");
         }
         try (ByteArrayInputStream bin = new ByteArrayInputStream(templateBytes);
              XSSFWorkbook wb = new XSSFWorkbook(bin)) {

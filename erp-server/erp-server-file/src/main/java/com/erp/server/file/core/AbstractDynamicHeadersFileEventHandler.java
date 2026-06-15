@@ -155,6 +155,12 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                             throw new ServiceException("导出分页查询失败，页码=" + pageNo);
                         }
                         pageList = pageData.getList();
+                        // 中间页空列表防静默丢数：pageNo 在 [1,totalPage] 内本应有数据，返回空属上游分页异常/数据并发变更；
+                        // 若放过会以不完整 Excel「成功」结束、totalRows 偏小，故显式失败（首页空已在上方按 totalCount 兜底）。
+                        if (CollectionUtils.isEmpty(pageList)) {
+                            throw new ServiceException("导出分页数据缺失：页码=" + pageNo + "（共 " + totalPage
+                                    + " 页）返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
+                        }
                     }
                     ensureNoNewHeaderKeys(headers, pageList, pageNo);
                     List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());

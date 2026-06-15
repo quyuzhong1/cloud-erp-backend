@@ -15,6 +15,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -773,6 +774,56 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String msg = CharSequenceUtil.format("状态更新为【{}】 ",  ReconciliationStatusEnum.getName(reconciliationStatus));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), entity.getTransportNo(), "状态更新");
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
+    }
+
+    private static final int RECONCILIATION_STATUS_BATCH_SIZE = 1000;
+
+    @Override
+    public void batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime) {
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
+        if (org.apache.commons.lang3.StringUtils.isBlank(reconciliationStatus)) {
+            throw new ServiceException("对账状态不能为空");
+        }
+        boolean confirmFlag = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+                || ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus);
+        if (confirmFlag && confirmTime == null) {
+            throw new ServiceException("对账状态修改为" + reconciliationStatus + "时，对账确认时间不能为空");
+        }
+        List<String> distinctIds = ids.stream()
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(distinctIds)) {
+            return;
+        }
+        String confirmUserId = UserContext.getDefaultLoginUser().getUid();
+        String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
+        for (int i = 0; i < distinctIds.size(); i += RECONCILIATION_STATUS_BATCH_SIZE) {
+            List<String> batch = distinctIds.subList(i,
+                    Math.min(distinctIds.size(), i + RECONCILIATION_STATUS_BATCH_SIZE));
+            validateConfirmAmount(batch, reconciliationStatus);
+            LambdaUpdateChainWrapper<LogisticsBillCostEntity> updateChain = lambdaUpdate()
+                    .in(LogisticsBillCostEntity::getId, batch);
+            if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
+                updateChain.eq(LogisticsBillCostEntity::getReconciliationStatus,
+                        ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            } else if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
+                updateChain.eq(LogisticsBillCostEntity::getReconciliationStatus,
+                        ReconciliationStatusEnum.CONFIRMED.getCode());
+            }
+            updateChain
+                    .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                    .set(confirmFlag, LogisticsBillCostEntity::getConfirmTime, confirmTime)
+                    .set(confirmFlag, LogisticsBillCostEntity::getConfirmUserId, confirmUserId)
+                    .set(confirmFlag, LogisticsBillCostEntity::getConfirmUserName, confirmUserName)
+                    .set(!confirmFlag, LogisticsBillCostEntity::getConfirmTime, null)
+                    .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserId, "")
+                    .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserName, "")
+                    .update();
+        }
+        log.info("批量更新对账状态完成，条数={}，状态={}", distinctIds.size(), reconciliationStatus);
     }
 
     /**

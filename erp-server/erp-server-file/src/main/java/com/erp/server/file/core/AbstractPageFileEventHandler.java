@@ -425,6 +425,13 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 cursor.writeSheet = buildCurrentDataSheet(cursor);
                 while (true) {
                     if (CollectionUtils.isEmpty(rawList)) {
+                        // 空列表但 vo 仍声明有后续数据：属上游键集分页异常或数据并发变更。
+                        // 若静默 break 会以「仅含模板的空 Excel / total 偏小」成功结束、用户难感知缺数，故显式失败；
+                        // hasNext=false 才是正常的数据结束（含合法空导出 total=0）。
+                        if (vo.isHasNext()) {
+                            throw new ServiceException("键集导出数据缺失：返回空列表但 hasNext=true（游标 lastId=" + lastId
+                                    + "），疑似分页查询异常或数据并发变更，请重试或排查上游键集接口。");
+                        }
                         break;
                     }
                     List<T> batch = withoutNullListElements(rawList);
@@ -550,6 +557,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 PagingVO<T> pageData = firstData;
                 while (true) {
                     int pageListSize = CollectionUtils.isEmpty(pageData.getList()) ? 0 : pageData.getList().size();
+                    // 中间页空列表防静默丢数：本页之前已覆盖行数 < totalCount 说明本页本应有数据，
+                    // 实际返回空属上游分页异常/数据并发变更；若仅跳过会以不完整 Excel「成功」结束、fileTask.count 偏小，故显式失败。
+                    // totalCount<=0（合法空导出）时 coveredBeforeThisPage(=0) 不小于 0，不触发。
+                    long coveredBeforeThisPage = (long) (dto.getCurrPage() - getFirstPage()) * getPageSize();
+                    if (pageListSize == 0 && coveredBeforeThisPage < totalCount) {
+                        throw new ServiceException("导出分页数据缺失：页码=" + dto.getCurrPage()
+                                + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
+                    }
                     long cap = (long) dataSheets * maxDataRowsPerSheet();
                     if (totalRows + pageListSize > cap) {
                         throw new ServiceException("导出数据量超过当前模板可承载的上限（约 " + cap
