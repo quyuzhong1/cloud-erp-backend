@@ -1297,9 +1297,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
 
             List<String> errorMsgList = new ArrayList<>();
+            Map<String, LogisticsReconMatchDTO.ResolvedCfgCostDTO> resolvedCfgCostBySubId = new LinkedHashMap<>();
             List<TmsCostDetailDTO.UpdateDTO> mergeCostDetail =
                     buildReconCostDetail(row, preQueryResult.getCfgCostList(), currencyLookupMap, currencyRateMap,
-                            costImportEntity, cfgImportDetailList, errorMsgList);
+                            costImportEntity, cfgImportDetailList, errorMsgList, resolvedCfgCostBySubId);
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 result.setSuccess(false);
                 result.setFailReason(FieldValidUtil.getMsgSort(errorMsgList));
@@ -1326,6 +1327,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
             result.setSuccess(true);
             result.setImportType(importDataDTO.getImportType());
+            result.setResolvedCfgCostBySubId(resolvedCfgCostBySubId);
             importDataList.add(importDataDTO);
             rowImportDataMap.put(row.getRowKey(), importDataDTO);
         }
@@ -1404,7 +1406,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                                                   Map<String, BigDecimal> currencyRateMap,
                                                                   CfgLogisticsCostImportEntity costImportEntity,
                                                                   List<CfgLogisticsCostImportDetailEntity> cfgImportDetailList,
-                                                                  List<String> errorMsgList) {
+                                                                  List<String> errorMsgList,
+                                                                  Map<String, LogisticsReconMatchDTO.ResolvedCfgCostDTO> resolvedCfgCostBySubId) {
         String currency = normalizeCurrencyByDict(row.getCurrency(), currencyLookupMap);
         if (CharSequenceUtil.isBlank(currency)) {
             currency = CharSequenceUtil.isBlank(row.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : row.getCurrency();
@@ -1425,6 +1428,14 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 errorMsgList.add(CharSequenceUtil.format("费用项【{}】未映射费用配置，无法匹配",
                         CharSequenceUtil.blankToDefault(item.getCostName(), "")));
                 continue;
+            }
+            if (CharSequenceUtil.isNotBlank(item.getDetailSubId()) && resolvedCfgCostBySubId != null) {
+                LogisticsReconMatchDTO.ResolvedCfgCostDTO resolved =
+                        new LogisticsReconMatchDTO.ResolvedCfgCostDTO();
+                resolved.setDetailSubId(item.getDetailSubId());
+                resolved.setCfgCostId(cfgCost.getId());
+                resolved.setCfgCostName(cfgCost.getCostName());
+                resolvedCfgCostBySubId.put(item.getDetailSubId(), resolved);
             }
             String oldCurrency = currencyMap.get(cfgCost.getDictCostCategory());
             if (CharSequenceUtil.isNotBlank(oldCurrency) && !CharSequenceUtil.equals(oldCurrency, currency)) {

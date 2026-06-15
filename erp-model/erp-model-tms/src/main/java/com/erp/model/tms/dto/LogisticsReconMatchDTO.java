@@ -170,6 +170,21 @@ public class LogisticsReconMatchDTO implements Serializable {
          * 命中/生成的物流费用单关联（多张物流单时多条）
          */
         private List<BillRefDTO> billRefs = new ArrayList<>();
+        /**
+         * 匹配成功后按 detailSubId 回写的 ERP 费用配置（key = logistics_recon_detail_sub.id）
+         */
+        private Map<String, ResolvedCfgCostDTO> resolvedCfgCostBySubId = new HashMap<>();
+    }
+
+    /**
+     * 匹配解析出的 ERP 费用项配置，用于回写 detail_sub.cfg_cost_id / cfg_cost_name
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ResolvedCfgCostDTO {
+        private String detailSubId;
+        private String cfgCostId;
+        private String cfgCostName;
     }
 
     /**
