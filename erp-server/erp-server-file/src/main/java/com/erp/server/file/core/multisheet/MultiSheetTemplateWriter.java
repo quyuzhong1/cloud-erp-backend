@@ -102,6 +102,9 @@ public class MultiSheetTemplateWriter {
                                     + " 返回空列表，但 totalCount=" + totalRows[i] + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
                         }
                         List<?> batch = withoutNullListElements(currentVo.getList());
+                        if (!CollectionUtils.isEmpty(currentVo.getList()) && batch.isEmpty()) {
+                            throw new ServiceException("导出数据存在空行，请检查查询结果（独立分页 sheetIndex=" + i + "，页码=" + currPage + "）");
+                        }
                         if (!CollectionUtils.isEmpty(batch)) {
                             fillAcrossSheets(excelWriter, fillConfig, batch, cursors[i], i, "INDEPENDENT");
                             if (i == 0) {
@@ -125,6 +128,10 @@ public class MultiSheetTemplateWriter {
                                     + " 实际返回空列表但 totalCount=" + totalRows[i] + " 仍有后续页，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
                         }
                         currentVo = nextVo;
+                    }
+                    if (totalRows[i] > 0 && i == 0 && actualMainRows == 0) {
+                        throw new ServiceException("导出失败：主 sheet totalCount=" + totalRows[0]
+                                + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
                     }
                 }
             } finally {
@@ -198,6 +205,9 @@ public class MultiSheetTemplateWriter {
                                 + " 返回空列表，但 totalCount=" + total + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
                     }
                     List<M> mainBatch = withoutNullListElements(currentVo.getList());
+                    if (!CollectionUtils.isEmpty(currentVo.getList()) && mainBatch.isEmpty()) {
+                        throw new ServiceException("导出数据存在空行，请检查查询结果（主从派生，页码=" + currPage + "）");
+                    }
                     if (!CollectionUtils.isEmpty(mainBatch)) {
                         fillMasterDerivedBatch(excelWriter, fillConfig, mainBatch, cursors, spec.getSheetExtractors());
                         actualMainRows += mainBatch.size();
@@ -218,6 +228,10 @@ public class MultiSheetTemplateWriter {
                                 + " 实际返回空列表但 totalCount=" + total + " 仍有后续页，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
                     }
                     currentVo = nextVo;
+                }
+                if (total > 0 && actualMainRows == 0) {
+                    throw new ServiceException("导出失败：totalCount=" + total
+                            + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
                 }
             } finally {
                 excelWriter.finish();

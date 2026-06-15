@@ -54,7 +54,7 @@ public final class ExportTempFilesHandler {
             fileTask.setFileUrl(url);
         } catch (IOException e) {
             log.error("导出上传失败{}", e.getMessage(), e);
-            throw new ServiceException(StringUtils.defaultIfBlank(e.getMessage(), "导出上传失败"));
+            throw new ServiceException(e, "导出上传失败");
         } finally {
             deleteQuietly(tempPath);
         }

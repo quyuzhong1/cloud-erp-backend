@@ -48,6 +48,7 @@ public interface IFileTaskRepository extends IService<FileTask> {
     /**
      * 查询待清理的文件任务，按 {@code (create_time, id)} 稳定升序、游标分页：
      * 取严格大于上一批已处理到的 {@code (lastCreateTime, lastId)} 的下一批。
+     * 包含 fileUrl 为 null、空串或仅空白字符的过期记录，由 Job 侧逻辑软删，避免脏数据永久残留。
      * 相比 offset，软删成功记录移除后游标仍单调推进，不回扫已处理记录，失败记录顺延到下次调度重试。
      *
      * @param expireTime     过期时间

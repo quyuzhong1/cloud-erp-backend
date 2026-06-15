@@ -164,6 +164,9 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                     }
                     ensureNoNewHeaderKeys(headers, pageList, pageNo);
                     List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());
+                    if (!CollectionUtils.isEmpty(pageList) && rows.isEmpty() && totalCount > 0) {
+                        throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + pageNo + "）");
+                    }
                     if (rows.isEmpty() && totalRows == 0) {
                         excelWriter.write(rows, writeSheet);
                     }
@@ -184,6 +187,10 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         rowsInSheet += take;
                         idx += take;
                     }
+                }
+                if (totalCount > 0 && totalRows == 0) {
+                    throw new ServiceException("导出失败：totalCount=" + totalCount
+                            + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
                 }
             } finally {
                 excelWriter.finish();
@@ -264,24 +271,43 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         dto.setCurrPage(1);
         ArrayList<LinkedHashMap<String, Object>> result = new ArrayList<>();
         boolean hasNext = true;
+        int totalCount = 0;
         while (hasNext) {
             dto.setParams(p);
             PagingVO<DynamicExcelDTO> data = getPageData(dto);
             if (data == null) {
                 throw new ServiceException("导出分页查询失败，页码=" + dto.getCurrPage());
             }
+            if (totalCount == 0) {
+                totalCount = data.getTotalCount();
+            }
+            int pageListSize = CollectionUtils.isEmpty(data.getList()) ? 0 : data.getList().size();
+            long coveredBeforeThisPage = (long) (dto.getCurrPage() - 1) * getPageSize();
+            if (pageListSize == 0 && coveredBeforeThisPage < totalCount) {
+                throw new ServiceException("导出分页数据缺失：页码=" + dto.getCurrPage()
+                        + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
+            }
             if (!CollectionUtils.isEmpty(data.getList())) {
+                int rowsBefore = result.size();
                 List<DynamicExcelDTO> list = (List<DynamicExcelDTO>) data.getList();
                 for (DynamicExcelDTO dynamicExcelDTO : list) {
                     excelDTO.setHeaders(dynamicExcelDTO.getHeaders());
-                    result.addAll(dynamicExcelDTO.getData());
+                    if (dynamicExcelDTO != null && !CollectionUtils.isEmpty(dynamicExcelDTO.getData())) {
+                        result.addAll(dynamicExcelDTO.getData());
+                    }
+                }
+                if (result.size() == rowsBefore) {
+                    throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
                 }
             }
-            int totalCount = data.getTotalCount();
-            if (totalCount <= dto.getCurrPage() * getPageSize()) {
+            if (totalCount <= (long) dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
+        }
+        if (totalCount > 0 && result.isEmpty()) {
+            throw new ServiceException("导出失败：totalCount=" + totalCount
+                    + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
         }
         excelDTO.setData(result);
         return excelDTO;

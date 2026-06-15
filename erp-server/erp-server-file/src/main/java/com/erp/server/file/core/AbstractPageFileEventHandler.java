@@ -218,7 +218,15 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 将模板中 {@link #templateSourceSheetIndex()} 指向的数据源 sheet 复制为共 {@code dataSheetCount} 张同结构数据 sheet，
      * 供 EasyExcel 按 sheet 分批 fill。
      * <p>
-     * 模板除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link ServiceException}；展开时会先移除这些空占位 sheet，
+     * <strong>存量模板约定（审查勿误报为破坏性变更）</strong>：classpath 导出模板以「仅 sheet0 含列表填充区」为主；
+     * 若存在 sheet1、sheet2…，均为历史遗留的空占位 sheet（{@code getPhysicalNumberOfRows()==0}），展开时移除占位后再克隆 sheet0。
+     * 单 sheet 且 {@code dataSheetCount<=1} 时直接返回原模板字节，不进入下述校验与克隆。
+     * <p>
+     * 本方法<strong>不</strong>支持「封面 / 说明 / 汇总」等非空静态页与数据 sheet 并存：若非数据源 sheet 有物理行则显式失败。
+     * 此类多 sheet 业务模板应使用 {@link com.erp.server.file.core.multisheet.AbstractMultiSheetPageFileEventHandler}
+     * / {@link com.erp.server.file.core.multisheet.MultiSheetTemplateWriter} 体系，勿走单列表分页展开路径。
+     * <p>
+     * 除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link ServiceException}；展开时会先移除这些空占位 sheet，
      * 再由数据源 sheet 克隆补齐，保证数据 sheet 物理下标连续（0、1、2…）且不残留中间空 sheet。返回真实物理 sheet 下标映射。
      */
     private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
@@ -244,7 +252,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 return new ExpandedTemplate(templateBytes, Collections.singletonList(source));
             }
             String sourceSheetName = wb.getSheetName(source);
-            // 除数据源（第一个）sheet 外，模板其余 sheet 必须为空（仅作可被替换的占位 sheet）；非空则报错
+            // 存量约定：仅 sheet0 有模板，其余 sheet 须为空占位（见方法 JavaDoc）。非空静态页（封面/说明等）不在本路径支持范围内。
             for (int i = 0; i < originalSheetCount; i++) {
                 if (i == source) {
                     continue;
@@ -384,7 +392,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             } catch (Throwable fillEx) {
                 logEasyExcelFillContext(exportPhase, excelPath, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
                         c.rowsInSheet, fillList, rawPageForLog);
-                throw fillEx;
+                ServiceException se = new ServiceException("模板导出填充失败，phase=" + exportPhase + "，" + pagingState);
+                se.initCause(fillEx);
+                throw se;
             }
             if (fillList != batch) {
                 fillList.clear();
@@ -573,18 +583,24 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     if (!CollectionUtils.isEmpty(pageData.getList())) {
                         List<T> rawPage = pageData.getList();
                         List<T> batch = withoutNullListElements(rawPage);
-                        if (!batch.isEmpty()) {
-                            fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, batch, rawPage, cursor,
-                                    "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
-                            totalRows += batch.size();
-                            clearBatchIfDetachedCopy(batch, rawPage);
+                        if (batch.isEmpty()) {
+                            // 与 KEYSET 路径对齐：rawPage 非空但元素全为 null 时不可静默跳过，否则 totalRows 偏小仍可能「成功」结束
+                            throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
                         }
+                        fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, batch, rawPage, cursor,
+                                "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
+                        totalRows += batch.size();
+                        clearBatchIfDetachedCopy(batch, rawPage);
                     }
                     if (isLastPage(dto.getCurrPage(), totalCount)) {
                         break;
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
                     pageData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
+                }
+                if (totalCount > 0 && totalRows == 0) {
+                    throw new ServiceException("导出失败：totalCount=" + totalCount
+                            + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
                 }
             } finally {
                 excelWriter.finish();
@@ -608,16 +624,31 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         while (hasNext) {
             dto.setParams(p);
             PagingVO<T> data = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
-            if (!CollectionUtils.isEmpty(data.getList())) {
-                dataList.addAll((Collection<? extends T>) data.getList());
-            }
             if (totalCount == 0) {
                 totalCount = data.getTotalCount();
+            }
+            int pageListSize = CollectionUtils.isEmpty(data.getList()) ? 0 : data.getList().size();
+            long coveredBeforeThisPage = (long) (dto.getCurrPage() - getFirstPage()) * getPageSize();
+            if (pageListSize == 0 && coveredBeforeThisPage < totalCount) {
+                throw new ServiceException("导出分页数据缺失：页码=" + dto.getCurrPage()
+                        + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
+            }
+            if (!CollectionUtils.isEmpty(data.getList())) {
+                List<T> rawPage = data.getList();
+                List<T> batch = withoutNullListElements(rawPage);
+                if (batch.isEmpty()) {
+                    throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
+                }
+                dataList.addAll(batch);
             }
             if (isLastPage(dto.getCurrPage(), totalCount)) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
+        }
+        if (totalCount > 0 && dataList.isEmpty()) {
+            throw new ServiceException("导出失败：totalCount=" + totalCount
+                    + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
         }
         return dataList;
     }

@@ -13,13 +13,9 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_PRODUCT;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_TASK;
 
 /**
  * 产品开发导出
@@ -91,29 +87,16 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
      * 根据 event 兜底推导导出类型，保证仅切换 event 的新事件也能正确导出。
      */
     private List<Integer> deriveExportDataListByEvent(String event) {
-        if (EXPORT_PLM_PRODUCT_DEV_PRODUCT.name().equals(event)) {
-            return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT));
+        List<Integer> exportDataList = ProductDevelopExportTypeEnum.exportDataListFromEventCode(event);
+        if (exportDataList == null) {
+            throw new ServiceException("导出数据类型不能为空");
         }
-        if (EXPORT_PLM_PRODUCT_DEV_TASK.name().equals(event)) {
-            return new ArrayList<>(Arrays.asList(EXPORT_TASK));
-        }
-        if (EXPORT_PLM_PRODUCT_DEV_BOTH.name().equals(event)) {
-            return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK));
-        }
-        // 兼容历史遗留事件 EXPORT_PLM_PRODUCT（仅切换 event、metaInfo 未携带 exportDataList 的存量异步任务）：
-        // 与旧实现一致默认导出产品列表（PRODUCT），避免重试时抛「导出数据类型不能为空」。
-        if (EXPORT_PLM_PRODUCT.name().equals(event)) {
-            return new ArrayList<>(Arrays.asList(EXPORT_PRODUCT));
-        }
-        throw new ServiceException("导出数据类型不能为空");
+        return new ArrayList<>(exportDataList);
     }
 
     @Override
     public boolean isMatch(String event) {
-        return EXPORT_PLM_PRODUCT.name().equals(event)
-                || EXPORT_PLM_PRODUCT_DEV_PRODUCT.name().equals(event)
-                || EXPORT_PLM_PRODUCT_DEV_TASK.name().equals(event)
-                || EXPORT_PLM_PRODUCT_DEV_BOTH.name().equals(event);
+        return ProductDevelopExportTypeEnum.exportDataListFromEventCode(event) != null;
     }
 
     @Override
