@@ -41,8 +41,9 @@ public class LogisticsOrderWeightSupport {
         if (CollUtil.isEmpty(distinctSkuIds)) {
             return Collections.emptyMap();
         }
+        //不考虑bom的审核状态
         Map<String, BigDecimal> weightMap = productPackFeign.listSingleBySkuIds(
-                new ProductPackDTO.ListSingleBySkuIdsParam(distinctSkuIds, BomStateEnum.AUDIT_PASS.getState()));
+                new ProductPackDTO.ListSingleBySkuIdsParam(distinctSkuIds, null));
         return ObjectUtil.defaultIfNull(weightMap, Collections.emptyMap());
     }
 
