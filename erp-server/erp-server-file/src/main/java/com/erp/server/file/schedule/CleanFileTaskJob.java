@@ -196,6 +196,8 @@ public class CleanFileTaskJob {
         int deleteFailCount = 0;
 
         // 扫描前一次性加载处理中任务 ID 集合，循环内 O(1) 精确匹配，避免逐文件查库（N+1）。
+        // 快照之后新进入 PROCESS 的任务：其临时文件 mtime 为导出进行中写入时间，通常晚于 expireTime（默认 3 天前），
+        // 会先被下方 lastModifiedTime 过期判断跳过，不会仅因不在快照内而被误删（审查勿误报为长扫描必删进行中文件）。
         Set<String> processingTaskIds = fileTaskRepository.listProcessingTaskIds();
 
         try (Stream<Path> pathStream = Files.walk(workDir)) {
