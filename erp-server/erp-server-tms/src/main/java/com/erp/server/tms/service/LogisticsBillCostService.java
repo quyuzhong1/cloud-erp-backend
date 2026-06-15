@@ -91,7 +91,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param reconciliationStatus 目标对账状态
      * @param confirmTime          确认时间（账单/暂估确认时必填）
      */
-    void batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime);
+    int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime);
 
     /**
      * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。

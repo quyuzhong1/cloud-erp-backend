@@ -68,6 +68,11 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     BaseResultDTO.AddDTO importExcel(LogisticsReconDTO.ImportDTO dto);
 
     /**
+     * 导入提交前预创建/更新主表（短事务，不含 Feign 任务创建）
+     */
+    void prepareImportExcelMains(LogisticsReconDTO.ImportDTO dto);
+
+    /**
      * 物流商对账单异步导入任务执行
      * @author Will
      * @date: 2026/06/02
@@ -117,9 +122,10 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @author Will
      * @date 2026/6/12
      * @param mainId 对账单 id
+     * @param scopeSubIds 本次整批匹配认领的费用项 id（仅处理该集合，避免与手动/导入匹配交叉）
      * @return void
      */
-    void doMatchByMain(String mainId);
+    void doMatchByMain(String mainId, List<String> scopeSubIds);
 
     /**
      * 对账单整批匹配的单批执行（分片小事务）：处理指定费用项 id 中仍处于匹配中的记录。
@@ -151,6 +157,16 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void markReconMatchFailed(String mainId, List<String> detailSubIds, String reason);
 
     /**
+     * 重置长时间处于匹配中且未更新的费用项（异步任务异常兜底）。
+     */
+    void resetStaleMatchingSubs(String mainId);
+
+    /**
+     * 刷新费用项确认状态汇总（短事务）
+     */
+    void refreshDetailSubReconciliationStatusInTx(String mainId);
+
+    /**
      * 物流商对账单账单确认（单条，更新已匹配物流费用单对账状态）
      * @author Will
      * @date: 2026/06/02
@@ -174,6 +190,15 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
                                 Map<String, String> rowKeyToDetailId,
                                 Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
                                 List<LogisticsReconMatchDTO.MatchResultDTO> matchResults);
+
+    /**
+     * 回写匹配结果并同事务写入 ERP 单号快照（手动/导入匹配）
+     */
+    void commitReconMatchResultWithErpSnapshot(String mainId, String matchType,
+                                               Map<String, String> rowKeyToDetailId,
+                                               Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
+                                               List<LogisticsReconMatchDTO.MatchResultDTO> matchResults,
+                                               List<LogisticsReconMatchDTO.SubErpInputDTO> erpInputs);
 
     /**
      * 物流商对账单导入分批处理（供 Excel 监听器分批回调）

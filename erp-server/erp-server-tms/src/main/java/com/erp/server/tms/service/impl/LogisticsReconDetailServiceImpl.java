@@ -3,8 +3,6 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.context.AnalysisContext;
-import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.LoginUser;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -29,12 +27,14 @@ import com.erp.model.tms.dto.excel.LogisticsReconMatchImportExcelDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
+import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconRefMatchTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.listener.LogisticsReconMatchImportExcelListener;
 import com.erp.server.tms.mapper.LogisticsReconDetailMapper;
 import com.erp.server.tms.service.LogisticsReconDetailService;
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
@@ -85,8 +85,6 @@ public class LogisticsReconDetailServiceImpl
 
     @Resource
     private SysUserFeign sysUserFeign;
-
-    private static final int IMPORT_MATCH_READ_BATCH = 3000;
 
     private static final int IMPORT_MATCH_TRACK_NO_BATCH = 1000;
 
@@ -187,49 +185,27 @@ public class LogisticsReconDetailServiceImpl
             if (main == null) {
                 throw new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "物流商对账单");
             }
+            if (!LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(main.getCheckStatus())) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_CONFIRMED_ALLOW_MATCH);
+            }
             byte[] fileBytes = fileFeign.downloadFile(dto.getFileUrl());
-            Map<String, LogisticsReconMatchImportExcelDTO> rowByTrackNo = new LinkedHashMap<>();
-            Map<String, List<String>> trackNoErrorMap = new LinkedHashMap<>();
-            Set<String> matchedTrackNoSet = new HashSet<>();
-            int[] totalCountHolder = {0};
-            List<LogisticsReconMatchImportExcelDTO> buffer = new ArrayList<>();
-            EasyExcel.read(new ByteArrayInputStream(fileBytes), LogisticsReconMatchImportExcelDTO.class,
-                    new AnalysisEventListener<LogisticsReconMatchImportExcelDTO>() {
-                        @Override
-                        public void invoke(LogisticsReconMatchImportExcelDTO row, AnalysisContext context) {
-                            if (StrUtil.isBlank(row.getTrackNo())) {
-                                return;
-                            }
-                            totalCountHolder[0]++;
-                            buffer.add(row);
-                            rowByTrackNo.putIfAbsent(StrUtil.trim(row.getTrackNo()), row);
-                            if (buffer.size() >= IMPORT_MATCH_READ_BATCH) {
-                                processImportMatchBatch(dto.getMainId(), buffer, trackNoErrorMap, matchedTrackNoSet);
-                                buffer.clear();
-                            }
-                        }
-
-                        @Override
-                        public void doAfterAllAnalysed(AnalysisContext context) {
-                            if (!buffer.isEmpty()) {
-                                processImportMatchBatch(dto.getMainId(), buffer, trackNoErrorMap, matchedTrackNoSet);
-                                buffer.clear();
-                            }
-                        }
-                    }).sheet().doRead();
-            if (totalCountHolder[0] == 0) {
+            LogisticsReconMatchImportExcelListener listener =
+                    new LogisticsReconMatchImportExcelListener(dto.getMainId());
+            EasyExcel.read(new ByteArrayInputStream(fileBytes), LogisticsReconMatchImportExcelDTO.class, listener)
+                    .sheet().doRead();
+            if (listener.getTotalCount() == 0) {
                 throw new ServiceException(ApiError.FILE_IMPORT_DATA_NOT_NULL, "对账导入匹配");
             }
 
             List<LogisticsReconMatchImportExcelDTO> errorRows = new ArrayList<>();
-            for (Map.Entry<String, LogisticsReconMatchImportExcelDTO> entry : rowByTrackNo.entrySet()) {
+            for (Map.Entry<String, LogisticsReconMatchImportExcelDTO> entry : listener.getRowByTrackNo().entrySet()) {
                 String trackNo = entry.getKey();
                 LogisticsReconMatchImportExcelDTO row = entry.getValue();
                 String failReason = null;
-                if (!matchedTrackNoSet.contains(trackNo)) {
+                if (!listener.getMatchedTrackNoSet().contains(trackNo)) {
                     failReason = "未匹配到对账明细";
-                } else if (trackNoErrorMap.containsKey(trackNo)) {
-                    failReason = String.join("；", trackNoErrorMap.get(trackNo));
+                } else if (listener.getTrackNoErrorMap().containsKey(trackNo)) {
+                    failReason = String.join("；", listener.getTrackNoErrorMap().get(trackNo));
                 }
                 if (StrUtil.isNotBlank(failReason)) {
                     row.setMatchResult("失败");
@@ -238,11 +214,11 @@ public class LogisticsReconDetailServiceImpl
                 }
             }
 
-            resultDTO.setCount(totalCountHolder[0]);
+            resultDTO.setCount(listener.getTotalCount());
             resultDTO.setErrorUrl(uploadMatchErrorFile(errorRows));
             resultDTO.setFinishTime(LocalDateTime.now());
             resultDTO.setStatus(FileTaskStatusEnum.FINISH.getCode());
-            resultDTO.setRemark("处理完成，失败" + errorRows.size() + "条");
+            resultDTO.setRemark("处理完成，失败" + errorRows.size() + "条；匹配任务已异步提交，请稍后查看明细匹配结果");
             downloadTaskFeign.updateTask(resultDTO);
         } catch (Exception e) {
             log.error("[executeImportMatchTask] 导入匹配失败 mainId={} fileName={}", dto.getMainId(), dto.getFileName(), e);
@@ -283,9 +259,10 @@ public class LogisticsReconDetailServiceImpl
     }
 
     /**
-     * 导入匹配分批处理：按 trackNo 定位明细，仅未匹配/失败且未确认的费用项认领后同步匹配。
+     * 导入匹配分批处理：按 trackNo 定位明细，认领后异步提交匹配（与手动匹配一致）。
      */
-    private void processImportMatchBatch(String mainId, List<LogisticsReconMatchImportExcelDTO> excelBatch,
+    @Override
+    public void processImportMatchBatch(String mainId, List<LogisticsReconMatchImportExcelDTO> excelBatch,
                                          Map<String, List<String>> trackNoErrorMap,
                                          Set<String> matchedTrackNoSet) {
         if (CollUtil.isEmpty(excelBatch)) {
@@ -305,6 +282,14 @@ public class LogisticsReconDetailServiceImpl
                     .in(LogisticsReconDetailEntity::getTrackNo, trackNoBatch)
                     .list());
         }
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        Set<String> trimmedTrackNoSet = batchRowByTrackNo.keySet();
+        detailList = detailList.stream()
+                .filter(detail -> StrUtil.isNotBlank(detail.getTrackNo())
+                        && trimmedTrackNoSet.contains(StrUtil.trim(detail.getTrackNo())))
+                .collect(Collectors.toList());
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
@@ -382,31 +367,17 @@ public class LogisticsReconDetailServiceImpl
         if (CollUtil.isEmpty(inputs)) {
             return;
         }
-        List<String> claimIds = inputs.stream()
-                .map(LogisticsReconMatchDTO.SubErpInputDTO::getDetailSubId)
-                .distinct()
-                .collect(Collectors.toList());
-        logisticsReconDetailSubService.batchUpdateMatchStatus(claimIds,
-                LogisticsReconDetailMatchStatusEnum.MATCHING.getCode(), null,
-                Arrays.asList(LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode(),
-                        LogisticsReconDetailMatchStatusEnum.FAILED.getCode()));
-        try {
-            List<BatchResultDTO> matchResults = logisticsReconService.matchDetailSubsByErp(
-                    mainId, inputs, LogisticsReconRefMatchTypeEnum.MANUAL.getCode());
-            for (BatchResultDTO matchResult : matchResults) {
-                if (Boolean.TRUE.equals(matchResult.getSuccess())) {
-                    continue;
-                }
-                String trackNo = subIdToTrackNo.get(matchResult.getCode());
-                if (StrUtil.isBlank(trackNo)) {
-                    continue;
-                }
-                trackNoErrorMap.computeIfAbsent(trackNo, key -> new ArrayList<>()).add(matchResult.getMsg());
+        List<BatchResultDTO> submitResults = logisticsReconService.submitManualMatch(inputs,
+                LogisticsReconRefMatchTypeEnum.MANUAL.getCode());
+        for (BatchResultDTO submitResult : submitResults) {
+            if (Boolean.TRUE.equals(submitResult.getSuccess())) {
+                continue;
             }
-        } catch (Exception e) {
-            logisticsReconService.markReconMatchFailed(mainId, claimIds,
-                    e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
-            throw e;
+            String trackNo = subIdToTrackNo.get(submitResult.getCode());
+            if (StrUtil.isBlank(trackNo)) {
+                continue;
+            }
+            trackNoErrorMap.computeIfAbsent(trackNo, key -> new ArrayList<>()).add(submitResult.getMsg());
         }
     }
 

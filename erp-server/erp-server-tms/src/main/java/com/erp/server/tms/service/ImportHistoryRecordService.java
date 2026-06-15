@@ -108,6 +108,11 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return 逐行匹配结果（含命中的物流费用单关联，用于回写对账关联关系）
      */
     List<LogisticsReconMatchDTO.MatchResultDTO> reconMatchAndGenerate(LogisticsReconMatchDTO.MatchContextDTO ctx);
+
+    /**
+     * 对账匹配落库（短事务，与 Feign 预查询分离）
+     */
+    void persistReconMatchImportData(List<LogisticsBillCostDTO.ImportDataDTO> importDataList, String processingType);
     /**
      * 更新对账状态
      * @author will
