@@ -6,12 +6,14 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgOutputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
@@ -75,29 +77,32 @@ public class DmpOutputTaskFactory{
 		if(execTimeout == null || execTimeout < 3) {
 			execTimeout = 3600;
 		}
-		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), execTimeout, TimeUnit.SECONDS)) {
+		if(Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), execTimeout, TimeUnit.SECONDS))) {
 			try {
 				log.info("输出{}任务开始执行" , outputTaskId);
 				try {
 					DmpHandlerChainImpl bean = ApplicationContextUtils.getBean(DmpHandlerChainImpl.class);
 					String cfgOutputId = dbDmpOutputTaskEntity.getCfgOutputId();
 					DmpCfgOutputEntity dmpCfgOutputEntity = dmpCfgOutputService.getById(cfgOutputId);
+					if(dmpCfgOutputEntity == null) {
+						ServiceException.runError("输出配置不存在,cfgOutputId={}", cfgOutputId);
+					}
 					dmpResponse.setDmpCfgOutputEntity(dmpCfgOutputEntity);
 					String outputClass = dmpCfgOutputEntity.getOutputClass();
 					bean.addDmpHandler(ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpHandler.class));
 					bean.doDmpHandler(dmpOutputTaskRequest, dmpResponse);
 				} catch (Exception e) {
-					log.error("输出{}任务执行报错" , outputTaskId , e);
-					Integer maxRetryCount = 3;
+					log.error("输出{}任务执行报错， 异常类型={}", outputTaskId , ExceptionUtil.stacktraceToString(e));
+					int maxRetryCount = 3;
 					DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity = dmpResponse.getDmpCfgOutputDetailEntity();
-					if(dmpCfgOutputDetailEntity != null) {
+					if(dmpCfgOutputDetailEntity != null && dmpCfgOutputDetailEntity.getMaxRetryCount() != null) {
 						maxRetryCount = dmpCfgOutputDetailEntity.getMaxRetryCount();
 					}
 					List<DmpOutputTaskEntity> beforeDmpOutputTaskEntityList = dmpResponse.getBeforeDmpOutputTaskEntityList();
 					if(CollUtil.isNotEmpty(beforeDmpOutputTaskEntityList)) {
 						DmpOutputTaskEntity dmpInputTaskEntity = beforeDmpOutputTaskEntityList.get(0);
-						Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-						boolean errorFlag = errorCount.equals(maxRetryCount);
+						int errorCount = (dmpInputTaskEntity.getErrorCount() == null ? 0 : dmpInputTaskEntity.getErrorCount()) + 1;
+						boolean errorFlag = errorCount >= maxRetryCount;
 						dmpOutputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
 					}
 					throw e;
