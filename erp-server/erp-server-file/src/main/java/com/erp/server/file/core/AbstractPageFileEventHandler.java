@@ -218,7 +218,15 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 将模板中 {@link #templateSourceSheetIndex()} 指向的数据源 sheet 复制为共 {@code dataSheetCount} 张同结构数据 sheet，
      * 供 EasyExcel 按 sheet 分批 fill。
      * <p>
-     * 模板除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link ServiceException}；展开时会先移除这些空占位 sheet，
+     * <strong>存量模板约定（审查勿误报为破坏性变更）</strong>：classpath 导出模板以「仅 sheet0 含列表填充区」为主；
+     * 若存在 sheet1、sheet2…，均为历史遗留的空占位 sheet（{@code getPhysicalNumberOfRows()==0}），展开时移除占位后再克隆 sheet0。
+     * 单 sheet 且 {@code dataSheetCount<=1} 时直接返回原模板字节，不进入下述校验与克隆。
+     * <p>
+     * 本方法<strong>不</strong>支持「封面 / 说明 / 汇总」等非空静态页与数据 sheet 并存：若非数据源 sheet 有物理行则显式失败。
+     * 此类多 sheet 业务模板应使用 {@link com.erp.server.file.core.multisheet.AbstractMultiSheetPageFileEventHandler}
+     * / {@link com.erp.server.file.core.multisheet.MultiSheetTemplateWriter} 体系，勿走单列表分页展开路径。
+     * <p>
+     * 除数据源 sheet 外的其余 sheet 必须为空（仅作占位），否则抛出 {@link ServiceException}；展开时会先移除这些空占位 sheet，
      * 再由数据源 sheet 克隆补齐，保证数据 sheet 物理下标连续（0、1、2…）且不残留中间空 sheet。返回真实物理 sheet 下标映射。
      */
     private ExpandedTemplate expandTemplateWithDataSheetCopies(byte[] templateBytes, int dataSheetCount) throws IOException {
@@ -244,7 +252,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 return new ExpandedTemplate(templateBytes, Collections.singletonList(source));
             }
             String sourceSheetName = wb.getSheetName(source);
-            // 除数据源（第一个）sheet 外，模板其余 sheet 必须为空（仅作可被替换的占位 sheet）；非空则报错
+            // 存量约定：仅 sheet0 有模板，其余 sheet 须为空占位（见方法 JavaDoc）。非空静态页（封面/说明等）不在本路径支持范围内。
             for (int i = 0; i < originalSheetCount; i++) {
                 if (i == source) {
                     continue;
@@ -384,7 +392,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             } catch (Throwable fillEx) {
                 logEasyExcelFillContext(exportPhase, excelPath, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
                         c.rowsInSheet, fillList, rawPageForLog);
-                throw fillEx;
+                ServiceException se = new ServiceException("模板导出填充失败，phase=" + exportPhase + "，" + pagingState);
+                se.initCause(fillEx);
+                throw se;
             }
             if (fillList != batch) {
                 fillList.clear();

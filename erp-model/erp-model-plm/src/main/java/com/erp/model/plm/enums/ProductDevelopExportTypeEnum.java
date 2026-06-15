@@ -97,6 +97,9 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
         if (exportDataList == null || exportDataList.isEmpty()) {
             return null;
         }
+        if (validateCombinationMessage(exportDataList) != null) {
+            return null;
+        }
         if (exportDataList.size() == 1) {
             Integer flag = exportDataList.get(0);
             if (EXPORT_PRODUCT.equals(flag)) {

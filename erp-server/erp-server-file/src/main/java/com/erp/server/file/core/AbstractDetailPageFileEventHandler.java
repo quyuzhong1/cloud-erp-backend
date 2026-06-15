@@ -43,7 +43,9 @@ public abstract class AbstractDetailPageFileEventHandler<R, T> implements FileEv
             if (failDetail == null || failDetail.isEmpty()) {
                 failDetail = e.getClass().getSimpleName();
             }
-            throw new ServiceException(failDetail);
+            ServiceException ex = new ServiceException(failDetail);
+            ex.initCause(e);
+            throw ex;
         } finally {
             ExportTempFilesHandler.deleteQuietly(tempPath);
         }
