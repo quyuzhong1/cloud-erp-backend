@@ -492,6 +492,32 @@ public class LogisticsCostImportFieldRuleTest {
     }
 
     @Test
+    public void buildOrderWeightMapShouldCollectErrorsWhenPreloadMissingAnyBill() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        Map<String, BigDecimal> preQueryOrderWeightMap = new HashMap<>();
+        preQueryOrderWeightMap.put("D2", new BigDecimal("10"));
+        Map<String, List<String>> preQueryOrderWeightErrorMap = new HashMap<>();
+        preQueryOrderWeightErrorMap.put("D1", Collections.singletonList("出库单CK001存在SKU无法获取重量用于分摊：SKU-A"));
+        List<String> errorMsgList = new ArrayList<>();
+        LogisticsBillDTO.LogisticsBillVo bill1 = billVo("B1", "D1", null, null, null);
+        bill1.setOutstockId("OS1");
+        bill1.setOutstockCode("CK001");
+        LogisticsBillDTO.LogisticsBillVo bill2 = billVo("B2", "D2", null, null, null);
+        bill2.setOutstockId("OS2");
+        bill2.setOutstockCode("CK002");
+
+        @SuppressWarnings("unchecked")
+        Map<String, BigDecimal> weightMap = (Map<String, BigDecimal>) invokePrivate(service, "buildOrderWeightMap",
+                new Class[]{List.class, List.class, Map.class, Map.class},
+                Arrays.asList(bill1, bill2),
+                errorMsgList, preQueryOrderWeightMap, preQueryOrderWeightErrorMap);
+
+        assertFalse(errorMsgList.isEmpty());
+        assertEquals(1, weightMap.size());
+        assertBigDecimalEquals(new BigDecimal("10"), weightMap.get("D2"));
+    }
+
+    @Test
     public void allocateCostDetailMapShouldSplitByOrderWeight() throws Exception {
         ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
         Map<String, BigDecimal> weightMap = new HashMap<>();

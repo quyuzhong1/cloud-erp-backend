@@ -745,9 +745,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void importCfgLogisticsCost(BaseDTO.ImportDTO dto) {
-        //费用配置-配置单据
-//        List<com.erp.model.tms.entity.DictBasicEntity> dictBasicEntities = dictBasicService.getByKey(DictBasicEnum.CFG_COST_BUSINESSKEY.getType());
-//        Map<String, String> dictBasicMap = dictBasicEntities.stream().collect(Collectors.toMap(com.erp.model.tms.entity.DictBasicEntity::getName, com.erp.model.tms.entity.DictBasicEntity::getCode, (o1, o2) -> o1));
         //物流商
         List<BaseDropDownDTO.DisabledDTO> logisticsSupplierList = logisticsSupplierService.listAllShort(false);
         Map<String, String> logisticsSupplierMap = logisticsSupplierList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (o1, o2) -> o1));

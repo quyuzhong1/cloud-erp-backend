@@ -33,7 +33,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.file.dto.FileDTO;
-import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -53,6 +52,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.ImportHistoryRecordExcelListener;
 import com.erp.server.tms.mapper.ImportHistoryRecordMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.support.LogisticsOrderWeightSupport;
 import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -121,6 +121,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     private LogisticsBillService logisticsBillService;
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private LogisticsOrderWeightSupport logisticsOrderWeightSupport;
     @Resource
     private TmsCfgCostService tmsCfgCostService;
     @Resource
@@ -1082,7 +1084,8 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                 .collect(Collectors.toList());
         logisticsBillVoList.stream()
                 .filter(vo -> CharSequenceUtil.isBlank(vo.getOutstockId()))
-                .forEach(vo -> addOrderWeightError(orderWeightErrorMap, vo.getDetailId(), "无法获取上游出库单用于重量分摊"));
+                .forEach(vo -> LogisticsOrderWeightSupport.addOrderWeightError(orderWeightErrorMap, vo.getDetailId(),
+                        "无法获取上游出库单用于重量分摊"));
         if (CollUtil.isEmpty(outstockIdList)) {
             return;
         }
@@ -1093,62 +1096,12 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = CollUtil.isEmpty(outstockDetailList)
                 ? new HashMap<>()
                 : outstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
-        List<String> skuIdList = CollUtil.isEmpty(outstockDetailList)
-                ? Collections.emptyList()
-                : outstockDetailList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        Map<String, ProductPackEntity> productPackMap;
-        if (CollUtil.isEmpty(skuIdList)) {
-            productPackMap = new HashMap<>();
-        } else {
-            List<ProductPackEntity> productPackList = FeignQuery.create(ProductPackEntity.class).in(ProductPackEntity::getSkuId, skuIdList).list();
-            productPackMap = CollUtil.isEmpty(productPackList)
-                    ? new HashMap<>()
-                    : productPackList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, obj -> obj, (first, second) -> first));
-        }
-
-        for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
-            if (CharSequenceUtil.isBlank(logisticsBillVo.getOutstockId()) || CharSequenceUtil.isBlank(logisticsBillVo.getDetailId())) {
-                continue;
-            }
-            List<SoOutstockDetailEntity> detailList = outstockDetailMap.get(logisticsBillVo.getOutstockId());
-            if (CollUtil.isEmpty(detailList)) {
-                addOrderWeightError(orderWeightErrorMap, logisticsBillVo.getDetailId(), "无法获取上游出库明细用于重量分摊：" + logisticsBillVo.getOutstockCode());
-                continue;
-            }
-            BigDecimal orderWeight = BigDecimal.ZERO;
-            boolean hasWeightDetailError = false;
-            for (SoOutstockDetailEntity detailEntity : detailList) {
-                ProductPackEntity productPackEntity = productPackMap.get(detailEntity.getSkuId());
-                if (ObjectUtil.isNull(productPackEntity) || ObjectUtil.isNull(productPackEntity.getGrossWeight()) || productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) <= 0) {
-                    addOrderWeightError(orderWeightErrorMap, logisticsBillVo.getDetailId(), "缺少SKU毛重，无法按重量分摊：" + detailEntity.getSkuNo());
-                    hasWeightDetailError = true;
-                    continue;
-                }
-                if (ObjectUtil.isNull(detailEntity.getActualQty())) {
-                    addOrderWeightError(orderWeightErrorMap, logisticsBillVo.getDetailId(), "出库实发数量为空，无法按重量分摊：" + detailEntity.getSkuNo());
-                    hasWeightDetailError = true;
-                    continue;
-                }
-                orderWeight = orderWeight.add(productPackEntity.getGrossWeight().multiply(BigDecimal.valueOf(detailEntity.getActualQty())));
-            }
-            if (hasWeightDetailError) {
-                continue;
-            }
-            if (orderWeight.compareTo(BigDecimal.ZERO) <= 0) {
-                addOrderWeightError(orderWeightErrorMap, logisticsBillVo.getDetailId(), "订单重量为0，无法执行费用分摊：" + logisticsBillVo.getOutstockCode());
-                continue;
-            }
-            orderWeightMap.put(logisticsBillVo.getDetailId(), orderWeight);
-        }
+        List<LogisticsBillDTO.LogisticsBillVo> validLogisticsBillVoList = logisticsBillVoList.stream()
+                .filter(vo -> CharSequenceUtil.isNotBlank(vo.getOutstockId()) && CharSequenceUtil.isNotBlank(vo.getDetailId()))
+                .collect(Collectors.toList());
+        logisticsOrderWeightSupport.fillOrderWeightByOutstockDetails(
+                validLogisticsBillVoList, outstockDetailMap, orderWeightMap, orderWeightErrorMap);
     }
-
-    private void addOrderWeightError(Map<String, List<String>> orderWeightErrorMap, String detailId, String errorMsg) {
-        if (CharSequenceUtil.isBlank(detailId) || CharSequenceUtil.isBlank(errorMsg)) {
-            return;
-        }
-        orderWeightErrorMap.computeIfAbsent(detailId, key -> new ArrayList<>()).add(errorMsg);
-    }
-
 
     /**
      * 导入批量新增或更新数据
@@ -2299,6 +2252,10 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             }
         }
         BigDecimal totalWeight = weightMap.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (logisticsBillVoList.size() > 1 && weightMap.size() != logisticsBillVoList.size()
+                && errorMsgList.size() == weightErrorCountBefore) {
+            errorMsgList.add("同一识别分组存在物流单无法获取订单重量，无法合并分摊费用");
+        }
         if (totalWeight.compareTo(BigDecimal.ZERO) <= 0 && errorMsgList.size() == weightErrorCountBefore) {
             errorMsgList.add("总订单重量为0，无法执行费用分摊");
         }

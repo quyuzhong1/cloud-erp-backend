@@ -58,6 +58,42 @@
         </where>
     </select>
 
+    <select id="listBomChildBySkuIdsAndState" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        select
+           pbi.id as bomId,
+           pbi.bom_version as bomVersion,
+           pbi.type AS type,
+           pbs.parent_sku_id as parentSkuId,
+           pbs.parent_sku_no as parentSkuNo,
+           pbs.sku_id as skuId,
+           pbs.sku_no as skuNo,
+           pbs.quantity as quantity,
+           pp.product_length as length,
+           pp.product_width as width,
+           pp.product_height as height,
+           pp.gross_weight as grossWeight,
+            pp.net_weight as netWeight,
+           pd.name as skuName,
+           pd.unit_name as unitName,
+            pd.images_url as imageUrl
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        left join product_pack pp on pp.sku_id = pbs.sku_id and pp.is_deleted = false
+        <where>
+            pbi.is_deleted = false
+            <if test="state != null">
+                and pbi.state = #{state}
+            </if>
+            <if test="parentSkuIds != null and parentSkuIds.size() > 0">
+                and pbs.parent_sku_id in
+                <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
     <select id="listBomChildBySkuNos" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
         pbi.id as bomId,
