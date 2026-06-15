@@ -5,6 +5,6 @@
 
     <update id="updateNum">
         update sys_code set num = num + 1, update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
-        where id = #{id}
+        where id = #{id} and is_deleted = false
     </update>
 </mapper>
