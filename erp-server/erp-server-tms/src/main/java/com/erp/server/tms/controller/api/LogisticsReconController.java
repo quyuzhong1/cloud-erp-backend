@@ -219,6 +219,9 @@ public class LogisticsReconController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> batchConfirmBill(
             @RequestBody @Validated LogisticsReconDTO.BatchConfirmBillDTO dto) {
+        if (dto.getIds() != null) {
+            dto.getIds().sort(null);
+        }
         List<BatchResultDTO> results = new ArrayList<>(dto.getIds().size());
         for (String mainId : dto.getIds()) {
             try {

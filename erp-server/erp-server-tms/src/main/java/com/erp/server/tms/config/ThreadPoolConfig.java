@@ -12,19 +12,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.concurrent.*;
-
 /**
  * @Classname ThreadPoolConfig
-
  * @Date 2022-11-16 14:33
  * @Created by yl
  */
-
 @Configuration
 public class ThreadPoolConfig {
     @Bean("tmsExecutor")
-    public ThreadPoolTaskExecutor  threadPoolExecutor() {
+    public ThreadPoolTaskExecutor threadPoolExecutor() {
         TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
@@ -44,7 +40,7 @@ public class ThreadPoolConfig {
 
     @Bean("tmsTransferChannelExecutor")
     public ThreadPoolTaskExecutor threadPoolTransferChannelExecutor() {
-        TraceableThreadPoolTaskExecutor  executor = new TraceableThreadPoolTaskExecutor();
+        TraceableThreadPoolTaskExecutor executor = new TraceableThreadPoolTaskExecutor();
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数
@@ -60,17 +56,18 @@ public class ThreadPoolConfig {
         executor.initialize();
         return executor;
     }
-    
+
     @Bean(name = "costAllocationPool")
     public ExecutorService costAllocationPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE));
+                new LinkedBlockingQueue<>(Integer.MAX_VALUE));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
         return new TraceableExecutorService(service);
     }
+
     @Bean(name = "tmsLogisticsLabelPool")
     public ExecutorService tmsLogisticsLabelPool() {
         // 1. 先创建原始的 ThreadPoolExecutor
@@ -117,14 +114,13 @@ public class ThreadPoolConfig {
      */
     @Bean(name = "logisticsReconMatchPool")
     public ExecutorService logisticsReconMatchPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(8, 16,
+        ThreadPoolExecutor service = new ThreadPoolExecutor(16, 32,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(10000));
-        // 池满时回退到调用线程执行，避免任务丢失
-        service.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+                new LinkedBlockingQueue<>(20000));
+        // 池满时快速失败，由业务层 markReconMatchFailed 回写状态，避免 CallerRunsPolicy 阻塞 HTTP 线程
+        service.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         return new TraceableExecutorService(service);
     }
-
 
     @Bean(name = "tmsLogisticsOrderPool")
     public ExecutorService tmsLogisticsOrderPool() {

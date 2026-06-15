@@ -782,9 +782,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private static final int RECONCILIATION_STATUS_BATCH_SIZE = 1000;
 
     @Override
-    public void batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime) {
+    public int batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime) {
         if (CollUtil.isEmpty(ids)) {
-            return;
+            return 0;
         }
         if (org.apache.commons.lang3.StringUtils.isBlank(reconciliationStatus)) {
             throw new ServiceException("对账状态不能为空");
@@ -799,10 +799,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .distinct()
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(distinctIds)) {
-            return;
+            return 0;
         }
         String confirmUserId = UserContext.getDefaultLoginUser().getUid();
         String confirmUserName = UserContext.getDefaultLoginUser().getUserName();
+        int totalUpdated = 0;
         for (int i = 0; i < distinctIds.size(); i += RECONCILIATION_STATUS_BATCH_SIZE) {
             List<String> batch = distinctIds.subList(i,
                     Math.min(distinctIds.size(), i + RECONCILIATION_STATUS_BATCH_SIZE));
@@ -823,10 +824,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     .set(confirmFlag, LogisticsBillCostEntity::getConfirmUserName, confirmUserName)
                     .set(!confirmFlag, LogisticsBillCostEntity::getConfirmTime, null)
                     .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserId, "")
-                    .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserName, "")
-                    .update();
+                    .set(!confirmFlag, LogisticsBillCostEntity::getConfirmUserName, "");
+            totalUpdated += getBaseMapper().update(null, updateChain.getWrapper());
         }
-        log.info("批量更新对账状态完成，条数={}，状态={}", distinctIds.size(), reconciliationStatus);
+        log.info("批量更新对账状态完成，更新={}，期望={}，状态={}", totalUpdated, distinctIds.size(), reconciliationStatus);
+        return totalUpdated;
     }
 
     /**

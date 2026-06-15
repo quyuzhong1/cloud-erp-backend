@@ -5,11 +5,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconDetailDTO;
+import com.erp.model.tms.dto.excel.LogisticsReconMatchImportExcelDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -65,6 +68,12 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
      * @return void
      */
     void executeImportMatchTask(LogisticsReconDetailDTO.ImportMatchSyncDTO dto);
+
+    /**
+     * 导入匹配分批处理：按 trackNo 定位明细，认领后异步提交匹配。
+     */
+    void processImportMatchBatch(String mainId, List<LogisticsReconMatchImportExcelDTO> excelBatch,
+                                 Map<String, List<String>> trackNoErrorMap, Set<String> matchedTrackNoSet);
 
     /**
      * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）
