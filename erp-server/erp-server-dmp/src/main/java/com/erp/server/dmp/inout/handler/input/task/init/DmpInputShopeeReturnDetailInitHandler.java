@@ -99,7 +99,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
     }
 
     /**
-     * 明细子任务 nextLevelId 为拆单 snowflake；店铺 ID 优先取父任务，与列表任务保持一致。
+     * 明细子任务 nextLevelId 继承父任务店铺 ID，与列表任务保持一致。
      */
     private String resolveShopeeShopId(List<Map<String, Object>> parentMongoData) {
         String parentShopId = resolveParentTaskShopId();
