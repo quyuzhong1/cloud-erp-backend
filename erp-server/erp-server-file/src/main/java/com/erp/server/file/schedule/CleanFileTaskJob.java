@@ -103,6 +103,8 @@ public class CleanFileTaskJob {
                     continue;
                 }
 
+                // FastDFS 与 DB 软删无法同一事务：先删远端、后删库，宁可短暂「文件已删、记录仍在」，也不留孤儿文件占存储。
+                // 若远端已删而 removeById 失败，本轮计 logicDeleteFailCount 且游标已推进；下次调度 exist 为 false 会跳过远端删除并补做软删（审查勿误报为需分布式事务）。
                 try {
                     // 参考 FileTaskContext.delete 的「先查 exist 再删」模式：文件不存在（已删除）则跳过删除，
                     // 直接执行后续 DB 软删，避免记录因 FastDFS 反复返回非 0 而永久卡住、fileUrl 长期残留。
@@ -125,6 +127,7 @@ public class CleanFileTaskJob {
                 }
 
                 try {
+                    // 远端已确认不存在或删除成功后的 DB 软删；失败不在本轮重试，依赖下次调度 exist 跳过后仅补库删。
                     boolean removed = fileTaskRepository.removeById(id);
                     if (removed) {
                         successCount++;
