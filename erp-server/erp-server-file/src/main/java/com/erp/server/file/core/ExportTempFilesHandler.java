@@ -34,7 +34,7 @@ public final class ExportTempFilesHandler {
     }
 
     /**
-     * 导出统一模板：创建临时文件 → 由 {@code writer} 写出 → 流式上传 FastDFS → 回填 url/行数 → 清理临时文件。
+     * 导出统一模板：创建临时文件 → 由 {@code writer} 写出 → 流式上传 FastDFS → 上传成功后再回填 {@code count} 与 {@code fileUrl} → 清理临时文件。
      * <p>
      * 统一使用 {@link FastDFSClientUtil#streamUploadFile} 流式上传（失败抛 {@code ServiceException}），
      * 避免整文件读入内存导致大文件 OOM，也避免上传失败被静默写入空 url。各导出基类务必复用本方法，
@@ -50,8 +50,9 @@ public final class ExportTempFilesHandler {
         try {
             tempPath = createTempPath(FileRegistry.getStorageTmpdir(), suffix, fileTask.getUniqueWithFileName());
             int total = writer.write(tempPath.toFile());
-            fileTask.setCount(total);
             String url = FastDFSClientUtil.streamUploadFile(tempPath.toFile(), displayName, null);
+            // 上传成功后再回填 count/url，避免 FastDFS 失败时内存中的 fileTask 已带 count 被 finally 持久化到 FAIL 任务
+            fileTask.setCount(total);
             fileTask.setFileUrl(url);
         } catch (IOException e) {
             log.error("导出上传失败{}", e.getMessage(), e);

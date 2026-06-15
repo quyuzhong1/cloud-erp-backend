@@ -56,6 +56,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     @Override
     protected String getExcelPath(ProductSearchDTO.ExportDTO params) {
         List<Integer> exportDataList = params.getExportDataList();
+        // 双 Sheet 以元素语义（contains）判定，非旧版 size==2；非法组合（如 [0,0]）已在 resolveExportParams / PLM 建任务侧由 validateCombinationMessage 拒绝（审查勿误报为行为回退）。
         boolean exportProduct = exportDataList.contains(EXPORT_PRODUCT);
         boolean exportTask = exportDataList.contains(EXPORT_TASK);
         if (exportProduct && exportTask) {
