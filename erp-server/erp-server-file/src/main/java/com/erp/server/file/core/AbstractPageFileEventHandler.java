@@ -104,6 +104,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 return writeKeysetBatches(outFile, params, excelPath);
             case OFFSET:
                 return writeOffsetBatches(outFile, params, excelPath);
+            // 当前 ExportPaginationMode 仅 OFFSET / KEYSET_BY_SORT_ID；default 供未来新增枚举值未补分支时兜底（审查勿要求改文案为合并项）。
             default:
                 throw new ServiceException(exportPaginationMode().name());
         }

@@ -106,6 +106,8 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
 
     @Override
     public Set<String> listProcessingTaskIds() {
+        // 全量加载 PROCESS 的 id 供 cleanFileStorageTmpdir 快照匹配；导出/导入异步执行受 FileTaskContext#fileExecutor 线程池约束，
+        // 集群并发 PROCESS 总量约两百量级，Set 规模有上界，非无界增长（审查勿误报为需分页或时间窗）。
         List<FileTask> list = lambdaQuery()
                 .select(FileTask::getId)
                 .eq(FileTask::getStatus, FileTaskStatusEnum.PROCESS.name())
