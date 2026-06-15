@@ -46,6 +46,16 @@ public interface LogisticsReconRefLogisticsBillService extends SuperService<Logi
     void saveBatchByDetail(List<LogisticsReconRefLogisticsBillEntity> refList);
 
     /**
+     * 按 detail_sub 维度整批写入关联（手动匹配 / 导入匹配共用）
+     * 写入前会先按 detailSubId 逻辑删旧记录，避免误删同明细下其它已匹配费用项
+     * @author Will
+     * @date: 2026/06/11
+     * @param refList
+     * @return void
+     */
+    void saveBatchByDetailSub(List<LogisticsReconRefLogisticsBillEntity> refList);
+
+    /**
      * 按 detail 维度批量解绑（逻辑删除）
      * @author Will
      * @date: 2026/05/29

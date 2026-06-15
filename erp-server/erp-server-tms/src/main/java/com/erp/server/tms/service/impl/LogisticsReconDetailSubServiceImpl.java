@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
@@ -68,17 +69,37 @@ public class LogisticsReconDetailSubServiceImpl
                 .remove();
     }
 
+    /**
+     * 按 id 集合分片更新匹配状态，避免一次性 IN 过多 id 超出 SQL 长度限制。
+     */
+    private static final int UPDATE_BATCH_SIZE = 1000;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason) {
+        batchUpdateMatchStatus(detailSubIds, matchStatus, failReason, null);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
+                                       Collection<String> fromMatchStatuses) {
         if (CollUtil.isEmpty(detailSubIds)) {
             return;
         }
-        lambdaUpdate()
-                .in(LogisticsReconDetailSubEntity::getId, detailSubIds)
-                .set(LogisticsReconDetailSubEntity::getMatchStatus, matchStatus)
-                .set(LogisticsReconDetailSubEntity::getMatchFailReason,
-                        LogisticsReconDetailMatchStatusEnum.FAILED.getCode().equals(matchStatus) ? failReason : "")
-                .update(new LogisticsReconDetailSubEntity());
+        String reason = LogisticsReconDetailMatchStatusEnum.FAILED.getCode().equals(matchStatus) ? failReason : "";
+        List<String> idList = new ArrayList<>(detailSubIds);
+        for (int i = 0; i < idList.size(); i += UPDATE_BATCH_SIZE) {
+            List<String> batch = idList.subList(i, Math.min(idList.size(), i + UPDATE_BATCH_SIZE));
+            LambdaUpdateChainWrapper<LogisticsReconDetailSubEntity> updateChain = lambdaUpdate()
+                    .in(LogisticsReconDetailSubEntity::getId, batch);
+            if (CollUtil.isNotEmpty(fromMatchStatuses)) {
+                updateChain.in(LogisticsReconDetailSubEntity::getMatchStatus, fromMatchStatuses);
+            }
+            updateChain
+                    .set(LogisticsReconDetailSubEntity::getMatchStatus, matchStatus)
+                    .set(LogisticsReconDetailSubEntity::getMatchFailReason, reason)
+                    .update(new LogisticsReconDetailSubEntity());
+        }
     }
 }
