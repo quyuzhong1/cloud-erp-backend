@@ -74,6 +74,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "address2", source = "secondAddress"),
             @Mapping(target = "district", source = "districtName"),
             @Mapping(target = "taxNumber", source = "receiverTaxNo"),
+            @Mapping(target = "houseNumber", source = "houseNumber"),
             @Mapping(target = "address3", ignore = true)
     })
     ThirdWarehouseCreateOutboundReq.ReceiverInfo convertThirdWarehouseReceiver(SoB2cReceiverEntity receiverEntity);
