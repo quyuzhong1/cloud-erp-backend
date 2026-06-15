@@ -1815,6 +1815,11 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_ADD_BILL_COST_NOT_READY(13661,"新增费用单功能暂未开放，请稍后再试"),
     LOGISTICS_RECON_IMPORT_MATCH_NOT_READY(13662,"导入匹配功能暂未开放，请稍后再试"),
     LOGISTICS_RECON_MATCH_NOT_READY(13663,"合并匹配功能暂未开放，请稍后再试"),
+    LOGISTICS_RECON_MATCHING_CONFIRM_FORBIDDEN(13664,"存在匹配中的费用项，请等待匹配完成后再确认"),
+    LOGISTICS_RECON_CONFIRM_COST_UPDATE_MISMATCH(13665,"账单确认失败：部分物流费用单状态未更新，请检查后重试"),
+    LOGISTICS_RECON_CONFIRM_PARTIAL_FAILURE(13666,"账单确认失败：第{0}批处理异常，前序批次可能已提交，请勿重复操作"),
+    LOGISTICS_RECON_MATCH_POOL_BUSY(13667,"匹配任务队列已满，请稍后重试"),
+    LOGISTICS_RECON_IMPORT_FAILED_CHECK_STATUS_FORBIDDEN(13668,"导入失败的对账单须重新导入后再确认"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

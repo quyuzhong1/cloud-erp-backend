@@ -107,6 +107,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
      */
     private static final int PRE_QUERY_BATCH_SIZE = 1000;
 
+    /**
+     * 对账匹配落库分片大小，避免单事务过大。
+     */
+    private static final int RECON_MATCH_PERSIST_BATCH_SIZE = 50;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
@@ -1253,7 +1258,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public List<LogisticsReconMatchDTO.MatchResultDTO> reconMatchAndGenerate(LogisticsReconMatchDTO.MatchContextDTO ctx) {
         List<LogisticsReconMatchDTO.MatchResultDTO> results = new ArrayList<>();
         if (ctx == null || CollUtil.isEmpty(ctx.getRows())) {
@@ -1372,9 +1376,13 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             rowImportDataMap.put(row.getRowKey(), importDataDTO);
         }
 
-        // 复用导入落库：新增/更新物流单、物流费用单、费用项
+        // 复用导入落库：新增/更新物流单、物流费用单、费用项（短事务分片，与 Feign 预查询分离）
         if (CollUtil.isNotEmpty(importDataList)) {
-            importBatchAddOrUpdate(importDataList, importDTO.getProcessingType());
+            for (int i = 0; i < importDataList.size(); i += RECON_MATCH_PERSIST_BATCH_SIZE) {
+                List<LogisticsBillCostDTO.ImportDataDTO> batch = importDataList.subList(i,
+                        Math.min(importDataList.size(), i + RECON_MATCH_PERSIST_BATCH_SIZE));
+                importHistoryRecordService.persistReconMatchImportData(batch, importDTO.getProcessingType());
+            }
         }
         Map<String, LogisticsReconMatchDTO.MatchRowDTO> rowMap = ctx.getRows().stream()
                 .collect(Collectors.toMap(LogisticsReconMatchDTO.MatchRowDTO::getRowKey, row -> row, (first, second) -> first));
@@ -1390,6 +1398,16 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     costImportEntity, cfgImportDetailList, reconBillRefCostDetailMap));
         }
         return results;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void persistReconMatchImportData(List<LogisticsBillCostDTO.ImportDataDTO> importDataList,
+                                            String processingType) {
+        if (CollUtil.isEmpty(importDataList)) {
+            return;
+        }
+        importBatchAddOrUpdate(importDataList, processingType);
     }
 
     /**
