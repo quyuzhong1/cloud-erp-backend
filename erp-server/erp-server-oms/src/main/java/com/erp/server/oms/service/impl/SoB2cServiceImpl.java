@@ -927,6 +927,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 } finally {
                     UserContext.clearIsUserSystem();
                 }
+            } else {
+                addDTO.getReceiverDTO().setCustomerId(cutomer.getId());
             }
             //新增买家信息
             soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
@@ -1505,6 +1507,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 CustomerB2CDTO.AddDTO dto = buildB2cCustomerUpdateDTO(updateDTO);
                 String customerId = customerB2cService.add(dto);
                 updateDTO.getReceiverDTO().setCustomerId(customerId);
+            } else {
+                updateDTO.getReceiverDTO().setCustomerId(customer.getId());
             }
             //修改买家信息
             soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity);
