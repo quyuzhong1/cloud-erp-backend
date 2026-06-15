@@ -133,7 +133,6 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
     }
 
     @Override
-    @Cacheable(value = "cache:sys:shopAuth:listShopSysUserAuthByUserIdList", key = "myKeyGenerator")
     public List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList) {
         if (CollectionUtils.isEmpty(userIdList)) {
             return Collections.EMPTY_LIST;
