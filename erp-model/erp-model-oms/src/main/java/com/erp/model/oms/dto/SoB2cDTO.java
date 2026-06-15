@@ -139,7 +139,7 @@ public class SoB2cDTO implements Serializable {
         private String shopId;
 
         /**
-         * 订单金额
+         * 订单总额
          */
         private BigDecimal amount;
 
@@ -624,7 +624,7 @@ public class SoB2cDTO implements Serializable {
         private String trackCode;
 
         /**
-         * 订单销售总额（原"订单金额"标签，sum(明细.销售金额)）
+         * 订单总额
          */
         private BigDecimal amount;
 
@@ -1247,7 +1247,7 @@ public class SoB2cDTO implements Serializable {
         private String currency;
 
         /**
-         * 订单销售总额（原"订单总金额"标签）
+         * 订单总额
          */
         private BigDecimal amount;
 
@@ -1625,10 +1625,10 @@ public class SoB2cDTO implements Serializable {
         private String shopId;
 
         /**
-         * 订单销售总额（原"订单金额"标签，sum(明细.销售金额)）
+         * 订单总额
          */
-        @NotNull(message = "订单销售总额不能为空")
-        @Digits(integer = 12, fraction = 4, message = "订单销售总额整数位不能超过12位，小数位不能超过4位")
+        @NotNull(message = "订单总额不能为空")
+        @Digits(integer = 12, fraction = 4, message = "订单总额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
         /**
          * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
@@ -1686,7 +1686,7 @@ public class SoB2cDTO implements Serializable {
         private String sellerOrderCode;
 
         /**
-         * 税后订单金额(速卖通)
+         * 税后订单总额(速卖通)
          */
         private BigDecimal afterTaxAmount = BigDecimal.ZERO;
 
@@ -3137,7 +3137,7 @@ public class SoB2cDTO implements Serializable {
         private String billStatusName;
 
         /**
-         * 订单金额
+         * 订单总额
          */
         private BigDecimal amount;
 
@@ -3947,7 +3947,7 @@ public class SoB2cDTO implements Serializable {
         private String id;
         //销售订单编码
         private String code;
-        //订单金额
+        //订单总额
         private BigDecimal amount;
         //币别
         private String currency;
@@ -4477,7 +4477,7 @@ public class SoB2cDTO implements Serializable {
         private String trackNo;
 
         /**
-         * 订单销售总额（原"订单金额"标签，sum(明细.销售金额)）
+         * 订单总额
          */
         private BigDecimal amount;
 

@@ -134,12 +134,12 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal creditDeductAmount;
 
         /**
-         * 订单销售总额（原"订单金额"标签）
+         * 订单总额
          */
         private BigDecimal orderAmount;
 
         /**
-         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值【可排序】
          */
         private BigDecimal paidAmount;
 
@@ -915,7 +915,7 @@ public class SoInfoDTO implements Serializable {
         private String thirdSystem;
 
         /**
-         * 订单销售总额（原"订单金额"标签）
+         * 订单总额
          */
         private BigDecimal orderAmount;
 
@@ -1227,7 +1227,7 @@ public class SoInfoDTO implements Serializable {
         private String virtualWarehouseName;
 
         /**
-         * 订单销售总额（原"订单金额"标签）
+         * 订单总额
          */
         private BigDecimal orderAmount;
 
@@ -1788,7 +1788,7 @@ public class SoInfoDTO implements Serializable {
         private String orderType;
 
         /**
-         * 订单销售总额（原"订单金额"标签）
+         * 订单总额
          */
         private BigDecimal orderAmount;
 

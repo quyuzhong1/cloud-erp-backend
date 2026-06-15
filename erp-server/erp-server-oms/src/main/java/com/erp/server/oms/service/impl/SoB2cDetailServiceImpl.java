@@ -149,7 +149,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.TRUE);
-        SoB2cAmountUtil.applyDetailAmounts(soB2cEntity, list);
+        SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
+        soB2cService.updateById(soB2cEntity);
         //批量新增
         boolean flag = this.saveBatch(list);
         //新增拆分订单关联关系
@@ -181,7 +182,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         //处理明细中的数据id
         handleDetailList(list, soB2cEntity, Boolean.FALSE);
-        SoB2cAmountUtil.applyDetailAmounts(soB2cEntity, list);
+        SoB2cAmountUtil.applyAllForManualDetailSave(soB2cEntity, list);
+        soB2cService.updateById(soB2cEntity);
         return service.saveOrUpdateBatch(list);
     }
 
@@ -619,7 +621,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 this.saveOrUpdateBatch(notExist);
             }
         }
-        SoB2cAmountUtil.applyDetailAmounts(mainEntity, saveOrUpdateList);
+        SoB2cAmountUtil.applyDetailAmounts(mainEntity, saveOrUpdateList, true);
+        soB2cService.updateById(mainEntity);
         // 批量保存和更新
         if (!this.saveOrUpdateBatch(saveOrUpdateList)) {
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");

@@ -160,7 +160,7 @@ public class SoOutstockDTO implements Serializable {
 
 
         /**
-         * 审核状态说明
+         * 审核状态说明【可排序】
          * 用于展示提交失败、不允许审核通过、审核不通过等说明
          */
         private String approveRemark;

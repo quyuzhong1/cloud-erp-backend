@@ -109,7 +109,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("pay_status")
     private String payStatus;
     /**
-     * 订单销售总额（原"订单金额"标签）
+     * 订单总额
      */
     @TableField("amount")
     private BigDecimal amount;

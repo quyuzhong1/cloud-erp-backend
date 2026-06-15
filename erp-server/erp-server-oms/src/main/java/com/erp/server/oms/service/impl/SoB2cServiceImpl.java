@@ -871,6 +871,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public SoB2cEntity add(SoB2cDTO.AddDTO addDTO, String code) {
         SoB2cEntity soB2cEntity = new SoB2cEntity();
         BeanMapperUtils.copy(addDTO, soB2cEntity);
+        SoB2cAmountUtil.ignoreRequestMainPaidAmount(soB2cEntity);
+        SoB2cAmountUtil.ignoreRequestMainTotalDiscount(soB2cEntity);
+        SoB2cAmountUtil.applyMainAmountsFromDetailAddDtos(soB2cEntity, addDTO.getDetailList());
         //查询支付方式是否需要填写付款时间
         Boolean isFlag = soB2cCoreService.listPayMethodSetting(soB2cEntity);
         if (!isFlag && Objects.isNull(soB2cEntity.getPayTime())) {
@@ -880,7 +883,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
         }
         String dictPlatform = addDTO.getDictPlatform();
-        SoB2cAmountUtil.applyMainPaidAmount(soB2cEntity);
         // 数据处理
         handleData(soB2cEntity, true, true);
         //创建时间
@@ -1477,10 +1479,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cCoreService.checkPayMent(old);
 
         SoB2cEntity soB2cEntity = BeanMapperUtils.map(SoB2cEntity.class, updateDTO);
-        if (soB2cEntity.getTotalDiscount() == null) {
-            soB2cEntity.setTotalDiscount(old.getTotalDiscount());
-        }
-        SoB2cAmountUtil.applyMainPaidAmount(soB2cEntity);
+        SoB2cAmountUtil.ignoreRequestMainPaidAmount(soB2cEntity);
+        SoB2cAmountUtil.ignoreRequestMainTotalDiscount(soB2cEntity);
+        SoB2cAmountUtil.applyMainAmountsFromDetailUpdateDtos(soB2cEntity, updateDTO.getDetailList());
 
         // 数据处理
         handleData(soB2cEntity, true, true);
@@ -7614,7 +7615,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             //校验汇率
             checkExchangeRate(entity);
-            SoB2cAmountUtil.applyMainPaidAmount(entity);
+            SoB2cAmountUtil.prepareMainPaidAmountForDetailCalc(entity);
 
             // 生成单号
             String businessNo = "";
@@ -7816,7 +7817,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 entity.setSellerOrderCode(dto.getSellerOrderCode());
             }
             checkExchangeRate(entity);
-            SoB2cAmountUtil.applyMainPaidAmount(entity);
+            SoB2cAmountUtil.prepareMainPaidAmountForDetailCalc(entity);
 
             if (!oldEntity.toString().equals(entity.toString())) {
                 if (!this.updateById(entity)) {

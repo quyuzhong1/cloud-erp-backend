@@ -355,7 +355,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
 
 
     /**
-     * 订单销售总额（原"订单金额"标签）
+     * 订单总额
      */
     @TableField("order_amount")
     private BigDecimal orderAmount;

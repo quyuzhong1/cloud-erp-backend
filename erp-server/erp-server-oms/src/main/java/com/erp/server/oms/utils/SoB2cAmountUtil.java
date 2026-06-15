@@ -2,6 +2,7 @@ package com.erp.server.oms.utils;
 
 import cn.hutool.core.collection.CollUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 
@@ -20,14 +21,172 @@ import java.util.List;
  *   <li>明细 discount_amount = sale_amount - paid_amount</li>
  * </ul>
  *
- * <p>调用前置：主表的 amount、total_discount 已经从入参/平台推送/手工录入设置完毕。
- * 调用后明细的 saleAmount/paidAmount/discountAmount 与主表 paidAmount 都会被覆盖写入。
+ * <p>主表 totalDiscount 落库口径：sum(明细.discountAmount)；平台未推送主表折扣时同样按明细汇总回填。
+ * 调用后明细的 saleAmount/paidAmount/discountAmount 与主表 paidAmount/totalDiscount 都会被覆盖写入。
  */
 public final class SoB2cAmountUtil {
 
     private static final int SCALE = 4;
 
     private SoB2cAmountUtil() {
+    }
+
+    /**
+     * 忽略入参中的实付总额。
+     */
+    public static void ignoreRequestMainPaidAmount(SoB2cEntity main) {
+        if (main != null) {
+            main.setPaidAmount(null);
+        }
+    }
+
+    /**
+     * 忽略入参中的折扣总额（手工新增/编辑不落库入参值，明细保存后按明细折扣汇总）。
+     */
+    public static void ignoreRequestMainTotalDiscount(SoB2cEntity main) {
+        if (main != null) {
+            main.setTotalDiscount(null);
+        }
+    }
+
+    /**
+     * 主表是否未推送/未设置折扣总额（null 或 0 视为缺失）。
+     */
+    public static boolean isMainTotalDiscountMissing(SoB2cEntity main) {
+        if (main == null || main.getTotalDiscount() == null) {
+            return true;
+        }
+        return main.getTotalDiscount().compareTo(BigDecimal.ZERO) == 0;
+    }
+
+    /**
+     * 明细折扣额合计。
+     */
+    public static BigDecimal sumDetailDiscountAmount(List<SoB2cDetailEntity> details) {
+        if (CollUtil.isEmpty(details)) {
+            return BigDecimal.ZERO.setScale(SCALE, RoundingMode.HALF_UP);
+        }
+        return details.stream()
+                .map(SoB2cDetailEntity::getDiscountAmount)
+                .map(MathUtil::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(SCALE, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * 主表折扣总额 = sum(明细.discountAmount)，并重算实付总额。
+     *
+     * @param onlyIfMissing true 时仅平台未推送主表折扣才回填；false 时强制以明细汇总为准（手工单）
+     */
+    public static void syncMainTotalDiscountFromDetails(SoB2cEntity main, List<SoB2cDetailEntity> details, boolean onlyIfMissing) {
+        if (main == null) {
+            return;
+        }
+        if (onlyIfMissing && !isMainTotalDiscountMissing(main)) {
+            applyMainPaidAmount(main);
+            return;
+        }
+        main.setTotalDiscount(sumDetailDiscountAmount(details));
+        applyMainPaidAmount(main);
+    }
+
+    /**
+     * 明细金额分摊前准备主表实付：有折扣总额按 amount-discount；否则平台付款金额；否则等于订单销售总额。
+     */
+    public static void prepareMainPaidAmountForDetailCalc(SoB2cEntity main) {
+        if (main == null) {
+            return;
+        }
+        BigDecimal amount = MathUtil.getValue(main.getAmount());
+        if (!isMainTotalDiscountMissing(main)) {
+            applyMainPaidAmount(main);
+            return;
+        }
+        BigDecimal payAmount = main.getPayAmount();
+        if (payAmount != null && payAmount.compareTo(BigDecimal.ZERO) > 0 && payAmount.compareTo(amount) <= 0) {
+            main.setPaidAmount(payAmount.setScale(SCALE, RoundingMode.HALF_UP));
+            return;
+        }
+        main.setPaidAmount(amount.setScale(SCALE, RoundingMode.HALF_UP));
+    }
+
+    /**
+     * 忽略入参中的明细销售金额/实付金额/折扣额。
+     */
+    public static void ignoreRequestDetailAmountFields(List<SoB2cDetailEntity> details) {
+        if (CollUtil.isEmpty(details)) {
+            return;
+        }
+        for (SoB2cDetailEntity detail : details) {
+            detail.setSaleAmount(null);
+            detail.setPaidAmount(null);
+            detail.setDiscountAmount(null);
+        }
+    }
+
+    /**
+     * 销售金额 = 单价 × 数量。
+     */
+    public static BigDecimal calcSaleAmount(BigDecimal price, Integer qty) {
+        BigDecimal qtyDecimal = qty == null ? BigDecimal.ZERO : new BigDecimal(qty);
+        return MathUtil.getValue(price).multiply(qtyDecimal).setScale(SCALE, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * 手工新增/编辑：主表订单销售总额由明细单价×数量汇总；折扣总额在明细保存后汇总回填。
+     */
+    public static void applyMainAmountsFromDetailAddDtos(SoB2cEntity main, List<SoB2cDetailDTO.AddDTO> details) {
+        applyMainSaleAmountFromDetailAddDtos(main, details);
+    }
+
+    /**
+     * 手工编辑：主表订单销售总额由明细单价×数量汇总；折扣总额在明细保存后汇总回填。
+     */
+    public static void applyMainAmountsFromDetailUpdateDtos(SoB2cEntity main, List<SoB2cDetailDTO.UpdateDTO> details) {
+        applyMainSaleAmountFromDetailUpdateDtos(main, details);
+    }
+
+    private static void applyMainSaleAmountFromDetailAddDtos(SoB2cEntity main, List<SoB2cDetailDTO.AddDTO> details) {
+        if (main == null || CollUtil.isEmpty(details)) {
+            return;
+        }
+        BigDecimal totalSale = BigDecimal.ZERO;
+        for (SoB2cDetailDTO.AddDTO detail : details) {
+            totalSale = totalSale.add(calcSaleAmount(detail.getPrice(), detail.getQty()));
+        }
+        main.setAmount(totalSale.setScale(SCALE, RoundingMode.HALF_UP));
+    }
+
+    private static void applyMainSaleAmountFromDetailUpdateDtos(SoB2cEntity main, List<SoB2cDetailDTO.UpdateDTO> details) {
+        if (main == null || CollUtil.isEmpty(details)) {
+            return;
+        }
+        BigDecimal totalSale = BigDecimal.ZERO;
+        for (SoB2cDetailDTO.UpdateDTO detail : details) {
+            totalSale = totalSale.add(calcSaleAmount(detail.getPrice(), detail.getQty()));
+        }
+        main.setAmount(totalSale.setScale(SCALE, RoundingMode.HALF_UP));
+    }
+
+    /**
+     * 手工新增/编辑明细：先汇总主表销售总额，再重算主表实付总额与明细三段金额。
+     */
+    public static void applyAllForManualDetailSave(SoB2cEntity main, List<SoB2cDetailEntity> details) {
+        if (main == null || CollUtil.isEmpty(details)) {
+            return;
+        }
+        ignoreRequestDetailAmountFields(details);
+        for (SoB2cDetailEntity detail : details) {
+            detail.setSaleAmount(calcSaleAmount(detail.getPrice(), detail.getQty()));
+        }
+        BigDecimal totalSale = details.stream()
+                .map(SoB2cDetailEntity::getSaleAmount)
+                .map(MathUtil::getValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        main.setAmount(totalSale.setScale(SCALE, RoundingMode.HALF_UP));
+        prepareMainPaidAmountForDetailCalc(main);
+        applyDetailPaidAndDiscountAmounts(main, details);
+        syncMainTotalDiscountFromDetails(main, details, false);
     }
 
     /**
@@ -52,17 +211,29 @@ public final class SoB2cAmountUtil {
      * 必须先调用 {@link #applyMainPaidAmount(SoB2cEntity)}。
      */
     public static void applyDetailAmounts(SoB2cEntity main, List<SoB2cDetailEntity> details) {
+        applyDetailAmounts(main, details, true);
+    }
+
+    /**
+     * 计算明细三段金额，并按需回填主表折扣总额。
+     *
+     * @param syncMainTotalDiscountOnlyIfMissing 平台 true：仅主表未推送折扣时 sum(明细)；手工 false：强制 sum(明细)
+     */
+    public static void applyDetailAmounts(SoB2cEntity main, List<SoB2cDetailEntity> details, boolean syncMainTotalDiscountOnlyIfMissing) {
         if (main == null || CollUtil.isEmpty(details)) {
             return;
         }
+        for (SoB2cDetailEntity d : details) {
+            d.setSaleAmount(calcSaleAmount(d.getPrice(), d.getQty()));
+        }
+        prepareMainPaidAmountForDetailCalc(main);
+        applyDetailPaidAndDiscountAmounts(main, details);
+        syncMainTotalDiscountFromDetails(main, details, syncMainTotalDiscountOnlyIfMissing);
+    }
+
+    private static void applyDetailPaidAndDiscountAmounts(SoB2cEntity main, List<SoB2cDetailEntity> details) {
         BigDecimal mainAmount = MathUtil.getValue(main.getAmount());
         BigDecimal paidTotal = MathUtil.getValue(main.getPaidAmount());
-
-        for (SoB2cDetailEntity d : details) {
-            BigDecimal price = MathUtil.getValue(d.getPrice());
-            BigDecimal qty = d.getQty() == null ? BigDecimal.ZERO : new BigDecimal(d.getQty());
-            d.setSaleAmount(price.multiply(qty).setScale(SCALE, RoundingMode.HALF_UP));
-        }
 
         if (mainAmount.compareTo(BigDecimal.ZERO) == 0) {
             for (SoB2cDetailEntity d : details) {
@@ -95,8 +266,7 @@ public final class SoB2cAmountUtil {
      * 一站式计算：主表 paidAmount + 明细 saleAmount/paidAmount/discountAmount。
      */
     public static void applyAll(SoB2cEntity main, List<SoB2cDetailEntity> details) {
-        applyMainPaidAmount(main);
-        applyDetailAmounts(main, details);
+        applyDetailAmounts(main, details, true);
     }
 
     /**

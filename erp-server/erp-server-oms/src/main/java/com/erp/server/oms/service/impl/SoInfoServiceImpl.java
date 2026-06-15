@@ -102,6 +102,7 @@ import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.listener.B2BSoImportExcelListener;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoInfoAmountUtil;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -325,6 +326,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         SoInfoEntity addEntity = new SoInfoEntity();
         BeanMapper.copy(dto, addEntity);
+        SoInfoAmountUtil.ignoreRequestPaidAmount(addEntity);
         addEntity.setId(id);
         if (StringUtils.isBlank(code)) {
             //生成单号
@@ -1464,6 +1466,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         SoInfoEntity draftEntity = new SoInfoEntity();
         BeanMapper.copy(dto, draftEntity);
+        SoInfoAmountUtil.ignoreRequestPaidAmount(draftEntity);
         draftEntity.setId(id);
         //报关费
         if (!draftEntity.getIsDeclare()) {
@@ -1620,6 +1623,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         BeanMapper.copy(soInfo, old);
 
         BeanMapper.copy(dto, soInfo);
+        SoInfoAmountUtil.ignoreRequestPaidAmount(soInfo);
         soInfo.setCode(code);
 
 
