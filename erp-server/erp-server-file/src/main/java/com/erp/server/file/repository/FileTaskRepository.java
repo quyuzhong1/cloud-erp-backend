@@ -84,7 +84,11 @@ public class FileTaskRepository extends ServiceImpl<FileTaskMapper, FileTask> im
     public List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, LocalDateTime lastCreateTime, String lastId) {
         LambdaQueryChainWrapper<FileTask> query = lambdaQuery()
                 .lt(FileTask::getCreateTime, expireTime)
-                .notIn(FileTask::getStatus, Arrays.asList(FileTaskStatusEnum.PROCESS.name(), FileTaskStatusEnum.PENDING.name()));
+                .in(FileTask::getStatus, Arrays.asList(FileTaskStatusEnum.FINISH.name(),
+                        FileTaskStatusEnum.FAIL.name(),
+                        FileTaskStatusEnum.CANCEL.name(),
+                        FileTaskStatusEnum.STOP.name())
+                );
         // 游标分页：按 (create_time, id) 严格大于上一批已处理到的位置取下一批，替代纯 offset。
         // 软删成功记录会从结果集移除，offset 语义随之漂移，导致失败记录在同一轮内被反复跳过；
         // 游标单调推进，无论成功/失败都不回扫已处理记录，失败记录顺延到下次调度重试，不再积压在本轮反复 offset。
