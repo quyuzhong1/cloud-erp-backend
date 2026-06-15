@@ -60,8 +60,8 @@ public interface IFileTaskRepository extends IService<FileTask> {
     List<FileTask> listCleanFileTask(LocalDateTime expireTime, int limit, LocalDateTime lastCreateTime, String lastId);
 
     /**
-     * 查询当前处于处理中（PROCESS）状态的任务ID集合，用于临时目录清理时 O(1) 判断是否处理中，
-     * 避免逐文件查库（N+1）。
+     * 查询当前处于处理中（PROCESS）状态的任务 ID 集合，用于临时目录清理时 O(1) 判断是否处理中，
+     * 避免逐文件查库（N+1）。PROCESS 规模受 {@link com.erp.server.file.context.FileTaskContext} 执行线程池并发约束（集群约两百量级）。
      *
      * @return 处理中任务ID集合
      */
