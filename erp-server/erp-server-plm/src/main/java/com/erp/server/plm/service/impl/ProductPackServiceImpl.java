@@ -382,7 +382,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Override
     public Map<String, BigDecimal> listSingleBySkuIds(ProductPackDTO.ListSingleBySkuIdsParam param) {
         Map<String, BigDecimal> skuIdToGrossWeightMap = new HashMap<>();
-        if (param == null || CollUtil.isEmpty(param.getSkuIds()) || param.getState() == null) {
+        if (param == null || CollUtil.isEmpty(param.getSkuIds())) {
             return skuIdToGrossWeightMap;
         }
         List<String> skuIds = param.getSkuIds();
