@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 
 /**
  * 导出任务临时文件
@@ -63,7 +64,13 @@ public final class ExportTempFilesHandler {
     public static Path createTempPath(String exportFilePath, String suffix, String fileName) throws IOException {
         Path dir = resolveWorkDir(exportFilePath).toAbsolutePath().normalize();
         Files.createDirectories(dir);
-        String name = EXPORT_TMP_PREFIX.concat(sanitizeFileName(fileName)).concat(suffix);
+        // 在确定性段（id_文件名_时间戳）后追加随机后缀，避免同一任务毫秒级重复调度时临时文件互相覆盖。
+        // 命名形如 exportTmp_{id}_{...}_{uuid}.xlsx；CleanFileTaskJob 仍取 exportTmp_ 后第一段为 taskId。
+        String name = EXPORT_TMP_PREFIX
+                .concat(sanitizeFileName(fileName))
+                .concat("_")
+                .concat(UUID.randomUUID().toString().replace("-", ""))
+                .concat(suffix);
         // 防路径穿越：净化文件名后再二次校验最终路径必须落在工作目录内，避免 fileName 含 / 或 .. 等字符写出目录之外
         Path target = dir.resolve(name).normalize();
         if (!target.startsWith(dir)) {

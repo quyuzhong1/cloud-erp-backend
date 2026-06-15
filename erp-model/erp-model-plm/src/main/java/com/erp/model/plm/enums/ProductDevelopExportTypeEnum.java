@@ -1,5 +1,6 @@
 package com.erp.model.plm.enums;
 
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.core.constant.EnumMessage;
 import lombok.Getter;
 
@@ -19,15 +20,6 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
 
     PRODUCT(0, "产品列表"),
     TASK(1, "任务列表");
-
-    /** file 侧 event code：仅产品 */
-    public static final String EVENT_CODE_EXPORT_PRODUCT = "EXPORT_PLM_PRODUCT_DEV_PRODUCT";
-    /** file 侧 event code：仅任务 */
-    public static final String EVENT_CODE_EXPORT_TASK = "EXPORT_PLM_PRODUCT_DEV_TASK";
-    /** file 侧 event code：产品 + 任务 */
-    public static final String EVENT_CODE_EXPORT_BOTH = "EXPORT_PLM_PRODUCT_DEV_BOTH";
-    /** 历史遗留 event code，等价于仅产品 */
-    public static final String EVENT_CODE_LEGACY_EXPORT_PRODUCT = "EXPORT_PLM_PRODUCT";
 
     private static final Integer EXPORT_PRODUCT = PRODUCT.getCode();
     private static final Integer EXPORT_TASK = TASK.getCode();
@@ -89,7 +81,7 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
 
     /**
      * {@code exportDataList}（须已通过 {@link #validateCombinationMessage}）→ file 侧 event code。
-     * PLM 创建任务与 file Handler 路由共用，避免双向映射分散维护。
+     * 与 {@link FileTaskEventEnum} 共用同一 code 源，避免 PLM 创建任务与 file Handler 路由字符串分叉。
      *
      * @return event code；入参非法时返回 {@code null}
      */
@@ -103,32 +95,35 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
         if (exportDataList.size() == 1) {
             Integer flag = exportDataList.get(0);
             if (EXPORT_PRODUCT.equals(flag)) {
-                return EVENT_CODE_EXPORT_PRODUCT;
+                return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_PRODUCT.getCode();
             }
             if (EXPORT_TASK.equals(flag)) {
-                return EVENT_CODE_EXPORT_TASK;
+                return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_TASK.getCode();
             }
             return null;
         }
-        return EVENT_CODE_EXPORT_BOTH;
+        return FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
     }
 
     /**
      * file 侧 event code → {@code exportDataList}；未知 event 返回 {@code null}。
+     * {@link FileTaskEventEnum#EXPORT_PLM_PRODUCT} 为历史遗留 code，等价于仅产品。
      */
     public static List<Integer> exportDataListFromEventCode(String eventCode) {
-        if (eventCode == null || eventCode.isEmpty()) {
+        FileTaskEventEnum event = FileTaskEventEnum.getByCode(eventCode);
+        if (event == null) {
             return null;
         }
-        if (EVENT_CODE_EXPORT_PRODUCT.equals(eventCode) || EVENT_CODE_LEGACY_EXPORT_PRODUCT.equals(eventCode)) {
-            return Collections.singletonList(EXPORT_PRODUCT);
+        switch (event) {
+            case EXPORT_PLM_PRODUCT_DEV_PRODUCT:
+            case EXPORT_PLM_PRODUCT:
+                return Collections.singletonList(EXPORT_PRODUCT);
+            case EXPORT_PLM_PRODUCT_DEV_TASK:
+                return Collections.singletonList(EXPORT_TASK);
+            case EXPORT_PLM_PRODUCT_DEV_BOTH:
+                return Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK);
+            default:
+                return null;
         }
-        if (EVENT_CODE_EXPORT_TASK.equals(eventCode)) {
-            return Collections.singletonList(EXPORT_TASK);
-        }
-        if (EVENT_CODE_EXPORT_BOTH.equals(eventCode)) {
-            return Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK);
-        }
-        return null;
     }
 }
