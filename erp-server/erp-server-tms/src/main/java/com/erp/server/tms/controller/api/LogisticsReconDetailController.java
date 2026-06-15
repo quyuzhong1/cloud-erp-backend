@@ -147,22 +147,6 @@ public class LogisticsReconDetailController extends BaseController {
     }
 
     /**
-     * 物流商对账明细新增费用单（基于对账明细补建物流费用单后绑定，match_type=newBill）
-     * @author Will
-     * @date: 2026/05/29
-     * @param dto
-     * @return ApiResult<BatchResultDTO>
-     */
-    @PostMapping("/addLogisticsBillCost")
-    @LogAction(value = LogActionEnum.INSERT, desc = "物流商对账明细新增费用单")
-    public ApiResult<BatchResultDTO> addLogisticsBillCost(
-            @RequestBody @Validated LogisticsReconDetailDTO.AddLogisticsBillCostDTO dto) {
-        BatchResultDTO result = logisticsReconDetailService.addLogisticsBillCost(dto);
-        return result.getSuccess() ? success(result) : failure(result);
-    }
-
-
-    /**
      * 物流商对账明细导出（异步：提交文件中心下载任务）
      * @author Will
      * @date: 2026/05/29
@@ -171,6 +155,7 @@ public class LogisticsReconDetailController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @LogAction(value = LogActionEnum.EXPORT, desc = "物流商对账明细导出")
+    @WebAdvanceQuery(handler = LogisticsReconDetailQueryHandler.class)
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated LogisticsReconDetailDTO.PagingParamDTO dto) {
         logisticsReconDetailService.exportList(dto);
         return success(Boolean.TRUE);

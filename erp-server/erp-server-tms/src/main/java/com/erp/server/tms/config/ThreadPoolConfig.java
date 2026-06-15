@@ -109,6 +109,22 @@ public class ThreadPoolConfig {
         return new TraceableExecutorService(service);
     }
 
+    /**
+     * 物流商对账合并匹配 / 手动匹配异步线程池（本模块自管，不走通用异步任务）
+     * @author Will
+     * @date 2026/6/12
+     * @return ExecutorService
+     */
+    @Bean(name = "logisticsReconMatchPool")
+    public ExecutorService logisticsReconMatchPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(8, 16,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(10000));
+        // 池满时回退到调用线程执行，避免任务丢失
+        service.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        return new TraceableExecutorService(service);
+    }
+
 
     @Bean(name = "tmsLogisticsOrderPool")
     public ExecutorService tmsLogisticsOrderPool() {

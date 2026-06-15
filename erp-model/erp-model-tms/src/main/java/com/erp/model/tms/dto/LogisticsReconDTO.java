@@ -430,6 +430,31 @@ public class LogisticsReconDTO implements Serializable {
         private String userId;
 
         /**
+         * 导入过程缓存：识别单号分组键 → 已落库明细 id（跨批次合并同单费用项）
+         */
+        private Map<String, String> importDetailKeyMap;
+
+        /**
+         * 导入过程缓存：明细 id → 当前最大 seq_no（追加费用项时递增）
+         */
+        private Map<String, Integer> importDetailMaxSeqMap;
+
+        /**
+         * 导入过程缓存：明细 id + 费用名称 → 已落库费用项 id（同 Excel 重导时按费用名更新）
+         */
+        private Map<String, String> importDetailSubKeyMap;
+
+        /**
+         * 是否为同 Excel 覆盖更新待确认对账单（否则为新增主表导入）
+         */
+        private Boolean reimportUpdate;
+
+        /**
+         * 按导入配置标记是否覆盖更新（cfg_logistics_cost_import.id → 是否重导更新）
+         */
+        private Map<String, Boolean> reimportUpdateMap;
+
+        /**
          * 由批量导入参数 + 单个文件参数组装单文件导入参数
          * @param batch 批量导入公共参数
          * @param file  单个文件参数
