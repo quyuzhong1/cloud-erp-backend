@@ -94,6 +94,13 @@ public class MultiSheetTemplateWriter {
                     PagingVO<?> currentVo = firstPages[i];
                     for (int pageOffset = 0; pageOffset < totalPages; pageOffset++) {
                         int currPage = firstPage + pageOffset;
+                        // 当前页（含首页）空列表防静默丢数：本页之前已覆盖行数 < totalCount 说明本页本应有数据，
+                        // 实际返回空属上游分页异常/数据并发变更；与 OFFSET 路径（AbstractPageFileEventHandler.writeOffsetBatches）守卫对齐。
+                        long coveredBefore = (long) pageOffset * pageSize;
+                        if (CollectionUtils.isEmpty(currentVo.getList()) && coveredBefore < totalRows[i]) {
+                            throw new ServiceException("独立分页导出数据缺失：sheetIndex=" + i + "，页码=" + currPage
+                                    + " 返回空列表，但 totalCount=" + totalRows[i] + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
+                        }
                         List<?> batch = withoutNullListElements(currentVo.getList());
                         if (!CollectionUtils.isEmpty(batch)) {
                             fillAcrossSheets(excelWriter, fillConfig, batch, cursors[i], i, "INDEPENDENT");
@@ -183,6 +190,13 @@ public class MultiSheetTemplateWriter {
                 PagingVO<M> currentVo = firstVo;
                 for (int pageOffset = 0; pageOffset < totalPages; pageOffset++) {
                     int currPage = firstPage + pageOffset;
+                    // 当前页（含首页）空列表防静默丢数：本页之前已覆盖行数 < totalCount 说明本页本应有数据，
+                    // 实际返回空属上游分页异常/数据并发变更；与 OFFSET 路径（AbstractPageFileEventHandler.writeOffsetBatches）守卫对齐。
+                    long coveredBefore = (long) pageOffset * pageSize;
+                    if (CollectionUtils.isEmpty(currentVo.getList()) && coveredBefore < total) {
+                        throw new ServiceException("主从派生导出数据缺失：页码=" + currPage
+                                + " 返回空列表，但 totalCount=" + total + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或联系开发排查上游分页接口。");
+                    }
                     List<M> mainBatch = withoutNullListElements(currentVo.getList());
                     if (!CollectionUtils.isEmpty(mainBatch)) {
                         fillMasterDerivedBatch(excelWriter, fillConfig, mainBatch, cursors, spec.getSheetExtractors());

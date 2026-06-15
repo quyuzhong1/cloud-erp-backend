@@ -65,6 +65,13 @@ public class FileRegistry {
     private static Long maxTemplateExpandBytes;
 
     /**
+     * 动态表头导出每页条数。动态表头单行 DynamicExcelDTO 体积通常大于固定模板行对象，
+     * 沿用更保守的批次（默认 1000）控制 Feign/内存峰值与超时，避免大宽表导出回归。
+     */
+    @Getter
+    private static Integer dynamicExportPageSize;
+
+    /**
      * 冒号后无内容表示「缺省属性时用空字符串」；业务侧应对空白串再回退到 {@code java.io.tmpdir}（见 ExportTempFilesHandler 等）。
      * 若需缺省为 null，可改为 {@code ${file.storage.tmpdir:#{null}}}（SpEL）。
      */
@@ -91,6 +98,11 @@ public class FileRegistry {
     @Value("${file.storage.maxTemplateExpandBytes:314572800}")
     public void setMaxTemplateExpandBytes(Long maxTemplateExpandBytes){
         FileRegistry.maxTemplateExpandBytes = maxTemplateExpandBytes;
+    }
+
+    @Value("${file.storage.dynamicExportPageSize:1000}")
+    public void setDynamicExportPageSize(Integer dynamicExportPageSize){
+        FileRegistry.dynamicExportPageSize = dynamicExportPageSize;
     }
 
     /**
@@ -124,6 +136,15 @@ public class FileRegistry {
     public static long maxTemplateExpandBytesOrDefault() {
         Long configured = maxTemplateExpandBytes;
         return configured == null || configured < 1 ? 314572800L : configured;
+    }
+
+    /**
+     * 动态表头导出每页条数：读取 {@code file.storage.dynamicExportPageSize}，未注入或非法（&lt;1）时回退 1000，
+     * 与历史固定批次一致，避免大宽表动态表头导出因批次过大引发内存/超时回归。
+     */
+    public static int dynamicExportPageSize() {
+        Integer configured = dynamicExportPageSize;
+        return configured == null || configured < 1 ? 1000 : configured;
     }
 
     @PostConstruct
