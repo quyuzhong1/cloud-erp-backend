@@ -48,6 +48,7 @@ public class CleanFileTaskJob {
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("任务参数={}", JSONUtil.toJsonStr(jobParam));
+        // 未传参用默认 360 天；传参须为 JSON {"days":N}，格式非法则 FAIL（见 parseDays JavaDoc），不回退默认以免误配被静默吞掉。
         Integer days = 360;
         if (StringUtils.isNotBlank(jobParam)){
             days = parseDays(jobParam);
@@ -162,6 +163,7 @@ public class CleanFileTaskJob {
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
         XxlJobHelper.log("任务参数={}", JSONUtil.toJsonStr(jobParam));
+        // 未传参用默认 3 天；传参格式约定同 cleanFileTask / parseDays。
         Integer days = 3;
         if (StringUtils.isNotBlank(jobParam)) {
             days = parseDays(jobParam);
@@ -250,8 +252,8 @@ public class CleanFileTaskJob {
 
     /**
      * 判断临时文件是否属于「处理中」任务。
-     * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}.xlsx}（见 {@link com.erp.server.file.entity.FileTask#getUniqueWithFileName()}），
-     * 取 {@code exportTmp_} 后第一个 {@code _} 之前的一段作为 taskId，与处理中 ID 集合做精确匹配，
+     * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}_{uuid}.xlsx}（见 {@link com.erp.server.file.entity.FileTask#getUniqueWithFileName()} 与
+     * {@link ExportTempFilesHandler#createTempPath}），取 {@code exportTmp_} 后第一个 {@code _} 之前的一段作为 taskId，与处理中 ID 集合做精确匹配，
      * 避免 {@code startsWith("exportTmp_{id}_")} 在 ID 存在前缀包含关系时误判（如 "12" 与 "123"）。
      */
     private boolean isProcessingTempFile(Path path, Set<String> processingTaskIds) {
@@ -274,6 +276,20 @@ public class CleanFileTaskJob {
         return processingTaskIds.contains(taskIdInFile);
     }
 
+    /**
+     * 解析 XXL-JOB 任务参数中的 {@code days}。
+     * <p>
+     * <strong>参数约定（审查勿误报为需兼容纯数字字符串）</strong>：
+     * <ul>
+     *   <li>调度中心<strong>未配置</strong>或配置为空：由调用方使用各 Job 内置默认天数（{@code cleanFileTask}=360，{@code cleanFileStorageTmpdir}=3）。</li>
+     *   <li>已配置时<strong>仅支持 JSON 对象</strong>，示例：{@code {"days":360}}；与仓库内其它 XXL 任务扩展字段的写法保持一致，便于后续加字段。</li>
+     *   <li>纯数字 {@code "360"}、非 JSON 文本、缺少 {@code days}、{@code days<=0}：返回 {@code null}，调用方返回 {@code ReturnT.FAIL} 并打日志——
+     *       有意<strong>不</strong>静默回退默认天数，避免运维误配后任务仍按默认值执行、清理范围与预期不符且难以察觉。</li>
+     * </ul>
+     *
+     * @param jobParam XXL-JOB {@link XxlJobHelper#getJobParam()} 原始字符串
+     * @return 正整数天数；解析失败或字段非法时返回 {@code null}
+     */
     private Integer parseDays(String jobParam) {
         if (CharSequenceUtil.isBlank(jobParam)) {
             return null;
