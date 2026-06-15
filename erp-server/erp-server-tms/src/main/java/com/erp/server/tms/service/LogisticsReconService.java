@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
 import com.erp.model.tms.dto.LogisticsReconDTO;
+import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailEntity;
@@ -99,6 +100,57 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     List<BatchResultDTO> batchMatch(LogisticsReconDTO.BatchMatchDTO dto);
 
     /**
+     * 按费用项 + ERP 业务单号匹配（手动匹配 / 导入匹配共用）。
+     * 行 = 单个费用项，识别单号取用户输入的 ERP 单号，按"识别单号 + 物流商"复用导入匹配逻辑，
+     * 命中唯一物流单则生成/更新物流费用并写对账关联，命中多张视为失败。
+     * @author Will
+     * @date 2026/6/11
+     * @param mainId 对账单 id
+     * @param inputs 费用项 + ERP 单号入参
+     * @param matchType 关联匹配类型（manual / ...）
+     * @return 逐费用项匹配结果
+     */
+    List<BatchResultDTO> matchDetailSubsByErp(String mainId, List<LogisticsReconMatchDTO.SubErpInputDTO> inputs, String matchType);
+
+    /**
+     * 对账单整批合并匹配的实际执行（异步线程内调用，加分布式锁 + 事务），处理已置"匹配中"的费用项。
+     * @author Will
+     * @date 2026/6/12
+     * @param mainId 对账单 id
+     * @return void
+     */
+    void doMatchByMain(String mainId);
+
+    /**
+     * 对账单整批匹配的单批执行（分片小事务）：处理指定费用项 id 中仍处于匹配中的记录。
+     *
+     * @param mainId       对账单 id
+     * @param detailSubIds 本批费用项 id
+     */
+    void doMatchSubsChunk(String mainId, List<String> detailSubIds);
+
+    /**
+     * 提交手动匹配异步任务（按对账单分组、认领 matching 后提交线程池），立即返回。
+     * @author Will
+     * @date 2026/6/12
+     * @param inputs 费用项 + ERP 单号入参
+     * @param matchType 关联匹配类型（manual）
+     * @return 提交结果（已提交 / 校验失败）
+     */
+    List<BatchResultDTO> submitManualMatch(List<LogisticsReconMatchDTO.SubErpInputDTO> inputs, String matchType);
+
+    /**
+     * 把仍处于"匹配中"的费用项回写为匹配失败（异步任务异常兜底）。
+     * @author Will
+     * @date 2026/6/12
+     * @param mainId 对账单 id
+     * @param detailSubIds 指定费用项 id（为空则按对账单下全部匹配中费用项）
+     * @param reason 失败原因
+     * @return void
+     */
+    void markReconMatchFailed(String mainId, List<String> detailSubIds, String reason);
+
+    /**
      * 物流商对账单账单确认（单条，更新已匹配物流费用单对账状态）
      * @author Will
      * @date: 2026/06/02
@@ -108,6 +160,20 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @return BatchResultDTO
      */
     BatchResultDTO confirmBill(String mainId, String reconciliationStatus, LocalDateTime confirmTime);
+
+    /**
+     * 账单确认单批 ref + 物流费用状态更新（独立短事务）
+     */
+    void confirmBillRefCostBatch(String mainId, List<String> batchCostIds, String reconciliationStatus,
+                                 LocalDateTime confirmTime);
+
+    /**
+     * 回写匹配结果（独立短事务，与 reconMatchAndGenerate 分离）
+     */
+    void commitReconMatchResult(String mainId, String matchType,
+                                Map<String, String> rowKeyToDetailId,
+                                Map<String, List<LogisticsReconDetailSubEntity>> rowKeyToSubs,
+                                List<LogisticsReconMatchDTO.MatchResultDTO> matchResults);
 
     /**
      * 物流商对账单导入分批处理（供 Excel 监听器分批回调）
@@ -140,7 +206,10 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      * @return void
      */
     void saveImportDetailAndSub(List<LogisticsReconDetailEntity> detailList,
-                                List<LogisticsReconDetailSubEntity> subList);
+                                List<LogisticsReconDetailSubEntity> subList,
+                                Map<String, Integer> detailCostCountDelta,
+                                List<LogisticsReconDetailEntity> updateDetailList,
+                                List<LogisticsReconDetailSubEntity> updateSubList);
 
     /**
      * 物流商对账明细批量解绑匹配（按 detail 维度，逻辑删 ref）

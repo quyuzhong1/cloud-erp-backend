@@ -54,4 +54,10 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
      * @return void
      */
     void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason);
+
+    /**
+     * 批量更新费用项匹配状态（带前置 match_status 条件，防并发覆盖）
+     */
+    void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
+                                Collection<String> fromMatchStatuses);
 }

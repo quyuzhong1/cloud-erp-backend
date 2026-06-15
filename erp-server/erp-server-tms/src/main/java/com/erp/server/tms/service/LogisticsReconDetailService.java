@@ -49,14 +49,22 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
     void exportList(LogisticsReconDetailDTO.PagingParamDTO dto);
 
     /**
-     * 物流商对账明细导入匹配（按对账明细批量触发合并 & 匹配）
-     * TODO 内部需复用 buildImportDataListFromSupplierBillDetail + importBatchAddOrUpdate 重载入口
+     * 物流商对账导入匹配（标准异步导入：上传 Excel，控制层逐文件提交导入任务）
      * @author Will
      * @date: 2026/05/29
      * @param dto
      * @return List<BatchResultDTO>
      */
     List<BatchResultDTO> importMatch(LogisticsReconDetailDTO.ImportMatchDTO dto);
+
+    /**
+     * 导入匹配异步任务执行：解析 Excel（与手动匹配字段一致），逐费用项按 ERP 单号匹配
+     * @author Will
+     * @date: 2026/06/11
+     * @param dto 单文件异步参数
+     * @return void
+     */
+    void executeImportMatchTask(LogisticsReconDetailDTO.ImportMatchSyncDTO dto);
 
     /**
      * 物流商对账费用项手动匹配（批量指定 ERP 四个业务单号）
@@ -69,16 +77,6 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
     List<BatchResultDTO> manualMatch(LogisticsReconDetailDTO.ManualMatchDTO dto);
 
     /**
-     * 物流商对账明细新增费用单（基于对账明细补建物流费用单后绑定，match_type=newBill）
-     * TODO 调用 LogisticsBillService / LogisticsBillCostService 新增 + 落 ref 关系
-     * @author Will
-     * @date: 2026/05/29
-     * @param dto
-     * @return BatchResultDTO
-     */
-    BatchResultDTO addLogisticsBillCost(LogisticsReconDetailDTO.AddLogisticsBillCostDTO dto);
-
-    /**
      * 按主表 id 级联逻辑删除（用于主表 batchDelete）
      * @author Will
      * @date: 2026/05/29
@@ -89,7 +87,6 @@ public interface LogisticsReconDetailService extends SuperService<LogisticsRecon
 
     /**
      * 按主表 id 集合查询所有 detail（合并匹配阶段拿来转 ImportDataDTO）
-     * TODO 当前依赖 ImportHistoryRecordServiceImpl.buildImportDataList 重构后才能转换，先返回 entity 由调用方处理
      * @author Will
      * @date: 2026/05/29
      * @param mainIds

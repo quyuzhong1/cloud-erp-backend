@@ -84,6 +84,15 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
 
     /**
+     * 批量更新对账状态（按 id 分片），供物流商对账单确认等大批量场景使用。
+     *
+     * @param ids                  物流费用单 id 列表
+     * @param reconciliationStatus 目标对账状态
+     * @param confirmTime          确认时间（账单/暂估确认时必填）
+     */
+    void batchUpdateReconciliationStatus(List<String> ids, String reconciliationStatus, LocalDateTime confirmTime);
+
+    /**
      * 导入确认前校验目标费用单合并导入明细后的确认金额是否大于 0。
      * <p>仅在对账状态为账单确认或暂估确认时生效；供 confirmImport 及标准导入勾选确认场景行级校验使用。</p>
      *

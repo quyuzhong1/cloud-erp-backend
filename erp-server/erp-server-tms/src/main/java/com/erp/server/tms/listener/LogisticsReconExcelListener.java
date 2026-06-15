@@ -35,7 +35,7 @@ public class LogisticsReconExcelListener extends AnalysisEventListener<Map<Integ
     /**
      * 单批落库行数
      */
-    private static final int BATCH_COUNT = 1000;
+    private static final int BATCH_COUNT = 3000;
 
     private final LogisticsReconDTO.ImportDTO dto;
     private final CfgLogisticsCostImportEntity importCfg;

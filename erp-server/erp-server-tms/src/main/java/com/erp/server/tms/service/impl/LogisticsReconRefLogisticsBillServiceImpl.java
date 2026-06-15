@@ -78,13 +78,48 @@ public class LogisticsReconRefLogisticsBillServiceImpl
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    public void saveBatchByDetailSub(List<LogisticsReconRefLogisticsBillEntity> refList) {
+        if (CollUtil.isEmpty(refList)) {
+            return;
+        }
+        List<String> detailSubIds = refList.stream()
+                .map(LogisticsReconRefLogisticsBillEntity::getDetailSubId)
+                .distinct()
+                .collect(Collectors.toList());
+        removeByDetailSubIds(detailSubIds);
+
+        LoginUser user = UserContext.getDefaultLoginUser();
+        LocalDateTime now = LocalDateTime.now();
+        refList.forEach(ref -> {
+            if (ref.getMatchTime() == null) {
+                ref.setMatchTime(now);
+            }
+            if (ref.getMatchUserId() == null && user != null) {
+                ref.setMatchUserId(user.getUid());
+                ref.setMatchUserName(user.getUserName());
+            }
+        });
+        super.saveBatch(refList);
+    }
+
+    /**
+     * 按 id 集合分片删除，避免一次性 IN 过多 id 超出 SQL 长度限制。
+     */
+    private static final int REMOVE_BATCH_SIZE = 1000;
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void removeByDetailIds(Collection<String> detailIds) {
         if (CollUtil.isEmpty(detailIds)) {
             return;
         }
-        lambdaUpdate()
-                .in(LogisticsReconRefLogisticsBillEntity::getDetailId, detailIds)
-                .remove();
+        List<String> idList = new ArrayList<>(detailIds);
+        for (int i = 0; i < idList.size(); i += REMOVE_BATCH_SIZE) {
+            List<String> batch = idList.subList(i, Math.min(idList.size(), i + REMOVE_BATCH_SIZE));
+            lambdaUpdate()
+                    .in(LogisticsReconRefLogisticsBillEntity::getDetailId, batch)
+                    .remove();
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -93,9 +128,13 @@ public class LogisticsReconRefLogisticsBillServiceImpl
         if (CollUtil.isEmpty(detailSubIds)) {
             return;
         }
-        lambdaUpdate()
-                .in(LogisticsReconRefLogisticsBillEntity::getDetailSubId, detailSubIds)
-                .remove();
+        List<String> idList = new ArrayList<>(detailSubIds);
+        for (int i = 0; i < idList.size(); i += REMOVE_BATCH_SIZE) {
+            List<String> batch = idList.subList(i, Math.min(idList.size(), i + REMOVE_BATCH_SIZE));
+            lambdaUpdate()
+                    .in(LogisticsReconRefLogisticsBillEntity::getDetailSubId, batch)
+                    .remove();
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)

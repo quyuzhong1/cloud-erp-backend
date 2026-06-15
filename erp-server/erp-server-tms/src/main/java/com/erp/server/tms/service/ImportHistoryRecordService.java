@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
 import com.erp.model.tms.entity.ImportHistoryRecordEntity;
@@ -97,6 +98,16 @@ public interface ImportHistoryRecordService extends SuperService<ImportHistoryRe
      * @return void
      */
     List<ImportHistoryRecordDTO.ImportConfirmDTO> importBatchAddOrUpdate(List<LogisticsBillCostDTO.ImportDataDTO> importDataList,String processingType);
+
+    /**
+     * 物流商对账"合并 & 匹配"编排：把对账明细/费用项转为与导入一致的识别行，
+     * 复用导入的匹配（识别单号 + 物流商）与落库逻辑，生成/更新物流单、物流费用单、费用项。
+     * @author Will
+     * @date 2026/6/11
+     * @param ctx 匹配编排上下文
+     * @return 逐行匹配结果（含命中的物流费用单关联，用于回写对账关联关系）
+     */
+    List<LogisticsReconMatchDTO.MatchResultDTO> reconMatchAndGenerate(LogisticsReconMatchDTO.MatchContextDTO ctx);
     /**
      * 更新对账状态
      * @author will
