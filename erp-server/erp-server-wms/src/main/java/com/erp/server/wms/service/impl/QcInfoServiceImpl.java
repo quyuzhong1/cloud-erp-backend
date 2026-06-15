@@ -3373,8 +3373,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(view.getQcInfo().getIsInside())){
             view.getQcInfo().setIsInside(QcTypeEnum.OUTSIDE_QC.getCode().equals(qcType) || QcTypeEnum.B2B_OUTSIDE_QC.getCode().equals(qcType) ? Boolean.FALSE : Boolean.TRUE);
         }
-        view.getQcInfo().setQcQty(view.getQcInfo().getQcQty() == 0 ? null : view.getQcInfo().getQcQty());
-        view.getQcInfo().setQcBadQty(view.getQcInfo().getQcBadQty() == 0 ? null : view.getQcInfo().getQcBadQty());
+        view.getQcInfo().setQcQty(view.getQcInfo().getQcQty());
+        view.getQcInfo().setQcBadQty(view.getQcInfo().getQcBadQty());
 
         //获取对应抽样方案
         SamplingPlanDTO.PlanParamDTO planParamDTO = new SamplingPlanDTO.PlanParamDTO();
