@@ -3,9 +3,7 @@ package com.erp.server.wms.service.impl;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -41,12 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
-
-    /**
-     * 字典批量查询单批最大 ID 数量。该接口对外通过 Feign 暴露（{@link com.erp.server.wms.controller.feign.DictBasicFeignController}），
-     * 限制单次 IN 查询规模，避免恶意或异常调用造成大 IN 查询打到数据库。
-     */
-    private static final int LIST_VALUE_MAP_MAX_BATCH_SIZE = 200;
 
 	@Override
 	public boolean saveJsonObject(JSONObject jsonObject) {
@@ -195,33 +187,6 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         queryWrapper.eq(DictBasicEntity::getValue, value);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
-    }
-
-    @Override
-    public Map<String, String> listValueMapByTypeAndIds(String type, List<String> ids) {
-        if (CharSequenceUtil.isBlank(type) || CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyMap();
-        }
-        if (ids.size() > LIST_VALUE_MAP_MAX_BATCH_SIZE) {
-            log.warn("listValueMapByTypeAndIds 单次查询数量超过上限, type={}, size={}, max={}",
-                    type, ids.size(), LIST_VALUE_MAP_MAX_BATCH_SIZE);
-            throw new com.common.core.exception.ServiceException(
-                    CharSequenceUtil.format("字典批量查询单次最多支持 {} 条, 当前 {} 条",
-                            LIST_VALUE_MAP_MAX_BATCH_SIZE, ids.size()));
-        }
-        List<String> distinctIds = ids.stream().distinct().collect(Collectors.toList());
-        List<DictBasicEntity> list = this.lambdaQuery()
-                .eq(DictBasicEntity::getType, type)
-                .in(DictBasicEntity::getId, distinctIds)
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.emptyMap();
-        }
-        Map<String, String> result = new HashMap<>(list.size());
-        for (DictBasicEntity entity : list) {
-            result.put(entity.getId(), entity.getValue());
-        }
-        return result;
     }
 
 }
