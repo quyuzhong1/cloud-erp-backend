@@ -103,6 +103,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
     private static final String PAYMENT_PREPAID = "prepaid";
     private static final String PAYMENT_MONTHLY = "monthly";
     private static final String PAYMENT_MONTHLY_CN = "快递账号月结";
+    private static final Long SHOPEE_PREPAID_LOGISTICS_PRODUCT_ID = 1010004L;
     private static final String FIRST_MILE_PACKAGE_HAS_NOT_BIND = "firstmile.package_has_not_bind";
 
     @Resource
@@ -329,8 +330,15 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                         .build())
                 .build();
         ValidatorUtil.validateEntity(request);
-        GenerateAndBindFirstMileTrackingNumberResponse response =
-                shopeeLogisticsService.generateAndBindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
+        GenerateAndBindFirstMileTrackingNumberResponse response;
+        try {
+            response = shopeeLogisticsService.generateAndBindFirstMileTrackingNumber(buildBaseRequest(context.getShopId()), request);
+        } catch (ServiceException e) {
+            if (isPrepaidAccountRequiredError(e.getMessage())) {
+                throw new ServiceException("当前收货仓/快递服务需要月结账号，请选择月结账号，或更换非月结快递服务/收货仓");
+            }
+            throw e;
+        }
 
         Set<String> successKeys = CollectionUtils.emptyIfNull(response.getSuccessList()).stream()
                 .map(item -> orderKey(item.getOrderSn(), item.getPackageNumber()))
@@ -440,8 +448,10 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 .orElseThrow(() -> new ServiceException("虾皮快递寄送交接面单不存在,bindingId:" + entity.getPlatformPackageNo()));
         String url = waybill.getShippingLabelUrl();
         if (StringUtils.isBlank(url)) {
-            throw new ServiceException("虾皮快递寄送交接面单暂未生成，请稍后重试,bindingId:"
-                    + entity.getPlatformPackageNo() + ",status:" + StringUtils.defaultString(bindingInfo.getStatus()));
+            throw new ServiceException("虾皮已接收快递寄送下单，但未返回交接面单链接，请核对收货仓/快递服务是否支持并已生成平台面单，或更换可出面单的收货仓/快递服务后重新下单,bindingId:"
+                    + entity.getPlatformPackageNo() + ",firstMileTrackingNumber:"
+                    + StringUtils.defaultString(bindingInfo.getFirstMileTrackingNumber()) + ",status:"
+                    + StringUtils.defaultString(bindingInfo.getStatus()));
         }
         try {
             return PdfUtil.convertPdfUrlToBase64(url, true);
@@ -665,8 +675,9 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         if (StringUtils.isBlank(dto.getCourierServiceId())) {
             throw new ServiceException("快递服务不能为空");
         }
-        if (isPrepaidPayment(dto.getPaymentMode()) && Objects.isNull(dto.getPrepaidAccountId())) {
-            throw new ServiceException("月结账号不能为空");
+        if ((isPrepaidPayment(dto.getPaymentMode()) || isPrepaidLogisticsProduct(dto.getLogisticsProductId()))
+                && Objects.isNull(dto.getPrepaidAccountId())) {
+            throw new ServiceException("当前物流产品需要月结账号，请选择月结账号");
         }
     }
 
@@ -869,6 +880,15 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
                 || PAYMENT_MONTHLY_CN.equals(paymentMode);
     }
 
+    private boolean isPrepaidLogisticsProduct(Long logisticsProductId) {
+        return SHOPEE_PREPAID_LOGISTICS_PRODUCT_ID.equals(logisticsProductId);
+    }
+
+    private boolean isPrepaidAccountRequiredError(String message) {
+        return StringUtils.containsIgnoreCase(message, "prepaid_account_id")
+                && StringUtils.containsIgnoreCase(message, "required");
+    }
+
     private String withPdfPrefix(String base64) {
         if (StringUtils.startsWith(base64, PDF_PREFIX)) {
             return base64;
@@ -924,6 +944,7 @@ public class ShopeePackageForecastAdapter implements PackageForecastPlatformAdap
         PackageForecastDTO.ShopeeCourierChannelDTO dto = new PackageForecastDTO.ShopeeCourierChannelDTO();
         dto.setLogisticsProductId(item.getLogisticsProductId());
         dto.setLogisticsProductName(item.getLogisticsProductName());
+        dto.setRequiredPrepaidAccount(isPrepaidLogisticsProduct(item.getLogisticsProductId()));
         dto.setCourierList(CollectionUtils.emptyIfNull(item.getCourierList()).stream().map(this::toCourierServiceDTO).collect(Collectors.toList()));
         return dto;
     }

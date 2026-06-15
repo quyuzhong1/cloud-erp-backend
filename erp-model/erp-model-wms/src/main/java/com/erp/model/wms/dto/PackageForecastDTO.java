@@ -763,6 +763,11 @@ public class PackageForecastDTO implements Serializable {
         private String logisticsProductName;
 
         /**
+         * 是否需要月结账号
+         */
+        private Boolean requiredPrepaidAccount;
+
+        /**
          * 快递服务列表
          */
         private List<ShopeeCourierServiceDTO> courierList;
