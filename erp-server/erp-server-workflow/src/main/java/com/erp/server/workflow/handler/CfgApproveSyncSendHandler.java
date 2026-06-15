@@ -178,6 +178,7 @@ public class CfgApproveSyncSendHandler {
                     newRecord.setDataJson(syncRecordEntity.getDataJson());
                     newRecord.setReceiverId(messageDTO.getCurApproveId());
                     newRecord.setReceiverName(messageDTO.getCurApproveName());
+                    log.error("打印updateApproveMessage 参数:{}", JSONUtil.toJsonStr(newRecord));
                     Boolean b = fsService.updateApproveMessage(messageId, status);
                     if(Boolean.FALSE.equals(b)){
                         //记录失败
@@ -410,6 +411,7 @@ public class CfgApproveSyncSendHandler {
                     ApproveSyncRecordEntity newRecord = map.get(sendParam.getThirdUserId());
                     //构建请求体
                     Map<String, Object> bodyMap = fsService.buildApproveBodyMap(sendParam);
+                    log.error("sendErpApproveSyncMessage 参数:{}", JSONUtil.toJsonStr(bodyMap));
                     //发送消息
                     String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
                     if(StringUtils.isBlank(messageId)){//发送失败

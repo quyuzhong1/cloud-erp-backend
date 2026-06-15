@@ -9,6 +9,7 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.utils.Md5Util;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.entity.DictBasicEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.InventoryBillStatusEnum;
 import com.erp.model.dmp.enums.InventoryOrderTypeEnum;
@@ -162,8 +163,8 @@ public class DmpInputWdtQueryInventoryDmpHandler extends DmpInputDbConvertDmpHan
         warnMsgInfo.setTableName("dmp_wdt_warehouse_inventory_record");
         warnMsgInfo.setTableId(inputTaskId);
         warnMsgInfo.setKeyInfo(warnMsg);
-        List<DictBasicDTO.ViewDTO> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
-        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
+        List<DictBasicEntity> viewDTOList = dictBasicService.getByKey("wdtUpdateInventoryUser");
+        warnMsgInfo.setUserIdList(CollUtil.isNotEmpty(viewDTOList) ? viewDTOList.stream().map(DictBasicEntity::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : new ArrayList<>());
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.IMPLEMENT_GROUP_NOTICE);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }

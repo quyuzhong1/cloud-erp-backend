@@ -57,6 +57,26 @@ public class RestCloudApiUtil {
         return true;
     }
 
+    /**
+     * 异步调用
+     * @param checkMonth 核对月份
+     * @param sourceSystem 核对仓库
+     * @param urls 请求路径列表
+     * @return 是否成功，true表示接口已触发
+     */
+    public static boolean syncReCreateByWarehouse(String checkMonth, String sourceSystem, String... urls) {
+        for (String url : urls) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("data", Arrays.asList());
+            map.put("yearMonth", checkMonth);
+            if (StringUtils.isNotBlank(sourceSystem)) {
+                map.put("sourceSystem", sourceSystem);
+            }
+            syncRequestRestCloud(url, map);
+        }
+        return true;
+    }
+
     public static boolean requestRestCloud(String url, Map<String, Object> map, boolean resultBool) {
         String restUrl = "http://" + restcloudUrl + ":" + restcloudPort + "/restcloud/" + url;
         HttpResponse response = HttpRequest.post(restUrl)

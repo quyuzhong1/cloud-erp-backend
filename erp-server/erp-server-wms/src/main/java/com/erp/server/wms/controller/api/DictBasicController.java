@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.server.wms.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,8 +50,8 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<DictBasicDTO.ListDTO>> list(@RequestParam("key") String key) {
-        List<DictBasicDTO.ListDTO> list = dictBasicService.getByKey(key);
+    public ApiResult<List<DictBasicEntity>> list(@RequestParam("key") String key) {
+        List<DictBasicEntity> list = dictBasicService.getByKey(key);
         return success(list);
     }
 

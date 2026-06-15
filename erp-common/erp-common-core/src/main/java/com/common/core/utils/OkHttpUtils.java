@@ -200,7 +200,7 @@ public class OkHttpUtils {
                 respStr = body.string();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(e, "OkHttp请求异常:{}", e.getMessage());
         }
         return respStr;
 
@@ -352,7 +352,7 @@ public class OkHttpUtils {
                 respStr = Base64.getEncoder().encodeToString(bytes);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ServiceException(e, "OkHttp请求异常:{}", e.getMessage());
         }
         return respStr;
 

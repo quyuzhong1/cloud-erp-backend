@@ -72,6 +72,7 @@ public interface SoMultiChannelConverter {
             @Mapping(target = "soId", source = "soB2cEntity.id"),
             @Mapping(target = "soCode", source = "soB2cEntity.code"),
             @Mapping(target = "shopId", source = "soB2cEntity.shopId"),
+            @Mapping(target = "partitionId", source = "soB2cReceiverEntity.partitionId"),
             @Mapping(target = "dictPlatform", source = "soB2cEntity.dictPlatform"),
             @Mapping(target = "logisticsChannelId", source = "soMultiChannelEntity.logisticsChannelId"),
             @Mapping(target = "logisticsChannelName", source = "soMultiChannelEntity.logisticsChannelName"),

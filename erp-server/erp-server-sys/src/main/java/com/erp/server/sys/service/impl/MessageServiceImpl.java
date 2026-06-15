@@ -513,16 +513,9 @@ public class MessageServiceImpl extends SuperServiceImpl<MessageMapper, MessageE
 
     @Override
     public int getSysMessageUnreadCount() {
-        MessageDTO.PdaParamDTO paramDTO = new MessageDTO.PdaParamDTO();
-        paramDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        paramDTO.setType(MessageTypeEnum.SYS.getCode());
-        paramDTO.setApplication(Arrays.asList(SysTypeEnum.PDA.getCode(), SysTypeEnum.PC.getCode()));
-        List<MessageDTO.NotReadMessageNum> notReadMessageNumList = baseMapper.listNotReadMessageNum(paramDTO);
-        return notReadMessageNumList.stream()
-                .filter(item -> Objects.equals(MessageTypeEnum.SYS.getCode(), item.getType()))
-                .map(MessageDTO.NotReadMessageNum::getCount)
-                .findFirst()
-                .orElse(0);
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        // 与 PC 端历史列表 pagingHistoryMessage 保持一致，角标不按 notice_time/expire_time 过滤
+        return baseMapper.getPcSysMessageUnreadCount(userId);
     }
 
     @Override

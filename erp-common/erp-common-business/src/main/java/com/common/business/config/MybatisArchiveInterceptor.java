@@ -2,8 +2,6 @@ package com.common.business.config;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,12 +18,15 @@ import org.apache.ibatis.reflection.DefaultReflectorFactory;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.common.business.cache.LocalCache;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.DynamicDataSourceTypeEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.DmpFeishuUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -36,18 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Intercepts({@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})})
 public class MybatisArchiveInterceptor implements Interceptor{
-	
-	private static final List<String> POSTGRES_WHITE_TABLE_LIST = Arrays.asList(
-			"file_task",
-			"operate_log",
-			"sys_event_tracking",
-			"sys_log_record",
-			"sys_user_info"
-			);
-	
-	private static final List<String> DORIS_WHITE_TABLE_LIST = Arrays.asList(
-			"sys_event_tracking"
-			);
 	
     public Object intercept(Invocation invocation) throws Throwable {
     	if(BusinessCommonConstants.isArchive()) {
@@ -70,15 +59,11 @@ public class MybatisArchiveInterceptor implements Interceptor{
 		String dsKey = DynamicDataSourceContextHolder.peek();
 		// 判断是否为SELECT
         if (!SqlCommandType.SELECT.equals(sqlType)) {
-			List<String> whiteTableList = POSTGRES_WHITE_TABLE_LIST;
-			if(DynamicDataSourceTypeEnum.isDorisByStr(dsKey)) {
-				whiteTableList = DORIS_WHITE_TABLE_LIST;
-			}
 			String extractTableName = extractTableName(oldSql , sqlType);
 			if(StringUtils.isBlank(extractTableName)) {
 				throw new ServiceException("提取非select语句表名失败，原始sql语句为：" + oldSql);
 			}
-			if(whiteTableList.stream().noneMatch(w -> extractTableName.toLowerCase().startsWith(w.toLowerCase()))) {
+			if(ApplicationContextUtils.getBean(LocalCache.class).getArchiveWhiteTableList().stream().noneMatch(extractTableName::equalsIgnoreCase)) {
 				String errorInfo = TraceContext.traceId() + "归档系统，"+ dsKey +"数据源执行增删改sql为：" + oldSql;
 				log.error(errorInfo);
 				DmpFeishuUtils.sendFeiShuMsg(errorInfo);
@@ -87,14 +72,14 @@ public class MybatisArchiveInterceptor implements Interceptor{
 		}
 		log.debug("归档替换前sql语句{}" , oldSql);
 		String newSql = oldSql;
-		ServiceCodeNameEnum[] values = ServiceCodeNameEnum.values();
-		for(ServiceCodeNameEnum value : values) {
-			if(ServiceCodeNameEnum.DEFAULT != value) {
-				String code = value.getCode();
-				newSql = newSql.replace("erp_" + code + ".", "erp_" + code + "_archive.");
-			}
-		}
 		if(DynamicDataSourceTypeEnum.isDorisByStr(dsKey)) {
+			ServiceCodeNameEnum[] values = ServiceCodeNameEnum.values();
+			for(ServiceCodeNameEnum value : values) {
+				if(ServiceCodeNameEnum.DEFAULT != value) {
+					String code = value.getCode();
+					newSql = newSql.replace("erp_" + code + ".", "erp_" + code + "_archive.");
+				}
+			}
 			newSql = newSql.replace("\"index\"", "`index`");
 			newSql = newSql.replace("\"key\"", "`key`");
 		}

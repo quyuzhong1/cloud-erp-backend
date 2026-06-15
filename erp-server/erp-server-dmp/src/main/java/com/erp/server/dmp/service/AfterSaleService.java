@@ -187,7 +187,7 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
      *
      * @param dto AfterSaleDTO.LogisticsOrderDTO
      */
-    List<BatchResultDTO> logisticsOrder(AfterSaleDTO.LogisticsOrderDTO dto);
+    List<BatchResultDTO> logisticsOrder(List<String> ids, AfterSaleDTO.LogisticsOrderDTO dto);
 
     /**
      * 取消物流下单
@@ -235,7 +235,7 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
      * @param logisticsLabelDTOS List<LogisticsOrderDTO.LogisticsLabelDTO>
      * @return List<BatchResultDTO>
      */
-    List<BatchResultDTO> getLogisticsOrderLabel(List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS);
+    List<BatchResultDTO> getLogisticsOrderLabel(List<String> afterSaleIds, List<LogisticsOrderDTO.LogisticsLabelDTO> logisticsLabelDTOS);
 
     /**
      * 手工批量获取物流面单

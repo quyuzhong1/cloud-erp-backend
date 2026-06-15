@@ -28,7 +28,7 @@ public interface QcInfoFeign {
      * @param dto
      */
     @PostMapping("/feign/qcBill/qcPaging")
-    ApiResult<PagingVO<QcInfoDTO.OpenPagingViewDTO>> qcPaging(@RequestBody @Validated PagingDTO<QcInfoDTO.OpenPagingParamDTO> dto);
+    ApiResult<PagingVO<QcInfoDTO.OpenPagingViewDTO>> qcPaging(@RequestBody @Validated PagingDTO<QcInfoDTO.PagingParamDTO> dto);
 
     /**
      * 免检

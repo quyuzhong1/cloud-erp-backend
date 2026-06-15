@@ -1733,7 +1733,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         Map<String, String> partnerMap = partnerList.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getNickname, KolPartnerInfoEntity::getId, (o1, o2) -> o1));
         //字典
         List<CfgKolOptionEntity> cfgKolOptionEntities = cfgKolOptionService.lambdaQuery().in(CfgKolOptionEntity::getType, Arrays.asList(CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE.getCode(), CfgKolOptionTypeEnum.PROJECT_TAG.getCode())).list();
-        Map<String, String> cfgKolOptionMap = cfgKolOptionEntities.stream().collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (o1, o2) -> o1));
+        Map<String, String> sampleTypeMap = getCfgKolOptionNameMap(cfgKolOptionEntities, CfgKolOptionTypeEnum.KOL_SAMPLE_TYPE);
+        Map<String, String> projectTagMap = getCfgKolOptionNameMap(cfgKolOptionEntities, CfgKolOptionTypeEnum.PROJECT_TAG);
         //国家
         List<DictCountryDTO.ListDTO> dictCountryList = sysUserFeign.countryList();
         Map<String, String> dictCountryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getNameCn, DictCountryDTO.ListDTO::getId, (o1, o2) -> o1));
@@ -1751,7 +1752,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         KolB2cApplicationExcelListener excelListenerUtil = new KolB2cApplicationExcelListener(dto.getTaskId(),
                 dto.getImportType(),
                 dto.getImportCount(),
-                cfgKolOptionMap,
+                sampleTypeMap,
                 shopMap,
                 userMap,
                 deptMap,
@@ -1760,7 +1761,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                 currencyMap
         );
 
-        KolB2cApplicationDetailExcelListener detailExcelListenerUtil = new KolB2cApplicationDetailExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(), skuMap,partnerMap,cfgKolOptionMap);
+        KolB2cApplicationDetailExcelListener detailExcelListenerUtil = new KolB2cApplicationDetailExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(), skuMap,partnerMap,projectTagMap);
 
         KolB2cApplicationAddressExcelListener addressListenerUtil = new KolB2cApplicationAddressExcelListener(dto.getTaskId(),dto.getImportType(),dto.getImportCount(),partnerMap,dictCountryMap,provinceMap,cityMap,districtMap);
 
@@ -1885,6 +1886,15 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return appendErrorMsg;
         }
         return sourceErrorMsg + appendErrorMsg;
+    }
+
+    private Map<String, String> getCfgKolOptionNameMap(List<CfgKolOptionEntity> cfgKolOptionEntities, CfgKolOptionTypeEnum optionTypeEnum) {
+        if (CollUtil.isEmpty(cfgKolOptionEntities)) {
+            return Collections.emptyMap();
+        }
+        return cfgKolOptionEntities.stream()
+                .filter(e -> Objects.equals(e.getType(), optionTypeEnum.getCode()))
+                .collect(Collectors.toMap(CfgKolOptionEntity::getName, CfgKolOptionEntity::getId, (o1, o2) -> o1));
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.NESTED)

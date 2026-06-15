@@ -474,4 +474,64 @@ public class WarehouseReceiveController extends BaseController {
         warehouseReceiveService.instockStatusCleanJob();
         return success();
     }
+
+
+    /**
+     * 新增数据时更新待质检数量（用于数据处理）
+     * @author will
+     * @date 2026/5/11 15:11
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "处理待质检数量")
+    @PostMapping("/recalculateWaitQcQty")
+    public ApiResult<?> recalculateWaitQcQty(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, WarehouseReceiveDetailEntity> entityMap = warehouseReceiveDetailService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveDetailEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单不存在"));
+                continue;
+            }
+            try {
+                warehouseReceiveDetailService.recalculateWaitQcQty(Collections.singletonList(entity.getPurchaseOrderDetailId()),Collections.singletonList(id));
+                resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getId(), "处理待质检数量成功"));
+            } catch (Exception e){
+                log.error("采购收货单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 质检完成后更新待质检数量（用于数据处理）
+     * @author will
+     * @date 2026/5/11 15:11
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "处理待质检数量")
+    @PostMapping("/updateWaitQcQty")
+    public ApiResult<?> updateWaitQcQty(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, WarehouseReceiveEntity> entityMap = warehouseReceiveService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单不存在"));
+                continue;
+            }
+            try {
+                warehouseReceiveDetailService.updateWaitQcQty(Collections.singletonList(id),Boolean.TRUE);
+                resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "处理待质检数量成功"));
+            } catch (Exception e){
+                log.error("采购收货单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

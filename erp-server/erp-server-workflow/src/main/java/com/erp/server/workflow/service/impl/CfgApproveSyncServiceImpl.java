@@ -770,17 +770,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         return resultList;
     }
 
-    @Override
-    public void cleanFeishuTest() {
-        List<CfgApproveSyncEntity> list = lambdaQuery().in(CfgApproveSyncEntity::getBusinessType,Arrays.asList( "pilotApplication", "purchaseOrder")).list();
-        for (CfgApproveSyncEntity cfgApproveSyncEntity : list) {
-            String businessType = cfgApproveSyncEntity.getBusinessType();
-            List<String> ids = processManagementService.getTestList(businessType);
-            del( cfgApproveSyncEntity,ids);
-
-        }
-    }
-
     public void del(CfgApproveSyncEntity cfgApproveSyncEntity,List<String> ids){
             String errorReason= "";
             //pc地址

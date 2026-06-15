@@ -147,10 +147,6 @@ public class SysCodeServiceImpl implements SysCodeService {
 
     @Override
     public String getBusinessNo(String businessHead, BusinessNoTypeEnum businessNoTypeEnum) {
-        SysCodeDTO dto = new SysCodeDTO();
-        dto.setCategory(businessHead);
-        dto.setType(businessNoTypeEnum.getCode());
-//        String sysNo = sysUserFeign.getBusinessNo(dto);
         String sysNo = docNoGenHelper.generateCode(businessNoTypeEnum);
         return sysNo;
     }

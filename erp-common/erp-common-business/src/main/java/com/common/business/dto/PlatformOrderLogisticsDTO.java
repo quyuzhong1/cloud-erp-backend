@@ -107,4 +107,12 @@ public class PlatformOrderLogisticsDTO implements Serializable {
      * 买家自选物流
      */
     private String buyerSelectedLogistics;
+    /**
+     * 计划包裹号
+     */
+    private String planPackageNo;
+    /**
+     * 计划供应商id
+     */
+    private String planSupplierId;
 }

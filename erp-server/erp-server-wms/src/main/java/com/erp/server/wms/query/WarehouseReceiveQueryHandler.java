@@ -23,63 +23,17 @@ public class WarehouseReceiveQueryHandler extends AbstractQueryHandler {
             String sql = "(";
             //是否是第一个，否则需要加连接符
             boolean isFirst = true;
-            if(isContain()){
-                for (String s : valueList) {
-                    if(!isFirst){
-                        sql = sql + "or";
-                    }
-                    isFirst = false;
-                    if("waitQc".equals(s)){
-                        sql = sql + "(not exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive' " +
-                                " and qi.qc_status NOT IN ('','draft','waitQc','cancel')))";
-                    }else if ("partialQc".equals(s)){
-                        sql = sql + "\t( exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive' \n" +
-                                "                                 and qi.qc_status NOT IN ('','draft','waitQc','cancel')))\n" +
-                                "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t and \n" +
-                                "\t\t\t\t\t\t\t\t\t\t\t\t (     exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive' \n" +
-                                "                                and qi.qc_status not IN ('exemption','finishQc')))";
-                    }else if ("finishQc".equals(s)){
-                        sql = sql +"( EXISTS (\n" +
-                                "\t\tSELECT\n" +
-                                "\t\t\t\t1 \n" +
-                                "\t\t\tFROM\n" +
-                                "\t\t\t\tqc_info qi \n" +
-                                "\t\t\tWHERE\n" +
-                                "\t\t\t\tqi.is_deleted = FALSE \n" +
-                                "\t\t\t\tAND qi.source_id = wr.ID \n" +
-                                "\t\t\t\tAND qi.source_type = 'poReceive' \n" +
-                                "\t\t) AND  not exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive'\n" +
-                                "and qi.qc_status not IN ('exemption','finishQc')))";
-                    }
+            for (String s : valueList) {
+                if(!isFirst){
+                    sql = sql + "or";
                 }
-            }else{
-                for (String s : valueList) {
-                    if(!isFirst){
-                        sql = sql + "or";
-                    }
-                    isFirst = false;
-                    if("waitQc".equals(s)){
-                        sql = sql + "( exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive' " +
-                                " and qi.qc_status NOT IN ('','draft','waitQc','cancel')))";
-                    }else if ("partialQc".equals(s)){
-                        sql = sql + "\t( not  exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive' \n" +
-                                "                                 and qi.qc_status NOT IN ('','draft','waitQc','cancel')))\n" +
-                                "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t or \n" +
-                                "\t\t\t\t\t\t\t\t\t\t\t\t (   not   exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive' \n" +
-                                "                                and qi.qc_status not IN ('exemption','finishQc')))";
-                    }else if ("finishQc".equals(s)){
-                        sql = sql +"( not  EXISTS (\n" +
-                                "\t\tSELECT\n" +
-                                "\t\t\t\t1 \n" +
-                                "\t\t\tFROM\n" +
-                                "\t\t\t\tqc_info qi \n" +
-                                "\t\t\tWHERE\n" +
-                                "\t\t\t\tqi.is_deleted = FALSE \n" +
-                                "\t\t\t\tAND qi.source_id = wr.ID \n" +
-                                "\t\t\t\tAND qi.source_type = 'poReceive' \n" +
-                                "\t\t) or  exists ( SELECT 1 FROM qc_info qi where qi.is_deleted  =false and qi.source_id = wr.id and qi.source_type = 'poReceive'\n" +
-                                "and qi.qc_status not IN ('exemption','finishQc')))";
-                    }
+                isFirst = false;
+                if("waitQc".equals(s)){
+                    sql = sql + "(wrd.receive_qty = wrd.wait_qc_qty)";
+                }else if ("partialQc".equals(s)){
+                    sql = sql + "\t(wrd.receive_qty > wrd.wait_qc_qty and wrd.wait_qc_qty > 0)";
+                }else if ("finishQc".equals(s)){
+                    sql = sql +"(wrd.wait_qc_qty = 0)";
                 }
             }
             sql = sql + ")";

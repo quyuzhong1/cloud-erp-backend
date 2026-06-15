@@ -19,14 +19,14 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_WAR
 
 @Component
 @Slf4j
-public class ExportWmsVirtualWarehouseAllocationHandler extends AbstractPageFileEventHandler<VirtualWarehouseAllocationDTO.ListDTO, VirtualWarehouseAllocationDTO.ExportDTO> {
+public class ExportWmsVirtualWarehouseAllocationHandler extends AbstractPageFileEventHandler<VirtualWarehouseAllocationDTO.ListDTO, VirtualWarehouseAllocationDTO.PagingParamDTO> {
     @Resource
     private ExportWmsFeign exportWmsFeign;
     
 
     @Override
     protected List<VirtualWarehouseAllocationDTO.ListDTO> getData(FileTask fileTask) {
-        VirtualWarehouseAllocationDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualWarehouseAllocationDTO.ExportDTO>() {
+        VirtualWarehouseAllocationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualWarehouseAllocationDTO.PagingParamDTO>() {
         });
         return listSeqData(dto);
     }
@@ -43,7 +43,15 @@ public class ExportWmsVirtualWarehouseAllocationHandler extends AbstractPageFile
     }
 
     @Override
-    protected PagingVO<VirtualWarehouseAllocationDTO.ListDTO> getPageData(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+    protected PagingVO<VirtualWarehouseAllocationDTO.ListDTO> getPageData(PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
         return exportWmsFeign.exportVirtualWarehouseAllocation(dto);
+    }
+
+    /**
+     * 分页大小，可重写
+     */
+    @Override
+    public int getPageSize() {
+        return 2000;
     }
 }
