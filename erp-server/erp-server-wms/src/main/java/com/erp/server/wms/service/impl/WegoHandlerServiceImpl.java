@@ -599,7 +599,9 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (isSuccess(resp)) {
             return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
         }
-        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
+        // 失败时通过 failure() 将 WEGO 原始错误信息（如"已出库，无法线上拦截"）透传给调用方，
+        // 避免上层 overseasProviderIntercept 因 data=interceptionFailed+msg=空 而展示空原因。
+        return failure(buildErrorMessage(resp));
     }
 
     @Override
