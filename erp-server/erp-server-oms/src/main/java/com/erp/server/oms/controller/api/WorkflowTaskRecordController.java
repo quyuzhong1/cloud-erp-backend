@@ -40,6 +40,9 @@ public class WorkflowTaskRecordController extends BaseController {
         workflowTaskRecordService.WorkflowTaskRecordRetryJob(id);
     }
 
-
+    @PostMapping("/forceRetry")
+    public ApiResult<WorkflowTaskRecordDTO.ForceRetryResultDTO> forceRetry(@RequestBody @Validated WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+        return success(workflowTaskRecordService.forceRetry(dto));
+    }
 
 }

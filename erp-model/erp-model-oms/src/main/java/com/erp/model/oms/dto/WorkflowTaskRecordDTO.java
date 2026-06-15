@@ -5,6 +5,8 @@ import com.erp.model.oms.enums.WorkflowTaskRecordTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,6 +72,50 @@ public class WorkflowTaskRecordDTO implements Serializable {
         private Map<String,Object> data;
 
         private String errorMsg;
+
+        private String status;
+    }
+
+    /**
+     * 人工强制重试
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForceRetryDTO {
+
+        /**
+         * 指定任务节点id，优先级高于sourceType + sourceId
+         */
+        private String id;
+
+        private String sourceType;
+
+        private String sourceId;
+
+        /**
+         * 重置后的重试次数，默认0
+         */
+        @Min(0)
+        @Max(3)
+        private Integer retryCount;
+
+        private String remark;
+    }
+
+    /**
+     * 人工强制重试结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ForceRetryResultDTO {
+
+        private String sourceType;
+
+        private String sourceId;
+
+        private Integer resetCount;
+
+        private Integer mqCount;
     }
 
     /**

@@ -28,6 +28,11 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
     List<WorkflowTaskRecordDTO.TaskErrorReportDTO> getTaskErrorReport();
 
     /**
+     * 人工强制重试终态失败或等待中的任务节点。
+     */
+    WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetry(WorkflowTaskRecordDTO.ForceRetryDTO dto);
+
+    /**
      * 根据sourceId和sourceType删除任务记录
      * @param sourceId
      * @param sourceType
@@ -40,4 +45,9 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      * @return
      */
     List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType);
+
+    /**
+     * 条件抢占待执行任务节点，避免重复消息并发执行同一节点。
+     */
+    Boolean claimTask(String id, String fromStatus);
 }

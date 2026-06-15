@@ -98,6 +98,9 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                 case PENDING:
                     success = remoteInvoke(map, entity, i, 0); // 初始执行
                     break;
+                case WAITING:
+                    success = remoteInvoke(map, entity, i, 0); // 等待条件满足后继续执行
+                    break;
                 case FAILED:
                     success = remoteInvoke(map, entity, i, 1); // 失败重试
                     break;
@@ -134,9 +137,11 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             return Boolean.FALSE;
         }
 
-        //更新为执行中
-        entity.setStatus(WorkflowTaskRecordStatusEnum.PROCESSING.getCode());
-        workflowTaskRecordService.updateById(entity);
+        // 条件抢占，避免重复MQ并发执行同一任务节点。
+        if (!workflowTaskRecordService.claimTask(entity.getId(), entity.getStatus())) {
+            log.warn("任务节点已被其他消费者抢占，id={}, index={}, sourceId={}", entity.getId(), i, entity.getSourceId());
+            return Boolean.FALSE;
+        }
 
         //inputData是一个jsonStr 需要转换成Map
         Map<String, Object> inputDataMap;
@@ -184,6 +189,21 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             entity.setOutputData(JSON.toJSONString(mqResponseDTO.getData()));
 
             String errorMsg = mqResponseDTO.getErrorMsg();
+            String responseStatus = mqResponseDTO.getStatus();
+            if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.WAITING.getCode())) {
+                entity.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+                entity.setLastError(StringUtils.defaultString(errorMsg));
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.FALSE;
+            }
+            if (Objects.equals(responseStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())) {
+                entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+                entity.setLastError(StringUtils.defaultString(errorMsg));
+                // 节点主动返回 failed 表示业务已进入终态失败，补偿任务不再反复唤醒。
+                entity.setRetryCount(Math.max(Optional.ofNullable(entity.getRetryCount()).orElse(0), 4));
+                workflowTaskRecordService.updateById(entity);
+                return Boolean.FALSE;
+            }
             if(StringUtils.isNotBlank(errorMsg)){
                 entity.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
                 entity.setLastError(errorMsg);

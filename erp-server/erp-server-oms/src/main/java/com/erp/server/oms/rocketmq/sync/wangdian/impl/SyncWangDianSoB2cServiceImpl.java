@@ -51,8 +51,25 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     public DmpPushTaskEntity syncDataToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO,Map<String, SkuVO> skuMap ) {
-        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
+        return saveApproveMsgToWangDian(pushDTO, skuMap);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public DmpPushTaskEntity saveApproveMsgToWangDian(KolSubB2cApplicationDTO.PushDTO pushDTO, Map<String, SkuVO> skuMap) {
         KolSubB2cApplicationEntity entity = pushDTO.getEntity();
+        OmsPushMsgEntity exist = omsPushMsgService.lambdaQuery()
+                .eq(OmsPushMsgEntity::getTargetPlatform, DmpBasicSystemCodeEnum.WDT.getCode())
+                .eq(OmsPushMsgEntity::getSourceType, SourceTypeEnum.WDT_SO_B2C.getCode())
+                .eq(OmsPushMsgEntity::getSourceId, entity.getId())
+                .eq(OmsPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_APPROVE.getCode())
+                .eq(OmsPushMsgEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        if (Objects.nonNull(exist)) {
+            return null;
+        }
+        PushSelf2Request request = newSyncKolB2c(pushDTO, skuMap, SyncOperateEnum.OPERATE_APPROVE.getCode());
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_SO_B2C.getCode());

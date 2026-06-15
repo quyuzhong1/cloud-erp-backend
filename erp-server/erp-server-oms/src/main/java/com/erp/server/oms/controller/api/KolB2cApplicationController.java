@@ -18,6 +18,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.entity.KolB2cApplicationEntity;
 import com.erp.server.oms.query.KolB2cApplicationQueryHandler;
 import com.erp.server.oms.service.KolB2cApplicationService;
@@ -536,6 +537,26 @@ public class KolB2cApplicationController extends BaseController {
     public ApiResult generateReturnPiece(@RequestBody @Valid ValidList<KolB2cApplicationDTO.DetailViewDTO> list) {
         Boolean flag = kolB2cApplicationService.generateReturnPiece(list.getList());
         return flag == true ? success() : failure();
+    }
+
+    @PostMapping("/generateKolB2cSplitOrder")
+    public WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return kolB2cApplicationService.generateKolB2cSplitOrder(dto);
+    }
+
+    @PostMapping("/dispatchKolB2cSubApproveTasks")
+    public WorkflowTaskRecordDTO.MqResponseDTO dispatchKolB2cSubApproveTasks(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return kolB2cApplicationService.dispatchKolB2cSubApproveTasks(dto);
+    }
+
+    @PostMapping("/finishKolB2cApplicationApprove")
+    public WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return kolB2cApplicationService.finishKolB2cApplicationApprove(dto);
+    }
+
+    @PostMapping("/pushKolB2cSubOrder")
+    public WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(@RequestBody WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        return kolB2cApplicationService.pushKolB2cSubOrder(dto);
     }
 
 

@@ -27,6 +27,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.DictCityTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -67,11 +70,16 @@ import com.erp.server.oms.service.address.AddressParseService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -148,6 +156,12 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private SoB2cRuleService soB2cRuleService;
     @Resource
     private AddressParseService addressParseService;
+    @Resource
+    private WorkflowTaskRecordService workflowTaskRecordService;
+    @Resource
+    private DictBasicService dictBasicService;
+    @Resource
+    private MQProducerService mqProducerService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1077,47 +1091,158 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         // 只有审核通过才下推
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if (ApproveTypeEnum.PASS.equals(approveType)) {
-            List<KolB2cApplicationDetailEntity> list = kolB2cApplicationDetailService.lambdaQuery().eq(KolB2cApplicationDetailEntity::getMainId, entity.getId()).list();
-            //企业达人信息
-            List<String> partnerIds = list.stream().map(KolB2cApplicationDetailEntity::getPartnerId).distinct().collect(Collectors.toList());
-            List<KolPartnerInfoEntity> kolPartnerInfoEntities = kolPartnerInfoService.lambdaQuery().in(KolPartnerInfoEntity::getId, partnerIds).eq(KolPartnerInfoEntity::getDisabled,false).list();
-            Map<String, KolPartnerInfoEntity> partnerMap = kolPartnerInfoEntities.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, v -> v));
-
-            //B2C寄样申请单地址信息
-            List<KolB2cApplicationAddressEntity> addressList = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, entity.getId()).list();
-            Map<String, KolB2cApplicationAddressEntity> partnerAddressMap = addressList.stream().collect(Collectors.toMap(KolB2cApplicationAddressEntity::getPartnerId, v -> v));
-
-            //根据业务类型生成 国外=B2C订单  国内=旺店通销售订单
-            if(entity.getIsInternational()){
-                try {
-                    UserContext.setIsUserSystem(true);
-                    //
-                    List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
-                    //下推B2C订单
-                    Map<String, String> b2cCodeMap = pushSoB2c(entity,pushDTOS, partnerMap, partnerAddressMap);
-                }finally {
-                    UserContext.clearIsUserSystem();
-                }
-
-            }else {
-                //旺店通
-                List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrder(entity, list);
-                // 获取所有推送订单的所有明细 SKU ID 列表
-                List<String> skuNos = pushDTOS.stream()
-                        .flatMap(e -> e.getDetailList().stream())
-                        .map(KolSubB2cApplicationDetailEntity::getSkuNo)
-                        .distinct()
-                        .collect(Collectors.toList());
-
-                List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
-                Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-                for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
-                    syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
-                }
+            if (!startKolB2cApproveWorkflowTask(entity)) {
+                legacyApproveEndPush(entity);
             }
-            updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        String kolId = getRequiredString(dto, "kolId");
+        KolB2cApplicationEntity entity = getById(kolId);
+        if (Objects.isNull(entity)) {
+            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            return responseDTO;
+        }
+        List<KolB2cApplicationDetailEntity> detailList = kolB2cApplicationDetailService.lambdaQuery()
+                .eq(KolB2cApplicationDetailEntity::getMainId, entity.getId())
+                .list();
+        List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, detailList);
+        Map<String, Object> data = new HashMap<>();
+        data.put("kolId", entity.getId());
+        data.put("kolCode", entity.getCode());
+        data.put("subIds", pushDTOS.stream().map(e -> e.getEntity().getId()).collect(Collectors.toList()));
+        responseDTO.setData(data);
+        return responseDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO dispatchKolB2cSubApproveTasks(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        String kolId = getRequiredString(dto, "kolId");
+        KolB2cApplicationEntity entity = getById(kolId);
+        if (Objects.isNull(entity)) {
+            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            return responseDTO;
+        }
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, kolId)
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(subList)) {
+            responseDTO.setErrorMsg("B2C寄样申请单拆分单不存在");
+            return responseDTO;
+        }
+        for (KolSubB2cApplicationEntity subEntity : subList) {
+            dispatchKolB2cSubTask(entity, subEntity);
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("kolId", entity.getId());
+        data.put("kolCode", entity.getCode());
+        data.put("subIds", subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList()));
+        responseDTO.setData(data);
+        return responseDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        String kolId = getRequiredString(dto, "kolId");
+        KolB2cApplicationEntity entity = getById(kolId);
+        if (Objects.isNull(entity)) {
+            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            return responseDTO;
+        }
+        List<KolSubB2cApplicationEntity> subList = kolSubB2cApplicationService.lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, kolId)
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isEmpty(subList)) {
+            responseDTO.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+            responseDTO.setErrorMsg("等待拆分单生成");
+            return responseDTO;
+        }
+        List<String> subIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+        List<WorkflowTaskRecordEntity> childTasks = workflowTaskRecordService.lambdaQuery()
+                .in(WorkflowTaskRecordEntity::getSourceId, subIds)
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .list();
+        Map<String, List<WorkflowTaskRecordEntity>> childTaskMap = childTasks.stream()
+                .collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
+        long successCount = 0;
+        List<WorkflowTaskRecordEntity> terminalFailedTasks = new ArrayList<>();
+        for (String subId : subIds) {
+            List<WorkflowTaskRecordEntity> tasks = childTaskMap.getOrDefault(subId, Collections.emptyList());
+            boolean success = tasks.stream().anyMatch(e -> Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()));
+            if (success) {
+                successCount++;
+                continue;
+            }
+            tasks.stream()
+                    .filter(this::isTerminalFailedTask)
+                    .findFirst()
+                    .ifPresent(terminalFailedTasks::add);
+        }
+        if (CollUtil.isNotEmpty(terminalFailedTasks)) {
+            responseDTO.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+            responseDTO.setErrorMsg(buildKolB2cSubTaskFailedMsg(terminalFailedTasks));
+            return responseDTO;
+        }
+        if (successCount < subIds.size()) {
+            responseDTO.setStatus(WorkflowTaskRecordStatusEnum.WAITING.getCode());
+            responseDTO.setErrorMsg(StrUtil.format("等待KOL B2C拆分单子任务完成，已完成{}/{}", successCount, subIds.size()));
+            return responseDTO;
+        }
+        if (Boolean.TRUE.equals(entity.getIsInternational())) {
+            updateKolSubStatus(entity.getId());
+        }
+        updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+        Map<String, Object> data = new HashMap<>();
+        data.put("kolId", entity.getId());
+        data.put("kolCode", entity.getCode());
+        responseDTO.setData(data);
+        return responseDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto) {
+        WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
+        String kolId = getRequiredString(dto, "kolId");
+        String subId = getRequiredString(dto, "subId");
+        KolB2cApplicationEntity entity = getById(kolId);
+        if (Objects.isNull(entity)) {
+            responseDTO.setErrorMsg("B2C寄样申请单不存在");
+            return responseDTO;
+        }
+        List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.listPushByIds(Collections.singletonList(subId));
+        if (CollUtil.isEmpty(pushDTOS)) {
+            responseDTO.setErrorMsg("B2C寄样申请单拆分单不存在");
+            return responseDTO;
+        }
+        KolSubB2cApplicationDTO.PushDTO pushDTO = pushDTOS.get(0);
+        Map<String, Object> data = new HashMap<>();
+        data.put("kolId", entity.getId());
+        data.put("kolCode", entity.getCode());
+        data.put("subId", subId);
+        data.put("subCode", pushDTO.getEntity().getCode());
+        if (Boolean.TRUE.equals(entity.getIsInternational())) {
+            String b2cCode = pushSingleSoB2c(entity, pushDTO);
+            data.put("b2cCode", b2cCode);
+        } else {
+            syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, null);
+            data.put("wdtPushMsg", Boolean.TRUE);
+        }
+        responseDTO.setData(data);
+        sendKolB2cParentTaskMq(entity, 2);
+        return responseDTO;
     }
 
     /**
@@ -1239,6 +1364,187 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             resultMap.put(entity.getCode(),b2cCode);
         }
         return resultMap;
+    }
+
+    private void legacyApproveEndPush(KolB2cApplicationEntity entity) {
+        List<KolB2cApplicationDetailEntity> list = kolB2cApplicationDetailService.lambdaQuery().eq(KolB2cApplicationDetailEntity::getMainId, entity.getId()).list();
+        //企业达人信息
+        List<String> partnerIds = list.stream().map(KolB2cApplicationDetailEntity::getPartnerId).distinct().collect(Collectors.toList());
+        List<KolPartnerInfoEntity> kolPartnerInfoEntities = kolPartnerInfoService.lambdaQuery().in(KolPartnerInfoEntity::getId, partnerIds).eq(KolPartnerInfoEntity::getDisabled,false).list();
+        Map<String, KolPartnerInfoEntity> partnerMap = kolPartnerInfoEntities.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, v -> v));
+
+        //B2C寄样申请单地址信息
+        List<KolB2cApplicationAddressEntity> addressList = kolB2cApplicationAddressService.lambdaQuery().eq(KolB2cApplicationAddressEntity::getMainId, entity.getId()).list();
+        Map<String, KolB2cApplicationAddressEntity> partnerAddressMap = addressList.stream().collect(Collectors.toMap(KolB2cApplicationAddressEntity::getPartnerId, v -> v));
+
+        //根据业务类型生成 国外=B2C订单  国内=旺店通销售订单
+        if(entity.getIsInternational()){
+            try {
+                UserContext.setIsUserSystem(true);
+                List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, list);
+                pushSoB2c(entity,pushDTOS, partnerMap, partnerAddressMap);
+            }finally {
+                UserContext.clearIsUserSystem();
+            }
+
+        }else {
+            List<KolSubB2cApplicationDTO.PushDTO> pushDTOS = kolSubB2cApplicationService.generateSplitOrderIdempotent(entity, list);
+            List<String> skuNos = pushDTOS.stream()
+                    .flatMap(e -> e.getDetailList().stream())
+                    .map(KolSubB2cApplicationDetailEntity::getSkuNo)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNos);
+            Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+            for (KolSubB2cApplicationDTO.PushDTO pushDTO : pushDTOS) {
+                syncWangDianSoB2cService.syncDataToWangDian(pushDTO, skuMap);
+            }
+        }
+        updateBillStatus(entity.getId(), KolB2cApplicationDocumentStatusEnum.CREATED.getCode());
+    }
+
+    private Boolean startKolB2cApproveWorkflowTask(KolB2cApplicationEntity entity) {
+        if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE)
+                || !hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
+            return Boolean.FALSE;
+        }
+        List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
+        if (CollUtil.isEmpty(existTasks)) {
+            workflowTaskRecordService.addTask(addTaskDTO);
+        }
+        sendWorkflowTaskMq(addTaskDTO, entity.getId(), 2);
+        return Boolean.TRUE;
+    }
+
+    private WorkflowTaskRecordDTO.AddTaskDTO buildKolB2cParentTaskDTO(KolB2cApplicationEntity entity, String traceId) {
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(entity.getId());
+        addTaskDTO.setSourceCode(entity.getCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE);
+        addTaskDTO.setTraceId(traceId);
+        Map<String, Object> map = new HashMap<>();
+        map.put("kolId", entity.getId());
+        map.put("kolCode", entity.getCode());
+        addTaskDTO.setFirstNodeInputData(map);
+        return addTaskDTO;
+    }
+
+    private void dispatchKolB2cSubTask(KolB2cApplicationEntity parentEntity, KolSubB2cApplicationEntity subEntity) {
+        if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
+            throw new ServiceException("KOL B2C拆分单任务节点配置不存在");
+        }
+        List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(subEntity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode());
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
+        addTaskDTO.setSourceId(subEntity.getId());
+        addTaskDTO.setSourceCode(subEntity.getCode());
+        addTaskDTO.setDictBasicTypeEnum(DictBasicTypeEnum.WORKFLOW_TASK_NODE);
+        addTaskDTO.setSourceTypeEnum(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE);
+        addTaskDTO.setTraceId(CollUtil.isNotEmpty(existTasks) ? existTasks.get(0).getTraceId() : TraceContext.traceId());
+        Map<String, Object> map = new HashMap<>();
+        map.put("kolId", parentEntity.getId());
+        map.put("kolCode", parentEntity.getCode());
+        map.put("subId", subEntity.getId());
+        map.put("subCode", subEntity.getCode());
+        addTaskDTO.setFirstNodeInputData(map);
+        if (CollUtil.isEmpty(existTasks)) {
+            workflowTaskRecordService.addTask(addTaskDTO);
+        }
+        sendWorkflowTaskMq(addTaskDTO, subEntity.getId(), 2);
+    }
+
+    private void sendKolB2cParentTaskMq(KolB2cApplicationEntity entity, int delayLevel) {
+        List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(entity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_APPLICATION_APPROVE.getCode());
+        if (CollUtil.isEmpty(existTasks)) {
+            return;
+        }
+        WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = buildKolB2cParentTaskDTO(entity, existTasks.get(0).getTraceId());
+        sendWorkflowTaskMq(addTaskDTO, entity.getId(), delayLevel);
+    }
+
+    private void sendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        doSendWorkflowTaskMq(addTaskDTO, key, delayLevel);
+                    } catch (Exception e) {
+                        log.error("KOL B2C任务编排事务提交后发送MQ失败，sourceId={}, sourceType={}", addTaskDTO.getSourceId(), addTaskDTO.getSourceTypeEnum(), e);
+                    }
+                }
+            });
+            return;
+        }
+        doSendWorkflowTaskMq(addTaskDTO, key, delayLevel);
+    }
+
+    private void doSendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {
+        SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, key, delayLevel);
+        if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+            throw new RuntimeException(StrUtil.format("KOL B2C任务编排发送MQ数据异常，{}", result));
+        }
+    }
+
+    private boolean isTerminalFailedTask(WorkflowTaskRecordEntity entity) {
+        return Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                && Optional.ofNullable(entity.getRetryCount()).orElse(0) > 3;
+    }
+
+    private String buildKolB2cSubTaskFailedMsg(List<WorkflowTaskRecordEntity> failedTasks) {
+        String detail = failedTasks.stream()
+                .limit(5)
+                .map(e -> StrUtil.format("{}：{}",
+                        StringUtils.defaultIfBlank(e.getSourceCode(), e.getSourceId()),
+                        StringUtils.defaultIfBlank(e.getLastError(), "子任务失败")))
+                .collect(Collectors.joining("；"));
+        if (failedTasks.size() > 5) {
+            detail = detail + StrUtil.format("；其余{}个失败任务略", failedTasks.size() - 5);
+        }
+        return StrUtil.format("KOL B2C拆分单子任务已失败{}个，{}", failedTasks.size(), detail);
+    }
+
+    private Boolean hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum sourceTypeEnum) {
+        return CollUtil.isNotEmpty(dictBasicService.getByType(DictBasicTypeEnum.WORKFLOW_TASK_NODE.getType(), sourceTypeEnum.getCode()));
+    }
+
+    private String getRequiredString(WorkflowTaskRecordDTO.MqRequestDTO dto, String key) {
+        if (Objects.isNull(dto) || Objects.isNull(dto.getData()) || Objects.isNull(dto.getData().get(key))) {
+            throw new ServiceException("{}为空", key);
+        }
+        return String.valueOf(dto.getData().get(key));
+    }
+
+    private String pushSingleSoB2c(KolB2cApplicationEntity kolB2cApplicationEntity, KolSubB2cApplicationDTO.PushDTO pushDTO) {
+        KolSubB2cApplicationEntity subEntity = pushDTO.getEntity();
+        SoB2cEntity exist = soB2cService.lambdaQuery()
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.KOL_B2C_APPLICATION.getCode())
+                .eq(SoB2cEntity::getSourceId, subEntity.getId())
+                .eq(SoB2cEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        if (Objects.nonNull(exist)) {
+            return exist.getCode();
+        }
+        List<KolPartnerInfoEntity> kolPartnerInfoEntities = kolPartnerInfoService.lambdaQuery()
+                .eq(KolPartnerInfoEntity::getId, subEntity.getPartnerId())
+                .eq(KolPartnerInfoEntity::getDisabled, false)
+                .list();
+        Map<String, KolPartnerInfoEntity> partnerMap = kolPartnerInfoEntities.stream().collect(Collectors.toMap(KolPartnerInfoEntity::getId, v -> v));
+        List<KolB2cApplicationAddressEntity> addressList = kolB2cApplicationAddressService.lambdaQuery()
+                .eq(KolB2cApplicationAddressEntity::getMainId, kolB2cApplicationEntity.getId())
+                .eq(KolB2cApplicationAddressEntity::getPartnerId, subEntity.getPartnerId())
+                .list();
+        Map<String, KolB2cApplicationAddressEntity> partnerAddressMap = addressList.stream().collect(Collectors.toMap(KolB2cApplicationAddressEntity::getPartnerId, v -> v));
+        try {
+            UserContext.setIsUserSystem(true);
+            Map<String, String> result = pushSoB2c(kolB2cApplicationEntity, Collections.singletonList(pushDTO), partnerMap, partnerAddressMap);
+            return result.get(subEntity.getCode());
+        } finally {
+            UserContext.clearIsUserSystem();
+        }
     }
 
 
