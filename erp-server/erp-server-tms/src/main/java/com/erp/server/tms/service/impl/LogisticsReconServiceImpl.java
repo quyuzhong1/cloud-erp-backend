@@ -245,12 +245,17 @@ public class LogisticsReconServiceImpl
         Map<String, String> mainIdMap = new HashMap<>(cfgList.size());
         Map<String, Boolean> reimportUpdateMap = new HashMap<>(cfgList.size());
         for (CfgLogisticsCostImportEntity importCfg : cfgList) {
+            if (findImportingReimportMain(dto, importCfg) != null) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+            }
             LogisticsReconEntity pending = findPendingReimportMain(dto, importCfg);
             if (pending != null) {
                 lambdaUpdate()
                         .eq(LogisticsReconEntity::getId, pending.getId())
                         .set(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.IMPORTING.getCode())
                         .set(LogisticsReconEntity::getFileUrl, dto.getFileUrl())
+                        .set(LogisticsReconEntity::getFileName, dto.getFileName())
+                        .set(LogisticsReconEntity::getImportFailReason, "")
                         .update();
                 mainIdMap.put(importCfg.getId(), pending.getId());
                 reimportUpdateMap.put(importCfg.getId(), Boolean.TRUE);
@@ -613,7 +618,6 @@ public class LogisticsReconServiceImpl
                 .setDetailId(detail.getId())
                 .setSeqNo(seqNo)
                 .setCostName(costName)
-                .setCfgCostName(costName)
                 .setActualAmount(actualAmount)
                 .setEstimatedAmount(estimatedAmount == null ? BigDecimal.ZERO : estimatedAmount)
                 .setCurrency(StrUtil.blankToDefault(detail.getCurrency(), ""))
@@ -1000,16 +1004,43 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 查找同 Excel 待确认对账单（允许覆盖更新导入）。
+     * 按对账维度（月份 + 物流商 + Sheet）构建查重条件，与唯一索引
+     * uniq_logistics_recon_month_supplier_sheet_active 一致。
+     */
+    private LambdaQueryChainWrapper<LogisticsReconEntity> buildReimportDimensionQuery(
+            LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
+        LambdaQueryChainWrapper<LogisticsReconEntity> query = lambdaQuery()
+                .eq(LogisticsReconEntity::getReconciliationMonth, dto.getReconciliationMonth())
+                .eq(LogisticsReconEntity::getSupplierId, importCfg.getDictPlatform())
+                .eq(LogisticsReconEntity::getIsDeleted, false);
+        if (StrUtil.isBlank(importCfg.getSheetName())) {
+            query.and(w -> w.isNull(LogisticsReconEntity::getSheetName)
+                    .or().eq(LogisticsReconEntity::getSheetName, ""));
+        } else {
+            query.eq(LogisticsReconEntity::getSheetName, importCfg.getSheetName());
+        }
+        return query;
+    }
+
+    /**
+     * 查找同维度导入中对账单（不允许重复提交导入任务）。
+     */
+    private LogisticsReconEntity findImportingReimportMain(LogisticsReconDTO.ImportDTO dto,
+                                                           CfgLogisticsCostImportEntity importCfg) {
+        return buildReimportDimensionQuery(dto, importCfg)
+                .eq(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.IMPORTING.getCode())
+                .orderByDesc(LogisticsReconEntity::getCreateTime)
+                .last("LIMIT 1")
+                .one();
+    }
+
+    /**
+     * 查找同维度待确认对账单（允许覆盖更新导入；已确认单不在此命中，将新建）。
      */
     private LogisticsReconEntity findPendingReimportMain(LogisticsReconDTO.ImportDTO dto,
                                                          CfgLogisticsCostImportEntity importCfg) {
-        return lambdaQuery()
-                .eq(LogisticsReconEntity::getReconciliationMonth, dto.getReconciliationMonth())
-                .eq(LogisticsReconEntity::getFileName, dto.getFileName())
-                .eq(LogisticsReconEntity::getCfgImportId, importCfg.getId())
+        return buildReimportDimensionQuery(dto, importCfg)
                 .eq(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
-                .eq(LogisticsReconEntity::getIsDeleted, false)
                 .orderByDesc(LogisticsReconEntity::getCreateTime)
                 .last("LIMIT 1")
                 .one();
@@ -1972,7 +2003,7 @@ public class LogisticsReconServiceImpl
             LogisticsReconMatchDTO.MatchCostItemDTO item = new LogisticsReconMatchDTO.MatchCostItemDTO();
             item.setDetailSubId(sub.getId());
             item.setCfgCostId(sub.getCfgCostId());
-            item.setCostName(StrUtil.blankToDefault(sub.getCfgCostName(), sub.getCostName()));
+            item.setCostName(sub.getCostName());
             item.setActualAmount(sub.getActualAmount());
             item.setEstimatedAmount(sub.getEstimatedAmount());
             return item;
@@ -2145,8 +2176,40 @@ public class LogisticsReconServiceImpl
         } else {
             logisticsReconRefLogisticsBillService.saveBatchByDetailSub(refList);
         }
+        updateMatchedSubResolvedCfgCost(matchResults, matchedSubIds);
         logisticsReconDetailSubService.batchUpdateMatchStatus(matchedSubIds,
                 LogisticsReconDetailMatchStatusEnum.MATCHED.getCode(), null, MATCHING_FROM_STATUS);
+    }
+
+    /**
+     * 匹配成功且已生成关联关系的费用项，回写 ERP 费用配置到 detail_sub。
+     */
+    private void updateMatchedSubResolvedCfgCost(List<LogisticsReconMatchDTO.MatchResultDTO> matchResults,
+                                                 List<String> matchedSubIds) {
+        if (CollUtil.isEmpty(matchedSubIds) || CollUtil.isEmpty(matchResults)) {
+            return;
+        }
+        Map<String, LogisticsReconMatchDTO.ResolvedCfgCostDTO> resolvedBySubId = matchResults.stream()
+                .filter(LogisticsReconMatchDTO.MatchResultDTO::isSuccess)
+                .map(LogisticsReconMatchDTO.MatchResultDTO::getResolvedCfgCostBySubId)
+                .filter(CollUtil::isNotEmpty)
+                .flatMap(map -> map.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+        if (CollUtil.isEmpty(resolvedBySubId)) {
+            return;
+        }
+        for (String subId : matchedSubIds) {
+            LogisticsReconMatchDTO.ResolvedCfgCostDTO resolved = resolvedBySubId.get(subId);
+            if (resolved == null || StrUtil.isBlank(resolved.getCfgCostId())) {
+                continue;
+            }
+            logisticsReconDetailSubService.lambdaUpdate()
+                    .eq(LogisticsReconDetailSubEntity::getId, subId)
+                    .set(LogisticsReconDetailSubEntity::getCfgCostId, resolved.getCfgCostId())
+                    .set(LogisticsReconDetailSubEntity::getCfgCostName,
+                            StrUtil.blankToDefault(resolved.getCfgCostName(), ""))
+                    .update();
+        }
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
