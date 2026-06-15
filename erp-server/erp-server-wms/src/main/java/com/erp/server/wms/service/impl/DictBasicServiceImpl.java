@@ -240,31 +240,4 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         return this.getOne(queryWrapper);
     }
 
-    @Override
-    public Map<String, String> listValueMapByTypeAndIds(String type, List<String> ids) {
-        if (CharSequenceUtil.isBlank(type) || CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyMap();
-        }
-        if (ids.size() > LIST_VALUE_MAP_MAX_BATCH_SIZE) {
-            log.warn("listValueMapByTypeAndIds 单次查询数量超过上限, type={}, size={}, max={}",
-                    type, ids.size(), LIST_VALUE_MAP_MAX_BATCH_SIZE);
-            throw new com.common.core.exception.ServiceException(
-                    CharSequenceUtil.format("字典批量查询单次最多支持 {} 条, 当前 {} 条",
-                            LIST_VALUE_MAP_MAX_BATCH_SIZE, ids.size()));
-        }
-        List<String> distinctIds = ids.stream().distinct().collect(Collectors.toList());
-        List<DictBasicEntity> list = this.lambdaQuery()
-                .eq(DictBasicEntity::getType, type)
-                .in(DictBasicEntity::getId, distinctIds)
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.emptyMap();
-        }
-        Map<String, String> result = new HashMap<>(list.size());
-        for (DictBasicEntity entity : list) {
-            result.put(entity.getId(), entity.getValue());
-        }
-        return result;
-    }
-
 }
