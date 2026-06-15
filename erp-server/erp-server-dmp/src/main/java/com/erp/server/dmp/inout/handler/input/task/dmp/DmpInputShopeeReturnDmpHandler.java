@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -49,7 +50,9 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
 
     private void fillHeader(TreeMap<String, Object> dmpDataMap) {
         dmpDataMap.put("sourceSystem", PlatformDictEnum.SHOPEE.getCode());
-        dmpDataMap.put("shopId", StringUtils.defaultString(Objects.toString(dmpDataMap.get("nextLevelId"), ""), nextLevelId));
+        String shopId = resolveShopeeShopId(dmpDataMap);
+        dmpDataMap.put("shopId", shopId);
+        dmpDataMap.put("nextLevelId", shopId);
 
         putIfPresent(dmpDataMap, "return_sn", "thirdCode");
         putIfPresent(dmpDataMap, "order_sn", "platformCode");
@@ -112,5 +115,31 @@ public class DmpInputShopeeReturnDmpHandler extends DmpInputDbConvertDmpHandler 
         if (value != null) {
             source.put(targetKey, String.valueOf(value));
         }
+    }
+
+    /**
+     * 子任务 nextLevelId 为拆单 snowflake，不是 OMS shopId；需继承父任务店铺 ID。
+     */
+    private String resolveShopeeShopId(Map<String, Object> dmpDataMap) {
+        String parentShopId = resolveParentTaskShopId();
+        if (StringUtils.isNotBlank(parentShopId)) {
+            return parentShopId;
+        }
+        String mongoShopId = Objects.toString(dmpDataMap.get("nextLevelId"), "");
+        if (StringUtils.isNotBlank(mongoShopId)) {
+            return mongoShopId;
+        }
+        return StringUtils.defaultString(nextLevelId, "");
+    }
+
+    private String resolveParentTaskShopId() {
+        if (dmpInputTaskEntity == null || StringUtils.isBlank(dmpInputTaskEntity.getParentTaskId())) {
+            return null;
+        }
+        DmpInputTaskEntity parentTask = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
+        if (parentTask == null || StringUtils.isBlank(parentTask.getNextLevelId())) {
+            return null;
+        }
+        return parentTask.getNextLevelId();
     }
 }
