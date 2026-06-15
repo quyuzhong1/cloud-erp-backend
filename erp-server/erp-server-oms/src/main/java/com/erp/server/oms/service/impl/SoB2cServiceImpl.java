@@ -12880,6 +12880,45 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return null;
     }
 
+    /**
+     * 三方仓自动出库：shipping_method + platform_warehouse_code → logistics_sale_channel → logistics_channel
+     */
+    private void fillLogisticsChannelFromThirdShipping(SoB2cLogisticsEntity logisticsEntity,
+                                                       String thirdWarehousePlatform,
+                                                       String shippingMethod,
+                                                       String platformWarehouseCode) {
+        if (CharSequenceUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())) {
+            return;
+        }
+        if (CharSequenceUtil.isBlank(shippingMethod)
+                || CharSequenceUtil.isBlank(thirdWarehousePlatform)
+                || CharSequenceUtil.isBlank(platformWarehouseCode)) {
+            return;
+        }
+        List<LogisticsSaleChannelEntity> saleChannelList = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
+                .eq(LogisticsSaleChannelEntity::getIsDeleted, false)
+                .eq(LogisticsSaleChannelEntity::getLogisticsPlatform, thirdWarehousePlatform)
+                .eq(LogisticsSaleChannelEntity::getCode, shippingMethod)
+                .eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, platformWarehouseCode));
+        if (CollUtil.isEmpty(saleChannelList)) {
+            log.warn("三方仓自动出库未匹配到销售平台物流渠道, mainId={}, platform={}, shippingMethod={}, platformWarehouseCode={}",
+                    logisticsEntity.getMainId(), thirdWarehousePlatform, shippingMethod, platformWarehouseCode);
+            return;
+        }
+        String channelCode = saleChannelList.get(0).getCode();
+        List<LogisticsChannelEntity> channelList = FeignQuery.list(FeignQuery.create(LogisticsChannelEntity.class)
+                .eq(LogisticsChannelEntity::getIsDeleted, false)
+                .eq(LogisticsChannelEntity::getCode, channelCode)
+                .eq(LogisticsChannelEntity::getSourceType, SourceTypeEnum.LOGISTICS_WAREHOUSE.getCode()));
+        if (CollUtil.isEmpty(channelList)) {
+            log.warn("三方仓自动出库未匹配到ERP物流渠道, mainId={}, channelCode={}", logisticsEntity.getMainId(), channelCode);
+            return;
+        }
+        LogisticsChannelEntity channel = channelList.get(0);
+        logisticsEntity.setLogisticsChannelId(channel.getId());
+        logisticsEntity.setLogisticsChannelName(channel.getName());
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateB2cByPlatformOutbound(SoB2cDTO.B2cByPlatformOutboundDTO dto) {
@@ -12897,11 +12936,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(StringUtils.isNotBlank(dto.getWarehouseOrgName()), SoB2cDetailEntity::getWarehouseOrgName, dto.getWarehouseOrgName())
                 .update();
 
-        // 记录跟踪号
+        // 记录跟踪号；渠道为空时按三方仓 shipping_method 映射 ERP 物流渠道（须在生成物流单前写入）
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(dto.getSoB2cId());
         if (Objects.nonNull(logisticsEntity)) {
             logisticsEntity.setCode(CharSequenceUtil.isNotBlank(logisticsEntity.getCode()) ? logisticsEntity.getCode() : dto.getTrackNo());
             logisticsEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsEntity.getTrackNo()) ? logisticsEntity.getTrackNo() : dto.getTrackNo());
+            fillLogisticsChannelFromThirdShipping(logisticsEntity, dto.getThirdWarehousePlatform(),
+                    dto.getShippingMethod(), dto.getPlatformWarehouseCode());
             soB2cLogisticsService.updateById(logisticsEntity);
         }
 
