@@ -10,6 +10,7 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -67,12 +68,7 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
             return new ArrayList<>();
         }
 
-        // nextLevelId 来自父任务 init 上下文；mongo 行内 nextLevelId 优先
-        String shopId = parentMongoData.stream()
-                .map(item -> Objects.toString(item.get("nextLevelId"), ""))
-                .filter(StringUtils::isNotBlank)
-                .findFirst()
-                .orElse(this.nextLevelId);
+        String shopId = resolveShopeeShopId(parentMongoData);
         CfgAppClientEntity cfgAppClientEntity = loadShopeeAppClient();
         ShopAuthEntity shopAuthEntity = loadShopAuth(shopId);
 
@@ -100,6 +96,32 @@ public class DmpInputShopeeReturnDetailInitHandler extends DmpInputInitHandler {
         List<DmpInputTaskInitDTO> result = new ArrayList<>();
         result.add(initDTO);
         return result;
+    }
+
+    /**
+     * 明细子任务 nextLevelId 为拆单 snowflake；店铺 ID 优先取父任务，与列表任务保持一致。
+     */
+    private String resolveShopeeShopId(List<Map<String, Object>> parentMongoData) {
+        String parentShopId = resolveParentTaskShopId();
+        if (StringUtils.isNotBlank(parentShopId)) {
+            return parentShopId;
+        }
+        return parentMongoData.stream()
+                .map(item -> Objects.toString(item.get("nextLevelId"), ""))
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(this.nextLevelId);
+    }
+
+    private String resolveParentTaskShopId() {
+        if (dmpInputTaskEntity == null || StringUtils.isBlank(dmpInputTaskEntity.getParentTaskId())) {
+            return null;
+        }
+        DmpInputTaskEntity parentTask = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
+        if (parentTask == null || StringUtils.isBlank(parentTask.getNextLevelId())) {
+            return null;
+        }
+        return parentTask.getNextLevelId();
     }
 
     private List<Map<String, Object>> loadParentMongoData() {
