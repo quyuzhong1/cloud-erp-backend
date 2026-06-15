@@ -74,9 +74,6 @@ import java.util.stream.Collectors;
 import static com.alibaba.excel.EasyExcelFactory.write;
 import static com.alibaba.excel.EasyExcelFactory.writerSheet;
 import static com.alibaba.fastjson.JSON.toJSONString;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_BOTH;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_PRODUCT;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_DEV_TASK;
 
 /**
  * <p>
@@ -2639,29 +2636,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
     }
 
-    private static final Integer EXPORT_PRODUCT = ProductDevelopExportTypeEnum.PRODUCT.getCode();
-    private static final Integer EXPORT_TASK = ProductDevelopExportTypeEnum.TASK.getCode();
-
-    /**
-     * 根据产品开发导出数据类型解析 file 侧 event code。
-     * 组合合法性由 {@link ProductDevelopExportTypeEnum#validateCombinationMessage} 统一维护，
-     * 在创建下载任务前完成唯一一次严格校验；返回细分错误文案后由本服务层抛出业务异常（保留空/重复/非法的差异提示）。
-     */
     private String resolveProductDevelopExportEventCode(List<Integer> exportDataList) {
         String validateMessage = ProductDevelopExportTypeEnum.validateCombinationMessage(exportDataList);
         if (validateMessage != null) {
             throw new ServiceException(validateMessage);
         }
-        if (exportDataList.size() == 1) {
-            Integer flag = exportDataList.get(0);
-            if (EXPORT_PRODUCT.equals(flag)) {
-                return EXPORT_PLM_PRODUCT_DEV_PRODUCT.getCode();
-            }
-            if (EXPORT_TASK.equals(flag)) {
-                return EXPORT_PLM_PRODUCT_DEV_TASK.getCode();
-            }
-            throw new ServiceException("导出数据类型不合法：" + flag);
+        String eventCode = ProductDevelopExportTypeEnum.resolveEventCode(exportDataList);
+        if (eventCode == null) {
+            throw new ServiceException("导出数据类型不合法：" + exportDataList);
         }
-        return EXPORT_PLM_PRODUCT_DEV_BOTH.getCode();
+        return eventCode;
     }
 }

@@ -614,16 +614,31 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         while (hasNext) {
             dto.setParams(p);
             PagingVO<T> data = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
-            if (!CollectionUtils.isEmpty(data.getList())) {
-                dataList.addAll((Collection<? extends T>) data.getList());
-            }
             if (totalCount == 0) {
                 totalCount = data.getTotalCount();
+            }
+            int pageListSize = CollectionUtils.isEmpty(data.getList()) ? 0 : data.getList().size();
+            long coveredBeforeThisPage = (long) (dto.getCurrPage() - getFirstPage()) * getPageSize();
+            if (pageListSize == 0 && coveredBeforeThisPage < totalCount) {
+                throw new ServiceException("导出分页数据缺失：页码=" + dto.getCurrPage()
+                        + " 返回空列表，但 totalCount=" + totalCount + " 预期仍有数据，疑似分页查询异常或数据并发变更，请重试或排查上游分页接口。");
+            }
+            if (!CollectionUtils.isEmpty(data.getList())) {
+                List<T> rawPage = data.getList();
+                List<T> batch = withoutNullListElements(rawPage);
+                if (batch.isEmpty()) {
+                    throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
+                }
+                dataList.addAll(batch);
             }
             if (isLastPage(dto.getCurrPage(), totalCount)) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
+        }
+        if (totalCount > 0 && dataList.isEmpty()) {
+            throw new ServiceException("导出失败：totalCount=" + totalCount
+                    + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
         }
         return dataList;
     }

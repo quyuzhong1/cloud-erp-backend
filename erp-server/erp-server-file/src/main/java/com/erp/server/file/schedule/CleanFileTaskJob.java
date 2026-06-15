@@ -25,8 +25,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -60,7 +58,7 @@ public class CleanFileTaskJob {
         }
 
         LocalDateTime expireTime = LocalDateTime.now().minusDays(days);
-        XxlJobHelper.log("清理创建时间早于{}且fileUrl不为空的文件任务", expireTime);
+        XxlJobHelper.log("清理创建时间早于{}的已完成/失败文件任务（含无效 fileUrl）", expireTime);
 
         int batchNo = 0;
         int successCount = 0;
@@ -87,7 +85,7 @@ public class CleanFileTaskJob {
                 cursorCreateTime = fileTask.getCreateTime();
                 cursorId = id;
                 if (CharSequenceUtil.isBlank(fileUrl)) {
-                    // 仅含空白字符的 fileUrl 无法走 FastDFS 删除，若只 skip 游标已推进会导致脏数据每轮被查出又跳过、永久残留
+                    // null / 空串 / 仅空白字符的 fileUrl 无法走 FastDFS 删除，直接逻辑软删，避免游标推进后脏数据永久残留
                     try {
                         if (fileTaskRepository.removeById(id)) {
                             successCount++;
@@ -195,11 +193,8 @@ public class CleanFileTaskJob {
         int skipProcessingCount = 0;
         int deleteFailCount = 0;
 
-        // 扫描前一次性加载处理中任务ID，避免逐文件查库（N+1）。
+        // 扫描前一次性加载处理中任务 ID 集合，循环内 O(1) 精确匹配，避免逐文件查库（N+1）。
         Set<String> processingTaskIds = fileTaskRepository.listProcessingTaskIds();
-        // 预构建「处理中」临时文件前缀集合 exportTmp_{id}_，避免在文件扫描循环内对每个文件重复拼接前缀字符串
-        // （否则复杂度为 O(扫描文件数 × 处理中任务数) 次字符串分配）。
-        Set<String> processingPrefixes = buildProcessingPrefixes(processingTaskIds);
 
         try (Stream<Path> pathStream = Files.walk(workDir)) {
             for (Path path : (Iterable<Path>) pathStream::iterator) {
@@ -221,7 +216,7 @@ public class CleanFileTaskJob {
                 if (!fileTime.isBefore(expireTime)) {
                     continue;
                 }
-                if (isProcessingTempFile(path, processingPrefixes)) {
+                if (isProcessingTempFile(path, processingTaskIds)) {
                     skipProcessingCount++;
                     XxlJobHelper.log("跳过处理中的临时文件, path={}", path);
                     continue;
@@ -254,38 +249,29 @@ public class CleanFileTaskJob {
     }
 
     /**
-     * 由「处理中」任务ID集合正向构造前缀集合 {@code exportTmp_{id}_}。
-     * <p>循环外一次性构建，避免在文件扫描循环内对每个文件 × 每个任务重复拼接前缀字符串。
-     * 正向构造（而非从文件名反推 taskId）可规避「id 不含下划线」的隐含约定：净化后的文件名可能含多个下划线段。
+     * 判断临时文件是否属于「处理中」任务。
+     * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}.xlsx}（见 {@link com.erp.server.file.entity.FileTask#getUniqueWithFileName()}），
+     * 取 {@code exportTmp_} 后第一个 {@code _} 之前的一段作为 taskId，与处理中 ID 集合做精确匹配，
+     * 避免 {@code startsWith("exportTmp_{id}_")} 在 ID 存在前缀包含关系时误判（如 "12" 与 "123"）。
      */
-    private Set<String> buildProcessingPrefixes(Set<String> processingTaskIds) {
+    private boolean isProcessingTempFile(Path path, Set<String> processingTaskIds) {
         if (CollUtil.isEmpty(processingTaskIds)) {
-            return Collections.emptySet();
-        }
-        Set<String> prefixes = new HashSet<>(processingTaskIds.size());
-        for (String taskId : processingTaskIds) {
-            if (CharSequenceUtil.isNotBlank(taskId)) {
-                prefixes.add(ExportTempFilesHandler.EXPORT_TMP_PREFIX + taskId + "_");
-            }
-        }
-        return prefixes;
-    }
-
-    private boolean isProcessingTempFile(Path path, Set<String> processingPrefixes) {
-        if (CollUtil.isEmpty(processingPrefixes)) {
             return false;
         }
         String fileName = path.getFileName().toString();
-        if (!fileName.startsWith(ExportTempFilesHandler.EXPORT_TMP_PREFIX)) {
+        String tmpPrefix = ExportTempFilesHandler.EXPORT_TMP_PREFIX;
+        if (!fileName.startsWith(tmpPrefix)) {
             return false;
         }
-        // 用预构建的 exportTmp_{id}_ 前缀集合匹配，循环内无字符串拼接分配，无论 id 内部含何字符都判定准确。
-        for (String prefix : processingPrefixes) {
-            if (fileName.startsWith(prefix)) {
-                return true;
-            }
+        int dot = fileName.lastIndexOf('.');
+        String nameWithoutExt = dot > 0 ? fileName.substring(0, dot) : fileName;
+        String afterPrefix = nameWithoutExt.substring(tmpPrefix.length());
+        int firstSep = afterPrefix.indexOf('_');
+        if (firstSep <= 0) {
+            return false;
         }
-        return false;
+        String taskIdInFile = afterPrefix.substring(0, firstSep);
+        return processingTaskIds.contains(taskIdInFile);
     }
 
     private Integer parseDays(String jobParam) {

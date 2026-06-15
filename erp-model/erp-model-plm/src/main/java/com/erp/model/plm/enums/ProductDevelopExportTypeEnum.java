@@ -2,8 +2,9 @@ package com.erp.model.plm.enums;
 
 import com.common.core.constant.EnumMessage;
 import lombok.Getter;
-import org.apache.commons.collections4.CollectionUtils;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,6 +19,15 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
 
     PRODUCT(0, "产品列表"),
     TASK(1, "任务列表");
+
+    /** file 侧 event code：仅产品 */
+    public static final String EVENT_CODE_EXPORT_PRODUCT = "EXPORT_PLM_PRODUCT_DEV_PRODUCT";
+    /** file 侧 event code：仅任务 */
+    public static final String EVENT_CODE_EXPORT_TASK = "EXPORT_PLM_PRODUCT_DEV_TASK";
+    /** file 侧 event code：产品 + 任务 */
+    public static final String EVENT_CODE_EXPORT_BOTH = "EXPORT_PLM_PRODUCT_DEV_BOTH";
+    /** 历史遗留 event code，等价于仅产品 */
+    public static final String EVENT_CODE_LEGACY_EXPORT_PRODUCT = "EXPORT_PLM_PRODUCT";
 
     private static final Integer EXPORT_PRODUCT = PRODUCT.getCode();
     private static final Integer EXPORT_TASK = TASK.getCode();
@@ -55,7 +65,7 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
      * @return 错误信息；合法时为 {@code null}
      */
     public static String validateCombinationMessage(List<Integer> exportDataList) {
-        if (CollectionUtils.isEmpty(exportDataList)) {
+        if (exportDataList == null || exportDataList.isEmpty()) {
             return "导出数据类型不能为空";
         }
         Set<Integer> distinctTypes = new LinkedHashSet<>();
@@ -73,6 +83,48 @@ public enum ProductDevelopExportTypeEnum implements EnumMessage {
                     && distinctTypes.contains(EXPORT_TASK));
         if (!validCombination) {
             return "导出数据类型不合法：" + exportDataList;
+        }
+        return null;
+    }
+
+    /**
+     * {@code exportDataList}（须已通过 {@link #validateCombinationMessage}）→ file 侧 event code。
+     * PLM 创建任务与 file Handler 路由共用，避免双向映射分散维护。
+     *
+     * @return event code；入参非法时返回 {@code null}
+     */
+    public static String resolveEventCode(List<Integer> exportDataList) {
+        if (exportDataList == null || exportDataList.isEmpty()) {
+            return null;
+        }
+        if (exportDataList.size() == 1) {
+            Integer flag = exportDataList.get(0);
+            if (EXPORT_PRODUCT.equals(flag)) {
+                return EVENT_CODE_EXPORT_PRODUCT;
+            }
+            if (EXPORT_TASK.equals(flag)) {
+                return EVENT_CODE_EXPORT_TASK;
+            }
+            return null;
+        }
+        return EVENT_CODE_EXPORT_BOTH;
+    }
+
+    /**
+     * file 侧 event code → {@code exportDataList}；未知 event 返回 {@code null}。
+     */
+    public static List<Integer> exportDataListFromEventCode(String eventCode) {
+        if (eventCode == null || eventCode.isEmpty()) {
+            return null;
+        }
+        if (EVENT_CODE_EXPORT_PRODUCT.equals(eventCode) || EVENT_CODE_LEGACY_EXPORT_PRODUCT.equals(eventCode)) {
+            return Collections.singletonList(EXPORT_PRODUCT);
+        }
+        if (EVENT_CODE_EXPORT_TASK.equals(eventCode)) {
+            return Collections.singletonList(EXPORT_TASK);
+        }
+        if (EVENT_CODE_EXPORT_BOTH.equals(eventCode)) {
+            return Arrays.asList(EXPORT_PRODUCT, EXPORT_TASK);
         }
         return null;
     }
