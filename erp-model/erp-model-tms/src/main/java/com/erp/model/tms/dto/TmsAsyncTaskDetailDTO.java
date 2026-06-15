@@ -140,16 +140,6 @@ public class TmsAsyncTaskDetailDTO implements Serializable {
         */
         private String createUserName;
 
-        /**
-         * 明细防重键；存量明细为空字符串
-         */
-        private String detailUniqueKey;
-
-        /**
-         * 明细独立执行参数 JSON；不需要时为 null
-         */
-        private String detailParamJson;
-
     }
 
 

@@ -204,54 +204,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String methodType;
         private String methodTypeName;
 
-        // -------------------------------------------------------
-        // 新增字段（refactor-tms-async-task-engine）
-        // -------------------------------------------------------
-
-        /**
-         * 执行结果状态  TmsAsyncTaskResultStatusEnum：none/success/partial_failed/failed/timeout/canceled
-         */
-        private String resultStatus;
-        /**
-         * 执行结果状态名称；由 Service 分页后置填充：TmsAsyncTaskResultStatusEnum.getName(resultStatus)
-         */
-        private String resultStatusName;
-
-        /**
-         * 成功明细数量
-         */
-        private Integer successCount;
-
-        /**
-         * 计划执行时间；未设置时为 null
-         */
-        private LocalDateTime executeTime;
-
-        /**
-         * MQ 派发成功时间；未派发时为 null
-         */
-        private LocalDateTime dispatchTime;
-
-        /**
-         * 重试模式：空字符串=非重试, full=全量重试, failed_only=错误明细重试
-         * 对应 TmsAsyncTaskRetryModeEnum；由 Service 分页后置填充 retryModeName
-         */
-        private String retryMode;
-        /**
-         * 重试模式名称；由 Service 分页后置填充：TmsAsyncTaskRetryModeEnum.getName(retryMode)
-         */
-        private String retryModeName;
-
-        /**
-         * 直接来源任务 ID；非重试任务为空字符串
-         */
-        private String retrySourceTaskId;
-
-        /**
-         * 重试根任务 ID；非重试任务为自身 ID
-         */
-        private String rootTaskId;
-
     }
 
 //     /**

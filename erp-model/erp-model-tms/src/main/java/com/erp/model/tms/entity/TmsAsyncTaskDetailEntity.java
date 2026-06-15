@@ -57,46 +57,32 @@ public class TmsAsyncTaskDetailEntity extends BaseEntity<TmsAsyncTaskDetailEntit
     @TableField("end_time")
     private LocalDateTime endTime;
     /**
-    * 状态：pending=待认领, ing=执行中, finish=已完成, failed=失败
+    * 状态：finish=已完成,  failed=失败
     */
     @TableField("status")
     private String status;
     /**
-    * 错误信息
+    * json
     */
     @TableField("error_data")
     private String errorData;
 
-    // -------------------------------------------------------
-    // 新增字段（refactor-tms-async-task-engine）
-    // -------------------------------------------------------
-
-    /**
-     * 明细防重键，格式建议：methodType:businessId[:extraParams]；存量明细默认值为空不参与防重
-     */
-    @TableField("detail_unique_key")
-    private String detailUniqueKey;
-
-    /**
-     * 明细独立执行参数 JSON；与主任务 data_json 不同的单条字段存此处；不需要时为 null
-     */
-    @TableField("detail_param_json")
-    private String detailParamJson;
-
-    // -------------------------------------------------------
-    // 列名常量
-    // -------------------------------------------------------
 
     public static final String MAIN_ID = "main_id";
+
     public static final String BUSINESS_ID = "business_id";
+
     public static final String BUSINESS_CODE = "business_code";
+
     public static final String BUSINESS_TYPE = "business_type";
+
     public static final String START_TIME = "start_time";
+
     public static final String END_TIME = "end_time";
+
     public static final String STATUS = "status";
+
     public static final String ERROR_DATA = "error_data";
-    public static final String DETAIL_UNIQUE_KEY = "detail_unique_key";
-    public static final String DETAIL_PARAM_JSON = "detail_param_json";
 
     @Override
     public Serializable pkVal() {

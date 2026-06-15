@@ -20,8 +20,6 @@
        <result column="end_time" property="endTime" />
        <result column="status" property="status" />
        <result column="error_data" property="errorData" />
-       <result column="detail_unique_key" property="detailUniqueKey" />
-       <result column="detail_param_json" property="detailParamJson" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -35,8 +33,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, business_id, business_code, business_type, start_time, end_time, status, error_data,
-        detail_unique_key, detail_param_json
+        main_id, business_id, business_code, business_type, start_time, end_time, status, error_data
     </sql>
 
 </mapper>
