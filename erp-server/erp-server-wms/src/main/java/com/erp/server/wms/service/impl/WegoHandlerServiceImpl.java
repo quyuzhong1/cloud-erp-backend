@@ -596,11 +596,19 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         log.warn("{}截单请求:{}", getPlatForm().getName(), toLogSafeJson(request));
         JSONObject resp = wegoOpenApiService.intercept2cOrder(request);
         log.warn("{}截单结果:{}", getPlatForm().getName(), JSONUtil.toJsonStr(resp));
+        // Case B：WEGO 正常拦截成功（success=true）
         if (isSuccess(resp)) {
             return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
         }
-        // 失败时通过 failure() 将 WEGO 原始错误信息（如"已出库，无法线上拦截"）透传给调用方，
-        // 避免上层 overseasProviderIntercept 因 data=interceptionFailed+msg=空 而展示空原因。
+        // Case A：订单已在 WEGO 侧截单/取消，重复截单属于幂等成功，透传 WEGO 说明供上层展示
+        if (isInterceptAlreadySuccessful(resp)) {
+            String wegoMsg = CharSequenceUtil.blankToDefault(resp.getString("errorMsg"), "WEGO订单已取消");
+            log.info("{}截单幂等命中，视为拦截成功, orderNo={}, wegoMsg={}",
+                    getPlatForm().getName(), cancelOutboundReq.getOrderCode(), wegoMsg);
+            return ApiResult.success("WEGO订单已截单/取消，视为拦截成功（" + wegoMsg + "）",
+                    ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+        }
+        // Case C：其他错误，透传 WEGO 原始错误信息
         return failure(buildErrorMessage(resp));
     }
 
@@ -900,6 +908,30 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         String errorCode = resp.getString("errorCode");
         return CharSequenceUtil.isNotBlank(errorCode) ? "WEGO接口错误码: " + errorCode : "WEGO接口调用失败";
+    }
+
+    /**
+     * 判断 WEGO 截单是否因订单已处于截单/取消终态而返回幂等响应（Case A）。
+     *
+     * <p>已知的两种幂等场景：</p>
+     * <ul>
+     *   <li><b>errorCode=2003</b>：{@code "errorMsg":"订单已截单"} —— 通过 ERP 已截单后重复调用</li>
+     *   <li><b>errorMsg 含"操作成功"</b>：{@code "errorMsg":"操作成功!"} —— 在 WEGO 后台手动取消后调用</li>
+     * </ul>
+     * <p>以上两种情况订单均已进入终态，应视为幂等成功（Case A）。</p>
+     */
+    private boolean isInterceptAlreadySuccessful(JSONObject resp) {
+        if (resp == null || Boolean.TRUE.equals(resp.getBoolean("success"))) {
+            return false;
+        }
+        // 场景1：已截单（errorCode=2003）
+        Integer errorCode = resp.getInteger("errorCode");
+        if (Integer.valueOf(2003).equals(errorCode)) {
+            return true;
+        }
+        // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg="操作成功!"
+        String errorMsg = resp.getString("errorMsg");
+        return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains("操作成功");
     }
 
     /**

@@ -4094,7 +4094,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 thirdWarehouseDeliveryEntity.setStatus(SoB2cWarehouseDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
                 thirdWarehouseDeliveryFeign.update(thirdWarehouseDeliveryEntity);
             }
-            return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截成功");
+            // 优先使用三方仓返回的成功消息（如 WEGO 幂等场景会携带特殊说明），缺省用通用文案
+            String interceptSuccessMsg = CharSequenceUtil.isNotBlank(stringApiResult.getMsg())
+                    ? stringApiResult.getMsg() : "三方仓拦截成功";
+            return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), interceptSuccessMsg);
         } else if ( ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode().equals(stringApiResult.getData())) {
             //拦截中
             soB2cEntity.setIsFrozen(Boolean.TRUE);
