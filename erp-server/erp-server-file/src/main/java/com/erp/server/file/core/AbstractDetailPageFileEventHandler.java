@@ -39,7 +39,11 @@ public abstract class AbstractDetailPageFileEventHandler<R, T> implements FileEv
             fileTask.setFileUrl(url);
         } catch (IOException e) {
             log.error("上传文件失败{}", e.getMessage(), e);
-            throw new ServiceException(e.getMessage());
+            String failDetail = e.getMessage();
+            if (failDetail == null || failDetail.isEmpty()) {
+                failDetail = e.getClass().getSimpleName();
+            }
+            throw new ServiceException(failDetail);
         } finally {
             ExportTempFilesHandler.deleteQuietly(tempPath);
         }

@@ -87,6 +87,20 @@ public class CleanFileTaskJob {
                 cursorCreateTime = fileTask.getCreateTime();
                 cursorId = id;
                 if (CharSequenceUtil.isBlank(fileUrl)) {
+                    // 仅含空白字符的 fileUrl 无法走 FastDFS 删除，若只 skip 游标已推进会导致脏数据每轮被查出又跳过、永久残留
+                    try {
+                        if (fileTaskRepository.removeById(id)) {
+                            successCount++;
+                        } else {
+                            logicDeleteFailCount++;
+                            XxlJobHelper.log("空白fileUrl任务逻辑删除失败, id={}", id);
+                            log.warn("空白fileUrl任务逻辑删除失败, id={}", id);
+                        }
+                    } catch (Exception e) {
+                        logicDeleteFailCount++;
+                        XxlJobHelper.log("空白fileUrl任务逻辑删除异常, id={}, error={}", id, e.getMessage());
+                        log.error("空白fileUrl任务逻辑删除异常, id={}", id, e);
+                    }
                     continue;
                 }
 

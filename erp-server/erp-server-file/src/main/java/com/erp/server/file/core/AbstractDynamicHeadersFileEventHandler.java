@@ -164,6 +164,9 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                     }
                     ensureNoNewHeaderKeys(headers, pageList, pageNo);
                     List<List<Object>> rows = convertPageDataList(pageList, headers.keySet());
+                    if (!CollectionUtils.isEmpty(pageList) && rows.isEmpty() && totalCount > 0) {
+                        throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + pageNo + "）");
+                    }
                     if (rows.isEmpty() && totalRows == 0) {
                         excelWriter.write(rows, writeSheet);
                     }
@@ -184,6 +187,10 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         rowsInSheet += take;
                         idx += take;
                     }
+                }
+                if (totalCount > 0 && totalRows == 0) {
+                    throw new ServiceException("导出失败：totalCount=" + totalCount
+                            + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
                 }
             } finally {
                 excelWriter.finish();

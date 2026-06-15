@@ -573,18 +573,24 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     if (!CollectionUtils.isEmpty(pageData.getList())) {
                         List<T> rawPage = pageData.getList();
                         List<T> batch = withoutNullListElements(rawPage);
-                        if (!batch.isEmpty()) {
-                            fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, batch, rawPage, cursor,
-                                    "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
-                            totalRows += batch.size();
-                            clearBatchIfDetachedCopy(batch, rawPage);
+                        if (batch.isEmpty()) {
+                            // 与 KEYSET 路径对齐：rawPage 非空但元素全为 null 时不可静默跳过，否则 totalRows 偏小仍可能「成功」结束
+                            throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
                         }
+                        fillBatchAcrossDataSheets("OFFSET", excelPath, excelWriter, fillConfig, batch, rawPage, cursor,
+                                "currPage=" + dto.getCurrPage(), pageData.getTotalCount());
+                        totalRows += batch.size();
+                        clearBatchIfDetachedCopy(batch, rawPage);
                     }
                     if (isLastPage(dto.getCurrPage(), totalCount)) {
                         break;
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
                     pageData = requirePagingResult(getPageData(dto), "页码=" + dto.getCurrPage());
+                }
+                if (totalCount > 0 && totalRows == 0) {
+                    throw new ServiceException("导出失败：totalCount=" + totalCount
+                            + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
                 }
             } finally {
                 excelWriter.finish();
