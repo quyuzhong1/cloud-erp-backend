@@ -1,6 +1,7 @@
 package com.erp.server.tms.rocketmq;
 
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -25,7 +26,7 @@ import java.util.Objects;
 @RocketMQMessageListener(topic = RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC,
         selectorExpression = RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG,
         consumerGroup = RocketMqConsumerGroup.TMS_ASYNC_TASK_RECORD_CONSUMER)
-public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTaskRecordDTO.PushParamsDTO> {
+public class TmsAsyncTaskConsumerService implements RocketMQListener<String> {
 
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
@@ -48,8 +49,18 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
     @Resource
     private TmsAsyncTaskRecordService asyncTaskRecordService;
 
+    /**
+     * 消费 TMS 异步任务消息。
+     * <p>
+     * 已迁移任务优先按 TaskEnvelope 路由；未迁移任务继续按 PushParamsDTO 解析，
+     * 以便小包试点和历史 TMS 异步任务在迁移期间共存。
+     *
+     * @param message MQ 原始 JSON 消息
+     */
     @Override
-    public void onMessage(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
+    public void onMessage(String message) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(message);
+        TmsAsyncTaskRecordDTO.PushParamsDTO dto = envelope == null ? parseLegacyPushParams(message) : buildDispatchParams(envelope);
         if (Objects.isNull(dto) || StringUtils.isBlank(dto.getTaskId()) || StringUtils.isBlank(dto.getBusinessType())) {
             log.warn("TMS异步任务MQ消息为空，跳过消费");
             return;
@@ -143,6 +154,50 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         log.info("TMS异步任务消费完成，taskId: {}, businessType: {}", taskId, businessType);
     }
 
+    /**
+     * 解析未迁移任务的 legacy PushParamsDTO 消息。
+     *
+     * @param message MQ 原始 JSON 消息
+     * @return 解析成功的 PushParamsDTO；解析失败时返回 null
+     */
+    private TmsAsyncTaskRecordDTO.PushParamsDTO parseLegacyPushParams(String message) {
+        if (StringUtils.isBlank(message)) {
+            return null;
+        }
+        try {
+            return JSONUtil.toBean(message, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+        } catch (Exception e) {
+            log.warn("TMS异步任务MQ消息解析失败，跳过消费，error: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 将任务信封转换为运行态派发参数。
+     * <p>
+     * 这里只复制调度和重试元数据，业务 payload 由对应业务消费者从任务记录中解析。
+     *
+     * @param envelope 任务信封
+     * @return 运行态派发参数
+     */
+    private TmsAsyncTaskRecordDTO.PushParamsDTO buildDispatchParams(TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope) {
+        TmsAsyncTaskRecordDTO.PushParamsDTO dto = new TmsAsyncTaskRecordDTO.PushParamsDTO();
+        dto.setTaskId(envelope.getTaskId());
+        dto.setBusinessType(envelope.getBusinessType());
+        dto.setMethodType(envelope.getMethodType());
+        dto.setRetryMode(envelope.getRetryMode());
+        dto.setRetrySourceTaskId(envelope.getRetrySourceTaskId());
+        dto.setOperatorUserId(envelope.getOperatorUserId());
+        dto.setOperatorUserName(envelope.getOperatorUserName());
+        return dto;
+    }
+
+    /**
+     * 判断小包费用分摊下推方法类型。
+     *
+     * @param methodType 方法类型
+     * @return true 表示应路由到小包费用分摊下推消费逻辑
+     */
     private boolean isSmallBagPushAllocationMethodType(String methodType) {
         return StringUtils.isBlank(methodType)
             || Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())

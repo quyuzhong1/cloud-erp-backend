@@ -243,6 +243,19 @@ public class TmsAsyncTaskDetailServiceImpl extends SuperServiceImpl<AsyncTaskDet
         return unfinishedCount;
     }
 
+    @Override
+    public List<String> listOrphanIngDetailIds(int limit) {
+        return baseMapper.listOrphanIngDetailIds(limit <= 0 ? 1000 : limit);
+    }
+
+    @Override
+    public List<String> listStaleIngDetailIdsByTaskType(String businessType, String methodType, LocalDateTime staleBefore, int limit) {
+        if (StringUtils.isBlank(businessType) || StringUtils.isBlank(methodType) || staleBefore == null) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listStaleIngDetailIdsByTaskType(businessType, methodType, staleBefore, limit <= 0 ? 1000 : limit);
+    }
+
     private List<String> terminalStatuses() {
         return Arrays.asList(
                 TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),

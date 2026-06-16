@@ -346,6 +346,100 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
     }
 
     /**
+     * TMS 异步任务信封。
+     * 调度、重试和载荷路由字段放在信封层，业务参数放入 payloadJson。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaskEnvelopeDTO implements Serializable {
+
+        /**
+         * 主任务 ID，创建任务前可为空，派发前补齐。
+         */
+        private String taskId;
+
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
+        /**
+         * 方法类型：同一 business_type 下区分不同方法
+         */
+        private String methodType;
+
+        /**
+         * 重试模式：FAILED_ONLY 表示按来源任务失败明细分页执行
+         */
+        private String retryMode;
+
+        /**
+         * 错误重试来源任务
+         */
+        private String retrySourceTaskId;
+
+        /**
+         * 业务载荷类型，默认使用 businessType:methodType 约定。
+         */
+        private String payloadType;
+
+        /**
+         * 业务载荷版本，用于后续载荷结构演进。
+         */
+        private Integer payloadVersion;
+
+        /**
+         * 任务提交人 ID
+         */
+        private String operatorUserId;
+
+        /**
+         * 任务提交人名称
+         */
+        private String operatorUserName;
+
+        /**
+         * 业务载荷 JSON
+         */
+        private String payloadJson;
+    }
+
+    /**
+     * 小包费用分摊下推载荷。
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SmallBagPushAllocationPayloadDTO implements Serializable {
+
+        /**
+         * 费用 ID 集合
+         */
+        private List<String> ids;
+
+        /**
+         * 核算日期
+         */
+        private String reportDate;
+
+        /**
+         * 费用类型：自发货/尾程
+         */
+        private String type;
+
+        /**
+         * 页面高级查询生成的 SQL 条件
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 数据权限 SQL
+         */
+        private String permissionSql;
+    }
+
+    /**
      * 手动创建任务
      */
     @Data

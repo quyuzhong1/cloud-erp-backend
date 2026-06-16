@@ -65,7 +65,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -85,6 +84,14 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     private static final Integer ERROR_START = 0;
     private static final Integer ERROR_END = 1000;
+    private static final int DEFAULT_WATCHDOG_MAIN_TASK_LIMIT = 100;
+    private static final int DEFAULT_WATCHDOG_DETAIL_LIMIT = 1000;
+    private static final int DEFAULT_WATCHDOG_UPDATE_BATCH_SIZE = 500;
+    private static final int DEFAULT_WATCHDOG_MAX_ROUNDS = 3;
+    private static final int MAX_WATCHDOG_MAIN_TASK_LIMIT = 500;
+    private static final int MAX_WATCHDOG_DETAIL_LIMIT = 5000;
+    private static final int MAX_WATCHDOG_UPDATE_BATCH_SIZE = 500;
+    private static final int MAX_WATCHDOG_MAX_ROUNDS = 10;
 
     @Resource
     private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
@@ -164,6 +171,10 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if (StringUtils.isBlank(json)) {
             return "";
         }
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(json);
+        if (envelope != null) {
+            return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
+        }
         TmsAsyncTaskRecordDTO.PushParamsDTO params = parsePushParams(json);
         if (params == null) {
             return json.trim();
@@ -176,6 +187,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
      * 获取头程/小包费用分摊日期参数
      */
     private String extractReportDate(String json) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(json);
+        if (envelope != null) {
+            TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                    parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO.class);
+            return payload == null ? null : trimToNull(payload.getReportDate());
+        }
         TmsAsyncTaskRecordDTO.PushParamsDTO params = parsePushParams(json);
         if (params == null) {
             return null;
@@ -386,6 +403,117 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, errorPayload);
     }
 
+    /**
+     * 构建业务载荷类型。
+     * <p>
+     * 当前按 businessType:methodType 约定生成，消费者可据此识别已迁移任务的 payload 类型。
+     *
+     * @param businessType 业务类型
+     * @param methodType 方法类型
+     * @return 载荷类型
+     */
+    @Override
+    public String buildPayloadType(String businessType, String methodType) {
+        return StringUtils.defaultString(businessType) + ":" + StringUtils.defaultString(methodType);
+    }
+
+    /**
+     * 构建 TMS 异步任务信封。
+     * <p>
+     * 信封保存调度、重试和载荷路由信息，业务参数会序列化到 payloadJson 中。
+     *
+     * @param taskId 任务 ID，创建任务前可为空
+     * @param businessType 业务类型
+     * @param methodType 方法类型
+     * @param retryMode 重试模式
+     * @param retrySourceTaskId 来源任务 ID
+     * @param payload 业务载荷对象
+     * @return 任务信封
+     */
+    @Override
+    public TmsAsyncTaskRecordDTO.TaskEnvelopeDTO buildEnvelope(String taskId, String businessType, String methodType,
+                                                               String retryMode, String retrySourceTaskId, Object payload) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = new TmsAsyncTaskRecordDTO.TaskEnvelopeDTO();
+        envelope.setTaskId(StringUtils.trimToNull(taskId));
+        envelope.setBusinessType(StringUtils.trimToNull(businessType));
+        envelope.setMethodType(StringUtils.trimToNull(methodType));
+        envelope.setRetryMode(StringUtils.trimToNull(retryMode));
+        envelope.setRetrySourceTaskId(StringUtils.trimToNull(retrySourceTaskId));
+        envelope.setPayloadType(buildPayloadType(businessType, methodType));
+        envelope.setPayloadVersion(1);
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if (loginUser != null) {
+            envelope.setOperatorUserId(StringUtils.trimToNull(loginUser.getUid()));
+            envelope.setOperatorUserName(StringUtils.trimToNull(loginUser.getUserName()));
+        }
+        envelope.setPayloadJson(payload == null ? "{}" : JSONUtil.toJsonStr(payload, TASK_DATA_JSON_CONFIG));
+        return envelope;
+    }
+
+    /**
+     * 解析任务信封。
+     * <p>
+     * 非信封 JSON 或解析失败时返回 null，调用方可继续尝试 legacy PushParamsDTO 路径。
+     *
+     * @param dataJson 任务参数 JSON
+     * @return 任务信封；非信封时返回 null
+     */
+    @Override
+    public TmsAsyncTaskRecordDTO.TaskEnvelopeDTO parseEnvelope(String dataJson) {
+        if (StringUtils.isBlank(dataJson)) {
+            return null;
+        }
+        try {
+            TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = JSONUtil.toBean(dataJson, TmsAsyncTaskRecordDTO.TaskEnvelopeDTO.class);
+            if (envelope == null || StringUtils.isBlank(envelope.getPayloadType()) || StringUtils.isBlank(envelope.getPayloadJson())) {
+                return null;
+            }
+            return envelope;
+        } catch (Exception e) {
+            log.debug("任务参数解析 TaskEnvelopeDTO 失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 解析任务信封中的业务载荷。
+     * <p>
+     * 解析失败时返回 null，由业务消费者记录确定性的任务失败原因。
+     *
+     * @param envelope 任务信封
+     * @param payloadClass 载荷类型
+     * @param <T> 载荷泛型
+     * @return 业务载荷；解析失败时返回 null
+     */
+    @Override
+    public <T> T parseEnvelopePayload(TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope, Class<T> payloadClass) {
+        if (envelope == null || StringUtils.isBlank(envelope.getPayloadJson()) || payloadClass == null) {
+            return null;
+        }
+        try {
+            return JSONUtil.toBean(envelope.getPayloadJson(), payloadClass);
+        } catch (Exception e) {
+            log.warn("任务信封载荷解析失败，payloadType: {}, error: {}", envelope.getPayloadType(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 解析任务信封中的业务载荷，解析失败时统一记录任务失败原因。
+     */
+    @Override
+    public <T> T parseEnvelopePayloadOrFinishTask(String taskId, TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                                  Class<T> payloadClass, String errorMsg) {
+        T payload = parseEnvelopePayload(envelope, payloadClass);
+        if (payload != null) {
+            return payload;
+        }
+        if (StringUtils.isNotBlank(taskId)) {
+            finishTaskWithError(taskId, errorMsg);
+        }
+        return null;
+    }
+
     @Override
     public LoginUser resolveOperatorLoginUser(TmsAsyncTaskRecordEntity taskRecord, TmsAsyncTaskRecordDTO.PushParamsDTO pushParams) {
         if (pushParams != null && StringUtils.isNotBlank(pushParams.getOperatorUserId())) {
@@ -422,6 +550,32 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             return true;
         }
         return false;
+    }
+
+    /**
+     * 分批循环内的轻量主任务超时检查。
+     * <p>
+     * watchdog 仍作为最终兜底；业务循环可复用该方法在低频任务刷新点及时止损。
+     */
+    @Override
+    public boolean terminateTaskIfExecTimeoutReached(TmsAsyncTaskRecordEntity currentTask,
+                                                     CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        if (currentTask == null || currentTask.getStartTime() == null) {
+            return false;
+        }
+        int execTimeout = currentTask.getExecTimeout() == null
+                ? resolveTaskExecTimeout(billBatchParamsDTO)
+                : currentTask.getExecTimeout();
+        if (execTimeout <= 0) {
+            return false;
+        }
+        LocalDateTime timeoutAt = currentTask.getStartTime().plusSeconds(execTimeout);
+        if (LocalDateTime.now().isBefore(timeoutAt)) {
+            return false;
+        }
+        terminateTaskTimeout(currentTask.getId(), "任务执行超时");
+        log.warn("异步任务执行超时，已终止任务，taskId: {}, execTimeout: {}", currentTask.getId(), execTimeout);
+        return true;
     }
 
     /**
@@ -562,34 +716,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         //数据校验
         checkData(entity);
 
-        //默认8小时
-        Integer execTimeout = null;
-        //获取分摊配置--任务超时时间
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
-        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson()) && !Objects.equals(cfgSettingEntity.getDataJson(), "{}")){
-            CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
-            String businessType = entity.getBusinessType();
-            //头程对账单
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
-            }
-            //报关对账
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
-            }
-            //头程分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
-            }
-            //小包分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
-            }
-            //中转分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
-            }
-        }
+        Integer execTimeout = resolveAutoTaskExecTimeout(entity);
+        String retryDataJson = buildFullRetryDataJson(entity);
 
         TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
         //重置任务ID
@@ -598,13 +726,11 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         //减少可以重试的次数
         newTask.setRetryTimes(entity.getRetryTimes() - 1 );
         newTask.setStartTime(LocalDateTime.now());
-        newTask.setDataJson(entity.getDataJson());
+        newTask.setDataJson(retryDataJson);
         newTask.setBusinessType(entity.getBusinessType());
         newTask.setMethodType(entity.getMethodType());
         newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-        if(Objects.nonNull(execTimeout)){
-            newTask.setExecTimeout(execTimeout);
-        }
+        newTask.setExecTimeout(execTimeout);
         newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
         boolean save = save(newTask);
         if(!save){
@@ -651,49 +777,143 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         }
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType,entity.methodType", unlockAfterTx = true)
-    public BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity) {
-        //数据校验
-        checkData(entity);
-        //默认8小时
-        Integer execTimeout = null;
-        //获取分摊配置--任务超时时间
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
-        if(Objects.nonNull(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson()) && !Objects.equals(cfgSettingEntity.getDataJson(), "{}")){
-            CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
-            String businessType = entity.getBusinessType();
-            //头程对账单
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
-            }
-            //报关对账
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
-            }
-            //头程分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
-            }
-            //小包分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
-            }
-            //中转分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
-            }
+    /**
+     * 校验失败明细重试的来源任务。
+     * <p>
+     * 失败明细重试支持手动和自动来源任务，但仍要求来源任务已完成、未创建过重试任务、
+     * 存在失败明细且 dataJson 可用于构建新的重试任务。
+     *
+     * @param entity 来源任务
+     */
+    private void checkErrorRetryData(TmsAsyncTaskRecordEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("异步任务记录不存在");
         }
+        if (Boolean.TRUE.equals(entity.getIsRetry())) {
+            throw new ServiceException("已有重试任务，无法再次重试");
+        }
+        Integer retryTimes = entity.getRetryTimes();
+        if (retryTimes == null || retryTimes <= 0) {
+            throw new ServiceException("已超过最大重试次数");
+        }
+        if (!Objects.equals(entity.getStatus(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode())) {
+            throw new ServiceException("任务未完成不支持错误重试");
+        }
+        Integer count = tmsAsyncTaskDetailService.lambdaQuery()
+                .eq(TmsAsyncTaskDetailEntity::getMainId, entity.getId())
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FAILED.getCode())
+                .count();
+        if (count == null || count <= 0) {
+            throw new ServiceException("无错误数量不支持错误重试");
+        }
+        if (StringUtils.isBlank(entity.getDataJson()) || Objects.equals(entity.getDataJson(), "{}")) {
+            throw new ServiceException("dataJson为空，无法错误重试");
+        }
+    }
 
-        //entity.getDataJson()转TmsAsyncTaskRecordDTO.PushDTO实体类
-        TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
+    /**
+     * 构建完整重试任务的 dataJson。
+     * <p>
+     * 完整重试保留原业务载荷，但必须清理 taskId 和失败明细重试元数据，
+     * 避免新的自动重试任务误走 FAILED_ONLY 游标消费逻辑。
+     *
+     * @param entity 来源任务
+     * @return 新完整重试任务持久化的 dataJson
+     */
+    private String buildFullRetryDataJson(TmsAsyncTaskRecordEntity entity) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(entity.getDataJson());
+        if (envelope != null) {
+            envelope.setTaskId(null);
+            envelope.setRetryMode(null);
+            envelope.setRetrySourceTaskId(null);
+            return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
+        }
+        TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = parsePushParams(entity.getDataJson());
+        if (pushDTO == null) {
+            throw new ServiceException("dataJson解析失败，无法重新创建任务重试");
+        }
+        pushDTO.setTaskId(null);
+        pushDTO.setRetryMode(null);
+        pushDTO.setRetrySourceTaskId(null);
+        return JSONUtil.toJsonStr(pushDTO, TASK_DATA_JSON_CONFIG);
+    }
+
+    /**
+     * 构建失败明细重试任务的 dataJson。
+     * <p>
+     * 失败明细重试只保存来源任务 ID 和 FAILED_ONLY 模式，消费时按来源任务失败明细游标分页，
+     * 不把失败业务 ID 批量写入任务参数。
+     *
+     * @param entity 来源任务
+     * @return 新失败明细重试任务持久化的 dataJson
+     */
+    private String buildFailedOnlyRetryDataJson(TmsAsyncTaskRecordEntity entity) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(entity.getDataJson());
+        if (envelope != null) {
+            envelope.setTaskId(null);
+            envelope.setRetrySourceTaskId(entity.getId());
+            envelope.setRetryMode(TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY);
+            if (StringUtils.isBlank(envelope.getBusinessType())) {
+                envelope.setBusinessType(entity.getBusinessType());
+            }
+            if (StringUtils.isBlank(envelope.getMethodType())) {
+                envelope.setMethodType(entity.getMethodType());
+            }
+            TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                    parseEnvelopePayload(envelope, TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO.class);
+            if (payload != null) {
+                payload.setIds(null);
+                envelope.setPayloadJson(JSONUtil.toJsonStr(payload, TASK_DATA_JSON_CONFIG));
+            }
+            return JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
+        }
+        TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = parsePushParams(entity.getDataJson());
+        if (pushDTO == null) {
+            throw new ServiceException("dataJson解析失败，无法错误重试");
+        }
         // 错误重试只记录来源任务，消费时按失败明细分页读取，避免 dataJson 持有大批量 ids。
+        pushDTO.setTaskId(null);
         pushDTO.setIds(null);
         pushDTO.setRetrySourceTaskId(entity.getId());
         pushDTO.setRetryMode(TmsAsyncTaskRecordDTO.RETRY_MODE_FAILED_ONLY);
         pushDTO.setBusinessType(entity.getBusinessType());
         pushDTO.setMethodType(StringUtils.defaultIfBlank(entity.getMethodType(), pushDTO.getMethodType()));
+        return JSONUtil.toJsonStr(pushDTO, TASK_DATA_JSON_CONFIG);
+    }
+
+    /**
+     * 创建失败明细重试任务并在事务提交后立即派发。
+     * <p>
+     * 任务创建通过 {@link #createFailedOnlyRetryTask(TmsAsyncTaskRecordEntity)} 走代理事务，
+     * MQ 派发在该方法返回后执行，避免消费者先于事务提交读取不到新任务。
+     *
+     * @param entity 来源任务
+     * @return 批量操作结果
+     */
+    @Override
+    public BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity) {
+        TmsAsyncTaskRecordEntity newTask = selfServer.createFailedOnlyRetryTask(entity);
+        // createFailedOnlyRetryTask 通过代理完成事务提交后再派发 MQ，避免消费者先于任务提交查询不到记录。
+        claimAndDispatch(newTask, true);
+        return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
+    }
+
+    /**
+     * 事务内创建失败明细重试任务。
+     * <p>
+     * 该方法只负责持久化新任务和标记来源任务已重试，不发送 MQ。
+     * 调用方应在事务提交后再派发，避免消息消费和数据库提交之间产生竞态。
+     *
+     * @param entity 来源任务
+     * @return 已保存的新重试任务
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_ASYNC_TASK_RECORD_KEY, keyName = "entity.businessType,entity.methodType", unlockAfterTx = true)
+    public TmsAsyncTaskRecordEntity createFailedOnlyRetryTask(TmsAsyncTaskRecordEntity entity) {
+        checkErrorRetryData(entity);
+        Integer execTimeout = resolveTaskExecTimeout(loadBillBatchParams(null));
+        String retryDataJson = buildFailedOnlyRetryDataJson(entity);
 
         TmsAsyncTaskRecordEntity newTask = new TmsAsyncTaskRecordEntity();
         //重置任务ID
@@ -702,14 +922,12 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         //减少可以重试的次数
         newTask.setRetryTimes(entity.getRetryTimes() - 1 );
         newTask.setStartTime(LocalDateTime.now());
-        newTask.setDataJson(JSONUtil.toJsonStr(pushDTO));
+        newTask.setDataJson(retryDataJson);
         newTask.setBusinessType(entity.getBusinessType());
         newTask.setMethodType(entity.getMethodType());
         newTask.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
-        if(Objects.nonNull(execTimeout)){
-            newTask.setExecTimeout(execTimeout);
-        }
-        newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
+        newTask.setExecTimeout(execTimeout);
+        newTask.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
         boolean save = save(newTask);
         if(!save){
             throw new ServiceException("保存失败");
@@ -717,7 +935,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         //表示任务已重试过
         entity.setIsRetry(Boolean.TRUE);
         updateById(entity);
-        return BatchResultDTO.success(newTask.getId(), newTask.getCode(), OperationTypeEnum.ADD);
+        return newTask;
     }
 
     @Override
@@ -752,6 +970,53 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             throw new ServiceException(taskName + fieldName + "配置非法，必须在1-31之间");
         }
         return configuredDay;
+    }
+
+    /**
+     * 完整重试保持自动周期任务语义，超时时间从自动任务配置来源解析。
+     */
+    private Integer resolveAutoTaskExecTimeout(TmsAsyncTaskRecordEntity entity) {
+        CfgSettingValueDTO.ReconciliationCycleDTO cycleDTO = loadReconciliationCycle();
+        Integer configuredTimeout = resolveAutoTaskConfiguredTimeout(entity, cycleDTO);
+        if (configuredTimeout != null && configuredTimeout > 0) {
+            return configuredTimeout;
+        }
+        if (entity != null && entity.getExecTimeout() != null && entity.getExecTimeout() > 0) {
+            return entity.getExecTimeout();
+        }
+        return resolveTaskExecTimeout(loadBillBatchParams(null));
+    }
+
+    private CfgSettingValueDTO.ReconciliationCycleDTO loadReconciliationCycle() {
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
+        if (cfgSettingEntity == null || cfgSettingEntity.getDataJson() == null) {
+            log.warn("自动任务生成配置缺失，完整重试将回退来源任务超时时间");
+            return null;
+        }
+        return JSONUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
+    }
+
+    private Integer resolveAutoTaskConfiguredTimeout(TmsAsyncTaskRecordEntity entity, CfgSettingValueDTO.ReconciliationCycleDTO cycleDTO) {
+        if (entity == null || cycleDTO == null || StringUtils.isBlank(entity.getBusinessType())) {
+            return null;
+        }
+        String businessType = entity.getBusinessType();
+        if (Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())) {
+            return cycleDTO.getFirstMileExecTimeout();
+        }
+        if (Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())) {
+            return cycleDTO.getDeclareExecTimeout();
+        }
+        if (Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())) {
+            return cycleDTO.getFirstMileAllocationeExecTimeout();
+        }
+        if (Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())) {
+            return cycleDTO.getPackageBeginExecTimeout();
+        }
+        if (Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())) {
+            return cycleDTO.getTransferBeginExecTimeout();
+        }
+        return null;
     }
 
 
@@ -803,116 +1068,199 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     }
 
     /**
-     * 启动任务
-     * 中止超时任务
+     * 启动到期的自动周期任务。
+     * 超时终止和孤儿明细清理由 watchdogTask 统一处理。
      */
     @Override
     public void startTask(){
         LocalDateTime now = LocalDateTime.now();
-        markFinishedTaskIngDetailsFailed();
-
-        // 查询所有 ING 或 PENDING 且 startTime <= now 的任务，去掉今日限制：
-        // 避免补偿场景（如服务宕机恢复后）中历史 PENDING 任务被永久搁置
+        // 只派发到期自动待执行任务，手动任务和清理职责不在周期派发器处理。
         List<TmsAsyncTaskRecordEntity> list = lambdaQuery()
-                .in(TmsAsyncTaskRecordEntity::getStatus, Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
+                .eq(TmsAsyncTaskRecordEntity::getExecType, TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode())
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                 .le(TmsAsyncTaskRecordEntity::getStartTime, now)
                 .list();
         if(CollUtil.isEmpty(list)){
-            log.info("TmsAsyncTaskRecord不存在待执行或者执行中的任务");
+            log.info("TmsAsyncTaskRecord不存在到期自动待执行任务");
             return;
         }
 
-        //执行中（手动 + 自动）
-        List<TmsAsyncTaskRecordEntity> ingList = list.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.ING.getCode())).collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(ingList)){
-            for (TmsAsyncTaskRecordEntity entity : ingList) {
-                CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = loadBillBatchParams(entity.getId());
-                if (billBatchParamsDTO == null) {
-                    continue;
-                }
-                Integer execTimeout = resolveTaskExecTimeout(billBatchParamsDTO);
-                LocalDateTime startTime = entity.getStartTime();
-                if(Objects.nonNull(startTime) && Objects.nonNull(execTimeout) && execTimeout > 0 ){
-                    if(now.isAfter(startTime.plusSeconds(execTimeout))){
-                        selfServer.terminateTaskTimeout(entity.getId(),"任务执行超时");
-                    }
-                }
+        for (TmsAsyncTaskRecordEntity entity : list) {
+            try {
+                claimAndDispatch(entity, false);
+            } catch (Exception e) {
+                log.error("自动异步任务派发异常，taskId: {}", entity.getId(), e);
+                selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), formatTaskErrorMessage(e));
             }
         }
+    }
 
-        // 1.开始时间小于等于当前时间则继续执行后续业务代码
-        // 2.自动类型
-        // 3.待执行
-        List<TmsAsyncTaskRecordEntity> pendingList = list.stream()
-                .filter(e ->e.getStartTime().isBefore(now) && e.getExecType().equals(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode()) && e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
-                .collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(pendingList)){
-            for (TmsAsyncTaskRecordEntity entity : pendingList) {
-                try {
-                    claimAndDispatch(entity);
-                } catch (Exception e) {
-                    log.error("自动异步任务派发异常，taskId: {}", entity.getId(), e);
-                    selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), formatTaskErrorMessage(e));
+    /**
+     * 异步任务健康检查。
+     * 将周期派发之外的超时和明细兜底清理集中在一个入口，避免 startTask 职责膨胀。
+     */
+    @Override
+    public void watchdogTask() {
+        CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = loadBillBatchParams(null);
+        WatchdogRunConfig runConfig = resolveWatchdogRunConfig(billBatchParamsDTO);
+        terminateTimedOutIngTasks(runConfig, billBatchParamsDTO);
+        markFinishedTaskIngDetailsFailed(runConfig);
+        markConfiguredStaleIngDetailsFailed(runConfig, billBatchParamsDTO);
+    }
+
+    private void terminateTimedOutIngTasks(WatchdogRunConfig runConfig, CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        LocalDateTime now = LocalDateTime.now();
+        int defaultExecTimeout = resolveTaskExecTimeout(billBatchParamsDTO);
+        for (int round = 0; round < runConfig.maxRounds; round++) {
+            List<TmsAsyncTaskRecordEntity> timedOutTasks =
+                    baseMapper.listTimedOutTasksForWatchdog(defaultExecTimeout, now, runConfig.mainTaskLimit);
+            if (CollUtil.isEmpty(timedOutTasks)) {
+                return;
+            }
+            for (TmsAsyncTaskRecordEntity entity : timedOutTasks) {
+                selfServer.terminateTaskTimeout(entity.getId(), "任务执行超时");
+            }
+            if (timedOutTasks.size() < runConfig.mainTaskLimit) {
+                return;
+            }
+        }
+    }
+
+    private void markFinishedTaskIngDetailsFailed(WatchdogRunConfig runConfig) {
+        for (int round = 0; round < runConfig.maxRounds; round++) {
+            List<String> detailIds = tmsAsyncTaskDetailService.listOrphanIngDetailIds(runConfig.detailLimit);
+            if (CollUtil.isEmpty(detailIds)) {
+                return;
+            }
+            int failedCount = markDetailsFailedInBatches(
+                    detailIds, "主任务已结束，明细仍为执行中，系统自动标记失败", runConfig.updateBatchSize);
+            if (failedCount > 0) {
+                log.warn("已清理主任务结束后的ING明细，明细数量: {}", failedCount);
+            }
+            if (detailIds.size() < runConfig.detailLimit || failedCount <= 0) {
+                return;
+            }
+        }
+    }
+
+    private void markConfiguredStaleIngDetailsFailed(WatchdogRunConfig runConfig, CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        if (billBatchParamsDTO == null) {
+            return;
+        }
+        LocalDateTime staleBefore = LocalDateTime.now().minusSeconds(resolveSmallBagStaleDetailSeconds(billBatchParamsDTO));
+        for (WatchdogStaleDetailTaskType taskType : staleDetailCleanupTaskTypes()) {
+            for (int round = 0; round < runConfig.maxRounds; round++) {
+                List<String> detailIds = tmsAsyncTaskDetailService.listStaleIngDetailIdsByTaskType(
+                        taskType.businessType, taskType.methodType, staleBefore, runConfig.detailLimit);
+                if (CollUtil.isEmpty(detailIds)) {
+                    break;
+                }
+                int failedCount = markDetailsFailedInBatches(
+                        detailIds, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg(), runConfig.updateBatchSize);
+                if (failedCount > 0) {
+                    log.warn("已清理僵死ING明细，businessType: {}, methodType: {}, 明细数量: {}",
+                            taskType.businessType, taskType.methodType, failedCount);
+                }
+                if (detailIds.size() < runConfig.detailLimit || failedCount <= 0) {
+                    break;
                 }
             }
         }
     }
 
-    private void markFinishedTaskIngDetailsFailed() {
-        List<TmsAsyncTaskDetailEntity> ingDetails = tmsAsyncTaskDetailService.lambdaQuery()
-                .select(TmsAsyncTaskDetailEntity::getMainId)
-                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                .isNotNull(TmsAsyncTaskDetailEntity::getMainId)
-                .list();
-        if (CollUtil.isEmpty(ingDetails)) {
-            return;
+    private int markDetailsFailedInBatches(List<String> detailIds, String errorMsg, int batchSize) {
+        if (CollUtil.isEmpty(detailIds)) {
+            return 0;
         }
-        List<String> mainIds = ingDetails.stream()
-                .map(TmsAsyncTaskDetailEntity::getMainId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (CollUtil.isEmpty(mainIds)) {
-            return;
+        int failedCount = 0;
+        for (int i = 0; i < detailIds.size(); i += batchSize) {
+            List<String> batch = detailIds.subList(i, Math.min(i + batchSize, detailIds.size()));
+            failedCount += tmsAsyncTaskDetailService.markDetailsFailed(batch, errorMsg);
         }
-        Set<String> finishedMainIds = lambdaQuery()
-                .select(TmsAsyncTaskRecordEntity::getId)
-                .in(TmsAsyncTaskRecordEntity::getId, mainIds)
-                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
-                .list()
-                .stream()
-                .map(TmsAsyncTaskRecordEntity::getId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toSet());
-        if (CollUtil.isEmpty(finishedMainIds)) {
-            return;
-        }
-        List<String> detailIds = tmsAsyncTaskDetailService.lambdaQuery()
-                .select(TmsAsyncTaskDetailEntity::getId)
-                .in(TmsAsyncTaskDetailEntity::getMainId, finishedMainIds)
-                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                .list()
-                .stream()
-                .map(TmsAsyncTaskDetailEntity::getId)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
-        int failedCount = tmsAsyncTaskDetailService.markDetailsFailed(
-                detailIds, "主任务已结束，明细仍为执行中，系统自动标记失败");
-        if (failedCount > 0) {
-            log.warn("已清理主任务结束后的ING明细，mainIds数量: {}, 明细数量: {}", finishedMainIds.size(), failedCount);
+        return failedCount;
+    }
+
+    private WatchdogRunConfig resolveWatchdogRunConfig(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        int mainTaskLimit = boundedWatchdogValue(
+                billBatchParamsDTO == null ? null : billBatchParamsDTO.getWatchdogMainTaskLimit(),
+                DEFAULT_WATCHDOG_MAIN_TASK_LIMIT, MAX_WATCHDOG_MAIN_TASK_LIMIT);
+        int detailLimit = boundedWatchdogValue(
+                billBatchParamsDTO == null ? null : billBatchParamsDTO.getWatchdogDetailLimit(),
+                DEFAULT_WATCHDOG_DETAIL_LIMIT, MAX_WATCHDOG_DETAIL_LIMIT);
+        int updateBatchSize = boundedWatchdogValue(
+                billBatchParamsDTO == null ? null : billBatchParamsDTO.getWatchdogUpdateBatchSize(),
+                DEFAULT_WATCHDOG_UPDATE_BATCH_SIZE, MAX_WATCHDOG_UPDATE_BATCH_SIZE);
+        int maxRounds = boundedWatchdogValue(
+                billBatchParamsDTO == null ? null : billBatchParamsDTO.getWatchdogMaxRounds(),
+                DEFAULT_WATCHDOG_MAX_ROUNDS, MAX_WATCHDOG_MAX_ROUNDS);
+        return new WatchdogRunConfig(mainTaskLimit, detailLimit, updateBatchSize, maxRounds);
+    }
+
+    private int boundedWatchdogValue(String configuredValue, int defaultValue, int maxValue) {
+        int resolved = resolveBatchSize(configuredValue, defaultValue);
+        return Math.min(resolved, maxValue);
+    }
+
+    private List<WatchdogStaleDetailTaskType> staleDetailCleanupTaskTypes() {
+        String businessType = TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
+        return Arrays.asList(
+                new WatchdogStaleDetailTaskType(businessType, TmsAsyncTaskMethodTypeEnum.SELFDELIVER_PUSH_ALLOCATION.getCode()),
+                new WatchdogStaleDetailTaskType(businessType, TmsAsyncTaskMethodTypeEnum.LASTMILE_PUSH_ALLOCATION.getCode()),
+                new WatchdogStaleDetailTaskType(businessType, TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode())
+        );
+    }
+
+    private static class WatchdogRunConfig {
+        private final int mainTaskLimit;
+        private final int detailLimit;
+        private final int updateBatchSize;
+        private final int maxRounds;
+
+        private WatchdogRunConfig(int mainTaskLimit, int detailLimit, int updateBatchSize, int maxRounds) {
+            this.mainTaskLimit = mainTaskLimit;
+            this.detailLimit = detailLimit;
+            this.updateBatchSize = updateBatchSize;
+            this.maxRounds = maxRounds;
         }
     }
 
-    private void claimAndDispatch(TmsAsyncTaskRecordEntity entity) {
+    private static class WatchdogStaleDetailTaskType {
+        private final String businessType;
+        private final String methodType;
+
+        private WatchdogStaleDetailTaskType(String businessType, String methodType) {
+            this.businessType = businessType;
+            this.methodType = methodType;
+        }
+    }
+
+    /**
+     * 认领待执行任务并发送 MQ。
+     * <p>
+     * 手动即时派发失败时会抛出业务异常并透传给调用方；自动周期派发失败时回退为 PENDING。
+     *
+     * @param entity 待派发任务
+     * @param manualImmediate 是否为用户触发的即时派发
+     */
+    @Override
+    public void claimAndDispatch(TmsAsyncTaskRecordEntity entity, boolean manualImmediate) {
         String dataJson = entity.getDataJson();
         if (StringUtils.isBlank(dataJson) || Objects.equals(dataJson, "{}")) {
             selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "dataJson为空直接结束任务");
+            if (manualImmediate) {
+                throw new ServiceException("dataJson为空，无法派发任务");
+            }
             return;
         }
 
-        //消费者有回退机制
-        TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = JSONUtil.toBean(entity.getDataJson(), TmsAsyncTaskRecordDTO.PushParamsDTO.class);
-        taskDTO.setTaskId(entity.getId());
+        Object dispatchPayload = buildDispatchPayload(entity);
+        if (dispatchPayload == null) {
+            selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), "任务参数解析失败");
+            if (manualImmediate) {
+                throw new ServiceException("任务参数解析失败，无法派发任务");
+            }
+            return;
+        }
         LocalDateTime dispatchTime = LocalDateTime.now();
         boolean claimed = lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
@@ -923,30 +1271,86 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 .update();
         if (!claimed) {
             log.warn("异步任务已被其他调度认领，taskId: {}", entity.getId());
+            if (manualImmediate) {
+                throw new ServiceException("异步任务已被其他调度认领，无法重复派发");
+            }
             return;
         }
+        SendResult sendResult;
         try {
-            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, taskDTO, taskDTO.getTaskId());
-            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                log.error("消息发送结果失败：{}", JSONUtil.toJsonStr(sendResult));
-                lambdaUpdate()
-                        .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                        .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
-                        .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
-                        .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                        .update();
-            } else {
-                log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
-            }
+            sendResult = mQProducerService.syncClassMsg(
+                    RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC,
+                    RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG,
+                    dispatchPayload,
+                    entity.getId());
         } catch (Exception e) {
             log.error("消息发送异常，taskId: {}", entity.getId(), e);
-            lambdaUpdate()
-                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, StringUtils.substring(e.getMessage(), ERROR_START, ERROR_END))
-                    .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
-                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .update();
+            handleDispatchFailure(entity.getId(), StringUtils.substring(e.getMessage(), ERROR_START, ERROR_END), manualImmediate);
+            return;
         }
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONUtil.toJsonStr(sendResult));
+            handleDispatchFailure(entity.getId(), "MQ消息发送失败", manualImmediate);
+        } else {
+            log.info("MQ数据结果：{}", JSONUtil.toJsonStr(sendResult));
+        }
+    }
+
+    /**
+     * 构建实际发送到 MQ 的消息体。
+     * <p>
+     * 已迁移任务发送信封，未迁移任务继续发送 legacy PushParamsDTO，确保迁移期间两种路径可并存。
+     *
+     * @param entity 待派发任务
+     * @return MQ 消息体；解析失败时返回 null
+     */
+    private Object buildDispatchPayload(TmsAsyncTaskRecordEntity entity) {
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = parseEnvelope(entity.getDataJson());
+        if (envelope != null) {
+            envelope.setTaskId(entity.getId());
+            if (StringUtils.isBlank(envelope.getBusinessType())) {
+                envelope.setBusinessType(entity.getBusinessType());
+            }
+            if (StringUtils.isBlank(envelope.getMethodType())) {
+                envelope.setMethodType(entity.getMethodType());
+            }
+            return envelope;
+        }
+        TmsAsyncTaskRecordDTO.PushParamsDTO taskDTO = parsePushParams(entity.getDataJson());
+        if (taskDTO == null) {
+            return null;
+        }
+        taskDTO.setTaskId(entity.getId());
+        if (StringUtils.isBlank(taskDTO.getBusinessType())) {
+            taskDTO.setBusinessType(entity.getBusinessType());
+        }
+        if (StringUtils.isBlank(taskDTO.getMethodType())) {
+            taskDTO.setMethodType(entity.getMethodType());
+        }
+        return taskDTO;
+    }
+
+    /**
+     * 处理 MQ 派发失败。
+     * <p>
+     * 手动即时派发需要把失败透传给调用方；自动周期派发则回退为 PENDING，等待后续调度重试。
+     *
+     * @param taskId 任务 ID
+     * @param errorMsg 失败原因
+     * @param manualImmediate 是否为用户触发的即时派发
+     */
+    private void handleDispatchFailure(String taskId, String errorMsg, boolean manualImmediate) {
+        String finalErrorMsg = StringUtils.defaultString(errorMsg, "MQ消息发送失败");
+        if (manualImmediate) {
+            selfServer.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), finalErrorMsg);
+            throw new ServiceException(finalErrorMsg);
+        }
+        lambdaUpdate()
+                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
+                .set(TmsAsyncTaskRecordEntity::getErrorData, finalErrorMsg)
+                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                .update();
     }
 
 
@@ -1088,14 +1492,11 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             return;
         }
         // 同一小包分摊业务下按费用类型拆分任务，便于任务列表和重试按 methodType 区分。
-        TmsAsyncTaskRecordDTO.PushParamsDTO pushDTO = new TmsAsyncTaskRecordDTO.PushParamsDTO();
-        pushDTO.setStartTime(startTime);
-        pushDTO.setEndTime(endTime);
-        pushDTO.setBusinessType(businessType);
-        pushDTO.setReportDate(reportDate);
-        pushDTO.setType(type);
-        pushDTO.setMethodType(methodType);
-        String jsonStr = JSONUtil.toJsonStr(pushDTO);
+        TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(null, reportDate, type, null, null);
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope =
+                buildEnvelope(null, businessType, methodType, null, null, payload);
+        String jsonStr = JSONUtil.toJsonStr(envelope, TASK_DATA_JSON_CONFIG);
         selfServer.addAutoTask(new TmsAsyncTaskRecordDTO.AutoCreateDTO(businessType, methodType, jsonStr, startTimeStr));
     }
 

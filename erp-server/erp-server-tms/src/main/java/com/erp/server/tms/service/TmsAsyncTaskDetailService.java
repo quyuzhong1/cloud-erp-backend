@@ -3,6 +3,7 @@ import com.erp.model.tms.entity.TmsAsyncTaskDetailEntity;
 import com.common.business.service.SuperService;
 
 import java.util.Collection;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -75,4 +76,14 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
      * @return 实际标记为失败的明细数量
      */
     int markUnfinishedBatchDetailsFailed(List<TmsAsyncTaskDetailEntity> taskDetailList, String errorMsg);
+
+    /**
+     * 限量查询已完成主任务下仍为 ING 的明细 ID。
+     */
+    List<String> listOrphanIngDetailIds(int limit);
+
+    /**
+     * 限量查询指定任务类型下已超过执行窗口的 ING 明细 ID。
+     */
+    List<String> listStaleIngDetailIdsByTaskType(String businessType, String methodType, LocalDateTime staleBefore, int limit);
 }

@@ -31,4 +31,13 @@ public class AsyncTaskJob {
         asyncTaskRecordService.startTask();
         return ReturnT.SUCCESS;
     }
+
+    /**
+     * 异步任务 watchdog，负责超时和孤儿明细清理。
+     */
+    @XxlJob("TmsAsyncTaskWatchdogJob")
+    public ReturnT<String> TmsAsyncTaskWatchdogJob() {
+        asyncTaskRecordService.watchdogTask();
+        return ReturnT.SUCCESS;
+    }
 }

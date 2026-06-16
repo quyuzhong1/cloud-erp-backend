@@ -12,7 +12,6 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -2928,8 +2927,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException("没有可下推分摊的数据");
         }
 
-        //新建一个任务
-        String jsonStr = JSONUtil.toJsonStr(dto);
+        //新建一个任务：小包下推使用信封 + 业务载荷，避免 PushParamsDTO 继续承载业务私有字段。
+        TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+            new TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO(
+                dto.getIds(), dto.getReportDate(), dto.getType(), dto.getSqlMap(), dto.getPermissionSql());
+        TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.buildEnvelope(
+            null, businessType, methodType, null, null, payload);
+        String jsonStr = JSONUtil.toJsonStr(envelope);
         if(StringUtils.isBlank(businessType)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
@@ -2940,35 +2944,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(Objects.isNull(taskRecord)){
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
-        String taskId = taskRecord.getId();
-        dto.setTaskId(taskId);
-        boolean claimed = asyncTaskRecordService.lambdaUpdate()
-            .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-            .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
-            .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-            .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-            .update();
-        BatchResultDTO claimResult = asyncTaskRecordService.resolveDispatchClaimOrThrow(taskId, claimed, taskRecord.getCode(), jsonStr);
-        if (claimResult != null) {
-            return;
-        }
-
-        try {
-            // 发送MQ消息，触发异步消费（不再一次性生成所有任务明细）
-            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, dto, taskId);
-            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
-                //失败则直接设置为完成
-                asyncTaskRecordService.finishTaskWithError(taskId,"MQ消息发送失败");
-                throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, "MQ消息发送失败");
-            }
-            log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
-        } catch (Exception e) {
-            //若是手动下推发送mq异常，则直接置为完成，用户再主动下推
-            log.error("MQ消息发送异常，taskId: {}", taskId, e);
-            asyncTaskRecordService.finishTaskWithError(taskId,asyncTaskRecordService.formatTaskErrorMessage(e));
-            throw e;
-        }
+        asyncTaskRecordService.claimAndDispatch(taskRecord, true);
+        log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskRecord.getId(), totalCount);
     }
 
     private String resolveSmallBagPushAllocationMethodType(String type) {
@@ -3014,6 +2991,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 log.warn("小包分摊异步任务已完成，跳过重复消费，taskId: {}", taskId);
                 return;
             }
+            TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope = asyncTaskRecordService.parseEnvelope(taskRecord.getDataJson());
+            TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO payload =
+                asyncTaskRecordService.parseEnvelopePayloadOrFinishTask(
+                    taskId, envelope, TmsAsyncTaskRecordDTO.SmallBagPushAllocationPayloadDTO.class, "小包分摊异步任务信封参数解析失败");
+            if (envelope == null || payload == null) {
+                return;
+            }
+            dto.setBusinessType(StringUtils.isBlank(envelope.getBusinessType()) ? taskRecord.getBusinessType() : envelope.getBusinessType());
+            dto.setMethodType(StringUtils.isBlank(envelope.getMethodType()) ? taskRecord.getMethodType() : envelope.getMethodType());
+            dto.setRetryMode(envelope.getRetryMode());
+            dto.setRetrySourceTaskId(envelope.getRetrySourceTaskId());
+            dto.setOperatorUserId(envelope.getOperatorUserId());
+            dto.setOperatorUserName(envelope.getOperatorUserName());
+            dto.setIds(payload.getIds());
+            dto.setReportDate(payload.getReportDate());
+            dto.setType(payload.getType());
+            dto.setSqlMap(payload.getSqlMap());
+            dto.setPermissionSql(payload.getPermissionSql());
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
@@ -3041,8 +3036,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             int totalFailed = 0;
             int batchNumber = 0;
             LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext = buildSmallBagPushAllocationContext();
-            LocalDateTime taskStartTime = taskRecord.getStartTime();
-            int taskExecTimeout = asyncTaskRecordService.resolveTaskExecTimeout(billBatchParamsDTO);
 
             log.info("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -3055,13 +3048,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                }
-
-                if (taskExecTimeout > 0 && taskStartTime != null) {
-                    long elapsedSeconds = java.time.Duration.between(taskStartTime, LocalDateTime.now()).getSeconds();
-                    if (elapsedSeconds > taskExecTimeout) {
-                        log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
-                        asyncTaskRecordService.terminateTaskTimeout(taskId, "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(currentTask, billBatchParamsDTO)) {
                         break;
                     }
                 }
@@ -4028,8 +4015,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             int totalSuccess = 0;
             int totalFailed = 0;
             int batchNumber = 0;
-            LocalDateTime taskStartTime = taskRecord.getStartTime();
-            Integer taskExecTimeout = taskRecord.getExecTimeout();
 
             log.info("开始分批处理{}对账状态变更任务，taskId: {}, 批次大小: {}, 预计总数: {}", costTypeName, taskId, batchSize, taskRecord.getDetailCount());
             while (true) {
@@ -4039,14 +4024,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                    taskExecTimeout = currentTask.getExecTimeout();
-                }
-                if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
-                    long elapsedSeconds = java.time.Duration.between(taskStartTime, LocalDateTime.now()).getSeconds();
-                    if (elapsedSeconds > taskExecTimeout) {
-                        log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
-                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                                "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                    if (asyncTaskRecordService.terminateTaskIfExecTimeoutReached(currentTask, billBatchParamsDTO)) {
                         break;
                     }
                 }

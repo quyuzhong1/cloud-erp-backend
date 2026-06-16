@@ -101,6 +101,45 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
     BatchResultDTO resolveDispatchClaimOrThrow(String taskId, boolean claimed, String taskCode, String errorPayload);
 
     /**
+     * 构建业务载荷类型，默认使用 businessType:methodType 约定。
+     */
+    String buildPayloadType(String businessType, String methodType);
+
+    /**
+     * 构建 TMS 异步任务信封。
+     */
+    TmsAsyncTaskRecordDTO.TaskEnvelopeDTO buildEnvelope(String taskId, String businessType, String methodType,
+                                                        String retryMode, String retrySourceTaskId, Object payload);
+
+    /**
+     * 解析任务信封；非信封 JSON 返回 null。
+     */
+    TmsAsyncTaskRecordDTO.TaskEnvelopeDTO parseEnvelope(String dataJson);
+
+    /**
+     * 解析信封中的业务载荷。
+     */
+    <T> T parseEnvelopePayload(TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope, Class<T> payloadClass);
+
+    /**
+     * 解析信封业务载荷；解析失败时按给定原因结束任务。
+     *
+     * @param taskId 任务 ID
+     * @param envelope 任务信封
+     * @param payloadClass 业务载荷类型
+     * @param errorMsg 解析失败时写入主任务的失败原因
+     * @param <T> 业务载荷泛型
+     * @return 业务载荷；解析失败时返回 null
+     */
+    <T> T parseEnvelopePayloadOrFinishTask(String taskId, TmsAsyncTaskRecordDTO.TaskEnvelopeDTO envelope,
+                                           Class<T> payloadClass, String errorMsg);
+
+    /**
+     * 认领待执行任务并派发 MQ。
+     */
+    void claimAndDispatch(TmsAsyncTaskRecordEntity entity, boolean manualImmediate);
+
+    /**
      * 解析异步任务执行业务时的操作人：优先 PushParams 显式操作人，错误重试时追溯源任务创建人，否则取当前任务创建人。
      */
     LoginUser resolveOperatorLoginUser(TmsAsyncTaskRecordEntity taskRecord, TmsAsyncTaskRecordDTO.PushParamsDTO pushParams);
@@ -109,6 +148,18 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * 分批循环内检查任务是否应终止（记录消失或已完成）
      */
     boolean shouldStopLoopTask(String taskId, TmsAsyncTaskRecordEntity currentTask);
+
+    /**
+     * 分批循环内检查主任务是否已超过执行超时时间。
+     * <p>
+     * 若任务已超时，该方法会调用统一超时终止流程并返回 true，业务循环应立即停止。
+     *
+     * @param currentTask 当前主任务记录
+     * @param billBatchParamsDTO 批次配置，用于任务未写入 execTimeout 时兜底解析
+     * @return true 表示已触发超时终止，调用方应停止后续批次处理
+     */
+    boolean terminateTaskIfExecTimeoutReached(TmsAsyncTaskRecordEntity currentTask,
+                                              CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
 
     void terminateTaskTimeout(String taskId, String errorMsg);
 
@@ -130,6 +181,13 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
     BatchResultDTO errorRetry(TmsAsyncTaskRecordEntity entity);
 
+    /**
+     * 创建失败明细重试任务。
+     * <p>
+     * 该方法仅负责数据库事务内的任务创建和源任务标记，MQ 派发由调用方在事务提交后执行。
+     */
+    TmsAsyncTaskRecordEntity createFailedOnlyRetryTask(TmsAsyncTaskRecordEntity entity);
+
     Boolean isExist(String businessType, String methodType, String startTimeStr);
 
     void updateTaskDetailFailure(String taskDetailId, Exception e);
@@ -141,4 +199,9 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
 
 
     void genAutoTask();
+
+    /**
+     * 异步任务 watchdog：负责超时和孤儿明细清理。
+     */
+    void watchdogTask();
 }
