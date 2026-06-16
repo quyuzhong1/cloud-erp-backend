@@ -136,12 +136,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("tax_rate")
     private BigDecimal taxRate;
     /**
-    * 订单总金额
+    * 实付总额（订单付款总额）：平台推送的折后付款金额
     */
     @TableField("pay_amount")
     private BigDecimal payAmount;
     /**
-    * 商品总售价
+    * 订单总额（折前）：商品总售价汇总
     */
     @TableField("all_amount")
     private BigDecimal allAmount = BigDecimal.ZERO;
@@ -226,7 +226,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
     /**
-     * 总优惠金额
+     * 订单折扣总额
      */
     @TableField("total_discount")
     private BigDecimal totalDiscount = BigDecimal.ZERO;

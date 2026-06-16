@@ -34,7 +34,7 @@ public class PlatformB2bOrderDTO {
     private String receiveAddress;
 
     /**
-     * 订单金额
+     * 订单总额：折前含税销售总额，平台推送优先
      */
     private BigDecimal orderAmount;
 
@@ -69,7 +69,7 @@ public class PlatformB2bOrderDTO {
     private String customerCode;
 
     /**
-     * 折扣总额
+     * 订单折扣总额，平台推送优先
      */
     private BigDecimal discountAmount;
 

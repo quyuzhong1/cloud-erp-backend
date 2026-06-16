@@ -147,12 +147,12 @@ public class DmpSoInfoDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
-        * 订单总金额
+        * 实付总额（订单付款总额）：平台推送的折后付款金额
         */
         private BigDecimal payAmount;
 
         /**
-        * 商品总售价
+        * 订单总额（折前）：商品总售价汇总
         */
         private BigDecimal allAmount;
 
@@ -382,14 +382,14 @@ public class DmpSoInfoDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
-        * 订单总金额
+        * 实付总额（订单付款总额）：平台推送的折后付款金额
         */
         @NotNull(message = "订单总金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "订单总金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal payAmount;
 
         /**
-        * 商品总售价
+        * 订单总额（折前）：商品总售价汇总
         */
         @NotNull(message = "商品总售价不能为空")
         @Digits(integer = 12, fraction = 4, message = "商品总售价整数位不能超过12位，小数位不能超过4位")

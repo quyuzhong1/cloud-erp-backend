@@ -773,7 +773,7 @@ public class SoDetailDTO implements Serializable {
         private LocalDate BillDate;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         private BigDecimal discountAmount;
 

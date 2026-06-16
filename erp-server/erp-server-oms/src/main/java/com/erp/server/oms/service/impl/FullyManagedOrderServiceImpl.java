@@ -802,6 +802,8 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             //清除订单维度数据
             resultDTO.setShippingCost(BigDecimal.ZERO);
             resultDTO.setAmount(BigDecimal.ZERO);
+            resultDTO.setPaidAmount(BigDecimal.ZERO);
+            resultDTO.setTotalDiscount(BigDecimal.ZERO);
             resultDTO.setEstimatedShippingCost(BigDecimal.ZERO);
             resultDTO.setActualShippingCost(BigDecimal.ZERO);
             resultDTO.setLength(BigDecimal.ZERO);
@@ -816,6 +818,9 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             //清除bom拆分数据
             resultDTO.setTaxCost(BigDecimal.ZERO);
             resultDTO.setSourceAmount(BigDecimal.ZERO);
+            resultDTO.setSaleAmount(BigDecimal.ZERO);
+            resultDTO.setDetailPaidAmount(BigDecimal.ZERO);
+            resultDTO.setDiscountAmount(BigDecimal.ZERO);
             resultDTO.setBaseAmount(BigDecimal.ZERO);
             resultDTO.setQty(MathUtil.ZERO);
         }else if (CharSequenceUtil.isNotBlank(code) && CharSequenceUtil.isNotBlank(parentSkuId)){

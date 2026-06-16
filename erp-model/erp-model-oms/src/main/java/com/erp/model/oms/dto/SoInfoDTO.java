@@ -134,12 +134,12 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal creditDeductAmount;
 
         /**
-         * 订单总额
+         * 订单总额：折前含税销售总额，平台推送优先
          */
         private BigDecimal orderAmount;
 
         /**
-         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值【可排序】
+         * 实付总额（订单付款总额）：应收金额 = 订单总额 - 订单折扣总额；sum(明细.实付金额)，平台已推送时直接取平台值【可排序】
          */
         private BigDecimal paidAmount;
 
@@ -577,7 +577,7 @@ public class SoInfoDTO implements Serializable {
         private String receiveAccountName;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         private BigDecimal discountAmount;
 
@@ -915,12 +915,12 @@ public class SoInfoDTO implements Serializable {
         private String thirdSystem;
 
         /**
-         * 订单总额
+         * 订单总额：折前含税销售总额，平台推送优先
          */
         private BigDecimal orderAmount;
 
         /**
-         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额（订单付款总额）：应收金额 = 订单总额 - 订单折扣总额；sum(明细.实付金额)，平台已推送时直接取平台值
          */
         private BigDecimal paidAmount;
 
@@ -1105,7 +1105,7 @@ public class SoInfoDTO implements Serializable {
         private List<SoDetailDTO.AddDTO> detailList;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;
@@ -1227,12 +1227,12 @@ public class SoInfoDTO implements Serializable {
         private String virtualWarehouseName;
 
         /**
-         * 订单总额
+         * 订单总额：折前含税销售总额，平台推送优先
          */
         private BigDecimal orderAmount;
 
         /**
-         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额（订单付款总额）：应收金额 = 订单总额 - 订单折扣总额；sum(明细.实付金额)，平台已推送时直接取平台值
          */
         private BigDecimal paidAmount;
 
@@ -1492,7 +1492,7 @@ public class SoInfoDTO implements Serializable {
         private String sellerName;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         private BigDecimal discountAmount;
 
@@ -1788,12 +1788,12 @@ public class SoInfoDTO implements Serializable {
         private String orderType;
 
         /**
-         * 订单总额
+         * 订单总额：折前含税销售总额，平台推送优先
          */
         private BigDecimal orderAmount;
 
         /**
-         * 实付总额：sum(明细.实付金额)，平台已推送时直接取平台值
+         * 实付总额（订单付款总额）：应收金额 = 订单总额 - 订单折扣总额；sum(明细.实付金额)，平台已推送时直接取平台值
          */
         private BigDecimal paidAmount;
         /**
@@ -1997,7 +1997,7 @@ public class SoInfoDTO implements Serializable {
         private List<SoDetailDTO.UpdateDTO> detailList;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;
@@ -2061,7 +2061,7 @@ public class SoInfoDTO implements Serializable {
         private String orderType;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         private BigDecimal discountAmount;
 
@@ -2941,7 +2941,7 @@ public class SoInfoDTO implements Serializable {
         private LocalDate billDate;
 
         /**
-         * 折扣总额
+         * 订单折扣总额
          */
         @DecimalMin(value = "0.00", message = "折扣总额不能小于0")
         private BigDecimal discountAmount;

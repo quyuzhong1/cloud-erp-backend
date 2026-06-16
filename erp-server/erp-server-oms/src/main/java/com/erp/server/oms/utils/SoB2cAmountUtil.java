@@ -15,13 +15,13 @@ import java.util.List;
  *
  * <p>统一处理：
  * <ul>
- *   <li>主表 paid_amount = amount - total_discount（实付总额）</li>
+ *   <li>主表 paid_amount = amount - total_discount（实付总额/订单付款总额）</li>
  *   <li>明细 sale_amount = price × qty（销售金额，折前）</li>
  *   <li>明细 paid_amount = sale_amount / main.amount × main.paid_amount，最后一行吃精度差</li>
  *   <li>明细 discount_amount = sale_amount - paid_amount</li>
  * </ul>
  *
- * <p>主表 totalDiscount 落库口径：sum(明细.discountAmount)；平台未推送主表折扣时同样按明细汇总回填。
+ * <p>主表 totalDiscount（订单折扣总额）落库口径：sum(明细.discountAmount)；平台未推送主表折扣时同样按明细汇总回填。
  * 调用后明细的 saleAmount/paidAmount/discountAmount 与主表 paidAmount/totalDiscount 都会被覆盖写入。
  */
 public final class SoB2cAmountUtil {
@@ -32,7 +32,7 @@ public final class SoB2cAmountUtil {
     }
 
     /**
-     * 忽略入参中的实付总额。
+     * 忽略入参中的实付总额（订单付款总额）。
      */
     public static void ignoreRequestMainPaidAmount(SoB2cEntity main) {
         if (main != null) {
@@ -41,7 +41,7 @@ public final class SoB2cAmountUtil {
     }
 
     /**
-     * 忽略入参中的折扣总额（手工新增/编辑不落库入参值，明细保存后按明细折扣汇总）。
+     * 忽略入参中的订单折扣总额（手工新增/编辑不落库入参值，明细保存后按明细折扣汇总）。
      */
     public static void ignoreRequestMainTotalDiscount(SoB2cEntity main) {
         if (main != null) {

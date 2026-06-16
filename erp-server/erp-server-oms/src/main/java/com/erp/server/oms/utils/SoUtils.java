@@ -97,14 +97,14 @@ public class SoUtils {
     }
 
     /**
-     * 计算折扣额信息等
+     * B2B 销售订单：按主表订单折扣总额分摊至明细折扣额，并重算价税合计/实付金额。
      *
-     * @param discountAmount
-     * @param saveOrUpdateList
+     * @param discountAmount  订单折扣总额
+     * @param saveOrUpdateList 销售明细
      * @param isTax            是否含税
      */
     public static void handleDetailAmount(Boolean isTax, BigDecimal discountAmount, List<SoDetailEntity> saveOrUpdateList) {
-        // 折扣总额
+        // 订单折扣总额
         discountAmount = Objects.nonNull(discountAmount) ? discountAmount : BigDecimal.ZERO;
         // 总的价税合计（折前）
         BigDecimal totalTaxAmountBefore = BigDecimal.ZERO;

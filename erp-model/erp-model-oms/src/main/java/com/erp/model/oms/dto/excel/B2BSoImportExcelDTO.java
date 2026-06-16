@@ -179,7 +179,7 @@ public class B2BSoImportExcelDTO {
 
 
     /**
-     * 折扣总额
+     * 订单折扣总额
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "折扣总额", index = 18)
@@ -262,7 +262,7 @@ public class B2BSoImportExcelDTO {
 
 
     /**
-     * 订单金额
+     * 订单总额：折前含税销售总额
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "订单金额", index = 28)
