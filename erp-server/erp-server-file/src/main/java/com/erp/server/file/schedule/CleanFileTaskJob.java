@@ -260,6 +260,8 @@ public class CleanFileTaskJob {
      * <p>临时文件名为 {@code exportTmp_{id}_{safeName}_{timestamp}_{uuid}.xlsx}（见 {@link com.erp.server.file.entity.FileTask#getUniqueWithFileName()} 与
      * {@link ExportTempFilesHandler#createTempPath}），取 {@code exportTmp_} 后第一个 {@code _} 之前的一段作为 taskId，与处理中 ID 集合做精确匹配，
      * 避免 {@code startsWith("exportTmp_{id}_")} 在 ID 存在前缀包含关系时误判（如 "12" 与 "123"）。
+     * <p>不变量：依赖主键为 {@code IdType.ASSIGN_ID} 的纯数字雪花串（不含下划线），故首段恰为 taskId；
+     * 若主键改为含 {@code _} 的自定义 id，须同步改造本方法与 {@link ExportTempFilesHandler#createTempPath} 的解析。
      */
     private boolean isProcessingTempFile(Path path, Set<String> processingTaskIds) {
         if (CollUtil.isEmpty(processingTaskIds)) {

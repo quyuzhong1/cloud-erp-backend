@@ -39,6 +39,11 @@ public final class ExportTempFilesHandler {
      * 统一使用 {@link FastDFSClientUtil#streamUploadFile} 流式上传（失败抛 {@code ServiceException}），
      * 避免整文件读入内存导致大文件 OOM，也避免上传失败被静默写入空 url。各导出基类务必复用本方法，
      * 不要各自再写一份上传逻辑，以防上传方式再次分叉。
+     * <p>
+     * 异常归口：仅 {@link IOException}（写出/上传的底层 IO 错误）在此包装为带「导出上传失败」文案的 {@code ServiceException} 并打 error 日志；
+     * {@code writer.write} 与 {@code streamUploadFile} 抛出的 {@code ServiceException}/{@code RuntimeException} <strong>原样向上传播</strong>，
+     * 因其已携带精确业务文案（如「键集导出数据缺失」「数据量超模板上限」），二次包装反而会掩盖原始语义。
+     * 故告警若要统一检索「导出-上传」失败，应同时匹配本方法的「导出上传失败」与上层全局异常处理记录的业务异常，而非仅依赖本方法日志。
      *
      * @param fileTask    导出任务，方法内回填 {@code count} 与 {@code fileUrl}
      * @param suffix      临时文件后缀，如 {@code ".xlsx"}
@@ -67,6 +72,8 @@ public final class ExportTempFilesHandler {
         Files.createDirectories(dir);
         // 在确定性段（id_文件名_时间戳）后追加随机后缀，避免同一任务毫秒级重复调度时临时文件互相覆盖。
         // 命名形如 exportTmp_{id}_{...}_{uuid}.xlsx；CleanFileTaskJob 仍取 exportTmp_ 后第一段为 taskId。
+        // 不变量：taskId 段解析依赖主键 id 为 IdType.ASSIGN_ID 生成的纯数字雪花串（不含下划线），
+        // 故 exportTmp_ 后第一个 '_' 恰为 id 与文件名的边界；若将来主键改为含 '_' 的自定义 id，须同步改造此处与 isProcessingTempFile。
         String name = EXPORT_TMP_PREFIX
                 .concat(sanitizeFileName(fileName))
                 .concat("_")
