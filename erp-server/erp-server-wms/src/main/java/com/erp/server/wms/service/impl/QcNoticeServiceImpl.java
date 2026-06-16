@@ -394,14 +394,26 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        List<FindUserDTO> userInfoList = CollUtil.isEmpty(qcUserIds)
-                ? Collections.emptyList()
-                : sysUserFeign.getUserListByUserIds(qcUserIds);
-        Map<String, String> qcUserNameMap = CollUtil.isEmpty(userInfoList)
-                ? Collections.emptyMap()
-                : userInfoList.stream()
-                        .filter(u -> u != null && StrUtil.isNotBlank(u.getUserId()))
-                        .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (a, b) -> a));
+        Map<String, String> qcUserNameMap;
+        try {
+            List<FindUserDTO> userInfoList = CollUtil.isEmpty(qcUserIds)
+                    ? Collections.emptyList()
+                    : sysUserFeign.getUserListByUserIds(qcUserIds);
+            qcUserNameMap = CollUtil.isEmpty(userInfoList)
+                    ? Collections.emptyMap()
+                    : userInfoList.stream()
+                            .filter(u -> u != null && StrUtil.isNotBlank(u.getUserId()))
+                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (a, b) -> a));
+        } catch (Exception e) {
+            log.warn("批量查询质检员失败, qcUserIds={}", qcUserIds, e);
+            String errMsg = e instanceof ServiceException
+                    ? ((ServiceException) e).getMsg()
+                    : ApiError.HTTP_UNKNOWN.getMsg();
+            for (QcNoticeDetailEntity detail : validDetails) {
+                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), errMsg));
+            }
+            return resultList;
+        }
 
         List<QcNoticeDetailEntity> resolvedValidDetails = new ArrayList<>(validDetails.size());
         Map<String, QcNoticeDTO.UpdateQcUserDTO> resolvedValidItemMap = new HashMap<>(validDetails.size());
