@@ -20,7 +20,6 @@ public enum ServiceCodeNameEnum implements EnumMessage {
 	SYS("sys","系统"),
     TMS("tms","物流系统"),
     WMS("wms","仓储系统"),
-    MRP("mrp","智能补货系统"),
     FMS("fms","资产管理系统"),
     FILE("file","文件系统"),
     WORKFLOW("workflow","工作流系统"),
