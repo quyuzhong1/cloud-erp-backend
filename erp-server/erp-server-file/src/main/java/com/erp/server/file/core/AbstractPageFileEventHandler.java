@@ -123,7 +123,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * {@code WHERE id > ? ORDER BY id LIMIT ?}。
      */
     protected KeysetPagingVO<T> fetchKeyset(P params, Long lastIdExclusive, int limit) {
-        throw new UnsupportedOperationException("启用键集导出时请重写 fetchKeyset(Object,Long,int)");
+        throw new ServiceException("启用键集导出时请重写 fetchKeyset(params, lastIdExclusive, limit)");
     }
 
     /**
