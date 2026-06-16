@@ -46,6 +46,12 @@ public class FileRegistry {
      */
     private static final int MAX_SHEET_NUM_UPPER = 200;
 
+    /**
+     * 模板展开足迹上界的硬顶（2GB）。该值本身是 OOM 安全阀、允许运维按机器内存调高，
+     * 故仅设很宽松的硬顶以挡住 {@code Long.MAX_VALUE} 等荒谬误配（否则保护形同虚设），不限制正常调优区间。
+     */
+    private static final long MAX_TEMPLATE_EXPAND_BYTES_UPPER = 2L * 1024 * 1024 * 1024;
+
     private final Map<String, FileService> handlers = new HashMap<>();
 
     @Resource
@@ -121,7 +127,8 @@ public class FileRegistry {
 
     @Value("${file.storage.maxTemplateExpandBytes:314572800}")
     public void setMaxTemplateExpandBytes(Long maxTemplateExpandBytes){
-        FileRegistry.maxTemplateExpandBytes = maxTemplateExpandBytes;
+        FileRegistry.maxTemplateExpandBytes = clampUpperLong("file.storage.maxTemplateExpandBytes",
+                maxTemplateExpandBytes, MAX_TEMPLATE_EXPAND_BYTES_UPPER);
     }
 
     @Value("${file.storage.dynamicExportPageSize:1000}")
@@ -136,6 +143,17 @@ public class FileRegistry {
      * {@code value} 为 null 时直接透传，由 {@code *OrDefault()} 兜底默认值。
      */
     private static Integer clampUpper(String key, Integer value, int upper) {
+        if (value != null && value > upper) {
+            log.warn("配置 {}={} 超过上限 {}，已 clamp 到上限以保护内存与超时", key, value, upper);
+            return upper;
+        }
+        return value;
+    }
+
+    /**
+     * {@code long} 版上界保护，语义同 {@link #clampUpper(String, Integer, int)}，用于 {@code maxTemplateExpandBytes} 等 long 配置。
+     */
+    private static Long clampUpperLong(String key, Long value, long upper) {
         if (value != null && value > upper) {
             log.warn("配置 {}={} 超过上限 {}，已 clamp 到上限以保护内存与超时", key, value, upper);
             return upper;

@@ -465,6 +465,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                     if (next == null) {
                         throw new ServiceException("键集导出无法推导下一游标，请在 KeysetPagingVO 中设置 nextCursorId 或重写 extractSortId");
                     }
+                    // 游标必须严格单调递增：上游若返回不前进/回退的游标（hasNext 恒真、重复返回同批等），
+                    // 仅靠下方 cap 上限会在写满后才失败；此处提前以明确异常拦截，避免无谓的重复拉取与写入。
+                    if (lastId != null && next <= lastId) {
+                        throw new ServiceException("键集导出游标未前进（lastId=" + lastId + "，next=" + next
+                                + "），疑似上游键集分页实现异常或数据并发变更，请排查上游键集接口。");
+                    }
                     lastId = next;
                     clearBatchIfDetachedCopy(batch, rawList);
                     if (!vo.isHasNext()) {
