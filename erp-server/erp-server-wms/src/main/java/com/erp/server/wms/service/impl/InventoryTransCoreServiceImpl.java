@@ -347,15 +347,16 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
-                // 调用方显式指定库存状态时仅覆盖「调入端（TARGET）」，对应业务语义：
-                // 物理位置仍按调拨方向（如在途仓→目的仓），但调入仓库的库存分类切换为
-                // 指定状态（如 wego 海外仓签收为不良品 → 目的仓落 DEFECTIVE_PRODUCT）。
-                // 调出端（CURRENT）必须保持原规则状态（如 USABLE），否则会从调出仓的
-                // 不良品库存中扣减，但调出仓只有 USABLE 库存，导致「库存不足」报错。
+                // 调用方可分别覆盖两端库存状态：调入端（TARGET）取 dictInventoryStatus，
+                // 调出端（CURRENT）取 curInventoryStatus；两者均为非空才覆盖，否则回落交易
+                // 规则配置，保证历史调用链路行为不变。
+                // 业务语义：物理位置仍按调拨方向（如在途仓→目的仓），但各端的库存分类可按
+                // 单据明细指定切换（如 wego 海外仓签收为不良品 → 目的仓落 DEFECTIVE_PRODUCT，
+                // 或直接调拨单明细指定从冻结/不良品库存桶调出）。
+                // 注意：覆盖端必须有对应分类的物理库存，否则会触发「库存不足」报错。
                 boolean isTargetSide = rule.getWarehouseOption() == InventoryWarehouseOptionEnum.WAREHOUSE_TARGET;
-                InventoryStatusEnum effectiveStatus = (isTargetSide && flow.getDictInventoryStatus() != null)
-                        ? flow.getDictInventoryStatus()
-                        : rule.getInventoryStatus();
+                InventoryStatusEnum overrideStatus = isTargetSide ? flow.getDictInventoryStatus() : flow.getCurInventoryStatus();
+                InventoryStatusEnum effectiveStatus = overrideStatus != null ? overrideStatus : rule.getInventoryStatus();
                 stockBaseDTO.setInventoryStatus(effectiveStatus);
                 if(rule.getWarehouseOption()==InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT){
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getCurWarehouseId()));

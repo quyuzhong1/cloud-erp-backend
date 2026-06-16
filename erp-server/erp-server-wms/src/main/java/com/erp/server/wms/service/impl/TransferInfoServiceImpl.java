@@ -496,6 +496,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //可用数量
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
         for (TransferInfoDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
+            //库存状态名称（可用/冻结/不良品）
+            viewDetailDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getOutInventoryStatus()));
+            viewDetailDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getInInventoryStatus()));
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
                 SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(new SkuVO());
@@ -1528,6 +1531,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.WH_TRANSFER_DIRECT_DETAIL_NOT_FOUND);
         }
         List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
+        //库存状态名称（可用/冻结/不良品）
+        viewDetailList.forEach(viewDetailDTO -> {
+            viewDetailDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getOutInventoryStatus()));
+            viewDetailDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getInInventoryStatus()));
+        });
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         return viewDTO;
@@ -1594,94 +1602,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     /**
-     * 解析海外仓签收下推的明细对应的库存状态覆盖值。
-     * <p>
-     * 业务背景：海外仓 wego 平台返回入库流水时，会带 {@code defectiveProductFlag} 不良品标记。
-     * 该标记已经写入 {@link OverseasWarehouseInboundReceivedEntity#getDefectiveProductFlag()}。
-     * 在调拨单审核扣库时，本方法把不良品签收对应的明细标记为
-     * {@link InventoryStatusEnum#DEFECTIVE_PRODUCT}，让 {@code transaction_flow.dict_inventory_status}
-     * 落「不良品」，进而把目的仓的即时库存累加到不良品分类下。
-     * <p>
-     * 命中条件（同时满足才覆盖）：
-     * <ol>
-     *   <li>调拨单 {@code source_type} 为 {@link SourceTypeEnum#OVERSEAS_INBOUND}；</li>
-     *   <li>对应海外仓入库主表 {@code dict_platform} 为 {@link OmsPlatformEnum#WE_GO} —
-     *       其他平台目前未约定这个语义，按可用品处理；</li>
-     *   <li>对应签收记录 {@code defective_product_flag = true}；</li>
-     *   <li>调拨方向为「正向（在途仓 → 目的仓）」，即 {@code detail.inWarehouseId == mainEntity.toWarehouseId}。
-     *       负数签收回滚（目的仓 → 在途仓）场景下不覆盖，避免在反向时把目的仓
-     *       本不存在的 USABLE 库存被错误扣减；该边缘场景如需对账由业务侧人工处理。</li>
-     * </ol>
-     *
-     * @return detailId → 覆盖后的库存状态（仅作用于调入端 TARGET）。
-     *         命中条件之外的 detail 不会出现在返回 map 中，调用方据此判定「是否覆盖」，
-     *         避免误伤其他场景。
-     */
-    private Map<String, InventoryStatusEnum> resolveOverseasInboundInventoryStatus(List<TransferInfoEntity> list, List<TransferInfoDetailEntity> detailList) {
-        if (CollectionUtils.isEmpty(list) || CollectionUtils.isEmpty(detailList)) {
-            return Collections.emptyMap();
-        }
-        // 1. 收集 source_type=OVERSEAS_INBOUND 的调拨单 ID（mainEntity.id）和源单据 ID（mainEntity.sourceId 即 海外仓入库单 id）
-        Map<String, TransferInfoEntity> overseasInboundTransferMap = list.stream()
-                .filter(e -> SourceTypeEnum.OVERSEAS_INBOUND.getCode().equals(e.getSourceType()))
-                .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceId()))
-                .collect(Collectors.toMap(TransferInfoEntity::getId, Function.identity(), (a, b) -> a));
-        if (overseasInboundTransferMap.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        // 2. 仅保留属于海外仓签收下推调拨单的明细
-        List<TransferInfoDetailEntity> overseasDetails = detailList.stream()
-                .filter(d -> overseasInboundTransferMap.containsKey(d.getMainId()))
-                .filter(d -> CharSequenceUtil.isNotBlank(d.getSourceDetailId()))
-                .collect(Collectors.toList());
-        if (overseasDetails.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        // 3. 反查海外仓入库主表，过滤出 dict_platform=wego 的入库单
-        Set<String> overseasInboundIds = overseasInboundTransferMap.values().stream()
-                .map(TransferInfoEntity::getSourceId)
-                .collect(Collectors.toSet());
-        List<OverseasWarehouseInboundEntity> mainEntities = overseasWarehouseInboundService.listByIds(overseasInboundIds);
-        // 主表 id → toWarehouseId（目的仓 id），用于判定调拨方向
-        Map<String, String> wegoInboundToWarehouseIdMap = mainEntities.stream()
-                .filter(e -> OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(e.getDictPlatform()))
-                .collect(Collectors.toMap(BaseEntity::getId,
-                        OverseasWarehouseInboundEntity::getToWarehouseId,
-                        (a, b) -> a));
-        if (wegoInboundToWarehouseIdMap.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        // 4. 仅保留 wego 入库单对应的、且为「正向调拨（调入仓=目的仓）」的调拨明细
-        List<TransferInfoDetailEntity> wegoForwardDetails = overseasDetails.stream()
-                .filter(d -> {
-                    TransferInfoEntity transfer = overseasInboundTransferMap.get(d.getMainId());
-                    String toWarehouseId = wegoInboundToWarehouseIdMap.get(transfer.getSourceId());
-                    return CharSequenceUtil.isNotBlank(toWarehouseId)
-                            && CharSequenceUtil.equals(toWarehouseId, d.getInWarehouseId());
-                })
-                .collect(Collectors.toList());
-        if (wegoForwardDetails.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        // 5. 按 sourceDetailId 反查签收记录，构造 detailId → DEFECTIVE_PRODUCT 映射
-        Set<String> receivedIds = wegoForwardDetails.stream()
-                .map(TransferInfoDetailEntity::getSourceDetailId)
-                .collect(Collectors.toSet());
-        List<OverseasWarehouseInboundReceivedEntity> receivedList = overseasWarehouseInboundReceivedService.listByIds(receivedIds);
-        Map<String, Boolean> defectiveFlagMap = receivedList.stream()
-                .collect(Collectors.toMap(BaseEntity::getId,
-                        r -> Boolean.TRUE.equals(r.getDefectiveProductFlag()),
-                        (a, b) -> a));
-        Map<String, InventoryStatusEnum> result = new HashMap<>();
-        for (TransferInfoDetailEntity detail : wegoForwardDetails) {
-            if (Boolean.TRUE.equals(defectiveFlagMap.get(detail.getSourceDetailId()))) {
-                result.put(detail.getId(), InventoryStatusEnum.DEFECTIVE_PRODUCT);
-            }
-        }
-        return result;
-    }
-
-    /**
      * @description:更新库存
      * @author Will
      * @date: 2023/5/15 15:19
@@ -1691,11 +1611,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(list) || CollectionUtils.isEmpty(detailList)) {
             return;
         }
-
-        // 海外仓签收下推：按 detail.sourceDetailId（即 overseas_warehouse_inbound_received.id）
-        // 反查签收记录拿不良品标记，仅当主表 dict_platform=wego 且 defective_product_flag=true 时
-        // 才把 transferDTO 的 dictInventoryStatus 标记为「不良品」，落到 transaction_flow。
-        Map<String, InventoryStatusEnum> overseasInboundDetailStatusMap = resolveOverseasInboundInventoryStatus(list, detailList);
 
         List<TransferDTO>  addTransferList = new ArrayList<>();
         List<TransferDTO>  pushTransferList = new ArrayList<>();
@@ -1732,10 +1647,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSkuId(detailEntity.getSkuId());
             transferDTO.setSkuNo(detailEntity.getSkuNo());
             transferDTO.setQty(detailEntity.getQty());
-            // 海外仓 wego 不良品签收：覆盖默认规则的 USABLE，落 DEFECTIVE_PRODUCT 库存状态
-            InventoryStatusEnum overrideStatus = overseasInboundDetailStatusMap.get(detailEntity.getId());
-            if (overrideStatus != null) {
-                transferDTO.setDictInventoryStatus(overrideStatus);
+            // 库存状态由明细列驱动（DB 默认 usable，仅非可用才覆盖交易规则，保证历史链路行为不变）：
+            // 调出库存状态(out_inventory_status) → 调出端(CURRENT)；
+            // 调入库存状态(in_inventory_status) → 调入端(TARGET)，wego 海外仓不良品签收已在创建时落库。
+            InventoryStatusEnum outStatus = InventoryStatusEnum.getByCode(detailEntity.getOutInventoryStatus());
+            if (outStatus != null && outStatus != InventoryStatusEnum.USABLE) {
+                transferDTO.setCurInventoryStatus(outStatus);
+            }
+            InventoryStatusEnum inStatus = InventoryStatusEnum.getByCode(detailEntity.getInInventoryStatus());
+            if (inStatus != null && inStatus != InventoryStatusEnum.USABLE) {
+                transferDTO.setDictInventoryStatus(inStatus);
             }
             if (SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
                 pushTransferList.add(transferDTO);
@@ -1925,6 +1846,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            //库存状态名称（可用/冻结/不良品）
+            obj.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(obj.getOutInventoryStatus()));
+            obj.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(obj.getInInventoryStatus()));
             String approveUserName = curApproveUserNameMap.get(obj.getId());
             if(CharSequenceUtil.isNotBlank(approveUserName)){
                 obj.setApproveUserName(approveUserName);
@@ -2073,13 +1997,18 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         List<TransferInfoDTO.PdaListDTO> records = pageData.getRecords();
         //主键id
-        List<String> ids = records.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> ids = records.stream().map(TransferInfoDTO.PdaListDTO::getId).collect(Collectors.toList());
         //查询详情
         List<TransferInfoDetailEntity> transferInfoDetailEntities = transferInfoDetailService.listByMainIds(ids);
         for (TransferInfoDTO.PdaListDTO record : records) {
             record.setApproveStatusName(ApproveStatusEnum.getName(record.getApproveStatus()));
             List<TransferInfoDetailEntity> detailEntities = transferInfoDetailEntities.stream().filter(obj -> obj.getMainId().equals(record.getId())).collect(Collectors.toList());
             List<TransferInfoDTO.PdaItemDTO> itemDTOList = BeanMapper.copyList(detailEntities, TransferInfoDTO.PdaItemDTO.class);
+            itemDTOList.forEach(viewDetailDTO -> {
+                //库存状态名称（可用/冻结/不良品）
+                viewDetailDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getOutInventoryStatus()));
+                viewDetailDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(viewDetailDTO.getInInventoryStatus()));
+            });
             record.setDetailCount(itemDTOList.size());
             record.setItemList(itemDTOList);
         }
@@ -2180,6 +2109,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(receivedEntity.getId());
             detailAddDto.setRemark(mainEntity.getCode());
+            // 库存状态：调出端固定可用（在途仓/目的仓的可用库存）；
+            // 调入端仅 wego 平台正向签收(在途仓→目的仓)且不良品标记时落不良品，其余默认可用。
+            boolean isDefective = OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
+                    && Boolean.FALSE.equals(isToOnwayWarehouse)
+                    && Boolean.TRUE.equals(receivedEntity.getDefectiveProductFlag());
+            detailAddDto.setOutInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            detailAddDto.setInInventoryStatus(isDefective
+                    ? InventoryStatusEnum.DEFECTIVE_PRODUCT.getCode()
+                    : InventoryStatusEnum.USABLE.getCode());
             detailAddDtoList.add(detailAddDto);
         }
 
