@@ -77,7 +77,9 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
      */
     void prepareImportMainLocked(String lockKey, LogisticsReconDTO.ImportDTO dto,
                                  CfgLogisticsCostImportEntity importCfg,
-                                 Map<String, String> mainIdMap, Map<String, Boolean> reimportUpdateMap);
+                                 Map<String, String> mainIdMap, Map<String, Boolean> reimportUpdateMap,
+                                 Map<String, String> logisticsSupplierNameMap,
+                                 Map<String, String> salesPlatformNameMap);
 
     /**
      * 物流商对账单异步导入任务执行
