@@ -464,8 +464,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			return;
 		}
 
-		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
+		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -662,8 +662,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			return;
 		}
 
-		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
+		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;
@@ -859,8 +859,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			return;
 		}
 
-		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
-			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getTransferTimeoutSeconds(), 5000);
+		int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+			int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
 			String lastId = "";
 			int totalProcessed = 0;
 			int totalSuccess = 0;

@@ -1393,7 +1393,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (Objects.isNull(billBatchParamsDTO)) {
             return;
         }
-        int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getTransferBatch(), 500);
+        int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
         int timeoutSeconds = Objects.nonNull(tmsAsyncTaskRecordEntity.getExecTimeout()) ? tmsAsyncTaskRecordEntity.getExecTimeout() : 3600;
         String cursor = "";
         int totalProcessed = 0;

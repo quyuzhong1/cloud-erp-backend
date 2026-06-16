@@ -2885,7 +2885,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (Objects.isNull(billBatchParamsDTO)) {
             return;
         }
-        int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getFirstMileBatch(), 500);
+        int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
         int timeoutSeconds = Objects.nonNull(tmsAsyncTaskRecordEntity.getExecTimeout()) ? tmsAsyncTaskRecordEntity.getExecTimeout() : 3600;
         String cursor = "";
         int totalProcessed = 0;

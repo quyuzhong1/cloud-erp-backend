@@ -2200,8 +2200,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return;
             }
 
-            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getFirstMileBatch(), 500);
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getFirstMileTimeoutSeconds(), 5000);
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
             String lastId = "";
             int totalProcessed = 0;
             int totalSuccess = 0;
@@ -2459,8 +2459,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return;
             }
 
-            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getFirstMileBatch(), 500);
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getFirstMileTimeoutSeconds(), 5000);
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
             String lastId = "";
             int totalProcessed = 0;
             int totalSuccess = 0;
@@ -2658,8 +2658,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return;
             }
 
-            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getFirstMileBatch(), 500);
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getFirstMileTimeoutSeconds(), 5000);
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
             String lastId = "";
             int totalProcessed = 0;
             int totalSuccess = 0;
@@ -2901,8 +2901,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return;
             }
 
-            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getFirstMileBatch(), 500);
-            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getFirstMileTimeoutSeconds(), 5000);
+            int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
+            int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
             String lastId = "";
 
             int totalProcessed = 0;
