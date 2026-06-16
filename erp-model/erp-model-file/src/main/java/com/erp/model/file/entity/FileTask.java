@@ -1,4 +1,4 @@
-package com.erp.server.file.entity;
+package com.erp.model.file.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.FileTaskEventEnum;

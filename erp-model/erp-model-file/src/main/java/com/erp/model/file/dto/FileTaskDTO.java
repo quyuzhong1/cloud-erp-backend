@@ -1,4 +1,4 @@
-package com.erp.server.file.dto;
+package com.erp.model.file.dto;
 
 import com.common.business.enums.FileTaskEventEnum;
 import lombok.AllArgsConstructor;

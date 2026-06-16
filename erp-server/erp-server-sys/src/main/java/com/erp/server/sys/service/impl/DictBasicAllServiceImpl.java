@@ -81,7 +81,6 @@ public class DictBasicAllServiceImpl implements DictBasicAllService {
 		srmTmsMrpMap.put("value", "code");
 		systemCodeDiffFieldMap.put(SystemCodeEnum.SRM.getCode(), srmTmsMrpMap);
 		systemCodeDiffFieldMap.put(SystemCodeEnum.TMS.getCode(), srmTmsMrpMap);
-		systemCodeDiffFieldMap.put(SystemCodeEnum.MRP.getCode(), srmTmsMrpMap);
 	}
 	
     @Transactional(rollbackFor = Exception.class)

@@ -6,7 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;

@@ -1,4 +1,4 @@
-package com.erp.server.file.dto;
+package com.erp.model.file.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;

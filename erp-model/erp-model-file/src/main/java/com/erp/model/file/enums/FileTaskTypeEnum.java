@@ -1,4 +1,4 @@
-package com.erp.server.file.enums;
+package com.erp.model.file.enums;
 
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
