@@ -1477,103 +1477,49 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         LocalDateTime confirmTime = CharSequenceUtil.isBlank(excelDTO.getConfirmTimeStr()) ? LocalDateTime.now() : LocalDateUtil.stringToLocalDateTime(excelDTO.getConfirmTimeStr());
 
         if (CollUtil.isNotEmpty(logisticsBillVoList)) {
-            Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = Collections.emptyMap();
-            if (logisticsBillVoList.size() > 1) {
-                // 同一识别分组对应多张物流单时，按上游出库重量拆分已汇总费用，避免要求用户人工拆成多行。
-                Map<String, BigDecimal> weightMap = buildOrderWeightMap(logisticsBillVoList, errorMsgList, orderWeightMap, orderWeightErrorMap);
-                if (CollectionUtils.isEmpty(errorMsgList)) {
-                    allocatedCostMap = allocateCostDetailMap(updateList, logisticsBillVoList, weightMap, errorMsgList);
-                }
-            }
-            if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                return importDataDTO;
-            }
             List<LogisticsBillCostDTO.AddDTO> addBillCostList = new ArrayList<>();
             List<TmsCostDetailDTO.AddDTO> addCfgCostList = new ArrayList<>();
             List<LogisticsBillCostDTO.UpdateDTO> updateBillCostList = new ArrayList<>();
             List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList = new ArrayList<>();
             String lastImportType = "";
-            String lastBillCostType = "";
-            for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : logisticsBillVoList) {
-                logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
-                applyImportLogisticsSupplierId(excelDTO, costImportEntity, Collections.singletonList(logisticsBillVo));
-                // 单物流单沿用已汇总费用，多物流单使用按重量分摊后的费用项。
-                List<TmsCostDetailDTO.UpdateDTO> currentUpdateList = logisticsBillVoList.size() > 1
-                        ? allocatedCostMap.getOrDefault(logisticsBillVo.getDetailId(), Collections.emptyList())
-                        : updateList;
-                // 返回 import_update/import_add_old，用于匹配费用单与落库分支；与 selfDeliver/lastMile 费用归属无关。
-                String thisImportType = checkCostImportData(excelDTO, logisticsBillCostList, logisticsBillVo, costImportEntity, errorMsgList);
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+            // 按识别单号：同一识别号可跨物流商命中多张单，分摊与落库须按费用状态二次筛选，不能与 identify_no_supplier 共用整组分摊逻辑。
+            if (!shouldFilterByCostImportPlatform(costImportEntity)) {
+                List<LogisticsBillDTO.LogisticsBillVo> updateBillList = new ArrayList<>();
+                List<LogisticsBillDTO.LogisticsBillVo> addOldBillList = new ArrayList<>();
+                splitIdentifyNoProcessBills(logisticsBillVoList, logisticsBillCostList, excelDTO.getPayType(),
+                        importDTO.getReconciliationMonth(), costImportEntity, updateBillList, addOldBillList);
+                if (CollUtil.isEmpty(updateBillList) && CollUtil.isEmpty(addOldBillList)) {
+                    errorMsgList.add("未找到可更新的待确认费用单或可新增的已确认费用单");
                     return importDataDTO;
                 }
-                if (CharSequenceUtil.isNotBlank(lastImportType) && !CharSequenceUtil.equals(lastImportType, thisImportType)) {
-                    errorMsgList.add("同一识别单号分组匹配到的多张物流单导入类型不一致，无法合并处理");
-                    return importDataDTO;
-                }
-                lastImportType = thisImportType;
-                LogisticsBillCostEntity logisticsBillCostEntity = findMatchedLogisticsBillCost(logisticsBillCostList, logisticsBillVo, excelDTO.getPayType(), thisImportType);
-                if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
-                    errorMsgList.add("未找到对应物流费用单");
-                    return importDataDTO;
-                }
-                if (CharSequenceUtil.isNotBlank(lastBillCostType) && !CharSequenceUtil.equals(lastBillCostType, logisticsBillCostEntity.getType())) {
-                    errorMsgList.add("同一识别单号分组匹配到的多张物流单费用类型不一致，无法合并处理");
-                    return importDataDTO;
-                }
-                lastBillCostType = logisticsBillCostEntity.getType();
-                String billCostType = logisticsBillCostEntity.getType();
-                if (!CharSequenceUtil.equals(billCostType, DictCostAttributionEnum.SELF_DELIVER.getCode())
-                        && !CharSequenceUtil.equals(billCostType, DictCostAttributionEnum.LAST_MILE.getCode())) {
-                    errorMsgList.add(CharSequenceUtil.format("不支持的物流费用类型【{}】，仅支持自发货或尾程",
-                            CharSequenceUtil.blankToDefault(DictCostAttributionEnum.getName(billCostType), billCostType)));
-                    return importDataDTO;
-                }
-                String rowSourceType = CharSequenceUtil.equals(billCostType, DictCostAttributionEnum.SELF_DELIVER.getCode())
-                        ? SourceTypeEnum.LOGISTICS_BILL_COST.getCode()
-                        : SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode();
-                currentUpdateList.forEach(dto -> dto.setSourceType(rowSourceType));
-
-                //校验分类币别
-                checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, mainIdListMap, errorMsgList);
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                    return importDataDTO;
-                }
-
-                // confirmImport 时校验合并导入明细后的实际金额合计，正式导入不触发
-                appendImportConfirmAmountError(importDTO, logisticsBillCostEntity.getId(), currentUpdateList, mainIdListMap, errorMsgList);
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                    return importDataDTO;
-                }
-
-                //预处理直接跳过落库数据构造，但保留上面的匹配和校验。
-                if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(), importDTO.getProcessingType())) {
-                    continue;
-                }
-
-                //数据格式化
-                LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(confirmTime, logisticsBillCostEntity.getLogisticsBillId(), logisticsBillCostEntity.getId(), logisticsBillCostEntity.getLogisticsBillDetailId(), excelDTO,
-                        importDTO, currentUpdateList, errorMsgList, cfgCostList);
-                //有错误信息直接跳过不暂处理
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                    return importDataDTO;
-                }
-
-                if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(thisImportType)) {
-                    LogisticsBillCostDTO.ImportDataDTO addDataDTO = new LogisticsBillCostDTO.ImportDataDTO();
-                    addDataDTO.setConfirmTime(confirmTime);
-                    List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO, currentUpdateList);
-                    getLogisticsBillCostAddData(addDataDTO, logisticsBillCostEntity, dtoList, rowSourceType);
-                    List<LogisticsBillCostDTO.AddDTO> currentAddBillCostList = addDataDTO.getAddBillCostList();
-                    if (CollUtil.isNotEmpty(currentAddBillCostList)) {
-                        addBillCostList.addAll(currentAddBillCostList);
+                // 待确认批次：允许多单按重量分摊；按原单新增批次：整行金额落每张单，不参与分摊。
+                if (CollUtil.isNotEmpty(updateBillList)) {
+                    lastImportType = processImportBillVoGroup(updateBillList, true, updateList, confirmTime, excelDTO, importDTO,
+                            costImportEntity, logisticsBillCostList, cfgCostList, errorMsgList, mainIdListMap, orderWeightMap,
+                            orderWeightErrorMap, addBillCostList, addCfgCostList, updateBillCostList, updateCfgCostList);
+                    if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                        return importDataDTO;
                     }
-                    addCfgCostList.addAll(ObjectUtil.defaultIfNull(addDataDTO.getAddCfgCostList(), Collections.emptyList()));
-                } else {
-                    updateDataDTO.setId(logisticsBillCostEntity.getId());
-                    updateBillCostList.add(updateDataDTO);
-                    //费用项id赋值
-                    currentUpdateList.forEach(obj -> obj.setMainId(updateDataDTO.getId()));
-                    updateCfgCostList.addAll(currentUpdateList);
+                }
+                if (CollUtil.isNotEmpty(addOldBillList)) {
+                    String addOldImportType = processImportBillVoGroup(addOldBillList, false, updateList, confirmTime, excelDTO, importDTO,
+                            costImportEntity, logisticsBillCostList, cfgCostList, errorMsgList, mainIdListMap, orderWeightMap,
+                            orderWeightErrorMap, addBillCostList, addCfgCostList, updateBillCostList, updateCfgCostList);
+                    if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                        return importDataDTO;
+                    }
+                    // 仅存在按原单新增时，importType 取 ADD_OLD；与更新并存时保留 UPDATE（落库走 add/update 列表，不依赖单一 importType）。
+                    if (CharSequenceUtil.isBlank(lastImportType)) {
+                        lastImportType = addOldImportType;
+                    }
+                }
+            } else {
+                // 按识别单号+物流商：命中范围已收窄，沿用整组分摊与单循环处理。
+                lastImportType = processImportBillVoGroup(logisticsBillVoList, logisticsBillVoList.size() > 1, updateList, confirmTime, excelDTO, importDTO,
+                        costImportEntity, logisticsBillCostList, cfgCostList, errorMsgList, mainIdListMap, orderWeightMap,
+                        orderWeightErrorMap, addBillCostList, addCfgCostList, updateBillCostList, updateCfgCostList);
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    return importDataDTO;
                 }
             }
             importDataDTO.setConfirmTime(confirmTime);
@@ -1584,6 +1530,116 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             importDataDTO.setUpdateCfgCostList(updateCfgCostList);
         }
         return importDataDTO;
+    }
+
+    /**
+     * 按物流单子集处理导入：匹配费用单、校验并构造落库数据。
+     * <p>{@code allowAllocate=true} 且子集多于 1 条时按出库重量分摊行内汇总金额；
+     * 为 false 或仅 1 条时整行金额原样落到每张单（用于按原单跨月新增）。</p>
+     * <p>自发货与尾程可在同一子集内并存，各单按自身费用单 type 设置 sourceType，不再要求同组费用归属一致。</p>
+     */
+    private String processImportBillVoGroup(List<LogisticsBillDTO.LogisticsBillVo> billGroup,
+                                            boolean allowAllocate,
+                                            List<TmsCostDetailDTO.UpdateDTO> updateList,
+                                            LocalDateTime confirmTime,
+                                            ImportHistoryRecordExcelDTO excelDTO,
+                                            ImportHistoryRecordDTO.ImportSyncDTO importDTO,
+                                            CfgLogisticsCostImportEntity costImportEntity,
+                                            List<LogisticsBillCostEntity> logisticsBillCostList,
+                                            List<TmsCfgCostEntity> cfgCostList,
+                                            List<String> errorMsgList,
+                                            Map<String, List<TmsCostDetailEntity>> mainIdListMap,
+                                            Map<String, BigDecimal> orderWeightMap,
+                                            Map<String, List<String>> orderWeightErrorMap,
+                                            List<LogisticsBillCostDTO.AddDTO> addBillCostList,
+                                            List<TmsCostDetailDTO.AddDTO> addCfgCostList,
+                                            List<LogisticsBillCostDTO.UpdateDTO> updateBillCostList,
+                                            List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList) {
+        Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = Collections.emptyMap();
+        if (allowAllocate && billGroup.size() > 1) {
+            Map<String, BigDecimal> weightMap = buildOrderWeightMap(billGroup, errorMsgList, orderWeightMap, orderWeightErrorMap);
+            if (CollectionUtils.isEmpty(errorMsgList)) {
+                allocatedCostMap = allocateCostDetailMap(updateList, billGroup, weightMap, errorMsgList);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(errorMsgList)) {
+            return "";
+        }
+        String lastImportType = "";
+        for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : billGroup) {
+            logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
+            applyImportLogisticsSupplierId(excelDTO, costImportEntity, Collections.singletonList(logisticsBillVo));
+            // 单条待确认不分摊；多条且 allowAllocate 时使用分摊结果，避免把整行金额重复计入每张单。
+            List<TmsCostDetailDTO.UpdateDTO> currentUpdateList = allowAllocate && billGroup.size() > 1
+                    ? allocatedCostMap.getOrDefault(logisticsBillVo.getDetailId(), Collections.emptyList())
+                    : updateList;
+            String thisImportType = checkCostImportData(excelDTO, logisticsBillCostList, logisticsBillVo, costImportEntity, errorMsgList);
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                return lastImportType;
+            }
+            if (CharSequenceUtil.isNotBlank(lastImportType) && !CharSequenceUtil.equals(lastImportType, thisImportType)) {
+                errorMsgList.add("同一识别单号分组匹配到的多张物流单导入类型不一致，无法合并处理");
+                return lastImportType;
+            }
+            lastImportType = thisImportType;
+            LogisticsBillCostEntity logisticsBillCostEntity = findMatchedLogisticsBillCost(logisticsBillCostList, logisticsBillVo,
+                    excelDTO.getPayType(), thisImportType, costImportEntity);
+            if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
+                errorMsgList.add("未找到对应物流费用单");
+                return lastImportType;
+            }
+            String billCostType = logisticsBillCostEntity.getType();
+            if (!CharSequenceUtil.equals(billCostType, DictCostAttributionEnum.SELF_DELIVER.getCode())
+                    && !CharSequenceUtil.equals(billCostType, DictCostAttributionEnum.LAST_MILE.getCode())) {
+                errorMsgList.add(CharSequenceUtil.format("不支持的物流费用类型【{}】，仅支持自发货或尾程",
+                        CharSequenceUtil.blankToDefault(DictCostAttributionEnum.getName(billCostType), billCostType)));
+                return lastImportType;
+            }
+            // 每张单独立取归属（自发货/尾程），同识别分组内允许混合，不再强制整组同一 type。
+            String rowSourceType = CharSequenceUtil.equals(billCostType, DictCostAttributionEnum.SELF_DELIVER.getCode())
+                    ? SourceTypeEnum.LOGISTICS_BILL_COST.getCode()
+                    : SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode();
+            currentUpdateList.forEach(dto -> dto.setSourceType(rowSourceType));
+
+            checkCategoryCurrency(currentUpdateList, logisticsBillCostEntity, cfgCostList, mainIdListMap, errorMsgList);
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                return lastImportType;
+            }
+
+            appendImportConfirmAmountError(importDTO, logisticsBillCostEntity.getId(), currentUpdateList, mainIdListMap, errorMsgList);
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                return lastImportType;
+            }
+
+            if (CharSequenceUtil.equals(ImportHistoryRecordProcessingTypeEnum.PRE_PROCESSING.getCode(), importDTO.getProcessingType())) {
+                continue;
+            }
+
+            LogisticsBillCostDTO.UpdateDTO updateDataDTO = handleLogisticsBillCostImportData(confirmTime, logisticsBillCostEntity.getLogisticsBillId(),
+                    logisticsBillCostEntity.getId(), logisticsBillCostEntity.getLogisticsBillDetailId(), excelDTO,
+                    importDTO, currentUpdateList, errorMsgList, cfgCostList);
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                return lastImportType;
+            }
+
+            if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(thisImportType)) {
+                LogisticsBillCostDTO.ImportDataDTO addDataDTO = new LogisticsBillCostDTO.ImportDataDTO();
+                addDataDTO.setConfirmTime(confirmTime);
+                List<LogisticsBillCostDTO.AddDataDTO> dtoList = buildAddDTO(updateDataDTO, currentUpdateList);
+                getLogisticsBillCostAddData(addDataDTO, logisticsBillCostEntity, dtoList, rowSourceType);
+                List<LogisticsBillCostDTO.AddDTO> currentAddBillCostList = addDataDTO.getAddBillCostList();
+                if (CollUtil.isNotEmpty(currentAddBillCostList)) {
+                    addBillCostList.addAll(currentAddBillCostList);
+                }
+                addCfgCostList.addAll(ObjectUtil.defaultIfNull(addDataDTO.getAddCfgCostList(), Collections.emptyList()));
+            } else {
+                updateDataDTO.setId(logisticsBillCostEntity.getId());
+                updateBillCostList.add(updateDataDTO);
+                currentUpdateList.forEach(obj -> obj.setMainId(updateDataDTO.getId()));
+                updateCfgCostList.addAll(currentUpdateList);
+            }
+        }
+        return lastImportType;
     }
 
     /**
@@ -1621,6 +1677,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     /**
      * 是否按配置平台（物流商/销售平台）收窄物流单匹配范围。
+     * identify_no 为 false：分组阶段可跨物流商命中，费用分摊与落库在 handleImportData 内再按状态筛选。
      */
     private boolean shouldFilterByCostImportPlatform(CfgLogisticsCostImportEntity costImportEntity) {
         String identifyType = costImportEntity.getIdentifyType();
@@ -1665,10 +1722,37 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
     }
 
+    /**
+     * 按物流单明细、付款类型与导入处理类型，从预加载费用单列表中定位本次落库目标费用单。
+     * <p>与 {@link #checkCostImportData} 判定的 importType 配合使用，返回值用于后续校验与 add/update 分支。</p>
+     * <p>匹配规则：</p>
+     * <ul>
+     *   <li>{@code import_update} + 按识别单号（identify_no）：仅待确认，不含暂估确认，避免跨物流商合并时误更新不可分摊状态的单</li>
+     *   <li>{@code import_update} + 按识别单号+物流商：待确认，或暂估确认且对账状态为待生成（未下推分摊）</li>
+     *   <li>{@code import_add_old}：优先匹配上述可更新单；若无则放宽为同明细任意费用单，作为按原单新增的模板单</li>
+     * </ul>
+     *
+     * @param logisticsBillCostList 预加载的物流费用单列表
+     * @param logisticsBillVo       当前处理的物流单
+     * @param payType               导入行付款类型
+     * @param importType            导入处理类型（import_update / import_add_old）
+     * @param costImportEntity      费用项导入配置，用于区分 identify_no 与 identify_no_supplier 匹配分支
+     * @return 匹配到的费用单；无匹配时返回 {@code null}
+     */
     private LogisticsBillCostEntity findMatchedLogisticsBillCost(List<LogisticsBillCostEntity> logisticsBillCostList,
                                                                 LogisticsBillDTO.LogisticsBillVo logisticsBillVo,
                                                                 String payType,
-                                                                String importType) {
+                                                                String importType,
+                                                                CfgLogisticsCostImportEntity costImportEntity) {
+        if (CfgLogisticsCostImportImportTypeEnum.IMPORT_UPDATE.getCode().equals(importType)
+                && !shouldFilterByCostImportPlatform(costImportEntity)) {
+            // 按识别单号更新只动待确认单；暂估确认等状态在跨物流商合并场景下不参与分摊更新。
+            return logisticsBillCostList.stream()
+                    .filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(), logisticsBillVo.getDetailId())
+                            && CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
+                            && CharSequenceUtil.equals(obj.getPayType(), payType))
+                    .findFirst().orElse(null);
+        }
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getLogisticsBillDetailId(), logisticsBillVo.getDetailId())
                                 && (CharSequenceUtil.equals(obj.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())
@@ -1683,6 +1767,55 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     .findFirst().orElse(null);
         }
         return logisticsBillCostEntity;
+    }
+
+    /**
+     * 按识别单号维度：从分组命中的物流单中拆出两批落库对象。
+     * <ul>
+     *   <li>分组内存在待确认 + 同付款类型：仅待确认进更新批次（可参与重量分摊），已确认（当月/跨月）均不处理</li>
+     *   <li>分组内无待确认、且配置含 import_add_old：已确认 + 同付款类型进按原单新增批次，同月/跨月由下游 checkCostImportData 校验</li>
+     * </ul>
+     */
+    private void splitIdentifyNoProcessBills(List<LogisticsBillDTO.LogisticsBillVo> matchedBillList,
+                                             List<LogisticsBillCostEntity> logisticsBillCostList,
+                                             String payType,
+                                             String importReconciliationMonth,
+                                             CfgLogisticsCostImportEntity costImportEntity,
+                                             List<LogisticsBillDTO.LogisticsBillVo> updateBillList,
+                                             List<LogisticsBillDTO.LogisticsBillVo> addOldBillList) {
+        boolean allowAddOld = costImportEntity.getImportType()
+                .contains(CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode());
+        boolean groupHasToBeConfirm = matchedBillList.stream().anyMatch(billVo -> logisticsBillCostList.stream()
+                .anyMatch(cost -> CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                        && CharSequenceUtil.equals(cost.getPayType(), payType)
+                        && CharSequenceUtil.equals(cost.getReconciliationStatus(),
+                                ReconciliationStatusEnum.TO_BE_CONFIRM.getCode())));
+        if (groupHasToBeConfirm) {
+            for (LogisticsBillDTO.LogisticsBillVo billVo : matchedBillList) {
+                boolean hasToBeConfirm = logisticsBillCostList.stream().anyMatch(cost ->
+                        CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                                && CharSequenceUtil.equals(cost.getPayType(), payType)
+                                && CharSequenceUtil.equals(cost.getReconciliationStatus(),
+                                        ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
+                if (hasToBeConfirm) {
+                    updateBillList.add(billVo);
+                }
+            }
+            return;
+        }
+        if (!allowAddOld) {
+            return;
+        }
+        for (LogisticsBillDTO.LogisticsBillVo billVo : matchedBillList) {
+            boolean hasConfirmed = logisticsBillCostList.stream().anyMatch(cost ->
+                    CharSequenceUtil.equals(cost.getLogisticsBillDetailId(), billVo.getDetailId())
+                            && CharSequenceUtil.equals(cost.getPayType(), payType)
+                            && CharSequenceUtil.equals(cost.getReconciliationStatus(),
+                                    ReconciliationStatusEnum.CONFIRMED.getCode()));
+            if (hasConfirmed) {
+                addOldBillList.add(billVo);
+            }
+        }
     }
 
     /**
