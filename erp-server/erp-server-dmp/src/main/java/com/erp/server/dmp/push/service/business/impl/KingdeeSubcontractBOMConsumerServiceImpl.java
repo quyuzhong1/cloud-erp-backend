@@ -270,27 +270,33 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
             for (SubcontractOrderDetailEntity parentDetail : parentList) {
                 SupplierEntity supplier = supplierMap.get(parentDetail.getSupplierId());
                 ProductDetailEntity productDetail = productMap.get(parentDetail.getSkuId());
+                if (Objects.isNull(supplier) || Objects.isNull(productDetail)) {
+                    log.warn("委外用料清单转换时未命中供应商或产品，parentDetailId={}, supplierId={}, skuId={}",
+                            parentDetail.getId(), parentDetail.getSupplierId(), parentDetail.getSkuId());
+                    if (Objects.isNull(supplier)) {
+                        throw new ServiceException(ApiError.SUPPLIER_NOT_FOUND);
+                    }
+                    throw new ServiceException(ApiError.PRODUCT_SKU_NOT_FOUND, parentDetail.getSkuNo());
+                }
                 //委外用料清单单头供应商,sku,数量相等,测试返回的id不一样，所以用名称
-                if (Objects.nonNull(supplier) && Objects.nonNull(productDetail)) {
-                    JSONObject materialId = view.getJSONObject("MaterialID");
-                    String skuNo = materialId.get("Number").toString();
+                JSONObject materialId = view.getJSONObject("MaterialID");
+                String skuNo = materialId.get("Number").toString();
 
-                    JSONObject supplierId = view.getJSONObject("SupplierId");
-                    JSONArray valueArray = supplierId.getJSONArray("Name");
-                    JSONObject firstElement = valueArray.getJSONObject(0);
-                    String supplierName = firstElement.get("Value").toString();
+                JSONObject supplierId = view.getJSONObject("SupplierId");
+                JSONArray valueArray = supplierId.getJSONArray("Name");
+                JSONObject firstElement = valueArray.getJSONObject(0);
+                String supplierName = firstElement.get("Value").toString();
 
-                    Integer kingdeeQty = parseKingdeeQtyInt(view.get("Qty"));
+                Integer kingdeeQty = parseKingdeeQtyInt(view.get("Qty"));
 
-                    if (Objects.equals(skuNo, productDetail.getSkuNo())
-                            && Objects.equals(supplierName, supplier.getName())
-                            && Objects.equals(kingdeeQty, parentDetail.getRepairQty())) {
-                        List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
-                                .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
-                                .collect(Collectors.toList());
-                        for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
-                            entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
-                        }
+                if (Objects.equals(skuNo, productDetail.getSkuNo())
+                        && Objects.equals(supplierName, supplier.getName())
+                        && Objects.equals(kingdeeQty, parentDetail.getRepairQty())) {
+                    List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
+                            .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
+                            .collect(Collectors.toList());
+                    for (SubcontractOrderDetailEntity subcontractOrderDetail : filterChildList) {
+                        entries = createNewPpBomEntry(FEntities, subcontractOrder, parentDetail, subcontractOrderDetail, sysAccountingCompany, bomBillNo);
                     }
                 }
             }
