@@ -690,9 +690,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 continue;
             }
 
-            if (Objects.isNull(detailEntity.getRepairQty()) || MathUtil.compareTo(detailEntity.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
-                errorMessages.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo()));
-                continue;
+            if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), subcontractOrderEntity.getType())
+                    && StringUtils.isBlank(detailEntity.getParentId())) {
+                if (Objects.isNull(detailEntity.getRepairQty()) || MathUtil.compareTo(detailEntity.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
+                    errorMessages.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo()));
+                    continue;
+                }
             }
 
             //采购退货数量校验
