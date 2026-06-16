@@ -70,6 +70,7 @@ import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
 import com.erp.server.tms.service.LogisticsReconService;
 import com.erp.server.tms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,28 +246,47 @@ public class LogisticsReconServiceImpl
         Map<String, String> mainIdMap = new HashMap<>(cfgList.size());
         Map<String, Boolean> reimportUpdateMap = new HashMap<>(cfgList.size());
         for (CfgLogisticsCostImportEntity importCfg : cfgList) {
-            if (findImportingReimportMain(dto, importCfg) != null) {
-                throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
-            }
-            LogisticsReconEntity pending = findPendingReimportMain(dto, importCfg);
-            if (pending != null) {
-                lambdaUpdate()
-                        .eq(LogisticsReconEntity::getId, pending.getId())
-                        .set(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.IMPORTING.getCode())
-                        .set(LogisticsReconEntity::getFileUrl, dto.getFileUrl())
-                        .set(LogisticsReconEntity::getFileName, dto.getFileName())
-                        .set(LogisticsReconEntity::getImportFailReason, "")
-                        .update();
-                mainIdMap.put(importCfg.getId(), pending.getId());
-                reimportUpdateMap.put(importCfg.getId(), Boolean.TRUE);
-            } else {
-                LogisticsReconEntity entity = createImportingMain(dto, importCfg);
-                mainIdMap.put(importCfg.getId(), entity.getId());
-                reimportUpdateMap.put(importCfg.getId(), Boolean.FALSE);
-            }
+            self.prepareImportMainLocked(buildReimportLockKey(dto, importCfg), dto, importCfg,
+                    mainIdMap, reimportUpdateMap);
         }
         dto.setMainIdMap(mainIdMap);
         dto.setReimportUpdateMap(reimportUpdateMap);
+    }
+
+    @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "lockKey",
+            unlockAfterTx = true)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void prepareImportMainLocked(String lockKey, LogisticsReconDTO.ImportDTO dto,
+                                        CfgLogisticsCostImportEntity importCfg,
+                                        Map<String, String> mainIdMap, Map<String, Boolean> reimportUpdateMap) {
+        if (findImportingReimportMain(dto, importCfg) != null) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+        }
+        LogisticsReconEntity pending = lockPendingReimportMain(dto, importCfg);
+        if (pending != null) {
+            boolean updated = lambdaUpdate()
+                    .eq(LogisticsReconEntity::getId, pending.getId())
+                    .eq(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
+                    .set(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.IMPORTING.getCode())
+                    .set(LogisticsReconEntity::getFileUrl, dto.getFileUrl())
+                    .set(LogisticsReconEntity::getFileName, dto.getFileName())
+                    .set(LogisticsReconEntity::getImportFailReason, "")
+                    .update();
+            if (!updated) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+            }
+            mainIdMap.put(importCfg.getId(), pending.getId());
+            reimportUpdateMap.put(importCfg.getId(), Boolean.TRUE);
+            return;
+        }
+        try {
+            LogisticsReconEntity entity = createImportingMain(dto, importCfg);
+            mainIdMap.put(importCfg.getId(), entity.getId());
+            reimportUpdateMap.put(importCfg.getId(), Boolean.FALSE);
+        } catch (DataIntegrityViolationException e) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+        }
     }
 
     @Override
@@ -301,7 +321,7 @@ public class LogisticsReconServiceImpl
                 if (CollUtil.isEmpty(cfgDetails)) {
                     throw new ServiceException(ApiError.LOGISTICS_CFG_IMPORT_DETAIL_NOT_FOUND);
                 }
-                LogisticsReconEntity entity = resolveImportMain(dto, importCfg, createdMainIds);
+                LogisticsReconEntity entity = resolveImportMain(dto, importCfg);
                 dto.setMainId(entity.getId());
                 dto.setCode(entity.getCode());
                 boolean reimportUpdate = CollUtil.isNotEmpty(dto.getReimportUpdateMap())
@@ -418,6 +438,13 @@ public class LogisticsReconServiceImpl
                         .update();
             }
         }
+    }
+
+    /**
+     * 导入原币别：取模板映射值，空则默认人民币（不阻断导入）。
+     */
+    private String resolveImportCurrency(String mappedCurrency) {
+        return StrUtil.blankToDefault(StrUtil.trim(mappedCurrency), CurrencyEnum.CNY.getCurrencyCode());
     }
 
     /**
@@ -586,7 +613,7 @@ public class LogisticsReconServiceImpl
                 .setTrackNo(excelDTO.getTrackNo())
                 .setTransportNo(excelDTO.getTransportNo())
                 .setSoDeliveryCode(excelDTO.getSoDeliveryCode())
-                .setCurrency(excelDTO.getCurrency())
+                .setCurrency(resolveImportCurrency(excelDTO.getCurrency()))
                 .setPayType(excelDTO.getPayType())
                 .setWeightLogistics(parseAmount(excelDTO.getWeightLogistics(), false))
                 .setVolumeWeightLogistics(parseAmount(excelDTO.getVolumeWeightLogistics(), false))
@@ -620,7 +647,7 @@ public class LogisticsReconServiceImpl
                 .setCostName(costName)
                 .setActualAmount(actualAmount)
                 .setEstimatedAmount(estimatedAmount == null ? BigDecimal.ZERO : estimatedAmount)
-                .setCurrency(StrUtil.blankToDefault(detail.getCurrency(), ""))
+                .setCurrency(resolveImportCurrency(detail.getCurrency()))
                 .setLocalCurrency(CurrencyEnum.CNY.getCurrencyCode())
                 .setMatchStatus(LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
                 .setReconciliationStatus(LogisticsReconReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
@@ -889,7 +916,7 @@ public class LogisticsReconServiceImpl
             LogisticsReconDetailEntity detail = new LogisticsReconDetailEntity();
             detail.setId(existingDetailId);
             detail.setMainId(dto.getMainId());
-            detail.setCurrency(excelDTO.getCurrency());
+            detail.setCurrency(resolveImportCurrency(excelDTO.getCurrency()));
             int nextSeqNo = dto.getImportDetailMaxSeqMap().getOrDefault(existingDetailId, 0) + 1;
             return new DetailResolveResult(detail, false, nextSeqNo);
         }
@@ -1022,6 +1049,24 @@ public class LogisticsReconServiceImpl
         return query;
     }
 
+    private String buildReimportLockKey(LogisticsReconDTO.ImportDTO dto, CfgLogisticsCostImportEntity importCfg) {
+        return dto.getReconciliationMonth() + "|"
+                + StrUtil.blankToDefault(importCfg.getDictPlatform(), "") + "|"
+                + StrUtil.blankToDefault(importCfg.getSheetName(), "");
+    }
+
+    /**
+     * 查找同维度待确认对账单并加行锁（允许覆盖更新导入；已确认单不在此命中，将新建）。
+     */
+    private LogisticsReconEntity lockPendingReimportMain(LogisticsReconDTO.ImportDTO dto,
+                                                       CfgLogisticsCostImportEntity importCfg) {
+        return buildReimportDimensionQuery(dto, importCfg)
+                .eq(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
+                .orderByDesc(LogisticsReconEntity::getCreateTime)
+                .last("LIMIT 1 FOR UPDATE")
+                .one();
+    }
+
     /**
      * 查找同维度导入中对账单（不允许重复提交导入任务）。
      */
@@ -1029,18 +1074,6 @@ public class LogisticsReconServiceImpl
                                                            CfgLogisticsCostImportEntity importCfg) {
         return buildReimportDimensionQuery(dto, importCfg)
                 .eq(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.IMPORTING.getCode())
-                .orderByDesc(LogisticsReconEntity::getCreateTime)
-                .last("LIMIT 1")
-                .one();
-    }
-
-    /**
-     * 查找同维度待确认对账单（允许覆盖更新导入；已确认单不在此命中，将新建）。
-     */
-    private LogisticsReconEntity findPendingReimportMain(LogisticsReconDTO.ImportDTO dto,
-                                                         CfgLogisticsCostImportEntity importCfg) {
-        return buildReimportDimensionQuery(dto, importCfg)
-                .eq(LogisticsReconEntity::getCheckStatus, LogisticsReconCheckStatusEnum.PENDING.getCode())
                 .orderByDesc(LogisticsReconEntity::getCreateTime)
                 .last("LIMIT 1")
                 .one();
@@ -1275,28 +1308,18 @@ public class LogisticsReconServiceImpl
     }
 
     /**
-     * 获取或创建导入主表（优先使用 importExcel 预创建的记录，兼容历史异步任务）
-     * @author Will
-     * @date: 2026/06/03
-     * @param dto 导入参数
-     * @param importCfg 导入配置
-     * @param createdMainIds 本次任务涉及的主表 id 集合（兜底创建时追加）
-     * @return LogisticsReconEntity
+     * 获取导入任务预创建的主表（禁止异步任务内静默新建，避免绕过提交阶段查重）。
      */
     private LogisticsReconEntity resolveImportMain(LogisticsReconDTO.ImportDTO dto,
-                                                   CfgLogisticsCostImportEntity importCfg,
-                                                   List<String> createdMainIds) {
+                                                   CfgLogisticsCostImportEntity importCfg) {
         String mainId = CollUtil.isNotEmpty(dto.getMainIdMap())
                 ? dto.getMainIdMap().get(importCfg.getId()) : null;
-        if (StrUtil.isNotBlank(mainId)) {
-            LogisticsReconEntity entity = super.getById(mainId);
-            if (entity != null) {
-                return entity;
-            }
+        if (StrUtil.isBlank(mainId)) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND);
         }
-        LogisticsReconEntity entity = createImportingMain(dto, importCfg);
-        if (!createdMainIds.contains(entity.getId())) {
-            createdMainIds.add(entity.getId());
+        LogisticsReconEntity entity = super.getById(mainId);
+        if (entity == null) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND);
         }
         return entity;
     }
@@ -2198,18 +2221,7 @@ public class LogisticsReconServiceImpl
         if (CollUtil.isEmpty(resolvedBySubId)) {
             return;
         }
-        for (String subId : matchedSubIds) {
-            LogisticsReconMatchDTO.ResolvedCfgCostDTO resolved = resolvedBySubId.get(subId);
-            if (resolved == null || StrUtil.isBlank(resolved.getCfgCostId())) {
-                continue;
-            }
-            logisticsReconDetailSubService.lambdaUpdate()
-                    .eq(LogisticsReconDetailSubEntity::getId, subId)
-                    .set(LogisticsReconDetailSubEntity::getCfgCostId, resolved.getCfgCostId())
-                    .set(LogisticsReconDetailSubEntity::getCfgCostName,
-                            StrUtil.blankToDefault(resolved.getCfgCostName(), ""))
-                    .update();
-        }
+        logisticsReconDetailSubService.batchUpdateResolvedCfgCost(resolvedBySubId, matchedSubIds);
     }
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)

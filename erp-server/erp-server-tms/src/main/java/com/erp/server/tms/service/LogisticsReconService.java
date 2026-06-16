@@ -73,6 +73,13 @@ public interface LogisticsReconService extends SuperService<LogisticsReconEntity
     void prepareImportExcelMains(LogisticsReconDTO.ImportDTO dto);
 
     /**
+     * 单配置维度加锁后预创建/复用主表（prepareImportExcelMains 内部按 cfg 循环调用）
+     */
+    void prepareImportMainLocked(String lockKey, LogisticsReconDTO.ImportDTO dto,
+                                 CfgLogisticsCostImportEntity importCfg,
+                                 Map<String, String> mainIdMap, Map<String, Boolean> reimportUpdateMap);
+
+    /**
      * 物流商对账单异步导入任务执行
      * @author Will
      * @date: 2026/06/02

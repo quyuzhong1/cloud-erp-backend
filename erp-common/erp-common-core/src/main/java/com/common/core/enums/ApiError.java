@@ -1821,6 +1821,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_RECON_MATCH_POOL_BUSY(13667,"匹配任务队列已满，请稍后重试"),
     LOGISTICS_RECON_IMPORT_FAILED_CHECK_STATUS_FORBIDDEN(13668,"导入失败的对账单须重新导入后再确认"),
     LOGISTICS_RECON_IMPORTING_DUPLICATE(13669,"相同对账维度（月份+物流商+Sheet）正在导入，不允许重复导入"),
+    LOGISTICS_RECON_IMPORT_MAIN_NOT_FOUND(13670,"导入任务关联的对账单不存在或已失效，请重新提交导入"),
     /**
      * 财务管理 错误 信息 14000-14500
      */
