@@ -97,4 +97,13 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
      */
     private InventoryStatusEnum dictInventoryStatus;
 
+    /**
+     * 库存状态运行期覆盖（仅对「调出端 CURRENT」生效）：非空时调出仓库的 inventoryStatus
+     * 取此值，调入仓库 inventoryStatus 仍按 {@link #dictInventoryStatus} 或交易规则配置。
+     * <p>
+     * 用于直接调拨单明细显式指定「调出库存状态」(out_inventory_status) 的场景，
+     * 例如从冻结 / 不良品库存桶调出。为空时按原有交易规则走，保证历史链路行为不变。
+     */
+    private InventoryStatusEnum curInventoryStatus;
+
 }
