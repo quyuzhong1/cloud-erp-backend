@@ -82,9 +82,8 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
 
     private static final JSONConfig TASK_DATA_JSON_CONFIG = JSONConfig.create().setIgnoreNullValue(true);
 
-    private static final String TASK_DISPATCHED_MSG = "任务已派发";
-
-    private static final String TASK_BATCH_PROCESSING_MSG = "分批处理中";
+    private static final Integer ERROR_START = 0;
+    private static final Integer ERROR_END = 1000;
 
     @Resource
     private TmsAsyncTaskDetailService tmsAsyncTaskDetailService;
@@ -123,27 +122,27 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             .in(TmsAsyncTaskRecordEntity::getStatus,Arrays.asList(TmsAsyncTaskRecordStatusEnum.ING.getCode(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode()))
             .list();
 
+        //仅头程/小包费用分摊防重维度需要不同月份
         if(CollUtil.isNotEmpty(runningTasks)){
-            String reportPeriodStr = extractReportPeriodStr(compactJson);
+            String reportDate = extractReportDate(compactJson);
             //判断核算期间
-            if (StringUtils.isNotBlank(reportPeriodStr)) {
+            if (StringUtils.isBlank(reportDate)) {
+                log.warn("手动异步任务参数重复，businessType: {}, methodType: {}", businessType, methodType);
+                return null;
+            }else {
                 Optional<TmsAsyncTaskRecordEntity> periodConflict = runningTasks.stream()
-                        .filter(task -> reportPeriodStr.equals(extractReportPeriodStr(task.getDataJson())))
+                        .filter(task -> reportDate.equals(extractReportDate(task.getDataJson())))
                         .findFirst();
                 if (periodConflict.isPresent()) {
                     TmsAsyncTaskRecordEntity conflict = periodConflict.get();
-                    log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportPeriodStr: {}, 进行中任务 code: {}",
-                            businessType,conflict.getMethodType(),reportPeriodStr, conflict.getCode());
+                    log.warn("手动异步任务核算期间冲突，businessType: {}, methodType: {}, reportDate: {}, 进行中任务 code: {}",
+                            businessType,conflict.getMethodType(),reportDate, conflict.getCode());
                     return null;
                 }
-            }else {
-                log.warn("手动异步任务参数重复，businessType: {}, methodType: {}", businessType, methodType);
-                return null;
             }
         }
 
         TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();
-        //重置任务ID
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_Z);
         entity.setCode(code);
         entity.setBusinessType(businessType);
@@ -154,22 +153,6 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
         return save(entity) ? entity : null;
-    }
-
-    /**
-     * 比较手动任务入参是否等价（忽略 taskId、游标等执行过程字段）
-     */
-    private boolean isSameManualTaskDataJson(String json1, String json2) {
-        try {
-            return Objects.equals(normalizeManualTaskDataJson(json1), normalizeManualTaskDataJson(json2));
-        } catch (Exception e) {
-            log.warn("任务参数归一化比较失败，保守策略：允许创建任务, err={}", e.getMessage());
-            return false;
-        }
-    }
-
-    private String normalizeManualTaskDataJson(String json) {
-        return compactTaskDataJson(json);
     }
 
     /**
@@ -187,14 +170,20 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         return JSONUtil.toJsonStr(params, TASK_DATA_JSON_CONFIG);
     }
 
-    private String extractReportPeriodStr(String json) {
+    /**
+     * 获取头程/小包费用分摊日期参数
+     */
+    private String extractReportDate(String json) {
         TmsAsyncTaskRecordDTO.PushParamsDTO params = parsePushParams(json);
         if (params == null) {
             return null;
         }
-        return trimToNull(params.getReportPeriodStr());
+        return trimToNull(params.getReportDate());
     }
 
+    /**
+     *  解析参数
+     */
     private TmsAsyncTaskRecordDTO.PushParamsDTO parsePushParams(String json) {
         try {
             return JSONUtil.toBean(json, TmsAsyncTaskRecordDTO.PushParamsDTO.class);
@@ -327,8 +316,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
                 .set(TmsAsyncTaskRecordEntity::getEndTime, LocalDateTime.now())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, StringUtils.substring(errorMsg, 0, 1000))
-                .set(TmsAsyncTaskRecordEntity::getErrorCount, 1)
+                .set(TmsAsyncTaskRecordEntity::getErrorData, StringUtils.substring(errorMsg, ERROR_START, ERROR_END))
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .update();
     }
@@ -360,7 +348,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Override
     public String formatTaskErrorMessage(Exception e) {
         String message = e == null ? null : e.getMessage();
-        return StringUtils.substring(Objects.toString(message, e == null ? "未知错误" : e.getClass().getSimpleName()), 0, 1000);
+        return StringUtils.substring(Objects.toString(message, e == null ? "未知错误" : e.getClass().getSimpleName()), ERROR_START, ERROR_END);
     }
 
     @Override
@@ -773,7 +761,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             return true;
         }
         String errorData = currentTask.getErrorData();
-        return TASK_DISPATCHED_MSG.equals(errorData) || TASK_BATCH_PROCESSING_MSG.equals(errorData);
+        return ApiError.COMMON_BATCH_PROCESSING.getMsg().equals(errorData);
     }
 
     /**
@@ -789,7 +777,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         // 限制错误信息长度，避免数据库字段超限
         tmsAsyncTaskDetailService.updateDetail(taskDetailId,
                 TmsAsyncTaskRecordStatusEnum.FAILED.getCode(),
-                StringUtils.substring(errorMsg, 0, 1000));
+                StringUtils.substring(errorMsg, ERROR_START, ERROR_END));
     }
 
     /**
@@ -856,7 +844,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         LocalDateTime dispatchTime = LocalDateTime.now();
         boolean claimed = lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+                .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                 .set(TmsAsyncTaskRecordEntity::getStartTime, dispatchTime)
                 .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
                 .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
@@ -882,7 +870,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
             log.error("消息发送异常，taskId: {}", entity.getId(), e);
             lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, StringUtils.substring(e.getMessage(), 0, 1000))
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, StringUtils.substring(e.getMessage(), ERROR_START, ERROR_END))
                     .eq(TmsAsyncTaskRecordEntity::getId, entity.getId())
                     .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
                     .update();

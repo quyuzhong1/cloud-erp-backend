@@ -2875,7 +2875,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public List<String> listByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        fillSmallBagCostAttributionTypes(dto);
         return baseMapper.listByCanPushAllocation(dto);
     }
     /**
@@ -2888,7 +2887,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     @Override
     public List<String> pageByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        fillSmallBagCostAttributionTypes(dto);
         return baseMapper.pageByCanPushAllocation(dto);
     }
 
@@ -2902,16 +2900,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      */
     @Override
     public int countByCanPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        fillSmallBagCostAttributionTypes(dto);
         Integer count = baseMapper.countByCanPushAllocation(dto);
         // 防御性处理：count 为 null 时返回 0
         return count == null ? 0 : count;
     }
 
-    private void fillSmallBagCostAttributionTypes(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        dto.setSelfDeliverType(DictCostAttributionEnum.SELF_DELIVER.getCode());
-        dto.setLastMileType(DictCostAttributionEnum.LAST_MILE.getCode());
-    }
 
     @Override
     public void batchAsyncPushAllocation(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
@@ -2931,7 +2924,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         String businessType = SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode();
         String methodType = resolveSmallBagPushAllocationMethodType(dto.getType());
         dto.setBusinessType(businessType);
-
+        dto.setMethodType(methodType);
         // 先统计总数（用于前端展示预期处理量）
         int totalCount = countByCanPushAllocation(dto);
         if (totalCount == 0) {
@@ -2944,8 +2937,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
 
-        dto.setMethodType(methodType);
-        jsonStr = JSONUtil.toJsonStr(dto);
         // 创建任务时直接写入预期明细数量，返回任务实体
         TmsAsyncTaskRecordEntity taskRecord = asyncTaskRecordService.addManualTask(
             new TmsAsyncTaskRecordDTO.ManualCreateDTO(businessType, methodType, totalCount, jsonStr));
@@ -2953,41 +2944,32 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
         }
         String taskId = taskRecord.getId();
-
         dto.setTaskId(taskId);
-
         boolean claimed = asyncTaskRecordService.lambdaUpdate()
             .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
             .eq(TmsAsyncTaskRecordEntity::getId, taskId)
             .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
             .update();
-        if (!claimed) {
-            throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR,jsonStr);
+        BatchResultDTO claimResult = asyncTaskRecordService.resolveDispatchClaimOrThrow(taskId, claimed, taskRecord.getCode(), jsonStr);
+        if (claimResult != null) {
+            return;
         }
 
         try {
             // 发送MQ消息，触发异步消费（不再一次性生成所有任务明细）
-            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, dto, taskId);
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                 log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
-                asyncTaskRecordService.lambdaUpdate()
-                    .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, "MQ消息发送失败")
-                    .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                    .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .update();
-            }else {
-                log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
+                //失败则直接设置为完成
+                asyncTaskRecordService.finishTaskWithError(taskId,"MQ消息发送失败");
+                throw new ServiceException(ApiError.LOGISTICS_ASYNC_TASK_CREATE_ERROR, "MQ消息发送失败");
             }
+            log.info("MQ消息发送成功，taskId: {}, 预计处理数据量: {}", taskId, totalCount);
         } catch (Exception e) {
             //若是手动下推发送mq异常，则直接置为完成，用户再主动下推
             log.error("MQ消息发送异常，taskId: {}", taskId, e);
-            asyncTaskRecordService.lambdaUpdate()
-                .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, asyncTaskRecordService.formatTaskErrorMessage(e))
-                .eq(TmsAsyncTaskRecordEntity::getId, taskId)
-                .update();
+            asyncTaskRecordService.finishTaskWithError(taskId,asyncTaskRecordService.formatTaskErrorMessage(e));
             throw e;
         }
     }
@@ -3038,7 +3020,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                     .update();
@@ -3350,7 +3332,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             log.debug("任务明细[{}]状态已变更，跳过", taskDetailId);
                             return;
                         }
-
                         BatchResultDTO result = service.pushAllocation(businessId, reportDate, pushContext);
 
                         if (result.getSuccess()) {
@@ -3854,7 +3835,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         // 派发前先认领任务，避免重复请求或MQ重投导致同一任务被并发执行。
         boolean claimed = asyncTaskRecordService.lambdaUpdate()
                 .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+                .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                 .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                 .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                 .update();
@@ -4015,7 +3996,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                         .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                        .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                        .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                         .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                         .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                         .update();

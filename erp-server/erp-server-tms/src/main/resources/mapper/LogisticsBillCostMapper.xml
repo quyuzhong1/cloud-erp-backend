@@ -458,14 +458,7 @@
         ) excl_estimate ON lbc.id = excl_estimate.cost_id
         WHERE lbc.is_deleted = FALSE
           AND lb.is_allocate_cost_required = true
-        <choose>
-            <when test="params.type != null and params.type != ''">
-                AND lbc.type = #{params.type}
-            </when>
-            <otherwise>
-                AND lbc.type IN (#{params.selfDeliverType}, #{params.lastMileType})
-            </otherwise>
-        </choose>
+        AND lbc.type = #{params.type}
           AND lbc.reconciliation_month = #{params.reportDate}
           AND (
               (lbc.reconciliation_status = 'confirmed'      AND excl_confirmed.cost_id IS NULL)
@@ -489,14 +482,7 @@
         WHERE
         lbc.is_deleted = FALSE
         AND lb.is_allocate_cost_required = true
-        <choose>
-            <when test="params.type != null and params.type != ''">
-                AND lbc.TYPE = #{params.type}
-            </when>
-            <otherwise>
-                AND lbc.TYPE IN (#{params.selfDeliverType}, #{params.lastMileType})
-            </otherwise>
-        </choose>
+        AND lbc.TYPE = #{params.type}
         AND lbc.reconciliation_month = #{params.reportDate}
         AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
         AND NOT EXISTS (
@@ -533,14 +519,7 @@
         WHERE
         lbc.is_deleted = FALSE
         AND lb.is_allocate_cost_required = true
-        <choose>
-            <when test="params.type != null and params.type != ''">
-                AND lbc.TYPE = #{params.type}
-            </when>
-            <otherwise>
-                AND lbc.TYPE IN (#{params.selfDeliverType}, #{params.lastMileType})
-            </otherwise>
-        </choose>
+        AND lbc.TYPE = #{params.type}
         AND lbc.reconciliation_month = #{params.reportDate}
         AND ( lbc.reconciliation_status = 'confirmed' OR lbc.reconciliation_status = 'estimateConfirm' )
         AND NOT EXISTS (

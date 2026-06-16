@@ -390,7 +390,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
 		boolean claimed = asyncTaskRecordService.lambdaUpdate()
 			.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-			.set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+			.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
 			.eq(TmsAsyncTaskRecordEntity::getId, taskId)
 			.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 			.update();
@@ -451,7 +451,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
 				boolean claimed = asyncTaskRecordService.lambdaUpdate()
 					.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-					.set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+					.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
 					.eq(TmsAsyncTaskRecordEntity::getId, taskId)
 					.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 					.update();
@@ -588,7 +588,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
 		boolean claimed = asyncTaskRecordService.lambdaUpdate()
 			.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-			.set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+			.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
 			.eq(TmsAsyncTaskRecordEntity::getId, taskId)
 			.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 			.update();
@@ -649,7 +649,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
 				boolean claimed = asyncTaskRecordService.lambdaUpdate()
 					.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-					.set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+					.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
 					.eq(TmsAsyncTaskRecordEntity::getId, taskId)
 					.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 					.update();
@@ -785,7 +785,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 
 		boolean claimed = asyncTaskRecordService.lambdaUpdate()
 			.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-			.set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+			.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
 			.eq(TmsAsyncTaskRecordEntity::getId, taskId)
 			.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 			.update();
@@ -846,7 +846,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
 				boolean claimed = asyncTaskRecordService.lambdaUpdate()
 					.set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-					.set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+					.set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
 					.eq(TmsAsyncTaskRecordEntity::getId, taskId)
 					.eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
 					.update();

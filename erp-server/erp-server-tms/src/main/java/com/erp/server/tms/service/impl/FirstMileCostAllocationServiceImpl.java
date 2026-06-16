@@ -2126,7 +2126,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         boolean claimed = asyncTaskRecordService.lambdaUpdate()
             .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
             .eq(TmsAsyncTaskRecordEntity::getId, taskId)
             .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
             .update();
@@ -2187,7 +2187,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                     .update();
@@ -2385,7 +2385,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         boolean claimed = asyncTaskRecordService.lambdaUpdate()
             .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
             .eq(TmsAsyncTaskRecordEntity::getId, taskId)
             .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
             .update();
@@ -2446,7 +2446,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                     .update();
@@ -2584,7 +2584,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         boolean claimed = asyncTaskRecordService.lambdaUpdate()
             .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
             .eq(TmsAsyncTaskRecordEntity::getId, taskId)
             .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
             .update();
@@ -2645,7 +2645,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                     .update();
@@ -2796,7 +2796,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-//    @Transactional(rollbackFor = Exception.class)
     public void asyncBatchPushAllocatedCost(TmsAsyncTaskRecordDTO.PushParamsDTO dto){
         dto.setBusinessType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
         dto.setMethodType(TmsAsyncTaskMethodTypeEnum.PUSH_ALLOCATION.getCode());
@@ -2821,7 +2820,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
         boolean claimed = asyncTaskRecordService.lambdaUpdate()
             .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-            .set(TmsAsyncTaskRecordEntity::getErrorData, "任务已派发")
+            .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
             .eq(TmsAsyncTaskRecordEntity::getId, taskId)
             .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
             .update();
@@ -2831,7 +2830,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
 
         try {
-            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_PUSH_ALLOCATION_COST_TOPIC, RocketMqNewTag.TMS_PUSH_ALLOCATION_COST_TAG, dto, taskId);
+            SendResult sendResult = mQProducerService.syncClassMsg(RocketMqTopic.TMS_ASYNC_TASK_RECORD_TOPIC, RocketMqNewTag.TMS_ASYNC_TASK_RECORD_TAG, dto, taskId);
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                 log.error("MQ消息发送失败：{}", JSONObject.toJSONString(sendResult));
                 asyncTaskRecordService.lambdaUpdate()
@@ -2889,7 +2888,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             if (Objects.equals(taskRecord.getStatus(), TmsAsyncTaskRecordStatusEnum.PENDING.getCode())) {
                 boolean claimed = asyncTaskRecordService.lambdaUpdate()
                     .set(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
-                    .set(TmsAsyncTaskRecordEntity::getErrorData, "分批处理中")
+                    .set(TmsAsyncTaskRecordEntity::getErrorData, ApiError.COMMON_BATCH_PROCESSING.getMsg())
                     .eq(TmsAsyncTaskRecordEntity::getId, taskId)
                     .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.PENDING.getCode())
                     .update();

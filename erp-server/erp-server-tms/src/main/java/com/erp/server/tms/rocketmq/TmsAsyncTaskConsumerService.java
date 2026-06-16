@@ -50,7 +50,7 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
 
     @Override
     public void onMessage(TmsAsyncTaskRecordDTO.PushParamsDTO dto) {
-        if (Objects.isNull(dto)) {
+        if (Objects.isNull(dto) || StringUtils.isBlank(dto.getTaskId()) || StringUtils.isBlank(dto.getBusinessType())) {
             log.warn("TMS异步任务MQ消息为空，跳过消费");
             return;
         }
@@ -99,7 +99,6 @@ public class TmsAsyncTaskConsumerService implements RocketMQListener<TmsAsyncTas
         //小包分摊
         else if(Objects.equals(businessType,SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
             String methodType = dto.getMethodType();
-            // 同一单据类型下按 methodType 二级分发；空值和旧枚举兼容历史/在途下推消息
             if (Objects.equals(methodType, TmsAsyncTaskMethodTypeEnum.UPDATE_REPORT_STATUS.getCode())) {
                 //批量更新核算状态
                 smallBagCostAllocationService.pushUpdateReportStatus(dto);

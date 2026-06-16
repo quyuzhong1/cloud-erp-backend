@@ -374,16 +374,6 @@ public class TmsAsyncTaskRecordDTO implements Serializable {
         private String type;
 
         /**
-         * 自发货费用类型（兼容历史小包下推任务）
-         */
-        private String selfDeliverType;
-
-        /**
-         * 尾程费用类型（兼容历史小包下推任务）
-         */
-        private String lastMileType;
-
-        /**
          * 方法类型：同一 business_type 下区分不同方法  枚举：TmsAsyncTaskMethodTypeEnum
          */
         private String methodType;
