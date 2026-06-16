@@ -9,13 +9,7 @@ import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.wms.dto.OverseasProviderDTO;
-import com.erp.model.wms.dto.WegoInOrderCancelDTO;
-import com.erp.model.wms.dto.WegoInOrderSaveDTO;
-import com.erp.model.wms.dto.WegoOutboundInterceptDTO;
-import com.erp.model.wms.dto.WegoOutboundQueryPageDTO;
-import com.erp.model.wms.dto.WegoOutboundSaveDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -25,7 +19,6 @@ import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.sdk.wms.wego.dto.response.WegoOutboundResp;
 import com.sdk.wms.wego.service.WegoOpenApiService;
-import com.sdk.wms.wego.utils.WeGoSignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -303,11 +296,11 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      */
     private List<WegoInOrderSaveDTO.Detail> buildDetails(ThirdWarehouseCreateInboundReq createInboundReq) {
         List<WmsCartonSpecDTO.PackingItemDTO> packingItems = loadPackingList(createInboundReq.getReferenceNo());
-        if (CollUtil.isNotEmpty(packingItems)) {
-            return buildDetailsFromPackingList(packingItems);
+        if (CollUtil.isEmpty(packingItems)) {
+            log.warn("[WEGO入库] 装箱清单为空，referenceNo={}", createInboundReq.getReferenceNo());
+            throw new ServiceException("装箱清单为空");
         }
-        log.warn("[WEGO入库] 装箱清单为空，回退到 items 兜底, referenceNo={}", createInboundReq.getReferenceNo());
-        return buildDetailsFromItems(createInboundReq);
+        return buildDetailsFromPackingList(packingItems);
     }
 
     /**
@@ -401,45 +394,6 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .qty(qty)
                 .build()));
         return products;
-    }
-
-    /**
-     * 兜底：用上层 {@link ThirdWarehouseCreateInboundReq#getItems()} 构造 details。
-     * <p>
-     * 仅在装箱清单为空时使用，逻辑与装箱清单分支等价：按 {@code boxNo} 分组、每箱一条、多 SKU 进 products。
-     */
-    private List<WegoInOrderSaveDTO.Detail> buildDetailsFromItems(ThirdWarehouseCreateInboundReq createInboundReq) {
-        List<ThirdWarehouseCreateInboundReq.Item> items = createInboundReq.getItems();
-        if (items == null || items.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<ThirdWarehouseCreateInboundReq.Item> sortedItems = new ArrayList<>(items);
-        sortedItems.sort(Comparator.comparing(ThirdWarehouseCreateInboundReq.Item::getBoxNo,
-                Comparator.nullsLast(Comparator.naturalOrder())));
-        Map<Integer, List<ThirdWarehouseCreateInboundReq.Item>> boxItemMap = sortedItems.stream()
-                .collect(Collectors.groupingBy(
-                        ThirdWarehouseCreateInboundReq.Item::getBoxNo,
-                        LinkedHashMap::new,
-                        Collectors.toList()));
-        List<WegoInOrderSaveDTO.Detail> details = new ArrayList<>(boxItemMap.size());
-        boxItemMap.forEach((boxNo, itemList) -> {
-            ThirdWarehouseCreateInboundReq.Item firstItem = itemList.get(0);
-            List<WegoInOrderSaveDTO.Product> products = buildProductsFromItems(itemList);
-            WegoInOrderSaveDTO.Detail detail = WegoInOrderSaveDTO.Detail.builder()
-                    .inOrderDetailId(null)
-                    .boxQty(1)
-                    .skuQty(sumSkuQty(products))
-                    .boxLabel(boxNo == null ? null : String.valueOf(boxNo))
-                    .boxLength(toIntegerCm(firstItem.getBoxLength()))
-                    .boxWidth(toIntegerCm(firstItem.getBoxWidth()))
-                    .boxHeight(toIntegerCm(firstItem.getBoxHeight()))
-                    .boxWeight(toIntegerKg(firstItem.getPackageWeight(), firstItem.getWeightUnit()))
-                    .deletedFlag(false)
-                    .products(products)
-                    .build();
-            details.add(detail);
-        });
-        return details;
     }
 
     /**
