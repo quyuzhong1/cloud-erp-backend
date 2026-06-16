@@ -809,7 +809,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     //委外返修子行：价格取委外明细，税率/币种优先取明细，缺失则从价目表补全
                     BigDecimal price = Objects.nonNull(dto.getPrice()) ? dto.getPrice() : BigDecimal.ZERO;
                     if (price.compareTo(BigDecimal.ZERO) == 0) {
-                        throw new ServiceException(StrUtil.format("SKU【{}】委外返修子行价格不能为空", skuVO.getSkuNo()));
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED, skuVO.getSkuNo());
                     }
                     if (Objects.isNull(dto.getTaxRate()) || StringUtils.isBlank(dto.getCurrency())) {
                         PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
@@ -829,7 +829,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                         }
                     }
                     if (Objects.isNull(dto.getTaxRate()) || StringUtils.isBlank(dto.getCurrency())) {
-                        throw new ServiceException(StrUtil.format("SKU【{}】委外返修子行税率或币种不能为空", skuVO.getSkuNo()));
+                        throw new ServiceException(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_TAX_RATE_OR_CURRENCY_REQUIRED, skuVO.getSkuNo());
                     }
                     dto.setAmount(MathUtil.multiplyWithTwo(price, dto.getQty()).setScale(4, RoundingMode.DOWN));
                 }
