@@ -71,11 +71,13 @@ import com.erp.server.tms.service.LogisticsReconService;
 import com.erp.server.tms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.sql.SQLException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
@@ -89,6 +91,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
@@ -274,7 +277,10 @@ public class LogisticsReconServiceImpl
                     .set(LogisticsReconEntity::getImportFailReason, "")
                     .update();
             if (!updated) {
-                throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+                if (findImportingReimportMain(dto, importCfg) != null) {
+                    throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+                }
+                throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
             }
             mainIdMap.put(importCfg.getId(), pending.getId());
             reimportUpdateMap.put(importCfg.getId(), Boolean.TRUE);
@@ -285,8 +291,38 @@ public class LogisticsReconServiceImpl
             mainIdMap.put(importCfg.getId(), entity.getId());
             reimportUpdateMap.put(importCfg.getId(), Boolean.FALSE);
         } catch (DataIntegrityViolationException e) {
-            throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+            if (isImportDimensionDuplicateException(e)) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
+            }
+            throw e;
         }
+    }
+
+    /**
+     * 判断是否因对账维度唯一约束冲突（pending/importing 同维度）导致的数据完整性异常。
+     */
+    private boolean isImportDimensionDuplicateException(Throwable e) {
+        Throwable cur = e;
+        while (cur != null) {
+            if (cur instanceof DuplicateKeyException) {
+                return true;
+            }
+            if (cur instanceof SQLException && "23505".equals(((SQLException) cur).getSQLState())) {
+                return true;
+            }
+            String msg = cur.getMessage();
+            if (msg != null) {
+                String lower = msg.toLowerCase(Locale.ROOT);
+                if (lower.contains("duplicate key") && lower.contains("uniq_logistics_recon_month_supplier_sheet")) {
+                    return true;
+                }
+                if (lower.contains("duplicate entry")) {
+                    return true;
+                }
+            }
+            cur = cur.getCause();
+        }
+        return false;
     }
 
     @Override
