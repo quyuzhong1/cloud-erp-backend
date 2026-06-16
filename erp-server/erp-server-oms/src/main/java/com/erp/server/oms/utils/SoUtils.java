@@ -37,26 +37,25 @@ public class SoUtils {
     public static SkuCostProfitDTO.SkuCostProfitResult calCostProfit(BigDecimal purchasePrice,
                                                                      SkuCostProfitDTO.SkuCostProfitParam costParam,
                                                                      SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult) {
-        skuCostProfitResult.setPurchasePrice(purchasePrice);
-        // 当没有计算得到采购单价或为0，所有都返回0
-        if (Objects.isNull(skuCostProfitResult.getPurchasePrice()) || skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) <= 0) {
-            return skuCostProfitResult;
-        }
-        skuCostProfitResult.setSaleCost(skuCostProfitResult.getPurchasePrice().multiply(new BigDecimal(costParam.getQty())).setScale(4, BigDecimal.ROUND_HALF_UP));
+        BigDecimal normalizedPurchasePrice = Objects.isNull(purchasePrice) || purchasePrice.compareTo(BigDecimal.ZERO) < 0
+                ? BigDecimal.ZERO : purchasePrice;
+        skuCostProfitResult.setPurchasePrice(normalizedPurchasePrice);
+        skuCostProfitResult.setSaleCost(normalizedPurchasePrice.multiply(new BigDecimal(costParam.getQty())).setScale(4, BigDecimal.ROUND_HALF_UP));
         if (Objects.isNull(costParam.getTaxRate())) {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
 
-        // 销售毛利=销售金额(折后)*汇率-总成本
-        BigDecimal saleAmount = costParam.getAmountLocalCurrency();
+        // 销售毛利=销售金额(折后)*汇率-总成本（成本为0时按0参与计算）
+        BigDecimal saleAmount = ObjectUtil.defaultIfNull(costParam.getAmountLocalCurrency(), BigDecimal.ZERO);
         //总成本
         BigDecimal saleCost = skuCostProfitResult.getSaleCost();
 
         BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
         skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率
-        if (costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0 && costParam.getAmountLocalCurrency().compareTo(BigDecimal.ZERO) > 0) {
-            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getAmountLocalCurrency(), 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
+        BigDecimal saleAmountForRate = ObjectUtil.defaultIfNull(costParam.getSaleAmount(), BigDecimal.ZERO);
+        if (saleAmountForRate.compareTo(BigDecimal.ZERO) > 0 && saleAmount.compareTo(BigDecimal.ZERO) > 0) {
+            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(saleAmount, 4, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal("100")));
         }
         return skuCostProfitResult;
     }
