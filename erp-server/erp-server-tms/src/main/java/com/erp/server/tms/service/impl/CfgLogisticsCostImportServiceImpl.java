@@ -113,7 +113,7 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
     public BaseResultDTO.AddDTO addInTransaction(CfgLogisticsCostImportDTO.AddDTO dto, Set<String> validCurrencyKeys) {
         dto.setBusinessType(DictCostAttributionEnum.LAST_MILE_DELIVERY.getCode());
         //校验是否已存在（配置生成单据+平台+识别名称+费用来源+sheet+识别维度 为唯一）
-        resolveIdentifyType(dto);
+        validateIdentifyType(dto.getIdentifyType());
         isExist(dto.getBusinessType(), dto.getDictPlatform(), dto.getName(), dto.getSheetName(), dto.getCostType(), dto.getIdentifyType(), "");
         // 验证明细列表
         validateDetailList(dto.getBusinessType(), dto.getDetailList(), validCurrencyKeys);
@@ -317,13 +317,6 @@ public class CfgLogisticsCostImportServiceImpl extends SuperServiceImpl<CfgLogis
         if(count > 0){
             throw new ServiceException(ApiError.COMMON_HAS_EXIST, "费用配置");
         }
-    }
-
-    private void resolveIdentifyType(CfgLogisticsCostImportDTO.CommonDTO dto) {
-        if (StringUtils.isBlank(dto.getIdentifyType())) {
-            dto.setIdentifyType(CfgLogisticsCostImportIdentifyTypeEnum.IDENTIFY_NO_SUPPLIER.getCode());
-        }
-        validateIdentifyType(dto.getIdentifyType());
     }
 
     private void validateIdentifyType(String identifyType) {

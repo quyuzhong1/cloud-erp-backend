@@ -646,6 +646,29 @@ public class LogisticsCostImportFieldRuleTest {
         assertBigDecimalEquals(new BigDecimal("75"), allocateMap.get("D2").get(0).getCostValue());
     }
 
+    @Test
+    public void allocateValueByWeightShouldSplitWithLastBillAbsorbingRemainder() throws Exception {
+        ImportHistoryRecordServiceImpl service = new ImportHistoryRecordServiceImpl();
+        Map<String, BigDecimal> weightMap = new HashMap<>();
+        weightMap.put("D1", new BigDecimal("1"));
+        weightMap.put("D2", new BigDecimal("3"));
+        List<LogisticsBillDTO.LogisticsBillVo> billGroup = Arrays.asList(
+                billVo("B1", "D1", null, null, null),
+                billVo("B2", "D2", null, null, null));
+        BigDecimal totalValue = new BigDecimal("2000");
+
+        BigDecimal first = (BigDecimal) invokePrivate(service, "allocateValueByWeight",
+                new Class[]{BigDecimal.class, List.class, Map.class, int.class, BigDecimal.class},
+                totalValue, billGroup, weightMap, 0, BigDecimal.ZERO);
+        BigDecimal second = (BigDecimal) invokePrivate(service, "allocateValueByWeight",
+                new Class[]{BigDecimal.class, List.class, Map.class, int.class, BigDecimal.class},
+                totalValue, billGroup, weightMap, 1, first);
+
+        assertBigDecimalEquals(new BigDecimal("500"), first);
+        assertBigDecimalEquals(new BigDecimal("1500"), second);
+        assertBigDecimalEquals(totalValue, first.add(second));
+    }
+
     /**
      * 调用默认值校验私有方法。
      *
