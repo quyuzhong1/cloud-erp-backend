@@ -634,6 +634,11 @@ public class SoB2cDTO implements Serializable {
         private BigDecimal paidAmount;
 
         /**
+         * 订单折扣总额
+         */
+        private BigDecimal totalDiscount;
+
+        /**
          * 币别（原币）
          */
         private String currency;

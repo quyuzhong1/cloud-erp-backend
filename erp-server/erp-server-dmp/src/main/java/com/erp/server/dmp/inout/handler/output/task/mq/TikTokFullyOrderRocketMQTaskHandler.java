@@ -20,6 +20,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.utils.DmpMappingUtils;
+import com.erp.server.dmp.inout.utils.PlatformOrderAmountUtils;
 import com.erp.server.dmp.service.DmpCfgOutputConvertMappingService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -124,8 +125,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
 
-        //订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
+        PlatformOrderAmountUtils.applyMainAmounts(orderDTO, dmpSoInfoEntity);
         //总优惠金额（驱动 paidAmount = amount - totalDiscount 计算）
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
 

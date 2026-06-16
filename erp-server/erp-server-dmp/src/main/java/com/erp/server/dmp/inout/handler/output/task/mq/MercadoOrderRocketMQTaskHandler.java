@@ -22,6 +22,7 @@ import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.utils.PlatformOrderAmountUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -159,9 +160,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntityList.get(0).getNextLevelId());
 
-        //订单金额
-        BigDecimal amount = dmpSoInfoEntityList.stream().filter(d -> d.getPayAmount() != null).map(DmpSoInfoEntity::getPayAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        orderDTO.setAmount(amount);
+        PlatformOrderAmountUtils.applyMainAmounts(orderDTO, dmpSoInfoEntityList);
         //币别
         orderDTO.setCurrency(dmpSoInfoEntityList.get(0).getCurrencyCode());
 

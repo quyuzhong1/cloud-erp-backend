@@ -724,7 +724,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (Boolean.TRUE.equals(b2c.getIsGift())) {
                 continue;
             }
-            BigDecimal soAmount = b2c.getAmount() == null ? BigDecimal.ZERO : b2c.getAmount();
+            BigDecimal detailPaid = b2c.getPaidAmount();
+            BigDecimal legacyAmount = b2c.getAmount() == null ? BigDecimal.ZERO : b2c.getAmount();
+            BigDecimal soAmount = (detailPaid != null && detailPaid.compareTo(BigDecimal.ZERO) > 0)
+                    ? detailPaid : legacyAmount;
             if (soAmount.compareTo(BigDecimal.ZERO) != 0) {
                 return true;
             }

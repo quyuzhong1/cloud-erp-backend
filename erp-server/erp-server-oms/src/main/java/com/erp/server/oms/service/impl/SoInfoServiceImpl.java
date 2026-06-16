@@ -1710,6 +1710,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //修改 订单详情
             soDetailService.updateSoDetail(soInfo, dto.getIsTax(), dto.getDetailList(),old);
+            if (CollUtil.isEmpty(dto.getDetailList())) {
+                List<SoDetailEntity> details = soDetailService.listBaseByMainId(id);
+                SoInfoAmountUtil.applyMainPaidAmount(soInfo, details);
+                this.updateById(soInfo);
+            }
             if(StringUtils.isNotBlank(dto.getReceiveAccount()) && !dto.getReceiveAccount().equals(oldReceiptAccount) && CollectionUtils.isNotEmpty(dto.getSoReceiptDTOList())){
                 dto.getSoReceiptDTOList().forEach(v->v.setReceiptAccount(dto.getReceiveAccount()));
             }
