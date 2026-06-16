@@ -1428,6 +1428,11 @@ public class ExcelPrintUtils {
 
     /**
      * 打开动态表头 Writer（分批 write 后须 {@link ExcelWriter#finish()}）。
+     * <p>
+     * 异常风格：本方法 {@code build()} 阶段不做 IO，故不声明受检 {@link IOException}；
+     * IO 异常在调用方后续 {@link ExcelWriter#write}/{@link ExcelWriter#finish} 阶段以运行时异常抛出，
+     * 由 file 服务层（{@code ExportTempFilesHandler.exportToTempAndUpload}）集中转换为 {@code ServiceException}，
+     * 与 {@link #openTemplateListWriter} 的最终异常归口一致（后者因读取模板字节才额外声明受检 {@link IOException}）。
      */
     public ExcelWriter openDynamicHeadersWriter(OutputStream outputStream, List<List<String>> head) {
         HorizontalCellStyleStrategy horizontalCellStyleStrategy = getHorizontalCellStyleStrategy();
