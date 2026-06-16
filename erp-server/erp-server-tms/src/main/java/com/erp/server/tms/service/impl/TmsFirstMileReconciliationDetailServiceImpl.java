@@ -43,6 +43,8 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.model.plm.dto.ProductPackDTO;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -1730,7 +1732,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDetailList = wmsFirstMileDeliveryFeign.listDetailByCodes(sourceCodeList);
         List<String> skuIdList = firstMileDetailList.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSkuId).distinct().collect(Collectors.toList());
         //sku的毛重
-        Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listSingleBySkuIds(skuIdList);
+        Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listSingleBySkuIds(
+                new ProductPackDTO.ListSingleBySkuIdsParam(skuIdList, BomStateEnum.AUDIT_PASS.getState()));
 
         //序号唯一的设置到结果集合里
         Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
