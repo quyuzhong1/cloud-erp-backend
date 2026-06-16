@@ -280,11 +280,11 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
                     JSONObject firstElement = valueArray.getJSONObject(0);
                     String supplierName = firstElement.get("Value").toString();
 
-                    String intStr = view.get("Qty").toString().split("\\.")[0]; // 按小数点分割，取整数部分
+                    Integer kingdeeQty = parseKingdeeQtyInt(view.get("Qty"));
 
                     if (Objects.equals(skuNo, productDetail.getSkuNo())
-                            && Objects.equals(supplierName,supplier.getName())
-                            && Integer.parseInt(intStr) == parentDetail.getRepairQty()) {
+                            && Objects.equals(supplierName, supplier.getName())
+                            && Objects.equals(kingdeeQty, parentDetail.getRepairQty())) {
                         List<SubcontractOrderDetailEntity> filterChildList = childList.stream()
                                 .filter(item -> Objects.equals(item.getParentId(), parentDetail.getId()))
                                 .collect(Collectors.toList());
@@ -751,6 +751,27 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
 
     private int resolveReplaceGroup(JSONObject srcEntry, int entryIndex) {
         return ConvertUtil.toInt(srcEntry.get("ReplaceGroup"), entryIndex + 1);
+    }
+
+    /**
+     * 解析金蝶 Qty 字段为整数（取小数点前整数部分）；无法解析时返回 null，避免 parseInt 导致 MQ 消费失败。
+     */
+    private Integer parseKingdeeQtyInt(Object qty) {
+        if (qty == null) {
+            return null;
+        }
+        if (qty instanceof Number) {
+            return ((Number) qty).intValue();
+        }
+        String qtyStr = String.valueOf(qty).trim();
+        if (StringUtils.isBlank(qtyStr)) {
+            return null;
+        }
+        int dotIndex = qtyStr.indexOf('.');
+        if (dotIndex >= 0) {
+            qtyStr = qtyStr.substring(0, dotIndex);
+        }
+        return ConvertUtil.toInt(qtyStr, null);
     }
 
 }
