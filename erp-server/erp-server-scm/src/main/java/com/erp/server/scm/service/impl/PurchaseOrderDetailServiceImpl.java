@@ -376,24 +376,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 && SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
             sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
         }
-        boolean isRepairSubcontractSource = Objects.nonNull(sourceSubcontractOrder)
-                && Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), sourceSubcontractOrder.getType());
-        Map<String, SubcontractOrderDetailEntity> repairSubcontractDetailMap = new HashMap<>();
-        if (isRepairSubcontractSource) {
-            List<SubcontractOrderDetailEntity> sourceDetailList = subcontractOrderDetailService.listByMainId(entity.getSourceId());
-            if (CollectionUtils.isNotEmpty(sourceDetailList)) {
-                repairSubcontractDetailMap = sourceDetailList.stream()
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toMap(SubcontractOrderDetailEntity::getId, e -> e, (oldValue, newValue) -> oldValue));
-            }
-        }
         if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
-            if (StrUtil.isBlank(entity.getSourceId())){
+                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())) {
+            if (StrUtil.isBlank(entity.getSourceId())) {
                 throw new ServiceException("委外订单id不能为空");
             }
             subcontractOrderDetailEntityList = subcontractOrderDetailService.listByMainId(entity.getSourceId());
-            if (CollectionUtils.isEmpty(subcontractOrderDetailEntityList)){
+            if (CollectionUtils.isEmpty(subcontractOrderDetailEntityList)) {
                 throw new ServiceException("委外订单明细记录不能为空");
             }
             // ENUM_SUBCONTRACT / ENUM_REPAIR 类型下，若上游 sourceType 不是委外订单（极少见），
@@ -402,9 +391,23 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
             }
         }
-        // 将上游委外订单是否返修类型固化到局部变量，循环内只读复用
-        final boolean isRepairType = Objects.nonNull(sourceSubcontractOrder)
+        // 在所有可能加载 sourceSubcontractOrder 的路径都执行完后，统一基于同一份订单实体计算 flag 并构建 Map，
+        // 避免父行（isRepairType）与子行（isRepairSubcontractSource）因为依赖时机不同而走出不一致的取价分支
+        final boolean isRepairSubcontractSource = Objects.nonNull(sourceSubcontractOrder)
                 && Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), sourceSubcontractOrder.getType());
+        final boolean isRepairType = isRepairSubcontractSource;
+        Map<String, SubcontractOrderDetailEntity> repairSubcontractDetailMap = new HashMap<>();
+        if (isRepairSubcontractSource && StrUtil.isNotBlank(entity.getSourceId())) {
+            // 兜底加载阶段已经查过 listByMainId 的，直接复用，避免重复查询
+            List<SubcontractOrderDetailEntity> sourceDetailList = CollectionUtils.isNotEmpty(subcontractOrderDetailEntityList)
+                    ? subcontractOrderDetailEntityList
+                    : subcontractOrderDetailService.listByMainId(entity.getSourceId());
+            if (CollectionUtils.isNotEmpty(sourceDetailList)) {
+                repairSubcontractDetailMap = sourceDetailList.stream()
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toMap(SubcontractOrderDetailEntity::getId, e -> e, (oldValue, newValue) -> oldValue));
+            }
+        }
         //退货单记录
         List<PoReturnDetailEntity> poReturnDetailEntityList = null;
         if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
