@@ -388,6 +388,7 @@ public interface RedisCacheConstants {
     String WMS_DICT_BASIC_BY_TYPE = "cache:wms:dict:type";
     String PLM_DICT_BASIC_BY_TYPE = "cache:plm:dict:type";
     String SRM_DICT_BASIC_BY_TYPE = "cache:srm:dict:type";
+    String FMS_DICT_BASIC_BY_TYPE = "cache:fms:dict:type";
     String WORKFLOW_DICT_BASIC_BY_TYPE = "cache:workflow:dict:type";
     //区域管理
     String SYS_DICT_GLOBAL_AREA_ID = "cache:sys:globalArea:id";
