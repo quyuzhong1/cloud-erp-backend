@@ -2,7 +2,7 @@ package com.erp.server.file.controller.feign;
 
 import com.common.business.dto.base.BaseDTO;
 import com.erp.server.file.context.FileTaskContext;
-import com.erp.server.file.dto.FileTaskDTO;
+import com.erp.model.file.dto.FileTaskDTO;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;

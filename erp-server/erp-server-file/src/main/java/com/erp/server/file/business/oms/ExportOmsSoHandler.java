@@ -11,7 +11,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.business.oms.utils.SoUtils;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.erp.server.file.exception.BusinessException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
