@@ -6,12 +6,14 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoB2cRefundDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
+import com.erp.model.file.entity.FileTask;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_RETURN_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_RETURN_INFO;
 
 @Component
 @Slf4j
@@ -27,7 +29,7 @@ public class ExportOmsRefundHandler extends AbstractPageFileEventHandler<SoB2cRe
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_BI_RETURN_INFO;
+        return EXPORT_OMS_RETURN_INFO;
     }
 
     @Override
