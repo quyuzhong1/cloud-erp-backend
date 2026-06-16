@@ -135,7 +135,7 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                 resp = wegoOpenApiService.query2cOrderPage(req);
             } catch (Exception e) {
                 log.error("[WEGO出库] 服务商[id={}] query2cOrderPage 异常, pageNum={}", authId, pageNum, e);
-                break;
+                throw new ServiceException("WEGO出库：query2cOrderPage 分页拉取异常，已拉取页数=" + (pageNum - 1) + "，数据不完整，任务中止");
             }
             if (resp == null || resp.getResult() == null) { break; }
             WegoOutboundResp.PageResultDTO pageResult = resp.getResult();
