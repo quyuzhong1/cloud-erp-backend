@@ -477,6 +477,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         if (!Objects.isNull(soInfo)) {
                             entity.setSoId(soInfo.getId());
                             entity.setSoCode(soInfo.getCode());
+                            //B2B订单平台订单编码，与B2C分支保持一致
+                            if (CharSequenceUtil.isBlank(dto.getPlatformOrderCode())) {
+                                dto.setPlatformOrderCode(soInfo.getPlatformOrderCode());
+                            }
                         }
                     }
                 }
