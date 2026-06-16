@@ -10,6 +10,7 @@ import com.erp.model.tms.entity.TmsAsyncTaskRecordEntity;
 import com.common.business.service.SuperService;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -57,6 +58,35 @@ public interface TmsAsyncTaskRecordService extends SuperService<TmsAsyncTaskReco
      * 解析批次并发等待超时秒数，非法或 <=0 时使用默认值
      */
     int resolveTimeoutSeconds(String timeoutConfig, int defaultSeconds);
+
+    /**
+     * 从异步任务批次配置解析主任务执行超时时间。
+     * <p>
+     * 该值用于消费侧和定时器统一判断主任务是否超时，避免不同入口使用不同超时来源。
+     *
+     * @param billBatchParamsDTO 批次配置，来源于 {@link #loadBillBatchParams(String)}
+     * @return 主任务超时时间，单位：秒
+     */
+    int resolveTaskExecTimeout(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
+
+    /**
+     * 从异步任务批次配置解析小包明细僵死判定窗口。
+     * <p>
+     * 判定窗口由批次等待超时时间和明细僵死缓冲时间相加得到，降低慢执行被误判为僵死的概率。
+     *
+     * @param billBatchParamsDTO 批次配置，来源于 {@link #loadBillBatchParams(String)}
+     * @return 小包明细僵死判定窗口，单位：秒
+     */
+    int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO);
+
+    /**
+     * 判断小包明细是否为超过执行窗口的 ING 明细。
+     *
+     * @param detail 任务明细
+     * @param staleBefore 僵死阈值时间，早于或等于该时间的 ING 明细视为僵死
+     * @return true 表示明细处于 ING 且执行开始时间已超过僵死阈值
+     */
+    boolean isSmallBagStaleIngDetail(com.erp.model.tms.entity.TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore);
 
     /**
      * 格式化任务错误信息，避免 getMessage() 为 null

@@ -18,9 +18,34 @@ public interface TmsAsyncTaskDetailService extends SuperService<TmsAsyncTaskDeta
     void updateDetail(String taskDetailId, String status, String msg);
 
     /**
-     * PENDING 认领为 ING，防止重复执行
+     * 将待执行明细从 PENDING 认领为 ING。
+     * <p>
+     * 认领成功时会刷新 startTime，使其表示真实执行开始时间，供僵死 ING 判定使用。
+     *
+     * @param taskDetailId 任务明细 ID
+     * @return true 表示认领成功；false 表示明细已被其他线程处理或状态已变化
      */
     boolean tryClaimDetailForExecution(String taskDetailId);
+
+    /**
+     * 将指定明细中未进入终态的数据标记为失败。
+     *
+     * @param detailIds 任务明细 ID 集合
+     * @param errorMsg 失败原因，写入 errorData 前会截断
+     * @return 实际标记为失败的明细数量
+     */
+    int markDetailsFailed(Collection<String> detailIds, String errorMsg);
+
+    /**
+     * 将超过执行窗口的 ING 明细标记为失败，不重置为 PENDING，后续走错误重试。
+     *
+     * @param mainId 主任务 ID
+     * @param businessIds 业务 ID 集合
+     * @param staleBefore 僵死阈值时间，早于或等于该时间的 ING 明细会被标记失败
+     * @param errorMsg 失败原因，写入 errorData 前会截断
+     * @return 实际标记为失败的明细数量
+     */
+    int markStaleIngDetailsFailed(String mainId, Collection<String> businessIds, java.time.LocalDateTime staleBefore, String errorMsg);
 
     List<TmsAsyncTaskDetailEntity> listErrorDetail(String mainId);
 

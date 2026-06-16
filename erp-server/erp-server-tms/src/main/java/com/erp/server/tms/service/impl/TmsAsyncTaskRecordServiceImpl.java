@@ -65,6 +65,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -150,6 +151,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setDetailCount(detailCount);
         entity.setDataJson(compactJson);
         entity.setStartTime(LocalDateTime.now());
+        entity.setExecTimeout(resolveTaskExecTimeout(loadBillBatchParams(null)));
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.MANUAL.getCode());
         return save(entity) ? entity : null;
@@ -242,33 +244,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                 businessType, methodType, effectiveStartTimeStr);
             return null;
         }
-        //默认8小时
-        Integer execTimeout = null;
-        //获取分摊配置--任务超时时间
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
-        if(Objects.nonNull(cfgSettingEntity) && Objects.nonNull(cfgSettingEntity.getDataJson())){
-            CfgSettingValueDTO.ReconciliationCycleDTO reconciliationCycleDTO = JSONUtil.toBean(cfgSettingEntity.getDataJson(),CfgSettingValueDTO.ReconciliationCycleDTO.class);
-            //头程对账单
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getFirstMileExecTimeout();
-            }
-            //报关对账
-            if(Objects.equals(businessType, TmsAsyncTaskRecordBusinessTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getDeclareExecTimeout();
-            }
-            //头程分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getFirstMileAllocationeExecTimeout();
-            }
-            //小包分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getPackageBeginExecTimeout();
-            }
-            //中转分摊
-            if(Objects.equals(businessType,TmsAsyncTaskRecordBusinessTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode())){
-                execTimeout = reconciliationCycleDTO.getTransferBeginExecTimeout();
-            }
-        }
+        Integer execTimeout = resolveTaskExecTimeout(loadBillBatchParams(null));
 
         TmsAsyncTaskRecordEntity entity = new TmsAsyncTaskRecordEntity();
         //重置任务ID
@@ -291,9 +267,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         entity.setStartTime(startTime);
         entity.setStatus(TmsAsyncTaskRecordStatusEnum.PENDING.getCode());
         entity.setExecType(TmsAsyncTaskRecordExecTypeEnum.AUTO.getCode());
-        if(Objects.nonNull(execTimeout)){
-            entity.setExecTimeout(execTimeout);
-        }
+        entity.setExecTimeout(execTimeout);
         return save(entity) ? entity.getId() : null;
     }
 
@@ -327,7 +301,9 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         if (byKey == null || byKey.getDataJson() == null) {
             log.error("配置项 {} 不存在或 dataJson 为空，taskId: {}",
                 CfgSettingEnum.BILL_BATCH_PARAMS.getCode(), taskId);
-            finishTaskWithError(taskId, "批次配置缺失");
+            if (StringUtils.isNotBlank(taskId)) {
+                finishTaskWithError(taskId, "批次配置缺失");
+            }
             return null;
         }
         return JSONUtil.toBean(byKey.getDataJson(), CfgSettingValueDTO.BillBatchParamsDTO.class);
@@ -343,6 +319,52 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     public int resolveTimeoutSeconds(String timeoutConfig, int defaultSeconds) {
         int timeoutSeconds = NumberUtils.toInt(timeoutConfig, defaultSeconds);
         return timeoutSeconds <= 0 ? defaultSeconds : timeoutSeconds;
+    }
+
+    /**
+     * 从批次配置解析主任务超时时间。
+     * <p>
+     * 未配置或配置非法时使用 28800 秒，保持任务有明确止损时间。
+     *
+     * @param billBatchParamsDTO 批次配置
+     * @return 主任务超时时间，单位：秒
+     */
+    @Override
+    public int resolveTaskExecTimeout(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        return resolveTimeoutSeconds(billBatchParamsDTO == null ? null : billBatchParamsDTO.getTaskTimeoutSeconds(), 28800);
+    }
+
+    /**
+     * 小包明细僵死窗口 = 批次等待超时时间 + 明细缓冲时间。
+     * <p>
+     * 缓冲时间用于覆盖线程刚超过批次等待时间但仍可能正常收尾的情况，避免过早标记失败。
+     *
+     * @param billBatchParamsDTO 批次配置
+     * @return 小包明细僵死判定窗口，单位：秒
+     */
+    @Override
+    public int resolveSmallBagStaleDetailSeconds(CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO) {
+        int timeoutSeconds = resolveTimeoutSeconds(billBatchParamsDTO == null ? null : billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
+        int bufferSeconds = resolveTimeoutSeconds(billBatchParamsDTO == null ? null : billBatchParamsDTO.getDetailBufferSeconds(), 600);
+        return timeoutSeconds + bufferSeconds;
+    }
+
+    /**
+     * 判断明细是否为僵死 ING。
+     * <p>
+     * 只依赖认领时刷新的 startTime，不使用 updateTime，避免被其他更新动作干扰判断。
+     *
+     * @param detail 任务明细
+     * @param staleBefore 僵死阈值时间
+     * @return true 表示该 ING 明细已超过执行窗口
+     */
+    @Override
+    public boolean isSmallBagStaleIngDetail(TmsAsyncTaskDetailEntity detail, LocalDateTime staleBefore) {
+        return detail != null
+                && staleBefore != null
+                && Objects.equals(detail.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                && detail.getStartTime() != null
+                && !detail.getStartTime().isAfter(staleBefore);
     }
 
     @Override
@@ -787,6 +809,7 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
     @Override
     public void startTask(){
         LocalDateTime now = LocalDateTime.now();
+        markFinishedTaskIngDetailsFailed();
 
         // 查询所有 ING 或 PENDING 且 startTime <= now 的任务，去掉今日限制：
         // 避免补偿场景（如服务宕机恢复后）中历史 PENDING 任务被永久搁置
@@ -803,7 +826,11 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
         List<TmsAsyncTaskRecordEntity> ingList = list.stream().filter(e -> e.getStatus().equals(TmsAsyncTaskRecordStatusEnum.ING.getCode())).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(ingList)){
             for (TmsAsyncTaskRecordEntity entity : ingList) {
-                Integer execTimeout = entity.getExecTimeout();
+                CfgSettingValueDTO.BillBatchParamsDTO billBatchParamsDTO = loadBillBatchParams(entity.getId());
+                if (billBatchParamsDTO == null) {
+                    continue;
+                }
+                Integer execTimeout = resolveTaskExecTimeout(billBatchParamsDTO);
                 LocalDateTime startTime = entity.getStartTime();
                 if(Objects.nonNull(startTime) && Objects.nonNull(execTimeout) && execTimeout > 0 ){
                     if(now.isAfter(startTime.plusSeconds(execTimeout))){
@@ -828,6 +855,51 @@ public class TmsAsyncTaskRecordServiceImpl extends SuperServiceImpl<TmsAsyncTask
                     selfServer.updateTask(entity.getId(), TmsAsyncTaskRecordStatusEnum.FINISH.getCode(), formatTaskErrorMessage(e));
                 }
             }
+        }
+    }
+
+    private void markFinishedTaskIngDetailsFailed() {
+        List<TmsAsyncTaskDetailEntity> ingDetails = tmsAsyncTaskDetailService.lambdaQuery()
+                .select(TmsAsyncTaskDetailEntity::getMainId)
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                .isNotNull(TmsAsyncTaskDetailEntity::getMainId)
+                .list();
+        if (CollUtil.isEmpty(ingDetails)) {
+            return;
+        }
+        List<String> mainIds = ingDetails.stream()
+                .map(TmsAsyncTaskDetailEntity::getMainId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(mainIds)) {
+            return;
+        }
+        Set<String> finishedMainIds = lambdaQuery()
+                .select(TmsAsyncTaskRecordEntity::getId)
+                .in(TmsAsyncTaskRecordEntity::getId, mainIds)
+                .eq(TmsAsyncTaskRecordEntity::getStatus, TmsAsyncTaskRecordStatusEnum.FINISH.getCode())
+                .list()
+                .stream()
+                .map(TmsAsyncTaskRecordEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+        if (CollUtil.isEmpty(finishedMainIds)) {
+            return;
+        }
+        List<String> detailIds = tmsAsyncTaskDetailService.lambdaQuery()
+                .select(TmsAsyncTaskDetailEntity::getId)
+                .in(TmsAsyncTaskDetailEntity::getMainId, finishedMainIds)
+                .eq(TmsAsyncTaskDetailEntity::getStatus, TmsAsyncTaskRecordStatusEnum.ING.getCode())
+                .list()
+                .stream()
+                .map(TmsAsyncTaskDetailEntity::getId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        int failedCount = tmsAsyncTaskDetailService.markDetailsFailed(
+                detailIds, "主任务已结束，明细仍为执行中，系统自动标记失败");
+        if (failedCount > 0) {
+            log.warn("已清理主任务结束后的ING明细，mainIds数量: {}, 明细数量: {}", finishedMainIds.size(), failedCount);
         }
     }
 

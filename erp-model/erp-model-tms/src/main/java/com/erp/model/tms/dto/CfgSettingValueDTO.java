@@ -355,6 +355,8 @@ public class CfgSettingValueDTO implements Serializable {
         private String batchTimeoutSeconds;
         /** 主任务超时时间（秒） */
         private String taskTimeoutSeconds;
+        /** 明细僵死判定缓冲时间（秒） */
+        private String detailBufferSeconds;
     }
 
 }

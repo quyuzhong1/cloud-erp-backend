@@ -1800,6 +1800,7 @@ public enum ApiError implements Serializable {
     LOGISTICS_ORDER_NOT_CANCEL(13645,"物流单据不是已取消或者下单失败状态，不能编辑"),
     LOGISTICS_ORDER_CANNOT_EDIT(13646,"该单据不能再当前页面编辑"),
     LOGISTICS_CHANNEL_CODE_EMPTY(13647,"渠道代码为空或者格式不正确"),
+    ASYNC_TASK_DETAIL_TIMEOUT(13648,"明细执行超时，系统自动标记失败"),
     /**
      * 财务管理 错误 信息 14000-14500
      */

@@ -15,7 +15,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
@@ -69,8 +68,6 @@ import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -3036,6 +3033,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             // 2. 初始化批次配置
             int batchSize = asyncTaskRecordService.resolveBatchSize(billBatchParamsDTO.getBatch(), 500);
             int timeoutSeconds = asyncTaskRecordService.resolveTimeoutSeconds(billBatchParamsDTO.getBatchTimeoutSeconds(), 5000);
+            int staleDetailSeconds = asyncTaskRecordService.resolveSmallBagStaleDetailSeconds(billBatchParamsDTO);
             String lastId = ""; // 游标起点为空
 
             int totalProcessed = 0;
@@ -3044,7 +3042,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             int batchNumber = 0;
             LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext = buildSmallBagPushAllocationContext();
             LocalDateTime taskStartTime = taskRecord.getStartTime();
-            Integer taskExecTimeout = taskRecord.getExecTimeout();
+            int taskExecTimeout = asyncTaskRecordService.resolveTaskExecTimeout(billBatchParamsDTO);
 
             log.info("开始分批处理任务，taskId: {}, 批次大小: {}, 预计总数: {}", taskId, batchSize, taskRecord.getDetailCount());
 
@@ -3057,15 +3055,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     if (asyncTaskRecordService.shouldStopLoopTask(taskId, currentTask)) {
                         break;
                     }
-                    taskExecTimeout = currentTask.getExecTimeout();
                 }
 
-                if (taskExecTimeout != null && taskExecTimeout > 0 && taskStartTime != null) {
+                if (taskExecTimeout > 0 && taskStartTime != null) {
                     long elapsedSeconds = java.time.Duration.between(taskStartTime, LocalDateTime.now()).getSeconds();
                     if (elapsedSeconds > taskExecTimeout) {
                         log.error("任务执行超时，taskId: {}, 已耗时: {}秒", taskId, elapsedSeconds);
-                        asyncTaskRecordService.updateTask(taskId, TmsAsyncTaskRecordStatusEnum.FINISH.getCode(),
-                            "任务执行超时，已耗时" + elapsedSeconds + "秒");
+                        asyncTaskRecordService.terminateTaskTimeout(taskId, "任务执行超时，已耗时" + elapsedSeconds + "秒");
                         break;
                     }
                 }
@@ -3098,7 +3094,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 log.info("开始处理第{}批，数量: {}, lastId: {}", batchNumber, batchIds.size(), lastId);
 
                 // 3.3 为本批次创建任务明细并执行
-                TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(), timeoutSeconds, pushContext);
+                TmsAsyncTaskRecordDTO.BatchProcessResult result = processBatch(taskId, dto.getBusinessType(), batchIds, dto.getReportDate(),
+                    timeoutSeconds, staleDetailSeconds, pushContext);
 
                 // 3.4 累计统计
                 totalProcessed += batchIds.size();
@@ -3156,7 +3153,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @date 2026-04-22
      */
     private TmsAsyncTaskRecordDTO.BatchProcessResult processBatch(String taskId, String businessType,
-                                             List<String> batchIds, String reportDate, int timeoutSeconds,
+                                             List<String> batchIds, String reportDate, int timeoutSeconds, int staleDetailSeconds,
                                                                   LogisticsBillCostDTO.SmallBagPushAllocationContext pushContext) {
 
         List<String> distinctBatchIds = batchIds.stream()
@@ -3179,12 +3176,23 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             .map(LogisticsBillCostEntity::getId)
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toList());
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime staleBefore = now.minusSeconds(staleDetailSeconds);
         List<TmsAsyncTaskDetailEntity> existingDetails = asyncTaskDetailRecordService.lambdaQuery()
             .eq(TmsAsyncTaskDetailEntity::getMainId, taskId)
             .in(TmsAsyncTaskDetailEntity::getBusinessId, costIds)
             .list();
+        Set<String> staleIngBusinessIds = existingDetails.stream()
+            .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .filter(d -> asyncTaskRecordService.isSmallBagStaleIngDetail(d, staleBefore))
+            .map(TmsAsyncTaskDetailEntity::getBusinessId)
+            .filter(StringUtils::isNotBlank)
+            .collect(Collectors.toSet());
+        int staleFailedCount = asyncTaskDetailRecordService.markStaleIngDetailsFailed(
+            taskId, staleIngBusinessIds, staleBefore, ApiError.ASYNC_TASK_DETAIL_TIMEOUT.getMsg());
         Set<String> existingIngBusinessIds = existingDetails.stream()
             .filter(d -> Objects.equals(d.getStatus(), TmsAsyncTaskRecordStatusEnum.ING.getCode()))
+            .filter(d -> !staleIngBusinessIds.contains(d.getBusinessId()))
             .map(TmsAsyncTaskDetailEntity::getBusinessId)
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toSet());
@@ -3196,8 +3204,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             .map(TmsAsyncTaskDetailEntity::getBusinessId)
             .filter(StringUtils::isNotBlank)
             .collect(Collectors.toSet());
+        if (staleFailedCount > 0) {
+            log.warn("小包分摊僵死ING明细已标记失败，taskId: {}, 数量: {}", taskId, staleFailedCount);
+        }
         if (CollUtil.isNotEmpty(existingIngBusinessIds)) {
-            log.warn("跳过执行中的任务明细，taskId: {}, ING数量: {}", taskId, existingIngBusinessIds.size());
+            log.warn("跳过近期执行中的任务明细，taskId: {}, ING数量: {}", taskId, existingIngBusinessIds.size());
         }
         if (CollUtil.isNotEmpty(existingPendingByBusinessId)) {
             log.info("纳入已存在的PENDING任务明细执行，taskId: {}, 数量: {}", taskId, existingPendingByBusinessId.size());
@@ -3224,7 +3235,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
 
         // 3. 构建任务明细列表
-        LocalDateTime now = LocalDateTime.now();
         List<TmsAsyncTaskDetailEntity> details = new ArrayList<>();
 
         for (LogisticsBillCostEntity cost : costList) {
@@ -3268,11 +3278,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         if (CollUtil.isEmpty(detailsToExecute)) {
             log.warn("本批次无可执行任务明细，taskId: {}", taskId);
-            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, 0);
+            return new TmsAsyncTaskRecordDTO.BatchProcessResult(0, staleFailedCount);
         }
 
         // 5. 并发执行本批次（含重投时已存在且仍为 PENDING 的明细）
-        return executeBatchWithConcurrency(detailsToExecute, reportDate, timeoutSeconds, pushContext);
+        TmsAsyncTaskRecordDTO.BatchProcessResult result = executeBatchWithConcurrency(detailsToExecute, reportDate, timeoutSeconds, pushContext);
+        return new TmsAsyncTaskRecordDTO.BatchProcessResult(
+            result.getSuccessCount(), result.getFailedCount() + staleFailedCount);
     }
 
     /**
