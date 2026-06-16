@@ -397,25 +397,6 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     /**
-     * 兜底：箱内 items → products 聚合。
-     */
-    private List<WegoInOrderSaveDTO.Product> buildProductsFromItems(List<ThirdWarehouseCreateInboundReq.Item> itemList) {
-        Map<String, Integer> skuQtyMap = new LinkedHashMap<>();
-        for (ThirdWarehouseCreateInboundReq.Item item : itemList) {
-            if (CharSequenceUtil.isBlank(item.getProductSku()) || item.getQuantity() == null) {
-                continue;
-            }
-            skuQtyMap.merge(item.getProductSku(), item.getQuantity(), Integer::sum);
-        }
-        List<WegoInOrderSaveDTO.Product> products = new ArrayList<>(skuQtyMap.size());
-        skuQtyMap.forEach((sku, qty) -> products.add(WegoInOrderSaveDTO.Product.builder()
-                .sku(sku)
-                .qty(qty)
-                .build()));
-        return products;
-    }
-
-    /**
      * 汇总单箱 SKU 总件数：对应 WEGO Detail.skuQty 字段。
      * <p>
      * 取 products 列表中所有 {@link WegoInOrderSaveDTO.Product#getQty()} 之和，
