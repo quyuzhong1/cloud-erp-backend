@@ -856,6 +856,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                          .map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),dto.getType()) && StringUtils.isBlank(dto.getParentId())) {
+                if (Objects.isNull(dto.getRepairQty()) || MathUtil.compareTo(dto.getRepairQty(), MathUtil.ZERO) <= MathUtil.ZERO) {
+                    throw new ServiceException(ApiError.PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO, skuVO.getSkuNo());
+                }
                 dto.setApplyQty(dto.getRepairQty() - purchaseQty);
             } else {
                 dto.setApplyQty(dto.getQty() - purchaseQty);

@@ -1092,6 +1092,7 @@ public enum ApiError implements Serializable {
     PO_RETURN_NOT_ALLOW_PUSH_DOWN(9672,"不同退货方式的采购退货单不允许合并下推委外订单"),
     PO_RECONCILIATION_STATUS_NOT_CONFIRM(9673,"单据状态不是【已确认待完结】，不允许上传发票"),
     PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED(9674,"发票数量不能超过10个"),
+    PO_SUBCONTRACT_REPAIR_QTY_MUST_GT_ZERO(9675,"SKU【{0}】返修数量必须大于0"),
 
     /**
      * 采购价目表错误 信息 10000 - 10500
@@ -1963,7 +1964,7 @@ public enum ApiError implements Serializable {
 
     /**
      * 质检申请 错误 信息 16000-16500
-      */
+     */
     QC_APPLICATION_NOT_EXIST(16000,"质检申请单不存在"),
     QC_APPLICATION_DETAIL_NOT_EXIST(16001,"质检申请明细单不存在"),
     QC_APPLICATION_SUPPLIER_NOT_DIFF(16002,"质检申请单明细单供应商与来源单据供应商不一致"),
