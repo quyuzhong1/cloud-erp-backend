@@ -21,6 +21,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -519,7 +520,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             addDTO.setTaxRate(viewDTO.getTaxRate());
                             addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
                         } else {
-                            String purchasePriceError = CharSequenceUtil.format(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND.getMsg(), addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                            String purchasePriceError = MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, addDTO.getSkuNo(), addDTO.getPurchaseQty());
                             errorList.add(purchasePriceError);
                         }
                     }
