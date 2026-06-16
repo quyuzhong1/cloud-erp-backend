@@ -9,11 +9,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.erp.server.file.core.ClasspathExportTemplateReader;
 import com.erp.server.file.handler.FileRegistry;
 import lombok.Getter;
-import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
 
 import java.io.ByteArrayInputStream;
@@ -21,7 +20,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,7 +78,7 @@ public class MultiSheetTemplateWriter {
             rowLimitPerType[i] = Math.min(maxDataRowsPerSheet, maxRowsPerXlsxSheetHardLimit);
         }
 
-        ExpandedTemplate expanded = expandTemplate(readClasspathTemplateBytes(excelPath), dataSheetCountPerType);
+        ExpandedTemplate expanded = expandTemplate(ClasspathExportTemplateReader.readBytes(excelPath), dataSheetCountPerType);
         SheetCursor[] cursors = buildCursors(expanded.sheetIndexesPerType, rowLimitPerType);
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
@@ -187,7 +185,7 @@ public class MultiSheetTemplateWriter {
             rowLimitPerType[i] = maxRowsPerXlsxSheetHardLimit;
         }
 
-        ExpandedTemplate expanded = expandTemplate(readClasspathTemplateBytes(excelPath), dataSheetCountPerType);
+        ExpandedTemplate expanded = expandTemplate(ClasspathExportTemplateReader.readBytes(excelPath), dataSheetCountPerType);
         SheetCursor[] cursors = buildCursors(expanded.sheetIndexesPerType, rowLimitPerType);
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.FALSE).build();
         WriteHandler[] handlers = writeHandlers.toArray(new WriteHandler[0]);
@@ -391,13 +389,6 @@ public class MultiSheetTemplateWriter {
         return dto;
     }
 
-    private byte[] readClasspathTemplateBytes(String path) throws IOException {
-        ClassPathResource resource = new ClassPathResource(path);
-        try (InputStream in = resource.getInputStream()) {
-            return IOUtils.toByteArray(in);
-        }
-    }
-
     private ExpandedTemplate expandTemplate(byte[] templateBytes, int[] sheetCountPerType) throws IOException {
         if (sheetCountPerType == null || sheetCountPerType.length == 0) {
             throw new ServiceException("sheetCountPerType 不能为空");
@@ -405,6 +396,9 @@ public class MultiSheetTemplateWriter {
         // 与单 sheet 路径（AbstractPageFileEventHandler.expandTemplateWithDataSheetCopies）一致的内存上界保护：
         // POI 整本克隆全部类型 sheet 后再整本写出，峰值内存与「模板字节 × 总展开 sheet 数」正相关，
         // 以 file.storage.maxTemplateExpandBytes（默认 300MB）做固定上界、早失败避免 OOM。
+        // 读入前已由 ClasspathExportTemplateReader 按 maxTemplateExpandBytes / maxSheetNum 校验单份模板体积。
+        // 注意：此处为原始字节估算，XSSFWorkbook 对象模型实际峰值高于该乘积（放大系数另计）；
+        // 复杂模板接近阈值时仍存在残余 OOM 风险，由生产监控 + 按模板体积下调 maxTemplateExpandBytes 兜底，POI 流式展开为后续优化项。
         // 审查约定：本方法（多类型 sheet 各自克隆 + buildCloneName 命名 + 模板 sheet 数=类型数校验）与单 sheet 路径语义不同，
         // 属并行实现而非重复，足迹校验逻辑已与单 sheet 路径对齐；勿因「结构相似」报重复/分叉问题或要求合并阻断。
         long totalExpandSheets = 0L;

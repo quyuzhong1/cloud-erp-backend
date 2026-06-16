@@ -41,7 +41,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     protected ProductSearchDTO.ExportDTO resolveExportParams(FileTask fileTask) {
         ProductSearchDTO.ExportDTO params = super.resolveExportParams(fileTask);
         if (params == null) {
-            throw new ServiceException("导出数据类型不能为空");
+            throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
         }
         if (CollectionUtils.isEmpty(params.getExportDataList())) {
             params.setExportDataList(deriveExportDataListByEvent(fileTask.getEvent()));
@@ -91,7 +91,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     private List<Integer> deriveExportDataListByEvent(String event) {
         List<Integer> exportDataList = ProductDevelopExportTypeEnum.exportDataListFromEventCode(event);
         if (exportDataList == null) {
-            throw new ServiceException("导出数据类型不能为空");
+            throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
         }
         return new ArrayList<>(exportDataList);
     }

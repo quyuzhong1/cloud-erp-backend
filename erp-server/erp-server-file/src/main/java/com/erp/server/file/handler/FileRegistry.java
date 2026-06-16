@@ -195,6 +195,15 @@ public class FileRegistry {
     }
 
     /**
+     * 单份 classpath 模板原始字节上界：{@code maxTemplateExpandBytes / maxSheetNum}。
+     * 最坏情况按 {@link #maxSheetNumOrDefault()} 张同结构 sheet 展开时，足迹不超过 {@link #maxTemplateExpandBytesOrDefault()}。
+     */
+    public static long maxSingleTemplateBytesOrDefault() {
+        int maxSheets = maxSheetNumOrDefault();
+        return Math.max(1L, maxTemplateExpandBytesOrDefault() / maxSheets);
+    }
+
+    /**
      * 动态表头导出每页条数：读取 {@code file.storage.dynamicExportPageSize}，未注入或非法（&lt;1）时回退 1000，
      * 与历史固定批次一致，避免大宽表动态表头导出因批次过大引发内存/超时回归。
      */

@@ -15,10 +15,8 @@ import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.CollectionUtils;
 
 import java.io.ByteArrayInputStream;
@@ -26,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -197,13 +194,11 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 故须在配置层约束 {@code maxTemplateDataSheets}（{@link #maxTemplateDataSheets()}）与单 sheet 行数
      * （{@link #maxDataRowsPerSheet()}）；并在 {@link #expandTemplateWithDataSheetCopies} 入口以
      * {@code file.storage.maxTemplateExpandBytes}（默认 300MB）对「模板字节 × sheet 数」做固定上界保护、早失败避免 OOM。
+     * 读入前另由 {@link ClasspathExportTemplateReader} 按 {@code maxTemplateExpandBytes / maxSheetNum} 校验单份模板体积。
      * 超大导出场景的 POI 流式模板展开作为后续优化。
      */
     private byte[] readClasspathTemplateBytes(String excelPath) throws IOException {
-        ClassPathResource resource = new ClassPathResource(excelPath);
-        try (InputStream in = resource.getInputStream()) {
-            return IOUtils.toByteArray(in);
-        }
+        return ClasspathExportTemplateReader.readBytes(excelPath);
     }
 
     private static final class ExpandedTemplate {
@@ -236,7 +231,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             throw new ServiceException("dataSheetCount 必须大于 0");
         }
         // 模板展开为非流式：POI 整本读入并克隆 dataSheetCount 张 sheet 后再整本写出，
-        // 峰值内存与「模板字节 × sheet 数」正相关（POI 对象模型放大系数另计）。此处以「展开足迹」固定上界早失败，
+        // 峰值内存与「模板字节 × sheet 数」正相关（POI 对象模型放大系数另计）。读入前已由 ClasspathExportTemplateReader
+        // 按 maxTemplateExpandBytes / maxSheetNum 校验单份模板体积；此处再以「展开足迹」固定上界早失败，
         // 把「复杂模板 × 高 sheet 数」从开放风险收成可证明上界，避免 OOM；上界由 file.storage.maxTemplateExpandBytes 配置（默认 300MB）。
         // 审查约定：本方法（单数据源 sheet 克隆 + 空占位 sheet 移除 + 连续物理下标）与多 sheet 路径
         // MultiSheetTemplateWriter.expandTemplate（多类型 sheet 各自克隆 + buildCloneName 命名）语义不同，属并行实现而非重复，
