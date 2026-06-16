@@ -396,6 +396,11 @@ public class QcNoticeDTO implements Serializable {
         private LocalDateTime qcDate;
 
         /**
+         * 期望质检日期
+         */
+        private LocalDate expectQcDate;
+
+        /**
          * 审核人
          */
         private String approveUserName;
