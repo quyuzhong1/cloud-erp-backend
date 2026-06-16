@@ -10,6 +10,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.ProductDetailShowDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.query.ProductDetailQueryHandler;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -54,5 +56,14 @@ public class PlmFeignController extends BaseController {
     public ApiResult<PagingVO<ProductDetailShowDTO>> productDetailList(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return success(paging);
+    }
+
+    /**
+     * 根据 SKU 编号批量查询 SKU 信息
+     */
+    @PostMapping("/productDetail/listSkuBySkuNos")
+    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody @Valid ProductSearchDTO.SkuParamDTO skuParamDTO) {
+        return success(productDetailService.listSkuBySkuNos(skuParamDTO));
     }
 }

@@ -8,18 +8,17 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.validator.AddGroup;
-import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.QcNoticeDTO;
+import com.erp.rpc.plm.feign.PlmFeign;
 import com.erp.rpc.wms.feign.QcInfoFeign;
 import com.erp.rpc.wms.feign.QcNoticeFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
@@ -41,6 +40,9 @@ public class QcOpenApi {
 
     @Resource
     private QcNoticeFeign qcNoticeFeign;
+
+    @Resource
+    private PlmFeign plmFeign;
 
     /**
      * 质检分页查询
@@ -179,5 +181,13 @@ public class QcOpenApi {
     @OpenApi("qcNoticeApprove")
     public ApiResult<List<BatchResultDTO>> qcNoticeApprove(@Valid BaseApproveParamDTO dto) {
         return qcNoticeFeign.qcNoticeApprove(dto);
+    }
+
+    /**
+     * 根据 SKU 编号批量查询 SKU 信息（用于质检通知单明细补全 skuId）
+     */
+    @OpenApi("listSkuBySkuNos")
+    public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@Valid ProductSearchDTO.SkuParamDTO dto) {
+        return plmFeign.listSkuBySkuNos(dto);
     }
 }
