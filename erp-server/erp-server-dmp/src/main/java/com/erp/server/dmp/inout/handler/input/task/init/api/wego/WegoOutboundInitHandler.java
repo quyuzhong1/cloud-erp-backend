@@ -7,15 +7,9 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.wms.dto.WegoOutboundQueryPageDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.model.wms.entity.ThirdWarehouseDeliveryEntity;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.wms.feign.ThirdWarehouseDeliveryFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -23,38 +17,50 @@ import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.sdk.wms.wego.dto.response.WegoOutboundResp;
 import com.sdk.wms.wego.service.WegoOpenApiService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * DMP 输入 init 任务处理器：WEGO 2C 出库单状态轮询。
- * 按 so_b2c.shipping_order_no（WEGO 出库单号）调用 2c.order.queryPage noList 模式拉取最新状态。
+ * <p>
+ * 按 dmp 任务的 startTime/endTime（缺省时回退为 [date-1] ~ [date]）作为「完结日期」范围，
+ * 调用 2c.order.queryPage finishDateBegin/finishDateEnd 模式拉取已出库订单的最新状态，
+ * 与 {@link WegoInboundInitHandler} 保持相同的增量拉取模式。
  */
 @Slf4j
 @Service
 @Scope("prototype")
 public class WegoOutboundInitHandler extends DmpInputInitHandler {
 
+    /**
+     * WEGO 授权 JSON（overseas_provider.auth_json）中的 accessToken 字段 key。
+     * 与 WegoHandlerServiceImpl / WegoWarehouseBaseDataJob / WegoInboundInitHandler 保持一致。
+     */
     private static final String AUTH_KEY_APP_TOKEN = "appToken";
+
+    /**
+     * WEGO 授权 JSON（overseas_provider.auth_json）中的 secret 字段 key。
+     */
     private static final String AUTH_KEY_APP_SECRET = "appSecret";
-    private static final int BATCH_SIZE = WegoOutboundQueryPageDTO.MAX_PAGE_SIZE;
-    private static final int MAX_PAGE_LIMIT = 100;
+
+    private static final int PAGE_SIZE = WegoOutboundQueryPageDTO.MAX_PAGE_SIZE;
+
+    /** 最大翻页保护，避免接口异常导致死循环 */
+    private static final int MAX_PAGE_LIMIT = 1000;
+
+    /** finishDateBegin/finishDateEnd 要求的日期时间格式（精确到秒） */
+    private static final DateTimeFormatter DATETIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Resource
     private WegoOpenApiService wegoOpenApiService;
-    @Resource
-    private WmsOverseasWarehouseFeign overseasWarehouseFeign;
-    @Resource
-    private SoB2cFeign soB2cFeign;
-    @Resource
-    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -71,6 +77,8 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
         if (provider == null) {
             throw new ServiceException("WEGO对应授权ID信息不存在, nextId:" + dmpInputTaskEntity.getNextLevelId());
         }
+
+        // 从数据库 overseas_provider.auth_json 读取 appToken / appSecret
         Map<String, Object> authJson = provider.getAuthJson();
         if (authJson == null || authJson.isEmpty()) {
             throw new ServiceException("WEGO出库：服务商[" + provider.getId() + "]auth_json为空");
@@ -82,45 +90,14 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
         }
         String authId = provider.getId();
 
-        List<OverseasProviderWarehouseEntity> warehouseList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
-                .eq(OverseasProviderWarehouseEntity::getMainId, provider.getId()).list();
-        warehouseList = warehouseList.stream()
-                .filter(v -> !v.getDisabled() && StringUtils.isNotBlank(v.getWarehouseId()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            log.warn("[WEGO出库] 服务商[id={}] 未配置启用的海外仓库", authId);
-            return Collections.emptyList();
-        }
+        // 完结日期范围：优先取 dmp 任务注入的时间窗口，缺省时回退为 [date-1 00:00:00] ~ [date 00:00:00]
+        String finishDateBegin = resolveFinishDateBegin();
+        String finishDateEnd   = resolveFinishDateEnd();
 
-        List<String> warehouseIds = warehouseList.stream()
-                .map(OverseasProviderWarehouseEntity::getWarehouseId).collect(Collectors.toList());
-        List<ThirdWarehouseDeliveryEntity> deliveryList = thirdWarehouseDeliveryFeign.listWaitShipByWarehouseIds(warehouseIds);
-        if (CollectionUtils.isEmpty(deliveryList)) {
-            return Collections.emptyList();
-        }
-
-        List<String> soIds = deliveryList.stream().map(ThirdWarehouseDeliveryEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soList = soB2cFeign.listByIds(soIds);
-        if (CollectionUtils.isEmpty(soList)) {
-            return Collections.emptyList();
-        }
-        Map<String, String> soIdToWegoNo = soList.stream()
-                .filter(e -> StringUtils.isNotBlank(e.getShippingOrderNo()))
-                .collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getShippingOrderNo, (a, b) -> a));
-        if (soIdToWegoNo.isEmpty()) {
-            log.info("[WEGO出库] 服务商[id={}] 待发货单均无 shippingOrderNo", authId);
-            return Collections.emptyList();
-        }
-
-        List<String> wegoOrderNos = deliveryList.stream()
-                .map(v -> soIdToWegoNo.get(v.getSoId()))
-                .filter(Objects::nonNull).distinct().collect(Collectors.toList());
-
-        List<WegoOutboundResp.OutboundOrderDTO> allResult = new ArrayList<>();
-        for (List<String> batch : ListUtils.partition(wegoOrderNos, BATCH_SIZE)) {
-            allResult.addAll(fetchOrderPages(appToken, appSecret, batch, authId));
-        }
+        List<WegoOutboundResp.OutboundOrderDTO> allResult =
+                fetchOutboundPages(appToken, appSecret, finishDateBegin, finishDateEnd, authId);
         if (allResult.isEmpty()) {
+            log.info("[WEGO出库] 服务商[id={}] 完结日期[{} ~ {}] 未拉到任何出库单", authId, finishDateBegin, finishDateEnd);
             return Collections.emptyList();
         }
 
@@ -130,14 +107,18 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
             obj.put("authId", authId);
             obj.put("sourcePlatform", DmpBasicSystemCodeEnum.WEGO.getCode());
         });
-        log.info("[WEGO出库] 服务商[id={}] 共拉取={}条", authId, result.size());
+        log.info("[WEGO出库] 服务商[id={}] 完结日期[{} ~ {}] 共拉取={}条", authId, finishDateBegin, finishDateEnd, result.size());
         DmpInputTaskInitDTO dto = new DmpInputTaskInitDTO();
         dto.setMsg(result.toJSONString());
         return Collections.singletonList(dto);
     }
 
-    private List<WegoOutboundResp.OutboundOrderDTO> fetchOrderPages(String appToken, String appSecret,
-                                                                      List<String> noList, String authId) {
+    /**
+     * 按完结日期范围分页拉取出库单；根据响应 pages 字段循环翻页。
+     */
+    private List<WegoOutboundResp.OutboundOrderDTO> fetchOutboundPages(
+            String appToken, String appSecret,
+            String finishDateBegin, String finishDateEnd, String authId) {
         List<WegoOutboundResp.OutboundOrderDTO> orderList = new ArrayList<>();
         int pageNum = 1;
         Integer totalPages = null;
@@ -145,9 +126,10 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
             WegoOutboundQueryPageDTO.QueryReqDTO req = new WegoOutboundQueryPageDTO.QueryReqDTO();
             req.setAccessToken(appToken);
             req.setSecret(appSecret);
-            req.setNoList(noList);
+            req.setFinishDateBegin(finishDateBegin);
+            req.setFinishDateEnd(finishDateEnd);
             req.setPageNum(pageNum);
-            req.setPageSize(BATCH_SIZE);
+            req.setPageSize(PAGE_SIZE);
             WegoOutboundResp resp;
             try {
                 resp = wegoOpenApiService.query2cOrderPage(req);
@@ -164,8 +146,34 @@ public class WegoOutboundInitHandler extends DmpInputInitHandler {
                     || (totalPages != null && pageNum >= totalPages)) { break; }
             pageNum++;
         }
-        log.info("[WEGO出库] 服务商[id={}] noList={}条 拉取={}条 翻页={}", authId, noList.size(), orderList.size(), pageNum);
+        if (pageNum > MAX_PAGE_LIMIT) {
+            log.warn("[WEGO出库] 服务商[id={}] 已达最大翻页上限({})，可能存在未拉取数据", authId, MAX_PAGE_LIMIT);
+        }
+        log.info("[WEGO出库] 服务商[id={}] 完结日期[{} ~ {}] 拉取={}条 已翻页={}",
+                authId, finishDateBegin, finishDateEnd, orderList.size(), pageNum);
         return orderList;
+    }
+
+    /**
+     * 计算「完结开始日期时间」：dmp 任务有 startTime 则取 startTime 当天 00:00:00，否则回退为「昨天 00:00:00」。
+     */
+    private String resolveFinishDateBegin() {
+        LocalDateTime startTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getStartTime();
+        LocalDateTime begin = startTime != null
+                ? startTime.toLocalDate().atStartOfDay()
+                : LocalDate.now().minusDays(1).atStartOfDay();
+        return begin.format(DATETIME_FORMATTER);
+    }
+
+    /**
+     * 计算「完结结束日期时间」：dmp 任务有 endTime 则取 endTime 当天 00:00:00，否则回退为「今天 00:00:00」。
+     */
+    private String resolveFinishDateEnd() {
+        LocalDateTime endTime = dmpInputTaskEntity == null ? null : dmpInputTaskEntity.getEndTime();
+        LocalDateTime end = endTime != null
+                ? endTime.toLocalDate().atStartOfDay()
+                : LocalDate.now().atStartOfDay();
+        return end.format(DATETIME_FORMATTER);
     }
 
     private String toStr(Object value) {
