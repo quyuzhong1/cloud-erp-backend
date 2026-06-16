@@ -1596,24 +1596,20 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return;
         }
 
-        // 4. 根据 skuType 选择标题和内容模板，拼装汇总正文
-        String cardTitle;
+        // 4. 标题直接取三方通知配置，正文模板按 skuType 区分
+        String cardTitle = noticeEntity.getTitle();
         String contentTemplate;
         switch (skuType) {
             case "platform":
-                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_TITLE;
                 contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_PLATFORM_CONTENT;
                 break;
             case "customer":
-                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_TITLE;
                 contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_CUSTOMER_CONTENT;
                 break;
             case "b2bPlatform":
-                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_TITLE;
                 contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_B2B_PLATFORM_CONTENT;
                 break;
             default:
-                cardTitle = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_TITLE;
                 contentTemplate = NoticeMsgConstant.FS_SKU_MAPPING_WAREHOUSE_CONTENT;
                 break;
         }
