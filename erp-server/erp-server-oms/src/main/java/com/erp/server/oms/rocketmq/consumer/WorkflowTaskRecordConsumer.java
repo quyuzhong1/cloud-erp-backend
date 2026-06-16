@@ -70,7 +70,22 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
         }
 
         //默认第一个节点的入参
-        Map<Integer, WorkflowTaskRecordEntity> map = list.stream().collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, Function.identity()));
+        Map<Integer, List<WorkflowTaskRecordEntity>> indexTaskMap = list.stream().collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getIndex));
+        List<Integer> duplicateIndexList = indexTaskMap.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(duplicateIndexList)) {
+            String msg = StrUtil.format("任务节点重复，sourceType={}, sourceId={}, index={}", mqDTO.getSourceTypeEnum().getCode(), mqDTO.getSourceId(), duplicateIndexList);
+            log.error(msg);
+            list.stream()
+                    .filter(e -> duplicateIndexList.contains(e.getIndex()))
+                    .filter(e -> !Objects.equals(e.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode()))
+                    .forEach(e -> markAsFailed(e, msg, 1));
+            return;
+        }
+        Map<Integer, WorkflowTaskRecordEntity> map = indexTaskMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().get(0)));
 
         for (int i = 0; i < map.size(); i++) {
             WorkflowTaskRecordEntity entity = map.getOrDefault(i,null);
@@ -169,6 +184,9 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
 
         WorkflowTaskRecordDTO.MqRequestDTO dto = new WorkflowTaskRecordDTO.MqRequestDTO();
         dto.setData(inputDataMap);
+        dto.setTaskId(entity.getId());
+        dto.setSourceType(entity.getSourceType());
+        dto.setIndex(entity.getIndex());
 
         WorkflowTaskRecordDTO.MqResponseDTO mqResponseDTO;
         try {

@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -31,6 +32,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.xxl.job.core.context.XxlJobHelper;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +55,8 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTaskRecordMapper, WorkflowTaskRecordEntity> implements WorkflowTaskRecordService {
+
+    private static final String FORCE_RETRY_PERMISSION = "oms:workflowTaskRecord:forceRetry";
 
 
     @Resource
@@ -108,9 +112,14 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             }
             entities.add(entity);
         }
-        // 批量保存所有实体
-        saveBatch(entities);
-        return entities;
+        // 批量保存所有实体。数据库唯一索引生效后，并发创建命中唯一冲突时让事务回滚，补偿任务会复用已提交记录。
+        try {
+            saveBatch(entities);
+            return entities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点已存在，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
     }
 
 
@@ -163,11 +172,12 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.ForceRetryResultDTO forceRetry(WorkflowTaskRecordDTO.ForceRetryDTO dto) {
         if (Objects.isNull(dto)) {
-            throw new ServiceException("强制重试参数不能为空");
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_REQUIRED);
         }
+        checkForceRetryPermission();
         List<WorkflowTaskRecordEntity> taskList = listForceRetryTasks(dto);
         if (CollUtil.isEmpty(taskList)) {
-            throw new ServiceException("未找到可强制重试的任务节点");
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND);
         }
         Map<String, List<WorkflowTaskRecordEntity>> taskGroup = taskList.stream()
                 .collect(Collectors.groupingBy(e -> e.getSourceType() + ":" + e.getSourceId()));
@@ -202,6 +212,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         resultDTO.setSourceType(first.getSourceType());
         resultDTO.setSourceId(first.getSourceId());
         resultDTO.setResetCount(resetCount);
+        resultDTO.setScheduledMqCount(mqCount);
         resultDTO.setMqCount(mqCount);
         return resultDTO;
     }
@@ -224,6 +235,20 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return this.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId,soId)
                 .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
                 .list();
+    }
+
+    @Override
+    public WorkflowTaskRecordEntity getActiveTask(String sourceId, String sourceType, Integer index) {
+        if (CharSequenceUtil.isBlank(sourceId) || CharSequenceUtil.isBlank(sourceType) || Objects.isNull(index)) {
+            return null;
+        }
+        return this.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, sourceId)
+                .eq(WorkflowTaskRecordEntity::getSourceType, sourceType)
+                .eq(WorkflowTaskRecordEntity::getIndex, index)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
     }
 
     @Override
@@ -317,7 +342,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
     private void addForceRetryLog(WorkflowTaskRecordDTO.ForceRetryDTO dto, List<WorkflowTaskRecordEntity> taskList, int resetCount, int mqCount) {
         WorkflowTaskRecordEntity first = taskList.get(0);
-        String content = StrUtil.format("用户【{}】人工强制重试任务节点，sourceType=【{}】，sourceId=【{}】，重置节点数=【{}】，发送MQ数=【{}】，备注=【{}】",
+        String content = StrUtil.format("用户【{}】人工强制重试任务节点，sourceType=【{}】，sourceId=【{}】，重置节点数=【{}】，调度MQ数=【{}】，备注=【{}】",
                 UserContext.getDefaultLoginUser().getUserName(),
                 first.getSourceType(),
                 first.getSourceId(),
@@ -325,6 +350,18 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 mqCount,
                 StrUtil.blankToDefault(dto.getRemark(), ""));
         operateLogService.addModuleOperateLog(content, resolveModuleType(first), resolveBusinessId(first), "任务强制重试");
+    }
+
+    private void checkForceRetryPermission() {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        if (Objects.nonNull(loginUser) && Boolean.TRUE.equals(loginUser.getIsSupper())) {
+            return;
+        }
+        List<String> permissionList = Objects.isNull(loginUser) ? Collections.emptyList() : loginUser.getPermissionList();
+        if (CollUtil.isNotEmpty(permissionList) && permissionList.contains(FORCE_RETRY_PERMISSION)) {
+            return;
+        }
+        throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN);
     }
 
     private String resolveModuleType(WorkflowTaskRecordEntity entity) {

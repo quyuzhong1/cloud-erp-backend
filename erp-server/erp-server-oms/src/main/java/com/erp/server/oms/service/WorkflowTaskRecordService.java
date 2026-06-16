@@ -47,6 +47,11 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
     List<WorkflowTaskRecordEntity> listBySourceId(String soId, String sourceType);
 
     /**
+     * 根据业务键查询未删除任务节点。
+     */
+    WorkflowTaskRecordEntity getActiveTask(String sourceId, String sourceType, Integer index);
+
+    /**
      * 条件抢占待执行任务节点，避免重复消息并发执行同一节点。
      */
     Boolean claimTask(String id, String fromStatus);

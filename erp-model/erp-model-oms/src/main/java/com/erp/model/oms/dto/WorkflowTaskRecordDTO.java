@@ -57,6 +57,12 @@ public class WorkflowTaskRecordDTO implements Serializable {
 
         private Map<String,Object> data;
 
+        private String taskId;
+
+        private String sourceType;
+
+        private Integer index;
+
     }
 
 
@@ -114,6 +120,11 @@ public class WorkflowTaskRecordDTO implements Serializable {
         private String sourceId;
 
         private Integer resetCount;
+
+        /**
+         * 已调度的MQ数量。事务提交后才实际发送，字段保留mqCount兼容旧调用方。
+         */
+        private Integer scheduledMqCount;
 
         private Integer mqCount;
     }
