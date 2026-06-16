@@ -16,14 +16,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Shopee 仅退款明细 DMP 转换：return_solution=1 且 status=CANCELLED（测试环境暂无 CLOSED 样本）。
+ * Shopee 仅退款明细 DMP 转换：return_solution=1 且 status=ACCEPTED。
  */
 @Service
 @Scope("prototype")
 public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandler {
 
     private static final int RETURN_SOLUTION_REFUND_ONLY = 1;
-    private static final String STATUS_REFUND = "CANCELLED";
+    private static final String STATUS_REFUND_ACCEPTED = "ACCEPTED";
     private static final String PARENT_STORAGE_NAME = "dmp_so_refund_info";
 
     @Override
@@ -122,7 +122,7 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
                 || RETURN_SOLUTION_REFUND_ONLY != Integer.parseInt(String.valueOf(returnSolution))) {
             return false;
         }
-        return STATUS_REFUND.equalsIgnoreCase(resolvePlatformStatus(dataMap));
+        return STATUS_REFUND_ACCEPTED.equalsIgnoreCase(resolvePlatformStatus(dataMap));
     }
 
     private String resolvePlatformStatus(Map<String, Object> dataMap) {
