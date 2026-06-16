@@ -1403,6 +1403,22 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
     }
 
     /**
+     * 解析可选数值字段；空白返回 null，格式错误写入 errorMsgList 供行级匹配结果导出。
+     */
+    private BigDecimal parseOptionalDecimalField(String rawValue, String fieldLabel, List<String> errorMsgList) {
+        if (CharSequenceUtil.isBlank(rawValue)) {
+            return null;
+        }
+        try {
+            String withoutCommas = rawValue.trim().replaceAll(",", "");
+            return new BigDecimal(withoutCommas);
+        } catch (NumberFormatException e) {
+            errorMsgList.add(fieldLabel + "格式不正确");
+            return null;
+        }
+    }
+
+    /**
      * 费用金额转换，支持绝对值配置。
      */
     private BigDecimal toCostValue(String amount, Boolean isAbsoluteValue) {
@@ -1566,10 +1582,11 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
             return "";
         }
-        BigDecimal totalImportBillingWeight = CharSequenceUtil.isBlank(excelDTO.getBillingWeightLogistics())
-                ? null : new BigDecimal(excelDTO.getBillingWeightLogistics());
-        BigDecimal totalImportThirdActualWeight = CharSequenceUtil.isBlank(excelDTO.getThirdActualWeight())
-                ? null : new BigDecimal(excelDTO.getThirdActualWeight());
+        BigDecimal totalImportBillingWeight = parseOptionalDecimalField(excelDTO.getBillingWeightLogistics(), "计费重", errorMsgList);
+        BigDecimal totalImportThirdActualWeight = parseOptionalDecimalField(excelDTO.getThirdActualWeight(), "实重", errorMsgList);
+        if (CollectionUtils.isNotEmpty(errorMsgList)) {
+            return "";
+        }
         BigDecimal billingWeightAllocatedSum = BigDecimal.ZERO;
         BigDecimal thirdActualWeightAllocatedSum = BigDecimal.ZERO;
         String lastImportType = "";
@@ -2115,7 +2132,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         updateDataDTO.setId(logisticsBIllCostId);
         updateDataDTO.setLogisticsBillId(logisticsBillId);
         updateDataDTO.setLogisticsBillDetailId(logisticsBIllDetailId);
-        updateDataDTO.setBillingWeightLogistics(CharSequenceUtil.isBlank(excelDTO.getBillingWeightLogistics()) ? null : new BigDecimal(excelDTO.getBillingWeightLogistics()));
+        updateDataDTO.setBillingWeightLogistics(parseOptionalDecimalField(excelDTO.getBillingWeightLogistics(), "计费重", errorMsgList));
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
         updateDataDTO.setPayType(excelDTO.getPayType());
         updateDataDTO.setConfirmTime(confirmTime);
@@ -2124,21 +2141,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         updateDataDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
         //尺寸
         String thirdHeight = excelDTO.getThirdHeight();
-        if(StringUtils.isNotBlank(thirdHeight)) {
-            updateDataDTO.setThirdHeight(new BigDecimal(thirdHeight));
+        if (StringUtils.isNotBlank(thirdHeight)) {
+            updateDataDTO.setThirdHeight(parseOptionalDecimalField(thirdHeight, "高度", errorMsgList));
         }
         String thirdWidth = excelDTO.getThirdWidth();
-        if(StringUtils.isNotBlank(thirdWidth)) {
-            updateDataDTO.setThirdWidth(new BigDecimal(thirdWidth));
+        if (StringUtils.isNotBlank(thirdWidth)) {
+            updateDataDTO.setThirdWidth(parseOptionalDecimalField(thirdWidth, "宽度", errorMsgList));
         }
         String thirdLength = excelDTO.getThirdLength();
-        if(StringUtils.isNotBlank(thirdHeight)) {
-            updateDataDTO.setThirdLength(new BigDecimal(thirdLength));
+        if (StringUtils.isNotBlank(thirdLength)) {
+            updateDataDTO.setThirdLength(parseOptionalDecimalField(thirdLength, "长度", errorMsgList));
         }
         //实重
         String thirdActualWeight = excelDTO.getThirdActualWeight();
-        if(StringUtils.isNotBlank(thirdActualWeight)) {
-            updateDataDTO.setThirdActualWeight(new BigDecimal(thirdActualWeight));
+        if (StringUtils.isNotBlank(thirdActualWeight)) {
+            updateDataDTO.setThirdActualWeight(parseOptionalDecimalField(thirdActualWeight, "实重", errorMsgList));
         }
 
         updateList.forEach(u ->  u.setCurrency( CharSequenceUtil.isBlank(u.getCurrency()) ?  updateDataDTO.getCurrency() : u.getCurrency()));
