@@ -1461,7 +1461,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         // 分组阶段已解析物流单集合，避免 platformCode 多行合并后被最后一行平台单号重新缩窄匹配范围。
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = ObjectUtil.defaultIfNull(matchedLogisticsBillVos, Collections.emptyList());
-        applyImportLogisticsSupplierId(excelDTO, costImportEntity, logisticsBillVoList);
 
         // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，配置入口已禁用；未匹配到物流单直接报错。
         if (CollUtil.isEmpty(logisticsBillVoList)) {
