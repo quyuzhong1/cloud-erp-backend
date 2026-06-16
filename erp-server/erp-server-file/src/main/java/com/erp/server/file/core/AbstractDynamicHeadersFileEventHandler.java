@@ -187,6 +187,11 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                         rowsInSheet += take;
                         idx += take;
                     }
+                    // 上游单页超发（返回行数超过 pageSize）时已写满 totalCount：提前结束，
+                    // 避免后续 pageNo 取到空列表被上方中间页守卫误判为「数据缺失」。
+                    if (totalRows >= totalCount) {
+                        break;
+                    }
                 }
                 if (totalCount > 0 && totalRows == 0) {
                     throw new ServiceException("导出失败：totalCount=" + totalCount
@@ -300,7 +305,8 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                     throw new ServiceException("导出数据存在空行，请检查查询结果（页码=" + dto.getCurrPage() + "）");
                 }
             }
-            if (totalCount <= (long) dto.getCurrPage() * getPageSize()) {
+            // 与主写循环对齐：已写满 totalCount（含上游单页超发）即结束，避免空页被误判为缺数。
+            if (result.size() >= totalCount || totalCount <= (long) dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);

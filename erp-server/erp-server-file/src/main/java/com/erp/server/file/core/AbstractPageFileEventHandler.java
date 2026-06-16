@@ -594,7 +594,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                         totalRows += batch.size();
                         clearBatchIfDetachedCopy(batch, rawPage);
                     }
-                    if (isLastPage(dto.getCurrPage(), totalCount)) {
+                    // 上游单页可能返回超过 pageSize 的行（分页不规范）：已写满 totalCount 即正常结束，
+                    // 避免继续翻页取到空列表被上方中间页守卫误判为「数据缺失」。
+                    if (totalRows >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
                         break;
                     }
                     dto.setCurrPage(dto.getCurrPage() + 1);
@@ -643,7 +645,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 }
                 dataList.addAll(batch);
             }
-            if (isLastPage(dto.getCurrPage(), totalCount)) {
+            // 与 writeOffsetBatches 对齐：已写满 totalCount（含上游单页超发）即结束，避免空页被误判为缺数。
+            if (dataList.size() >= totalCount || isLastPage(dto.getCurrPage(), totalCount)) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);

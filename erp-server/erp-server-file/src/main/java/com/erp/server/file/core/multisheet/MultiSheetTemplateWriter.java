@@ -92,6 +92,7 @@ public class MultiSheetTemplateWriter {
                 for (int i = 0; i < typeCount; i++) {
                     int totalPages = computeTotalPages(totalRows[i], pageSize);
                     PagingVO<?> currentVo = firstPages[i];
+                    int writtenForType = 0;
                     for (int pageOffset = 0; pageOffset < totalPages; pageOffset++) {
                         int currPage = firstPage + pageOffset;
                         // 当前页（含首页）空列表防静默丢数：本页之前已覆盖行数 < totalCount 说明本页本应有数据，
@@ -107,11 +108,13 @@ public class MultiSheetTemplateWriter {
                         }
                         if (!CollectionUtils.isEmpty(batch)) {
                             fillAcrossSheets(excelWriter, fillConfig, batch, cursors[i], i, "INDEPENDENT");
+                            writtenForType += batch.size();
                             if (i == 0) {
                                 actualMainRows += batch.size();
                             }
                         }
-                        if (pageOffset == totalPages - 1) {
+                        // 上游单页超发时已写满本类型 totalCount：提前结束，避免预取下一页取到空列表被下方守卫误判缺数。
+                        if (writtenForType >= totalRows[i] || pageOffset == totalPages - 1) {
                             break;
                         }
                         PagingDTO<P> pageDto = pagingDtos[i];
@@ -212,7 +215,8 @@ public class MultiSheetTemplateWriter {
                         fillMasterDerivedBatch(excelWriter, fillConfig, mainBatch, cursors, spec.getSheetExtractors());
                         actualMainRows += mainBatch.size();
                     }
-                    if (pageOffset == totalPages - 1) {
+                    // 上游单页超发时已写满 totalCount：提前结束，避免预取下一页取到空列表被下方守卫误判缺数。
+                    if (actualMainRows >= total || pageOffset == totalPages - 1) {
                         break;
                     }
                     pagingDto.setCurrPage(currPage + 1);
