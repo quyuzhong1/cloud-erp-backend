@@ -1,7 +1,7 @@
 package com.erp.server.file.core;
 
 import com.common.core.utils.FastDFSClientUtil;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.handler.FileRegistry;
 import lombok.extern.slf4j.Slf4j;
