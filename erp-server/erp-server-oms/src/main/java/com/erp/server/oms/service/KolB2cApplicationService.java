@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationImportExcelDTO;
@@ -196,6 +197,14 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     * @return
     */
     Boolean approveEnd(ApproveOneDTO dto, KolB2cApplicationEntity entity);
+
+    WorkflowTaskRecordDTO.MqResponseDTO generateKolB2cSplitOrder(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO dispatchKolB2cSubApproveTasks(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 

@@ -18,6 +18,7 @@ import java.util.Arrays;
 public enum WorkflowTaskRecordStatusEnum implements EnumMessage {
 	PENDING("pending", "待执行"),
     PROCESSING("processing", "执行中"),
+    WAITING("waiting", "等待中"),
     SUCCESS("success", "成功"),
     FAILED("failed", "失败"),
     ;

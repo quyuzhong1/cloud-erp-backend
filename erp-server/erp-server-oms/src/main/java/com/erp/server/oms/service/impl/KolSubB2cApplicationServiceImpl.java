@@ -88,6 +88,9 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
 
     @Override
     public List<KolSubB2cApplicationDTO.PushDTO> listPushByIds(List<String> ids){
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         List<KolSubB2cApplicationDTO.PushDTO> result = new ArrayList<>();
         List<KolSubB2cApplicationEntity> list = listByIds(ids);
         List<KolSubB2cApplicationDetailEntity> detailList = kolSubB2cApplicationDetailService.lambdaQuery().in(KolSubB2cApplicationDetailEntity::getMainId, ids).list();
@@ -167,6 +170,23 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
         }
 
         return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrderIdempotent(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list) {
+        if (Objects.isNull(entity) || StringUtils.isBlank(entity.getId())) {
+            return Collections.emptyList();
+        }
+        List<KolSubB2cApplicationEntity> existList = lambdaQuery()
+                .eq(KolSubB2cApplicationEntity::getSourceId, entity.getId())
+                .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                .list();
+        if (CollUtil.isNotEmpty(existList)) {
+            List<String> ids = existList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+            return listPushByIds(ids);
+        }
+        return generateSplitOrder(entity, list);
     }
 
     /**
