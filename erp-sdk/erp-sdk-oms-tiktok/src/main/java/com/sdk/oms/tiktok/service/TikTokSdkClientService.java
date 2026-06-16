@@ -156,20 +156,47 @@ public class TikTokSdkClientService {
         }
         TokenDTO tokenDTO = tikTokTokenDTO.getData();
         if(StringUtils.isBlank(paramMap.get("isFully"))) {
-        	//查询店铺权限
             TikTokShopAuthDTO tikTokShopAuthDTO = getAuthorizedShops(paramMap, tokenDTO.getAccessToken());
-            for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
-//                if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
-                tokenDTO.setShopCipher(shop.getCipher());
-                tokenDTO.setShopsBean(shop);
-//                }
-            }
+            ShopsBean matchedShop = resolveAuthorizedShop(tikTokShopAuthDTO, paramMap.get("targetRegion"));
+            tokenDTO.setShopCipher(matchedShop.getCipher());
+            tokenDTO.setShopsBean(matchedShop);
         }
         tokenDTO.setCode(authCode);
         //返回token实体
         return tokenDTO;
     }
 
+    /**
+     * 按 ERP 店铺国家与 TikTok 授权站点 region 匹配 cipher。
+     *
+     * @param tikTokShopAuthDTO 平台授权站点列表
+     * @param targetRegion      ERP 店铺 dict_country_code（如 FR、ES）
+     */
+    private ShopsBean resolveAuthorizedShop(TikTokShopAuthDTO tikTokShopAuthDTO, String targetRegion) {
+        if (tikTokShopAuthDTO == null || tikTokShopAuthDTO.getData() == null
+                || CollectionUtil.isEmpty(tikTokShopAuthDTO.getData().getShops())) {
+            throw new ServiceException("TikTok授权失败：未获取到平台授权站点");
+        }
+        if (StringUtils.isBlank(targetRegion)) {
+            throw new ServiceException("店铺未配置国家，无法完成TikTok授权");
+        }
+        String normalizedRegion = targetRegion.trim().toUpperCase(Locale.ROOT);
+        ShopsBean matchedShop = tikTokShopAuthDTO.getData().getShops().stream()
+                .filter(shop -> shop.getRegion() != null
+                        && normalizedRegion.equalsIgnoreCase(shop.getRegion()))
+                .findFirst()
+                .orElse(null);
+        if (matchedShop == null) {
+            String availableRegions = tikTokShopAuthDTO.getData().getShops().stream()
+                    .map(ShopsBean::getRegion)
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.joining(", "));
+            throw new ServiceException(StrUtil.format(
+                    "TikTok授权失败：店铺国家[{}]在平台授权站点中不存在，可用站点：{}",
+                    normalizedRegion, availableRegions));
+        }
+        return matchedShop;
+    }
 
     /**
      * 查询店铺权限
