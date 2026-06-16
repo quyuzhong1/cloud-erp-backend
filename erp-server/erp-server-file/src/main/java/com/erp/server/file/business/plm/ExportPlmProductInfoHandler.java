@@ -74,6 +74,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
     @Override
     protected List<MultiSheetTemplateWriter.IndependentSheet<ProductSearchDTO.ExportDTO>> sheets(ProductSearchDTO.ExportDTO params) {
         List<Integer> exportDataList = params.getExportDataList();
+        // 列表顺序决定 streamIndependent 的「主 sheet」与 fileTask.count：首项为产品（若存在），与旧 handle 仅记产品条数一致；勿调整顺序。
         List<MultiSheetTemplateWriter.IndependentSheet<ProductSearchDTO.ExportDTO>> sheets = new ArrayList<>(exportDataList.size());
         if (exportDataList.contains(EXPORT_PRODUCT)) {
             sheets.add(new MultiSheetTemplateWriter.IndependentSheet<>(params, dto -> exportPlmFeign.exportProductShow(dto)));
