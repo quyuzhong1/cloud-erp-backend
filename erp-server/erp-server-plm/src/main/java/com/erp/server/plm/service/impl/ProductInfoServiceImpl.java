@@ -2643,7 +2643,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (validateMessage != null) {
             throw new ServiceException(validateMessage);
         }
-        String eventCode = ProductDevelopExportTypeEnum.resolveEventCode(exportDataList);
+        String eventCode = ProductDevelopExportEventMapping.resolveEventCode(exportDataList);
         if (eventCode == null) {
             throw new ServiceException("导出数据类型不合法：" + exportDataList);
         }

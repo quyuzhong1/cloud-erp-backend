@@ -3,11 +3,12 @@ package com.erp.server.file.business.plm;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.enums.ProductDevelopExportEventMapping;
 import com.erp.model.plm.enums.ProductDevelopExportTypeEnum;
 import com.erp.rpc.plm.feign.ExportPlmFeign;
 import com.erp.server.file.core.multisheet.AbstractStreamingMultiSheetHandler;
 import com.erp.server.file.core.multisheet.MultiSheetTemplateWriter;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -89,7 +90,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
      * 根据 event 兜底推导导出类型，保证仅切换 event 的新事件也能正确导出。
      */
     private List<Integer> deriveExportDataListByEvent(String event) {
-        List<Integer> exportDataList = ProductDevelopExportTypeEnum.exportDataListFromEventCode(event);
+        List<Integer> exportDataList = ProductDevelopExportEventMapping.exportDataListFromEventCode(event);
         if (exportDataList == null) {
             throw new ServiceException(ProductDevelopExportTypeEnum.validateCombinationMessage(null));
         }
@@ -98,7 +99,7 @@ public class ExportPlmProductInfoHandler extends AbstractStreamingMultiSheetHand
 
     @Override
     public boolean isMatch(String event) {
-        return ProductDevelopExportTypeEnum.exportDataListFromEventCode(event) != null;
+        return ProductDevelopExportEventMapping.exportDataListFromEventCode(event) != null;
     }
 
     @Override

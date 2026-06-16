@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_RETURN_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_RETURN_INFO;
 
 @Component
 @Slf4j
@@ -27,7 +27,7 @@ public class ExportOmsRefundHandler extends AbstractPageFileEventHandler<SoB2cRe
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_BI_RETURN_INFO;
+        return EXPORT_OMS_RETURN_INFO;
     }
 
     @Override

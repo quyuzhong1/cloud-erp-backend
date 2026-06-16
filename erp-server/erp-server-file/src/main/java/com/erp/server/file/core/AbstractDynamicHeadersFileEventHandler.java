@@ -11,7 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;

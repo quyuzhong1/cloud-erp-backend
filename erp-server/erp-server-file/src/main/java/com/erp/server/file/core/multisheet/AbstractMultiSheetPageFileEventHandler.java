@@ -3,7 +3,7 @@ package com.erp.server.file.core.multisheet;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.core.AbstractFileEventHandler;
 import com.erp.server.file.core.ExportTempFilesHandler;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import lombok.extern.slf4j.Slf4j;

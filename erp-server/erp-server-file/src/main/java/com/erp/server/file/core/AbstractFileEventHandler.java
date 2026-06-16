@@ -2,7 +2,7 @@ package com.erp.server.file.core;
 
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;

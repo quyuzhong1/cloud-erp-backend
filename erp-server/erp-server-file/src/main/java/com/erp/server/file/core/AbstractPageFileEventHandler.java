@@ -13,7 +13,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.erp.server.file.handler.FileRegistry;
 import com.fasterxml.jackson.databind.JavaType;
-import com.erp.server.file.entity.FileTask;
+import com.erp.model.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.ResolvableType;
@@ -390,7 +390,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             List<T> fillList = (take == batch.size() && idx == 0) ? batch : new ArrayList<>(slice);
             try {
                 fillOnSheet(excelWriter, c.writeSheet, fillList, fillConfig);
-            } catch (Throwable fillEx) {
+            } catch (Exception fillEx) {
                 logEasyExcelFillContext(exportPhase, excelPath, fillEx, pagingState + ",totalCount=" + dataTotalCount, c.sheetNo,
                         c.rowsInSheet, fillList, rawPageForLog);
                 ServiceException se = new ServiceException("模板导出填充失败，phase=" + exportPhase + "，" + pagingState);
