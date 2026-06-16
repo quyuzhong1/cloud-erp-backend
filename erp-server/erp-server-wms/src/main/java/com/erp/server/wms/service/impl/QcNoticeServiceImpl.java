@@ -394,16 +394,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<String, String> qcUserNameMap;
+        List<FindUserDTO> userInfoList;
         try {
-            List<FindUserDTO> userInfoList = CollUtil.isEmpty(qcUserIds)
+            userInfoList = CollUtil.isEmpty(qcUserIds)
                     ? Collections.emptyList()
                     : sysUserFeign.getUserListByUserIds(qcUserIds);
-            qcUserNameMap = CollUtil.isEmpty(userInfoList)
-                    ? Collections.emptyMap()
-                    : userInfoList.stream()
-                            .filter(u -> u != null && StrUtil.isNotBlank(u.getUserId()))
-                            .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (a, b) -> a));
         } catch (Exception e) {
             log.warn("批量查询质检员失败, qcUserIds={}", qcUserIds, e);
             String errMsg = e instanceof ServiceException
@@ -414,6 +409,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             return resultList;
         }
+        if (userInfoList == null) {
+            userInfoList = Collections.emptyList();
+        }
+        Map<String, String> qcUserNameMap = userInfoList.stream()
+                .filter(u -> u != null && StrUtil.isNotBlank(u.getUserId()))
+                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (a, b) -> a));
 
         List<QcNoticeDetailEntity> resolvedValidDetails = new ArrayList<>(validDetails.size());
         Map<String, QcNoticeDTO.UpdateQcUserDTO> resolvedValidItemMap = new HashMap<>(validDetails.size());
