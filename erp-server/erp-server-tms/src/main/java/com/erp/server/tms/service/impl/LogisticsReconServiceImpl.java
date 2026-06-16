@@ -13,6 +13,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.message.constant.DistributeKeyConstant;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -33,6 +34,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.dto.LogisticsReconBatchResultDTO;
@@ -46,6 +48,7 @@ import com.erp.model.tms.entity.LogisticsReconDetailEntity;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.entity.LogisticsReconEntity;
 import com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity;
+import com.erp.model.tms.enums.CfgLogisticsCostImportCfgTypeEnum;
 import com.erp.model.tms.enums.LogisticsReconCheckStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconMatchStatusEnum;
@@ -62,22 +65,22 @@ import com.erp.server.tms.mapper.LogisticsReconMapper;
 import com.erp.server.tms.listener.LogisticsReconExcelListener;
 import com.erp.server.tms.service.CfgLogisticsCostImportDetailService;
 import com.erp.server.tms.service.CfgLogisticsCostImportService;
+import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.ImportHistoryRecordService;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsReconDetailService;
 import com.erp.server.tms.service.LogisticsReconDetailSubService;
 import com.erp.server.tms.service.LogisticsReconRefLogisticsBillService;
 import com.erp.server.tms.service.LogisticsReconService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.sql.SQLException;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.math.BigDecimal;
@@ -93,6 +96,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.stream.Collectors;
@@ -145,6 +149,12 @@ public class LogisticsReconServiceImpl
 
     @Resource
     private CfgLogisticsCostImportDetailService cfgLogisticsCostImportDetailService;
+
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Resource
     private ImportHistoryRecordService importHistoryRecordService;
@@ -248,9 +258,11 @@ public class LogisticsReconServiceImpl
         // mainId/code 为异步任务内按配置逐条处理时使用的临时字段，提交阶段不在此设置
         Map<String, String> mainIdMap = new HashMap<>(cfgList.size());
         Map<String, Boolean> reimportUpdateMap = new HashMap<>(cfgList.size());
+        Map<String, String> logisticsSupplierNameMap = buildLogisticsSupplierNameMap();
+        Map<String, String> salesPlatformNameMap = buildSalesPlatformNameMap();
         for (CfgLogisticsCostImportEntity importCfg : cfgList) {
             self.prepareImportMainLocked(buildReimportLockKey(dto, importCfg), dto, importCfg,
-                    mainIdMap, reimportUpdateMap);
+                    mainIdMap, reimportUpdateMap, logisticsSupplierNameMap, salesPlatformNameMap);
         }
         dto.setMainIdMap(mainIdMap);
         dto.setReimportUpdateMap(reimportUpdateMap);
@@ -262,7 +274,10 @@ public class LogisticsReconServiceImpl
     @Override
     public void prepareImportMainLocked(String lockKey, LogisticsReconDTO.ImportDTO dto,
                                         CfgLogisticsCostImportEntity importCfg,
-                                        Map<String, String> mainIdMap, Map<String, Boolean> reimportUpdateMap) {
+                                        Map<String, String> mainIdMap, Map<String, Boolean> reimportUpdateMap,
+                                        Map<String, String> logisticsSupplierNameMap,
+                                        Map<String, String> salesPlatformNameMap) {
+        String supplierName = resolveImportSupplierName(importCfg, logisticsSupplierNameMap, salesPlatformNameMap);
         if (findImportingReimportMain(dto, importCfg) != null) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
         }
@@ -275,6 +290,7 @@ public class LogisticsReconServiceImpl
                     .set(LogisticsReconEntity::getFileUrl, dto.getFileUrl())
                     .set(LogisticsReconEntity::getFileName, dto.getFileName())
                     .set(LogisticsReconEntity::getImportFailReason, "")
+                    .set(LogisticsReconEntity::getSupplierName, supplierName)
                     .update();
             if (!updated) {
                 if (findImportingReimportMain(dto, importCfg) != null) {
@@ -287,16 +303,22 @@ public class LogisticsReconServiceImpl
             return;
         }
         try {
-            LogisticsReconEntity entity = createImportingMain(dto, importCfg);
+            LogisticsReconEntity entity = createImportingMain(dto, importCfg, supplierName);
             mainIdMap.put(importCfg.getId(), entity.getId());
             reimportUpdateMap.put(importCfg.getId(), Boolean.FALSE);
         } catch (DataIntegrityViolationException e) {
             if (isImportDimensionDuplicateException(e)) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_DUPLICATE);
             }
-            throw e;
+            log.warn("创建导入主表数据完整性异常, lockKey={}, cfgImportId={}", lockKey, importCfg.getId(), e);
+            throw new ServiceException(ApiError.LOGISTICS_RECON_SAVE_FAILED);
         }
     }
+
+    /**
+     * 对账维度（月份+物流商+Sheet）pending/importing 部分唯一索引名。
+     */
+    private static final String DIM_UNIQUE_CONSTRAINT = "uniq_logistics_recon_month_supplier_sheet";
 
     /**
      * 判断是否因对账维度唯一约束冲突（pending/importing 同维度）导致的数据完整性异常。
@@ -304,25 +326,52 @@ public class LogisticsReconServiceImpl
     private boolean isImportDimensionDuplicateException(Throwable e) {
         Throwable cur = e;
         while (cur != null) {
-            if (cur instanceof DuplicateKeyException) {
-                return true;
-            }
-            if (cur instanceof SQLException && "23505".equals(((SQLException) cur).getSQLState())) {
-                return true;
-            }
             String msg = cur.getMessage();
-            if (msg != null) {
-                String lower = msg.toLowerCase(Locale.ROOT);
-                if (lower.contains("duplicate key") && lower.contains("uniq_logistics_recon_month_supplier_sheet")) {
-                    return true;
-                }
-                if (lower.contains("duplicate entry")) {
-                    return true;
-                }
+            if (msg != null && isDimensionUniqueConstraintMessage(msg)) {
+                return true;
             }
             cur = cur.getCause();
         }
         return false;
+    }
+
+    private boolean isDimensionUniqueConstraintMessage(String message) {
+        String lower = message.toLowerCase(Locale.ROOT);
+        return lower.contains(DIM_UNIQUE_CONSTRAINT);
+    }
+
+    private Map<String, String> buildLogisticsSupplierNameMap() {
+        return logisticsSupplierService.listAllShort(false).stream()
+                .filter(item -> StrUtil.isNotBlank(item.getCode()))
+                .collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getCode,
+                        BaseDropDownDTO.DisabledDTO::getValue, (first, second) -> first));
+    }
+
+    private Map<String, String> buildSalesPlatformNameMap() {
+        List<com.erp.model.tms.entity.DictBasicEntity> salesPlatformList =
+                dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        if (CollUtil.isEmpty(salesPlatformList)) {
+            return Collections.emptyMap();
+        }
+        return salesPlatformList.stream()
+                .filter(item -> StrUtil.isNotBlank(item.getCode()))
+                .collect(Collectors.toMap(com.erp.model.tms.entity.DictBasicEntity::getCode,
+                        com.erp.model.tms.entity.DictBasicEntity::getName, (first, second) -> first));
+    }
+
+    /**
+     * 按 cfg_type 解析主表 supplier_name：平台取平台名称，物流商取供应商名称。
+     */
+    private String resolveImportSupplierName(CfgLogisticsCostImportEntity importCfg,
+                                             Map<String, String> logisticsSupplierNameMap,
+                                             Map<String, String> salesPlatformNameMap) {
+        if (importCfg == null || StrUtil.isBlank(importCfg.getDictPlatform())) {
+            return "";
+        }
+        if (Objects.equals(CfgLogisticsCostImportCfgTypeEnum.LOGISTICS_SUPPLIER.getCode(), importCfg.getCfgType())) {
+            return logisticsSupplierNameMap.getOrDefault(importCfg.getDictPlatform(), importCfg.getDictPlatform());
+        }
+        return salesPlatformNameMap.getOrDefault(importCfg.getDictPlatform(), importCfg.getDictPlatform());
     }
 
     @Override
@@ -1369,7 +1418,8 @@ public class LogisticsReconServiceImpl
      * @return LogisticsReconEntity
      */
     private LogisticsReconEntity createImportingMain(LogisticsReconDTO.ImportDTO dto,
-                                                     CfgLogisticsCostImportEntity importCfg) {
+                                                     CfgLogisticsCostImportEntity importCfg,
+                                                     String supplierName) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_DZ);
         LogisticsReconEntity entity = new LogisticsReconEntity()
                 .setCode(code)
@@ -1378,7 +1428,7 @@ public class LogisticsReconServiceImpl
                 .setCfgImportId(importCfg.getId())
                 .setCfgType(importCfg.getCfgType())
                 .setSupplierId(importCfg.getDictPlatform())
-                .setSupplierName(importCfg.getName())
+                .setSupplierName(supplierName)
                 .setSheetName(importCfg.getSheetName())
                 .setFileUrl(dto.getFileUrl())
                 .setFileName(dto.getFileName())
