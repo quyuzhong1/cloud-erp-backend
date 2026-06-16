@@ -356,7 +356,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .inOrderDetailId(null)
                     .boxQty(1)
                     .skuQty(sumSkuQty(products))
-                    .boxLabel(null)
+                    .boxLabel(buildBoxLabel(first.getSourceCode(), boxNo))
                     .boxLength(toIntegerCm(first.getBoxLength()))
                     .boxWidth(toIntegerCm(first.getBoxWidth()))
                     .boxHeight(toIntegerCm(first.getBoxHeight()))
@@ -367,6 +367,21 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             details.add(detail);
         });
         return details;
+    }
+
+    /**
+     * 构造 WEGO 箱唛（boxLabel）：发货单号（{@code packing_task.source_code}）+ "-" + 箱号。
+     * <p>
+     * sourceCode 为空时退化为仅用箱号，避免出现以 "-" 开头的无效箱唛。
+     */
+    private String buildBoxLabel(String sourceCode, String boxNo) {
+        if (CharSequenceUtil.isBlank(boxNo)) {
+            return CharSequenceUtil.isBlank(sourceCode) ? null : sourceCode;
+        }
+        if (CharSequenceUtil.isBlank(sourceCode)) {
+            return boxNo;
+        }
+        return sourceCode + "-" + boxNo;
     }
 
     /**
@@ -414,7 +429,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                     .inOrderDetailId(null)
                     .boxQty(1)
                     .skuQty(sumSkuQty(products))
-                    .boxLabel(null)
+                    .boxLabel(boxNo == null ? null : String.valueOf(boxNo))
                     .boxLength(toIntegerCm(firstItem.getBoxLength()))
                     .boxWidth(toIntegerCm(firstItem.getBoxWidth()))
                     .boxHeight(toIntegerCm(firstItem.getBoxHeight()))
