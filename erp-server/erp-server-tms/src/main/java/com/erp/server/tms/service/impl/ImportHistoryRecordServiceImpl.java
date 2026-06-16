@@ -2030,7 +2030,6 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         }
         // 分组阶段已解析物流单集合，避免 platformCode 多行合并后被最后一行平台单号重新缩窄匹配范围。
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVoList = ObjectUtil.defaultIfNull(matchedLogisticsBillVos, Collections.emptyList());
-        applyImportLogisticsSupplierId(excelDTO, costImportEntity, logisticsBillVoList);
 
         // IMPORT_ADD_NEW 已下线：按新单无法区分自发货/尾程归属，配置入口已禁用；未匹配到物流单直接报错。
         if (CollUtil.isEmpty(logisticsBillVoList)) {
@@ -2061,7 +2060,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     errorMsgList.add("未找到可更新的待确认费用单或可新增的已确认费用单");
                     return importDataDTO;
                 }
-                // 待确认批次：允许多单按重量分摊；按原单新增批次：整行金额落每张单，不参与分摊。
+                // 待确认批次与 ADD_OLD 多单批次均按出库重量分摊；仅单张物流单时整行金额原样落库。
                 if (CollUtil.isNotEmpty(updateBillList)) {
                     lastImportType = processImportBillVoGroup(updateBillList, true, updateList, confirmTime, excelDTO, importDTO,
                             costImportEntity, logisticsBillCostList, cfgCostList, errorMsgList, mainIdListMap, orderWeightMap,
@@ -2071,7 +2070,7 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     }
                 }
                 if (CollUtil.isNotEmpty(addOldBillList)) {
-                    String addOldImportType = processImportBillVoGroup(addOldBillList, false, updateList, confirmTime, excelDTO, importDTO,
+                    String addOldImportType = processImportBillVoGroup(addOldBillList, addOldBillList.size() > 1, updateList, confirmTime, excelDTO, importDTO,
                             costImportEntity, logisticsBillCostList, cfgCostList, errorMsgList, mainIdListMap, orderWeightMap,
                             orderWeightErrorMap, addBillCostList, addCfgCostList, updateBillCostList, updateCfgCostList);
                     if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -2103,8 +2102,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
 
     /**
      * 按物流单子集处理导入：匹配费用单、校验并构造落库数据。
-     * <p>{@code allowAllocate=true} 且子集多于 1 条时按出库重量分摊行内汇总金额；
-     * 为 false 或仅 1 条时整行金额原样落到每张单（用于按原单跨月新增）。</p>
+     * <p>{@code allowAllocate=true} 且子集多于 1 条时按出库重量分摊行内汇总金额及计费重/实重；
+     * 为 false 或仅 1 条时整行金额原样落到该单（单张 ADD_OLD 跨月新增场景）。</p>
+     * <p>IMPORT_ADD_OLD 多单与 IMPORT_UPDATE 多单共用同一分摊规则，避免组合品子单重复计入全额费用。</p>
      * <p>自发货与尾程可在同一子集内并存，各单按自身费用单 type 设置 sourceType，不再要求同组费用归属一致。</p>
      */
     private String processImportBillVoGroup(List<LogisticsBillDTO.LogisticsBillVo> billGroup,
@@ -2125,8 +2125,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                                             List<LogisticsBillCostDTO.UpdateDTO> updateBillCostList,
                                             List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList) {
         Map<String, List<TmsCostDetailDTO.UpdateDTO>> allocatedCostMap = Collections.emptyMap();
+        Map<String, BigDecimal> weightMap = Collections.emptyMap();
         if (allowAllocate && billGroup.size() > 1) {
-            Map<String, BigDecimal> weightMap = buildOrderWeightMap(billGroup, errorMsgList, orderWeightMap, orderWeightErrorMap);
+            weightMap = buildOrderWeightMap(billGroup, errorMsgList, orderWeightMap, orderWeightErrorMap);
             if (CollectionUtils.isEmpty(errorMsgList)) {
                 allocatedCostMap = allocateCostDetailMap(updateList, billGroup, weightMap, errorMsgList);
             }
@@ -2134,8 +2135,15 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         if (CollectionUtils.isNotEmpty(errorMsgList)) {
             return "";
         }
+        BigDecimal totalImportBillingWeight = CharSequenceUtil.isBlank(excelDTO.getBillingWeightLogistics())
+                ? null : new BigDecimal(excelDTO.getBillingWeightLogistics());
+        BigDecimal totalImportThirdActualWeight = CharSequenceUtil.isBlank(excelDTO.getThirdActualWeight())
+                ? null : new BigDecimal(excelDTO.getThirdActualWeight());
+        BigDecimal billingWeightAllocatedSum = BigDecimal.ZERO;
+        BigDecimal thirdActualWeightAllocatedSum = BigDecimal.ZERO;
         String lastImportType = "";
-        for (LogisticsBillDTO.LogisticsBillVo logisticsBillVo : billGroup) {
+        for (int billIndex = 0; billIndex < billGroup.size(); billIndex++) {
+            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = billGroup.get(billIndex);
             logisticsBillVo.setReconciliationMonth(importDTO.getReconciliationMonth());
             applyImportLogisticsSupplierId(excelDTO, costImportEntity, Collections.singletonList(logisticsBillVo));
             // 单条待确认不分摊；多条且 allowAllocate 时使用分摊结果，避免把整行金额重复计入每张单。
@@ -2189,6 +2197,21 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
                     importDTO, currentUpdateList, errorMsgList, cfgCostList);
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 return lastImportType;
+            }
+            // 多单分摊时 override updateDataDTO，避免改共享 excelDTO 导致后续子单重量被污染
+            if (allowAllocate && billGroup.size() > 1 && CollUtil.isNotEmpty(weightMap)) {
+                if (ObjectUtil.isNotNull(totalImportBillingWeight)) {
+                    BigDecimal allocatedBillingWeight = allocateValueByWeight(totalImportBillingWeight, billGroup, weightMap,
+                            billIndex, billingWeightAllocatedSum);
+                    billingWeightAllocatedSum = billingWeightAllocatedSum.add(allocatedBillingWeight);
+                    updateDataDTO.setBillingWeightLogistics(allocatedBillingWeight);
+                }
+                if (ObjectUtil.isNotNull(totalImportThirdActualWeight)) {
+                    BigDecimal allocatedThirdActualWeight = allocateValueByWeight(totalImportThirdActualWeight, billGroup, weightMap,
+                            billIndex, thirdActualWeightAllocatedSum);
+                    thirdActualWeightAllocatedSum = thirdActualWeightAllocatedSum.add(allocatedThirdActualWeight);
+                    updateDataDTO.setThirdActualWeight(allocatedThirdActualWeight);
+                }
             }
 
             if (CfgLogisticsCostImportImportTypeEnum.IMPORT_ADD_OLD.getCode().equals(thisImportType)) {
@@ -2457,6 +2480,29 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
         return resultMap;
     }
 
+    /**
+     * 按订单重量比例拆分单个数值（计费重/实重等），最后一单吸收四位小数尾差。
+     * <p>与 {@link #allocateCostDetailMap} 费用分摊规则一致，保证拆分后总和等于导入值。</p>
+     */
+    private BigDecimal allocateValueByWeight(BigDecimal totalValue,
+                                           List<LogisticsBillDTO.LogisticsBillVo> billGroup,
+                                           Map<String, BigDecimal> weightMap,
+                                           int billIndex,
+                                           BigDecimal allocatedSum) {
+        BigDecimal totalWeight = billGroup.stream()
+                .map(vo -> weightMap.getOrDefault(vo.getDetailId(), BigDecimal.ZERO))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (totalWeight.compareTo(BigDecimal.ZERO) <= 0) {
+            return totalValue;
+        }
+        LogisticsBillDTO.LogisticsBillVo logisticsBillVo = billGroup.get(billIndex);
+        if (billIndex == billGroup.size() - 1) {
+            return totalValue.subtract(allocatedSum);
+        }
+        return totalValue.multiply(weightMap.getOrDefault(logisticsBillVo.getDetailId(), BigDecimal.ZERO))
+                .divide(totalWeight, 4, RoundingMode.HALF_UP);
+    }
+
     private TmsCostDetailDTO.UpdateDTO copyUpdateCostDetail(TmsCostDetailDTO.UpdateDTO source) {
         TmsCostDetailDTO.UpdateDTO copyDTO = new TmsCostDetailDTO.UpdateDTO();
         BeanUtil.copyProperties(source, copyDTO);
@@ -2518,7 +2564,9 @@ public class ImportHistoryRecordServiceImpl extends SuperServiceImpl<ImportHisto
             addDTO.setLogisticsBillDetailId(logisticsBillCostEntity.getLogisticsBillDetailId());
             addDTO.setActualWeight(logisticsBillCostEntity.getActualWeight());
             addDTO.setVolumeWeight(logisticsBillCostEntity.getVolumeWeight());
-            addDTO.setBillingWeightLogistics(logisticsBillCostEntity.getBillingWeightLogistics());
+            // ADD_OLD 新增优先取 Excel 导入计费重，原单仅兜底，避免已确认单 0 kg 覆盖导入值
+            addDTO.setBillingWeightLogistics(ObjectUtil.defaultIfNull(dto.getBillingWeightLogistics(),
+                    logisticsBillCostEntity.getBillingWeightLogistics()));
             addDTO.setConfirmTime(importDataDTO.getConfirmTime());
             String currency = dto.getCurrency();
             if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {

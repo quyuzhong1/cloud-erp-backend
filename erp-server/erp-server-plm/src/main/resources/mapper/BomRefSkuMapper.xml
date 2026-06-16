@@ -82,6 +82,7 @@
         left join product_pack pp on pp.sku_id = pbs.sku_id and pp.is_deleted = false
         <where>
             pbi.is_deleted = false
+            and pbi.state != 6
             <if test="state != null">
                 and pbi.state = #{state}
             </if>
