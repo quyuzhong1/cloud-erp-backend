@@ -370,14 +370,10 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //根据sku查询是否是组合品
         List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = null;
-        // 预加载上游委外订单（如果存在），用于循环内复用，避免每次迭代重复调用 subcontractOrderService.getById
         SubcontractOrderEntity sourceSubcontractOrder = null;
-        if (StrUtil.isNotBlank(entity.getSourceId())
-                && SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType())) {
-            sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
-        }
-        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())) {
+        final boolean needSubcontractOrderDetail = PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
+                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType());
+        if (needSubcontractOrderDetail) {
             if (StrUtil.isBlank(entity.getSourceId())) {
                 throw new ServiceException("委外订单id不能为空");
             }
@@ -385,11 +381,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             if (CollectionUtils.isEmpty(subcontractOrderDetailEntityList)) {
                 throw new ServiceException("委外订单明细记录不能为空");
             }
-            // ENUM_SUBCONTRACT / ENUM_REPAIR 类型下，若上游 sourceType 不是委外订单（极少见），
-            // 也按 sourceId 兜底加载一次委外订单，方便后续 ENUM_PARENT 分支判断返修标识，避免循环内重复查询
-            if (Objects.isNull(sourceSubcontractOrder)) {
-                sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
-            }
+        }
+        // 子行 PO（sourceType=委外订单）或父行 PO（委外/返修采购单）均需上游委外主单，统一在此处加载一次
+        if (StrUtil.isNotBlank(entity.getSourceId())
+                && (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) || needSubcontractOrderDetail)) {
+            sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
         }
         // 在所有可能加载 sourceSubcontractOrder 的路径都执行完后，统一基于同一份订单实体计算 flag 并构建 Map，
         // 避免父行（isRepairType）与子行（isRepairSubcontractSource）因为依赖时机不同而走出不一致的取价分支
