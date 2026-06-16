@@ -203,7 +203,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             mqCount++;
         }
         if (resetCount == 0) {
-            throw new ServiceException("没有可强制重试的任务节点，成功节点不会重试，处理中节点需超过3分钟才允许接管");
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE);
         }
         addForceRetryLog(dto, taskList, resetCount, mqCount);
 
@@ -269,7 +269,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             return Objects.isNull(entity) ? Collections.emptyList() : listBySourceId(entity.getSourceId(), entity.getSourceType());
         }
         if (CharSequenceUtil.isBlank(dto.getSourceType()) || CharSequenceUtil.isBlank(dto.getSourceId())) {
-            throw new ServiceException("任务节点id或sourceType/sourceId不能为空");
+            throw new ServiceException(ApiError.WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE);
         }
         return listBySourceId(dto.getSourceId(), dto.getSourceType());
     }
@@ -280,6 +280,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
                 .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
                 .update();
     }
@@ -318,7 +319,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         addTaskDTO.setTraceId(entity.getTraceId());
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, entity.getSourceId(), 1);
         if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("任务节点人工强制重试MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new ServiceException(ApiError.WF_TASK_RECORD_MQ_SEND_FAILED, JSONUtil.toJsonStr(result));
         }
         return Boolean.TRUE;
     }
