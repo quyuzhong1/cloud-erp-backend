@@ -104,6 +104,51 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qn.create_time desc
+    </sql>
+
+    <sql id="paging_header_sql">
+        SELECT
+        qn.ID AS id,
+        qn.create_user_id AS createUserId,
+        qn.create_user_name AS createUserName,
+        qn.create_time AS createTime,
+        qn.is_deleted AS isDeleted,
+        qn.approve_status AS approveStatus,
+        qn.approve_time AS approveTime,
+        qn.approve_user_id AS approveUserId,
+        qn.approve_user_name AS approveUserName,
+        qn.code AS code,
+        qn.qc_warehouse_id AS qcWarehouseId,
+        qn.putaway_warehouse_id AS putawayWarehouseId,
+        qn.qc_type AS qcType,
+        qn.qc_status AS qcStatus,
+        qn.qc_timeliness AS qcTimeliness,
+        qn.remark AS remark,
+        qn.invalid_status AS invalidStatus,
+        qn.invalid_remark AS invalidRemark,
+        qn.source_id as sourceId,
+        qn.source_code as sourceCode,
+        qn.source_type as sourceType,
+        qn.purchase_order_id as purchaseOrderId,
+        qn.purchase_order_code as purchaseOrderCode,
+        qn.expect_qc_date as expectQcDate,
+        qn.plan_qc_date as planQcDate
+        FROM
+        qc_notice AS qn
+        LEFT JOIN qc_application qa on qa.id = qn.source_id and qa.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND qn.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         <if test="params.searchKey != null and params.searchKey != ''">
             and CONCAT(qn.code, ' ', qn.source_code, ' ', qn.purchase_order_code) LIKE CONCAT('%', #{params.searchKey}::text, '%')
         </if>
@@ -118,6 +163,10 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.QcNoticeDTO$ListDTO">
         <include refid="paging_sql"></include>
+    </select>
+
+    <select id="pagingHeader" resultType="com.erp.model.wms.dto.QcNoticeDTO$ListDTO">
+        <include refid="paging_header_sql"></include>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

@@ -80,7 +80,7 @@ public class QcNoticeFeignController extends BaseController {
     )
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public ApiResult<PagingVO<QcNoticeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<QcNoticeDTO.PagingParamDTO> dto) {
-        return success(qcNoticeService.paging(dto));
+        return success(qcNoticeService.pagingHeader(dto));
     }
 
     /**

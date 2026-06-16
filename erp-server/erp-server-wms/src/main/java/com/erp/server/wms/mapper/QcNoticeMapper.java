@@ -32,6 +32,11 @@ public interface QcNoticeMapper extends BaseMapper<QcNoticeEntity> {
     IPage<QcNoticeDTO.ListDTO> paging(Page query, @Param("params") QcNoticeDTO.PagingParamDTO params);
 
     /**
+     * 分页查询（仅单头）
+     */
+    IPage<QcNoticeDTO.ListDTO> pagingHeader(Page query, @Param("params") QcNoticeDTO.PagingParamDTO params);
+
+    /**
     * 状态数量
     * @param params
     * @return

@@ -526,6 +526,18 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     @Override
+    public PagingVO<QcNoticeDTO.ListDTO> pagingHeader(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<QcNoticeDTO.ListDTO> pageData = this.baseMapper.pagingHeader(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        fillHeaderList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public List<QcNoticeDTO.TabListDTO> tabList(PermissionsDTO param) {
         QcNoticeDTO.PagingParamDTO searchParam = new QcNoticeDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
@@ -2579,6 +2591,30 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         lambdaUpdate().eq(QcNoticeEntity::getId, id)
                 .set(QcNoticeEntity::getApproveStatus, approveStatus)
                 .update(new QcNoticeEntity());
+    }
+
+    /**
+     * 单头分页列表数据处理
+     */
+    private void fillHeaderList(List<QcNoticeDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> qcWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> putawayWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getPutawayWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        qcWarehouseId.addAll(putawayWarehouseId);
+        List<String> warehouseIdList = qcWarehouseId.stream().distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
+        for (QcNoticeDTO.ListDTO data : list) {
+            data.setQcWarehouseName(warehouseMap.get(data.getQcWarehouseId()));
+            data.setPutawayWarehouseName(warehouseMap.get(data.getPutawayWarehouseId()));
+            data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
+            data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        }
     }
 
     /**
