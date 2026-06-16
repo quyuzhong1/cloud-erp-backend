@@ -183,11 +183,8 @@ public class PlatformShopifyOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailDto(sourceOrder);
         orderDTO.setDetails(details);
 
-        // 明细是否退款
-        boolean detailRefund = details.stream().anyMatch(PlatformOrderDetailDTO::getIsDetailRefund);
-        // 平台是否取消(全退款/明细退款视为平台取消(暂不包含部分退款)
-        Boolean isCancel = sourceOrder.convertIsCancel(detailRefund);
-        // 平台订单原始取消状态(已退款,部分退款)
+        // 平台是否取消：仅依据 cancelled_at
+        Boolean isCancel = sourceOrder.convertIsCancel();
         orderDTO.setIsCancel(isCancel);
 
         // 标签json

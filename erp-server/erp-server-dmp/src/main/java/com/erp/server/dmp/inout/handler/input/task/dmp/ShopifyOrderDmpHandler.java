@@ -164,8 +164,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     }
                 }
 
-                // 是否明细退款
-                boolean hasRefundLineItems = false;
                 //退款
                 Object refundsObj = dmpDataMap.get("refunds");
                 if (ObjectUtil.isNotEmpty(refundsObj)) {
@@ -185,7 +183,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                                         .distinct()
                                         .collect(Collectors.toList());
                                 refundedLineItemIds.addAll(sourceFundedLineItemIds);
-                                hasRefundLineItems = true;
                             }
                         }
                     }
@@ -202,18 +199,9 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 String financialStatusStr= dmpDataMap.getOrDefault("platformOriginalStatus", "").toString();
                 dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
 
-                // dmp退款状态
-                String dmpReturnStatus = dmpDataMap.getOrDefault("returnStatus", "notReturn").toString();
-                // 平台订单原始取消状态(已退款,部分退款)
-                DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpReturnStatus);
-                // 整单退款 或 明细存在退货 才推送取消状态
-                if (DmpOrderReturnStatusEnum.ORDER_RETURN.equals(dmpBasicSystemCodeEnum)
-                        || hasRefundLineItems
-                ) {
-                    dmpDataMap.put("isCancel", Boolean.TRUE);
-                } else {
-                    dmpDataMap.put("isCancel", Boolean.FALSE);
-                }
+                // 平台是否取消：仅依据 cancelled_at
+                Object cancelledAtObj = dmpDataMap.get("cancelledAt");
+                dmpDataMap.put("isCancel", ObjectUtil.isNotEmpty(cancelledAtObj));
 
             }
         }
