@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.file.mapper.FileTaskMapper">
 
 
-    <select id="getFileTasks" resultType="com.erp.server.file.vo.FileTaskVO">
+    <select id="getFileTasks" resultType="com.erp.model.file.vo.FileTaskVO">
         select id,
         create_user_id,
         create_user_name,
