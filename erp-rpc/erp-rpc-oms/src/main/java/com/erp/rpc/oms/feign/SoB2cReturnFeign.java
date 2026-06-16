@@ -1,6 +1,7 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -40,7 +41,7 @@ public interface SoB2cReturnFeign {
      * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
      **/
     @PostMapping("feign/soB2cReturn/listDetailByMainIds")
-    List<SoB2cReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
+    List<SoB2cReturnDetailDTO.ViewDTO> listDetailByMainIds(@RequestBody List<String> mainIds);
 
 
     @PostMapping("feign/soReturn/updateBatch")

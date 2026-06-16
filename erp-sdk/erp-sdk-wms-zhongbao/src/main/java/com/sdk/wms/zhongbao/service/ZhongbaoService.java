@@ -7,6 +7,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
+import com.common.core.exception.ThirdWarehouseEmptyResponseException;
 import com.sdk.wms.zhongbao.dto.request.*;
 import com.sdk.wms.zhongbao.dto.response.*;
 import com.sdk.wms.zhongbao.utils.AuthUtils;
@@ -86,7 +87,7 @@ public class ZhongbaoService {
             throw new ServiceException(e.getMessage());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -119,7 +120,7 @@ public class ZhongbaoService {
             return JSONUtil.toBean(bodyStr, BaseResponse.class);
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -146,7 +147,7 @@ public class ZhongbaoService {
             return JSONUtil.toBean(bodyStr, BaseResponse.class);
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -409,7 +410,7 @@ public class ZhongbaoService {
             return JSON.parseObject(bodyStr, new TypeReference<OverseasOutboundCreateResponse>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -439,7 +440,7 @@ public class ZhongbaoService {
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             ThirdWarehouseContext.setResponseJson("请求失败,异常:" + e.getMessage());
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -465,7 +466,7 @@ public class ZhongbaoService {
             return JSON.parseObject(bodyStr, new TypeReference<OverseasOutboundQueryResponse>() {}.getType());
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -496,7 +497,7 @@ public class ZhongbaoService {
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             ThirdWarehouseContext.setResponseJson("请求失败,异常: {}" + e.getMessage());
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 
@@ -522,12 +523,16 @@ public class ZhongbaoService {
             String bodyStr = response.body().string();
             log.warn("bodyStr: {}", bodyStr);
             ThirdWarehouseContext.setResponseJson(bodyStr);
-            return JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCreateResponse>>() {
+            BaseResponse<OutboundB2cCreateResponse> resp = JSON.parseObject(bodyStr, new TypeReference<BaseResponse<OutboundB2cCreateResponse>>() {
             }.getType());
+            if (resp == null) {
+                throw new ThirdWarehouseEmptyResponseException("众包创建B2C出库单接口返回为空");
+            }
+            return resp;
         } catch (IOException e) {
             log.error("请求失败,异常: {}", e);
             ThirdWarehouseContext.setResponseJson("请求失败,异常: {}" + e.getMessage());
-            throw new ServiceException("请求失败,异常: " + e.getMessage());
+            throw new ServiceException(e, "请求失败,异常: {}", e.getMessage());
         }
     }
 

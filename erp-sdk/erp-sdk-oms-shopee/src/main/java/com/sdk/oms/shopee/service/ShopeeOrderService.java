@@ -103,7 +103,7 @@ public class ShopeeOrderService {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("timestamp", orderRequest.getTimestamp());
         paramMap.put("sign", ShopeeApiUtils.getOrderSign(orderRequest.getPath(), orderRequest.getToken(), orderRequest.getPartnerId(),
-                orderRequest.getTmpPartnerKey(), orderRequest.getShopId()));
+                orderRequest.getTmpPartnerKey(), orderRequest.getShopId(), orderRequest.getTimestamp()));
         paramMap.put("shop_id", orderRequest.getShopId());
         paramMap.put("partner_id", orderRequest.getPartnerId());
         paramMap.put("access_token", orderRequest.getToken());

@@ -4,12 +4,16 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.DynamicDataSourceTypeEnum;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -18,6 +22,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -78,6 +83,18 @@ public class LogisticsBillCostDTO implements Serializable {
          * 排除的类型
          */
         private List<String> excludeOrderTypeList;
+
+        /**
+         * 动态数据源，需要重新get方法
+         */
+        private String dynamicDataSource;
+        //dynamicDataSource需要重新此方法
+        public String getDynamicDataSource(){
+            if(StringUtils.isNotBlank(dynamicDataSource) && dynamicDataSource.toUpperCase().contains(DynamicDataSourceTypeEnum.DORIS.getCode().toUpperCase())) {
+                return DynamicDataSourceTypeEnum.DORIS.getCode();
+            }
+            return dynamicDataSource;
+        }
     }
 
 
@@ -826,6 +843,11 @@ public class LogisticsBillCostDTO implements Serializable {
 
         private String logisticsBillDetailId;
 
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
         private String trackNo;
         /**
          * 对账类型
@@ -893,6 +915,11 @@ public class LogisticsBillCostDTO implements Serializable {
         @NotBlank(message = "物流单明细id不能为空")
         @Size(max = 19,message = "物流单明细id最大长度不能超过19位")
         private String logisticsBillDetailId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
         * 实重
@@ -1277,5 +1304,33 @@ public class LogisticsBillCostDTO implements Serializable {
          * 费用项更新列表
          */
         private List<TmsCostDetailDTO.UpdateDTO> updateCfgCostList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabCountDTO {
+        private String type;
+        private String reconciliationStatus;
+        private String payType;
+        private Integer count;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class SmallBagPushAllocationContext {
+        private CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO;
+        private Map<String, String> feeTypeSettingMaps;
+        private Map<String, String> orgIdNameMaps;
+        private String weightPackageAllocation;
+        private String packageOrgId;
+        private String packageWarehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class OutstockWeightPreloadDTO {
+        private Map<String, List<SoOutstockDetailEntity>> outstockDetailMap = Collections.emptyMap();
+        private Map<String, ProductPackEntity> productPackMap = Collections.emptyMap();
     }
 }

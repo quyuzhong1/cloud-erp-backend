@@ -237,6 +237,7 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
             itemEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             itemEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             itemEntity.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
+			itemEntity.setTaxAmount(item.getAllAmountLocalCurrency());
             itemEntity.setExchangeRate(new BigDecimal(1));
             itemEntity.setSoDetailId(item.getSrcOrderDetailId());
             itemEntity.setRemark(item.getItemRemark());

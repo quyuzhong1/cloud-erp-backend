@@ -43,7 +43,7 @@ public interface SoB2cLogisticsMapper extends BaseMapper<SoB2cLogisticsEntity> {
      * 根据运单号进行跟踪号更新
      * @param trackDTOS
      */
-    void updateTrackNoByTransportNo(@Param("trackDTOS") List<LogisticsBillDTO.TrackDTO> trackDTOS);
+    int updateTrackNoByTransportNo(@Param("trackDTOS") List<LogisticsBillDTO.TrackDTO> trackDTOS);
 
     List<SoB2cLogisticsDTO.transferOrderDTO> transferOrderView(List<String> ids);
 }

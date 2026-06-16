@@ -80,5 +80,7 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      * @param permissionSql
      * @return
      */
-    List<SoReturnEntity> listSoReturnByApproveStatus(@Param("approveStatus") String approveStatus, @Param("permissionSql") String permissionSql);
+    IPage<SoReturnEntity> listSoReturnByApproveStatus(Page query, @Param("params") SoReturnDTO.ApproveStatusPagingParam params,
+                                                       @Param("approveStatus") String approveStatus,
+                                                       @Param("permissionSql") String permissionSql);
 }

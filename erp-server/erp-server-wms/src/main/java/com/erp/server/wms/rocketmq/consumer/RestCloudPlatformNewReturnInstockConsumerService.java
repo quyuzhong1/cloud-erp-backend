@@ -28,7 +28,13 @@ import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.wms.entity.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.*;
@@ -43,6 +49,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -101,6 +108,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 
 	@Resource
 	private B2bThirdDeliveryService b2bThirdDeliveryService;
+
+	@Resource
+	private DmpTaskFeign dmpTaskFeign;
 
 	@Override
 	public String getBizName() {
@@ -182,8 +192,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		}
 
 
-		if(Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())
-				&& CharSequenceUtil.isNotBlank(dto.getPlatformOrderNo())){
+		if((Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())
+				|| Objects.equals(dto.getPlatform(), PlatformDictEnum.JI_TU_WAREHOUSE.getCode())
+				&& CharSequenceUtil.isNotBlank(dto.getPlatformOrderNo()))){
 			List<B2bThirdDeliveryEntity> list = b2bThirdDeliveryService.lambdaQuery()
 					.eq(B2bThirdDeliveryEntity::getPlatformOrderCode, dto.getPlatformOrderNo())
 					.list();
@@ -225,6 +236,9 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 		if (Objects.equals(dto.getPlatform(), PlatformDictEnum.ZHONG_BAO_WAREHOUSE.getCode())) {
 			soReturnInstockEntity = this.buildZhongBaoSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soInfoEntity,soOutstock);
 			detailEntityList.addAll(this.buildZhongBaoSoReturnInstockDetail(dto,soB2cEntity,soInfoEntity,warehouseEntity));
+		} else if(Objects.equals(dto.getPlatform(), PlatformDictEnum.JI_TU_WAREHOUSE.getCode())){
+			soReturnInstockEntity = this.buildJiTuSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soInfoEntity,soOutstock);
+			detailEntityList.addAll(this.buildJiTuSoReturnInstockDetail(dto,soB2cEntity,soInfoEntity,warehouseEntity));
 		} else {
 			soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 			detailEntityList.addAll(this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity));
@@ -824,5 +838,280 @@ public class RestCloudPlatformNewReturnInstockConsumerService extends AbstractRe
 					.findFirst()
 					.ifPresent(obj -> item.setProductSku(obj.getPlatformSkuNo()));
 		}
+	}
+	
+	/**
+	 * 构建极兔退货入库单实体
+	 */
+	private SoReturnInstockEntity buildJiTuSoReturnInstockEntity(PlatformReturnInstockDTO dto,WarehouseEntity warehouseEntity,SoB2cEntity soB2cEntity,SoInfoEntity soInfoEntity,SoOutstockEntity soOutstock){
+		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
+		CustomerInfoEntity customerInfo = null;
+		
+		// 默认自动提交并审核通过
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			soReturnInstockEntity.setApproveTime(LocalDateTime.now());
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+		}
+		// 入库日期取关单时间
+		if (dto.getPutawayTime() != null) {
+			soReturnInstockEntity.setBillDate(dto.getPutawayTime().toLocalDate());
+		}
+		// 库存组织
+		soReturnInstockEntity.setInventoryOrgId(warehouseEntity.getOrgId());
+		// 组织信息
+		if(StringUtils.isNotBlank(warehouseEntity.getId())){
+			SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
+			soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
+		}
+		// 退货物流单号
+		soReturnInstockEntity.setReturnLogisticCode(dto.getReturnLogisticCode());
+		// 第三方单据编号
+		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
+		// 来源类型
+		soReturnInstockEntity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
+		// 创建时间
+		soReturnInstockEntity.setCreated(dto.getCreateTime());
+		// 仓库信息
+		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
+		if (Objects.nonNull(soB2cEntity)) {
+			// B2C订单
+			soReturnInstockEntity.setType("B2C");
+			//取客户订单号，匹配数大臣的B2C三方仓发货单的三方仓订单号，匹配到后将发货单的销售单号作为退货入库单的来源订单号
+			if (Objects.equals(soB2cEntity.getShippingOrderNo(),dto.getOrderReferenceNo())) {
+				soReturnInstockEntity.setSourceId(soB2cEntity.getId());
+				soReturnInstockEntity.setSourceCode(soB2cEntity.getCode());
+			}
+			soReturnInstockEntity.setSalesOrgId(soB2cEntity.getOrgId());
+			soReturnInstockEntity.setSalesOrgName(soB2cEntity.getOrgName());
+			// 退货客户
+			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
+			customerInfo = customerFeign.getCustomerById(shopInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerId(shopInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerName(customerInfo.getName());
+			// 销售订单信息
+			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
+			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+			soReturnInstockEntity.setShopId(soB2cEntity.getShopId());
+			// 平台订单编号
+			soReturnInstockEntity.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+			// 币种
+			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
+		} else if (Objects.nonNull(soInfoEntity)){
+			// B2B订单
+			soReturnInstockEntity.setType("B2B");
+			//未匹配到时匹配B2B三方发货单的三方仓订单号，匹配到后将发货单的销售单号作为退货入库单的来源订单号
+			if (StringUtils.isNotBlank(dto.getOrderReferenceNo())) {
+				B2bThirdDeliveryEntity b2bThirdDelivery = b2bThirdDeliveryService.lambdaQuery()
+						.eq(B2bThirdDeliveryEntity::getPlatformOrderCode, dto.getOrderReferenceNo())
+						.one();
+				if (Objects.nonNull(b2bThirdDelivery)) {
+					soReturnInstockEntity.setSourceId(b2bThirdDelivery.getId());
+					soReturnInstockEntity.setSourceCode(b2bThirdDelivery.getSoCode());
+				}
+			}
+			soReturnInstockEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+			soReturnInstockEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+			// 退货客户
+			customerInfo = customerFeign.getCustomerById(soInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerId(soInfoEntity.getCustomerId());
+			soReturnInstockEntity.setCustomerName(customerInfo.getName());
+			// 销售订单信息
+			soReturnInstockEntity.setSoCode(soInfoEntity.getCode());
+			soReturnInstockEntity.setSoId(soInfoEntity.getId());
+			// 币种
+			soReturnInstockEntity.setCurrency(soInfoEntity.getCurrency());
+			soReturnInstockEntity.setCurrencySymbol(soInfoEntity.getCurrencySymbol());
+		} else {
+			// 未关联到订单
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+			soReturnInstockEntity.setCurrencySymbol("¥");
+		}
+		
+		// 销售部门和销售员
+		if(Objects.nonNull(soOutstock)){
+			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
+				SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
+				if( null != department){
+					soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
+					soReturnInstockEntity.setSalesDeptName(department.getName());
+				}
+			}
+			soReturnInstockEntity.setSellerId(soOutstock.getSellerId());
+			soReturnInstockEntity.setSellerName(soOutstock.getSellerName());
+		}
+
+		if (Objects.nonNull(customerInfo)) {
+			soReturnInstockEntity.setSellerId(customerInfo.getSellerId());
+			soReturnInstockEntity.setSellerName(customerInfo.getSellerName());
+		}
+		
+		return soReturnInstockEntity;
+	}
+	
+	/**
+	 * 构建极兔退货入库单明细
+	 */
+	private List<SoReturnInstockDetailEntity> buildJiTuSoReturnInstockDetail(PlatformReturnInstockDTO dto, SoB2cEntity soB2cEntity, SoInfoEntity soInfoEntity, WarehouseEntity warehouseEntity) {
+		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
+		List<SoB2cDetailEntity> soB2cDetails = new ArrayList<>();
+		List<SoDetailEntity> soDetails = new ArrayList<>();
+		List<SoB2cReturnDetailEntity> soB2cReturnDetails = new ArrayList<>();
+		List<SoReturnDetailEntity> soReturnDetails = new ArrayList<>();
+		
+		if(CollectionUtils.isEmpty(details)){
+			throw new ServiceException("明细为空");
+		}
+		
+		// 获取SKU映射
+		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v->v.getProductSku()).collect(Collectors.toList());
+		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
+		listingInfoParamDTO.setAuthId(dto.getAuthId());
+		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+
+		if (mappingSkuViewDTOList.isEmpty()) {
+			throw new ServiceException("没有找到sku映射");
+		}
+
+		// 获取订单明细和关联数据
+		BigDecimal rate = new BigDecimal("1");
+		if (Objects.nonNull(soB2cEntity)) {
+			try {
+				rate = dmpTaskFeign.getRate(soB2cEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+			}catch (Exception e){
+				throw new ServiceException(soB2cEntity.getCurrency() + "获取汇率失败");
+			}
+			// B2C订单
+			soB2cDetails.addAll(soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId())));
+			
+			// 获取退货订单明细
+			List<SoB2cReturnEntity> soB2cReturnEntities = FeignQuery.create(SoB2cReturnEntity.class)
+					.eq(SoB2cReturnEntity::getSoId, soB2cEntity.getId())
+					.list();
+			if (CollectionUtils.isNotEmpty(soB2cReturnEntities)) {
+				List<String> returnIds = soB2cReturnEntities.stream().map(SoB2cReturnEntity::getId).collect(Collectors.toList());
+				soB2cReturnDetails.addAll(FeignQuery.create(SoB2cReturnDetailEntity.class)
+						.in(SoB2cReturnDetailEntity::getMainId, returnIds)
+						.list());
+			}
+		} else if (Objects.nonNull(soInfoEntity)){
+			try {
+				rate = dmpTaskFeign.getRate(soInfoEntity.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soInfoEntity.getCurrency());
+			}catch (Exception e){
+				throw new ServiceException(soInfoEntity.getCurrency() + "获取汇率失败");
+			}
+			// B2B订单
+			soDetails.addAll(soInfoFeign.listSoDetailByMainId(soInfoEntity.getId()));
+			
+			// 获取退货订单明细
+			List<SoReturnEntity> soReturnEntities = FeignQuery.create(SoReturnEntity.class)
+					.eq(SoReturnEntity::getSourceId, soInfoEntity.getId())
+					.list();
+			if (CollectionUtils.isNotEmpty(soReturnEntities)) {
+				List<String> returnIds = soReturnEntities.stream().map(SoReturnEntity::getId).collect(Collectors.toList());
+				soReturnDetails.addAll(FeignQuery.create(SoReturnDetailEntity.class)
+						.in(SoReturnDetailEntity::getMainId, returnIds)
+						.list());
+			}
+		}
+		
+		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
+		
+		for (PlatformReturnInstockDTO.Detail detail : details) {
+			// 匹配SKU
+			SkuMappingDTO.MappingSkuViewDTO skuViewDTO = mappingSkuViewDTOList.stream()
+					.filter(v->v.getPlatformSkuNo().equals(detail.getProductSku()))
+					.findFirst()
+					.orElse(null);
+			
+			if(Objects.isNull(skuViewDTO)){
+				continue;
+			}
+			
+			SoReturnInstockDetailEntity soReturnInstockDetailEntity = new SoReturnInstockDetailEntity();
+			soReturnInstockDetailEntity.setSkuId(skuViewDTO.getProductSkuId());
+			soReturnInstockDetailEntity.setSkuNo(skuViewDTO.getProductSkuNo());
+			// 仓库信息
+			soReturnInstockDetailEntity.setWarehouseId(warehouseEntity.getId());
+			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
+			// 备注和退货类型
+			soReturnInstockDetailEntity.setRemark(dto.getReason());
+			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+			// 来源明细ID
+			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
+			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
+			soReturnInstockDetailEntity.setPlatformSkuNo(detail.getProductSku());
+			
+			// 计算数量
+			int shouldReturnQty = 0; // 应退数量
+			int actualQty = detail.getReceiveQty() != null ? detail.getReceiveQty() : 0;
+
+			if (!soB2cDetails.isEmpty()) {
+				// B2C订单
+				SoB2cDetailEntity soB2cDetailEntity = soB2cDetails.stream()
+						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getPlatformSkuNo()))
+						.findFirst()
+						.orElse(null);
+				if (Objects.nonNull(soB2cDetailEntity)) {
+					
+					// 应退数量
+					shouldReturnQty = soB2cReturnDetails.stream()
+							.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
+							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
+							.sum();
+					
+					// 计算退货金额和含税退货金额
+					// 取销售订单的订单金额*订单明细的真实售价占比*（上架数量/销售数量）
+					BigDecimal amount = MathUtil.multiplyWithTwo(soB2cDetailEntity.getPrice(), actualQty);
+					soReturnInstockDetailEntity.setAmount(amount);
+					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
+					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithTwo(amount,rate));
+				} else {
+					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
+				}
+			} else if (!soDetails.isEmpty()){
+				// B2B订单
+				SoDetailEntity soDetailEntity = soDetails.stream()
+						.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getPlatformSkuNo()))
+						.findFirst()
+						.orElse(null);
+				if (Objects.nonNull(soDetailEntity)) {
+					
+					// 应退数量
+					shouldReturnQty = soReturnDetails.stream()
+							.filter(item -> Objects.equals(item.getSkuId(), skuViewDTO.getProductSkuId()))
+							.mapToInt(item -> item.getReturnQty() != null ? item.getReturnQty() : 0)
+							.sum();
+					
+					// 计算退货金额和含税退货金额
+					// 取销售订单的明细销售单价*上架数量
+					soReturnInstockDetailEntity.setReturnAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), actualQty));
+					// 取销售订单的含税单价*退货数量
+					BigDecimal amount = MathUtil.multiplyWithTwo(soDetailEntity.getTaxPrice(), actualQty);
+					soReturnInstockDetailEntity.setTaxReturnAmount(amount);
+					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(MathUtil.multiplyWithTwo(amount,rate));
+				} else {
+					soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+					soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
+				}
+			} else {
+				// 未匹配到订单
+				soReturnInstockDetailEntity.setAmount(BigDecimal.ZERO);
+				soReturnInstockDetailEntity.setTaxReturnAmount(BigDecimal.ZERO);
+				soReturnInstockDetailEntity.setTaxReturnAmountLocalCurrency(BigDecimal.ZERO);
+			}
+			
+			soReturnInstockDetailEntity.setMustQty(shouldReturnQty);
+			soReturnInstockDetailEntity.setReceiveQty(actualQty);
+			soReturnInstockDetailEntity.setRealQty(actualQty);
+			detailEntityList.add(soReturnInstockDetailEntity);
+		}
+		
+		return detailEntityList;
 	}
 }

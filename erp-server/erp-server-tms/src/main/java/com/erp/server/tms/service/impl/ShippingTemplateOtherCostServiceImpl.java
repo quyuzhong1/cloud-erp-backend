@@ -11,6 +11,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
+import com.erp.model.tms.entity.DictBasicEntity;
 import com.erp.model.tms.entity.ShippingTemplateCostSettingEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
@@ -159,7 +160,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     */
     private void handleData(List<ShippingTemplateOtherCostEntity> list,String mainId) {
 
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.SHIPPING_TEMPLATE_COST.getType());
+        List<DictBasicEntity> dictList = dictBasicService.getByKey(DictBasicEnum.SHIPPING_TEMPLATE_COST.getType());
 
         for (ShippingTemplateOtherCostEntity otherCostEntity : list) {
             //主表id

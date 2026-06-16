@@ -21,6 +21,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.MessageUtils;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -369,7 +370,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //根据sku查询是否是组合品
         List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = null;
-        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
+        if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
+                || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
             if (StrUtil.isBlank(entity.getSourceId())){
                 throw new ServiceException("委外订单id不能为空");
             }
@@ -414,11 +416,17 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                             && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType())
                     || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())
-                    ||PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
+                    || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
-                if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
+                if ((PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_REPAIR.getCode().equals(entity.getType()))
+                        && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
                     //sku是组合品时，取委外订单含税单价
-                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId()) && CharSequenceUtil.isBlank(e.getParentId()))
+                    SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList.stream()
+                            .filter(e -> Objects.nonNull(e)
+                                    && StrUtil.isNotBlank(e.getSkuId())
+                                    && Objects.equals(e.getSkuId(), addDTO.getSkuId())
+                                    && Objects.equals(e.getId(), addDTO.getSourceDetailId())
+                                    && CharSequenceUtil.isBlank(e.getParentId()))
                             .findFirst().orElse(null);
                     if (Objects.isNull(subcontractOrderDetailEntity)){
                         throw new ServiceException(StrUtil.format("SKU【{}】是组合品，未找到委外订单明细记录",addDTO.getSkuNo()));
@@ -453,7 +461,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setTaxRate(viewDTO.getTaxRate());
                     addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
                 } else {
-                    String purchasePriceError = CharSequenceUtil.format(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND.getMsg(), addDTO.getSkuNo(), addDTO.getPurchaseQty());
+                    String purchasePriceError = MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_NOT_FOUND, addDTO.getSkuNo(), addDTO.getPurchaseQty());
                     errorList.add(purchasePriceError);
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){

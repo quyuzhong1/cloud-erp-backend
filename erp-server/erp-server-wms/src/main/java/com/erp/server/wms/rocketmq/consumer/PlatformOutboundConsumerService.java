@@ -116,6 +116,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     private WarehouseService warehouseService;
 
     @Resource
+    private B2bThirdDeliveryService b2bThirdDeliveryService;
+
+    @Resource
     private AntuService antuService;
 
     @Resource
@@ -243,7 +246,11 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
 
                     map.put(mainEntity, thirdWarehouseDeliveryEntity);
                 }
-            } else {
+            }else if (referenceNo.contains(BusinessNoConstant.SFFH)){
+                //B2B三方发货单
+                b2bThirdDeliveryService.syncOutboundStatus(dto);
+                return ApiResult.success();
+            }else {
                 SoB2cEntity mainEntity = soB2cFeign.getSoCode(referenceNo);
                 if (null == mainEntity) {
                     if (CharSequenceUtil.isBlank(referenceNo)) {
@@ -975,6 +982,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         thirdWarehouseDeliveryEntity.setCode(dto.getReferenceNo());
         thirdWarehouseDeliveryEntity.setSoCode(mainEntity.getCode());
         thirdWarehouseDeliveryEntity.setSoId(mainEntity.getId());
+        thirdWarehouseDeliveryEntity.setShopId(mainEntity.getShopId());
         thirdWarehouseDeliveryEntity.setDictPlatform(mainEntity.getDictPlatform());
         thirdWarehouseDeliveryEntity.setPlatformCode(platformCode);
         thirdWarehouseDeliveryEntity.setThirdWarehousePlatform(dto.getPlatform());

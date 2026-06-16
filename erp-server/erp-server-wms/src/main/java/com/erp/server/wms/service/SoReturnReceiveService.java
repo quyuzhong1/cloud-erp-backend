@@ -128,7 +128,7 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
-     * @param ids ids
+     * @param dto
      * @return java.lang.Boolean
      **/
     Boolean cancelProcess(ApproveDTO.BatchCancelProcessDTO dto);
@@ -259,8 +259,6 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @return java.lang.Boolean
      **/
     Boolean pdaDisApprove(List<String> ids);
-
-    PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(PagingDTO<SoReturnReceiveDTO.PagingParam> dto);
 
     /**
      * 根据ID列表获取实体Map

@@ -249,6 +249,14 @@ public class ProductChangeExcelListener extends AnalysisEventListener<ProductCha
                     excelDTO.setNewValueObj(gradeDict.getId());
                 }
                 break;
+            case WARRANTY_PERIOD:
+                BasicDictEntity warrantyPeriod = basicDictList.stream().filter(e -> Objects.equals(e.getName(), newValue)).findFirst().orElse(null);
+                if(Objects.isNull(warrantyPeriod)){
+                    errorMsgList.add("产品质保期不存在，值：" + newValue);
+                }else{
+                    excelDTO.setNewValueObj(warrantyPeriod.getValue());
+                }
+                break;
 
             // product_ref_bu
             case BU_LINE:

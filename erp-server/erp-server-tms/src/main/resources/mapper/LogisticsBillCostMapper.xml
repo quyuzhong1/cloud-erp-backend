@@ -48,25 +48,21 @@
     </update>
 
     <!-- tab列表 -->
-    <select id="listCount" resultType="java.lang.Integer">
+    <select id="listCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TabCountDTO">
         select
-        count( lbc.id)
+        count( lbc.id) as count,
+        lbc.type as type,
+        lbc.reconciliation_status as reconciliationStatus,
+        lbc.pay_type as payType
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
-        <where>
-            ${params.sqlMap.default}
-            and lbc.is_deleted = false
-            <!--需要排除的订单类型-->
-            <if test="params.excludeOrderTypeList !=null and params.excludeOrderTypeList.size>0">
-                AND lb.order_type not in
-                <foreach collection="params.excludeOrderTypeList" item="item" open="(" separator="," close=")">
-                    #{item}
-                </foreach>
-            </if>
+        where
+            lbc.is_deleted = false
+            and lbc.type = #{type}
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-        </where>
+        group by lbc.type,lbc.reconciliation_status,lbc.pay_type
     </select>
 
     <!-- 分页查询 -->
@@ -332,7 +328,6 @@
     <!-- 统计总数 -->
     <select id="listTotalCostValueCount" resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$TotalCountDTO">
         select
-            sum(lbc.billing_weight_logistics) as totalBillingWeightLogistics,
             sum((case when tcc.dict_cost_category = 'shippingCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualShippingCost,
             sum((case when tcc.dict_cost_category = 'declareCost' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeclareCost,
             sum((case when tcc.dict_cost_category = 'deductibleTax' and tcd.type = 'actual' then tcd.cost_value else 0 end) * tcd.exchange_rate) as totalActualDeductibleTax,

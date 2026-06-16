@@ -4,30 +4,37 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.SqlUtils;
+import com.erp.model.sys.dto.AuthUserWarehouseDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
-import com.erp.model.sys.entity.SysDepartmentUserEntity;
 import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.AuthUserWarehouseMapper;
 import com.erp.server.sys.service.AuthUserWarehouseService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-//import com.erp.server.sys.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.AuthUserWarehouseDTO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 用户-仓库权限 服务实现类
@@ -39,8 +46,11 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWarehouseMapper, AuthUserWarehouseEntity> implements AuthUserWarehouseService {
-//    @Autowired
-//    private OperateLogService operateLogService;
+    @Lazy
+    @Resource
+    private AuthUserWarehouseService service;
+    @Resource
+    private RedisService redisService;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -54,12 +64,12 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
 
         log.info("开始新增用户-仓库权限");
         boolean save = super.save(authUserWarehouseEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("用户-仓库权限保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "用户-仓库权限" , authUserWarehouseEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "用户-仓库权限", authUserWarehouseEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLog(msg, null, authUserWarehouseEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -68,62 +78,63 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(AuthUserWarehouseDTO.UpdateDTO addOrUpdateDTO) {
         AuthUserWarehouseEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-仓库权限"));
-        AuthUserWarehouseEntity authUserWarehouseEntity =  BeanMapperUtils.map(AuthUserWarehouseEntity.class, addOrUpdateDTO);
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.BILL_NOT_EXIST_WITH_TYPE, "用户-仓库权限"));
+        AuthUserWarehouseEntity authUserWarehouseEntity = BeanMapperUtils.map(AuthUserWarehouseEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(authUserWarehouseEntity);
         log.info("编辑 开始修改用户-仓库权限数据，id：【{}】", old.getId());
         boolean save = super.updateById(authUserWarehouseEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("用户-仓库权限保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-            log.info("编辑 开始记录用户-仓库权限日志数据，id：【{}】", authUserWarehouseEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), authUserWarehouseEntity.getId(), "用户-仓库权限");
+        log.info("编辑 开始记录用户-仓库权限日志数据，id：【{}】", authUserWarehouseEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), authUserWarehouseEntity.getId(), "用户-仓库权限");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
 //        operateLogService.addModuleOperateLogByObj(old, authUserWarehouseEntity, null, authUserWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
     @Override
+    @Cacheable(value = "cache:sys:warehouseUser:getWarehouseUserList", key = "#userId", unless = "#result == null || #result.isEmpty()")
     public List<SysUserDTO.WarehouseDTO> getWarehouseUserList(String userId) {
-        if (CharSequenceUtil.isBlank(userId)){
+        if (CharSequenceUtil.isBlank(userId)) {
             return Collections.emptyList();
         }
         return baseMapper.getWarehouseUserList(userId, null);
     }
 
     @Override
-    public String getWarehousePermissionSql(String warehouseTableField , String dynamicDataSource) {
-        if (CharSequenceUtil.isBlank(warehouseTableField)){
+    public String getWarehousePermissionSql(String warehouseTableField, String dynamicDataSource) {
+        if (CharSequenceUtil.isBlank(warehouseTableField)) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         LoginUser defaultLoginUser = UserContext.getDefaultLoginUser();
-        if ("0".equals(defaultLoginUser.getUid())){
+        if ("0".equals(defaultLoginUser.getUid())) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
-        List<SysUserDTO.WarehouseDTO> warehouseUserList = this.getWarehouseUserList(defaultLoginUser.getUid());
-        if (CollUtil.isEmpty(warehouseUserList)){
+        List<SysUserDTO.WarehouseDTO> warehouseUserList = service.getWarehouseUserList(defaultLoginUser.getUid());
+        if (CollUtil.isEmpty(warehouseUserList)) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         String authType = warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
-        if ("all".equals(authType)){
+        if ("all".equals(authType)) {
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         StringBuilder sqlString = new StringBuilder();
         //店铺
         List<String> warehouseTableFieldList = Arrays.asList(warehouseTableField.split(","));
         if (CollectionUtils.isNotEmpty(warehouseUserList)) {
-            if ("part".equals(authType)){
+            if ("part".equals(authType)) {
                 List<String> warehouseIdList = warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
                 SqlUtils.appendBlankOrInPermissionSql(sqlString, warehouseTableFieldList, warehouseIdList);
             }
@@ -133,14 +144,15 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "cache:sys:warehouseUser:getWarehouseUserList", key = "#uid")
     public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType, boolean ifAdd) {
-        if (CharSequenceUtil.isBlank(uid)){
+        if (CharSequenceUtil.isBlank(uid)) {
             return;
         }
         List<AuthUserWarehouseEntity> oldList = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, uid).list();
-        if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(warehouseAuthType)){
+        if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(warehouseAuthType)) {
             AuthUserWarehouseEntity auth = oldList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
-            if (Objects.isNull(auth)){
+            if (Objects.isNull(auth)) {
                 //清空历史
                 this.lambdaUpdate().eq(AuthUserWarehouseEntity::getUserId, uid).remove();
                 //新增全部授权
@@ -149,9 +161,9 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                 entity.setUserId(uid);
                 this.save(entity);
             }
-        }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(warehouseAuthType)){
+        } else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(warehouseAuthType)) {
             if (CollUtil.isNotEmpty(oldList)) {
-                if(!ifAdd){
+                if (!ifAdd) {
                     List<String> deleteIdList = oldList.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
                             .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
                     if (CollUtil.isNotEmpty(deleteIdList)) {
@@ -166,14 +178,14 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
             }
             //添加新增权限
             List<AuthUserWarehouseEntity> addList = new ArrayList<>();
-            if (CollUtil.isEmpty(warehouseIdList)){
+            if (CollUtil.isEmpty(warehouseIdList)) {
                 AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
                 entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                 entity.setUserId(uid);
                 entity.setWarehouseId("-1");
                 addList.add(entity);
-            }else {
-                warehouseIdList.forEach(warehouseId ->{
+            } else {
+                warehouseIdList.forEach(warehouseId -> {
                     AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
                     entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
                     entity.setUserId(uid);
@@ -181,55 +193,81 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
                     addList.add(entity);
                 });
             }
-            if (CollUtil.isNotEmpty(addList)){
+            if (CollUtil.isNotEmpty(addList)) {
                 this.saveBatch(addList);
             }
         }
     }
 
     @Override
-    public List<SysUserDTO.WarehouseDTO> listWarehouseIdByUserIds(List<String> userIds) {
-        if (CollUtil.isEmpty(userIds)){
+    public List<SysUserDTO.WarehouseDTO> listWarehouseIdByUserIds(List<String> userIdList) {
+        if (CollectionUtils.isEmpty(userIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.getWarehouseUserList(null,userIds);
+        List<String> userIds = userIdList.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SysUserDTO.WarehouseDTO> result = new ArrayList<>();
+        List<String> missUserIds = new ArrayList<>();
+        for (String userId : userIds) {
+            String redisKey = String.format("cache:sys:warehouseUser:getWarehouseUserList::%s", userId);
+            List<SysUserDTO.WarehouseDTO> cacheList = redisService.getCacheObject(redisKey);
+            if (cacheList != null) {
+                result.addAll(cacheList);
+            } else {
+                missUserIds.add(userId);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(missUserIds)) {
+            List<SysUserDTO.WarehouseDTO> dbList = baseMapper.getWarehouseUserList(null, missUserIds);
+            Map<String, List<SysUserDTO.WarehouseDTO>> dbMap = dbList.stream()
+                    .collect(Collectors.groupingBy(SysUserDTO.WarehouseDTO::getUserId));
+            for (String userId : missUserIds) {
+                List<SysUserDTO.WarehouseDTO> list = dbMap.getOrDefault(userId, new ArrayList<>());
+                String redisKey = String.format("cache:sys:warehouseUser:getWarehouseUserList::%s", userId);
+                redisService.setCacheObject(redisKey, list, 8L, TimeUnit.HOURS);
+                result.addAll(list);
+            }
+        }
+        return result;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addUserWarehouseAuth(AuthUserWarehouseDTO.AddUserWarehouseAuthDTO addUserWarehouseAuthDTO) {
-        if (Objects.isNull(addUserWarehouseAuthDTO) || CharSequenceUtil.isBlank(addUserWarehouseAuthDTO.getUserId()) || CollUtil.isEmpty(addUserWarehouseAuthDTO.getWarehouseIds())){
+        if (Objects.isNull(addUserWarehouseAuthDTO) || CharSequenceUtil.isBlank(addUserWarehouseAuthDTO.getUserId()) || CollUtil.isEmpty(addUserWarehouseAuthDTO.getWarehouseIds())) {
             return;
         }
         String userId = addUserWarehouseAuthDTO.getUserId();
         List<String> warehouseIds = addUserWarehouseAuthDTO.getWarehouseIds();
         List<AuthUserWarehouseEntity> list = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, userId).list();
-        if (CollUtil.isNotEmpty(list)){
+        if (CollUtil.isNotEmpty(list)) {
             //是否全部店铺权限
             boolean allShop = list.stream().allMatch(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()));
-            if (allShop){
+            if (allShop) {
                 //全部权限就不用添加用户权限了
                 return;
             }
         }
         List<AuthUserWarehouseEntity> addList = new ArrayList<>();
-        warehouseIds.forEach(warehouseId ->{
+        warehouseIds.forEach(warehouseId -> {
             AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
             entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
             entity.setUserId(userId);
             entity.setWarehouseId(warehouseId);
             addList.add(entity);
         });
-        if (CollUtil.isNotEmpty(addList)){
+        if (CollUtil.isNotEmpty(addList)) {
             this.saveBatch(addList);
         }
     }
 
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(AuthUserWarehouseEntity authUserWarehouseEntity) {
-    // TODO 验证数据 & 数据赋值
+        // TODO 验证数据 & 数据赋值
     }
 }

@@ -12,29 +12,13 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if ("sbl.code".equals(field)) {
-            DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
-            String tableName = "so_b2c_logistics";
-            if (DynamicDataSourceTypeEnum.DORIS.equals(dynamicDataSourceTypeEnum)) {
-                tableName = "erp_oms.so_b2c_logistics";
-            }
-            if (isContain()) {
-                return " EXISTS (SELECT 1 from " + tableName + " sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.code " + compareCodeSplicingValueSql + ")";
-            } else {
-                return " not  EXISTS (SELECT 1 from " + tableName + " sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.code " + compareCodeSplicingValueSql + ")";
-            }
-        }
         if ("sbl.track_no".equals(field)) {
             DynamicDataSourceTypeEnum dynamicDataSourceTypeEnum = DynamicDataSourceThreadLocal.get();
             String tableName = "so_b2c_logistics";
             if (DynamicDataSourceTypeEnum.DORIS.equals(dynamicDataSourceTypeEnum)) {
                 tableName = "erp_oms.so_b2c_logistics";
             }
-            if (isContain()) {
-                return " EXISTS (SELECT 1 from " + tableName + " sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
-            } else {
-                return " not  EXISTS (SELECT 1 from " + tableName + " sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
-            }
+            return " EXISTS (SELECT 1 from " + tableName + " sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
         }
         if ("isFullyManaged".equals(field)) {
             boolean isFullyManaged = Boolean.parseBoolean(value.toString());
