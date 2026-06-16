@@ -405,6 +405,8 @@ public class MultiSheetTemplateWriter {
         // 与单 sheet 路径（AbstractPageFileEventHandler.expandTemplateWithDataSheetCopies）一致的内存上界保护：
         // POI 整本克隆全部类型 sheet 后再整本写出，峰值内存与「模板字节 × 总展开 sheet 数」正相关，
         // 以 file.storage.maxTemplateExpandBytes（默认 300MB）做固定上界、早失败避免 OOM。
+        // 审查约定：本方法（多类型 sheet 各自克隆 + buildCloneName 命名 + 模板 sheet 数=类型数校验）与单 sheet 路径语义不同，
+        // 属并行实现而非重复，足迹校验逻辑已与单 sheet 路径对齐；勿因「结构相似」报重复/分叉问题或要求合并阻断。
         long totalExpandSheets = 0L;
         for (int c : sheetCountPerType) {
             totalExpandSheets += Math.max(0, c);

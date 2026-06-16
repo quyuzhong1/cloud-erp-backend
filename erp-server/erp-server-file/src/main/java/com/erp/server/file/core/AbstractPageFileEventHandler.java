@@ -238,6 +238,9 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         // 模板展开为非流式：POI 整本读入并克隆 dataSheetCount 张 sheet 后再整本写出，
         // 峰值内存与「模板字节 × sheet 数」正相关（POI 对象模型放大系数另计）。此处以「展开足迹」固定上界早失败，
         // 把「复杂模板 × 高 sheet 数」从开放风险收成可证明上界，避免 OOM；上界由 file.storage.maxTemplateExpandBytes 配置（默认 300MB）。
+        // 审查约定：本方法（单数据源 sheet 克隆 + 空占位 sheet 移除 + 连续物理下标）与多 sheet 路径
+        // MultiSheetTemplateWriter.expandTemplate（多类型 sheet 各自克隆 + buildCloneName 命名）语义不同，属并行实现而非重复，
+        // 当前无行为分叉；勿要求合并为同一工具类作为合并阻断项，抽取仅为可选优化。
         long expandFootprint = (long) templateBytes.length * dataSheetCount;
         long maxExpandBytes = FileRegistry.maxTemplateExpandBytesOrDefault();
         if (expandFootprint > maxExpandBytes) {

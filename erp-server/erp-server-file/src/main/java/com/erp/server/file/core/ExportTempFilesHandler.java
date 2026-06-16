@@ -44,6 +44,9 @@ public final class ExportTempFilesHandler {
      * {@code writer.write} 与 {@code streamUploadFile} 抛出的 {@code ServiceException}/{@code RuntimeException} <strong>原样向上传播</strong>，
      * 因其已携带精确业务文案（如「键集导出数据缺失」「数据量超模板上限」），二次包装反而会掩盖原始语义。
      * 故告警若要统一检索「导出-上传」失败，应同时匹配本方法的「导出上传失败」与上层全局异常处理记录的业务异常，而非仅依赖本方法日志。
+     * <p>
+     * 审查约定：本类为 {@link com.common.core.excel.ExcelPrintUtils} 各 {@code *ToFile} / {@code openTemplateListWriter} 抛 {@link IOException} 的配套归口；
+     * {@link com.erp.server.file.core.AbstractPageFileEventHandler} 等主链路已接入，勿因「diff 仅有 erp-common-core」误判调用链未配套。
      *
      * @param fileTask    导出任务，方法内回填 {@code count} 与 {@code fileUrl}
      * @param suffix      临时文件后缀，如 {@code ".xlsx"}
