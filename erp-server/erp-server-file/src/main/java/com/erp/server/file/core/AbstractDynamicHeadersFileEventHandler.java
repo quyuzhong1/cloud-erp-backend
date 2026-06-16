@@ -201,6 +201,12 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
                 excelWriter.finish();
             }
         }
+        // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （fileTask.count 已回填实际行数），与固定模板分页路径对称地显式告警，避免静默丢数难感知。
+        if (totalCount > 0 && totalRows < totalCount) {
+            log.warn("动态表头导出末页数据不足：handler={} 预期 totalCount={} 实际写入 totalRows={}，疑似导出期间数据并发变更",
+                    getClass().getName(), totalCount, totalRows);
+        }
         return totalRows;
     }
 

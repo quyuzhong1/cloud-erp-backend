@@ -615,6 +615,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
                 excelWriter.finish();
             }
         }
+        // 末页 partial：实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （fileTask.count 已回填实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
+        if (totalCount > 0 && totalRows < totalCount) {
+            log.warn("导出末页数据不足：handler={} template={} 预期 totalCount={} 实际写入 totalRows={}，疑似导出期间数据并发变更",
+                    getClass().getName(), excelPath, totalCount, totalRows);
+        }
         return totalRows;
     }
 
@@ -659,6 +665,12 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         if (totalCount > 0 && dataList.isEmpty()) {
             throw new ServiceException("导出失败：totalCount=" + totalCount
                     + " 但未写入任何数据行，疑似分页查询异常或数据全为空行，请检查上游分页接口。");
+        }
+        // 末页 partial：实际累计行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败，
+        // 与 writeOffsetBatches 对称地显式告警，避免静默丢数难感知。
+        if (totalCount > 0 && dataList.size() < totalCount) {
+            log.warn("导出末页数据不足(listSeqData)：handler={} 预期 totalCount={} 实际 {}，疑似导出期间数据并发变更",
+                    getClass().getName(), totalCount, dataList.size());
         }
         return dataList;
     }

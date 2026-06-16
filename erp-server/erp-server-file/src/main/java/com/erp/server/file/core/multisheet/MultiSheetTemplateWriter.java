@@ -12,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.server.file.core.ClasspathExportTemplateReader;
 import com.erp.server.file.handler.FileRegistry;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.util.CollectionUtils;
 
@@ -29,6 +30,7 @@ import java.util.function.Function;
 /**
  * EasyExcel 2.2.7 多 sheet 分页模板写引擎。
  */
+@Slf4j
 public class MultiSheetTemplateWriter {
 
     private final String excelPath;
@@ -139,6 +141,12 @@ public class MultiSheetTemplateWriter {
                 excelWriter.finish();
             }
         }
+        // 末页 partial：主 sheet 实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （count 已反映实际行数），但与中间页空列表守卫对称地显式告警，便于排查「导出比预期少」反馈，避免静默。
+        if (totalRows[0] > 0 && actualMainRows < totalRows[0]) {
+            log.warn("独立分页导出主sheet数据不足：template={} 预期 totalCount={} 实际写入 {}，疑似导出期间数据并发变更",
+                    excelPath, totalRows[0], actualMainRows);
+        }
         // count 取首个（主）sheet 实际写入行数（非 totalCount），与 streamMasterDerived 及 writeAllSheets 文档语义一致；
         // 不返回各 sheet 行数之和，避免 fileTask.count 被放大影响任务展示/下游统计。
         // 独立多 sheet 约定 sheets 列表首项为主表（typeCount>=1，空集合在方法开头已抛异常）。
@@ -238,6 +246,12 @@ public class MultiSheetTemplateWriter {
             } finally {
                 excelWriter.finish();
             }
+        }
+        // 末页 partial：主表实际写入行数 < 首查 totalCount（多因导出期间并发删除/数据漂移），不视为失败
+        // （count 已反映实际行数），与 streamIndependent / writeOffsetBatches 对称地显式告警，避免静默丢数难感知。
+        if (total > 0 && actualMainRows < total) {
+            log.warn("主从派生导出主表数据不足：template={} 预期 totalCount={} 实际写入 {}，疑似导出期间数据并发变更",
+                    excelPath, total, actualMainRows);
         }
         return actualMainRows;
     }
