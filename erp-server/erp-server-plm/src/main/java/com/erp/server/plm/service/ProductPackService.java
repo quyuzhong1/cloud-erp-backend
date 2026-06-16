@@ -107,5 +107,5 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      */
     List<ProductPackEntity> listBySkuIdList(List<String> skuIdList);
 
-    Map<String, BigDecimal> listSingleBySkuIds(List<String> skuIds);
+    Map<String, BigDecimal> listSingleBySkuIds(ProductPackDTO.ListSingleBySkuIdsParam param);
 }
