@@ -106,6 +106,52 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      */
     private static final DateTimeFormatter ETA_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    /**
+     * queryPage 降级查询的时间格式（精确到秒）
+     */
+    private static final DateTimeFormatter QUERY_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * g → kg 换算除数
+     */
+    private static final BigDecimal G_TO_KG_DIVISOR = new BigDecimal("1000");
+
+    /**
+     * WEGO 响应 JSON 字段：是否成功
+     */
+    private static final String RESP_FIELD_SUCCESS = "success";
+
+    /**
+     * WEGO 响应 JSON 字段：错误码
+     */
+    private static final String RESP_FIELD_ERROR_CODE = "errorCode";
+
+    /**
+     * WEGO 响应 JSON 字段：错误信息
+     */
+    private static final String RESP_FIELD_ERROR_MSG = "errorMsg";
+
+    /**
+     * WEGO 响应 JSON 字段：业务结果
+     */
+    private static final String RESP_FIELD_RESULT = "result";
+
+    /**
+     * WEGO "订单已存在" 的 errorCode（2c.order.save 幂等重试时返回）
+     */
+    private static final int WEGO_ERROR_CODE_ORDER_EXISTS = 2000;
+
+    /**
+     * WEGO "订单已截单" 的 errorCode（重复截单时返回）
+     */
+    private static final int WEGO_ERROR_CODE_INTERCEPTED = 2003;
+
+    /**
+     * WEGO 截单幂等关键词：在 WEGO 后台手动取消订单后再截单时，
+     * WEGO 返回 success=false 但 errorMsg 包含此关键词，视为幂等成功。
+     */
+    private static final String WEGO_INTERCEPT_IDEMPOTENT_KEYWORD = "操作成功";
+
     @Resource
     private WegoOpenApiService wegoOpenApiService;
 
@@ -440,7 +486,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         BigDecimal kg = value;
         if (CharSequenceUtil.equals(weightUnit, UnitEnum.WeightUnitEnum.G.code)) {
-            kg = value.divide(new BigDecimal(1000), 4, RoundingMode.HALF_UP);
+            kg = value.divide(G_TO_KG_DIVISOR, 4, RoundingMode.HALF_UP);
         }
         return kg.setScale(0, RoundingMode.HALF_UP).intValue();
     }
@@ -569,16 +615,16 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (resp == null) {
             return false;
         }
-        Integer errorCode = resp.getInteger("errorCode");
-        boolean codeMatch = Integer.valueOf(2000).equals(errorCode);
+        Integer errorCode = resp.getInteger(RESP_FIELD_ERROR_CODE);
+        boolean codeMatch = Integer.valueOf(WEGO_ERROR_CODE_ORDER_EXISTS).equals(errorCode);
         if (!codeMatch) {
             return false;
         }
-        String result = resp.getString("result");
+        String result = resp.getString(RESP_FIELD_RESULT);
         if (CharSequenceUtil.isNotBlank(result) && result.contains(WEGO_ERROR_ORDER_ALREADY_EXISTS)) {
             return true;
         }
-        String errorMsg = resp.getString("errorMsg");
+        String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
         return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains(WEGO_ERROR_ORDER_ALREADY_EXISTS);
     }
 
@@ -602,7 +648,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         }
         // Case A：订单已在 WEGO 侧截单/取消，重复截单属于幂等成功，透传 WEGO 说明供上层展示
         if (isInterceptAlreadySuccessful(resp)) {
-            String wegoMsg = CharSequenceUtil.blankToDefault(resp.getString("errorMsg"), "WEGO订单已取消");
+            String wegoMsg = CharSequenceUtil.blankToDefault(resp.getString(RESP_FIELD_ERROR_MSG), "WEGO订单已取消");
             log.info("{}截单幂等命中，视为拦截成功, orderNo={}, wegoMsg={}",
                     getPlatForm().getName(), cancelOutboundReq.getOrderCode(), wegoMsg);
             return ApiResult.success("WEGO订单已截单/取消，视为拦截成功（" + wegoMsg + "）",
@@ -659,9 +705,8 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             String accessToken, String secret, String referenceCode) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime begin = now.minusHours(REFERENCE_CODE_FALLBACK_HOURS);
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String orderDateBegin = begin.format(fmt);
-        String orderDateEnd = now.format(fmt);
+        String orderDateBegin = begin.format(QUERY_DATE_FORMATTER);
+        String orderDateEnd = now.format(QUERY_DATE_FORMATTER);
 
         int pageNum = 1;
         int totalPages = 1;
@@ -864,7 +909,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (resp == null) {
             return "";
         }
-        Object result = resp.get("result");
+        Object result = resp.get(RESP_FIELD_RESULT);
         if (result instanceof String && CharSequenceUtil.isNotBlank((String) result)) {
             return (String) result;
         }
@@ -892,7 +937,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (resp == null) {
             return false;
         }
-        return Boolean.TRUE.equals(resp.getBoolean("success"));
+        return Boolean.TRUE.equals(resp.getBoolean(RESP_FIELD_SUCCESS));
     }
 
     /**
@@ -902,11 +947,11 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (resp == null) {
             return "WEGO接口返回为空";
         }
-        String errorMsg = resp.getString("errorMsg");
+        String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
         if (CharSequenceUtil.isNotBlank(errorMsg)) {
             return errorMsg;
         }
-        String errorCode = resp.getString("errorCode");
+        String errorCode = resp.getString(RESP_FIELD_ERROR_CODE);
         return CharSequenceUtil.isNotBlank(errorCode) ? "WEGO接口错误码: " + errorCode : "WEGO接口调用失败";
     }
 
@@ -921,17 +966,17 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
      * <p>以上两种情况订单均已进入终态，应视为幂等成功（Case A）。</p>
      */
     private boolean isInterceptAlreadySuccessful(JSONObject resp) {
-        if (resp == null || Boolean.TRUE.equals(resp.getBoolean("success"))) {
+        if (resp == null || Boolean.TRUE.equals(resp.getBoolean(RESP_FIELD_SUCCESS))) {
             return false;
         }
         // 场景1：已截单（errorCode=2003）
-        Integer errorCode = resp.getInteger("errorCode");
-        if (Integer.valueOf(2003).equals(errorCode)) {
+        Integer errorCode = resp.getInteger(RESP_FIELD_ERROR_CODE);
+        if (Integer.valueOf(WEGO_ERROR_CODE_INTERCEPTED).equals(errorCode)) {
             return true;
         }
         // 场景2：WEGO 后台手动取消后返回 success=false + errorMsg="操作成功!"
-        String errorMsg = resp.getString("errorMsg");
-        return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains("操作成功");
+        String errorMsg = resp.getString(RESP_FIELD_ERROR_MSG);
+        return CharSequenceUtil.isNotBlank(errorMsg) && errorMsg.contains(WEGO_INTERCEPT_IDEMPOTENT_KEYWORD);
     }
 
     /**
@@ -943,7 +988,7 @@ public class WegoHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (resp == null) {
             return "";
         }
-        Object result = resp.get("result");
+        Object result = resp.get(RESP_FIELD_RESULT);
         if (result instanceof JSONObject) {
             JSONObject resultObj = (JSONObject) result;
             String no = resultObj.getString("no");
