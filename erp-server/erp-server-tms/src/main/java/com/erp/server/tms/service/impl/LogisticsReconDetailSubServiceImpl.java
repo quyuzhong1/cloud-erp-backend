@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
+import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 import com.erp.model.tms.enums.LogisticsReconDetailMatchStatusEnum;
 import com.erp.model.tms.enums.LogisticsReconReconciliationStatusEnum;
@@ -19,6 +20,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -140,6 +143,48 @@ public class LogisticsReconDetailSubServiceImpl
             claimedIds.addAll(lockedIds);
         }
         return claimedIds;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void batchUpdateResolvedCfgCost(Map<String, LogisticsReconMatchDTO.ResolvedCfgCostDTO> resolvedBySubId,
+                                           Collection<String> detailSubIds) {
+        if (CollUtil.isEmpty(detailSubIds) || CollUtil.isEmpty(resolvedBySubId)) {
+            return;
+        }
+        List<String> idList = detailSubIds.stream()
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .filter(resolvedBySubId::containsKey)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(idList)) {
+            return;
+        }
+        String matchingStatus = LogisticsReconDetailMatchStatusEnum.MATCHING.getCode();
+        for (int i = 0; i < idList.size(); i += UPDATE_BATCH_SIZE) {
+            List<String> batch = idList.subList(i, Math.min(idList.size(), i + UPDATE_BATCH_SIZE));
+            List<LogisticsReconDetailSubEntity> updates = lambdaQuery()
+                    .in(LogisticsReconDetailSubEntity::getId, batch)
+                    .eq(LogisticsReconDetailSubEntity::getMatchStatus, matchingStatus)
+                    .select(LogisticsReconDetailSubEntity::getId)
+                    .list().stream()
+                    .map(entity -> {
+                        LogisticsReconMatchDTO.ResolvedCfgCostDTO resolved = resolvedBySubId.get(entity.getId());
+                        if (resolved == null || StrUtil.isBlank(resolved.getCfgCostId())) {
+                            return null;
+                        }
+                        LogisticsReconDetailSubEntity update = new LogisticsReconDetailSubEntity();
+                        update.setId(entity.getId());
+                        update.setCfgCostId(resolved.getCfgCostId());
+                        update.setCfgCostName(StrUtil.blankToDefault(resolved.getCfgCostName(), ""));
+                        return update;
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(updates)) {
+                updateBatchById(updates);
+            }
+        }
     }
 
     /**

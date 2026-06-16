@@ -2,10 +2,12 @@ package com.erp.server.tms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.LogisticsReconDetailSubDTO;
+import com.erp.model.tms.dto.LogisticsReconMatchDTO;
 import com.erp.model.tms.entity.LogisticsReconDetailSubEntity;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -60,6 +62,12 @@ public interface LogisticsReconDetailSubService extends SuperService<LogisticsRe
      */
     void batchUpdateMatchStatus(Collection<String> detailSubIds, String matchStatus, String failReason,
                                 Collection<String> fromMatchStatuses);
+
+    /**
+     * 匹配成功回写 ERP 费用配置（仅 matching 状态、分批 updateBatchById）
+     */
+    void batchUpdateResolvedCfgCost(Map<String, LogisticsReconMatchDTO.ResolvedCfgCostDTO> resolvedBySubId,
+                                    Collection<String> detailSubIds);
 
     /**
      * 条件更新匹配状态并返回实际更新成功的费用项 id（用于认领防并发）。
