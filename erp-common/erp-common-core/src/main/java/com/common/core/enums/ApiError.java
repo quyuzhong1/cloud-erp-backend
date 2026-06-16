@@ -481,6 +481,10 @@ public enum ApiError implements Serializable {
     WF_TASK_RECORD_FORCE_RETRY_NOT_FOUND(4069,"未找到可强制重试的任务节点"),
     WF_TASK_RECORD_FORCE_RETRY_FORBIDDEN(4070,"无任务节点人工强制重试权限"),
     WF_KOL_B2C_APPROVE_REQUIRED(4071,"B2C寄样申请单未审核通过，禁止下推"),
+    WF_TASK_RECORD_MQ_SEND_FAILED(4072,"任务节点MQ发送失败：{0}"),
+    WF_TASK_RECORD_FORCE_RETRY_NO_ELIGIBLE(4073,"没有可强制重试的任务节点，成功节点不会重试，处理中节点需超过3分钟才允许接管"),
+    WF_TASK_RECORD_FORCE_RETRY_PARAM_INCOMPLETE(4074,"任务节点id或sourceType/sourceId不能为空"),
+    WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND(4075,"KOL B2C拆分单任务节点配置不存在"),
     /**
      * PROJECT 项目相关 4500 - 5000
      */

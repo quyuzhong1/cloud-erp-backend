@@ -1142,13 +1142,24 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             responseDTO.setErrorMsg("B2C寄样申请单拆分单不存在");
             return responseDTO;
         }
+        if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
+            throw new ServiceException(ApiError.WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND);
+        }
+        List<String> subIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
+        List<WorkflowTaskRecordEntity> existChildTasks = workflowTaskRecordService.lambdaQuery()
+                .in(WorkflowTaskRecordEntity::getSourceId, subIds)
+                .eq(WorkflowTaskRecordEntity::getSourceType, WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .list();
+        Map<String, List<WorkflowTaskRecordEntity>> existChildTaskMap = existChildTasks.stream()
+                .collect(Collectors.groupingBy(WorkflowTaskRecordEntity::getSourceId));
         for (KolSubB2cApplicationEntity subEntity : subList) {
-            dispatchKolB2cSubTask(entity, subEntity);
+            dispatchKolB2cSubTask(entity, subEntity, existChildTaskMap.getOrDefault(subEntity.getId(), Collections.emptyList()));
         }
         Map<String, Object> data = new HashMap<>();
         data.put("kolId", entity.getId());
         data.put("kolCode", entity.getCode());
-        data.put("subIds", subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList()));
+        data.put("subIds", subIds);
         responseDTO.setData(data);
         return responseDTO;
     }
@@ -1245,8 +1256,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             String b2cCode = pushSingleSoB2c(entity, pushDTO);
             data.put("b2cCode", b2cCode);
         } else {
-            syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, null);
-            data.put("wdtPushMsg", Boolean.TRUE);
+            Boolean created = syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, null);
+            data.put("wdtPushMsg", created);
+            data.put("wdtPushMsgSkipped", !created);
         }
         responseDTO.setData(data);
         sendKolB2cParentTaskMq(entity, 2);
@@ -1440,11 +1452,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         return addTaskDTO;
     }
 
-    private void dispatchKolB2cSubTask(KolB2cApplicationEntity parentEntity, KolSubB2cApplicationEntity subEntity) {
-        if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
-            throw new ServiceException("KOL B2C拆分单任务节点配置不存在");
-        }
-        List<WorkflowTaskRecordEntity> existTasks = workflowTaskRecordService.listBySourceId(subEntity.getId(), WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE.getCode());
+    private void dispatchKolB2cSubTask(KolB2cApplicationEntity parentEntity, KolSubB2cApplicationEntity subEntity, List<WorkflowTaskRecordEntity> existTasks) {
         WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO = new WorkflowTaskRecordDTO.AddTaskDTO();
         addTaskDTO.setSourceId(subEntity.getId());
         addTaskDTO.setSourceCode(subEntity.getCode());
@@ -1492,7 +1500,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private void doSendWorkflowTaskMq(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, String key, int delayLevel) {
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.OMS_WORKFLOW_TASK_RECORD_TOPIC, RocketMqTagEnum.OMS_WORKFLOW_TASK_RECORD_TAG.getName(), addTaskDTO, key, delayLevel);
         if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-            throw new RuntimeException(StrUtil.format("KOL B2C任务编排发送MQ数据异常，{}", result));
+            throw new ServiceException(ApiError.WF_TASK_RECORD_MQ_SEND_FAILED, String.valueOf(result));
         }
     }
 
