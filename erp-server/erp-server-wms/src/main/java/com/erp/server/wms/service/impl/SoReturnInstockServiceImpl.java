@@ -477,10 +477,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         if (!Objects.isNull(soInfo)) {
                             entity.setSoId(soInfo.getId());
                             entity.setSoCode(soInfo.getCode());
-                            //B2B订单平台订单编码，与B2C分支保持一致
-                            if (CharSequenceUtil.isBlank(dto.getPlatformOrderCode())) {
-                                dto.setPlatformOrderCode(soInfo.getPlatformOrderCode());
-                            }
+                            //B2B订单平台订单编码，与soId/soCode一样直接写入entity
+                            entity.setPlatformOrderCode(soInfo.getPlatformOrderCode());
                         }
                     }
                 }
@@ -542,7 +540,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         entity.setSoReturnId(dto.getSoReturnId());
         entity.setSoReturnCode(dto.getSoReturnCode());
-        entity.setPlatformOrderCode(dto.getPlatformOrderCode());
+        //平台订单编码：分支内已直接写入entity时不覆盖，否则用dto兜底
+        if (CharSequenceUtil.isBlank(entity.getPlatformOrderCode())) {
+            entity.setPlatformOrderCode(dto.getPlatformOrderCode());
+        }
         entity.setThirdCode(dto.getThirdCode());
         entity.setSourceCode(dto.getSourceCode());
         entity.setSourceType(dto.getSourceType());
