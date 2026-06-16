@@ -506,7 +506,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                         }
                         BigDecimal price = Objects.nonNull(sourceDetail.getPrice()) ? sourceDetail.getPrice() : BigDecimal.ZERO;
                         if (MathUtil.compareTo(price, MathUtil.ZERO) <= MathUtil.ZERO) {
-                            errorList.add(MessageUtils.getMessage(ApiError.PURCHASE_PRICE_SKU_PRICE_ZERO, addDTO.getSkuNo()));
+                            errorList.add(MessageUtils.getMessage(ApiError.PO_SUBCONTRACT_REPAIR_SUB_LINE_PRICE_REQUIRED, addDTO.getSkuNo()));
                             continue;
                         }
                         Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;

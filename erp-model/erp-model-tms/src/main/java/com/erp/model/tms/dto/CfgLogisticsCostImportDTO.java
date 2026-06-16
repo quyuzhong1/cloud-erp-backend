@@ -140,7 +140,7 @@ public class CfgLogisticsCostImportDTO implements Serializable {
         * 导入处理：import_update=导入更新,import_add_old=导入新增(按原单),import_add_new=导入新增(按新单)
         */
         private String importType;
-                private String importTypeName;
+        private String importTypeName;
 
         /**
         * 识别维度：identify_no=按识别单号,identify_no_supplier=按识别单号+物流商

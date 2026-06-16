@@ -388,8 +388,54 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return resultList;
         }
 
-        List<QcNoticeDetailEntity> detailUpdates = validDetails.stream().map(detail -> {
+        // 根据质检员id批量查询用户名，不使用前端传入的名称
+        List<String> qcUserIds = validItemMap.values().stream()
+                .map(QcNoticeDTO.UpdateQcUserDTO::getQcUserId)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        List<FindUserDTO> userInfoList;
+        try {
+            userInfoList = CollUtil.isEmpty(qcUserIds)
+                    ? Collections.emptyList()
+                    : sysUserFeign.getUserListByUserIds(qcUserIds);
+        } catch (Exception e) {
+            log.warn("批量查询质检员失败, qcUserIds={}", qcUserIds, e);
+            String errMsg = e instanceof ServiceException
+                    ? ((ServiceException) e).getMsg()
+                    : ApiError.HTTP_UNKNOWN.getMsg();
+            for (QcNoticeDetailEntity detail : validDetails) {
+                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(), errMsg));
+            }
+            return resultList;
+        }
+        if (userInfoList == null) {
+            userInfoList = Collections.emptyList();
+        }
+        Map<String, String> qcUserNameMap = userInfoList.stream()
+                .filter(u -> u != null && StrUtil.isNotBlank(u.getUserId()))
+                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (a, b) -> a));
+
+        List<QcNoticeDetailEntity> resolvedValidDetails = new ArrayList<>(validDetails.size());
+        Map<String, QcNoticeDTO.UpdateQcUserDTO> resolvedValidItemMap = new HashMap<>(validDetails.size());
+        for (QcNoticeDetailEntity detail : validDetails) {
             QcNoticeDTO.UpdateQcUserDTO item = validItemMap.get(detail.getId());
+            String qcUserName = qcUserNameMap.get(item.getQcUserId());
+            if (StrUtil.isBlank(qcUserName)) {
+                resultList.add(BatchResultDTO.fail(detail.getId(), detail.getSkuNo(),
+                        MessageFormat.format(ApiError.AUTH_USER_NOT_FOUND.getMsg(), item.getQcUserId())));
+                continue;
+            }
+            item.setQcUserName(qcUserName);
+            resolvedValidDetails.add(detail);
+            resolvedValidItemMap.put(detail.getId(), item);
+        }
+        if (resolvedValidDetails.isEmpty()) {
+            return resultList;
+        }
+
+        List<QcNoticeDetailEntity> detailUpdates = resolvedValidDetails.stream().map(detail -> {
+            QcNoticeDTO.UpdateQcUserDTO item = resolvedValidItemMap.get(detail.getId());
             QcNoticeDetailEntity e = new QcNoticeDetailEntity();
             e.setId(detail.getId());
             e.setQcUserId(item.getQcUserId());
@@ -401,20 +447,18 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
 
         // 级联：同步更新下游 qc_info 的质检员
-        batchUpdateQcInfoUsers(validItemMap);
+        batchUpdateQcInfoUsers(resolvedValidItemMap);
 
         // 操作日志：按所属通知单 + 质检员分组记录，避免一通知单下不同质检员被覆盖
         String userName = UserContext.getDefaultLoginUser().getUserName();
-        Map<String, List<QcNoticeDetailEntity>> detailsByNotice = validDetails.stream()
+        Map<String, List<QcNoticeDetailEntity>> detailsByNotice = resolvedValidDetails.stream()
                 .collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
         for (Map.Entry<String, List<QcNoticeDetailEntity>> entry : detailsByNotice.entrySet()) {
             String mainId = entry.getKey();
             Map<String, List<QcNoticeDetailEntity>> detailsByUser = entry.getValue().stream()
                     .collect(Collectors.groupingBy(d -> {
-                        QcNoticeDTO.UpdateQcUserDTO item = validItemMap.get(d.getId());
-                        String userId = item.getQcUserId();
-                        String name = item.getQcUserName();
-                        return StrUtil.isNotBlank(name) ? name : userId;
+                        QcNoticeDTO.UpdateQcUserDTO item = resolvedValidItemMap.get(d.getId());
+                        return item.getQcUserName();
                     }));
             for (Map.Entry<String, List<QcNoticeDetailEntity>> userEntry : detailsByUser.entrySet()) {
                 String showName = userEntry.getKey();
@@ -428,7 +472,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
         }
 
-        validDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
+        resolvedValidDetails.forEach(d -> resultList.add(BatchResultDTO.success(d.getId(), d.getSkuNo())));
 
         return resultList;
     }
@@ -522,6 +566,18 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
         // 数据处理
         fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<QcNoticeDTO.ListDTO> pagingHeader(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<QcNoticeDTO.ListDTO> pageData = this.baseMapper.pagingHeader(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        fillHeaderList(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -2607,6 +2663,30 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         lambdaUpdate().eq(QcNoticeEntity::getId, id)
                 .set(QcNoticeEntity::getApproveStatus, approveStatus)
                 .update(new QcNoticeEntity());
+    }
+
+    /**
+     * 单头分页列表数据处理
+     */
+    private void fillHeaderList(List<QcNoticeDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> qcWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> putawayWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getPutawayWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        qcWarehouseId.addAll(putawayWarehouseId);
+        List<String> warehouseIdList = qcWarehouseId.stream().distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
+        for (QcNoticeDTO.ListDTO data : list) {
+            data.setQcWarehouseName(warehouseMap.get(data.getQcWarehouseId()));
+            data.setPutawayWarehouseName(warehouseMap.get(data.getPutawayWarehouseId()));
+            data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
+            data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        }
     }
 
     /**

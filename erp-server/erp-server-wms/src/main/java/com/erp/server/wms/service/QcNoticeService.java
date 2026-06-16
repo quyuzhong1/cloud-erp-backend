@@ -53,6 +53,11 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     PagingVO<QcNoticeDTO.ListDTO> paging(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO);
 
     /**
+     * 分页列表查询（仅单头，OpenAPI / App 端）
+     */
+    PagingVO<QcNoticeDTO.ListDTO> pagingHeader(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
     * 状态统计
     * @author jack
     * @date: 2025-04-21

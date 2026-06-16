@@ -144,6 +144,10 @@ public class DmpInputShopeeRefundDetailDmpHandler extends DmpInputDoNextDmpHandl
         if (StringUtils.isNotBlank(modelSku)) {
             return modelSku;
         }
-        return String.valueOf(item.getOrDefault("item_sku", ""));
+        String itemSku = String.valueOf(item.getOrDefault("item_sku", ""));
+        if (StringUtils.isNotBlank(itemSku)) {
+            return itemSku;
+        }
+        return String.valueOf(item.getOrDefault("variation_sku", ""));
     }
 }
