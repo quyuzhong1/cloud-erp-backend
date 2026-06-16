@@ -186,14 +186,12 @@ public class KingdeeSubcontractBOMConsumerServiceImpl implements KingdeeSubcontr
         int entryIndex = 0;
         //原数据行
         for (int i = 0; i < ppBomEntries.size(); i++) {
-            if (Objects.nonNull(subcontractOrder)) {
-                JSONObject srcEntry = ppBomEntries.getJSONObject(i);
-                JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,entryIndex);
-                JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,entryIndex);
-                entryIndex++;
-                FEntities.put(changeBeforPpBom);
-                FEntities.put(changeAfterPpBom);
-            }
+            JSONObject srcEntry = ppBomEntries.getJSONObject(i);
+            JSONObject changeBeforPpBom = createChangeBeforePpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,entryIndex);
+            JSONObject changeAfterPpBom = createChangeAfterPpBomEntry(view,skuApiUtils, platformId,srcEntry, bomBillNo,subcontractOrder.getCode(),sysAccountingCompany,entryIndex);
+            entryIndex++;
+            FEntities.put(changeBeforPpBom);
+            FEntities.put(changeAfterPpBom);
         }
         entries.put("FEntity",FEntities);
         //单据类型

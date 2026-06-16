@@ -386,11 +386,15 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (StrUtil.isNotBlank(entity.getSourceId())
                 && (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(entity.getSourceType()) || needSubcontractOrderDetail)) {
             sourceSubcontractOrder = subcontractOrderService.getById(entity.getSourceId());
+            if (Objects.isNull(sourceSubcontractOrder)) {
+                throw new ServiceException(ApiError.PO_SUBCONTRACT_ORDER_NOT_FOUND);
+            }
         }
         // 在所有可能加载 sourceSubcontractOrder 的路径都执行完后，统一基于同一份订单实体计算 flag 并构建 Map，
         // 避免父行（isRepairType）与子行（isRepairSubcontractSource）因为依赖时机不同而走出不一致的取价分支
-        final boolean isRepairSubcontractSource = Objects.nonNull(sourceSubcontractOrder)
-                && Objects.equals(SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(), sourceSubcontractOrder.getType());
+        final boolean isRepairSubcontractSource = Objects.equals(
+                SubcontractOrderTypeEnum.REPAIR_SUBCONTRACT.getCode(),
+                sourceSubcontractOrder == null ? null : sourceSubcontractOrder.getType());
         final boolean isRepairType = isRepairSubcontractSource;
         Map<String, SubcontractOrderDetailEntity> repairSubcontractDetailMap = new HashMap<>();
         if (isRepairSubcontractSource && StrUtil.isNotBlank(entity.getSourceId())) {
