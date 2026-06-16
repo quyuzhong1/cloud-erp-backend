@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProductForbiddenWordCheckMapper">
+
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.ProductForbiddenWordCheckEntity">
+        <id column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="report_name" property="reportName"/>
+        <result column="report_url" property="reportUrl"/>
+        <result column="report_date" property="reportDate"/>
+        <result column="report_seq" property="reportSeq"/>
+        <result column="status" property="status"/>
+        <result column="finish_time" property="finishTime"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="hit_count" property="hitCount"/>
+        <result column="fail_reason" property="failReason"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        pfwc.id AS id,
+        pfwc.report_name AS reportName,
+        pfwc.report_url AS reportUrl,
+        pfwc.status AS status,
+        pfwc.finish_time AS finishTime,
+        pfwc.total_count AS totalCount,
+        pfwc.hit_count AS hitCount,
+        pfwc.fail_reason AS failReason,
+        pfwc.create_user_id AS createUserId,
+        pfwc.create_user_name AS createUserName,
+        pfwc.create_time AS createTime,
+        pfwc.update_user_id AS updateUserId,
+        pfwc.update_user_name AS updateUserName,
+        pfwc.update_time AS updateTime,
+        pfwc.version AS version
+    </sql>
+
+    <sql id="Where_Condition">
+        pfwc.is_deleted = FALSE
+        <if test="params != null and params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
+        <if test="params != null and params.ids != null and params.ids.size > 0">
+            AND pfwc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params != null and params.status != null">
+            AND pfwc.status = #{params.status}
+        </if>
+        <if test="params != null and params.finishStartTime != null">
+            AND pfwc.finish_time &gt;= #{params.finishStartTime}
+        </if>
+        <if test="params != null and params.finishEndTime != null">
+            AND pfwc.finish_time &lt;= #{params.finishEndTime}
+        </if>
+        <if test="params != null and params.createUserName != null and params.createUserName != ''">
+            AND pfwc.create_user_name ILIKE concat('%', #{params.createUserName}::text, '%')
+        </if>
+        <if test="params != null and params.createStartTime != null">
+            AND pfwc.create_time &gt;= #{params.createStartTime}
+        </if>
+        <if test="params != null and params.createEndTime != null">
+            AND pfwc.create_time &lt;= #{params.createEndTime}
+        </if>
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.ProductForbiddenWordCheckDTO$ListDTO">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM product_forbidden_word_check pfwc
+        WHERE
+        <include refid="Where_Condition"/>
+        ORDER BY
+        <if test="params != null and params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pfwc.create_time DESC
+    </select>
+
+    <select id="nextSeq" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(report_seq), 0) + 1
+        FROM product_forbidden_word_check
+        WHERE is_deleted = FALSE
+          AND report_date = #{reportDate}
+    </select>
+
+    <select id="countProductForDetect" resultType="java.lang.Integer">
+        SELECT count(1)
+        FROM product_detail
+        WHERE is_deleted = FALSE
+    </select>
+
+    <select id="listProductForDetect" resultType="com.erp.model.plm.dto.ProductForbiddenWordCheckDTO$ProductScanDTO">
+        SELECT
+            id AS id,
+            sku_no AS skuNo,
+            name AS name
+        FROM product_detail
+        WHERE is_deleted = FALSE
+        ORDER BY id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+</mapper>

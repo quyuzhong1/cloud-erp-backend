@@ -16,6 +16,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.CfgMoldAlertRuleDTO;
 import com.erp.model.plm.dto.CfgMoldReturnAlertRuleDTO;
+import com.erp.model.plm.dto.CfgProductForbiddenWordDTO;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.MoldInfoDTO;
 import com.erp.model.plm.dto.MoldMonitorDTO;
@@ -41,6 +42,7 @@ import com.erp.model.plm.dto.SkuStdCostDetailDTO;
 import com.erp.model.plm.dto.SkuStdRetailPriceDTO;
 import com.erp.model.plm.dto.TaskDTO;
 import com.erp.model.plm.dto.TaskPagingDTO;
+import com.erp.model.plm.dto.excel.CfgProductForbiddenWordExportExcelDTO;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
@@ -61,6 +63,7 @@ import com.erp.server.plm.query.SkuStdRetailPriceQueryHandler;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.CfgMoldAlertRuleService;
 import com.erp.server.plm.service.CfgMoldReturnAlertRuleService;
+import com.erp.server.plm.service.CfgProductForbiddenWordService;
 import com.erp.server.plm.service.LogisticsProductService;
 import com.erp.server.plm.service.MoldInfoService;
 import com.erp.server.plm.service.MoldMonitorService;
@@ -131,6 +134,8 @@ public class ExportPlmFeignController {
     private ProductChangeService productChangeService;
     @Resource
     private SkuStdRetailPriceService skuStdRetailPriceService;
+    @Resource
+    private CfgProductForbiddenWordService cfgProductForbiddenWordService;
 
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
@@ -279,5 +284,10 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = SkuStdRetailPriceQueryHandler.class)
     public PagingVO<SkuStdRetailPriceDTO.ListDTO> skuStdRetailPrice(@RequestBody @Validated PagingDTO<SkuStdRetailPriceDTO.PagingParamDTO> dto) {
     	return skuStdRetailPriceService.paging(dto);
+    }
+
+    @PostMapping("/productForbiddenWord")
+    public PagingVO<CfgProductForbiddenWordExportExcelDTO> exportProductForbiddenWord(@RequestBody @Validated PagingDTO<CfgProductForbiddenWordDTO.PagingParamDTO> dto) {
+        return cfgProductForbiddenWordService.exportPaging(dto);
     }
 }
