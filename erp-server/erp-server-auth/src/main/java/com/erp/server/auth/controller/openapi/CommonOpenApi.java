@@ -5,14 +5,18 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.wrapper.FeignBuilder;
 import com.common.business.wrapper.FeignInvoke;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.file.feign.FileFeign;
 import com.erp.rpc.scm.feign.ScmDictFeign;
 import com.erp.rpc.wms.feign.WmsCommonFeign;
 import com.erp.rpc.wms.feign.WmsFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +36,8 @@ public class CommonOpenApi {
     private WmsCommonFeign wmsCommonFeign;
     @Resource
     private ScmDictFeign scmDictFeign;
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
     /**
      * 
      * @param feignInvoke
@@ -66,5 +72,15 @@ public class CommonOpenApi {
     @OpenApi("scmDropDownSupplierAllList")
     public ApiResult<List<BaseDropDownDTO.RemarkDTO>> scmDropDownSupplierAllList() {
         return scmDictFeign.listALLSupplierDropDown();
+    }
+
+    @OpenApi("wmsWarehouseListOrderByName")
+    public ApiResult<List<WarehouseDTO.ListDTO>> wmsWarehouseListOrderByName() {
+        List<WarehouseDTO.ListDTO> list = wmsTaskFeign.listApproveWarehouse();
+        if (list == null) {
+            return ApiResult.success(Collections.emptyList());
+        }
+        list.sort(Comparator.comparing(WarehouseDTO.ListDTO::getName, Comparator.nullsLast(Comparator.naturalOrder())));
+        return ApiResult.success(list);
     }
 }

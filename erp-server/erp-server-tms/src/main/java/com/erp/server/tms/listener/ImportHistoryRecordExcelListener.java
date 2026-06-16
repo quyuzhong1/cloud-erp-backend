@@ -17,6 +17,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.tms.dto.ImportHistoryRecordDTO;
 import com.erp.model.tms.entity.CfgLogisticsCostImportDetailEntity;
 import com.erp.model.tms.entity.CfgLogisticsCostImportEntity;
+import com.erp.model.tms.enums.CfgLogisticsCostImportBusinessTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordProcessingTypeEnum;
 import com.erp.model.tms.enums.ImportHistoryRecordStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -228,7 +229,7 @@ public class ImportHistoryRecordExcelListener extends AnalysisEventListener<Map<
         //添加导入历史记录表数据
         ImportHistoryRecordDTO.AddOrUpdateDTO addOrUpdateDTO = new ImportHistoryRecordDTO.AddOrUpdateDTO();
         addOrUpdateDTO.setReconciliationMonth(importDTO.getReconciliationMonth());
-        addOrUpdateDTO.setBusinessType(costImportEntity.getBusinessType());
+        addOrUpdateDTO.setBusinessType(CfgLogisticsCostImportBusinessTypeEnum.LAST_MILE_DELIVERY.getCode());
         addOrUpdateDTO.setFileUrl(importDTO.getFileUrl());
         addOrUpdateDTO.setFileName(importDTO.getFileName());
         //清洗结果

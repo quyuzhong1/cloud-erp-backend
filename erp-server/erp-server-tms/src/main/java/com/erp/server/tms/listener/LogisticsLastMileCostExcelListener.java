@@ -94,9 +94,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
                 logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap,importType,extMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
-                successList.forEach(jsonObject -> {
-                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
-                });
+                appendBatchErrorMsg(successList, e.getMessage());
                 errorList.addAll(successList);
             }
             successList.clear();
@@ -123,9 +121,7 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
                 logisticsLastMileCostService.handleImportSuccessList(successList, errorList2, headList, headMap, importType,extMap);
                 errorList.addAll(errorList2);
             }catch (Exception e){
-                successList.forEach(jsonObject -> {
-                    jsonObject.set("错误信息",e.getMessage().length() > 50 ? e.getMessage().substring(0, 50) : e.getMessage());
-                });
+                appendBatchErrorMsg(successList, e.getMessage());
                 errorList.addAll(successList);
             }
         }
@@ -147,6 +143,24 @@ public class LogisticsLastMileCostExcelListener extends AnalysisEventListener<Ma
         importResultDTO.setRemark("处理中");
         importResultDTO.setCount(count);
         downloadTaskFeign.updateTask(importResultDTO);
+    }
+
+    private void appendBatchErrorMsg(List<JSONObject> rows, String message) {
+        String errorMsg = message == null ? "" : (message.length() > 50 ? message.substring(0, 50) : message);
+        String errorColumnKey = getErrorColumnKey();
+        rows.forEach(jsonObject -> jsonObject.set(errorColumnKey, errorMsg));
+    }
+
+    private String getErrorColumnKey() {
+        if (headMap == null) {
+            return "错误信息";
+        }
+        for (Map.Entry<Integer, String> entry : headMap.entrySet()) {
+            if ("错误信息".equals(entry.getValue())) {
+                return entry.getKey().toString();
+            }
+        }
+        return String.valueOf(headMap.size() - 1);
     }
 
 }
