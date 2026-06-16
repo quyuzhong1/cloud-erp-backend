@@ -1759,7 +1759,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     boolean uat = BusinessCommonConstants.hasProfile(BusinessCommonConstants.UAT);
                     boolean dev = BusinessCommonConstants.hasProfile(BusinessCommonConstants.DEV);
                     boolean test = BusinessCommonConstants.hasProfile(BusinessCommonConstants.TEST);
-                    if (dev || test || uat) {
+                    //临时将test环境判断移除
+                    if (dev || uat) {
                         log.info("通知配置消费者（SKU预警）：走开发、测试、uat环境");
                         FsBatchSendMessageDTO fsMessage = new FsBatchSendMessageDTO();
                         String thirdUnionId = unionMap.get(userId).getThirdUnionId();
