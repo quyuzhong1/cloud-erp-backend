@@ -18,6 +18,7 @@ import java.util.List;
  */
 public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskRecordEntity> {
 
+    int TASK_PROCESSING_TIMEOUT_MINUTES = 3;
 
     List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto);
 
@@ -55,4 +56,9 @@ public interface WorkflowTaskRecordService extends SuperService<WorkflowTaskReco
      * 条件抢占待执行任务节点，避免重复消息并发执行同一节点。
      */
     Boolean claimTask(String id, String fromStatus);
+
+    /**
+     * 将超时仍处于 PROCESSING 的节点重置为 PENDING，便于 MQ 补偿重新抢占。
+     */
+    Boolean resetStaleProcessingTask(String id);
 }

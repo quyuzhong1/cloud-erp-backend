@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.AddressParseDTO;
 import com.erp.model.oms.dto.KolB2cApplicationCancelCallbackDTO;
 import com.erp.model.oms.dto.KolB2cApplicationDTO;
+import com.erp.model.oms.dto.KolSubB2cApplicationDTO;
 import com.erp.model.oms.dto.WorkflowTaskRecordDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationAddressImportExcelDTO;
 import com.erp.model.oms.dto.excel.KolB2cApplicationDetailImportExcelDTO;
@@ -15,6 +16,7 @@ import com.erp.model.oms.entity.KolB2cApplicationEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -205,6 +207,11 @@ public interface KolB2cApplicationService extends SuperService<KolB2cApplication
     WorkflowTaskRecordDTO.MqResponseDTO finishKolB2cApplicationApprove(WorkflowTaskRecordDTO.MqRequestDTO dto);
 
     WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto);
+
+    /**
+     * 子单下推（无外层事务，Feign/跨服务写操作在独立事务中执行）。
+     */
+    Map<String, Object> executeKolB2cSubOrderPush(KolB2cApplicationEntity entity, KolSubB2cApplicationDTO.PushDTO pushDTO);
 
     Boolean importFile(BaseDTO.ImportDTO dto);
 

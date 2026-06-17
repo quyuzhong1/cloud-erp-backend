@@ -75,6 +75,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -162,6 +163,10 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     private DictBasicService dictBasicService;
     @Resource
     private MQProducerService mqProducerService;
+
+    @Lazy
+    @Resource
+    private KolB2cApplicationService self;
 
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 120000)
     @Transactional(rollbackFor = Exception.class)
@@ -1145,7 +1150,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return responseDTO;
         }
         if (!hasWorkflowTaskNode(WorkflowTaskRecordTypeEnum.KOL_B2C_SUB_APPROVE)) {
-            throw new ServiceException(ApiError.WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND);
+            responseDTO.setStatus(WorkflowTaskRecordStatusEnum.FAILED.getCode());
+            responseDTO.setErrorMsg(ApiError.WF_KOL_B2C_SUB_TASK_NODE_NOT_FOUND.getMsg());
+            return responseDTO;
         }
         List<String> subIds = subList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
         List<WorkflowTaskRecordEntity> existChildTasks = workflowTaskRecordService.lambdaQuery()
@@ -1231,6 +1238,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public WorkflowTaskRecordDTO.MqResponseDTO pushKolB2cSubOrder(WorkflowTaskRecordDTO.MqRequestDTO dto) {
         WorkflowTaskRecordDTO.MqResponseDTO responseDTO = new WorkflowTaskRecordDTO.MqResponseDTO();
         String kolId = getRequiredString(dto, "kolId");
@@ -1248,10 +1256,19 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             return responseDTO;
         }
         KolSubB2cApplicationDTO.PushDTO pushDTO = pushDTOS.get(0);
+        Map<String, Object> data = self.executeKolB2cSubOrderPush(entity, pushDTO);
+        responseDTO.setData(data);
+        sendKolB2cParentTaskMq(entity, 2);
+        return responseDTO;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Map<String, Object> executeKolB2cSubOrderPush(KolB2cApplicationEntity entity, KolSubB2cApplicationDTO.PushDTO pushDTO) {
         Map<String, Object> data = new HashMap<>();
         data.put("kolId", entity.getId());
         data.put("kolCode", entity.getCode());
-        data.put("subId", subId);
+        data.put("subId", pushDTO.getEntity().getId());
         data.put("subCode", pushDTO.getEntity().getCode());
         if (Boolean.TRUE.equals(entity.getIsInternational())) {
             String b2cCode = pushSingleSoB2c(entity, pushDTO);
@@ -1262,9 +1279,7 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             data.put("wdtPushMsg", created);
             data.put("wdtPushMsgSkipped", !created);
         }
-        responseDTO.setData(data);
-        sendKolB2cParentTaskMq(entity, 2);
-        return responseDTO;
+        return data;
     }
 
     /**
@@ -1434,6 +1449,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                         legacyApproveEndPush(entity);
                     } catch (Exception e) {
                         log.error("KOL B2C legacy审核下推失败，kolId={}, kolCode={}", entity.getId(), entity.getCode(), e);
+                        String reason = StringUtils.substring(StrUtil.blankToDefault(e.getMessage(), e.getClass().getSimpleName()), 0, 500);
+                        String msg = StrUtil.format("legacy审核下推失败，单号为【{}】，原因：【{}】", entity.getCode(), reason);
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.KOL_B2C_APPLICATION.getCode(), entity.getId(), "legacy下推失败");
                     }
                 }
             });

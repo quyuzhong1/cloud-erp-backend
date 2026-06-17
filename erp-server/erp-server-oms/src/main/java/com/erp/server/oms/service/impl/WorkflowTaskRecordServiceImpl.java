@@ -61,7 +61,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
     private static final String FORCE_RETRY_PERMISSION = "oms:workflowTaskRecord:forceRetry";
 
-
     @Resource
     private DictBasicService dictBasicService;
 
@@ -271,8 +270,31 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .eq(WorkflowTaskRecordEntity::getSourceType, sourceType)
                 .eq(WorkflowTaskRecordEntity::getIndex, index)
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByDesc(WorkflowTaskRecordEntity::getCreateTime)
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public Boolean resetStaleProcessingTask(String id) {
+        if (CharSequenceUtil.isBlank(id)) {
+            return Boolean.FALSE;
+        }
+        WorkflowTaskRecordEntity entity = getById(id);
+        if (Objects.isNull(entity)
+                || !Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.PROCESSING.getCode())) {
+            return Boolean.FALSE;
+        }
+        LocalDateTime updateTime = entity.getUpdateTime();
+        if (Objects.nonNull(updateTime)
+                && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now())) {
+            return Boolean.FALSE;
+        }
+        return this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, id)
+                .eq(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PROCESSING.getCode())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                .update();
     }
 
     @Override
@@ -317,7 +339,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             return true;
         }
         LocalDateTime updateTime = entity.getUpdateTime();
-        return Objects.nonNull(updateTime) && updateTime.plusMinutes(3).isBefore(LocalDateTime.now());
+        return Objects.nonNull(updateTime) && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isBefore(LocalDateTime.now());
     }
 
     private String appendForceRetryRemark(String oldRemark, String remark) {
