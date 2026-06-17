@@ -172,18 +172,14 @@
         LIMIT 1
     </select>
 
-    <!-- 批量按供应商ID集合 + 仓库ID集合查询（用于导入批处理避免 N+1） -->
-    <select id="selectBySupplierIdsAndWarehouseIds" resultMap="BaseResultMap">
+    <!-- 按 (supplier_id, warehouse_id) 组合批量查询（用于导入批处理，避免 IN+IN 笛卡尔积误匹配） -->
+    <select id="selectBySupplierWarehousePairs" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
         FROM cfg_qc_user
         WHERE is_deleted = FALSE
-          AND supplier_id IN
-          <foreach collection="supplierIds" item="supplierId" open="(" separator="," close=")">
-              #{supplierId}
-          </foreach>
-          AND warehouse_id IN
-          <foreach collection="warehouseIds" item="warehouseId" open="(" separator="," close=")">
-              #{warehouseId}
+          AND (supplier_id, warehouse_id) IN
+          <foreach collection="pairs" item="pair" open="(" separator="," close=")">
+              (#{pair.supplierId}, #{pair.warehouseId})
           </foreach>
         ORDER BY create_time DESC
     </select>

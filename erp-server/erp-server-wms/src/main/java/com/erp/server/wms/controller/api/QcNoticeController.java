@@ -11,7 +11,6 @@ import com.common.business.validator.ValidList;
 import com.common.core.utils.ExcelUtil;
 import com.erp.server.wms.query.QcNoticeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,22 +20,12 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.utils.ExcelUtil;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.entity.QcNoticeEntity;
-import com.erp.server.wms.query.QcNoticeQueryHandler;
+import com.erp.server.wms.service.QcNoticeDetailService;
 import com.erp.server.wms.service.QcNoticeService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -100,6 +89,11 @@ public class QcNoticeController extends BaseController {
     * @return ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>>
     */
     @PostMapping("/updateQcUserView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:update",
+            serviceClass = QcNoticeDetailService.class,
+            keyIdName = "detailIds")
     public ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>> updateQcUserView(
             @RequestBody @Validated QcNoticeDTO.UpdateQcUserViewParamDTO dto) {
         return success(qcNoticeService.updateQcUserView(dto));
@@ -113,6 +107,11 @@ public class QcNoticeController extends BaseController {
     * @return ApiResult<List<BatchResultDTO>>
     */
     @PostMapping("/updateQcUser")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:update",
+            serviceClass = QcNoticeDetailService.class,
+            keyIdName = "detailId")
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
     public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
             @RequestBody @Valid List<QcNoticeDTO.UpdateQcUserDTO> dtos) {

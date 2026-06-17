@@ -180,6 +180,7 @@ public class CfgQcUserController extends BaseController {
             menuCode = "wms:cfgQcUser:export",
             tableAlias = "cqu"
     )
+    @WebAdvanceQuery(handler = CfgQcUserQueryHandler.class)
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检员配置")
     public ApiResult<Object> exportList(@RequestBody @Validated CfgQcUserDTO.ExportDTO dto, HttpServletResponse response) {
         cfgQcUserService.exportList(dto, response);

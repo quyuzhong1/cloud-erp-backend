@@ -15,6 +15,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.UserInfoDTO;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.CfgQcUserDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.CfgQcUserEntity;
@@ -259,25 +260,37 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
         if (supplierByCode.isEmpty() || warehouseMap.isEmpty()) {
             return existsByKey;
         }
-        List<String> supplierIds = supplierByCode.values().stream()
-                .map(SupplierEntity::getId)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        List<String> warehouseIds = warehouseMap.values().stream()
-                .flatMap(List::stream)
-                .map(WarehouseDTO.ListDTO::getId)
-                .filter(StrUtil::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        if (supplierIds.isEmpty() || warehouseIds.isEmpty()) {
+        Set<String> seenPairKeys = new LinkedHashSet<>();
+        List<CfgQcUserDTO.SupplierWarehousePair> pairs = new ArrayList<>();
+        for (CfgQcUserDTO.ImportExcelDTO dto : successList) {
+            if (StrUtil.isBlank(dto.getSupplierCode()) || StrUtil.isBlank(dto.getWarehouseName())) {
+                continue;
+            }
+            SupplierEntity supplier = supplierByCode.get(dto.getSupplierCode());
+            if (supplier == null || StrUtil.isBlank(supplier.getId())) {
+                continue;
+            }
+            List<WarehouseDTO.ListDTO> warehouses = warehouseMap.get(dto.getWarehouseName());
+            if (CollUtil.isEmpty(warehouses) || warehouses.size() != 1) {
+                continue;
+            }
+            String warehouseId = warehouses.get(0).getId();
+            if (StrUtil.isBlank(warehouseId)) {
+                continue;
+            }
+            String pairKey = buildSupplierWarehouseKey(supplier.getId(), warehouseId);
+            if (seenPairKeys.add(pairKey)) {
+                pairs.add(new CfgQcUserDTO.SupplierWarehousePair(supplier.getId(), warehouseId));
+            }
+        }
+        if (pairs.isEmpty()) {
             return existsByKey;
         }
-        List<CfgQcUserEntity> existsList = cfgQcUserMapper.selectBySupplierIdsAndWarehouseIds(supplierIds, warehouseIds);
+        List<CfgQcUserEntity> existsList = cfgQcUserMapper.selectBySupplierWarehousePairs(pairs);
         if (CollUtil.isEmpty(existsList)) {
             return existsByKey;
         }
-        // 按 create_time DESC 排序，putIfAbsent 保留最新一条，等价于原 LIMIT 1 语义。
+        // SQL 已 ORDER BY create_time DESC，putIfAbsent 保留每组 (supplier, warehouse) 最新一条
         for (CfgQcUserEntity entity : existsList) {
             existsByKey.putIfAbsent(buildSupplierWarehouseKey(entity.getSupplierId(), entity.getWarehouseId()), entity);
         }
@@ -296,7 +309,7 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
         Map<String, String> map = new HashMap<>();
         try {
             KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO param = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
-            param.setType("ZJY");
+            param.setType(KingdeeBusinessOperatorTypeEnum.ZJY.getCode());
             if (StrUtil.isNotBlank(orgId)) {
                 param.setOrgId(orgId);
             }

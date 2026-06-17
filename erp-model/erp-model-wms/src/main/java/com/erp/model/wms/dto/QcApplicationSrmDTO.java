@@ -159,7 +159,7 @@ public class QcApplicationSrmDTO implements Serializable {
         private LocalDate expectQcDate;
 
         /**
-         * 期望质检日期【可排序】
+         * 计划质检日期【可排序】
          */
         private LocalDate planQcDate;
 
