@@ -306,6 +306,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (Objects.isNull(shopInfo)){
             throw new ServiceException(ApiError.SHOP_NOT_FOUND);
         }
+        if (StringUtils.isBlank(shopInfo.getSalesOrgId())){
+            log.warn("匹配b2c订单={}的中转规则，订单所属店铺销售组织信息={}", soB2cEntity.getCode(), shopInfo.getSalesOrgId());
+        }
         dto.setSalesOrgId(shopInfo.getSalesOrgId());
         dto.setDictPlatform(soB2cEntity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
