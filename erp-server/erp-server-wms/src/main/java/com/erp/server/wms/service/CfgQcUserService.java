@@ -102,15 +102,6 @@ public interface CfgQcUserService extends SuperService<CfgQcUserEntity> {
     BatchResultDTO delete(String id);
 
     /**
-    * 根据供应商ID查询质检员配置
-    * @author wtr
-    * @date: 2026-05-28
-    * @param supplierId
-    * @return
-    */
-    CfgQcUserEntity getBySupplierId(String supplierId);
-
-    /**
      * 根据供应商ID和仓库ID查询质检员配置
      *
      * @param supplierId  供应商ID
