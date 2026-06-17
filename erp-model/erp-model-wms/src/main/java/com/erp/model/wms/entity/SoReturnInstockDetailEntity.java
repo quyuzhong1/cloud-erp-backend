@@ -199,6 +199,12 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     @TableField("tax_price")
     private BigDecimal taxPrice;
 
+    /**
+     * 入库库存状态ID（来自金蝶FStockstatusId）
+     */
+    @TableField("stock_status_id")
+    private String stockStatusId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
