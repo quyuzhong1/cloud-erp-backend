@@ -353,7 +353,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 数据填充处理
         fillOne(data, requisitionApplicationDetailEntities);
         //附件
-        data.setAttachmentList(WmsAttachmentConverter.INSTANCE.entity2DTOList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode())));
+        data.setAttachmentList(WmsAttachmentConverter.INSTANCE.entityListToAttachDTOList(wmsAttachmentService.getByBusinessId(id, ModuleTypeEnum.REQUISITION_APPLICATION.getCode())));
         return data;
     }
 

@@ -54,6 +54,6 @@ public interface WmsAttachmentConverter {
     FileManagementDTO.VersionDTO entityToVersionDTO(WmsAttachmentEntity attachmentEntity);
     List<FileManagementDTO.VersionDTO> entityToVersionDTO(List<WmsAttachmentEntity> attachmentEntityList);
 
-    AttachDTO entity2DTOList(WmsAttachmentEntity entity);
-    List<AttachDTO> entity2DTOList(List<WmsAttachmentEntity> entityList);
+    AttachDTO entityToAttachDTO(WmsAttachmentEntity entity);
+    List<AttachDTO> entityListToAttachDTOList(List<WmsAttachmentEntity> entityList);
 }
