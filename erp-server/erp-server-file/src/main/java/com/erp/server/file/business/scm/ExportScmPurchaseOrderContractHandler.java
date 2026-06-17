@@ -6,12 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.rpc.scm.feign.ExportScmFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER_CONTRACT;
 
@@ -20,10 +18,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_OR
 public class ExportScmPurchaseOrderContractHandler extends AbstractPageFileEventHandler<BomExportExcelVO, String> {
     @Resource
     private ExportScmFeign exportScmFeign;
-    @Override
-    protected List<BomExportExcelVO> getData(FileTask fileTask) {
-        return listSeqData(fileTask.getMetaInfo());
-    }
 
     @Override
     protected PagingVO<BomExportExcelVO> getPageData(PagingDTO<String> dto) {

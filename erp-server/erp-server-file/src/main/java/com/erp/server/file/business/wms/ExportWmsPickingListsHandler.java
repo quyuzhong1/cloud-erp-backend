@@ -6,13 +6,10 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PICKING_LISTS;
 
@@ -32,12 +29,6 @@ public class ExportWmsPickingListsHandler extends AbstractPageFileEventHandler<P
         return EXPORT_WMS_PICKING_LISTS;
     }
 
-    @Override
-    protected List<PickingListsDTO.ExportInfoDTO> getData(FileTask fileTask) {
-        PickingListsDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PickingListsDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
 
     @Override

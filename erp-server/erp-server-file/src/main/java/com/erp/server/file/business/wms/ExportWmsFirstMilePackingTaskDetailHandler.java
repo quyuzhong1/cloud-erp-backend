@@ -7,13 +7,10 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
-import com.erp.model.file.entity.FileTask;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL;
 
@@ -24,12 +21,6 @@ public class ExportWmsFirstMilePackingTaskDetailHandler extends AbstractPageFile
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
-    @Override
-    protected List<WmsCartonDetailDTO.ListPackingDetailDTO> getData(FileTask fileTask) {
-        PackingTaskDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PackingTaskDTO.ExportDTO>() {
-        });
-        return listSeqData(dto);
-    }
 
     @Override
     protected PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> getPageData(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
