@@ -384,7 +384,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
             QcNoticeDTO.UpdateQcUserDTO item = itemMap.get(detailId);
             if (StrUtil.isBlank(item.getQcUserId())) {
-                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), "质检员id不能为空"));
+                resultList.add(BatchResultDTO.fail(detailId, detail.getSkuNo(), ApiError.QC_NOTICE_QC_USER_ID_REQUIRED.getMsg()));
                 continue;
             }
             validDetails.add(detail);
@@ -1384,8 +1384,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (Objects.nonNull(qcInfoEntity)) {
                 qcInfoView.setQcBillId(qcInfoEntity.getId());
                 qcInfoView.setQcBillCode(qcInfoEntity.getCode());
-                qcInfoView.setQcStatus(qcInfoEntity.getQcStatus().getCode());
-                qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
+                if (Objects.nonNull(qcInfoEntity.getQcStatus())) {
+                    qcInfoView.setQcStatus(qcInfoEntity.getQcStatus().getCode());
+                    qcInfoView.setQcStatusName(qcInfoEntity.getQcStatus().getName());
+                } else {
+                    qcInfoView.setQcStatus(QcBillStatusEnum.WAIT_QC.getCode());
+                    qcInfoView.setQcStatusName(QcBillStatusEnum.WAIT_QC.getName());
+                }
                 QcResultEntity qcResultEntity = qcResults.stream()
                         .filter(item -> Objects.equals(item.getMainId(), qcInfoEntity.getId()))
                         .findFirst()

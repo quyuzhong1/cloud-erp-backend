@@ -100,12 +100,6 @@
         cqu.create_time desc
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        SELECT '' AS approve_status, count(id) AS count
-        FROM cfg_qc_user
-        WHERE is_deleted = false
-    </select>
-
     <select id="listExport" resultType="com.erp.model.wms.dto.CfgQcUserDTO$ListDTO">
         SELECT 
             id,

@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.ibatis.annotations.Param;
 
 import com.erp.model.wms.dto.CfgQcUserDTO;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
 import java.util.List;
 
 /**
@@ -29,13 +28,6 @@ public interface CfgQcUserMapper extends BaseMapper<CfgQcUserEntity> {
     * @return
     */
     IPage<CfgQcUserDTO.ListDTO> paging(Page query, @Param("params") CfgQcUserDTO.PagingParamDTO params);
-
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") CfgQcUserDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询

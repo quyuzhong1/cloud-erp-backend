@@ -11,6 +11,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +45,8 @@ import java.util.stream.Collectors;
 public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.ImportExcelDTO> {
 
     private static final int BATCH_COUNT = 1000;
+
+    private static final int MAX_IMPORT_ROWS = 5000;
 
     private final String taskId;
 
@@ -74,6 +78,11 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
      */
     private final Map<String, Map<String, String>> qcUserNameToIdMapByOrgId = new HashMap<>();
 
+    /**
+     * 金蝶 Feign 加载失败的组织，避免缓存空 Map 导致误判「质检员不在组织中」
+     */
+    private final Set<String> qcUserLoadFailedOrgIds = new HashSet<>();
+
     public CfgQcUserExcelListener(String taskId, Integer importCount) {
         this.taskId = taskId;
         this.importCount = importCount;
@@ -82,6 +91,9 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
     @Override
     public void invoke(CfgQcUserDTO.ImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         count += 1;
+        if (count > MAX_IMPORT_ROWS) {
+            throw new ServiceException(ApiError.COMMON_IMPORT_SIZE_EXCEED_LIMIT, MAX_IMPORT_ROWS);
+        }
         if (Objects.nonNull(importCount) && count < importCount) {
             return;
         }
@@ -303,6 +315,9 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
 
     private Map<String, String> getQcUserNameToIdMap(String orgId) {
         String cacheKey = StrUtil.blankToDefault(orgId, "");
+        if (qcUserLoadFailedOrgIds.contains(cacheKey)) {
+            throw new ServiceException(ApiError.CFG_QC_USER_LOAD_QC_USER_LIST_FAILED);
+        }
         if (qcUserNameToIdMapByOrgId.containsKey(cacheKey)) {
             return qcUserNameToIdMapByOrgId.get(cacheKey);
         }
@@ -314,7 +329,11 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                 param.setOrgId(orgId);
             }
             ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> apiResult = kingdeeFeign.listKingdeeUser(param);
-            if (apiResult != null && apiResult.isSuccess() && CollUtil.isNotEmpty(apiResult.getData())) {
+            if (apiResult == null || !apiResult.isSuccess()) {
+                qcUserLoadFailedOrgIds.add(cacheKey);
+                throw new ServiceException(ApiError.CFG_QC_USER_LOAD_QC_USER_LIST_FAILED);
+            }
+            if (CollUtil.isNotEmpty(apiResult.getData())) {
                 for (UserInfoDTO.BusinessOperationUserDTO user : apiResult.getData()) {
                     if (StrUtil.isNotBlank(user.getRealName())) {
                         map.putIfAbsent(user.getRealName(), user.getUserId());
@@ -324,8 +343,12 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                     }
                 }
             }
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             log.error("加载业务员管理质检员列表失败，orgId={}", orgId, e);
+            qcUserLoadFailedOrgIds.add(cacheKey);
+            throw new ServiceException(ApiError.CFG_QC_USER_LOAD_QC_USER_LIST_FAILED);
         }
         qcUserNameToIdMapByOrgId.put(cacheKey, map);
         return map;
