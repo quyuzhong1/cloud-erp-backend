@@ -59,10 +59,9 @@ public class PlmFeignController extends BaseController {
     }
 
     /**
-     * 根据 SKU 编号批量查询 SKU 信息
+     * 根据 SKU 编号批量查询 SKU 信息（内部 Feign 调用，按 SKU 编号精确查询，不做 PLM 列表数据权限过滤）
      */
     @PostMapping("/productDetail/listSkuBySkuNos")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
     public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody @Valid ProductSearchDTO.SkuParamDTO skuParamDTO) {
         return success(productDetailService.listSkuBySkuNos(skuParamDTO));
     }

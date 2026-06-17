@@ -53,13 +53,6 @@ public interface CfgQcUserMapper extends BaseMapper<CfgQcUserEntity> {
     List<CfgQcUserDTO.TabListDTO> tabList(@Param("params") CfgQcUserDTO.PagingParamDTO searchParam);
 
     /**
-    * 根据供应商ID查询配置
-    * @param supplierId
-    * @return
-    */
-    CfgQcUserEntity selectBySupplierId(@Param("supplierId") String supplierId);
-
-    /**
      * 根据供应商ID和仓库ID查询配置（精确匹配）
      *
      * @param supplierId  供应商ID
