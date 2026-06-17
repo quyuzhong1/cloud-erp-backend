@@ -115,7 +115,8 @@ public class QcNoticeController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
     public ApiResult<List<BatchResultDTO>> batchUpdateQcUser(
             @RequestBody @Valid List<QcNoticeDTO.UpdateQcUserDTO> dtos) {
-        return success(qcNoticeService.batchUpdateQcUser(dtos));
+        List<BatchResultDTO> resultDTOS = qcNoticeService.batchUpdateQcUser(dtos);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
