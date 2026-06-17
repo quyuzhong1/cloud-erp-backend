@@ -24,10 +24,13 @@ import com.erp.server.oms.rocketmq.sync.wangdian.SyncWangDianSoB2cService;
 import com.erp.server.oms.service.*;
 import com.sdk.wangdian.sdk.api.sales.dto.PushSelf2Request;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.context.annotation.Lazy;
+
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +38,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
 
@@ -83,7 +87,12 @@ public class SyncWangDianSoB2cServiceImpl implements SyncWangDianSoB2cService {
         omsPushMsgEntity.setSourceCode(entity.getCode());
         omsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
         omsPushMsgEntity.setPushData(JSON.toJSONString(request));
-        omsPushMsgService.save(omsPushMsgEntity);
+        try {
+            omsPushMsgService.save(omsPushMsgEntity);
+        } catch (DuplicateKeyException e) {
+            log.warn("旺店通B2C审核推送消息已存在，按幂等成功处理，sourceId={}, sourceCode={}", entity.getId(), entity.getCode(), e);
+            return Boolean.FALSE;
+        }
         return Boolean.TRUE;
     }
 

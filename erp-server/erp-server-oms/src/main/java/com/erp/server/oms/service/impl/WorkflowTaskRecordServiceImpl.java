@@ -359,6 +359,18 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
     private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto) {
         String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
+        String refreshedInputData = getPreviousSuccessOutputData(entity);
+        if (CharSequenceUtil.isNotBlank(refreshedInputData)) {
+            this.lambdaUpdate()
+                    .eq(WorkflowTaskRecordEntity::getId, entity.getId())
+                    .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                    .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                    .set(WorkflowTaskRecordEntity::getLastError, "")
+                    .set(WorkflowTaskRecordEntity::getRemark, remark)
+                    .set(WorkflowTaskRecordEntity::getInputData, refreshedInputData)
+                    .update();
+            return;
+        }
         this.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
@@ -366,6 +378,25 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
                 .update();
+    }
+
+    private String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity) {
+        if (Objects.isNull(entity)
+                || Objects.isNull(entity.getIndex())
+                || entity.getIndex() <= 0
+                || CharSequenceUtil.isBlank(entity.getSourceType())
+                || CharSequenceUtil.isBlank(entity.getSourceId())) {
+            return null;
+        }
+        WorkflowTaskRecordEntity previousTask = this.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceType, entity.getSourceType())
+                .eq(WorkflowTaskRecordEntity::getSourceId, entity.getSourceId())
+                .eq(WorkflowTaskRecordEntity::getIndex, entity.getIndex() - 1)
+                .eq(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .last("limit 1")
+                .one();
+        return Objects.isNull(previousTask) ? null : previousTask.getOutputData();
     }
 
     private boolean allowForceRetry(WorkflowTaskRecordEntity entity) {

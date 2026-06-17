@@ -233,7 +233,7 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
             }
             Set<String> sourceDetailIds = sourceDetailIdsBySubId.getOrDefault(subId, Collections.emptySet());
             if (!sourceDetailIds.contains(detail.getId())) {
-                throw new ServiceException("B2C寄样申请单拆分单明细不完整，单号【{}】，达人【{}】", entity.getCode(), detail.getNickname());
+                throw new ServiceException(ApiError.WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE, entity.getCode(), detail.getNickname());
             }
         }
     }
