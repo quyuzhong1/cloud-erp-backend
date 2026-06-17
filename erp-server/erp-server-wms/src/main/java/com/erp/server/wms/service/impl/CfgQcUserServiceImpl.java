@@ -454,7 +454,7 @@ public class CfgQcUserServiceImpl extends SuperServiceImpl<CfgQcUserMapper, CfgQ
     }
 
     private String buildImportFailRemark(Exception e) {
-        String message = StrUtil.blankToDefault(e.getMessage(), ApiError.HTTP_UNKNOWN.getMsg());
+        String message = BatchResultDTO.resolveFailMsg(e);
         return message.length() > 490 ? message.substring(0, 490) : message;
     }
 

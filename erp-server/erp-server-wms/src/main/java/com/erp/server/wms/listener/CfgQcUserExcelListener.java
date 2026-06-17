@@ -7,6 +7,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.FileTaskStatusEnum;
 import com.common.core.controller.vo.ApiResult;
@@ -229,7 +230,7 @@ public class CfgQcUserExcelListener extends AnalysisEventListener<CfgQcUserDTO.I
                 }
             } catch (Exception e) {
                 log.error("质检员配置导入处理失败，supplierCode={}", dto.getSupplierCode(), e);
-                String message = e.getMessage() == null ? "" : e.getMessage();
+                String message = BatchResultDTO.resolveFailMsg(e);
                 dto.setErrorMsg(message.length() > 200 ? message.substring(0, 200) : message);
                 errorList.add(dto);
             }
