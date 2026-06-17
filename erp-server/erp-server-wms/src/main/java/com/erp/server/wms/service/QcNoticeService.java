@@ -202,11 +202,11 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     List<QcNoticeDTO.UpdateQcUserViewDTO> updateQcUserView(QcNoticeDTO.UpdateQcUserViewParamDTO dto);
 
     /**
-    * 批量更新质检员（每行独立质检员）
+    * 更新质检员（单条，含级联更新下游质检单）
     * @author wtr
     * @date: 2026-05-28
-    * @param dtos 明细质检员列表，每行 {detailId, qcUserId, qcUserName}
-    * @return
+    * @param dto 明细质检员 {detailId, qcUserId}
+    * @return BatchResultDTO
     */
-    List<BatchResultDTO> batchUpdateQcUser(List<QcNoticeDTO.UpdateQcUserDTO> dtos);
+    BatchResultDTO updateQcUser(QcNoticeDTO.UpdateQcUserDTO dto);
 }
