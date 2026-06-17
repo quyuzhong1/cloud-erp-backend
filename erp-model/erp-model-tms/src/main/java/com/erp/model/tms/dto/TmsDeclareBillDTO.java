@@ -2191,10 +2191,15 @@ public class TmsDeclareBillDTO implements Serializable {
     @AllArgsConstructor
     public static class AddSplitDeclareDTO {
         /**
-         *  拆分数据不能为空
+         * 原报关单主表id
+         */
+        @NotBlank(message = "报关单id不能为空")
+        private String id;
+        /**
+         * 拆分数据：外层每一组为一票，内层为该票包含的箱/SKU 选择
          */
         @NotEmpty(message = "拆分数据不能为空")
-        private List<SplitDeclareDTO> splitDeclareDTOList;
+        private List<List<SplitDeclareDTO>> splitDeclareDTOList;
     }
 
     /**

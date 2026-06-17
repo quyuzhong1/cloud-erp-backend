@@ -2836,7 +2836,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
-            keyName = "declareDTO.splitDeclareDTOList.id",
+            keyName = "declareDTO.id",
             maxRetries = 1,
             unlockAfterTx = true
     )
@@ -2846,11 +2846,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
         }
-        List<String> declareIdList = declareDTO.getSplitDeclareDTOList().stream().map(TmsDeclareBillDTO.SplitDeclareDTO::getId).distinct().collect(Collectors.toList());
-        if (declareIdList.size() != MathUtil.ONE) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_SINGLE_BILL_REQUIRED);
-        }
-        TmsDeclareBillEntity declareBillEntity = super.getById(declareIdList.get(0));
+        validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
+        TmsDeclareBillEntity declareBillEntity = super.getById(declareDTO.getId());
         if (ObjectUtil.isEmpty(declareBillEntity)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
@@ -2870,10 +2867,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         //删除原本的报关单
         deleteDeclareBillById(declareBillEntity.getId());
 
-        for (TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO : declareDTO.getSplitDeclareDTOList()) {
-
-            //按规则合并数据
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetail(sourceDeliveryDetailList, splitDeclareDTO);
+        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
                     new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList), Boolean.FALSE);
 
@@ -2899,7 +2894,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
     @Override
     @DistributeLocker(
             businessType = DistributeKeyConstant.TMS_DECLARE_BILL_ID_KEY,
-            keyName = "declareDTO.splitDeclareDTOList.id",
+            keyName = "declareDTO.id",
             maxRetries = 1,
             unlockAfterTx = true
     )
@@ -2909,11 +2904,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         if (CollUtil.isEmpty(declareDTO.getSplitDeclareDTOList())) {
             return Boolean.TRUE;
         }
-        List<String> declareIdList = declareDTO.getSplitDeclareDTOList().stream().map(TmsDeclareBillDTO.SplitDeclareDTO::getId).distinct().collect(Collectors.toList());
-        if (declareIdList.size() != MathUtil.ONE) {
-            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SPLIT_SINGLE_BILL_REQUIRED);
-        }
-        TmsDeclareBillEntity declareBillEntity = super.getById(declareIdList.get(0));
+        validateSplitDeclareGroups(declareDTO.getSplitDeclareDTOList());
+        TmsDeclareBillEntity declareBillEntity = super.getById(declareDTO.getId());
         if (ObjectUtil.isEmpty(declareBillEntity)) {
             throw new ServiceException(ApiError.LOGISTICS_DECLARE_INFO_NOT_FOUND);
         }
@@ -2929,10 +2921,8 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 ? new TmsDeclareBillDTO.SplitDeclareCodeSequence(splitBaseCode)
                 : null;
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList = deliveryDeclareDetailMidService.listSourceByDeclareIdList(Collections.singletonList(declareBillEntity.getId()));
-        for (TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO : declareDTO.getSplitDeclareDTOList()) {
-
-            //按规则合并数据
-            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetail(sourceDeliveryDetailList, splitDeclareDTO);
+        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : declareDTO.getSplitDeclareDTOList()) {
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = filterSplitSourceDetailGroup(sourceDeliveryDetailList, splitGroup);
             List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeDeclareBillDTOS = autoMergeDeclareBillView(
                     new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(Boolean.TRUE, batchSourceList),
                     isB2bCustomerReceiver(declareBillEntity.getType(), declareBillEntity.getReceiverType()));
@@ -3011,6 +3001,33 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 .filter(obj -> CharSequenceUtil.equals(obj.getBoxNo(), splitDeclareDTO.getBoxNo()))
                 .filter(obj -> CollUtil.isEmpty(skuIdSet) || skuIdSet.contains(obj.getSkuId()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 合并同一票内多个箱/SKU 选择对应的来源明细。
+     */
+    private List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> filterSplitSourceDetailGroup(
+            List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDeliveryDetailList,
+            List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup) {
+        List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> batchSourceList = new ArrayList<>();
+        for (TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO : splitGroup) {
+            batchSourceList.addAll(filterSplitSourceDetail(sourceDeliveryDetailList, splitDeclareDTO));
+        }
+        if (CollUtil.isEmpty(batchSourceList)) {
+            throw new ServiceException(ApiError.LOGISTICS_DECLARE_SOURCE_DETAIL_NOT_FOUND_FOR_SAVE);
+        }
+        return batchSourceList;
+    }
+
+    /**
+     * 校验拆分分组：外层每一组代表一票，内层不能为空。
+     */
+    private void validateSplitDeclareGroups(List<List<TmsDeclareBillDTO.SplitDeclareDTO>> splitDeclareGroupList) {
+        for (List<TmsDeclareBillDTO.SplitDeclareDTO> splitGroup : splitDeclareGroupList) {
+            if (CollUtil.isEmpty(splitGroup)) {
+                throw new ServiceException(ApiError.BILL_SELECTION_REQUIRED);
+            }
+        }
     }
 
 
@@ -4642,6 +4659,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         for ( Map.Entry<String, List<DeliveryDeclareDetailMidEntity>> entry : map.entrySet()) {
             TmsDeclareBillDTO.SplitDeclareDTO splitDeclareDTO = new TmsDeclareBillDTO.SplitDeclareDTO();
             List<DeliveryDeclareDetailMidEntity> value = entry.getValue();
+            splitDeclareDTO.setId(id);
             splitDeclareDTO.setBoxNo(value.get(0).getBoxNo());
             splitDeclareDTO.setSourceId(value.get(0).getSourceId());
             splitDeclareDTO.setBusinessCode(value.stream().map(DeliveryDeclareDetailMidEntity::getBusinessCode).filter(StringUtils::isNotBlank).findFirst().orElse(""));
