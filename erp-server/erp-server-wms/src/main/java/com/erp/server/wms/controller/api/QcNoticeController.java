@@ -91,7 +91,7 @@ public class QcNoticeController extends BaseController {
     @PostMapping("/updateQcUserView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "qcNotice:updateQcUserView",
+            menuCode = "wms:qcNotice:updateQcUser",
             serviceClass = QcNoticeDetailService.class,
             keyIdName = "detailIds")
     public ApiResult<List<QcNoticeDTO.UpdateQcUserViewDTO>> updateQcUserView(
@@ -109,7 +109,7 @@ public class QcNoticeController extends BaseController {
     @PostMapping("/updateQcUser")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:update",
+            menuCode = "wms:qcNotice:updateQcUser",
             serviceClass = QcNoticeDetailService.class,
             keyIdName = "detailId")
     @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单批量更新质检员")
