@@ -1256,7 +1256,8 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
             String b2cCode = pushSingleSoB2c(entity, pushDTO);
             data.put("b2cCode", b2cCode);
         } else {
-            Boolean created = syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, null);
+            Map<String, SkuVO> skuMap = buildKolSubB2cSkuMap(pushDTO);
+            Boolean created = syncWangDianSoB2cService.saveApproveMsgToWangDian(pushDTO, skuMap);
             data.put("wdtPushMsg", created);
             data.put("wdtPushMsgSkipped", !created);
         }
@@ -1488,7 +1489,9 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
                     try {
                         doSendWorkflowTaskMq(addTaskDTO, key, delayLevel);
                     } catch (Exception e) {
-                        log.error("KOL B2C任务编排事务提交后发送MQ失败，sourceId={}, sourceType={}", addTaskDTO.getSourceId(), addTaskDTO.getSourceTypeEnum(), e);
+                        log.error("KOL B2C任务编排事务提交后发送MQ失败，sourceId={}, sourceType={}, traceId={}",
+                                addTaskDTO.getSourceId(), addTaskDTO.getSourceTypeEnum(), addTaskDTO.getTraceId(), e);
+                        markWorkflowTaskMqSendFailed(addTaskDTO, e);
                     }
                 }
             });
@@ -1502,6 +1505,32 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
             throw new ServiceException(ApiError.WF_TASK_RECORD_MQ_SEND_FAILED, String.valueOf(result));
         }
+    }
+
+    private void markWorkflowTaskMqSendFailed(WorkflowTaskRecordDTO.AddTaskDTO addTaskDTO, Exception e) {
+        if (Objects.isNull(addTaskDTO) || Objects.isNull(addTaskDTO.getSourceTypeEnum()) || StringUtils.isBlank(addTaskDTO.getSourceId())) {
+            return;
+        }
+        WorkflowTaskRecordEntity taskEntity = workflowTaskRecordService.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, addTaskDTO.getSourceId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, addTaskDTO.getSourceTypeEnum().getCode())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(taskEntity)) {
+            return;
+        }
+        String errorMsg = StrUtil.format("任务节点MQ发送失败，traceId={}，error={}",
+                addTaskDTO.getTraceId(),
+                Objects.nonNull(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName());
+        workflowTaskRecordService.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, taskEntity.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(taskEntity.getRetryCount()).orElse(0) + 1)
+                .update();
     }
 
     private boolean isTerminalFailedTask(WorkflowTaskRecordEntity entity) {
@@ -1556,6 +1585,28 @@ public class KolB2cApplicationServiceImpl extends SuperServiceImpl<KolB2cApplica
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.WF_KOL_B2C_APPROVE_REQUIRED);
         }
+    }
+
+    private Map<String, SkuVO> buildKolSubB2cSkuMap(KolSubB2cApplicationDTO.PushDTO pushDTO) {
+        if (Objects.isNull(pushDTO) || CollUtil.isEmpty(pushDTO.getDetailList())) {
+            return Collections.emptyMap();
+        }
+        List<String> skuIds = pushDTO.getDetailList().stream()
+                .map(KolSubB2cApplicationDetailEntity::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIds)) {
+            return Collections.emptyMap();
+        }
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        if (CollUtil.isEmpty(skuList)) {
+            return Collections.emptyMap();
+        }
+        return skuList.stream()
+                .filter(Objects::nonNull)
+                .filter(e -> StringUtils.isNotBlank(e.getSkuId()))
+                .collect(Collectors.toMap(SkuVO::getSkuId, Function.identity(), (o1, o2) -> o1));
     }
 
     private String pushSingleSoB2c(KolB2cApplicationEntity kolB2cApplicationEntity, KolSubB2cApplicationDTO.PushDTO pushDTO) {

@@ -332,13 +332,41 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                     try {
                         sendForceRetryMq(entity);
                     } catch (Exception e) {
-                        log.error("任务节点人工强制重试事务提交后发送MQ失败，sourceType={}, sourceId={}", entity.getSourceType(), entity.getSourceId(), e);
+                        log.error("任务节点人工强制重试事务提交后发送MQ失败，sourceType={}, sourceId={}, traceId={}",
+                                entity.getSourceType(), entity.getSourceId(), entity.getTraceId(), e);
+                        markForceRetryMqSendFailed(entity, e);
                     }
                 }
             });
             return;
         }
         sendForceRetryMq(entity);
+    }
+
+    private void markForceRetryMqSendFailed(WorkflowTaskRecordEntity entity, Exception e) {
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getSourceId()) || CharSequenceUtil.isBlank(entity.getSourceType())) {
+            return;
+        }
+        WorkflowTaskRecordEntity taskEntity = this.lambdaQuery()
+                .eq(WorkflowTaskRecordEntity::getSourceId, entity.getSourceId())
+                .eq(WorkflowTaskRecordEntity::getSourceType, entity.getSourceType())
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .ne(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                .orderByAsc(WorkflowTaskRecordEntity::getIndex)
+                .last("limit 1")
+                .one();
+        if (Objects.isNull(taskEntity)) {
+            return;
+        }
+        String errorMsg = StrUtil.format("任务节点人工强制重试MQ发送失败，traceId={}，error={}",
+                entity.getTraceId(),
+                Objects.nonNull(e.getMessage()) ? e.getMessage() : e.getClass().getSimpleName());
+        this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, taskEntity.getId())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.FAILED.getCode())
+                .set(WorkflowTaskRecordEntity::getLastError, errorMsg)
+                .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(taskEntity.getRetryCount()).orElse(0) + 1)
+                .update();
     }
 
     private void addForceRetryLog(WorkflowTaskRecordDTO.ForceRetryDTO dto, List<WorkflowTaskRecordEntity> taskList, int resetCount, int mqCount) {
