@@ -1492,6 +1492,15 @@ public class LogisticsReconServiceImpl
 
     // ============================== 校验状态流转 ==============================
 
+    /**
+     * 物流商对账单校验状态单条切换（待确认 ↔ 已确认）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param id          对账单 id
+     * @param checkStatus 目标校验状态
+     * @return 切换结果
+     */
     @DistributeLocker(businessType = DistributeKeyConstant.TMS_LOGISTICS_RECON_KEY, keyName = "id", unlockAfterTx = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -1519,9 +1528,20 @@ public class LogisticsReconServiceImpl
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    /**
+     * 校验对账单校验状态切换是否合法（待确认 ↔ 已确认）。
+     * <p>目标待确认：禁止同状态重复；已确认回退时要求全部费用项未匹配。</p>
+     * <p>目标已确认：仅允许当前待确认；禁止导入失败或存在匹配中费用项。</p>
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param entity       当前对账单
+     * @param targetStatus 目标校验状态（pending / confirmed）
+     */
     private void validateCheckStatusTransition(LogisticsReconEntity entity, String targetStatus) {
+        String currentStatus = entity.getCheckStatus();
         // 导入中不允许直接切换校验状态（需等导入完成进入待确认）
-        if (LogisticsReconCheckStatusEnum.IMPORTING.getCode().equals(entity.getCheckStatus())) {
+        if (LogisticsReconCheckStatusEnum.IMPORTING.getCode().equals(currentStatus)) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORTING_CHECK_STATUS_FORBIDDEN);
         }
         // 仅允许在 待确认 / 已确认 之间流转
@@ -1529,15 +1549,25 @@ public class LogisticsReconServiceImpl
                 && !LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(targetStatus)) {
             throw new ServiceException(ApiError.LOGISTICS_RECON_CHECK_STATUS_INVALID);
         }
+        if (StrUtil.equals(currentStatus, targetStatus)) {
+            throw new ServiceException(ApiError.LOGISTICS_RECON_CHECK_STATUS_NO_CHANGE);
+        }
         if (LogisticsReconCheckStatusEnum.PENDING.getCode().equals(targetStatus)) {
-            int refCount = (int) logisticsReconRefLogisticsBillService.lambdaQuery()
-                    .eq(com.erp.model.tms.entity.LogisticsReconRefLogisticsBillEntity::getMainId, entity.getId())
+            // 已确认 → 待确认：仅当全部费用项匹配状态为未匹配时允许
+            long nonUnmatchedCount = logisticsReconDetailSubService.lambdaQuery()
+                    .eq(LogisticsReconDetailSubEntity::getMainId, entity.getId())
+                    .ne(LogisticsReconDetailSubEntity::getMatchStatus,
+                            LogisticsReconDetailMatchStatusEnum.UNMATCHED.getCode())
                     .count();
-            if (refCount > 0) {
+            if (nonUnmatchedCount > 0) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_MATCH_REF_EXISTS_ROLLBACK_FORBIDDEN);
             }
         }
         if (LogisticsReconCheckStatusEnum.CONFIRMED.getCode().equals(targetStatus)) {
+            // 仅待确认 → 已确认
+            if (!LogisticsReconCheckStatusEnum.PENDING.getCode().equals(currentStatus)) {
+                throw new ServiceException(ApiError.LOGISTICS_RECON_ONLY_PENDING_ALLOW_CHECK_CONFIRM);
+            }
             if (StrUtil.isNotBlank(entity.getImportFailReason())) {
                 throw new ServiceException(ApiError.LOGISTICS_RECON_IMPORT_FAILED_CHECK_STATUS_FORBIDDEN);
             }
@@ -2384,6 +2414,13 @@ public class LogisticsReconServiceImpl
 
     /**
      * 构建账单确认时需更新的 ref 计数查询（带当前对账状态前置条件，用于乐观校验）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param mainId                对账单 id
+     * @param costIdBatch           本批物流费用单 id
+     * @param reconciliationStatus  目标对账状态
+     * @return 带状态前置条件的 ref 计数查询
      */
     private LambdaQueryChainWrapper<LogisticsReconRefLogisticsBillEntity> buildConfirmRefCountQuery(
             String mainId, List<String> costIdBatch, String reconciliationStatus) {

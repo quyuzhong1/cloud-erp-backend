@@ -20,6 +20,12 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 开放接口物流费用导入 Feign 回调（已切换为物流商对账单导入）。
+ *
+ * @author Will
+ * @date 2026/6/12
+ */
 @Slf4j
 @RestController
 @RequestMapping("/feign/importHistoryRecord")

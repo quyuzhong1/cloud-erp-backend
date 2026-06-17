@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
  */
 public final class LogisticsReconMatchGroupHelper {
 
+    /**
+     * 工具类私有构造，禁止实例化。
+     */
     private LogisticsReconMatchGroupHelper() {
     }
 
@@ -126,9 +129,9 @@ public final class LogisticsReconMatchGroupHelper {
      *
      * @author Will
      * @date 2026/6/12
-     * @param row          导入匹配 Excel 行
-     * @param targetField  模板 targetField
-     * @return 识别字段值，无法映射时返回空串
+     * @param row         导入匹配 Excel 行
+     * @param targetField 模板 targetField
+     * @return 识别字段值（已 trim），无法映射时返回空串
      */
     private static String excelIdentifyValue(LogisticsReconMatchImportExcelDTO row, String targetField) {
         if (row == null || StrUtil.isBlank(targetField)) {
