@@ -3977,7 +3977,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .set(SoB2cEntity::getShippingOrderNo, earlyShippingOrderNo)
                             .eq(SoB2cEntity::getId, entity.getId())
                             .eq(SoB2cEntity::getVersion, entity.getVersion())
-                            .update(entity);
+                            .update();
                     if (updated) {
                         entity.setShippingOrderNo(earlyShippingOrderNo);
                         log.info("三方仓建单成功，提前落库 shippingOrderNo={}, soCode={}", earlyShippingOrderNo, entity.getCode());
