@@ -1115,9 +1115,18 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<ProductLogisticsEntity> productLogisticsList = FeignQuery.create(ProductLogisticsEntity.class).in(ProductLogisticsEntity::getSkuId, skuIdList).list();
         Map<String, ProductLogisticsEntity> logisticsMap = CollUtil.isEmpty(productLogisticsList) ? new HashMap<>() : productLogisticsList.stream().collect(Collectors.toMap(ProductLogisticsEntity::getSkuId,item -> item));
 
+        //查询单位名称
+        List<BasicDictEntity> declareUnitList = FeignQuery.create(BasicDictEntity.class).eq(BasicDictEntity::getType, "declareUnit").list();
+        Map<String, String> declareUnitNameMap = CollUtil.isEmpty(declareUnitList)
+                ? new HashMap<>()
+                : declareUnitList.stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (a, b) -> a));
+
         //币别明细
         List<DictCurrencyEntity> dictCurrencyList = sysUserFeign.currencyList();
         Map<String, String> currencyMap = CollUtil.isEmpty(dictCurrencyList) ? new HashMap<>() : dictCurrencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getId,item -> item.getName()));
+
+        boolean customerReceiver = Boolean.TRUE.equals(tmsDeclareBillFeign.isB2bCustomerReceiver(list));
+        Map<String, SoDetailEntity> soDetailMap = customerReceiver ? loadSoDetailMapForB2bMinDeclare(list) : Collections.emptyMap();
 
         for (TmsDeclareBillDTO.SourceDeliveryDetailDTO deliveryDetailDTO : list) {
             ProductLogisticsEntity productLogisticsEntity = logisticsMap.get(deliveryDetailDTO.getSkuId());
@@ -1126,12 +1135,56 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 deliveryDetailDTO.setProductNameCn(productLogisticsEntity.getDeclareChineseName());
                 deliveryDetailDTO.setDeclareElement(productLogisticsEntity.getDeclareElement());
                 deliveryDetailDTO.setUnit(productLogisticsEntity.getDeclareUnit());
-                deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
-                deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
-                deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
-                deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
-            }
+                deliveryDetailDTO.setUnitName(declareUnitNameMap.get(productLogisticsEntity.getDeclareUnit()));
 
+                SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(deliveryDetailDTO.getBusinessId(), deliveryDetailDTO.getSkuId()));
+                if (customerReceiver && Objects.nonNull(soDetailEntity)) {
+                    deliveryDetailDTO.setUnitPrice(resolveSoDetailTaxUnitPrice(soDetailEntity));
+                    deliveryDetailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
+                    deliveryDetailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                    deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(deliveryDetailDTO.getDeclareCurrency()));
+                } else {
+                    deliveryDetailDTO.setUnitPrice(productLogisticsEntity.getDeclarePrice());
+                    deliveryDetailDTO.setDeclareCurrency(productLogisticsEntity.getDeclareCurrency());
+                    deliveryDetailDTO.setDeclareCurrencySymbol(productLogisticsEntity.getDeclareCurrencySymbol());
+                    deliveryDetailDTO.setDeclareCurrencyName(currencyMap.get(productLogisticsEntity.getDeclareCurrency()));
+                }
+            }
+            fillB2bPreviewBusinessTypeDefault(deliveryDetailDTO);
+        }
+    }
+
+    private BigDecimal resolveSoDetailTaxUnitPrice(SoDetailEntity soDetailEntity) {
+        if (Objects.isNull(soDetailEntity)) {
+            return null;
+        }
+        if (Objects.nonNull(soDetailEntity.getTaxPrice())) {
+            return soDetailEntity.getTaxPrice();
+        }
+        return soDetailEntity.getPrice();
+    }
+
+    private void fillB2bPreviewBusinessTypeDefault(TmsDeclareBillDTO.SourceDeliveryDetailDTO detailDTO) {
+        if (Objects.isNull(detailDTO) || StringUtils.isNotBlank(detailDTO.getBusinessType())) {
+            return;
+        }
+        detailDTO.setBusinessType(OrderTypeEnum.B2B.getCode());
+    }
+
+    private void fillB2bPreviewBusinessType(List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeList) {
+        if (CollUtil.isEmpty(mergeList)) {
+            return;
+        }
+        for (TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO : mergeList) {
+            if (Objects.isNull(mergeDeclareBillDTO) || CollUtil.isEmpty(mergeDeclareBillDTO.getDeclareBillList())) {
+                continue;
+            }
+            for (TmsDeclareBillDTO.MergeDeclareBillDetailDTO detailDTO : mergeDeclareBillDTO.getDeclareBillList()) {
+                if (Objects.isNull(detailDTO) || CollUtil.isEmpty(detailDTO.getSourceDeliveryDetailList())) {
+                    continue;
+                }
+                detailDTO.getSourceDeliveryDetailList().forEach(this::fillB2bPreviewBusinessTypeDefault);
+            }
         }
     }
 
@@ -1139,14 +1192,19 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public List<TmsDeclareBillDTO.MergeDeclareBillDTO> listAfterPushB2bDeclare(TmsDeclareBillDTO.PushDeclareBeforeParamDTO dto) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> list = baseMapper.listBeforePushB2bDeclare(dto.getIds());
-        return tmsDeclareBillFeign.autoMergeDeclareBillView(new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(),list));
+        List<TmsDeclareBillDTO.MergeDeclareBillDTO> mergeList = tmsDeclareBillFeign.autoMergeDeclareBillView(
+                new TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO(dto.getIsMultipleMerge(), list));
+        fillB2bPreviewBusinessType(mergeList);
+        return mergeList;
     }
 
     @Override
     public TmsDeclareBillDTO.MergeDeclareBillDTO listAfterPushB2bDeclareNoMerge(List<TmsDeclareBillDTO.PushDeclareNoMergeDTO> list) {
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList = baseMapper.listB2bDeclareMinSourceDetail(list);
         List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> declareSourceDetailList = prepareB2bMinDeclareSourceDetail(sourceDetailList);
-        return buildB2bMinMergeDeclareBillList(declareSourceDetailList);
+        TmsDeclareBillDTO.MergeDeclareBillDTO mergeDeclareBillDTO = buildB2bMinMergeDeclareBillList(declareSourceDetailList);
+        fillB2bPreviewBusinessType(Collections.singletonList(mergeDeclareBillDTO));
+        return mergeDeclareBillDTO;
     }
 
     /**
@@ -1269,9 +1327,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         SoDetailEntity soDetailEntity = soDetailMap.get(buildSoDetailKey(detailDTO.getBusinessId(), detailDTO.getSkuId()));
         if (Objects.nonNull(soDetailEntity)) {
-            // B2B 不合并预览：单价/币别/币别符号取自 so_detail，避免被物流产品 (foreign_product_logistics) 覆盖；
-            // 币别名称按命中后的 declareCurrency 在字典里反查，保证与币别一致。
-            detailDTO.setUnitPrice(soDetailEntity.getPrice());
+            // B2B 不合并预览：单价/币别/币别符号取自 so_detail 销售含税单价及对应币种。
+            detailDTO.setUnitPrice(resolveSoDetailTaxUnitPrice(soDetailEntity));
             detailDTO.setDeclareCurrency(soDetailEntity.getCurrency());
             detailDTO.setDeclareCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailDTO.setDeclareCurrencyName(currencyMap.get(detailDTO.getDeclareCurrency()));
