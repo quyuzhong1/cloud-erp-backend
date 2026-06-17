@@ -66,8 +66,11 @@ public abstract class AbstractMultiSheetPageFileEventHandler<P> extends Abstract
      */
     static Type resolveExportParamType(Class<?> handlerClass) {
         // 用 forClass(baseType, implementationClass) 让 Spring 跨中间继承层（如 AbstractMasterDerivedSheetHandler<P,M>）
-        // 把类型变量 P 绑定到具体类型。逐层 getSuperType() 在多层继承下会丢失变量绑定，使 P 退化为 TypeVariable，
-        // 进而 Jackson constructType 退回 Object 并反序列化成 LinkedHashMap，最终在 getExcelPath 处抛 ClassCastException。
+        // 把类型变量 P 绑定到具体类型；返回值必须用 resolve()（已绑定的具体 Class），不能用 getType()。
+        // 注意：getType() 返回的是声明处的原始 Type，跨继承层时即未解析的 TypeVariable（如 "P"），
+        // Jackson constructType 会退回 Object 并把 metaInfo 反序列化成 LinkedHashMap，最终在 getExcelPath 处抛 ClassCastException
+        // ——这正是本类历史 BUG 的根因。本仓库所有导出 Handler 的 P 均为非参数化 DTO，resolve() 不存在嵌套泛型丢失问题；
+        // 若将来出现参数化 P（如 PagingDTO<T>），应改为由 ResolvableType 递归构造 Jackson JavaType，而非退回 getType()。
         ResolvableType param = ResolvableType.forClass(AbstractMultiSheetPageFileEventHandler.class, handlerClass).getGeneric(0);
         if (param == ResolvableType.NONE || param.resolve() == null) {
             return null;
