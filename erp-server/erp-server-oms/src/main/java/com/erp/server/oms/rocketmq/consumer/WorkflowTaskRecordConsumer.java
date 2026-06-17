@@ -101,14 +101,15 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
                     success = Boolean.TRUE;
                     break;
                 case PROCESSING:
-                    LocalDateTime updateTime = entity.getUpdateTime();
-                    if (updateTime.plusMinutes(3).isAfter(LocalDateTime.now())) {
+                    if (isProcessingWithinTimeout(entity.getUpdateTime())) {
                         log.warn("节点处理中且未超时，index={}, sourceId={}", i, mqDTO.getSourceId());
                         break;
-                    } else {
-                        log.warn("节点处理超时，触发远程调用，index={}, sourceId={}", i, mqDTO.getSourceId());
-                        success = remoteInvoke(map, entity, i, 1); // 超时重试
                     }
+                    log.warn("节点处理超时，重置后重试，index={}, sourceId={}", i, mqDTO.getSourceId());
+                    if (Boolean.TRUE.equals(workflowTaskRecordService.resetStaleProcessingTask(entity.getId()))) {
+                        entity.setStatus(WorkflowTaskRecordStatusEnum.PENDING.getCode());
+                    }
+                    success = remoteInvoke(map, entity, i, 1);
                     break;
                 case PENDING:
                     success = remoteInvoke(map, entity, i, 0); // 初始执行
@@ -242,6 +243,13 @@ public class WorkflowTaskRecordConsumer implements RocketMQListener<WorkflowTask
             }
 
         }
+    }
+
+    private boolean isProcessingWithinTimeout(LocalDateTime updateTime) {
+        if (Objects.isNull(updateTime)) {
+            return false;
+        }
+        return updateTime.plusMinutes(WorkflowTaskRecordService.TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now());
     }
 
     private void markAsFailed(WorkflowTaskRecordEntity entity,String errorMsg,Integer plus) {

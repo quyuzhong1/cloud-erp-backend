@@ -61,7 +61,6 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
 
     private static final String FORCE_RETRY_PERMISSION = "oms:workflowTaskRecord:forceRetry";
 
-
     @Resource
     private DictBasicService dictBasicService;
 
@@ -84,8 +83,49 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<WorkflowTaskRecordEntity> addTask(WorkflowTaskRecordDTO.AddTaskDTO dto) {
+        List<WorkflowTaskRecordEntity> entities = buildTaskEntities(dto);
+        // 批量保存所有实体。数据库唯一索引生效后，并发创建命中唯一冲突时让事务回滚，补偿任务会复用已提交记录。
+        try {
+            saveBatch(entities);
+            return entities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点已存在，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<WorkflowTaskRecordEntity> addMissingTask(WorkflowTaskRecordDTO.AddTaskDTO dto, List<WorkflowTaskRecordEntity> existTasks) {
+        List<WorkflowTaskRecordEntity> allTaskEntities = buildTaskEntities(dto);
+        List<WorkflowTaskRecordEntity> mergedExistTasks = new ArrayList<>(listBySourceId(dto.getSourceId(), dto.getSourceTypeEnum().getCode()));
+        mergedExistTasks.addAll(CollUtil.emptyIfNull(existTasks));
+        Map<Integer, WorkflowTaskRecordEntity> existTaskMap = buildIndexTaskMap(mergedExistTasks);
+        Set<Integer> existIndexSet = existTaskMap.keySet();
+        List<WorkflowTaskRecordEntity> missingEntities = allTaskEntities.stream()
+                .filter(e -> !existIndexSet.contains(e.getIndex()))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(missingEntities)) {
+            return Collections.emptyList();
+        }
+        for (WorkflowTaskRecordEntity missingEntity : missingEntities) {
+            String previousOutputData = getPreviousSuccessOutputData(missingEntity, existTaskMap);
+            if (CharSequenceUtil.isNotBlank(previousOutputData)) {
+                missingEntity.setInputData(previousOutputData);
+            }
+        }
+        try {
+            saveBatch(missingEntities);
+            return missingEntities;
+        } catch (DuplicateKeyException e) {
+            log.warn("任务节点补齐命中唯一约束，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
+            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
+        }
+    }
+
+    private List<WorkflowTaskRecordEntity> buildTaskEntities(WorkflowTaskRecordDTO.AddTaskDTO dto) {
         //查询字典表 type = workflowTaskNode
-        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(),dto.getSourceTypeEnum().getCode());
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByType(dto.getDictBasicTypeEnum().getType(), dto.getSourceTypeEnum().getCode());
         if(CollUtil.isEmpty(dictList)){
             throw new ServiceException(ApiError.COMMON_NOT_EXIST_GENERIC,dto.getSourceTypeEnum().getName());
         }
@@ -115,14 +155,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             }
             entities.add(entity);
         }
-        // 批量保存所有实体。数据库唯一索引生效后，并发创建命中唯一冲突时让事务回滚，补偿任务会复用已提交记录。
-        try {
-            saveBatch(entities);
-            return entities;
-        } catch (DuplicateKeyException e) {
-            log.warn("任务节点已存在，sourceType={}, sourceId={}", dto.getSourceTypeEnum().getCode(), dto.getSourceId(), e);
-            throw new ServiceException(ApiError.WF_TASK_RECORD_DUPLICATE);
-        }
+        return entities;
     }
 
 
@@ -216,8 +249,9 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             if (CollUtil.isEmpty(resetTasks)) {
                 continue;
             }
+            Map<Integer, WorkflowTaskRecordEntity> indexTaskMap = buildIndexTaskMap(groupTasks);
             for (WorkflowTaskRecordEntity entity : resetTasks) {
-                resetForceRetryTask(entity, dto);
+                resetForceRetryTask(entity, dto, indexTaskMap);
                 resetCount++;
             }
             WorkflowTaskRecordEntity firstTask = groupTasks.stream()
@@ -258,6 +292,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         }
         return this.lambdaQuery().eq(WorkflowTaskRecordEntity::getSourceId,soId)
                 .eq(WorkflowTaskRecordEntity::getSourceType,sourceType)
+                .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
                 .list();
     }
 
@@ -271,8 +306,31 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .eq(WorkflowTaskRecordEntity::getSourceType, sourceType)
                 .eq(WorkflowTaskRecordEntity::getIndex, index)
                 .eq(WorkflowTaskRecordEntity::getIsDeleted, false)
+                .orderByDesc(WorkflowTaskRecordEntity::getCreateTime)
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public Boolean resetStaleProcessingTask(String id) {
+        if (CharSequenceUtil.isBlank(id)) {
+            return Boolean.FALSE;
+        }
+        WorkflowTaskRecordEntity entity = getById(id);
+        if (Objects.isNull(entity)
+                || !Objects.equals(entity.getStatus(), WorkflowTaskRecordStatusEnum.PROCESSING.getCode())) {
+            return Boolean.FALSE;
+        }
+        LocalDateTime updateTime = entity.getUpdateTime();
+        if (Objects.nonNull(updateTime)
+                && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isAfter(LocalDateTime.now())) {
+            return Boolean.FALSE;
+        }
+        return this.lambdaUpdate()
+                .eq(WorkflowTaskRecordEntity::getId, id)
+                .eq(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PROCESSING.getCode())
+                .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                .update();
     }
 
     @Override
@@ -298,8 +356,20 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
         return listBySourceId(dto.getSourceId(), dto.getSourceType());
     }
 
-    private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto) {
+    private void resetForceRetryTask(WorkflowTaskRecordEntity entity, WorkflowTaskRecordDTO.ForceRetryDTO dto, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
         String remark = appendForceRetryRemark(entity.getRemark(), dto.getRemark());
+        String refreshedInputData = getPreviousSuccessOutputData(entity, indexTaskMap);
+        if (CharSequenceUtil.isNotBlank(refreshedInputData)) {
+            this.lambdaUpdate()
+                    .eq(WorkflowTaskRecordEntity::getId, entity.getId())
+                    .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
+                    .set(WorkflowTaskRecordEntity::getRetryCount, Optional.ofNullable(dto.getRetryCount()).orElse(0))
+                    .set(WorkflowTaskRecordEntity::getLastError, "")
+                    .set(WorkflowTaskRecordEntity::getRemark, remark)
+                    .set(WorkflowTaskRecordEntity::getInputData, refreshedInputData)
+                    .update();
+            return;
+        }
         this.lambdaUpdate()
                 .eq(WorkflowTaskRecordEntity::getId, entity.getId())
                 .set(WorkflowTaskRecordEntity::getStatus, WorkflowTaskRecordStatusEnum.PENDING.getCode())
@@ -307,6 +377,30 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
                 .set(WorkflowTaskRecordEntity::getLastError, "")
                 .set(WorkflowTaskRecordEntity::getRemark, remark)
                 .update();
+    }
+
+    private Map<Integer, WorkflowTaskRecordEntity> buildIndexTaskMap(List<WorkflowTaskRecordEntity> taskList) {
+        return CollUtil.emptyIfNull(taskList).stream()
+                .filter(Objects::nonNull)
+                .filter(e -> Objects.nonNull(e.getIndex()))
+                .filter(e -> !Boolean.TRUE.equals(e.getIsDeleted()))
+                .collect(Collectors.toMap(WorkflowTaskRecordEntity::getIndex, e -> e, (o1, o2) -> o1));
+    }
+
+    private String getPreviousSuccessOutputData(WorkflowTaskRecordEntity entity, Map<Integer, WorkflowTaskRecordEntity> indexTaskMap) {
+        if (Objects.isNull(entity)
+                || Objects.isNull(entity.getIndex())
+                || entity.getIndex() <= 0
+                || Objects.isNull(indexTaskMap)) {
+            return null;
+        }
+        WorkflowTaskRecordEntity previousTask = indexTaskMap.get(entity.getIndex() - 1);
+        if (Objects.isNull(previousTask)
+                || !Objects.equals(previousTask.getStatus(), WorkflowTaskRecordStatusEnum.SUCCESS.getCode())
+                || Boolean.TRUE.equals(previousTask.getIsDeleted())) {
+            return null;
+        }
+        return previousTask.getOutputData();
     }
 
     private boolean allowForceRetry(WorkflowTaskRecordEntity entity) {
@@ -317,7 +411,7 @@ public class WorkflowTaskRecordServiceImpl extends SuperServiceImpl<WorkflowTask
             return true;
         }
         LocalDateTime updateTime = entity.getUpdateTime();
-        return Objects.nonNull(updateTime) && updateTime.plusMinutes(3).isBefore(LocalDateTime.now());
+        return Objects.nonNull(updateTime) && updateTime.plusMinutes(TASK_PROCESSING_TIMEOUT_MINUTES).isBefore(LocalDateTime.now());
     }
 
     private String appendForceRetryRemark(String oldRemark, String remark) {

@@ -16,6 +16,7 @@ import com.erp.server.oms.service.KolSubB2cApplicationDetailService;
 import com.erp.server.oms.mapper.KolSubB2cApplicationMapper;
 import com.erp.server.oms.service.KolSubB2cApplicationService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -115,11 +116,15 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list) {
+        return generateSplitOrder(entity, list, 0);
+    }
+
+    private List<KolSubB2cApplicationDTO.PushDTO> generateSplitOrder(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> list, int startIndex) {
         List<KolSubB2cApplicationDTO.PushDTO> result = new ArrayList<>();
         //明细按达人分组
         Map<String, List<KolB2cApplicationDetailEntity>> partnerGroup = list.stream().collect(Collectors.groupingBy(KolB2cApplicationDetailEntity::getPartnerId));
 
-        int index = 0;
+        int index = startIndex;
         for (Map.Entry<String, List<KolB2cApplicationDetailEntity>> entry : partnerGroup.entrySet()) {
             KolSubB2cApplicationDTO.PushDTO pushDTO = new KolSubB2cApplicationDTO.PushDTO();
 
@@ -178,15 +183,77 @@ public class KolSubB2cApplicationServiceImpl extends SuperServiceImpl<KolSubB2cA
         if (Objects.isNull(entity) || StringUtils.isBlank(entity.getId())) {
             return Collections.emptyList();
         }
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
         List<KolSubB2cApplicationEntity> existList = lambdaQuery()
                 .eq(KolSubB2cApplicationEntity::getSourceId, entity.getId())
                 .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
                 .list();
         if (CollUtil.isNotEmpty(existList)) {
+            checkSplitOrderComplete(entity, list, existList);
+            Map<String, KolSubB2cApplicationEntity> existPartnerMap = existList.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getPartnerId()))
+                    .collect(Collectors.toMap(KolSubB2cApplicationEntity::getPartnerId, e -> e, (o1, o2) -> o1));
+            List<KolB2cApplicationDetailEntity> missingPartnerDetails = list.stream()
+                    .filter(e -> StringUtils.isNotBlank(e.getPartnerId()))
+                    .filter(e -> !existPartnerMap.containsKey(e.getPartnerId()))
+                    .collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(missingPartnerDetails)) {
+                generateSplitOrder(entity, missingPartnerDetails, getNextSplitOrderIndex(entity, existList));
+                existList = lambdaQuery()
+                        .eq(KolSubB2cApplicationEntity::getSourceId, entity.getId())
+                        .eq(KolSubB2cApplicationEntity::getIsDeleted, false)
+                        .list();
+            }
             List<String> ids = existList.stream().map(KolSubB2cApplicationEntity::getId).collect(Collectors.toList());
             return listPushByIds(ids);
         }
         return generateSplitOrder(entity, list);
+    }
+
+    private void checkSplitOrderComplete(KolB2cApplicationEntity entity, List<KolB2cApplicationDetailEntity> sourceDetails, List<KolSubB2cApplicationEntity> existList) {
+        Map<String, String> subPartnerMap = existList.stream()
+                .filter(e -> StringUtils.isNotBlank(e.getPartnerId()))
+                .collect(Collectors.toMap(KolSubB2cApplicationEntity::getPartnerId, KolSubB2cApplicationEntity::getId, (o1, o2) -> o1));
+        Set<String> existingSubIds = new HashSet<>(subPartnerMap.values());
+        List<KolSubB2cApplicationDetailEntity> subDetails = CollUtil.isEmpty(existingSubIds)
+                ? Collections.emptyList()
+                : kolSubB2cApplicationDetailService.lambdaQuery()
+                        .in(KolSubB2cApplicationDetailEntity::getMainId, existingSubIds)
+                        .eq(KolSubB2cApplicationDetailEntity::getIsDeleted, false)
+                        .list();
+        Map<String, Set<String>> sourceDetailIdsBySubId = CollUtil.emptyIfNull(subDetails).stream()
+                .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                .collect(Collectors.groupingBy(KolSubB2cApplicationDetailEntity::getMainId,
+                        Collectors.mapping(KolSubB2cApplicationDetailEntity::getSourceDetailId, Collectors.toSet())));
+        for (KolB2cApplicationDetailEntity detail : sourceDetails) {
+            String subId = subPartnerMap.get(detail.getPartnerId());
+            if (StringUtils.isBlank(subId)) {
+                continue;
+            }
+            Set<String> sourceDetailIds = sourceDetailIdsBySubId.getOrDefault(subId, Collections.emptySet());
+            if (!sourceDetailIds.contains(detail.getId())) {
+                throw new ServiceException(ApiError.WF_KOL_B2C_SPLIT_DETAIL_INCOMPLETE, entity.getCode(), detail.getNickname());
+            }
+        }
+    }
+
+    private int getNextSplitOrderIndex(KolB2cApplicationEntity entity, List<KolSubB2cApplicationEntity> existList) {
+        int maxIndex = -1;
+        String baseCode = entity.getCode();
+        for (KolSubB2cApplicationEntity subEntity : CollUtil.emptyIfNull(existList)) {
+            String code = subEntity.getCode();
+            if (StringUtils.equals(code, baseCode)) {
+                maxIndex = Math.max(maxIndex, 0);
+            } else if (StringUtils.startsWith(code, baseCode + "_")) {
+                String suffix = StringUtils.substringAfter(code, baseCode + "_");
+                if (StringUtils.isNumeric(suffix)) {
+                    maxIndex = Math.max(maxIndex, Integer.parseInt(suffix));
+                }
+            }
+        }
+        return maxIndex + 1;
     }
 
     /**
