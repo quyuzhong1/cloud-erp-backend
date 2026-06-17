@@ -497,10 +497,15 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         OverseasProviderWarehouseEntity toEntity = overseasProviderWarehouseService.getByWarehouseId(deliveryEntity.getDestWarehouseId());
 
         // 校验参数
-        // WEGO 平台目的仓只支持「自发头程」入库类型
-        if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dictPlatform)
-                && !OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
-            throw new ServiceException("目的仓平台授权为WEGO时，入库类型只能为【自发头程】");
+        if (OmsPlatformEnum.WE_GO.getCode().equalsIgnoreCase(dictPlatform)) {
+            // WEGO 平台目的仓只支持「自发头程」入库类型
+            if (!OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
+                throw new ServiceException("目的仓平台授权为WEGO时，入库类型只能为【自发头程】");
+            }
+            // WEGO入库单需提供物流跟踪号
+            if (CharSequenceUtil.isBlank(commonDTO.getTrackingNo())) {
+                throw new ServiceException("WEGO入库单需提供物流跟踪号");
+            }
         }
         // 入库类型=自发头程
         if (OverseasInstockTypeEnum.SELF_HEADWAY.equals(commonDTO.getInstockType())) {
