@@ -22,6 +22,7 @@ import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -227,6 +228,13 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
             //备注
             jsonObject.set("remark", detail.getRemark());
+
+            //调出库存状态
+            jsonObject.set("outInventoryStatus", detail.getOutInventoryStatus());
+            jsonObject.set("outInventoryStatusName", InventoryStatusEnum.getNameByCode(detail.getOutInventoryStatus()));
+            //调入库存状态
+            jsonObject.set("inInventoryStatus", detail.getInInventoryStatus());
+            jsonObject.set("inInventoryStatusName", InventoryStatusEnum.getNameByCode(detail.getInInventoryStatus()));
 
             list.add(jsonObject);
         }

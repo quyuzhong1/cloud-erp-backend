@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.WegoWarehouseQueryDTO;
 import com.sdk.wms.wego.constants.WeGoConstants;
 import com.sdk.wms.wego.dto.response.WegoInboundResp;
 import com.sdk.wms.wego.dto.response.WegoOutboundResp;
+import com.sdk.wms.wego.dto.response.WegoReturnOrderResp;
 import com.sdk.wms.wego.utils.WeGoSignUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -356,6 +357,45 @@ public class WegoOpenApiService {
         Map<String, Object> bizParams = new HashMap<>();
         bizParams.put("no", dto.getNo());
         return doQuery(dto.getAccessToken(), dto.getSecret(), WeGoConstants.TWO_C_ORDER_INTERCEPT, bizParams, "截单2C出库单");
+    }
+
+    /**
+     * 调用 WEGO returnorder.queryPage 分页查询退货订单。
+     * <p>
+     * 按到仓日期区间（{@code arrivalDateBegin}/{@code arrivalDateEnd}）拉取退货订单，
+     * 单次最多返回 100 条（pageSize ≤ 100）。
+     * <p>
+     * 调用方根据 {@link WegoReturnOrderResp.PageResultDTO#getPages()} 判断总页数，
+     * 当 {@code pageNum >= pages} 或 {@code emptyFlag == true} 时结束分页。
+     *
+     * @param accessToken      WEGO accessToken
+     * @param secret           WEGO secret（用于签名）
+     * @param arrivalDateBegin 到仓日期开始（YYYY-MM-DD，可为 null）
+     * @param arrivalDateEnd   到仓日期结束（YYYY-MM-DD，可为 null）
+     * @param pageNum          页码（从 1 开始）
+     * @param pageSize         每页数量（最大 100）
+     * @return 分页结果；接口返回失败或无响应时返回 null，解析失败时抛出 ServiceException
+     */
+    public WegoReturnOrderResp queryReturnOrderPage(String accessToken, String secret,
+                                                     String arrivalDateBegin, String arrivalDateEnd,
+                                                     int pageNum, int pageSize) {
+        Map<String, Object> bizParams = new HashMap<>();
+        bizParams.put("pageNum", pageNum);
+        bizParams.put("pageSize", pageSize);
+        putIfNotNull(bizParams, "arrivalDateBegin", arrivalDateBegin);
+        putIfNotNull(bizParams, "arrivalDateEnd", arrivalDateEnd);
+        JSONObject response = doQuery(accessToken, secret,
+                WeGoConstants.RETURN_ORDER_QUERY_PAGE, bizParams, "分页查询退货订单");
+        if (response == null || !Boolean.TRUE.equals(response.getBoolean("success"))) {
+            log.warn("[WEGO分页查询退货订单] 接口返回失败或无响应, {}", safeResponseLog(response));
+            return null;
+        }
+        try {
+            return response.toJavaObject(WegoReturnOrderResp.class);
+        } catch (Exception ex) {
+            log.error("[WEGO分页查询退货订单] 响应JSON转换WegoReturnOrderResp失败, {}", safeResponseLog(response), ex);
+            throw new ServiceException("WEGO 分页查询退货订单接口响应转换失败: " + ex.getMessage());
+        }
     }
 
     /**
