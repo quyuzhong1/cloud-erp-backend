@@ -2520,6 +2520,11 @@ public class TmsDeclareBillDTO implements Serializable {
         private String exemption;
 
         /**
+         * 订单类型（so_outstock.order_type，如 B2B）
+         */
+        private String businessType;
+
+        /**
          * 发货仓ID
          */
         private String fromWarehouseId;

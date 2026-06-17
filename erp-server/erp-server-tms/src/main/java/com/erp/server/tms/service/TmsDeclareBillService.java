@@ -197,6 +197,11 @@ public interface TmsDeclareBillService extends SuperService<TmsDeclareBillEntity
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO) ;
 
     /**
+     * B2B 报关单且境外收货人为客户时返回 true（与合并预览 sixDimensionMerge 口径一致）。
+     */
+    Boolean isB2bCustomerReceiver(List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
+
+    /**
      * 自动生成报关单链路（DeliveryDeclareDetailMid 中间表自动生成、batchAddMergeDetail 等）
      * 在入库前调用，按合并明细维度校验报关必填信息（海关编码 / 报关品名 / 申报要素 / 单位 / 币种 / 单价）。
      * 任一行缺失即抛 {@link com.common.core.enums.ApiError#LOGISTICS_DECLARE_AUTO_DETAIL_FIELD_REQUIRED}，

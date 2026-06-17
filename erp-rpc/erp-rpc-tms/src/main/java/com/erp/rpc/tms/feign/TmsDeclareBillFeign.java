@@ -49,4 +49,10 @@ public interface TmsDeclareBillFeign {
      **/
     @PostMapping("/feign/tmsDeclareBill/autoMergeDeclareBillView")
     List<TmsDeclareBillDTO.MergeDeclareBillDTO> autoMergeDeclareBillView(@RequestBody TmsDeclareBillDTO.AutoMergeDeclareBillViewDTO viewDTO);
+
+    /**
+     * B2B 报关合并预览：判断境外收货人是否按客户分发。
+     */
+    @PostMapping("/feign/tmsDeclareBill/isB2bCustomerReceiver")
+    Boolean isB2bCustomerReceiver(@RequestBody List<TmsDeclareBillDTO.SourceDeliveryDetailDTO> sourceDetailList);
 }
