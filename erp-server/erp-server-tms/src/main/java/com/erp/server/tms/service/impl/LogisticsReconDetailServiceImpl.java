@@ -253,6 +253,10 @@ public class LogisticsReconDetailServiceImpl
 
     /**
      * 导入匹配异步回调：按操作人 id 恢复登录上下文。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param userId 操作人 id
      */
     private void setupImportMatchUserContext(String userId) {
         if (StrUtil.isBlank(userId)) {
@@ -587,7 +591,12 @@ public class LogisticsReconDetailServiceImpl
     }
 
     /**
-     * 导入匹配仅处理未匹配/失败且未确认、非匹配中的费用项。
+     * 判断费用项是否可参与导入匹配（未匹配/失败且未确认、非匹配中）。
+     *
+     * @author Will
+     * @date 2026/6/12
+     * @param sub 对账费用项
+     * @return 可匹配时返回 true
      */
     private boolean canImportMatchSub(LogisticsReconDetailSubEntity sub) {
         if (LogisticsReconReconciliationStatusEnum.CONFIRMED.getCode().equals(sub.getReconciliationStatus())) {

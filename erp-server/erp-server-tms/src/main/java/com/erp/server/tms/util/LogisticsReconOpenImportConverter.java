@@ -22,6 +22,9 @@ public final class LogisticsReconOpenImportConverter {
      */
     public static final String RECON_PROCESSING_IMPORT_CHECK = "importCheck";
 
+    /**
+     * 工具类私有构造，禁止实例化。
+     */
     private LogisticsReconOpenImportConverter() {
     }
 
