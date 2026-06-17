@@ -5,7 +5,6 @@ import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,6 +56,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer qty;
     }
+
     /**
      * fba下推发货单绑定货件View
      */
@@ -68,6 +68,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @Valid
         private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
     }
+
     /**
      * fba下推发货单绑定货件View
      */
@@ -187,6 +188,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private List<String> fbaBoxNo;
     }
+
     /**
      * fba下推发货单绑定货件View
      */
@@ -203,6 +205,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOList;
     }
+
     /**
      * fba下推发货单绑定货件详情View
      */
@@ -677,6 +680,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer pickQty;
     }
+
     /**
      * 列表查询参数
      */
@@ -699,6 +703,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
     }
+
     /**
      * 列表查询参数
      */
@@ -1217,7 +1222,7 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货数量
          */
         @NotNull(message = "拣货数量不能为空")
-        @Max(value = 999999999,message = "拣货数量最大值为999999999")
+        @Max(value = 999999999, message = "拣货数量最大值为999999999")
         private Integer pickingQty;
 
         /**
@@ -1229,7 +1234,6 @@ public class RequisitionApplicationDTO implements Serializable {
          * 调入组织
          */
         private String inOrgId;
-
 
 
     }
@@ -1303,6 +1307,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String bomVersion;
     }
+
     /**
      * 绑定货件
      */
@@ -1320,6 +1325,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "货件id 不能为空")
         private String shipmentId;
     }
+
     /**
      * 子件信息
      */
@@ -1352,6 +1358,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer requisitionQty;
     }
+
     /**
      * 仓库列表
      */
@@ -1410,12 +1417,13 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 是否可选
          */
-        private Boolean canCheck=true;
+        private Boolean canCheck = true;
         /**
          * 是否关联虚拟仓
          */
-        private Boolean hasVw=false;
+        private Boolean hasVw = false;
     }
+
     @Data
     @NoArgsConstructor
     public static class WarehouseSelectDTO {
@@ -1452,7 +1460,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
     }
 
     @Getter
@@ -1491,7 +1499,7 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "要货申请不能为空")
         private String id;
 
-        @Size(min = 1,message = "至少存在一条明细,才可生成拣货单")
+        @Size(min = 1, message = "至少存在一条明细,才可生成拣货单")
         private List<String> detailIds;
     }
 
@@ -1651,6 +1659,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String id;
     }
+
     @Data
     @NoArgsConstructor
     public static class ImportDTO {
@@ -1741,6 +1750,7 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer printNum;
     }
+
     /**
      * fba下推发货单绑定货件View
      */
@@ -1750,7 +1760,8 @@ public class RequisitionApplicationDTO implements Serializable {
         @NotBlank(message = "要货申请id不能为空")
         private String id;
         @NotBlank(message = "FBA货件号不能为空")
-        private String fbaShipmentCode;;
+        private String fbaShipmentCode;
+        ;
     }
 
     @Data
