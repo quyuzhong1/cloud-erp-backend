@@ -89,7 +89,7 @@ public interface PoReconciliationService extends SuperService<PoReconciliationEn
 
     /**
      * 上传发票，全量保存语义：
-     * - attachUrlList 为空：不修改现有发票数据
+     * - attachmentList 为空：删除该对账单全部发票附件
      * - 1~10：删除已有发票后批量保存本次列表
      * - 超过 10：抛 PO_RECONCILIATION_INVOICE_LIMIT_EXCEEDED
      *

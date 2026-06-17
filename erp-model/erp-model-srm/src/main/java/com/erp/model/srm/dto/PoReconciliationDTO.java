@@ -693,7 +693,7 @@ public class PoReconciliationDTO implements Serializable {
         /**
          * 发票附件列表，全量保存语义：
          * - 长度 1~10：删除该对账单已有发票后批量保存本次列表
-         * - 长度 0 或 null：拒绝（避免旧客户端传参不匹配时静默失败）
+         * - 长度 0 或 null：删除该对账单全部发票附件
          * - 长度 > 10：拒绝
          */
         @Valid
